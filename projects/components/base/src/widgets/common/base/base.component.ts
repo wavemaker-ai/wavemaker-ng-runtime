@@ -656,16 +656,15 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
 
     ngAfterContentInit() {}
 
-    
-   public setHeightWidthForElement(ele:any, height?:string, width?:string){
-        if(!ele){
+   public setHeightWidthForElement(ele: any, height?: string, width?: string) {
+        if (!ele) {
             return;
         }
-        if(height){
+        if (height) {
             setCSS(ele, 'height', height);
         }
 
-        if(width){
+        if (width) {
             setCSS(ele, 'width', width);
         }
     }
