@@ -114,7 +114,7 @@ const isSeachWidget = (widgetType) => {
 
 // This function is used to set the groupby field for search/autocomplete
 const setGroupbyKey = (scope, option, dataSetItem, innerItem) => {
-    if (scope && isSeachWidget(scope.widgetType)) {
+    if (scope && scope.groupby && isSeachWidget(scope.widgetType)) {
         scope.groupedData.forEach((val, index) => {
             var element =  _.find(val.data, (test) =>  _.isEqual(test[innerItem], option));
             if (element) {
