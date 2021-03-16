@@ -107,9 +107,22 @@ export const convertDataToObject = dataResult => {
     return dataResult;
 };
 
+// This function used to check the search type widget
 const isSeachWidget = (widgetType) => {
     return widgetType === 'wm-search';
 };
+
+// This function is used to set the groupby field for search/autocomplete
+const setGroupbyKey = (scope, option, dataSetItem, innerItem) => {
+    if (scope && isSeachWidget(scope.widgetType)) {
+        scope.groupedData.forEach((val, index) => {
+            var element =  _.find(val.data, (test) =>  _.isEqual(test[innerItem], option));
+            if (element) {
+                (dataSetItem as any).groupby =  val.key;
+            }
+        });
+    }
+}
 
 /**
  * The first step in datasetItems creation is data transformation:
@@ -136,16 +149,22 @@ export const transformFormData = (context: any, dataSet: any, myDataField?: stri
     if (_.isString(dataSet)) {
         dataSet = dataSet.split(',').map(str => str.trim());
         dataSet.forEach((option, index) => {
-            data.push({key: option, value: option, label: (isDefined(option) && option !== null) ? option.toString() : '', index: startIndex + index});
+            const dataSetItem = {key: option, value: option, label: (isDefined(option) && option !== null) ? option.toString() : '', index: startIndex + index};
+            setGroupbyKey(scope, option, dataSetItem, 'value');
+            data.push(dataSetItem);
         });
     } else if (_.isArray(dataSet) && !_.isObject(dataSet[0])) { // array of primitive values only
         dataSet.forEach((option, index) => {
-            data.push({key: option, value: option, label: (isDefined(option) && option !== null) ? option.toString() : '', index: startIndex + index});
+            const dataSetItem = {key: option, value: option, label: (isDefined(option) && option !== null) ? option.toString() : '', index: startIndex + index};
+            setGroupbyKey(scope, option, dataSetItem, 'value');
+            data.push(dataSetItem);
         });
     } else if (!(dataSet instanceof Array) && _.isObject(dataSet)) {
         const i = 0;
         _.forEach(dataSet, (value, key) => {
-            data.push({key: _.trim(key), value: key, label: (isDefined(value) && value !== null) ? value.toString() : '', index: startIndex, dataObject: dataSet});
+            const dataSetItem = {key: _.trim(key), value: key, label: (isDefined(value) && value !== null) ? value.toString() : '', index: startIndex, dataObject: dataSet};
+            setGroupbyKey(scope, value, dataSetItem, 'value');
+            data.push();
         });
     } else {
         if (!myDataField) { // consider the datafield as 'ALLFIELDS' when datafield is not given.
@@ -182,15 +201,7 @@ export const transformFormData = (context: any, dataSet: any, myDataField?: stri
                         bindExpression: displayOptions.bindDisplayImgSrc
                     }, context);
                 }
-                // this is for search/autocomplete widget groupby and match property implementation
-                if (scope && isSeachWidget(scope.widgetType)) {
-                    scope.groupedData.forEach((val, index) => {
-                        var elemnt =  _.find(val.data, (test) =>  _.isEqual(test.dataObject, option));
-                        if (elemnt) {
-                            (dataSetItem as any).groupby =  val.key;
-                        }
-                    });
-                }
+                setGroupbyKey(scope, option, dataSetItem, 'dataObject');
 
                 data.push(dataSetItem);
             }
