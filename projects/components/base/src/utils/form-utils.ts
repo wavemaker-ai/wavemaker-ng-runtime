@@ -107,6 +107,10 @@ export const convertDataToObject = dataResult => {
     return dataResult;
 };
 
+const isSeachWidget = (widgetType) => {
+    return widgetType === 'wm-search';
+};
+
 /**
  * The first step in datasetItems creation is data transformation:
  *
@@ -117,7 +121,7 @@ export const convertDataToObject = dataResult => {
  * 3) an object eg: {name: 'A', age: 20} => [ {key: 'name', value: 'A'}, {key: 'age', value: 20}]
  * 4) an array of objects...eg: [ {name: 'A', age: 20}, {name: 'B', age: 20}] ==> returns [{key: _DATAFIELD_, value: _DISPLAYFIELD, label: _DISPLAYVALUE}]
  */
-export const transformFormData = (context: any, dataSet: any, myDataField?: string, displayOptions?, startIndex?: number): Array<DataSetItem> => {
+export const transformFormData = (context: any, dataSet: any, myDataField?: string, displayOptions?, startIndex?: number, scope?: any): Array<DataSetItem> => {
     const data = [];
     if (!dataSet) {
         return;
@@ -147,10 +151,17 @@ export const transformFormData = (context: any, dataSet: any, myDataField?: stri
         if (!myDataField) { // consider the datafield as 'ALLFIELDS' when datafield is not given.
             myDataField = ALLFIELDS;
         }
-
+        // ordering the data based on groupby field
+        if (scope && isSeachWidget(scope.widgetType)) {
+            dataSet = _.orderBy(dataSet, (function(fieldDef) {
+                var groupKey = _.get(fieldDef, scope && scope.groupby);
+                if (groupKey) {
+                    return _.toLower(groupKey);
+                }
+            }));
+        }
         dataSet.forEach((option, index) => {
             const key = myDataField === ALLFIELDS ? startIndex + index : getObjValueByKey(option, myDataField);
-
             // Omit all the items whose datafield (key) is null or undefined.
             if (!_.isUndefined(key) && !_.isNull(key)) {
                 const label = getEvaluatedData(option, {
@@ -171,6 +182,16 @@ export const transformFormData = (context: any, dataSet: any, myDataField?: stri
                         bindExpression: displayOptions.bindDisplayImgSrc
                     }, context);
                 }
+                // this is for search/autocomplete widget groupby and match property implementation
+                if (scope && isSeachWidget(scope.widgetType)) {
+                    scope.groupedData.forEach((val, index) => {
+                        var elemnt =  _.find(val.data, (test) =>  _.isEqual(test.dataObject, option));
+                        if (elemnt) {
+                            (dataSetItem as any).groupby =  val.key;
+                        }
+                    });
+                }
+
                 data.push(dataSetItem);
             }
         });

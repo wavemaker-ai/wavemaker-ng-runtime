@@ -1,15 +1,15 @@
-import { Injector, Attribute } from '@angular/core';
+import { Injector, Attribute, OnInit } from '@angular/core';
 
 import { Subject } from 'rxjs';
 
-import { $appDigest, debounce, isDefined, isEqualWithFields, toBoolean, AppDefaults } from '@wm/core';
+import {$appDigest, debounce, isDefined, isEqualWithFields, toBoolean, AppDefaults, noop} from '@wm/core';
 
-import { ALLFIELDS, convertDataToObject, DataSetItem, extractDataAsArray, getOrderedDataset, getUniqObjsByDataField, transformFormData, transformDataWithKeys, groupData, ToDatePipe } from '@wm/components/base';
+import { ALLFIELDS, convertDataToObject, DataSetItem, extractDataAsArray, getOrderedDataset, getUniqObjsByDataField, handleHeaderClick, toggleAllHeaders, transformFormData, transformDataWithKeys, groupData, ToDatePipe } from '@wm/components/base';
 import { BaseFormCustomComponent } from './base-form-custom.component';
 
 declare const _;
 
-export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent {
+export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent implements OnInit {
     public dataset: any;
     public datafield: string;
     public displayfield: string;
@@ -21,6 +21,11 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
     public multiple: boolean;
     public readonly: boolean;
     public content: string;
+    public collapsible: boolean;
+    public datePipe;
+
+    public handleHeaderClick: ($event) => void;
+    private toggleAllHeaders: void;
 
     public binddisplayexpression: string;
     public binddisplayimagesrc: string;
@@ -79,11 +84,10 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
         this.invokeOnChange(val, undefined, true);
     }
 
-    protected constructor(inj: Injector, WIDGET_CONFIG,  @Attribute('groupby') public groupby?: string,
-      private appDefaults?: AppDefaults,
-      public datePipe?: ToDatePipe) {
+    protected constructor(inj: Injector, WIDGET_CONFIG, @Attribute('groupby') public groupby?: string,
+        private appDefaults?: AppDefaults) {
         super(inj, WIDGET_CONFIG);
-
+        this.datePipe = this.inj.get(ToDatePipe);
         this.binddisplayexpression = this.nativeElement.getAttribute('displayexpression.bind');
         this.binddisplayimagesrc = this.nativeElement.getAttribute('displayimagesrc.bind');
         this.binddisplaylabel = this.nativeElement.getAttribute('displaylabel.bind');
@@ -92,6 +96,7 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
             this.initDatasetItems();
             $appDigest();
         }, 150);
+        this.handleHeaderClick = noop;
     }
 
     /**
@@ -324,6 +329,23 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
             case 'datavalue':
                 this._onChange(this.datavalue);
                 break;
+            case 'groupby':
+            case 'match':
+                this.setGroupData();
+            break;
+        }
+    }
+
+    ngOnInit() {
+        super.ngOnInit();
+        // &&  this.widgetType !== 'wm-search'
+        if (this.groupby) {
+            this.setGroupData();
+        }
+        // adding the handler for header click and toggle headers.
+        if (this.groupby && this.collapsible) {
+            this.handleHeaderClick = handleHeaderClick;
+            this.toggleAllHeaders = toggleAllHeaders.bind(undefined, this);
         }
     }
 }

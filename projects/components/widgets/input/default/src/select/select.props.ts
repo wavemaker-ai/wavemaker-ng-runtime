@@ -10,11 +10,14 @@ export const selectProps = new Map(
         ['dataset', PROP_ANY],
         ['datavaluesource', PROP_ANY],
         ['datavalue', PROP_STRING],
+        ['dateformat', PROP_STRING],
         ['disabled', PROP_BOOLEAN],
         ['displayexpression', PROP_STRING],
         ['displayfield', PROP_STRING],
         ['displayValue', PROP_STRING],
+        ['groupby', PROP_STRING],
         ['hint', PROP_STRING],
+        ['match', PROP_STRING],
         ['multiple', {value: false, ...PROP_BOOLEAN}],
         ['name', PROP_STRING],
         ['orderby', PROP_STRING],
@@ -24,9 +27,7 @@ export const selectProps = new Map(
         ['shortcutkey', PROP_STRING],
         ['show', {value: true, ...PROP_BOOLEAN}],
         ['tabindex', {value: 0, ...PROP_NUMBER}],
-        ['usekeys', PROP_BOOLEAN],
-        ['groupby', PROP_STRING],
-        ['match', PROP_STRING]
+        ['usekeys', PROP_BOOLEAN]
     ]
 );
 

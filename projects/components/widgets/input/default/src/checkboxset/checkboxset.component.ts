@@ -1,8 +1,8 @@
-import { Attribute, Component, Injector, OnInit} from '@angular/core';
+import { Attribute, Component, Injector } from '@angular/core';
 import { NG_VALUE_ACCESSOR, NG_VALIDATORS } from '@angular/forms';
 
 import { AppDefaults, noop, setListClass, switchClass} from '@wm/core';
-import { convertDataToObject, IWidgetConfig, groupData, handleHeaderClick, provideAs, provideAsWidgetRef, styler, ToDatePipe, toggleAllHeaders } from '@wm/components/base';
+import { convertDataToObject, IWidgetConfig, groupData, handleHeaderClick, provideAs, provideAsWidgetRef, styler, toggleAllHeaders } from '@wm/components/base';
 import { DatasetAwareFormComponent } from '../dataset-aware-form.component';
 
 import { registerProps } from '../checkboxset/checkboxset.props';
@@ -23,7 +23,7 @@ const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-checkboxset', hostClass: D
     ]
 })
 
-export class CheckboxsetComponent extends DatasetAwareFormComponent implements OnInit {
+export class CheckboxsetComponent extends DatasetAwareFormComponent {
     static initializeProps = registerProps();
 
     public layout = '';
@@ -33,9 +33,6 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent implements O
     protected dateformat: string;
     protected groupedData: any[];
 
-    public handleHeaderClick: ($event) => void;
-    private toggleAllHeaders: void;
-
     public disabled: boolean;
     public itemsperrow: string;
     private itemsPerRowClass: string;
@@ -44,7 +41,6 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent implements O
         super(inj, WIDGET_CONFIG);
         styler(this.nativeElement, this);
         this.multiple = true;
-        this.handleHeaderClick = noop;
     }
 
     onCheckboxLabelClick($event, key) {
@@ -95,22 +91,8 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent implements O
         }
         if (key === 'itemsperrow') {
             setListClass(this);
-        } else if (key === 'groupby' || key === 'match') {
-             this.setGroupData();
         } else {
             super.onPropertyChange(key, nv, ov);
-        }
-    }
-
-    ngOnInit() {
-        super.ngOnInit();
-        if (this.groupby) {
-          this.setGroupData();
-        }
-        // adding the handler for header click and toggle headers.
-        if (this.groupby && this.collapsible) {
-            this.handleHeaderClick = handleHeaderClick;
-            this.toggleAllHeaders = toggleAllHeaders.bind(undefined, this);
         }
     }
 }
