@@ -114,13 +114,17 @@ const isSeachWidget = (widgetType) => {
 
 // This function is used to set the groupby field for search/autocomplete
 const setGroupbyKey = (scope, option, dataSetItem, innerItem) => {
-    if (scope && scope.groupby && isSeachWidget(scope.widgetType)) {
-        scope.groupedData.forEach((val, index) => {
-            var element =  _.find(val.data, (test) =>  _.isEqual(test[innerItem], option));
-            if (element) {
-                (dataSetItem as any).groupby =  val.key;
-            }
-        });
+    if (scope && isSeachWidget(scope.widgetType)) {
+        if (scope.groupby) {
+            scope.groupedData.forEach((val, index) => {
+                var element =  _.find(val.data, (test) =>  _.isEqual(test[innerItem], option));
+                if (element) {
+                    (dataSetItem as any).groupby =  val.key;
+                }
+            });
+        } else {
+            (dataSetItem as any).groupby =  '';
+        }
     }
 }
 
