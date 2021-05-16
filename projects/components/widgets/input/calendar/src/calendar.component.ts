@@ -145,7 +145,6 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             viewRender: this.viewRender.bind(this)
         }
     };
-    public mobileCalendar: boolean;
     private view: string;
     private dayClass: Array<any> = [];
 
@@ -359,22 +358,9 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                     this.eventData[eventDay].push(event);
                 } else {
                     this.eventData[eventDay] = [event];
-                }
-
-                if (this.mobileCalendar) {
-                    // custom class on the date in the date picker.
-                    this.dayClass.push({
-                        date: new Date(eventStart).setHours(0, 0, 0, 0),
-                        mode: 'day',
-                        clazz: this.getDayClass({eventDay: eventDay})
-                    });
-                }
+                }                
             }
-        });
-        // add the eventData on the calendar by calling refreshView
-        if (this.mobileCalendar && this._datepickerInnerComponent) {
-            this._datepickerInnerComponent.refreshView();
-        }
+        });        
     }
 
     // constructs the calendar dataset by mapping the eventstart, eventend, eventtitle etc.,
@@ -426,7 +412,6 @@ export class CalendarComponent extends StylableComponent implements AfterContent
     constructor(inj: Injector, i18nService: AbstractI18nService) {
         super(inj, WIDGET_CONFIG);
 
-        this.mobileCalendar = isMobileApp();
         this.eventSources.push(this.dataSetEvents);
         const FullCalendar = window['FullCalendar'];
         if (!FullCalendar.__wm_locale_initialized) {
@@ -438,15 +423,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
     ngOnInit() {
         super.ngOnInit();
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER, ['height']);
-
-        if (this.mobileCalendar) {
-            if (!this.view || this.view === 'week') {
-                this.view = 'day';
-            }
-            this.triggerMobileCalendarChange();
-        } else {
-            this.setLocale();
-        }
+        this.setLocale();
     }
 
     onStyleChange(key, nv, ov?) {
@@ -502,14 +479,9 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                         return true;
                     }
                 });
-
-                if (this.mobileCalendar) {
-                    this.triggerMobileCalendarChange();
-                } else {
-                    this.updateCalendarOptions('removeEvents');
-                    this.updateCalendarOptions('addEventSource', this.dataSetEvents.events);
-                    this.updateCalendarOptions('rerenderEvents');
-                }
+                this.updateCalendarOptions('removeEvents');
+                this.updateCalendarOptions('addEventSource', this.dataSetEvents.events);
+                this.updateCalendarOptions('rerenderEvents');            
                 break;
         }
     }
@@ -523,40 +495,6 @@ export class CalendarComponent extends StylableComponent implements AfterContent
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
-
-        if (this.mobileCalendar && this._datepicker) {
-            let lastActiveDate = (this._datepicker as any).activeDate;
-            // renderview when active date changes
-            (this._datepicker as any).activeDateChange.subscribe((dt) => {
-                const prevYear = lastActiveDate.getYear();
-                const prevMonth = lastActiveDate.getMonth();
-                const selectedYear = dt.getYear();
-                const selectedMonth = dt.getMonth();
-
-                // invoke renderView only when month is changed.
-                if (prevMonth !== selectedMonth || prevYear !== selectedYear) {
-                    lastActiveDate = dt;
-                    this.renderMobileView(dt);
-                }
-            });
-
-            this._datepickerInnerComponent = (this._datepicker as any)._datePicker;
-            this.renderMobileView(moment(this.datavalue));
-            this.registerDestroyListener(
-                $watch(
-                    '_datepickerInnerComponent.datepickerMode',
-                    this,
-                    {},
-                    (nv, ov) => {
-                        if (ov && !_.isEmpty(ov)) {
-                            this.invokeOnViewRenderback();
-                        }
-                    }
-                )
-            );
-            return;
-        }
-
         this.$fullCalendar = $(this._calendar.nativeElement);
         this.invokeEventCallback('beforerender', {'$event' : {}});
         this.$fullCalendar.fullCalendar(this.calendarOptions.calendar);
