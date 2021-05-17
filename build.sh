@@ -537,7 +537,7 @@ bundleWebLibs() {
         ./node_modules/he/he.js \
         ./node_modules/@wavemaker.com/nvd3/build/nv.d3.min.js \
         ./node_modules/jquery/dist/jquery.min.js \
-        ./node_modules/fullcalendar/lib/main.min.js \
+        ./node_modules/fullcalendar/main.min.js \
         ./node_modules/jssha/dist/sha256.js \
         ./node_modules/summernote/dist/summernote-lite.js \
         ./node_modules/jquery-ui/ui/disable-selection.js \
@@ -603,7 +603,7 @@ bundleMobileLibs() {
         ./node_modules/he/he.js \
         ./node_modules/@wavemaker.com/nvd3/build/nv.d3.min.js \
         ./node_modules/jquery/dist/jquery.min.js \
-        ./node_modules/fullcalendar/lib/main.min.js \
+        ./node_modules/fullcalendar/main.min.js \
         ./node_modules/jssha/dist/sha256.js \
         ./node_modules/summernote/dist/summernote-lite.js \
         ./node_modules/jquery-ui/ui/disable-selection.js \
