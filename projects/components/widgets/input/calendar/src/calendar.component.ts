@@ -8,7 +8,7 @@ import { APPLY_STYLES_TYPE, createArrayFrom, getEvaluatedData, IWidgetConfig, IR
 
 import { registerProps } from './calendar.props';
 
-declare const _, $, moment;
+declare const _, $, moment, FullCalendar;
 
 const DEFAULT_CLS = 'app-calendar';
 const dateFormats = ['yyyy-MM-dd', 'yyyy-M-dd', 'M-dd-yyyy', 'MM-dd-yy', 'yyyy, dd MMMM', 'yyyy, MMM dd', 'MM/dd/yyyy', 'M/d/yyyy', 'EEE, dd MMM yyyy', 'EEE MMM dd yyyy', 'EEEE, MMMM dd, yyyy', 'timestamp'];
@@ -495,6 +495,18 @@ export class CalendarComponent extends StylableComponent implements AfterContent
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
+        var calendarEl = document.getElementById('calendar');
+        const FullCalendar = window['FullCalendar'];
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            timeZone: 'UTC',
+            initialView: 'dayGridMonth',
+            events: 'https://fullcalendar.io/demo-events.json',
+            editable: true,
+            selectable: true
+          });
+      
+          calendar.render();
+
         this.$fullCalendar = $(this._calendar.nativeElement);
         this.invokeEventCallback('beforerender', {'$event' : {}});
         this.$fullCalendar.fullCalendar(this.calendarOptions.calendar);
