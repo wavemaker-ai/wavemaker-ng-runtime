@@ -8,7 +8,7 @@ import { APPLY_STYLES_TYPE, createArrayFrom, getEvaluatedData, IWidgetConfig, IR
 
 import { registerProps } from './calendar.props';
 
-declare const _, $, moment, FullCalendar;
+declare const _, $, moment;
 
 const DEFAULT_CLS = 'app-calendar';
 const dateFormats = ['yyyy-MM-dd', 'yyyy-M-dd', 'M-dd-yyyy', 'MM-dd-yy', 'yyyy, dd MMMM', 'yyyy, MMM dd', 'MM/dd/yyyy', 'M/d/yyyy', 'EEE, dd MMM yyyy', 'EEE MMM dd yyyy', 'EEEE, MMMM dd, yyyy', 'timestamp'];
@@ -134,6 +134,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                     eventLimit: 0
                 }
             },
+            events: 'https://fullcalendar.io/demo-events.json',
             unselectAuto: false,
             eventDrop: this.eventDrop.bind(this),
             eventResizeStart: this.onEventChangeStart.bind(this),
@@ -142,7 +143,12 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             eventClick: this.eventClick.bind(this),
             select: this.select.bind(this),
             eventRender: this.eventRender.bind(this),
-            viewRender: this.viewRender.bind(this)
+            viewRender: this.viewRender.bind(this),
+            headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            }
         }
     };
     private view: string;
@@ -495,24 +501,25 @@ export class CalendarComponent extends StylableComponent implements AfterContent
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
-        var calendarEl = document.getElementById('calendar');
+        var calendarEl = this._calendar.nativeElement; //document.getElementById('calendar');
         const FullCalendar = window['FullCalendar'];
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            timeZone: 'UTC',
-            initialView: 'dayGridMonth',
-            events: 'https://fullcalendar.io/demo-events.json',
-            editable: true,
-            selectable: true
-          });
-      
-          calendar.render();
-
-        this.$fullCalendar = $(this._calendar.nativeElement);
+        // var calendar = new FullCalendar.Calendar(calendarEl, {
+        //     timeZone: 'UTC',
+        //     initialView: 'dayGridMonth',
+        //     events: 'https://fullcalendar.io/demo-events.json',
+        //     editable: true,
+        //     selectable: true,
+        //     eventClick: this.eventClick.bind(this),
+        //   });
         this.invokeEventCallback('beforerender', {'$event' : {}});
-        this.$fullCalendar.fullCalendar(this.calendarOptions.calendar);
+        var calendar = new FullCalendar.Calendar(calendarEl,this.calendarOptions.calendar);
+        calendar.render();
+        this.$fullCalendar =  calendar; //$(this._calendar.nativeElement);
+        // this.$fullCalendar.fullCalendar(this.calendarOptions.calendar);
         // if the changes are already stacked before calendar renders then execute them when needed
         if (this.changesStack.length) {
             this.changesStack.forEach((changeObj) => {
+                debugger;
                 this.$fullCalendar.fullCalendar(changeObj.operationType, changeObj.argumentKey, changeObj.argumentValue);
             });
             this.changesStack.length = 0;
