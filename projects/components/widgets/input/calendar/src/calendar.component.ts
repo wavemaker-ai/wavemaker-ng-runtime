@@ -2,7 +2,7 @@ import { DatePickerInnerComponent } from 'ngx-bootstrap/datepicker/datepicker-in
 
 import { AfterViewInit, AfterContentInit, Component, ElementRef, Injector, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 
-import {$watch, getClonedObject, getSessionStorageItem, AbstractI18nService, isMobileApp} from '@wm/core';
+import {$watch, getClonedObject, getSessionStorageItem, AbstractI18nService, isMobileApp, isMobile} from '@wm/core';
 
 import { APPLY_STYLES_TYPE, createArrayFrom, getEvaluatedData, IWidgetConfig, IRedrawableComponent, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 
@@ -126,7 +126,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             eventSources: this.eventSources,
             editable: true,
             locale: getSessionStorageItem('selectedLocale') || 'en',
-            selectable: false,
+            longPressDelay: isMobile() ? 1 : 1000,
             header: defaultHeaderOptions,
             nextDayThreshold: NEXT_DAY_THRESHOLD,
             views: {
@@ -134,13 +134,12 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                     eventLimit: 0
                 }
             },
-            events: 'https://fullcalendar.io/demo-events.json',
             unselectAuto: false,
             eventDrop: this.eventDrop.bind(this),
             eventResizeStart: this.onEventChangeStart.bind(this),
             eventDragStart: this.onEventChangeStart.bind(this),
             eventResize: this.eventResize.bind(this),
-            eventClick: this.eventClick.bind(this),
+            eventClick: this.eventClick.bind(this),           
             select: this.select.bind(this),
             eventRender: this.eventRender.bind(this),
             viewRender: this.viewRender.bind(this),
@@ -515,7 +514,6 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         var calendar = new FullCalendar.Calendar(calendarEl,this.calendarOptions.calendar);
         calendar.render();
         this.$fullCalendar =  calendar; //$(this._calendar.nativeElement);
-        // this.$fullCalendar.fullCalendar(this.calendarOptions.calendar);
         // if the changes are already stacked before calendar renders then execute them when needed
         if (this.changesStack.length) {
             this.changesStack.forEach((changeObj) => {
