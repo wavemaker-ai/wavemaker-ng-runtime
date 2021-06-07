@@ -159,15 +159,14 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             start = moment(this.datavalue);
             end   = moment(this.datavalue).add(1, 'day').startOf('day');
         }
-        this.$fullCalendar.fullCalendar('gotoDate', start); // after selecting the date go to the date.
-        this.$fullCalendar.gotoDate(start);
-        this.$fullCalendar.fullCalendar('select', start, end);
+        
+        this.$fullCalendar.gotoDate( moment(start)._d);// after selecting the date go to the date.
+        this.$fullCalendar.select(start, end);
     }
 
     // changes the calendar view to the default date given for the calendar.
     public gotoDate() {
         this.$fullCalendar.gotoDate( moment(this.datavalue)._d);
-        // this.$fullCalendar.fullCalendar('gotoDate', moment(this.datavalue));
     }
 
     // this function takes the calendar view to the a year ahead
@@ -186,37 +185,30 @@ export class CalendarComponent extends StylableComponent implements AfterContent
      */
     public gotoMonth(monthVal) {
         const presentDay = this.$fullCalendar.getDate();
-        // const presentDay = this.$fullCalendar.fullCalendar('getDate');
         const presentMonthVal =presentDay.getMonth();
         if (presentMonthVal < monthVal) {
             this.$fullCalendar.gotoDate(presentDay.add(monthVal - presentMonthVal - 1, 'M'));
-            // this.$fullCalendar.fullCalendar('gotoDate', presentDay.add(monthVal - presentMonthVal - 1, 'M'));
         } else {
             this.$fullCalendar.gotoDate(presentDay.subtract( presentMonthVal - monthVal + 1, 'M'));
-            // this.$fullCalendar.fullCalendar('gotoDate', presentDay.subtract( presentMonthVal - monthVal + 1, 'M'));
         }
     }
 
     // this function takes the calendar view to the a month ahead
     public gotoNextMonth() {
         const presentDay = this.$fullCalendar.getDate();
-        // const presentDay = this.$fullCalendar.fullCalendar('getDate');
         this.$fullCalendar.gotoDate(presentDay.add(1, 'M'));
-        // this.$fullCalendar.fullCalendar('gotoDate', presentDay.add(1, 'M'));
     }
 
     // this function takes the calendar view to the a month before
     public gotoPrevMonth() {
         const presentDay = this.$fullCalendar.getDate();
-        // const presentDay = this.$fullCalendar.fullCalendar('getDate');
         this.$fullCalendar.gotoDate(presentDay.subtract(1, 'M'));
-        // this.$fullCalendar.fullCalendar('gotoDate', presentDay.subtract(1, 'M'));
     }
 
 
     // this function re-renders the events assigned to the calendar.
     private rerenderEvents() {
-        this.$fullCalendar.fullCalendar('rerenderEvents');
+        this.$fullCalendar.render()
     }
 
     private setSelectedData(start, end) {
@@ -440,7 +432,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         super.onStyleChange(key, nv, ov);
         if (key === 'height') {
             this.calendarOptions.calendar.height = this.calculateHeight(nv);
-            this.updateCalendarOptions('option', 'height', this.calendarOptions.calendar.height);
+            this.updateCalendarOptions('option', 'height', this.calendarOptions.calendar.height);//
         }
     }
 
@@ -450,19 +442,19 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             case 'selectionmode':
                 if (nv !== SELECTION_MODES.NONE) {
                     this.calendarOptions.calendar.selectable = true;
-                    this.updateCalendarOptions('option', 'selectable', true);
+                    this.updateCalendarOptions('option', 'selectable', true);//
                     if (nv === SELECTION_MODES.SINGLE) {
                         this.calendarOptions.calendar.selectConstraint = {
                             start: '00:00',
                             end: '24:00'
                         };
-                        this.updateCalendarOptions('option', 'selectConstraint', this.calendarOptions.calendar.selectConstraint);
+                        this.updateCalendarOptions('option', 'selectConstraint', this.calendarOptions.calendar.selectConstraint);//
                     } else {
-                        this.updateCalendarOptions('option', 'selectConstraint', {});
+                        this.updateCalendarOptions('option', 'selectConstraint', {});//
                     }
                 } else {
                     this.calendarOptions.calendar.selectable = false;
-                    this.updateCalendarOptions('option', 'selectable', false);
+                    this.updateCalendarOptions('option', 'selectable', false);//
                 }
                 break;
             case 'view':
@@ -471,7 +463,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                 } else {
                     this.calendarOptions.calendar.defaultView = nv;
                 }
-                this.updateCalendarOptions('changeView', this.calendarOptions.calendar.defaultView);
+                this.updateCalendarOptions('changeView', this.calendarOptions.calendar.defaultView);//
                 break;
             case 'calendartype':
                 this.calendartype = nv || 'dayGrid';
@@ -489,9 +481,15 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                         return true;
                     }
                 });
-                this.updateCalendarOptions('removeEvents');
-                this.updateCalendarOptions('addEventSource', this.dataSetEvents.events);
-                this.updateCalendarOptions('rerenderEvents');            
+
+                
+                this.$fullCalendar.batchRendering(function() {
+                    let event = this.$fullCalendar.getEvents()
+
+                  });
+                // this.updateCalendarOptions('removeEvents');
+                // this.updateCalendarOptions('addEventSource', this.dataSetEvents.events);
+                // this.updateCalendarOptions('rerenderEvents');            
                 break;
         }
     }
@@ -515,7 +513,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         if (this.changesStack.length) {
             this.changesStack.forEach((changeObj) => {
                 debugger;
-                this.$fullCalendar.fullCalendar(changeObj.operationType, changeObj.argumentKey, changeObj.argumentValue);
+                this.applyCalendarOptions(changeObj.operationType, changeObj.argumentKey, changeObj.argumentValue);
             });
             this.changesStack.length = 0;
         }
@@ -533,7 +531,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         _.extend(this.calendarOptions.calendar, options);
     }
 
-    updateCalendarOptions(operationType: string, argumentKey?: any, argumentValue?: any): void {
+    updateCalendarOptions(operationType: string, argumentKey?: any, argumentValue?: any): void {//
         if (!this.$fullCalendar) {
             this.changesStack.push({
                 operationType: operationType,
@@ -542,11 +540,27 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             });
             return;
         }
-        this.$fullCalendar.fullCalendar(operationType, argumentKey, argumentValue);
+        this.applyCalendarOptions(operationType, argumentKey, argumentValue);    
     }
 
+    applyCalendarOptions(operationType: string, argumentKey?: any, argumentValue?: any): void {
+        switch (operationType) {
+            case 'render':
+                this.$fullCalendar.render()
+                break;
+            case 'option':
+                this.$fullCalendar.setOption(argumentKey, argumentValue);                
+                break;
+            case 'changeView':
+                this.$fullCalendar.changeView(argumentKey);                
+                break;
+
+          }
+    }
+
+
     redraw() {
-        this.updateCalendarOptions('render');
+        this.updateCalendarOptions('render');//
     }
 
     // on date change invoke the select event, and if date has event on it then invoke the event click.
