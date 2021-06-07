@@ -13,9 +13,9 @@ declare const _, $, moment;
 const DEFAULT_CLS = 'app-calendar';
 const dateFormats = ['yyyy-MM-dd', 'yyyy-M-dd', 'M-dd-yyyy', 'MM-dd-yy', 'yyyy, dd MMMM', 'yyyy, MMM dd', 'MM/dd/yyyy', 'M/d/yyyy', 'EEE, dd MMM yyyy', 'EEE MMM dd yyyy', 'EEEE, MMMM dd, yyyy', 'timestamp'];
 const defaultHeaderOptions = {
-    left: 'prev next today',
+    start: 'prev next today',
     center: 'title',
-    right: 'month basicWeek basicDay'
+    end: 'month basicWeek basicDay'
 };
 const VIEW_TYPES = {
     BASIC: 'basic',
@@ -126,12 +126,13 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             eventSources: this.eventSources,
             editable: true,
             locale: getSessionStorageItem('selectedLocale') || 'en',
+            selectable: false,
             longPressDelay: isMobile() ? 1 : 1000,
-            header: defaultHeaderOptions,
+            headerToolbar: defaultHeaderOptions,
             nextDayThreshold: NEXT_DAY_THRESHOLD,
             views: {
                 month: {
-                    eventLimit: 0
+                    dayMaxEvents: 0
                 }
             },
             unselectAuto: false,
@@ -141,13 +142,8 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             eventResize: this.eventResize.bind(this),
             eventClick: this.eventClick.bind(this),           
             select: this.select.bind(this),
-            eventRender: this.eventRender.bind(this),
-            viewRender: this.viewRender.bind(this),
-            headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            }
+            eventDidMount: this.eventRender.bind(this),
+            datesSet: this.viewRender.bind(this)            
         }
     };
     private view: string;
@@ -164,22 +160,24 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             end   = moment(this.datavalue).add(1, 'day').startOf('day');
         }
         this.$fullCalendar.fullCalendar('gotoDate', start); // after selecting the date go to the date.
+        this.$fullCalendar.gotoDate(start);
         this.$fullCalendar.fullCalendar('select', start, end);
     }
 
     // changes the calendar view to the default date given for the calendar.
     public gotoDate() {
-        this.$fullCalendar.fullCalendar('gotoDate', moment(this.datavalue));
+        this.$fullCalendar.gotoDate( moment(this.datavalue)._d);
+        // this.$fullCalendar.fullCalendar('gotoDate', moment(this.datavalue));
     }
 
     // this function takes the calendar view to the a year ahead
     public gotoNextYear() {
-        this.$fullCalendar.fullCalendar('nextYear');
+        this.$fullCalendar.nextYear()
     }
 
     // this function takes the calendar view to the a year before
     public gotoPrevYear() {
-        this.$fullCalendar.fullCalendar('prevYear');
+        this.$fullCalendar.prevYear()
     }
 
     /**
@@ -187,25 +185,32 @@ export class CalendarComponent extends StylableComponent implements AfterContent
      * @param monthVal, 1-12 value of month
      */
     public gotoMonth(monthVal) {
-        const presentDay = this.$fullCalendar.fullCalendar('getDate');
-        const presentMonthVal = new Date(presentDay).getMonth();
+        const presentDay = this.$fullCalendar.getDate();
+        // const presentDay = this.$fullCalendar.fullCalendar('getDate');
+        const presentMonthVal =presentDay.getMonth();
         if (presentMonthVal < monthVal) {
-            this.$fullCalendar.fullCalendar('gotoDate', presentDay.add(monthVal - presentMonthVal - 1, 'M'));
+            this.$fullCalendar.gotoDate(presentDay.add(monthVal - presentMonthVal - 1, 'M'));
+            // this.$fullCalendar.fullCalendar('gotoDate', presentDay.add(monthVal - presentMonthVal - 1, 'M'));
         } else {
-            this.$fullCalendar.fullCalendar('gotoDate', presentDay.subtract( presentMonthVal - monthVal + 1, 'M'));
+            this.$fullCalendar.gotoDate(presentDay.subtract( presentMonthVal - monthVal + 1, 'M'));
+            // this.$fullCalendar.fullCalendar('gotoDate', presentDay.subtract( presentMonthVal - monthVal + 1, 'M'));
         }
     }
 
     // this function takes the calendar view to the a month ahead
     public gotoNextMonth() {
-        const presentDay = this.$fullCalendar.fullCalendar('getDate');
-        this.$fullCalendar.fullCalendar('gotoDate', presentDay.add(1, 'M'));
+        const presentDay = this.$fullCalendar.getDate();
+        // const presentDay = this.$fullCalendar.fullCalendar('getDate');
+        this.$fullCalendar.gotoDate(presentDay.add(1, 'M'));
+        // this.$fullCalendar.fullCalendar('gotoDate', presentDay.add(1, 'M'));
     }
 
     // this function takes the calendar view to the a month before
     public gotoPrevMonth() {
-        const presentDay = this.$fullCalendar.fullCalendar('getDate');
-        this.$fullCalendar.fullCalendar('gotoDate', presentDay.subtract(1, 'M'));
+        const presentDay = this.$fullCalendar.getDate();
+        // const presentDay = this.$fullCalendar.fullCalendar('getDate');
+        this.$fullCalendar.gotoDate(presentDay.subtract(1, 'M'));
+        // this.$fullCalendar.fullCalendar('gotoDate', presentDay.subtract(1, 'M'));
     }
 
 
@@ -271,7 +276,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
     }
 
     private viewRender($view) {
-        this.currentview = {start: $view.start.format(), end: $view.end.subtract(1, 'days').format()};
+        this.currentview = {start: moment($view.start).format(), end: moment($view.end).subtract(1, 'days').format()};
         if (this.calendartype === VIEW_TYPES.LIST) {
             this.$fullCalendar.find('.fc-list-table').addClass('table');
         }
@@ -301,14 +306,14 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             }
 
             if (_.includes(ctrls, 'week')) {
-                right += (viewType === VIEW_TYPES.BASIC) ?  ' basicWeek' : (viewType === VIEW_TYPES.LIST) ? ' listWeek' : ' agendaWeek';
+                right += (viewType === VIEW_TYPES.BASIC) ?  ' dayGridWeek' : (viewType === VIEW_TYPES.LIST) ? ' listWeek' : ' timeGridWeek';
             }
 
             if (regEx.test(ctrls)) {
-                right += (viewType === VIEW_TYPES.BASIC) ?  ' basicDay' : (viewType === VIEW_TYPES.LIST) ? ' listDay' : ' agendaDay';
+                right += (viewType === VIEW_TYPES.BASIC) ?  ' dayGridDay' : (viewType === VIEW_TYPES.LIST) ? ' listDay' : ' timeGridDay';
             }
 
-            _.extend(this.calendarOptions.calendar.header, {'left': left, 'right': right});
+            _.extend(this.calendarOptions.calendar.headerToolbar, {'start': left, 'end': right});
         }
     }
 
@@ -469,7 +474,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                 this.updateCalendarOptions('changeView', this.calendarOptions.calendar.defaultView);
                 break;
             case 'calendartype':
-                this.calendartype = nv || 'basic';
+                this.calendartype = nv || 'dayGrid';
             case 'controls':
                 this.updateCalendarHeaderOptions();
                 break;
@@ -502,14 +507,6 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         super.ngAfterViewInit();
         var calendarEl = this._calendar.nativeElement; //document.getElementById('calendar');
         const FullCalendar = window['FullCalendar'];
-        // var calendar = new FullCalendar.Calendar(calendarEl, {
-        //     timeZone: 'UTC',
-        //     initialView: 'dayGridMonth',
-        //     events: 'https://fullcalendar.io/demo-events.json',
-        //     editable: true,
-        //     selectable: true,
-        //     eventClick: this.eventClick.bind(this),
-        //   });
         this.invokeEventCallback('beforerender', {'$event' : {}});
         var calendar = new FullCalendar.Calendar(calendarEl,this.calendarOptions.calendar);
         calendar.render();
