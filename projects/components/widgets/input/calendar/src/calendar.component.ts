@@ -15,7 +15,7 @@ const dateFormats = ['yyyy-MM-dd', 'yyyy-M-dd', 'M-dd-yyyy', 'MM-dd-yy', 'yyyy, 
 const defaultHeaderOptions = {
     start: 'prev next today',
     center: 'title',
-    end: 'month basicWeek basicDay'
+    end: 'dayGridMonth dayGridWeek dayGridDay'
 };
 const VIEW_TYPES = {
     BASIC: 'basic',
@@ -207,8 +207,8 @@ export class CalendarComponent extends StylableComponent implements AfterContent
 
 
     // this function re-renders the events assigned to the calendar.
-    private rerenderEvents() {
-        this.$fullCalendar.render()
+    public rerenderEvents() {
+        this.$fullCalendar.render();
     }
 
     private setSelectedData(start, end) {
@@ -432,7 +432,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         super.onStyleChange(key, nv, ov);
         if (key === 'height') {
             this.calendarOptions.calendar.height = this.calculateHeight(nv);
-            this.updateCalendarOptions('option', 'height', this.calendarOptions.calendar.height);//
+            this.updateCalendarOptions('option', 'height', this.calendarOptions.calendar.height);
         }
     }
 
@@ -442,7 +442,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             case 'selectionmode':
                 if (nv !== SELECTION_MODES.NONE) {
                     this.calendarOptions.calendar.selectable = true;
-                    this.updateCalendarOptions('option', 'selectable', true);//
+                    this.updateCalendarOptions('option', 'selectable', true);
                     if (nv === SELECTION_MODES.SINGLE) {
                         this.calendarOptions.calendar.selectConstraint = {
                             start: '00:00',
@@ -450,11 +450,11 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                         };
                         this.updateCalendarOptions('option', 'selectConstraint', this.calendarOptions.calendar.selectConstraint);//
                     } else {
-                        this.updateCalendarOptions('option', 'selectConstraint', {});//
+                        this.updateCalendarOptions('option', 'selectConstraint', {});
                     }
                 } else {
                     this.calendarOptions.calendar.selectable = false;
-                    this.updateCalendarOptions('option', 'selectable', false);//
+                    this.updateCalendarOptions('option', 'selectable', false);
                 }
                 break;
             case 'view':
@@ -463,7 +463,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                 } else {
                     this.calendarOptions.calendar.defaultView = nv;
                 }
-                this.updateCalendarOptions('changeView', this.calendarOptions.calendar.defaultView);//
+                this.updateCalendarOptions('changeView', this.calendarOptions.calendar.defaultView);
                 break;
             case 'calendartype':
                 this.calendartype = nv || 'dayGrid';
@@ -484,12 +484,14 @@ export class CalendarComponent extends StylableComponent implements AfterContent
 
                 
                 this.$fullCalendar.batchRendering(function() {
-                    let event = this.$fullCalendar.getEvents()
-
-                  });
-                // this.updateCalendarOptions('removeEvents');
-                // this.updateCalendarOptions('addEventSource', this.dataSetEvents.events);
-                // this.updateCalendarOptions('rerenderEvents');            
+                    let events = this.$fullCalendar.getEvents();
+                    _.each( events, function( event){
+                        var event = this.$fullCalendar.getEventById(event.id);
+                        event.remove();
+                    });
+                    this.$fullCalendar.addEvent(this.dataSetEvents.events);                    
+                    this.$fullCalendar.render();
+                  });                         
                 break;
         }
     }
@@ -503,12 +505,12 @@ export class CalendarComponent extends StylableComponent implements AfterContent
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
-        var calendarEl = this._calendar.nativeElement; //document.getElementById('calendar');
+        var calendarEl = this._calendar.nativeElement;
         const FullCalendar = window['FullCalendar'];
         this.invokeEventCallback('beforerender', {'$event' : {}});
         var calendar = new FullCalendar.Calendar(calendarEl,this.calendarOptions.calendar);
         calendar.render();
-        this.$fullCalendar =  calendar; //$(this._calendar.nativeElement);
+        this.$fullCalendar =  calendar;
         // if the changes are already stacked before calendar renders then execute them when needed
         if (this.changesStack.length) {
             this.changesStack.forEach((changeObj) => {
@@ -554,13 +556,12 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             case 'changeView':
                 this.$fullCalendar.changeView(argumentKey);                
                 break;
-
           }
     }
 
 
     redraw() {
-        this.updateCalendarOptions('render');//
+        this.updateCalendarOptions('render');
     }
 
     // on date change invoke the select event, and if date has event on it then invoke the event click.
@@ -622,11 +623,9 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                 console.warn('For google calendar integration, \'googleCalendarApiKey\' and \'googleCalendarId\' should be passed in the parameter object.');
                 return;
             }
-            $.getScript('https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.0/gcal.js', () => {
-                this.$fullCalendar.fullCalendar('option', 'googleCalendarApiKey', eventObject.googleCalendarApiKey);
-                this.$fullCalendar.fullCalendar('addEventSource', {
+            this.$fullCalendar.setOption('googleCalendarApiKey', eventObject.googleCalendarApiKey)
+                this.$fullCalendar.addEventSource({
                     googleCalendarId: eventObject.googleCalendarId
-                });
             });
         }
     }
