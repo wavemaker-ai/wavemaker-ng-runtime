@@ -2,7 +2,7 @@ import { DatePickerInnerComponent } from 'ngx-bootstrap/datepicker/datepicker-in
 
 import { AfterViewInit, AfterContentInit, Component, ElementRef, Injector, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 
-import {$watch, getClonedObject, getSessionStorageItem, AbstractI18nService, isMobileApp, isMobile} from '@wm/core';
+import {getClonedObject, getSessionStorageItem, AbstractI18nService, isMobileApp, isMobile} from '@wm/core';
 
 import { APPLY_STYLES_TYPE, createArrayFrom, getEvaluatedData, IWidgetConfig, IRedrawableComponent, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 
@@ -57,7 +57,7 @@ const getEventMomentValue = (value, key) => {
     return moment(value);
 };
 const getUTCDateTime = (dateObj) => {
-    dateObj = _.isObject(dateObj) ? dateObj : moment(dateObj);
+    dateObj = moment(dateObj);
     const year = dateObj.format('YYYY'),
         // javascript starts the month count from '0' where as moment returns the human count
         month = dateObj.format('MM') - 1,
@@ -242,10 +242,10 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         this.invokeEventCallback('eventdrop', {$event, $newData, $oldData: this.oldData, $delta, $revertFunc, $ui, $view});
     }
 
-    private select(start, end, jsEvent, $view) {
-        this.selecteddates = {start: getUTCDateTime(start), end: getUTCDateTime(end)};
-        this.selecteddata = this.setSelectedData(start, end);
-        this.invokeEventCallback('select', {$start: start.valueOf(), $end: end.valueOf(), $view, $data: this.selecteddata});
+    private select($selectionInfo) {
+        this.selecteddates = {start: getUTCDateTime($selectionInfo.start), end: getUTCDateTime($selectionInfo.end)};
+        this.selecteddata = this.setSelectedData($selectionInfo.start, $selectionInfo.end);
+        this.invokeEventCallback('select', {$start: $selectionInfo.start.valueOf(), $end: $selectionInfo.end.valueOf(), $view: $selectionInfo.view, $data: this.selecteddata});
     }
 
     private eventResize($newData, $delta, $revertFunc, $event, $ui, $view) {
@@ -549,36 +549,6 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         if (selectedEventData) {
             this.calendarOptions.calendar.eventClick(selectedEventData, {}, this);
         }
-    }
-
-    // returns the custom class for the events depending on the length of the events for that day.
-    private getDayClass(data) {
-        const eventDay = data.eventDay;
-
-        if (!_.isEmpty(this.eventData) && this.eventData[eventDay]) {
-            const eventsLength = this.eventData[eventDay].length;
-            if (eventsLength === 1) {
-                return singleEventClass;
-            }
-            if (eventsLength === 2) {
-                return doubleEventClass;
-            }
-            return multipleEventClass;
-        }
-        return '';
-    }
-
-    // sets the current view and invokes the viewrender method.
-    private renderMobileView(viewObj) {
-        let startDate,
-            endDate;
-        if (!viewObj) {
-            return;
-        }
-        startDate = moment(viewObj).startOf('month').valueOf();
-        endDate = moment(viewObj).endOf('month').valueOf();
-        this.currentview = {start: startDate, end: endDate};
-        this.invokeOnViewRenderback();
     }
 
     // This function will receive an object containing source of calendar, apikey and calendarId and will integrate the respective calendar with fullcalendar.
