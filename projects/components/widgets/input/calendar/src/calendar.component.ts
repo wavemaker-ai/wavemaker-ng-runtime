@@ -278,7 +278,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
     // update the calendar header options once the controls changes
     private updateCalendarHeaderOptions() {
         const ctrls = this.controls, viewType = this.calendartype,
-            regEx = new RegExp('\\bday\\b', 'g');
+        regEx = new RegExp('\\bday\\b', 'g');
         let left = '', right = '';
         if (ctrls && viewType) {
             if (_.includes(ctrls, 'navigation')) {
@@ -294,7 +294,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             }
 
             if (_.includes(ctrls, 'month')) {
-                right += (viewType === VIEW_TYPES.LIST) ? ' listMonth' : ' month';
+                right += (viewType === VIEW_TYPES.LIST) ? ' listMonth' : ' dayGridMonth';
             }
 
             if (_.includes(ctrls, 'week')) {
@@ -304,7 +304,12 @@ export class CalendarComponent extends StylableComponent implements AfterContent
             if (regEx.test(ctrls)) {
                 right += (viewType === VIEW_TYPES.BASIC) ?  ' dayGridDay' : (viewType === VIEW_TYPES.LIST) ? ' listDay' : ' timeGridDay';
             }
-
+            if(left.charAt(0) === ' '){
+                left = left.substring(1);
+            }
+            if(right.charAt(0) === ' '){
+                right = right.substring(1);
+            }
             _.extend(this.calendarOptions.calendar.headerToolbar, {'start': left, 'end': right});
         }
     }
@@ -327,42 +332,6 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         }
         this.calendarOptions.calendar.views.month.eventLimit = parseInt('' + computedHeight / 200, 10) + 1;
         return computedHeight;
-    }
-
-    private triggerMobileCalendarChange() {
-        this.prepareCalendarEvents();
-        // change the model so that the view is rendered again with the events , after the dataset is changed.
-        this.proxyModel = this.proxyModel || moment().valueOf();
-        this.selecteddates = {
-            start: moment(this.proxyModel).valueOf(),
-            end  : moment(this.proxyModel).endOf('day').valueOf()
-        };
-        this.invokeEventCallback('eventrender', {$data: this.eventData});
-    }
-
-    // prepares events for the mobie calendar
-    private prepareCalendarEvents () {
-        let eventDay,
-            dataset;
-        this.eventData = {};
-        this.dayClass = [];
-        if (!this.dataset) {
-            return;
-        }
-        dataset = this.dataset;
-        dataset = _.isArray(dataset) ? dataset : (_.isObject(dataset) ? [dataset] : []);
-        this.events = dataset || this.constructCalendarDataset(dataset);
-        this.events.forEach((event) => {
-            const eventStart = event.start || event[this.eventstart];
-            if (eventStart) {
-                eventDay = moment(eventStart).startOf('day').format(dateFormat);
-                if (this.eventData[eventDay]) {
-                    this.eventData[eventDay].push(event);
-                } else {
-                    this.eventData[eventDay] = [event];
-                }                
-            }
-        });        
     }
 
     // constructs the calendar dataset by mapping the eventstart, eventend, eventtitle etc.,
@@ -448,7 +417,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                             start: '00:00',
                             end: '24:00'
                         };
-                        this.updateCalendarOptions('option', 'selectConstraint', this.calendarOptions.calendar.selectConstraint);//
+                        this.updateCalendarOptions('option', 'selectConstraint', this.calendarOptions.calendar.selectConstraint);
                     } else {
                         this.updateCalendarOptions('option', 'selectConstraint', {});
                     }
