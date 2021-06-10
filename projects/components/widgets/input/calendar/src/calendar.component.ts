@@ -68,10 +68,6 @@ const getUTCDateTime = (dateObj) => {
     return new Date(year, month, day, hours, minutes, seconds);
 };
 const WIDGET_CONFIG = {widgetType: 'wm-calendar', hostClass: DEFAULT_CLS};
-// mobile calendar class names
-const multipleEventClass = 'app-calendar-event';
-const doubleEventClass = multipleEventClass + ' two';
-const singleEventClass = multipleEventClass + ' one';
 const dateFormat = 'YYYY/MM/DD';
 
 @Component({
@@ -244,7 +240,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
 
     private select($selectionInfo) {
         this.selecteddates = {start: getUTCDateTime($selectionInfo.start), end: getUTCDateTime($selectionInfo.end)};
-        this.selecteddata = this.setSelectedData($selectionInfo.start, $selectionInfo.end);
+        this.selecteddata = this.setSelectedData($selectionInfo.start, $selectionInfo.end);        
         this.invokeEventCallback('select', {$start: $selectionInfo.start.valueOf(), $end: $selectionInfo.end.valueOf(), $view: $selectionInfo.view, $data: this.selecteddata});
     }
 
@@ -414,8 +410,8 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                     this.updateCalendarOptions('option', 'selectable', true);
                     if (nv === SELECTION_MODES.SINGLE) {
                         this.calendarOptions.calendar.selectConstraint = {
-                            start: '00:00',
-                            end: '24:00'
+                            startTime: '00:00',
+                            endTime: '24:00'
                         };
                         this.updateCalendarOptions('option', 'selectConstraint', this.calendarOptions.calendar.selectConstraint);
                     } else {
