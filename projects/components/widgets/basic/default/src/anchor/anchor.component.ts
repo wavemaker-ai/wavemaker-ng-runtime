@@ -4,6 +4,7 @@ import {addClass, App, encodeUrl, EventNotifier, getRouteNameFromLink, setAttr} 
 import { DISPLAY_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 
 import { registerProps } from './anchor.props';
+import { Router } from '@angular/router';
 
 const DEFAULT_CLS = 'app-anchor';
 const WIDGET_CONFIG: IWidgetConfig = {
@@ -46,7 +47,8 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
 
     constructor(
         inj: Injector,
-        private app: App
+        private app: App,
+        private router:Router
     ) {
         super(inj, WIDGET_CONFIG);
         styler(this.nativeElement, this);
