@@ -116,7 +116,7 @@ const addScriptForWMStylesPath = () => {
                         .getElementsByTagName("head")[0]
                         .appendChild(styleNode);
                 }
-            })()
+            })();
             window.onload = function() {
                  var printCssNode = document.createElement('link');
                  printCssNode.type = 'text/css';
