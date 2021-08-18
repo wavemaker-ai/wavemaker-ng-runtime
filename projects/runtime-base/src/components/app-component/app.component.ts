@@ -81,6 +81,9 @@ export class AppComponent implements DoCheck, AfterViewInit {
                 if (node) {
                     addClass(node, 'page-load-in-progress');
                 }
+                if (e.url && e.url.startsWith('/#/')) {
+                    this.router.navigateByUrl(e.url.replace('/#/', ''));
+                 }
                 let page = e.url.split('?')[0];
                 page = page.substring(1);
                 const pageLoadStartTime = Date.now();
