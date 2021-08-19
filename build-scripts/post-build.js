@@ -122,14 +122,14 @@ const addScriptForWMStylesPath = () => {
             </script>`);
 }
 
-const copyPwaAssets = () => {
+const updatePwaAssets = (updatedFileNames) => {
     // copy service worker and its config to root directory
     fs.copyFileSync('./dist/ng-bundle/ngsw-worker.js', './dist/ngsw-worker.js');
     fs.copyFileSync('./dist/ng-bundle/ngsw.json', './dist/ngsw.json');
     fs.copyFileSync('./dist/ng-bundle/manifest.json', './dist/manifest.json');
 
     // edit service worker config to include ng-bundle in the path of cached files
-    const suffix = '/ng-bundle';
+    const suffix = './ng-bundle';
     const fileName = './dist/ngsw.json';
     const ngswData = JSON.parse(fs.readFileSync(fileName).toString());
     ngswData.assetGroups = ngswData.assetGroups
@@ -140,7 +140,14 @@ const copyPwaAssets = () => {
             [suffix + current]: ngswData.hashTable[current],
         }
     }, {})
-    fs.writeFileSync(fileName, JSON.stringify(ngswData, null, 4));
+
+    let ngswContent = JSON.stringify(ngswData, null, 4);
+    // change references to all updated file names
+    for (key of Object.keys(updatedFileNames)) {
+        ngswContent = ngswContent.replace(key, updatedFileNames[key]);
+    }
+
+    fs.writeFileSync(fileName, ngswContent);
 }
 
 (async () => {
@@ -152,12 +159,6 @@ const copyPwaAssets = () => {
             deployUrl = deployUrl.substr(0, deployUrl.length - 1);
         }
         fs.copyFileSync('./dist/ng-bundle/index.html', './dist/index.html');
-
-        // if service worker is enabled, make changes related to PWA
-        const serviceWorkerEnabled = build['configurations']['production']['serviceWorker'];
-        if (serviceWorkerEnabled) {
-            copyPwaAssets()
-        }
 
         const contents = await readFile(`./dist/index.html`, `utf8`);
         $ = cheerio.load(contents);
@@ -194,11 +195,22 @@ const copyPwaAssets = () => {
                 const fileName = 'wm-styles';
                 const hash = await generateHash(`${opPath}/${fileName}.css`);
                 copyCssFiles(hash);
+                const updatedFileName = `${fileName}.${hash}.css`
                 $("head").append(
-                    `<script> const WMStylesPath = "${deployUrl}/${fileName}.${hash}.css" </script>`
+                    `<script> const WMStylesPath = "${deployUrl}/${updatedFileName}" </script>`
                 );
+
+                // if service worker is enabled, make changes related to PWA
+                const serviceWorkerEnabled = build['configurations']['production']['serviceWorker'];
+                const updatedFileNames = {
+                    [`${fileName}.css`]: updatedFileName
+                }
+                if (serviceWorkerEnabled) {
+                    updatePwaAssets(updatedFileNames)
+                }
             }
         }
+
         addScriptForWMStylesPath();
         await writeFile(`./dist/index.html`, $.html());
         generateHashForScripts();
