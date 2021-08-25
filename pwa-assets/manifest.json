@@ -1,7 +1,7 @@
 {
     "name": "wm-pwa",
     "short_name": "wm-pwa",
-    "theme_color": "#1976d2",
+    "theme_color": "#2c3049",
     "background_color": "#fafafa",
     "display": "standalone",
     "scope": "./",
