@@ -122,6 +122,11 @@ const addScriptForWMStylesPath = () => {
             </script>`);
 }
 
+// Files that are moved out of ng-bundle and hence not to be updated.
+const SKIP_UPDATE = ['index.html', 'manifest.json'];
+// Suffix to be appended to all file names except the ones to skip.
+const SUFFIX = './ng-bundle';
+
 /**
  * Checks if a file's name has been changed during the build process
  * and if changed, returns an updated file path.
@@ -132,12 +137,30 @@ const addScriptForWMStylesPath = () => {
  */
 const getUpdatedFileName = (url, updatedFileNames) => {
     const absUrl = url.substring(1); // remove leading '/'
-    if (absUrl in updatedFileNames) {
-        return `/${updatedFileNames[absUrl]}` // add the leading '/' back
+    if (SKIP_UPDATE.includes(absUrl)) {
+        return `.${url}`;
     }
-    return url;
+    if (absUrl in updatedFileNames) {
+        return `${SUFFIX}/${updatedFileNames[absUrl]}` // add the leading '/' back
+    }
+    return `${SUFFIX}${url}`;
 }
 
+/**
+ * Checks if a file's content has been changed during the build process
+ * and if changed, returns a new hash to be updated in ngsw.json
+ * 
+ * @param {string} url an absolute url to check if its filename has changed 
+ * @param {object} updatedFileHashes a map from filenames to file hashes
+ * @returns {string} an updated file hash
+ */
+const getUpdatedFileHashes = (url, oldHash, updatedFileHashes) => {
+    const absUrl = url.substring(1); // remove leading '/'
+    if (absUrl in updatedFileHashes) {
+        return updatedFileHashes[absUrl];
+    }
+    return oldHash;
+}
 
 /**
  * Updates name, location and content of PWA related assets.
@@ -145,26 +168,25 @@ const getUpdatedFileName = (url, updatedFileNames) => {
  * @param {object} updatedFileNames a map from old filenames to new filenames
  * @returns {void}
  */
-const updatePwaAssets = (updatedFileNames) => {
+const updatePwaAssets = (updatedFileNames, updatedFileHashes) => {
     // copy service worker and its config to root directory
     fs.copyFileSync('./dist/ng-bundle/ngsw-worker.js', './dist/ngsw-worker.js');
     fs.copyFileSync('./dist/ng-bundle/ngsw.json', './dist/ngsw.json');
     fs.copyFileSync('./dist/ng-bundle/manifest.json', './dist/manifest.json');
 
     // edit service worker config to include ./ng-bundle to the path of files to be cached
-    // also updates the urls to files whose names are modified to include file hash
-    const suffix = './ng-bundle';
+    // also update the urls to files whose names are modified to include file hash (wm-styles)
     const fileName = './dist/ngsw.json';
     const ngswData = JSON.parse(fs.readFileSync(fileName).toString());
 
     ngswData.assetGroups = ngswData.assetGroups.map(group => ({
         ...group,
-        urls: group.urls.map(url => suffix + getUpdatedFileName(url, updatedFileNames))
+        urls: group.urls.map(url => getUpdatedFileName(url, updatedFileNames))
     }));
     ngswData.hashTable = Object.keys(ngswData.hashTable).reduce((prev, current) => ({
         ...prev,
-        [suffix + getUpdatedFileName(current, updatedFileNames)]: ngswData.hashTable[current],
-    }), {});
+        [getUpdatedFileName(current, updatedFileNames)]: getUpdatedFileHashes(current, ngswData.hashTable[current], updatedFileHashes),
+    }), { });
 
     const ngswContent = JSON.stringify(ngswData, null, 4);
     fs.writeFileSync(fileName, ngswContent);
@@ -202,6 +224,10 @@ const updatePwaAssets = (updatedFileNames) => {
                 console.error(`Optimization Error | ${stderr}`);
             }
         }
+        // if service worker is enabled the app is a PWA
+        const serviceWorkerEnabled = build['configurations']['production']['serviceWorker'];
+        const updatedFileNames = { }
+        const updatedFileHashes = { }
 
         if (isMobileProject) {
             await addMobileSpecificStyles(deployUrl);
@@ -218,20 +244,21 @@ const updatePwaAssets = (updatedFileNames) => {
                 $("head").append(
                     `<script> const WMStylesPath = "${deployUrl}/${updatedFileName}" </script>`
                 );
-
-                // if service worker is enabled, make changes related to PWA
-                const serviceWorkerEnabled = build['configurations']['production']['serviceWorker'];
-                const updatedFileNames = {
-                    [`${fileName}.css`]: updatedFileName
-                }
-                if (serviceWorkerEnabled) {
-                    updatePwaAssets(updatedFileNames)
-                }
+                updatedFileNames[`${fileName}.css`] = updatedFileName;
             }
         }
 
         addScriptForWMStylesPath();
-        await writeFile(`./dist/index.html`, $.html());
+        const htmlContent = $.html();
+        await writeFile(`./dist/index.html`, htmlContent);
+
+        if (serviceWorkerEnabled) {
+            // re-generate hash for index.html since its been modified
+            const buffer = Buffer.from(htmlContent, 'utf8');
+            updatedFileHashes['index.html'] = crypto.createHash('sha1').update(buffer).digest("hex");
+            updatePwaAssets(updatedFileNames, updatedFileHashes);
+        }
+
         generateHashForScripts();
     } catch (e) {
         console.error(`Error in Post ng build Script | ${e}`);
