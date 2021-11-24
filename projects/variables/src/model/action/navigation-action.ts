@@ -12,6 +12,13 @@ export class NavigationAction extends BaseAction {
 
     constructor(variable: any) {
         super();
+        // variable.pathParams = {
+        //     id:321,
+        //     userid:'rest',
+        //     testId:32,
+        //     empId:455,
+        //     manageId:566
+        // }
         Object.assign(this as any, variable);
     }
 
@@ -30,5 +37,7 @@ export class NavigationAction extends BaseAction {
 
         // dynamic property bindings (e.g. page params)
         getManager().initBinding(this, 'dataSet', 'dataSet');
+        getManager().initBinding(this, 'pathParams', 'pathParams');
+
     }
 }

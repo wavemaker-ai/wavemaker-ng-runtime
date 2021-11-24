@@ -1,7 +1,7 @@
 import { Injector, ModuleWithProviders, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
-import { ExtraOptions, RouteReuseStrategy, RouterModule } from '@angular/router';
+import { ExtraOptions, Router, RouteReuseStrategy, RouterModule } from '@angular/router';
 import { HttpClientModule, HttpClientXsrfModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
@@ -103,7 +103,7 @@ import {
     AppExtensionProvider
 } from '@wm/runtime/base';
 
-import { routes } from './app.routes';
+import { routes, commonRouteDef } from './app.routes';
 import { PageWrapperComponent } from './components/page-wrapper.component';
 import { AppJSProviderService } from './services/app-js-provider.service';
 import { AppVariablesProviderService } from './services/app-variables-provider.service';
@@ -112,6 +112,7 @@ import { ComponentRefProviderService } from './services/component-ref-provider.s
 import { PrefabConfigProviderService } from './services/prefab-config-provider.service';
 import { AppResourceManagerService } from './services/app-resource-manager.service';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+declare const WM_CUSTOM_ROUTES;
 
 let  projectProperties = getWmProjectProperties();
 let routeConfig:ExtraOptions = { scrollPositionRestoration: 'top' };
@@ -218,6 +219,22 @@ REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(...componentsModule);
 REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(...MOBILE_COMPONENT_MODULES_FOR_ROOT);
 REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule, ReactiveFormsModule);
 
+function buildRoutes(response){
+   response.map(pathInfo =>{
+        // commonRouteDef.path = pathInfo.path;
+        // commonRouteDef.data = pathInfo.data;
+        // if(pathInfo.children && pathInfo.children.length){
+        //     buildRoutes(pathInfo.children);
+        // }
+        pathInfo.data.studioPath =  pathInfo.path;
+        let path = pathInfo.path.replaceAll('${',':');
+        path = path.replaceAll('}','');
+        pathInfo.path = path;
+        Object.assign(pathInfo, commonRouteDef);
+    });
+    return response;
+}
+
 @NgModule({
     declarations: [
         PageWrapperComponent
@@ -261,7 +278,10 @@ REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule, ReactiveFormsModule);
     bootstrap: [AppComponent]
 })
 export class AppModule {
-    constructor(private app: App, private inj: Injector, private componentRefProvider: ComponentRefProvider) {
+    constructor(private app: App, private inj: Injector, private componentRefProvider: ComponentRefProvider, private router: Router) {
+        console.log(WM_CUSTOM_ROUTES, 'from module');
+        let pageRoutes = buildRoutes(WM_CUSTOM_ROUTES);
+        router.resetConfig([...routes, ...pageRoutes]);
         if (window['cordova']) {
             // clear the cached urls on logout, to load the Login Page and not the Main Page as app reload(window.location.reload) is not invoked in mobile
             this.app.subscribe('userLoggedOut', this.componentRefProvider.clearComponentFactoryRefCache.bind(this.componentRefProvider));

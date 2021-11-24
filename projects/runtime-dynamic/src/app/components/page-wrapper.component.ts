@@ -91,7 +91,7 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
         } else {
             $(this.getTargetNode()).find('>div').first().remove();
             this.subscription = this.route.params.subscribe(({pageName}: any) => {
-               this.loadPage(pageName);
+               this.loadPage(pageName || this.route.snapshot.data.pageName);
             });
         }
     }

@@ -135,7 +135,10 @@ export {
     transformFileURI,
     appendScriptToHead,
     getAppSetting,
-    setListClass
+    setListClass,
+    interpolate,
+    getFutureRoute,
+    getRouteConfig
 } from './utils/utils';
 export {
     FIRST_TIME_WATCH,

@@ -8,25 +8,27 @@ const appDependenciesResolve = {
     metadata: MetadataResolve,
     appMetaConfig: AppExtensionJSResolve
 };
+export const commonRouteDef:any = {
+    pathMatch: 'full',
+    resolve: appDependenciesResolve,
+    component: PageWrapperComponent,
+    canDeactivate: [CanDeactivatePageGuard]
+}
 
 export const routes = [
-    {
-        path: '',
-        pathMatch: 'full',
-        resolve: appDependenciesResolve,
-        component: EmptyPageComponent
-    },
-    {
-        path: 'prefab-preview',
-        pathMatch: 'full',
-        resolve: appDependenciesResolve,
-        component: PrefabPreviewComponent
-    },
-    {
-        path: ':pageName',
-        pathMatch: 'full',
-        resolve: appDependenciesResolve,
-        component: PageWrapperComponent,
-        canDeactivate: [CanDeactivatePageGuard]
-    }
-];
+        {
+            path: '',
+            pathMatch: 'full',
+            resolve: appDependenciesResolve,
+            component: EmptyPageComponent
+        },
+        {
+            path: 'prefab-preview',
+            pathMatch: 'full',
+            resolve: appDependenciesResolve,
+            component: PrefabPreviewComponent
+        },
+        {
+            path: ':pageName',
+            ...commonRouteDef
+        }];

@@ -17,6 +17,7 @@ declare const WM_CUSTOM_FORMATTERS;
 declare const MSCSSMatrix;
 declare const _WM_APP_PROPERTIES;
 declare const cordova;
+declare const WM_CUSTOM_ROUTES;
 
 const userAgent = window.navigator.userAgent;
 const REGEX = {
@@ -1401,6 +1402,12 @@ export const triggerItemAction = (scope, item) => {
             const queryParams = getUrlParams(itemLink);
             itemLink = getRouteNameFromLink(itemLink);
             const router = _.get(scope, 'route') || _.get(scope, 'menuRef.route');
+        //    let futureRouteInfo =  getFutureRoute(router.config, itemLink.replaceAll('/',''), options.pathParams);
+          
+          
+            // if(futureRouteInfo.path){
+            //     return router.navigate(['/'+futureRouteInfo.path], { queryParams:queryParams});
+            // }
             router.navigate([itemLink], { queryParams });
         } else {
             openLink(itemLink, linkTarget);
@@ -1507,6 +1514,64 @@ export const appendScriptToHead = (callback) =>{
     scriptele.src = './extensions/formatters.js';
     document.head.appendChild(scriptele);
 };
+
+
+export const interpolate  = (template, params) => {
+    const names = Object.keys(params);
+    const vals = Object.values(params);
+    let dynamicFunc = new Function(...names, `return \`${template}\`;`);
+    return dynamicFunc(...vals);
+}
+
+export const getRouteConfig = (routeConfig) =>{
+    // For angular build we don't have WM_CUSTOM_ROUTES as routes will be generated from codegen.
+    if(!WM_CUSTOM_ROUTES || !WM_CUSTOM_ROUTES.length){
+        let childrenRoutes = routeConfig.filter(conf=>{
+            if(conf.children && conf.children.length){
+                return conf.children;
+            }
+        });
+        if(childrenRoutes && childrenRoutes.length){
+            routeConfig = childrenRoutes[0].children;
+        }
+        return routeConfig;
+    }
+    return WM_CUSTOM_ROUTES;
+
+
+}
+
+export const getFutureRoute = (routeConfig, pageName, pathparams)=>{
+    let futureRouteInfo:any = {};
+
+  
+    let currentRouteConfig = routeConfig.filter(config => {
+        if(config.data && config.data.pageName && pageName === config.data.pageName && config.data.studioPath){
+            // pathParamsOrder = config.data.pathParamsOrder;
+            return config;
+        }
+    });
+    if(pathparams && currentRouteConfig.length){
+            currentRouteConfig.some(config=>{
+              if(config.data &&
+                 config.data.pageName && 
+                 pageName === config.data.pageName){
+                    // config.data.pathParamsOrder.map(element=>{
+                       let routeStudioPath = config.data.studioPath.split('${');
+                    //     if(Object.keys(pathparams).length){
+                    //        futureRouteInfo.path =  interpolate(config.data.studioPath, pathparams);
+                    //        return true;
+                    //    }
+                       if(routeStudioPath.length - 1 === Object.keys(pathparams).length){
+                           futureRouteInfo.path =  interpolate(config.data.studioPath, pathparams);
+                           return true;
+                       }
+                       
+                };
+            });
+    }
+    return futureRouteInfo;
+}
 
 export const getAppSetting = (key, defaultValue) => {
     return (_WM_APP_PROPERTIES.extra_settings && _.get(_WM_APP_PROPERTIES.extra_settings, key)) || defaultValue;
