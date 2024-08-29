@@ -1,9 +1,20 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
-import { AbstractI18nService, App, AppDefaults, DataSource, setPipeProvider } from '@wm/core';
+import {
+    AbstractHttpService,
+    AbstractI18nService,
+    App,
+    AppDefaults,
+    DataSource,
+    PartialRefProvider,
+    setPipeProvider
+} from '@wm/core';
+import {MetadataService, VariablesService} from '@wm/variables';
+import { SecurityService } from '@wm/security';
 import { Component, QueryList, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ListComponent } from './list.component';
+import { ListModule } from './list.module';
 import { ListItemDirective } from './list-item.directive';
 import { PaginationModule } from 'ngx-bootstrap/pagination';
 import { PipeProvider } from '../../../../../runtime-base/src/services/pipe-provider.service';
@@ -13,7 +24,17 @@ import { MockAbstractI18nService } from 'projects/components/base/src/test/util/
 import { DatePipe } from '@angular/common';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 import { configureDnD } from '@wm/components/base';
-import { isMobile, isMobileApp } from '@wm/core';
+import { isMobile, isMobileApp, AbstractNavigationService, AbstractToasterService, AbstractSpinnerService } from '@wm/core';
+import { ComponentRefProviderService } from 'projects/runtime-dynamic/src/app/services/component-ref-provider.service';
+import { AppResourceManagerService } from '@wm/runtime/dynamic';
+import {AppManagerService} from '@wm/runtime/base';
+import {RouterModule} from '@angular/router';
+import { OAuthService } from '@wm/oAuth';
+import {HttpServiceImpl} from '@wm/http';
+import { HttpClient, HttpHandler } from '@angular/common/http';
+
+const testdata: any = [{ name: 'Peter', age: 21 }, { name: 'Tony', age: 42 }];
+
 
 jest.mock('@wm/core', () => ({
     ...jest.requireActual('@wm/core'),
@@ -33,10 +54,10 @@ jest.mock('@wm/components/base', () => ({
              click.event="onListClick($event, widget)"
              beforedatarender.event="onBeforeRender(widget, $data)"
              render.event="onRender(widget, $data)">
-            <ng-template #listTemplate let-item="item" let-$index="$index" let-itemRef="itemRef" let-$first="$first" let-$last="$last" let-currentItemWidgets="currentItemWidgets" >
+                <ng-template #listTemplate let-item="item" let-$index="$index" let-itemRef="itemRef" let-$first="$first" let-$last="$last"  let-currentItemWidgets="currentItemWidgets" >
                 <label wmLabel name="Name" class="p media-heading" caption.bind="item.name" fontsize="1.143" fontunit="em"></label>
-            </ng-template>
-        </div>
+                </ng-template>
+            </div>
     `
 })
 class ListWrapperComponent {
@@ -69,7 +90,9 @@ describe('ListComponent', () => {
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             imports: [
+                ListModule,
                 FormsModule,
+                RouterModule.forRoot([]),
                 PaginationModule.forRoot(),
                 WmPaginationModule,
                 WmComponentsModule.forRoot()
@@ -80,7 +103,20 @@ describe('ListComponent', () => {
                 { provide: ToDatePipe, useClass: ToDatePipe },
                 { provide: AppDefaults, useClass: AppDefaults },
                 { provide: AbstractI18nService, useClass: MockAbstractI18nService },
-                { provide: DatePipe, useValue: DatePipe }
+                { provide: DatePipe, useValue: DatePipe },
+                { provide: PartialRefProvider, useClass: ComponentRefProviderService },
+                {provide: AbstractHttpService, useClass: HttpServiceImpl},
+                HttpHandler,
+                HttpClient,
+                AppResourceManagerService,
+                AbstractToasterService,
+                AbstractSpinnerService,
+                OAuthService,
+                AbstractNavigationService,
+                AppManagerService,
+                SecurityService,
+                VariablesService,
+                MetadataService
             ]
         })
             .compileComponents();
@@ -92,6 +128,7 @@ describe('ListComponent', () => {
         listComponent.dataset = wrapperComponent.testdata;
         listComponent.onPropertyChange('dataset', listComponent.dataset);
         listComponent.groupby = ""
+        //expect(fixture).toMatchSnapshot();
     }));
 
     it('should create the List Component', () => {
@@ -1212,19 +1249,34 @@ describe('ListComponent With groupby', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
+            declarations: [ListWrapperComponent, ListComponent, ListItemDirective],
             imports: [
+                ListModule,
                 FormsModule,
+                RouterModule.forRoot([]),
                 PaginationModule.forRoot(),
                 WmPaginationModule,
                 WmComponentsModule.forRoot()
             ],
-            declarations: [ListWrapperComponent, ListComponent, ListItemDirective],
             providers: [
-                { provide: App, useValue: mockApp },
-                { provide: ToDatePipe, useClass: ToDatePipe },
-                { provide: AppDefaults, useClass: AppDefaults },
-                { provide: AbstractI18nService, useClass: MockAbstractI18nService },
-                { provide: DatePipe, useValue: DatePipe }
+                {provide: App, useValue: mockApp},
+                {provide: ToDatePipe, useClass: ToDatePipe},
+                {provide: AppDefaults, useClass: AppDefaults},
+                {provide: AbstractI18nService, useClass: MockAbstractI18nService},
+                {provide: DatePipe, useValue: DatePipe},
+                {provide: PartialRefProvider, useClass: ComponentRefProviderService},
+                {provide: AbstractHttpService, useClass: HttpServiceImpl},
+                HttpHandler,
+                HttpClient,
+                AppResourceManagerService,
+                AbstractNavigationService,
+                AbstractSpinnerService,
+                AbstractToasterService,
+                OAuthService,
+                AppManagerService,
+                SecurityService,
+                VariablesService,
+                MetadataService
             ]
         })
             .compileComponents();
