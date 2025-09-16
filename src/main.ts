@@ -1,11 +1,12 @@
-import { ApplicationRef, enableProdMode } from '@angular/core';
+import { ApplicationRef, enableProdMode, Injector } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { environment } from './environments/environment';
 import initWmProjectProperties from './app/wm-project-properties';
 import { WMAppProperties } from './app/wmProperties';
 import * as fontConfig from './font.config';
 import { appConfig } from './app/app.config';
-import { AppComponent } from '@wm/runtime/base';
+import { AppComponent, AppJSResolve } from '@wm/runtime/base';
+import { AbstractI18nService } from '@wm/core';
 
 // Format Accept-Language header
 const formatAcceptHeader = (languages: string[]): string => {
@@ -52,7 +53,22 @@ document.addEventListener('DOMContentLoaded', () => {
   new Promise<Event | void>(resolve => {
     resolve();
   }).then(() => bootstrapApplication(AppComponent, appConfig))
-    .then((appRef: ApplicationRef) => {
+    .then(async (appRef: ApplicationRef) => {
+      // Initialize app after bootstrap
+      try {
+        const injector = appRef.injector;
+        const i18nService = injector.get(AbstractI18nService);
+        const appJSResolve = injector.get(AppJSResolve);
+        
+        // Load default locale
+        await (i18nService as any).loadDefaultLocale();
+        
+        // Resolve app JS
+        await appJSResolve.resolve();
+      } catch (err) {
+        console.error('Error during app initialization:', err);
+      }
+      
       window.addEventListener('unload', () => {
         appRef.components.map(c => c?.destroy());
       });

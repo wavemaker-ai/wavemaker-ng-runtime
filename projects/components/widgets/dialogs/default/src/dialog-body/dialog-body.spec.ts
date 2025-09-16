@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ElementRef, Renderer2 } from '@angular/core';
+import { App } from '@wm/core';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { DialogBodyDirective } from './dialog-body.directive';
 import { DialogRef } from '@wm/components/base';
@@ -66,12 +67,10 @@ describe('DialogBodyDirective', () => {
 
         TestBed.configureTestingModule({
             imports: [DialogBodyDirective],
-            providers: [
-                { provide: ElementRef, useValue: mockElementRef },
+            providers: [{ provide: ElementRef, useValue: mockElementRef },
                 { provide: DialogRef, useValue: mockDialogRef },
                 { provide: BsModalService, useValue: mockBsModalService },
-                { provide: Renderer2, useValue: mockRenderer }
-            ]
+                { provide: Renderer2, useValue: mockRenderer }, { provide: App, useValue: {} }]
         });
 
         directive = new DialogBodyDirective(mockElementRef, mockDialogRef, mockBsModalService, mockRenderer);

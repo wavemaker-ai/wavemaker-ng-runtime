@@ -51,7 +51,8 @@ const markup = `
     `;
 
 @Component({
-    template: markup
+    template: markup,
+    standalone: true
 })
 class SearchWrapperComponent {
     @ViewChild(SearchComponent, /* TODO: add static flag */ { static: true })
@@ -75,12 +76,8 @@ class SearchWrapperComponent {
 }
 
 const testModuleDef: ITestModuleDef = {
-    imports: [
-        FormsModule,
-        TypeaheadModule.forRoot(),
-        SearchComponent, ScrollableDirective, InputTextComponent
-    ],
-    declarations: [SearchWrapperComponent],
+    imports: [FormsModule, TypeaheadModule.forRoot(), SearchComponent, ScrollableDirective, InputTextComponent,],
+    declarations: [],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: ToDatePipe, useClass: ToDatePipe },
@@ -299,8 +296,8 @@ describe('SearchComponent', () => {
     //TypeError: The provided value is not of type 'Element'.
 
     it('last result has to be reset to undefined on changing the dataset', ((done) => {
-        wmComponent.dataset = wrapperComponent.testdata;
-        wmComponent.onPropertyChange('dataset', wrapperComponent.testdata, []);
+        wmComponent.dataset = wrapperComponent.testdata = wrapperComponent.testdata || [];
+        wmComponent.onPropertyChange('dataset', wrapperComponent.testdata = wrapperComponent.testdata || [], []);
         fixture.detectChanges();
         (wmComponent as any)._lastResult = [{ name: 'Tony', age: 42 }];
         expect((wmComponent as any)._lastResult).toBeDefined();
@@ -309,13 +306,13 @@ describe('SearchComponent', () => {
             expect((wmComponent as any)._lastResult).toBeUndefined();
         });
         wmComponent.dataset = [];
-        wmComponent.onPropertyChange('dataset', wmComponent.dataset, wrapperComponent.testdata);
+        wmComponent.onPropertyChange('dataset', wmComponent.dataset, wrapperComponent.testdata = wrapperComponent.testdata || []);
 
         fixture.detectChanges();
     }));
 
     it('should set the datavalue when searchkey is not set', (waitForAsync((done) => {
-        wmComponent.getWidget().dataset = wrapperComponent.testdata;
+        wmComponent.getWidget().dataset = wrapperComponent.testdata = wrapperComponent.testdata || [];
         wmComponent.getWidget().displaylabel = 'name';
         wmComponent.getWidget().datafield = 'name';
         wmComponent.getWidget().datavalue = 'John';

@@ -1,7 +1,7 @@
-import { APP_INITIALIZER, LOCALE_ID, ModuleWithProviders, NgModule } from '@angular/core';
+import { LOCALE_ID, ModuleWithProviders, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ɵSharedStylesHost } from '@angular/platform-browser';
 import { ɵDomRendererFactory2 } from "@angular/platform-browser";
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -44,9 +44,6 @@ import { PipeService } from "./services/pipe.service";
 import { AppDefaultsService } from './services/app-defaults.service';
 import { AppManagerService } from './services/app.manager.service';
 import { PrefabManagerService } from './services/prefab-manager.service';
-import { AuthGuard } from './guards/auth.guard';
-import { RoleGuard } from './guards/role.guard';
-import { PageNotFoundGuard } from './guards/page-not-found.guard';
 import { AppJSResolve } from './resolves/app-js.resolve';
 import { AppExtensionJSResolve } from './resolves/app-extension.resolve';
 import { I18nResolve } from './resolves/i18n.resolve';
@@ -54,7 +51,6 @@ import { AppComponent } from './components/app-component/app.component';
 import { HttpCallInterceptor } from './services/http-interceptor.services';
 import { PrefabPreviewComponent } from './components/prefab-preview.component';
 import { DynamicComponentRefProviderService } from './services/dynamic-component-ref-provider.service';
-import { CanDeactivatePageGuard } from './guards/can-deactivate-page.guard';
 import { MAX_CACHE_AGE, MAX_CACHE_SIZE } from './util/wm-route-reuse-strategy';
 
 //angular overrides
@@ -419,7 +415,6 @@ export const REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS = [
     imports: [
         CommonModule,
         RouterModule,
-        HttpClientModule,
         FormsModule,
         ReactiveFormsModule,
         ...definitions,
@@ -434,7 +429,6 @@ export const REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS = [
         AccessrolesDirective,
         CommonModule,
         RouterModule,
-        HttpClientModule,
         ToastrModule,
         // CoreModule,
         ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS
@@ -486,12 +480,7 @@ export class RuntimeBaseModule {
                 { provide: AbstractNavigationService, useClass: NavigationServiceImpl },
                 { provide: AppDefaults, useClass: AppDefaultsService },
                 { provide: DynamicComponentRefProvider, useClass: DynamicComponentRefProviderService },
-                {
-                    provide: APP_INITIALIZER,
-                    useFactory: InitializeApp,
-                    deps: [AbstractI18nService, AppJSResolve],
-                    multi: true
-                },
+                // Application initialization is now handled in main.ts using bootstrapApplication
                 {
                     provide: LOCALE_ID,
                     useFactory: setAngularLocale,
@@ -507,10 +496,6 @@ export class RuntimeBaseModule {
                 DatePipe,
                 AppManagerService,
                 PrefabManagerService,
-                AuthGuard,
-                RoleGuard,
-                PageNotFoundGuard,
-                CanDeactivatePageGuard,
                 AppJSResolve,
                 AppExtensionJSResolve,
                 I18nResolve,

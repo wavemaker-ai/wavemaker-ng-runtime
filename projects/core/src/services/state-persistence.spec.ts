@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { StatePersistence } from './state-persistence.service';
 import { get, includes, isEmpty, merge } from 'lodash-es';
+import { App } from '../types/types';
 
 jest.mock('lodash-es', () => ({
     ...jest.requireActual('lodash-es'),
@@ -35,7 +36,7 @@ describe('StatePersistence', () => {
         });
         
         TestBed.configureTestingModule({
-            providers: [StatePersistence]
+            providers: [StatePersistence, { provide: App, useValue: {} }]
         });
         (get as jest.Mock).mockImplementation((obj, path) => {
             const pathArray = Array.isArray(path) ? path : path.split('.');

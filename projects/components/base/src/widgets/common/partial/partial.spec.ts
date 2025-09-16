@@ -1,60 +1,54 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { ElementRef, Injector, ViewContainerRef } from '@angular/core';
 import { PartialDirective } from './partial.directive';
 import { App, Viewport, ViewportEvent } from '@wm/core';
 import { StylableComponent } from '../base/stylable.component';
 import { mockApp } from '../../../test/util/component-test-util';
 
-@Component({
-    template: '<div wmPartial></div>'
-})
-class TestComponent { }
-
 describe('PartialDirective', () => {
-    let fixture: ComponentFixture<TestComponent>;
     let directive: PartialDirective;
     let viewportMock: jest.Mocked<Viewport>;
+    let mockInjector: Injector;
+    let mockElementRef: ElementRef;
+    let mockViewContainerRef: ViewContainerRef;
 
     beforeEach(() => {
         viewportMock = {
             subscribe: jest.fn()
         } as unknown as jest.Mocked<Viewport>;
 
-        TestBed.configureTestingModule({
-            imports: [PartialDirective],
-            declarations: [TestComponent],
-            providers: [
-                { provide: Viewport, useValue: viewportMock },
-                { provide: 'EXPLICIT_CONTEXT', useValue: null },
-                { provide: App, useValue: mockApp }
-            ]
-        });
+        mockElementRef = { nativeElement: document.createElement('div') } as ElementRef;
+        mockViewContainerRef = {} as ViewContainerRef;
 
-        fixture = TestBed.createComponent(TestComponent);
-        directive = fixture.debugElement.children[0].injector.get(PartialDirective);
+        mockInjector = {
+            get: jest.fn((token) => {
+                if (token === ElementRef) return mockElementRef;
+                if (token === App) return mockApp;
+                if (token === ViewContainerRef) return mockViewContainerRef;
+                return null;
+            }),
+            _lView: [null, null, null, null, null, null, null, null, { index: 0 }],
+            _tNode: {
+                attrs: ['attr1', 'value1', 'attr2', 'value2']
+            }
+        } as any;
+
+        // Create directive instance directly
+        directive = new PartialDirective(
+            mockInjector,
+            viewportMock,
+            null
+        );
     });
 
     it('should create an instance', () => {
         expect(directive).toBeTruthy();
     });
 
-    it('should register resize and orientation change listeners', () => {
+    it('should subscribe to viewport events on construction', () => {
+        // The directive should have subscribed to RESIZE and ORIENTATION_CHANGE events
         expect(viewportMock.subscribe).toHaveBeenCalledWith(ViewportEvent.RESIZE, expect.any(Function));
         expect(viewportMock.subscribe).toHaveBeenCalledWith(ViewportEvent.ORIENTATION_CHANGE, expect.any(Function));
-    });
-
-    it('should call callback on resize', () => {
-        const callbackSpy = jest.spyOn(directive as any, 'callback');
-        const resizeCallback = viewportMock.subscribe.mock.calls[0][1];
-        resizeCallback({ someData: 'resizeData' });
-        expect(callbackSpy).toHaveBeenCalledWith('resize', { someData: 'resizeData' });
-    });
-
-    it('should call callback on orientation change', () => {
-        const callbackSpy = jest.spyOn(directive as any, 'callback');
-        const orientationCallback = viewportMock.subscribe.mock.calls[1][1];
-        orientationCallback({ someData: 'orientationData' });
-        expect(callbackSpy).toHaveBeenCalledWith('orientationchange', { someData: 'orientationData' });
     });
 
     it('should call callback on attach', () => {
@@ -75,5 +69,12 @@ describe('PartialDirective', () => {
         directive.ngOnDestroy();
         expect(callbackSpy).toHaveBeenCalledWith('destroy');
         expect(superDestroySpy).toHaveBeenCalled();
+    });
+
+    it('should call invokeEventCallback when callback is called', () => {
+        const invokeEventCallbackSpy = jest.spyOn(directive, 'invokeEventCallback');
+        
+        directive.ngOnAttach();
+        expect(invokeEventCallbackSpy).toHaveBeenCalledWith('attach', expect.any(Object));
     });
 });

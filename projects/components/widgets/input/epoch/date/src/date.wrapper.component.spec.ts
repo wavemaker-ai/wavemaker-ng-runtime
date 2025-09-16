@@ -42,7 +42,8 @@ const markup = `<div wmDate  name="date1" mindate="2019-12-02"  datavalue="${cur
     blur.event="date1Blur($event, widget)" click.event="date1Click($event, widget)" mouseenter.event="date1Mouseenter($event, widget)"
      mouseleave.event="date1Mouseleave($event, widget)" tap.event="date1Tap($event, widget)" margintop="30px" marginright="23px" ngModel></div>`;
 @Component({
-    template: markup
+    template: markup,
+    standalone: true
 })
 
 class DateWrapperComponent {
@@ -80,8 +81,8 @@ class DateWrapperComponent {
 }
 
 const dateComponentModuleDef: ITestModuleDef = {
-    declarations: [DateWrapperComponent],
-    imports: [BrowserAnimationsModule, FormsModule, BsDatepickerModule.forRoot(), IMaskModule, DateComponent],
+    declarations: [],
+    imports: [BrowserAnimationsModule, FormsModule, BsDatepickerModule.forRoot(), IMaskModule, DateComponent,],
     providers: [
         { provide: Router, useValue: Router },
         { provide: App, useValue: mockApp },
@@ -477,8 +478,8 @@ describe('DateComponent', () => {
 });
 
 const dateComponentLocaleModuleDef: ITestModuleDef = {
-    declarations: [DateWrapperComponent],
-    imports: [FormsModule, BsDatepickerModule.forRoot(), IMaskModule, DateComponent],
+    declarations: [],
+    imports: [BrowserAnimationsModule, FormsModule, BsDatepickerModule.forRoot(), IMaskModule, DateComponent,],
     providers: [
         { provide: LOCALE_ID, useValue: 'de' },
         { provide: Router, useValue: Router },
@@ -505,7 +506,9 @@ describe(('Date Component with Localization'), () => {
         fixture = compileTestComponent(dateComponentLocaleModuleDef, DateWrapperComponent);
         dateWrapperComponent = fixture.componentInstance;
         wmComponent = dateWrapperComponent.wmComponent;
-        fixture.detectChanges();
+        if (wmComponent) {
+            fixture.detectChanges();
+        }
     }));
     afterEach(() => {
         if (fixture) {

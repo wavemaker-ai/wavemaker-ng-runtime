@@ -163,6 +163,7 @@ export abstract class AbstractI18nService {
     public abstract getPrefabLocaleBundle(prefabName: string): any;
     public abstract setwidgetLocale(locale);
     public abstract getwidgetLocale();
+    public abstract deduceAppLocale(): string;
 }
 
 export abstract class AbstractToasterService {

@@ -22,7 +22,8 @@ jest.mock('@wm/core', () => ({
 }));
 
 @Component({
-    template: '<div></div>'
+    template: '<div></div>',
+    standalone: false
 })
 class PipeWrapperComponent implements OnInit {
     ngOnInit() {
@@ -31,9 +32,7 @@ class PipeWrapperComponent implements OnInit {
 }
 
 const testModuleDef: ITestModuleDef = {
-    imports: [
-        BrowserModule,
-    ],
+    imports: [BrowserModule],
     declarations: [PipeWrapperComponent],
     providers: [{ provide: App, useValue: mockApp },
     { provide: AbstractI18nService, useClass: MockAbstractI18nService },

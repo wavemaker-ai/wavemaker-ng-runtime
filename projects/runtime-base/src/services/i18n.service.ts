@@ -279,7 +279,7 @@ export class I18nServiceImpl extends AbstractI18nService {
         });
     }
 
-    private deduceAppLocale() {
+    public deduceAppLocale() {
         // computation to find app default locale
         const _acceptLang = this.getAcceptedLanguages();
         const _defaultLanguage = getWmProjectProperties().defaultLanguage;

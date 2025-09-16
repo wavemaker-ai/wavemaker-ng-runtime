@@ -1,5 +1,5 @@
 import { ApplicationConfig, importProvidersFrom, APP_INITIALIZER, LOCALE_ID } from "@angular/core";
-import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation } from "@angular/router";
+import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation, Router } from "@angular/router";
 import { provideHttpClient, withXsrfConfiguration, HTTP_INTERCEPTORS, withInterceptorsFromDi } from "@angular/common/http";
 import { provideAnimations } from "@angular/platform-browser/animations";
 import { routes } from "./app.routes";
@@ -126,12 +126,13 @@ export const appConfig: ApplicationConfig = {
         ),
         provideAnimations(),
         // Provide application-specific services
-        {
-            provide: APP_INITIALIZER,
-            useFactory: InitializeApp,
-            deps: [AbstractI18nService, AppJSResolve],
-            multi: true
-        },
+        // Temporarily disabling APP_INITIALIZER to isolate bootstrap DI error
+        // {
+        //     provide: APP_INITIALIZER,
+        //     useFactory: InitializeApp,
+        //     deps: [AbstractI18nService, AppJSResolve],
+        //     multi: true
+        // },
         {
             provide: LOCALE_ID,
             useFactory: setAngularLocale,

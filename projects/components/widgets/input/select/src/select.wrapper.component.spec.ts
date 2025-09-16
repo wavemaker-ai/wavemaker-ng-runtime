@@ -1,6 +1,8 @@
 import { Component, ViewChild } from "@angular/core";
 import { SelectComponent } from "./select.component";
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from "../../../../base/src/test/common-widget.specs";
+import { mockApp } from "projects/components/base/src/test/util/component-test-util";
+import { App } from "@wm/core";
 import { FormsModule } from "@angular/forms";
 import { AbstractI18nService, App, AppDefaults, DataSource, setAttr } from '@wm/core';
 import { ToDatePipe } from "@wm/components/base";
@@ -12,7 +14,8 @@ import { compileTestComponent, mockApp } from "projects/components/base/src/test
 const markup = `<wm-select name="select1" hint="select field">`;
 
 @Component({
-    template: markup
+    template: markup,
+    standalone: true
 })
 
 class SelectWrapperComponent {
@@ -21,7 +24,7 @@ class SelectWrapperComponent {
 
 const testModuleDef: ITestModuleDef = {
     imports: [FormsModule, SelectComponent],
-    declarations: [SelectWrapperComponent],
+    declarations: [],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: ToDatePipe, useClass: ToDatePipe },

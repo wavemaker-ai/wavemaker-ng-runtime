@@ -1142,12 +1142,13 @@ describe('isInsecureContentRequest', () => {
 
     beforeEach(() => {
         originalLocation = window.location;
-        delete window.location;
-        window.location = { href: 'https://example.com' } as Location;
+        // Mock window.location using a different approach
+        delete (window as any).location;
+        (window as any).location = { href: 'https://example.com' };
     });
 
     afterEach(() => {
-        window.location = originalLocation;
+        (window as any).location = originalLocation;
     });
 
     it('should return false for HTTPS URLs', () => {

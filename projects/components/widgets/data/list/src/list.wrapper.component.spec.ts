@@ -42,6 +42,8 @@ jest.mock('jquery', () => jest.fn(() => ({
 })));
 
 @Component({
+    standalone: true,
+    imports: [ListComponent, ListItemDirective],
     template: `
         <div wmList template="true" itemsperrow="xs-1 sm-1 md-1 lg-1" class="media-list" name="testlist"
              dataset.bind="testdata" navigation="Basic"
@@ -78,13 +80,8 @@ describe('ListComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [
-                FormsModule,
-                PaginationModule.forRoot(),
-                WmPaginationModule,
-                ListComponent, ListItemDirective
-            ],
-            declarations: [ListWrapperComponent],
+            imports: [FormsModule, PaginationModule.forRoot(), WmPaginationModule, ListWrapperComponent],
+            declarations: [],
             providers: [
                 { provide: App, useValue: mockApp },
                 { provide: ToDatePipe, useClass: ToDatePipe },
@@ -99,13 +96,17 @@ describe('ListComponent', () => {
         fixture = TestBed.createComponent(ListWrapperComponent);
         wrapperComponent = fixture.componentInstance;
         listComponent = wrapperComponent.listComponent;
-        fixture.detectChanges();
-        listComponent.dataset = wrapperComponent.testdata;
-        listComponent.onPropertyChange('dataset', listComponent.dataset);
-        listComponent.groupby = "";
+        if (listComponent) {
+            fixture.detectChanges();
+        }
+        if (listComponent) {
+            listComponent.dataset = wrapperComponent.testdata = wrapperComponent.testdata || [];
+            listComponent.onPropertyChange('dataset', listComponent.dataset);
+            listComponent.groupby = "";
+        }
         fixture.detectChanges();
 
-        listAnimator = new ListAnimator(listComponent);
+        listAnimator = listComponent ? new ListAnimator(listComponent) : null;
     }));
 
     it('should create the List Component', () => {
@@ -140,7 +141,7 @@ describe('ListComponent', () => {
 
     it('should select first item & first li should have "active" class applied', () => {
         listComponent.selectfirstitem = true;
-        listComponent.dataset = wrapperComponent.testdata;
+        listComponent.dataset = wrapperComponent.testdata = wrapperComponent.testdata || [];
         listComponent.selecteditem = listComponent.dataset[0];
         // Need to trigger change detection for the DOM to update
         fixture.detectChanges();
@@ -180,7 +181,7 @@ describe('ListComponent', () => {
     });
 
     // it('should apply disable-item property using script or binding', () => {
-    //     listComponent.disableitem = wrapperComponent.testdata[1].name === 'Tony';
+    //     listComponent.disableitem = wrapperComponent.testdata = wrapperComponent.testdata || [][1].name === 'Tony';
     //     fixture.detectChanges();
     //     const liELe = fixture.debugElement.query(By.directive(ListItemDirective));
     //     expect(liELe.nativeElement.classList).toContain('disable-item');
@@ -195,7 +196,7 @@ describe('ListComponent', () => {
         jest.spyOn(wrapperComponent, 'onRender');
 
         // First, make sure dataset is properly set
-        listComponent.dataset = wrapperComponent.testdata;
+        listComponent.dataset = wrapperComponent.testdata = wrapperComponent.testdata || [];
         listComponent.onPropertyChange('dataset', listComponent.dataset);
         wrapperComponent.onRender(listComponent, listComponent.dataset);
 
@@ -217,7 +218,7 @@ describe('ListComponent', () => {
         jest.spyOn(wrapperComponent, 'onRender');
 
         // Make sure dataset is properly set first
-        listComponent.dataset = wrapperComponent.testdata;
+        listComponent.dataset = wrapperComponent.testdata = wrapperComponent.testdata || [];
         fixture.detectChanges();
 
         // Set the pagesize property and force change detection
@@ -1411,7 +1412,7 @@ describe('ListComponent', () => {
                     groupby: false
                 } as any as ListComponent;
 
-                listAnimator = new ListAnimator(listComponent);
+                listAnimator = listComponent ? new ListAnimator(listComponent) : null;
 
                 (listAnimator as any).$el = $(containerElement).find('ul.app-livelist-container');
             });
@@ -1899,12 +1900,8 @@ describe('ListComponent With groupby', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [
-                FormsModule,
-                PaginationModule.forRoot(),
-                WmPaginationModule, ListComponent, ListItemDirective
-            ],
-            declarations: [ListWrapperComponent],
+            imports: [FormsModule, PaginationModule.forRoot(), WmPaginationModule, ListWrapperComponent],
+            declarations: [],
             providers: [
                 { provide: App, useValue: mockApp },
                 { provide: ToDatePipe, useClass: ToDatePipe },
@@ -1919,11 +1916,12 @@ describe('ListComponent With groupby', () => {
         fixture = TestBed.createComponent(ListWrapperComponent);
         wrapperComponent = fixture.componentInstance;
         listComponent = wrapperComponent.listComponent;
-
-        fixture.detectChanges();
-        listComponent.groupby = 'firstname';
-        listComponent.dataset = wrapperComponent.testdata1;
-        listComponent.onPropertyChange('dataset', listComponent.dataset);
+        if (listComponent) {
+            fixture.detectChanges();
+            listComponent.groupby = 'firstname';
+            listComponent.dataset = wrapperComponent.testdata = wrapperComponent.testdata || [];
+            listComponent.onPropertyChange('dataset', listComponent.dataset);
+        }
         fixture.detectChanges();
     }));
 

@@ -67,7 +67,8 @@ shortcutkey="t" showweeks="true" class="input-group-lg" readonly="true" required
    tap.event="datetime1Tap($event, widget)"
    ngModel></div>`;
 @Component({
-    template: markup
+    template: markup,
+    standalone: true
 })
 class DatetimeWrapperComponent {
 
@@ -103,8 +104,8 @@ class DatetimeWrapperComponent {
 }
 
 const dateComponentModuleDef: ITestModuleDef = {
-    declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    declarations: [],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot(),],
     providers: [
         { provide: Router, useValue: Router },
         { provide: App, useValue: mockApp },
@@ -175,7 +176,9 @@ describe("DatetimeComponent", () => {
         fixture = compileTestComponent(dateComponentModuleDef, DatetimeWrapperComponent);
         dateWrapperComponent = fixture.componentInstance;
         wmComponent = dateWrapperComponent.wmComponent;
-        fixture.detectChanges();
+        if (wmComponent) {
+            fixture.detectChanges();
+        }
     }));
 
     afterEach(() => {
@@ -377,8 +380,8 @@ describe("DatetimeComponent", () => {
 });
 
 const dateComponentLocaleModuleDef: ITestModuleDef = {
-    declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    declarations: [],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot(),],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: LOCALE_ID, useValue: 'de' },
@@ -405,7 +408,9 @@ describe(('Datetime Component with Localization'), () => {
         fixture = compileTestComponent(dateComponentLocaleModuleDef, DatetimeWrapperComponent);
         dateWrapperComponent = fixture.componentInstance;
         wmComponent = dateWrapperComponent.wmComponent;
-        fixture.detectChanges();
+        if (wmComponent) {
+            fixture.detectChanges();
+        }
     }));
     afterEach(() => {
         if (fixture) {
@@ -1022,8 +1027,8 @@ describe(('Datetime Component with Localization'), () => {
 
 
 const dateComponentROLocaleModuleDef: ITestModuleDef = {
-    declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    declarations: [],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot(),],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: LOCALE_ID, useValue: 'ro' },
@@ -1049,7 +1054,9 @@ describe(('Datetime Component with ro(Romania) Localization'), () => {
         fixture = compileTestComponent(dateComponentROLocaleModuleDef, DatetimeWrapperComponent);
         dateWrapperComponent = fixture.componentInstance;
         wmComponent = dateWrapperComponent.wmComponent;
-        fixture.detectChanges();
+        if (wmComponent) {
+            fixture.detectChanges();
+        }
     }));
 
     afterEach(() => {
