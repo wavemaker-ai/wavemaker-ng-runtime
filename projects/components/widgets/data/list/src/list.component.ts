@@ -751,6 +751,15 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             this._listAnimator.$btnSubscription.unsubscribe();
         }
         this._listenerDestroyers.forEach(d => d && d());
+
+        this.cdRef = null;
+        this.listTemplate = null;
+        this.listLeftActionTemplate = null;
+        this.listRightActionTemplate = null
+        this.btnComponents = null;
+        this.dataNavigator = null;
+        this.listItems = null;
+
         super.ngOnDestroy();
     }
 
@@ -766,7 +775,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             doubletap: 'dblclick'
         };
         if (includes(['click', 'tap', 'dblclick', 'doubletap'], eventName)) {
-            this.eventManager.addEventListener(
+            return this.eventManager.addEventListener(
                 this.nativeElement,
                 touchToMouse[eventName] || eventName,
                 (evt) => {
@@ -784,6 +793,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 }
             );
         }
+        return () => {}
     }
 
     private getConfiguredState() {

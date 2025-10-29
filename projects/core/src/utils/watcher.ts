@@ -67,7 +67,7 @@ const getUpdatedWatcInfo = (expr, acceptsArray, listener) => {
 
     // listener accepts array
     // replace all except the last `[$i]` with `[0]` and return the expression.
-    var index           = expr.lastIndexOf($I),
+    let index           = expr.lastIndexOf($I),
         _expr           = expr.substr(0, index).replace($I, $0),
         restExpr        = expr.substr(index + 5),
         arrayConsumerFn = listener;
@@ -168,7 +168,7 @@ export const setAppRef = ref => {
 export const isChangeFromWatch = () => changedByWatch;
 export const resetChangeFromWatch = () => changedByWatch = false;
 
-(<any>window).watchRegistry = registry;
+//(<any>window).watchRegistry = registry;
 
 let skipWatchers;
 
