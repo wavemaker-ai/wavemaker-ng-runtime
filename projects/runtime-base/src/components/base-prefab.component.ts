@@ -48,6 +48,9 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     
     // CRITICAL FIX: Track destroy listener subscriptions to prevent memory leaks
     private destroySubscriptions: any[] = [];
+    
+    // CRITICAL FIX: Track if component is being destroyed to prevent async widget registration
+    private isDestroyed = false;
 
     private viewParent: any;
 
@@ -300,6 +303,15 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
     ngOnDestroy(): void {
+        // CRITICAL FIX: Mark as destroyed FIRST to prevent async widgets from registering
+        this.isDestroyed = true;
+        
+        // CRITICAL FIX: Set Widgets to null immediately to stop widget registration
+        // Widget registry checks for null viewParent.Widgets and will warn + skip registration
+        this.Widgets = null;
+        this.Variables = null;
+        this.Actions = null;
+        
         // CRITICAL FIX: Unsubscribe all destroy listeners BEFORE completing subject
         if (this.destroySubscriptions && this.destroySubscriptions.length > 0) {
             this.destroySubscriptions.forEach(sub => {
@@ -319,12 +331,6 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
             this.fragmentsLoaded$.complete();
         }
         
-        // CRITICAL FIX: Set Widgets to empty object instead of null
-        // This prevents "Cannot set properties of null" errors when async child widgets
-        // try to register after parent is destroyed. The empty object will be GC'd with the parent.
-        this.Widgets = Object.create(null);
-        this.Variables = Object.create(null);
-        this.Actions = Object.create(null);
         this.containerWidget = null;
         this.viewParent = null;
     }

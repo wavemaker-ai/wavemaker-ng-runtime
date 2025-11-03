@@ -23,7 +23,12 @@ export const register = (widget: any, viewParent: any, widgetId: string, name?: 
     // This prevents orphaned widgets that can't be cleaned up
     // Return early cleanup function to prevent memory leaks
     if (!viewParent || !viewParent.Widgets) {
-        console.warn(`Widget ${name || widgetId} attempted to register with null ${!viewParent ? 'viewParent' : 'viewParent.Widgets'} - parent was destroyed during async child initialization`);
+        // Silently skip registration - parent was destroyed during async initialization
+        // This is expected behavior during navigation and is handled gracefully
+        // Debug log available for troubleshooting if needed
+        if (typeof console.debug === 'function') {
+            console.debug(`Widget ${name || widgetId} skipped registration - parent destroyed during async initialization`);
+        }
         return () => {
             registryById.delete(widgetId);
         };

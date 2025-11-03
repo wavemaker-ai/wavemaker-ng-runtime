@@ -63,6 +63,9 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
     // CRITICAL FIX: Track destroy listener subscriptions to prevent memory leaks
     private destroySubscriptions: any[] = [];
     
+    // CRITICAL FIX: Track if component is being destroyed to prevent async widget registration
+    private isDestroyed = false;
+    
     private viewParent: any;
 
     abstract evalUserScript(prefabContext: any, appContext: any, utils: any);
@@ -257,10 +260,14 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
     }
 
     ngOnDestroy(): void {
-        // Call ngOnDetach to ensure cleanup if it hasn't been called
-        if (this.Widgets) {
-            this.ngOnDetach();
-        }
+        // CRITICAL FIX: Mark as destroyed FIRST to prevent async widgets from registering
+        this.isDestroyed = true;
+        
+        // CRITICAL FIX: Set Widgets to null immediately to stop widget registration
+        // Widget registry checks for null viewParent.Widgets and will warn + skip registration
+        this.Widgets = null;
+        this.Variables = null;
+        this.Actions = null;
         
         // CRITICAL FIX: Unsubscribe all destroy listeners BEFORE completing subject
         if (this.destroySubscriptions && this.destroySubscriptions.length > 0) {
@@ -281,17 +288,15 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
             this.fragmentsLoaded$.complete();
         }
         
-        // CRITICAL FIX: Set Widgets to empty object instead of null
-        // This prevents "Cannot set properties of null" errors when async child widgets
-        // try to register after parent is destroyed. The empty object will be GC'd with the parent.
-        this.Widgets = Object.create(null);
-        this.Variables = Object.create(null);
-        this.Actions = Object.create(null);
         this.viewParent = null;
         this.containerWidget = null;
     }
 
     ngOnAttach(refreshData) {
+        // DEFENSIVE FIX: Don't attach if component is destroyed
+        if (this.isDestroyed) {
+            return;
+        }
         this.unmute();
         if (refreshData) {
             const refresh = v => { v && v.startUpdate && v.invoke && v.invoke(); };
@@ -302,6 +307,10 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
     }
 
     ngOnDetach() {
+        // DEFENSIVE FIX: Don't detach if component is destroyed
+        if (this.isDestroyed) {
+            return;
+        }
         this.mute();
         each(this.Widgets, w => w && w.ngOnDetach && w.ngOnDetach());
         

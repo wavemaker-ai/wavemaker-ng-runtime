@@ -1,4 +1,4 @@
-import { AfterContentInit, AfterViewInit, Directive, ElementRef, Injector, OnDestroy } from '@angular/core';
+import { AfterContentInit, AfterViewInit, Directive, ElementRef, inject, Injector, OnDestroy } from '@angular/core';
 
 import { SearchComponent } from './search.component';
 
@@ -11,8 +11,9 @@ declare const $;
 export class ScrollableDirective implements AfterContentInit, AfterViewInit, OnDestroy {
     private elementRef: ElementRef;
     private scrollHandler;
+    private searchRef = inject(SearchComponent);
 
-    constructor(inj: Injector, private searchRef: SearchComponent) {
+    constructor(inj: Injector) {
         this.elementRef = inj.get(ElementRef);
     }
 

@@ -490,6 +490,15 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      * Register the widget with the widgetRegistry
      */
     protected registerWidget(widgetName: string) {
+        // CRITICAL FIX: Don't attempt registration if parent is destroyed
+        // This prevents hundreds of warnings during async template compilation
+        // when parent components are destroyed before child widgets finish initializing
+        if (!this.viewParent || !this.viewParent.Widgets) {
+            // Parent was destroyed during async initialization - skip registration silently
+            // Widget will be garbage collected with its DOM element
+            return;
+        }
+        
         this.registerDestroyListener(register(this.widget, this.viewParent, this.widgetId, widgetName));
     }
 
