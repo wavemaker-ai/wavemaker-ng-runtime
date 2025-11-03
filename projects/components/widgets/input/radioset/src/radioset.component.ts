@@ -55,7 +55,8 @@ export class RadiosetComponent extends DatasetAwareFormComponent {
      * On click of the option, update the datavalue
      */
     onRadioLabelClick($event, key) {
-        if (!$($event.target).is('input')) {
+        // PERFORMANCE FIX: Use native check instead of jQuery
+        if ($event.target.tagName !== 'INPUT') {
             return;
         }
 
@@ -69,7 +70,8 @@ export class RadiosetComponent extends DatasetAwareFormComponent {
                 node,
                 eventName,
                 e => {
-                    if (!$(e.target).is('input')) {
+                    // PERFORMANCE FIX: Use native tagName check instead of jQuery
+                    if ((e.target as HTMLElement).tagName !== 'INPUT') {
                         return;
                     }
                     locals.$event = e;

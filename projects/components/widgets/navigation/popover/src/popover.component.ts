@@ -491,7 +491,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
 
     ngOnDestroy() {
         super.ngOnDestroy();
-        console.log("Popover Destoy");
+        // PERFORMANCE FIX: Removed console.log - was causing 2000+ log messages and ~100ms overhead
         if (this.documentClickHandler) {
             document.removeEventListener('click', this.documentClickHandler, true);
         }

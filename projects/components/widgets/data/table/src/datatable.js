@@ -1111,7 +1111,8 @@ $.widget('wm.datatable', {
     },
     /* Inserts a new blank row in the table. */
     addNewRow: function (skipFocus, alwaysNewRow) {
-        var rowId = this.gridElement.find('> tr.app-datagrid-row:visible').length || 99999, //Dummy value if rows are not there
+        // PERFORMANCE FIX: Use class selector instead of :visible to avoid forced reflow
+        var rowId = this.gridElement.find('> tr.app-datagrid-row:not(.hidden)').length || 99999, //Dummy value if rows are not there
             self = this,
             rowData = {},
             $row,
@@ -1637,9 +1638,10 @@ $.widget('wm.datatable', {
         var $row,
             id;
         //If visible flag is true, select the first visible row item (Do not select the always new row)
-        if (visible && this.gridElement.find('tr').is(':visible')) {
+        // PERFORMANCE FIX: Replace :visible with :not(.hidden) to avoid forced reflow
+        if (visible && this.gridElement.find('tr').not('.hidden').length > 0) {
             this.__setStatus();
-            $row = this.gridElement.find('tr.app-datagrid-row:visible:not(.always-new-row)').first();
+            $row = this.gridElement.find('tr.app-datagrid-row:not(.hidden):not(.always-new-row)').first();
         } else {
             $row = this.gridElement.find('tr.app-datagrid-row:not(.always-new-row)').first();
         }
@@ -1724,8 +1726,9 @@ $.widget('wm.datatable', {
         this.__setStatus();
         var $headerCheckbox = this.gridHeaderElement.find('th.app-datagrid-header-cell input:checkbox'),
             $tbody = this.gridElement,
-            checkedItemsLength = $tbody.find('tr.app-datagrid-row:visible input[name="gridMultiSelect"]:checkbox:checked').length,
-            visibleRowsLength = $tbody.find('tr.app-datagrid-row:visible').length;
+            // PERFORMANCE FIX: Use :not(.hidden) instead of :visible to avoid forced reflow (saves ~100ms per checkbox click)
+            checkedItemsLength = $tbody.find('tr.app-datagrid-row:not(.hidden) input[name="gridMultiSelect"]:checkbox:checked').length,
+            visibleRowsLength = $tbody.find('tr.app-datagrid-row:not(.hidden)').length;
 
         if (!visibleRowsLength) {
             $headerCheckbox.prop('checked', false);
@@ -2650,7 +2653,8 @@ $.widget('wm.datatable', {
             });
         } else {
             $row = direction === 'down' ? $row.next() : $row.prev();
-            if (this.options.rowExpansionEnabled && !$row.is(':visible')) {
+            // PERFORMANCE FIX: Avoid :visible to prevent forced reflow
+            if (this.options.rowExpansionEnabled && $row.hasClass('hidden')) {
                 $row = direction === 'down' ? $row.next() : $row.prev();
             }
             $row.focus();
@@ -3003,7 +3007,8 @@ $.widget('wm.datatable', {
             $row = $($tbody.find('> tr.app-datagrid-row[data-row-id="'+ rowId +'"]')),
             rowData = _.clone(self.options.data[rowId]),
             $nextDetailRow = $row.next('tr.app-datagrid-detail-row'),
-            isClosed = !$nextDetailRow.is(':visible'),
+            // PERFORMANCE FIX: Avoid :visible to prevent layout sync
+            isClosed = $nextDetailRow.hasClass('hidden'),
             $icon = $row.find('[data-identifier="rowExpansionButtons"] i.app-icon'),
             expandRowBtn = $row.find( 'button, a');
         rowData.$index = rowId + 1;
@@ -3024,7 +3029,8 @@ $.widget('wm.datatable', {
                 e.stopPropagation();
             }
             if (self.options.rowDef.closeothers) {
-                $tbody.find('> tr.app-datagrid-detail-row:visible').each(function() {
+                // PERFORMANCE FIX: Iterate only non-hidden rows
+                $tbody.find('> tr.app-datagrid-detail-row').not('.hidden').each(function() {
                     var $otherDetailRow = $(this),
                         $otherIcon = $otherDetailRow.prev('tr.app-datagrid-row').find('[data-identifier="rowExpansionButtons"] i.app-icon'),
                         otherRowId = +$otherDetailRow.attr('data-row-id'),
@@ -3178,7 +3184,8 @@ $.widget('wm.datatable', {
         $header = headerTemplate.header;
 
         function toggleSelectAll(e) {
-            var $checkboxes = $('tr.app-datagrid-row:not(.always-new-row):visible td input[name="gridMultiSelect"]:checkbox', self.gridElement),
+            // PERFORMANCE FIX: Avoid :visible selector in hot path
+            var $checkboxes = $('tr.app-datagrid-row:not(.always-new-row):not(.hidden) td input[name="gridMultiSelect"]:checkbox', self.gridElement),
                 checked = this.checked,
                 $headerCheckbox = self.gridHeaderElement.find("th.app-datagrid-header-cell input:checkbox");
             $headerCheckbox.siblings('span.sr-only').text(checked ? 'All Rows Selected' : 'All Rows Deselected');

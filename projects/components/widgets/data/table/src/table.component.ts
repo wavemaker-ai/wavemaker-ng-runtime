@@ -142,6 +142,15 @@ const isInputBodyWrapper = target => {
     ]
 })
 export class TableComponent extends StylableComponent implements AfterContentInit, OnDestroy, ControlValueAccessor {
+    // PERFORMANCE: Batch $appDigest calls to a single frame to reduce redundant change detection
+    private digestScheduled = false;
+    private scheduleDigest = () => {
+        if (this.digestScheduled) { return; }
+        this.digestScheduled = true;
+        requestAnimationFrame(() => {
+            try { $appDigest(); } finally { this.digestScheduled = false; }
+        });
+    };
     static initializeProps = registerProps();
     @ViewChild(PaginationComponent, {static: true}) dataNavigator;
 
@@ -781,7 +790,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     }};
             const rootNode = this.rowDetailViewRef.createEmbeddedView(this.rowExpansionTmpl, context).rootNodes[0];
             $target[0].appendChild(rootNode);
-            $appDigest();
+            this.scheduleDigest();
         },
         onBeforeRowCollapse: ($event, row, rowId) => {
             return this.rowInstance.invokeEventCallback('beforerowcollapse', {$event, row, $data: this.rowDefInstances[rowId]});
@@ -932,7 +941,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         setGridEditMode: (val) => {
             this.ngZone.run(() => {
                 this.isGridEditMode = val;
-                $appDigest();
+                this.scheduleDigest();
             });
         },
         setGridState: (val) => {
@@ -977,9 +986,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         runInNgZone: fn => {
             this.ngZone.run(fn);
         },
-        safeApply: () => {
-            $appDigest();
-        },
+        safeApply: () => { this.scheduleDigest(); },
         setTouched: (name) => {
             const ctrl = this.ngform.controls[name];
             if (ctrl) {

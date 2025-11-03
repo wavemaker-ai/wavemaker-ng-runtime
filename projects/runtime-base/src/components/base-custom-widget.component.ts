@@ -303,6 +303,12 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
     }
 
     invokeOnReady() {
+        // DEFENSIVE FIX: Don't invoke if component is destroyed
+        // This can happen if fragmentsLoaded$ completes after ngOnDestroy
+        if (this.isDestroyed || !this.containerWidget || !this.viewParent) {
+            return;
+        }
+        
         let params;
         if (this.containerWidget.userComponentParams) {
             params = this.containerWidget.userComponentParams;

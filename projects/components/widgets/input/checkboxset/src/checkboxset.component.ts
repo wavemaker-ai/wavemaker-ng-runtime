@@ -58,15 +58,17 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent {
     }
 
     onCheckboxLabelClick($event, key) {
-        if (!$($event.target).is('input')) {
+        // PERFORMANCE FIX: Use native check instead of jQuery
+        if ($event.target.tagName !== 'INPUT') {
             return;
         }
 
-        // construct the _model from the checked elements.
+        // PERFORMANCE FIX: Use native querySelectorAll and Array.from instead of forEach
+        // Avoid creating unnecessary jQuery objects and reduce overhead
         const inputElements = this.nativeElement.querySelectorAll('input:checked');
         const keys = [];
-        forEach(inputElements, ($el) => {
-            // @ts-ignore
+        // Convert NodeList to array for iteration
+        Array.from(inputElements).forEach(($el: HTMLInputElement) => {
             keys.push($el.value);
         });
 
@@ -80,7 +82,8 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent {
                 node,
                 eventName,
                 e => {
-                    if (!$(e.target).is('input')) {
+                    // PERFORMANCE FIX: Use native tagName check instead of jQuery
+                    if ((e.target as HTMLElement).tagName !== 'INPUT') {
                         return;
                     }
                     locals.$event = e;

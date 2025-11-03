@@ -224,6 +224,12 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
     invokeOnReady() {
+        // DEFENSIVE FIX: Don't invoke if component is destroyed
+        // This can happen if fragmentsLoaded$ completes after ngOnDestroy
+        if (this.isDestroyed || !this.containerWidget || !this.viewParent) {
+            return;
+        }
+        
         // triggering watchers so variables and propertiers watching over an expression are updated
         $invokeWatchers(true, true);
         this.onReady();
