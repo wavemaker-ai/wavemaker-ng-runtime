@@ -5,7 +5,6 @@ import {MenuComponent} from '@wm/components/navigation/menu';
 import {
     AfterContentInit,
     Attribute,
-    ChangeDetectorRef,
     Component,
     ContentChild,
     ContentChildren,
@@ -235,7 +234,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     statehandler;
     selectedItemChange = new Subject();
     selectedItemChange$: Observable<any> = this.selectedItemChange.asObservable();
-    private selectedItemChangeSubscription;
 
     actions = [];
     _actions = {
@@ -774,13 +772,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     row,
                     rowDef,
                     containerLoad: (widget) => {
-                        // Use requestAnimationFrame for UI updates
-                        requestAnimationFrame(() => {
+                        setTimeout(() => {
                             $overlay.hide();
                             $target.show();
                             this.rowDefInstances[rowId] = widget;
                             this.rowInstance.invokeEventCallback('rowexpand', {$event, row, $data: widget});
-                        });
+                        }, 500);
                     }};
             const rootNode = this.rowDetailViewRef.createEmbeddedView(this.rowExpansionTmpl, context).rootNodes[0];
             $target[0].appendChild(rootNode);
@@ -1127,7 +1124,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         @Attribute('datasource.bind') public binddatasource,
         @Attribute('readonlygrid') public readonlygrid,
         private ngZone: NgZone,
-        private cdr: ChangeDetectorRef,
         private trustAsPipe: TrustAsPipe,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
@@ -1179,11 +1175,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     return;
                 }
                 this._isDependent = true;
-                // Unsubscribe previous subscription if exists to prevent memory leak
-                if (this.selectedItemChangeSubscription) {
-                    this.selectedItemChangeSubscription.unsubscribe();
-                }
-                this.selectedItemChangeSubscription = this.selectedItemChange$
+                this.selectedItemChange$
                     .pipe(debounceTime(250))
                     .subscribe(this.triggerWMEvent.bind(this));
             })
@@ -1514,25 +1506,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     }
 
     ngOnDestroy() {
-        // CRITICAL FIX: Destroy jQuery datatable widget to prevent memory leaks
-        // The datatable plugin creates timers (refreshGridTimeout), event handlers, 
-        // and property change watchers that are never cleaned up unless explicitly destroyed
-        // This was causing the SafeSubscriber.next retention seen in heap snapshots
-        try {
-            if (this.$element && this.$element.data && this.$element.data('wm-datatable')) {
-                // Call jQuery widget destroy method to clean up all plugin resources
-                this.$element.datatable('destroy');
-            }
-        } catch (e) {
-            // Suppress errors if datatable is already destroyed or not initialized
-            console.warn('Failed to destroy datatable widget:', e);
-        }
-        
-        // Clear dynamic table view container to prevent view leaks
-        if (this.dynamicTableRef) {
-            this.dynamicTableRef.clear();
-        }
-        
         document.removeEventListener('click', this.documentClickBind);
         if (this.navigatorResultWatch) {
             this.navigatorResultWatch.unsubscribe();
@@ -1540,14 +1513,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (this.navigatorMaxResultWatch) {
             this.navigatorMaxResultWatch.unsubscribe();
         }
-        // Unsubscribe from selectedItemChange subscription to prevent memory leak
-        if (this.selectedItemChangeSubscription) {
-            this.selectedItemChangeSubscription.unsubscribe();
-        }
-        // Complete the selectedItemChange subject to prevent observable leaks
-        if (this.selectedItemChange && !this.selectedItemChange.closed) {
-            this.selectedItemChange.complete();
-        }
+
+        this.callDataGridMethod('destroy');
         super.ngOnDestroy();
     }
 
@@ -1582,20 +1549,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     getClonedRowObject(rowData) {
         const row = getClonedObject(rowData);
-        
-        // CRITICAL FIX: Avoid circular reference memory leak
-        // OLD CODE: row.getProperty = field => get(row, field);
-        // This created a closure capturing 'row', causing: row → getProperty → row (circular ref)
-        // NEW: Use Object.defineProperty with a getter that doesn't capture 'row' in closure
-        Object.defineProperty(row, 'getProperty', {
-            value: function(field) {
-                return get(this, field);  // 'this' refers to row at call time, no closure capture
-            },
-            writable: false,
-            enumerable: false,  // Don't include in iterations/clones
-            configurable: true
-        });
-        
+        row.getProperty = field => {
+            return get(row, field);
+        };
         row.$isFirst = row.$index === 1;
         row.$isLast = this.gridData.length === row.$index;
         delete row.$$index;
@@ -2415,8 +2371,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     // change and blur events are added from the template
     protected handleEvent(node: HTMLElement, eventName: string, callback: Function, locals: any) {
         if (eventName !== 'select') {
-            super.handleEvent(this.nativeElement, eventName, callback, locals);
+            return super.handleEvent(this.nativeElement, eventName, callback, locals);
         }
+        return () =>{}
     }
 
     triggerUploadEvent($event, eventName, fieldName, row) {

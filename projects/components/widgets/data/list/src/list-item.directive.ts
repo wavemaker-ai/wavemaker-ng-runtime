@@ -6,8 +6,7 @@ import {
     HostListener,
     inject,
     Injector,
-    Input,
-    OnDestroy,
+    Input, OnDestroy,
     OnInit,
     Optional,
     ViewContainerRef
@@ -45,12 +44,6 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
      */
     protected trackId = widgetIdGenerator.nextUid();
 
-    // Store event listener references for cleanup
-    private editClickHandler;
-    private deleteClickHandler;
-    private mouseEnterHandler;
-    private mouseLeaveHandler;
-
     @HostBinding('class.active') isActive = false;
     @HostBinding('class.disable-item') disableItem = false;
 
@@ -80,12 +73,28 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
         return this.context.last;
     }
 
-    get currentItemWidgets () {
-        const componentElements = Array.from(this.nativeElement.querySelectorAll('[widget-id]'));
-        return Object.assign(this._currentItemWidgets, componentElements.reduce((result, comp: any) => {
-            result[comp.widget.name] = comp.widget;
+    private widgetMap = new WeakMap<Element, any>();
+
+    get currentItemWidgets() {
+        const componentElements = Array.from(
+            this.nativeElement.querySelectorAll('[widget-id]')
+        );
+
+        return componentElements.reduce((result, comp: any) => {
+            let widget = this.widgetMap.get(comp);
+
+            if (!widget) {
+                widget = comp.widget;
+                this.widgetMap.set(comp, widget);
+            }
+
+            // DEFENSIVE FIX: Check if comp.widget exists before accessing .name
+            // During component destruction, widget reference may be nullified while DOM still exists
+            if (widget && comp.widget && comp.widget.name) {
+                result[comp.widget.name] = widget;
+            }
             return result;
-        }, {}));
+        }, {});
     }
 
     @Input() set wmListItem(val) {
@@ -132,33 +141,35 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
         const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
 
         if ($editItem) {
+            console.log('this.listComponent.$editItem')
+
             // Triggered on click of edit action
-            this.editClickHandler = evt => {
-                this.listComponent.update();
-            };
-            $editItem.addEventListener('click', this.editClickHandler);
+            const handler = () => this.listComponent.update();
+            $editItem.addEventListener('click', handler);
+            this.destroy$.subscribe(() => $editItem.removeEventListener('click', handler));
         }
 
         if ($deleteItem) {
+            console.log('this.listComponent.$deleteItem')
+
             // Triggered on click of delete action
-            this.deleteClickHandler = evt => {
-                this.listComponent.delete();
-            };
-            $deleteItem.addEventListener('click', this.deleteClickHandler);
+            const handler = () => this.listComponent.delete();
+            $deleteItem.addEventListener('click', handler);
+            this.destroy$.subscribe(() => $deleteItem.removeEventListener('click', handler));
         }
     }
     ngOnInit() {
         if (this.listComponent.mouseEnterCB) {
-            this.mouseEnterHandler = ($event) => {
+            console.log('this.listComponent.mouseEnterCB')
+            this.nativeElement.addEventListener('mouseenter', ($event) => {
                 this.listComponent.invokeEventCallback('mouseenter', {widget: this, $event});
-            };
-            this.nativeElement.addEventListener('mouseenter', this.mouseEnterHandler);
+            });
         }
         if (this.listComponent.mouseLeaveCB) {
-            this.mouseLeaveHandler = ($event) => {
+            console.log('this.listComponent.mouseLeaveCB')
+            this.nativeElement.addEventListener('mouseleave', ($event) => {
                 this.listComponent.invokeEventCallback('mouseleave', {widget: this, $event});
-            };
-            this.nativeElement.addEventListener('mouseleave', this.mouseLeaveHandler);
+            });
         }
         // adding item attribute on every list item
         $(this.nativeElement).attr('listitemindex', this.$index);
@@ -177,39 +188,9 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        try {
-            // Remove event listeners to prevent memory leaks
-            const $editItem = this.nativeElement.querySelector('.edit-list-item');
-            const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
-
-            if ($editItem && this.editClickHandler) {
-                $editItem.removeEventListener('click', this.editClickHandler);
-            }
-            if ($deleteItem && this.deleteClickHandler) {
-                $deleteItem.removeEventListener('click', this.deleteClickHandler);
-            }
-            if (this.mouseEnterHandler) {
-                this.nativeElement.removeEventListener('mouseenter', this.mouseEnterHandler);
-            }
-            if (this.mouseLeaveHandler) {
-                this.nativeElement.removeEventListener('mouseleave', this.mouseLeaveHandler);
-            }
-        } catch (e) {
-            // Suppress DOM access errors in test environments
-        }
-
-        try {
-            // Remove jQuery data to prevent DOM reference leaks
-            if (this.nativeElement) {
-                $(this.nativeElement).removeData('listItemContext');
-            }
-        } catch (e) {
-            // Suppress jQuery cleanup errors in test environments
-        }
-
-        // Complete the destroy subject
-        if (this.destroy && !this.destroy.closed) {
-            this.destroy.complete();
-        }
+        console.log("ngOnDestroy listItem");
+        this.destroy.next(null);
+        this.destroy.complete();
+        $(this.nativeElement).removeData('listItemContext');
     }
 }

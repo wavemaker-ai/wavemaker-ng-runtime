@@ -65,8 +65,7 @@ export class RadiosetComponent extends DatasetAwareFormComponent {
     // change and blur events are added from the template
     protected handleEvent(node: HTMLElement, eventName: string, callback: Function, locals: any) {
         if (eventName === 'click') {
-            // CRITICAL FIX: Store the cleanup function to prevent memory leaks
-            const removeListener = this.eventManager.addEventListener(
+            return this.eventManager.addEventListener(
                 node,
                 eventName,
                 e => {
@@ -77,11 +76,10 @@ export class RadiosetComponent extends DatasetAwareFormComponent {
                     return callback();
                 }
             );
-            // Register cleanup to be called in ngOnDestroy
-            this.registerDestroyListener(removeListener);
         } else if (!includes(['change'], eventName)) {
-            super.handleEvent(node, eventName, callback, locals);
+            return super.handleEvent(node, eventName, callback, locals);
         }
+        return () => {}
     }
 
     onPropertyChange(key, nv, ov?) {
