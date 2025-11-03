@@ -1020,6 +1020,18 @@ $.widget('wm.datatable', {
 
     /* Initializes the grid. */
     _create: function () {
+        // CRITICAL FIX: Store bound event handler references to prevent memory leaks
+        // .bind(this) creates a new function each time, so handlers can't be removed
+        // Store them once here and reuse the same references in attachEventHandlers
+        this._boundRowClickHandlerOnCapture = this.rowClickHandlerOnCapture.bind(this);
+        this._boundRowSelectionHandler = this.rowSelectionHandler.bind(this);
+        this._boundRowDblClickHandler = this.rowDblClickHandler.bind(this);
+        this._boundOnKeyDown = this.onKeyDown.bind(this);
+        this._boundColumnSelectionHandler = this.columnSelectionHandler.bind(this);
+        this._boundSortHandler = this.sortHandler.bind(this);
+        this._boundKeydownHandler = this.keydownHandler.bind(this);
+        this._boundToggleEditRow = this.toggleEditRow.bind(this);
+        
         // Add all instance specific values here.
         $.extend(this, {
             dataStatus: {
@@ -2858,35 +2870,40 @@ $.widget('wm.datatable', {
             self = this;
 
         if (this.options.enableRowSelection) {
-            $htm[0].removeEventListener('click', this.rowClickHandlerOnCapture.bind(this));
+            // CRITICAL FIX: Use stored bound references instead of .bind(this)
+            // This allows .off() to actually remove the handlers
+            $htm[0].removeEventListener('click', this._boundRowClickHandlerOnCapture);
             $htm.off();
-            $htm[0].addEventListener('click', this.rowClickHandlerOnCapture.bind(this));
+            $htm[0].addEventListener('click', this._boundRowClickHandlerOnCapture);
             // add js click handler for capture phase in order to first listen on grid and
             // assign selectedItems so that any child actions can have access to the selectedItems.
-            $htm.on('click', this.rowSelectionHandler.bind(this));
-            $htm.on('dblclick', this.rowDblClickHandler.bind(this));
-            $htm.on('keydown', this.onKeyDown.bind(this));
+            $htm.on('click', this._boundRowSelectionHandler);
+            $htm.on('dblclick', this._boundRowDblClickHandler);
+            $htm.on('keydown', this._boundOnKeyDown);
         }
 
         if ($header) {
             if (this.options.enableColumnSelection) {
-                $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
-                $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
+                // CRITICAL FIX: Use stored bound reference
+                $header.find('th[data-col-selectable]').off('click', this._boundColumnSelectionHandler);
+                $header.find('th[data-col-selectable]').on('click', this._boundColumnSelectionHandler);
             } else {
                 $header.find('th[data-col-selectable]').off('click');
             }
 
             if (this.options.enableSort) {
                 if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+                    // CRITICAL FIX: Use stored bound references
+                    $header.find('th[data-col-sortable] .header-data').off('click', this._boundSortHandler);
+                    $header.find('th[data-col-sortable] .header-data').on('click', this._boundSortHandler);
+                    $header.find('th[data-col-sortable]').off('keydown', this._boundKeydownHandler);
+                    $header.find('th[data-col-sortable]').on('keydown', this._boundKeydownHandler);
                 } else {
-                    $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+                    // CRITICAL FIX: Use stored bound references
+                    $header.find('th[data-col-sortable]').off('click', this._boundSortHandler);
+                    $header.find('th[data-col-sortable]').on('click', this._boundSortHandler);
+                    $header.find('th[data-col-sortable]').off('keydown', this._boundKeydownHandler);
+                    $header.find('th[data-col-sortable]').on('keydown', this._boundKeydownHandler);
                 }
             } else {
                 if (this.options.enableColumnSelection) {
@@ -2899,8 +2916,9 @@ $.widget('wm.datatable', {
         if (this.options.rowActions.length) {
             $htm.find('.cancel-edit-row-button').off('click');
             $htm.find('.save-edit-row-button').off('click');
-            $htm.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
-            $htm.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
+            // CRITICAL FIX: Use stored bound reference
+            $htm.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this._boundToggleEditRow);
+            $htm.find('.save-edit-row-button').on('click', {action: 'save'}, this._boundToggleEditRow);
         }
         if (self.options.editmode === self.CONSTANTS.QUICK_EDIT) {
             $htm.on('focus', 'tr.app-datagrid-row', function (e) {
@@ -3635,5 +3653,17 @@ $.widget('wm.datatable', {
     _destroy: function () {
         this.element.text('');
         window.clearTimeout(this.refreshGridTimeout);
+        
+        // CRITICAL FIX: Nullify bound handler references to prevent memory leaks
+        // These bound functions hold references to 'this' (the widget instance)
+        // Clearing them allows the widget to be garbage collected
+        this._boundRowClickHandlerOnCapture = null;
+        this._boundRowSelectionHandler = null;
+        this._boundRowDblClickHandler = null;
+        this._boundOnKeyDown = null;
+        this._boundColumnSelectionHandler = null;
+        this._boundSortHandler = null;
+        this._boundKeydownHandler = null;
+        this._boundToggleEditRow = null;
     }
 });

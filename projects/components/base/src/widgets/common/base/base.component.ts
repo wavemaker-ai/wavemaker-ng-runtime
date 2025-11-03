@@ -155,6 +155,13 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     private eventHandlers = new Map<string, {callback: Function, locals: any}>();
 
     /**
+     * Array to track destroy listener subscriptions
+     * CRITICAL FIX: Store subscriptions to prevent memory leaks
+     * Without this, subscription objects linger even after destroy.complete()
+     */
+    private destroySubscriptions: Array<any> = [];
+
+    /**
      * context of the widget
      * when the widget is preset inside a repeater this context will have the repeater related properties
      */
@@ -357,7 +364,11 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         if (ctx) {
             fn = fn.bind(ctx);
         }
-        this.destroy.subscribe(() => {}, () => {}, () => fn());
+        // CRITICAL FIX: Store subscription to prevent memory leaks
+        // The subscription object itself can retain memory even after destroy.complete()
+        // By storing and explicitly unsubscribing, we ensure proper cleanup
+        const subscription = this.destroy.subscribe(() => {}, () => {}, () => fn());
+        this.destroySubscriptions.push(subscription);
     }
 
     public getDisplayType(): string {
@@ -574,9 +585,14 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         let viewParent  = child ? child.widget.viewParent.viewParent : this.viewParent,
             context     = child ? child.widget.context : this.context,
             widget      = child ? child.widget : this.widget,
-            isMuted     = child ? child.widget.isMuted : this.isMuted,
             widgetProps = child ? child.widget.widgetProps : this.widgetProps,
             widgetId    = child ? child.widget.widgetId : this.widgetId;
+        
+        // CRITICAL FIX: Don't create closure for isMuted check
+        // Arrow function () => isMuted captures entire scope (viewParent, context, widget, widgetProps)
+        // Instead, reference the widget property directly to minimize closure scope
+        const widgetRef = child ? child.widget : this;
+        
         this.registerDestroyListener(
             $watch(
                 expr,
@@ -590,7 +606,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
                 getWatchIdentifier(widgetId, propName),
                 propName === 'datasource',
                 widgetProps.get(propName),
-                () => isMuted
+                () => widgetRef.isMuted  // Only captures widgetRef, not all local variables
             )
         );
     }
@@ -851,6 +867,19 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
 
     ngOnDestroy() {
         this.isDestroyed = true;
+        
+        // CRITICAL FIX: Unsubscribe all destroy listeners BEFORE completing the subject
+        // This prevents subscription objects from lingering in memory
+        // Each registerDestroyListener() call creates a subscription that needs explicit cleanup
+        if (this.destroySubscriptions && this.destroySubscriptions.length > 0) {
+            this.destroySubscriptions.forEach(sub => {
+                if (sub && typeof sub.unsubscribe === 'function') {
+                    sub.unsubscribe();
+                }
+            });
+            this.destroySubscriptions = [];
+        }
+        
         this.widget = Object.create(null);
         this.styleChange.complete();
         this.propertyChange.complete();

@@ -1265,13 +1265,36 @@ export const removeExtraSlashes = function (url) {
 $.cachedScript = (() => {
     const inProgress = new Map();
     const resolved = new Set();
+    
+    // CRITICAL FIX: Add size limit to prevent unbounded growth
+    const MAX_CACHE_SIZE = 100;
 
     const isInProgress = url => inProgress.has(url);
     const isResolved = url => resolved.has(url);
+    
     const onLoad = url => {
+        // CRITICAL FIX: Implement LRU-style cache eviction
+        if (resolved.size >= MAX_CACHE_SIZE) {
+            // Remove oldest entry (first item in Set)
+            const firstUrl = resolved.values().next().value;
+            resolved.delete(firstUrl);
+        }
+        
         resolved.add(url);
-        inProgress.get(url).resolve();
-        inProgress.delete(url);
+        const promiseData = inProgress.get(url);
+        if (promiseData) {
+            promiseData.resolve();
+            inProgress.delete(url);
+        }
+    };
+    
+    // CRITICAL FIX: Handle errors to prevent hanging promises
+    const onError = (url, error) => {
+        const promiseData = inProgress.get(url);
+        if (promiseData) {
+            promiseData.reject(error);
+            inProgress.delete(url);
+        }
     };
 
     const setInProgress = url => {
@@ -1282,10 +1305,12 @@ $.cachedScript = (() => {
             rejFn = rej;
         });
 
-        promise.resolve = resFn;
-        promise.reject = rejFn;
-
-        inProgress.set(url, promise);
+        // Store resolve/reject separately to avoid attaching to promise
+        inProgress.set(url, {
+            promise,
+            resolve: resFn,
+            reject: rejFn
+        });
     };
 
     return function (url) {
@@ -1294,7 +1319,7 @@ $.cachedScript = (() => {
         }
 
         if (isInProgress(url)) {
-            return inProgress.get(url);
+            return inProgress.get(url).promise;
         }
 
         setInProgress(url);
@@ -1305,9 +1330,16 @@ $.cachedScript = (() => {
             url
         };
 
-        $.ajax(options).done(() => onLoad(url));
+        // CRITICAL FIX: Add error handling
+        $.ajax(options)
+            .done(() => onLoad(url))
+            .fail((jqXHR, textStatus, errorThrown) => {
+                const error = new Error(`Failed to load script: ${url} - ${textStatus}`);
+                console.warn('Script load failed:', url, errorThrown);
+                onError(url, error);
+            });
 
-        return inProgress.get(url);
+        return inProgress.get(url).promise;
     };
 })();
 

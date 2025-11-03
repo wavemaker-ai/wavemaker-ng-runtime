@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Injector, Input, Output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Injector, Input, OnDestroy, Output } from '@angular/core';
 
 declare const $;
 
@@ -35,7 +35,7 @@ export class PickerGroupComponent {
         </div>
         `
 })
-export class PickerComponent implements AfterViewInit {
+export class PickerComponent implements AfterViewInit, OnDestroy {
 
     public $el;
 
@@ -99,16 +99,28 @@ export class PickerComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         this.pickerAnimator = new PickerAnimator(this);
     }
+    
+    ngOnDestroy() {
+        // CRITICAL FIX: Destroy PickerAnimator to clean up swipey plugin
+        if (this.pickerAnimator) {
+            this.pickerAnimator.destroy();
+            this.pickerAnimator = null;
+        }
+    }
 
 }
 
 class PickerAnimator {
+    private swipeyElement: any;
 
     constructor(private picker: PickerComponent) {
         let lastSelectedIndex = picker.selectedIndex + picker.noOfEmptyElements;
         const computeIndex = (d: number) => lastSelectedIndex + Math.floor(d / 16);
         this.select(lastSelectedIndex);
-        this.getElement().swipey({
+        
+        // CRITICAL FIX: Store swipey element for cleanup
+        this.swipeyElement = this.getElement();
+        this.swipeyElement.swipey({
             'direction': $.fn.swipey.DIRECTIONS.VERTICAL,
             'threshold': 10,
             'target': picker.$el,
@@ -156,5 +168,22 @@ class PickerAnimator {
                 $(e).hide();
             }
         });
+    }
+    
+    // CRITICAL FIX: Destroy method to clean up swipey plugin
+    destroy() {
+        if (this.swipeyElement) {
+            // Destroy swipey plugin to remove event listeners
+            try {
+                if (typeof this.swipeyElement.swipey === 'function') {
+                    this.swipeyElement.swipey('destroy');
+                }
+            } catch (e) {
+                // Swipey might not have destroy method, manually clean up
+                this.swipeyElement.off();
+            }
+            this.swipeyElement = null;
+        }
+        this.picker = null;
     }
 }

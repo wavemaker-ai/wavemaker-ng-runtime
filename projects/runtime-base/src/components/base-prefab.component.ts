@@ -45,6 +45,9 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
 
     destroy$ = new Subject();
     viewInit$ = new Subject();
+    
+    // CRITICAL FIX: Track destroy listener subscriptions to prevent memory leaks
+    private destroySubscriptions: any[] = [];
 
     private viewParent: any;
 
@@ -115,7 +118,9 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
     registerDestroyListener(fn: Function) {
-        this.destroy$.subscribe(noop, noop, () => fn());
+        // CRITICAL FIX: Store subscription to prevent memory leaks
+        const subscription = this.destroy$.subscribe(noop, noop, () => fn());
+        this.destroySubscriptions.push(subscription);
     }
 
     defineI18nProps() {
@@ -295,6 +300,16 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
     ngOnDestroy(): void {
+        // CRITICAL FIX: Unsubscribe all destroy listeners BEFORE completing subject
+        if (this.destroySubscriptions && this.destroySubscriptions.length > 0) {
+            this.destroySubscriptions.forEach(sub => {
+                if (sub && typeof sub.unsubscribe === 'function') {
+                    sub.unsubscribe();
+                }
+            });
+            this.destroySubscriptions = [];
+        }
+        
         this.destroy$.complete();
         // Complete all subjects to prevent memory leaks
         if (this.viewInit$ && !this.viewInit$.closed) {

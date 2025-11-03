@@ -414,4 +414,19 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
         }
         (this.displayInputElem as any).value = get(this, 'nativeDisplayValue');
     }
+    
+    ngOnDestroy() {
+        // CRITICAL FIX: Clear time interval to prevent memory leaks
+        // Already registered via registerDestroyListener in constructor, but adding explicit cleanup
+        this.clearTimeInterval();
+        
+        // CRITICAL FIX: Remove event listener to prevent memory leaks
+        if (this.deregisterEventListener) {
+            this.deregisterEventListener();
+            this.deregisterEventListener = null;
+        }
+        
+        // Call super to clean up base component resources
+        super.ngOnDestroy();
+    }
 }

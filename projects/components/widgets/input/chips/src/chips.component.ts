@@ -3,6 +3,7 @@ import {
     AfterViewInit,
     Attribute,
     Component,
+    forwardRef,
     Inject,
     Injector,
     OnDestroy,
@@ -26,6 +27,8 @@ import {
     TextContentDirective
 } from '@wm/components/base';
 import {DatasetAwareFormComponent} from '@wm/components/input/dataset-aware-form';
+// CRITICAL FIX: Use forwardRef to break circular dependency
+// SearchComponent uses ScrollableDirective which injects SearchComponent
 import {SearchComponent} from '@wm/components/basic/search';
 
 import {registerProps} from './chips.props';
@@ -53,7 +56,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective, SearchComponent],
+    imports: [CommonModule, TextContentDirective, forwardRef(() => SearchComponent)],
     selector: '[wmChips]',
     templateUrl: './chips.component.html',
     providers: [
@@ -77,7 +80,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
     private inputposition: string;
     private showsearchicon: boolean;
 
-    @ViewChild(SearchComponent, /* TODO: add static flag */ {static: true}) searchComponent: SearchComponent;
+    @ViewChild(forwardRef(() => SearchComponent), /* TODO: add static flag */ {static: true}) searchComponent: SearchComponent;
     private _datasource: any;
     private _unsubscribeDv = false;
     private searchkey: string;

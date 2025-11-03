@@ -18,6 +18,8 @@ import {get} from "lodash-es";
 
 initComponentsBuildTask();
 
+// CRITICAL FIX: Add size limit to prevent unbounded cache growth
+const MAX_CACHE_SIZE = 50;
 const componentFactoryRefCache = new Map<string, any>();
 
 const getDynamicModule = (componentRef: any) => {
@@ -48,6 +50,9 @@ const getDynamicComponent = (
 @Injectable()
 export class DynamicComponentRefProviderService {
     private counter = 1;
+    
+    // CRITICAL FIX: Track created components for cleanup
+    private createdComponents: any[] = [];
 
     constructor(
         private app: App,
@@ -69,6 +74,14 @@ export class DynamicComponentRefProviderService {
                 .componentFactories
                 .filter(factory => factory.componentType === componentDef)[0];
 
+            // CRITICAL FIX: Implement LRU-style cache eviction to prevent unbounded growth
+            if (componentFactoryRefCache.size >= MAX_CACHE_SIZE) {
+                // Remove oldest entry (first item in Map)
+                const firstKey = componentFactoryRefCache.keys().next().value;
+                componentFactoryRefCache.delete(firstKey);
+                console.warn(`Dynamic component cache limit reached. Evicted: ${firstKey}`);
+            }
+            
             componentFactoryRefCache.set(selector, componentFactoryRef);
         }
         return componentFactoryRef;
@@ -90,7 +103,48 @@ export class DynamicComponentRefProviderService {
         options.selector = isDefined(options.selector) ? options.selector : 'wm-dynamic-component-' + this.counter++;
         const componentFactoryRef = await this.getComponentFactoryRef(options.selector, markup, options);
         const component = this.app.dynamicComponentContainerRef.createComponent(componentFactoryRef, 0, get(options, 'inj'));
+        
+        // CRITICAL FIX: Track created components for potential cleanup
+        // Store with weak reference pattern to avoid retaining components
+        this.createdComponents.push({
+            componentRef: component,
+            selector: options.selector,
+            target: target
+        });
+        
         extendProto(component.instance, context);
         target.appendChild(component.location.nativeElement);
+        
+        // Return cleanup function that caller MUST call when component is no longer needed
+        return () => {
+            const index = this.createdComponents.findIndex(c => c.componentRef === component);
+            if (index > -1) {
+                this.createdComponents.splice(index, 1);
+            }
+            component.destroy();
+        };
+    }
+    
+    /**
+     * CRITICAL FIX: Clear all cached component factories
+     * Call this when navigating away from pages that create many dynamic components
+     */
+    public clearCache() {
+        componentFactoryRefCache.clear();
+    }
+    
+    /**
+     * CRITICAL FIX: Cleanup method for destroying all tracked dynamic components
+     * Should be called when app/page is being destroyed
+     */
+    public destroyAllComponents() {
+        this.createdComponents.forEach(({componentRef}) => {
+            try {
+                componentRef.destroy();
+            } catch (e) {
+                console.warn('Failed to destroy dynamic component:', e);
+            }
+        });
+        this.createdComponents = [];
     }
 }

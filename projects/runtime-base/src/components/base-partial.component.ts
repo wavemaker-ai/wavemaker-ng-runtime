@@ -59,6 +59,10 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
 
     destroy$ = new Subject();
     viewInit$ = new Subject();
+    
+    // CRITICAL FIX: Track destroy listener subscriptions to prevent memory leaks
+    private destroySubscriptions: any[] = [];
+    
     private viewParent: any;
 
     abstract evalUserScript(prefabContext: any, appContext: any, utils: any);
@@ -130,7 +134,9 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
     }
 
     registerDestroyListener(fn: Function) {
-        this.destroy$.subscribe(noop, noop, () => fn());
+        // CRITICAL FIX: Store subscription to prevent memory leaks
+        const subscription = this.destroy$.subscribe(noop, noop, () => fn());
+        this.destroySubscriptions.push(subscription);
     }
 
     initUserScript() {
@@ -254,6 +260,16 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
         // Call ngOnDetach to ensure cleanup if it hasn't been called
         if (this.Widgets) {
             this.ngOnDetach();
+        }
+        
+        // CRITICAL FIX: Unsubscribe all destroy listeners BEFORE completing subject
+        if (this.destroySubscriptions && this.destroySubscriptions.length > 0) {
+            this.destroySubscriptions.forEach(sub => {
+                if (sub && typeof sub.unsubscribe === 'function') {
+                    sub.unsubscribe();
+                }
+            });
+            this.destroySubscriptions = [];
         }
         
         this.destroy$.complete();

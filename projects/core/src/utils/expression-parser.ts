@@ -26,6 +26,12 @@ const noop = () => {};
 
 export type ParseExprResult = (data?: any, locals?: any) => any;
 
+// CRITICAL FIX: Add size limits to prevent unbounded cache growth
+// These caches can grow to thousands of entries in large, long-running SPAs
+const MAX_EXPR_CACHE_SIZE = 500;
+const MAX_EVENT_CACHE_SIZE = 300;
+const MAX_PIPE_CACHE_SIZE = 50;
+
 const exprFnCache = new Map();
 const eventFnCache = new Map();
 const purePipes = new Map();
@@ -570,6 +576,11 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
                             }
 
                             if (pipeInfo.pure) {
+                                // CRITICAL FIX: Implement cache size limit for pure pipes
+                                if (purePipes.size >= MAX_PIPE_CACHE_SIZE) {
+                                    const firstKey = purePipes.keys().next().value;
+                                    purePipes.delete(firstKey);
+                                }
                                 purePipes.set(pipeName, pipeInstance);
                             }
                         }
@@ -585,6 +596,13 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
         }
     }
 
+    // CRITICAL FIX: Implement LRU-style cache eviction to prevent unbounded growth
+    if (exprFnCache.size >= MAX_EXPR_CACHE_SIZE) {
+        const firstKey = exprFnCache.keys().next().value;
+        exprFnCache.delete(firstKey);
+        console.warn(`Expression cache limit reached (${MAX_EXPR_CACHE_SIZE}). Evicted: ${firstKey}`);
+    }
+    
     exprFnCache.set(expr, boundFn);
 
     return boundFn;
@@ -647,6 +665,13 @@ export function $parseEvent(expr, defOnly?): ParseExprResult {
         }
     }
 
+    // CRITICAL FIX: Implement LRU-style cache eviction to prevent unbounded growth
+    if (eventFnCache.size >= MAX_EVENT_CACHE_SIZE) {
+        const firstKey = eventFnCache.keys().next().value;
+        eventFnCache.delete(firstKey);
+        console.warn(`Event cache limit reached (${MAX_EVENT_CACHE_SIZE}). Evicted: ${firstKey}`);
+    }
+    
     eventFnCache.set(expr, fn);
     return fn;
 }
@@ -692,6 +717,11 @@ const fnExecutor = (expr, exprType) => {
                 }
 
                 if (pipeInfo.pure) {
+                    // CRITICAL FIX: Implement cache size limit for pure pipes
+                    if (purePipes.size >= MAX_PIPE_CACHE_SIZE) {
+                        const firstKey = purePipes.keys().next().value;
+                        purePipes.delete(firstKey);
+                    }
                     purePipes.set(pipeName, pipeInstance);
                 }
             }
@@ -715,4 +745,48 @@ export const getFnForBindExpr = (expr) => {
 
 export const getFnForEventExpr = (expr) => {
     return fnExecutor(expr, ExpressionType.Action);
+}
+
+/**
+ * CRITICAL FIX: Utility functions to manage expression parser caches
+ * These caches can grow unbounded in long-running SPAs
+ */
+
+/**
+ * Clear all expression parser caches
+ * Call this during major navigation events or when memory pressure is detected
+ */
+export const clearExpressionCaches = () => {
+    const exprCount = exprFnCache.size;
+    const eventCount = eventFnCache.size;
+    const pipeCount = purePipes.size;
+    const fnCount = fnNameMap.size;
+    
+    exprFnCache.clear();
+    eventFnCache.clear();
+    purePipes.clear();
+    fnNameMap.clear();
+    
+    console.log(`Cleared expression caches: ${exprCount} expressions, ${eventCount} events, ${pipeCount} pipes, ${fnCount} registered functions`);
+}
+
+/**
+ * Get current cache sizes for monitoring
+ */
+export const getExpressionCacheSizes = () => {
+    return {
+        exprFnCache: exprFnCache.size,
+        eventFnCache: eventFnCache.size,
+        purePipes: purePipes.size,
+        fnNameMap: fnNameMap.size,
+        total: exprFnCache.size + eventFnCache.size + purePipes.size + fnNameMap.size
+    };
+}
+
+/**
+ * Expose cache size getters for debugging
+ */
+if (typeof window !== 'undefined') {
+    (window as any).getExpressionCacheSizes = getExpressionCacheSizes;
+    (window as any).clearExpressionCaches = clearExpressionCaches;
 }

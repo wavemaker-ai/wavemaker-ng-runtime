@@ -188,6 +188,10 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
     private chartData: any[] = [];
     private _processedData: any[] = [];
     private _subsciptions: any = [];
+    
+    // CRITICAL FIX: Store bound handler references to prevent creating new closures
+    private _boundHandleLoading: any;
+    private _boundHideTooltip: any;
 
     @HostBinding('class.panel') title;
 
@@ -1127,6 +1131,10 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER, ['fontsize', 'fontunit', 'color', 'fontfamily', 'fontweight', 'fontstyle', 'textdecoration']);
 
+        // CRITICAL FIX: Create bound references once to avoid creating multiple closures
+        this._boundHandleLoading = this.handleLoading.bind(this);
+        this._boundHideTooltip = this.hideTooltip.bind(this);
+
         // generate unique id for the component
         this.$id = this.widgetId || Math.random();
         // remove title attribute as the element on hover shows you the hint through-out the element
@@ -1134,9 +1142,11 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
         this.chartReady = false;
         this.binddataset = this.nativeElement.getAttribute('dataset.bind');
         // Show loading status based on the variable life cycle
-        this._subsciptions.push(this.app.subscribe('toggle-variable-state', this.handleLoading.bind(this)));
+        // CRITICAL FIX: Use stored bound reference instead of .bind(this)
+        this._subsciptions.push(this.app.subscribe('toggle-variable-state', this._boundHandleLoading));
         // Will hide tolltip of a chart in mobile when the user scrolls.
-        this._subsciptions.push(this.app.subscribe('iscroll-start', () => {this.hideTooltip();}));
+        // CRITICAL FIX: Use stored bound reference instead of arrow function
+        this._subsciptions.push(this.app.subscribe('iscroll-start', this._boundHideTooltip));
     }
 
     ngAfterViewInit() {
@@ -1166,6 +1176,13 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
         this._subsciptions.forEach((subscription)=>{
             subscription();
         });
+        
+        // CRITICAL FIX: Nullify bound handler references to enable garbage collection
+        // These hold references to the component instance via closures
+        this._boundHandleLoading = null;
+        this._boundHideTooltip = null;
+        this.redraw = null;
+        
         super.ngOnDestroy();
     }
     redraw = this._plotChartProxy.bind(this);

@@ -1582,9 +1582,20 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     getClonedRowObject(rowData) {
         const row = getClonedObject(rowData);
-        row.getProperty = field => {
-            return get(row, field);
-        };
+        
+        // CRITICAL FIX: Avoid circular reference memory leak
+        // OLD CODE: row.getProperty = field => get(row, field);
+        // This created a closure capturing 'row', causing: row → getProperty → row (circular ref)
+        // NEW: Use Object.defineProperty with a getter that doesn't capture 'row' in closure
+        Object.defineProperty(row, 'getProperty', {
+            value: function(field) {
+                return get(this, field);  // 'this' refers to row at call time, no closure capture
+            },
+            writable: false,
+            enumerable: false,  // Don't include in iterations/clones
+            configurable: true
+        });
+        
         row.$isFirst = row.$index === 1;
         row.$isLast = this.gridData.length === row.$index;
         delete row.$$index;

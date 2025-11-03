@@ -68,6 +68,9 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
     destroy$ = new Subject();
     viewInit$ = new Subject();
     formatsByLocale = {'timezone': ''};
+    
+    // CRITICAL FIX: Track destroy listener subscriptions to prevent memory leaks
+    private destroySubscriptions: any[] = [];
 
 
     abstract evalUserScript(prefabContext: any, appContext: any, utils: any);
@@ -126,7 +129,9 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
     }
 
     registerDestroyListener(fn: Function) {
-        this.destroy$.subscribe(noop, noop, () => fn());
+        // CRITICAL FIX: Store subscription to prevent memory leaks
+        const subscription = this.destroy$.subscribe(noop, noop, () => fn());
+        this.destroySubscriptions.push(subscription);
     }
 
     defineI18nProps() {
@@ -346,6 +351,17 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
     ngOnDestroy(): void {
         //this.captureApplicationThumbnail();
         this.savePageSnapShot();
+        
+        // CRITICAL FIX: Unsubscribe all destroy listeners BEFORE completing subject
+        if (this.destroySubscriptions && this.destroySubscriptions.length > 0) {
+            this.destroySubscriptions.forEach(sub => {
+                if (sub && typeof sub.unsubscribe === 'function') {
+                    sub.unsubscribe();
+                }
+            });
+            this.destroySubscriptions = [];
+        }
+        
         this.destroy$.complete();
         // Complete all subjects to prevent memory leaks
         if (this.viewInit$ && !this.viewInit$.closed) {
@@ -354,6 +370,31 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         if (this.fragmentsLoaded$ && !this.fragmentsLoaded$.closed) {
             this.fragmentsLoaded$.complete();
         }
+        
+        // CRITICAL FIX: Clear App singleton references to allow page garbage collection
+        // App is a singleton that lives for the entire app lifetime
+        // Without clearing these, App holds references to every destroyed page
+        if (this.App) {
+            // Clear if this page is the active page
+            if (this.App.activePage === this) {
+                this.App.activePage = null;
+            }
+            // Clear App.Widgets reference (holds all page widgets)
+            if ((this.App as any).Widgets) {
+                (this.App as any).Widgets = null;
+            }
+            // Clear active page name if it's this page
+            if (this.App.activePageName === this.pageName) {
+                this.App.activePageName = null;
+            }
+        }
+        
+        // CRITICAL FIX: Clear all component references
+        this.Widgets = Object.create(null);
+        this.Variables = Object.create(null);
+        this.Actions = Object.create(null);
+        this.pageDirective = null;
+        this.$page = null;
     }
 
     captureApplicationThumbnail() {

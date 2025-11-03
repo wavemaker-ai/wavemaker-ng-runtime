@@ -31,7 +31,9 @@ export {
     setPipeProvider,
     getFnByExpr,
     getFnForBindExpr,
-    getFnForEventExpr
+    getFnForEventExpr,
+    clearExpressionCaches,
+    getExpressionCacheSizes
 } from './utils/expression-parser';
 export {
     EVENT_LIFE,

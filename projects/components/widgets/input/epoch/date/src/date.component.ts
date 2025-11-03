@@ -1,5 +1,5 @@
 import {IMaskDirective, IMaskModule} from 'angular-imask';
-import {ChangeDetectorRef, Component, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {BsDatepickerDirective, BsDatepickerModule} from 'ngx-bootstrap/datepicker';
 import {
@@ -41,7 +41,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(DateComponent)
     ]
 })
-export class DateComponent extends BaseDateTimeComponent {
+export class DateComponent extends BaseDateTimeComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     public bsDataValue;
@@ -240,6 +240,23 @@ export class DateComponent extends BaseDateTimeComponent {
         if (!includes(['blur', 'focus', 'change', 'click'], eventName)) {
             super.handleEvent(node, eventName, callback, locals);
         }
+    }
+    
+    ngOnDestroy() {
+        // CRITICAL FIX: Clean up focusTrap to prevent memory leaks
+        if (this.focusTrap) {
+            this.focusTrap.deactivate();
+            this.focusTrap = null;
+        }
+        
+        // CRITICAL FIX: Remove event listener to prevent memory leaks
+        if (this.deregisterEventListener) {
+            this.deregisterEventListener();
+            this.deregisterEventListener = null;
+        }
+        
+        // Call super to clean up base component resources
+        super.ngOnDestroy();
     }
 
     /**

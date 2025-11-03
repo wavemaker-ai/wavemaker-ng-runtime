@@ -522,4 +522,31 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
             this.invokeEventCallback('blur', { $event });
         }
     }
+    
+    ngOnDestroy() {
+        // CRITICAL FIX: Clear time interval to prevent memory leaks
+        // Already registered via registerDestroyListener in constructor, but adding explicit cleanup
+        this.clearTimeInterval();
+        
+        // CRITICAL FIX: Clean up focusTrap to prevent memory leaks
+        if (this.focusTrap) {
+            this.focusTrap.deactivate();
+            this.focusTrap = null;
+        }
+        
+        // CRITICAL FIX: Remove date picker event listener
+        if (this.deregisterDatepickerEventListener) {
+            this.deregisterDatepickerEventListener();
+            this.deregisterDatepickerEventListener = null;
+        }
+        
+        // CRITICAL FIX: Remove time picker event listener
+        if (this.deregisterTimepickeEventListener) {
+            this.deregisterTimepickeEventListener();
+            this.deregisterTimepickeEventListener = null;
+        }
+        
+        // Call super to clean up base component resources
+        super.ngOnDestroy();
+    }
 }

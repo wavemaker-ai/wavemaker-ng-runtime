@@ -287,7 +287,13 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        // CRITICAL FIX: Hide modal and clean up event listeners
         this.hideModal();
+        
+        // CRITICAL FIX: Remove jQuery click handlers that may have been added
+        // hideOnClick() adds click handlers that need to be removed
+        $('body>modal-container .date-picker-modal .app-datetime-picker').off('click');
+        $('body>modal-container .date-picker-modal').off('click');
     }
 
 }

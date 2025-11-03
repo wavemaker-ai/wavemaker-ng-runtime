@@ -69,6 +69,10 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
 
     destroy$ = new Subject();
     viewInit$ = new Subject();
+    
+    // CRITICAL FIX: Track destroy listener subscriptions to prevent memory leaks
+    private destroySubscriptions: any[] = [];
+    
     private viewParent: any;
 
     abstract evalUserScript(prefabContext: any, appContext: any, utils: any);
@@ -213,7 +217,9 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
     }
 
     registerDestroyListener(fn: Function) {
-        this.destroy$.subscribe(noop, noop, () => fn());
+        // CRITICAL FIX: Store subscription to prevent memory leaks
+        const subscription = this.destroy$.subscribe(noop, noop, () => fn());
+        this.destroySubscriptions.push(subscription);
     }
 
     registerChangeListeners() {
@@ -377,11 +383,30 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
     }
 
     ngOnDestroy(): void {
+        // CRITICAL FIX: Unsubscribe all destroy listeners BEFORE completing subject
+        if (this.destroySubscriptions && this.destroySubscriptions.length > 0) {
+            this.destroySubscriptions.forEach(sub => {
+                if (sub && typeof sub.unsubscribe === 'function') {
+                    sub.unsubscribe();
+                }
+            });
+            this.destroySubscriptions = [];
+        }
+        
         this.destroy$.complete();
         // Complete viewInit$ subject to prevent memory leak
         if (this.viewInit$ && !this.viewInit$.closed) {
             this.viewInit$.complete();
         }
+        
+        // CRITICAL FIX: Set Widgets to empty object instead of null
+        // This prevents "Cannot set properties of null" errors when async child widgets
+        // try to register after parent is destroyed. The empty object will be GC'd with the parent.
+        this.Widgets = Object.create(null);
+        this.Variables = Object.create(null);
+        this.Actions = Object.create(null);
+        this.containerWidget = null;
+        this.viewParent = null;
     }
 
     ngOnAttach(refreshData) {
