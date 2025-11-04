@@ -2149,6 +2149,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         };
         this.dataNavigator.widget.maxResults = nv;
         this.dataNavigator.maxResults = nv;
+        if(this.datasource) {
+            this.datasource.maxResults = this.pagesize || this.datasource.maxResults;
+        }
     }
 
     onDataSourceChange() {

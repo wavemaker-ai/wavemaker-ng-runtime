@@ -601,6 +601,9 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         };
         this.dataNavigator.widget.maxResults = nv;
         this.dataNavigator.maxResults = nv;
+        if(this.datasource){
+            this.datasource.maxResults = this.pagesize || this.datasource.maxResults;
+        }
     }
 
     public onItemClick(evt: any, $listItem: ListItemDirective) {
