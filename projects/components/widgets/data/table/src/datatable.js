@@ -927,6 +927,9 @@ $.widget('wm.datatable', {
         }
         gridData = this.options.isNavTypeScrollOrOndemand() ? this.options.data.slice(pageStartIndex) : this.options.data;
         gridData.forEach(function (item, i) {
+            // NOTE: Deep clone is necessary for proper nested object handling
+            // The code below extracts nested values (e.g., obj.nested.value) and flattens them
+            // Shallow clone would share references and cause data corruption
             var rowData = $.extend(true, {}, item);
             colDefs.forEach(function (colDef) {
                 if (!colDef.field) {
@@ -3661,32 +3664,6 @@ $.widget('wm.datatable', {
         $cell.addClass(val.toAdd);
         $head.removeClass(val.toRemove);
         $head.addClass(val.toAdd);
-    },
-    
-    // MEMORY OPTIMIZATION: Refresh a single row to apply lazy-compiled custom expressions
-    // This is called when a row scrolls into view and its popovers need to be compiled
-    refreshRow: function (rowId) {
-        var $row = this.gridElement.find('tr.app-datagrid-row[data-row-id="' + rowId + '"]');
-        if (!$row.length || !this.preparedData[rowId]) {
-            return;
-        }
-        
-        var self = this;
-        var rowData = this.preparedData[rowId];
-        
-        // Re-render cells with custom expressions (popovers)
-        $row.find('td.app-datagrid-cell').each(function() {
-            var $cell = $(this);
-            var colId = $cell.attr('data-col-id');
-            var colDef = self.preparedHeaderData[colId];
-            
-            if (colDef && colDef.customExpression) {
-                var customExpr = self.options.getCustomExpression(colDef.field, rowId);
-                if (customExpr) {
-                    $cell.html(customExpr);
-                }
-            }
-        });
     },
 
     _destroy: function () {
