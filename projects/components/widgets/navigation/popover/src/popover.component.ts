@@ -64,6 +64,10 @@ let activePopover: PopoverComponent;
 
 export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
+    
+    // MEMORY OPTIMIZATION: Lazy initialization flag
+    // Defer heavy initialization until first interaction to reduce memory footprint
+    private isContentInitialized = false;
 
     public event: string;
     public isOpen = false;

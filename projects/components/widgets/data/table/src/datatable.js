@@ -3662,6 +3662,32 @@ $.widget('wm.datatable', {
         $head.removeClass(val.toRemove);
         $head.addClass(val.toAdd);
     },
+    
+    // MEMORY OPTIMIZATION: Refresh a single row to apply lazy-compiled custom expressions
+    // This is called when a row scrolls into view and its popovers need to be compiled
+    refreshRow: function (rowId) {
+        var $row = this.gridElement.find('tr.app-datagrid-row[data-row-id="' + rowId + '"]');
+        if (!$row.length || !this.preparedData[rowId]) {
+            return;
+        }
+        
+        var self = this;
+        var rowData = this.preparedData[rowId];
+        
+        // Re-render cells with custom expressions (popovers)
+        $row.find('td.app-datagrid-cell').each(function() {
+            var $cell = $(this);
+            var colId = $cell.attr('data-col-id');
+            var colDef = self.preparedHeaderData[colId];
+            
+            if (colDef && colDef.customExpression) {
+                var customExpr = self.options.getCustomExpression(colDef.field, rowId);
+                if (customExpr) {
+                    $cell.html(customExpr);
+                }
+            }
+        });
+    },
 
     _destroy: function () {
         // PERFORMANCE FIX: Removed console.log - reduces console noise
