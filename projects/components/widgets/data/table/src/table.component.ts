@@ -194,6 +194,59 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     private colWatcherCleanups: Map<string, Function> = new Map();
     private titleWatcherCleanups: Map<string, Function> = new Map();
     
+    // MEMORY OPTIMIZATION: Track which rows have had custom expressions compiled
+    // This allows lazy compilation - only compile when row becomes visible
+    private compiledCustomExprRows: Set<number> = new Set();
+    private lazyCompileThreshold = 20; // Only compile custom expressions for first 50 rows initially
+    private rowIntersectionObserver: IntersectionObserver;
+    
+    // MEMORY OPTIMIZATION: Setup lazy loading for custom expressions (popovers)
+    private setupLazyCustomExpressionLoading() {
+        if (this.rowIntersectionObserver) {
+            this.rowIntersectionObserver.disconnect();
+        }
+        
+        // Only setup if we have rows beyond the threshold
+        if (!this.gridData || this.gridData.length <= this.lazyCompileThreshold) {
+            return;
+        }
+        
+        // Use IntersectionObserver to compile POPOVER components when rows come into view
+        this.rowIntersectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const rowElement = entry.target as HTMLElement;
+                    const rowId = parseInt(rowElement.getAttribute('data-row-id') || '-1', 10);
+                    
+                    if (rowId >= 0 && rowId >= this.lazyCompileThreshold && !this.compiledCustomExprRows.has(rowId)) {
+                        // Compile this row's custom expressions on-demand
+                        const rowData = this.gridOptions.data[rowId];
+                        if (rowData) {
+                            this.gridOptions.generateCustomExpressions(rowData, rowId, false);
+                            // Re-render the row to include compiled expressions
+                            this.callDataGridMethod('refreshRow', rowId);
+                        }
+                    }
+                }
+            });
+        }, {
+            root: this.nativeElement.querySelector('.app-grid-content'),
+            rootMargin: '200px', // Start compiling 200px before row is visible
+            threshold: 0.01
+        });
+        
+        // Observe all rows beyond the threshold
+        setTimeout(() => {
+            const rows = this.nativeElement.querySelectorAll(`tr.app-datagrid-row[data-row-id]`);
+            rows.forEach((row: HTMLElement) => {
+                const rowId = parseInt(row.getAttribute('data-row-id') || '-1', 10);
+                if (rowId >= this.lazyCompileThreshold) {
+                    this.rowIntersectionObserver.observe(row);
+                }
+            });
+        }, 100);
+    }
+    
     // MEMORY LEAK FIX: Helper method to clear all row watchers during data refresh
     private clearAllRowWatchers() {
         this.rowWatcherCleanups.forEach(cleanup => cleanup());
@@ -490,6 +543,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 if (this._isPageSearch && this.filterInfo) {
                     this.searchSortHandler(this.filterInfo, undefined, 'search');
                 }
+                
+                // MEMORY OPTIMIZATION: Setup lazy loading for custom expressions (popovers) after render
+                this.setupLazyCustomExpressionLoading();
             });
         },
         getParentTableData: ()=> {
@@ -756,6 +812,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.customExprCompiledTl = {};
             this.customExprCompiledSummaryTl = {};
             
+            // MEMORY OPTIMIZATION: Clear compiled row tracker for lazy loading
+            this.compiledCustomExprRows.clear();
+            
             // MEMORY LEAK FIX: Clear row/column watchers when expressions are cleared
             // This prevents watcher accumulation during data refresh
             this.clearAllRowWatchers();
@@ -765,7 +824,15 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.rowDefMap = {};
             this.rowDefInstances = {};
         },
-        generateCustomExpressions: (rowData, index, summaryRow?) => {
+        generateCustomExpressions: (rowData, index, summaryRow?, forceCompile?) => {
+            // MEMORY OPTIMIZATION: Lazy compile custom expressions (includes popovers)
+            // Only compile first N rows initially, compile others on-demand when they become visible  
+            // forceCompile flag allows on-demand compilation to bypass the threshold check
+            if (!forceCompile && !summaryRow && index >= this.lazyCompileThreshold && !this.compiledCustomExprRows.has(index)) {
+                // Defer compilation for rows beyond threshold
+                // They'll be compiled when scrolled into view or when accessed
+                return;
+            }
             
             const row = this.getClonedRowObject(rowData);
             const compileTemplate = (tmpl) => {
@@ -784,6 +851,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 extend(colDef, this.columns[fieldName]);
                 if (!summaryRow) {
                     this.customExprCompiledTl[fieldName + index] = rootNode;
+                    this.compiledCustomExprRows.add(index);
                 } else {
                     this.customExprCompiledSummaryTl[fieldName + index] = rootNode;
                 }
@@ -852,6 +920,17 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             let customExpression;
             if (!summaryRow) {
                 customExpression = this.customExprCompiledTl[fieldName + index];
+                
+                // MEMORY OPTIMIZATION: If expression not compiled yet (lazy loading), compile it now
+                if (!customExpression && !this.compiledCustomExprRows.has(index)) {
+                    // Find the row data and compile on-demand
+                    const rowData = this.gridOptions.data[index];
+                    if (rowData) {
+                        // CRITICAL: Pass forceCompile=true to bypass threshold check
+                        this.gridOptions.generateCustomExpressions(rowData, index, false, true);
+                        customExpression = this.customExprCompiledTl[fieldName + index];
+                    }
+                }
             } else {
                 customExpression = this.customExprCompiledSummaryTl[fieldName + index];
             }
@@ -1574,6 +1653,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.navigatorMaxResultWatch.unsubscribe();
         }
 
+        // MEMORY OPTIMIZATION: Disconnect IntersectionObserver for lazy popover loading
+        if (this.rowIntersectionObserver) {
+            this.rowIntersectionObserver.disconnect();
+            this.rowIntersectionObserver = null;
+        }
+
         // MEMORY LEAK FIX: Clean up all row/column watchers before destroy
         // These Maps prevent the accumulation issue in destroySubscriptions
         this.rowWatcherCleanups.forEach(cleanup => cleanup());
@@ -1584,6 +1669,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         
         this.titleWatcherCleanups.forEach(cleanup => cleanup());
         this.titleWatcherCleanups.clear();
+        
+        // MEMORY OPTIMIZATION: Clear compiled row tracker
+        this.compiledCustomExprRows.clear();
         
         // MEMORY LEAK FIX: Clear all internal maps and structures
         this.rowActionsCompiledTl = null;
