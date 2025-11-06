@@ -417,6 +417,11 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
             this.viewInit$.complete();
         }
         
+        // MEMORY LEAK FIX: Clear i18n/locale references
+        // appLocale has prototype chains that prevent GC if not cleared
+        this.appLocale = null;
+        this.i18nService = null;
+        
         this.containerWidget = null;
         this.viewParent = null;
     }

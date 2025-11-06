@@ -489,6 +489,13 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
         if (this.panesChangesSubscription) {
             this.panesChangesSubscription.unsubscribe();
         }
+        
+        // MEMORY LEAK FIX: Remove mousewheel event handler
+        const $ul = this.$element.find('> ul');
+        if ($ul && $ul.length) {
+            $ul.off('mousewheel');
+        }
+        
         super.ngOnDestroy();
     }
 

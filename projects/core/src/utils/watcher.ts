@@ -102,7 +102,23 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
     return () => $unwatch(identifier);
 };
 
-export const $unwatch = identifier => registry.delete(identifier);
+export const $unwatch = identifier => {
+    // MEMORY LEAK FIX: Clear watchInfo contents before deleting from registry
+    // The watchInfo object holds: bound fn (with $scope/$locals), listener callback, and last value
+    // Without explicit cleanup, these can remain in memory during GC delay
+    const watchInfo = registry.get(identifier);
+    if (watchInfo) {
+        // Clear the stored last value (could be large cloned object)
+        watchInfo.last = null;
+        // Clear the bound function (releases $scope and $locals references)
+        watchInfo.fn = null;
+        // Clear the listener callback
+        watchInfo.listener = null;
+        // Clear isMuted function
+        watchInfo.isMuted = null;
+    }
+    return registry.delete(identifier);
+};
 
 let changedByWatch = false;
 

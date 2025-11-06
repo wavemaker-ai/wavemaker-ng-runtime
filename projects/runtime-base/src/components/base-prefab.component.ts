@@ -337,6 +337,17 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
             this.fragmentsLoaded$.complete();
         }
         
+        // MEMORY LEAK FIX: Clear prefab locale bundle from service Map
+        // This Map grows indefinitely without this cleanup
+        if (this.prefabName && this.i18nService) {
+            (this.i18nService as any).clearPrefabLocaleBundle?.(this.prefabName);
+        }
+        
+        // MEMORY LEAK FIX: Clear i18n/locale references
+        // appLocale has prototype chains that prevent GC if not cleared
+        this.appLocale = null;
+        this.i18nService = null;
+        
         this.containerWidget = null;
         this.viewParent = null;
     }

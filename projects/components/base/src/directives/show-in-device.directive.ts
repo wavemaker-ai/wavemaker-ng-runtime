@@ -10,6 +10,9 @@ export class ShowInDeviceDirective implements OnDestroy {
     private readonly context = {};
     private devices;
     private embeddedView;
+    // MEMORY LEAK FIX: Store bound function reference for proper event listener removal
+    private boundOnResize: () => void;
+    
     constructor(
         private viewContainerRef: ViewContainerRef,
         inj: Injector,
@@ -18,7 +21,9 @@ export class ShowInDeviceDirective implements OnDestroy {
     ) {
         extend(this.context, (inj as any)._lView[8], explicitContext);
 
-        window.addEventListener('resize', this.onResize.bind(this));
+        // MEMORY LEAK FIX: Store the bound function so we can remove it later
+        this.boundOnResize = this.onResize.bind(this);
+        window.addEventListener('resize', this.boundOnResize);
     }
     @Input() set wmShowInDevice(devices) {
         this.devices = devices.split(',');
@@ -63,8 +68,25 @@ export class ShowInDeviceDirective implements OnDestroy {
     }
 
     ngOnDestroy() {
-        window.removeEventListener('resize', this.onResize);
+        // MEMORY LEAK FIX: Remove event listener using the stored bound function reference
+        // Previously this was broken - addEventListener used .bind(this) but removeEventListener didn't
+        if (this.boundOnResize) {
+            window.removeEventListener('resize', this.boundOnResize);
+            this.boundOnResize = null;
+        }
+        
         // Clear the ViewContainerRef to prevent memory leaks
         this.viewContainerRef.clear();
+        
+        // MEMORY LEAK FIX: Clear all references to allow garbage collection
+        this.embeddedView = null;
+        (this as any).viewContainerRef = null;
+        (this as any).templateRef = null;
+        
+        // MEMORY LEAK FIX: Clear context object that holds references to Angular internals
+        // This context holds _lView[8] and explicitContext which prevent GC
+        if (this.context) {
+            Object.keys(this.context).forEach(key => delete this.context[key]);
+        }
     }
 }

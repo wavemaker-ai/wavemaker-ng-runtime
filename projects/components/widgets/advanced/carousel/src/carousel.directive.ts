@@ -104,6 +104,10 @@ export class CarouselDirective extends StylableComponent implements AfterContent
 
     ngOnDestroy() {
         this.stopAnimation();
+        // MEMORY LEAK FIX: Destroy animator to clean up event listeners
+        if (this.animator && typeof this.animator.destroy === 'function') {
+            this.animator.destroy();
+        }
         // Unsubscribe from slides.changes to prevent memory leak
         if (this.slidesChangesSubscription) {
             this.slidesChangesSubscription.unsubscribe();

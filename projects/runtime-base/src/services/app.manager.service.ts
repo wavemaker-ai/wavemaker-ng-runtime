@@ -559,13 +559,16 @@ export class AppManagerService implements OnDestroy {
         // Apply restored modes
         this.$app.setMode(storedModes);
 
-        // Listener for postMessage-based mode changes
-        window.addEventListener('message', (event) => {
+        // MEMORY LEAK FIX: Store the listener function so it can be properly removed in ngOnDestroy
+        this.messageListener = (event) => {
             const { key, modes, shouldPersist } = event.data || {};
             if (key === 'switch-mode' && modes) {
                 this.$app.setMode(modes, !shouldPersist);
             }
-        });
+        };
+        
+        // Listener for postMessage-based mode changes
+        window.addEventListener('message', this.messageListener);
     }
 
     ngOnDestroy(): void {

@@ -294,6 +294,11 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
             this.fragmentsLoaded$.complete();
         }
         
+        // MEMORY LEAK FIX: Clear i18n/locale references
+        // appLocale has prototype chains that prevent GC if not cleared
+        this.appLocale = null;
+        this.i18nService = null;
+        
         this.viewParent = null;
         this.containerWidget = null;
     }

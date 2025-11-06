@@ -1203,7 +1203,8 @@ $.widget('wm.datatable', {
             }
 
             // Adding click event to the button
-            $btnEl.on('click', function (e) {
+            // MEMORY LEAK FIX: Namespace event for cleanup
+            $btnEl.on('click.datatable', function (e) {
                 // when the button is clicked, hide the button and show loading indicator
                 var lastPage = (self.options.getCurrentPage() == self.options.getPageCount());
                 if(!lastPage) {
@@ -2082,10 +2083,11 @@ $.widget('wm.datatable', {
         });
 
         $editableElements = $row.find('td.cell-editing');
-        $editableElements.on('click', function (e) {
+        // MEMORY LEAK FIX: Namespace event handlers for cleanup
+        $editableElements.on('click.datatable', function (e) {
             e.stopPropagation();
         });
-        $editableElements.on('keydown', function (e) {
+        $editableElements.on('keydown.datatable', function (e) {
             //To prevent up and down arrows, navigating to other rows in edit mode
             if ((e.which === 38 || e.which === 40) && (e.currentTarget && !e.currentTarget.closest('.always-new-row'))) {
                 e.stopPropagation();
@@ -2108,10 +2110,11 @@ $.widget('wm.datatable', {
                     '<i aria-hidden="true" class="app-icon wi wi-done"></i>'+
                     '<span class="sr-only">Save Icon</span><span class="btn-caption">Save</span>'+
                     '</button>');
-                $gridActions.find('.cancelNewRow').on('click', function (event) {
+                // MEMORY LEAK FIX: Namespace event handlers for cleanup
+                $gridActions.find('.cancelNewRow').on('click.datatable', function (event) {
                     self.toggleEditRow(event, {action: 'cancel', $row: $newRow});
                 });
-                $gridActions.find('.saveNewRow').on('click', function (event) {
+                $gridActions.find('.saveNewRow').on('click.datatable', function (event) {
                     self.toggleEditRow(event, {action: 'save', $row: $newRow});
                 });
                 $newRowButton.hide();
@@ -2863,52 +2866,60 @@ $.widget('wm.datatable', {
             self = this;
 
         if (this.options.enableRowSelection) {
-            $htm[0].removeEventListener('click', this.rowClickHandlerOnCapture.bind(this));
+            // MEMORY LEAK FIX: Store bound function to properly remove event listener
+            if (!this.boundRowClickHandlerOnCapture) {
+                this.boundRowClickHandlerOnCapture = this.rowClickHandlerOnCapture.bind(this);
+            }
+            $htm[0].removeEventListener('click', this.boundRowClickHandlerOnCapture);
             $htm.off();
-            $htm[0].addEventListener('click', this.rowClickHandlerOnCapture.bind(this));
+            $htm[0].addEventListener('click', this.boundRowClickHandlerOnCapture);
             // add js click handler for capture phase in order to first listen on grid and
             // assign selectedItems so that any child actions can have access to the selectedItems.
-            $htm.on('click', this.rowSelectionHandler.bind(this));
-            $htm.on('dblclick', this.rowDblClickHandler.bind(this));
-            $htm.on('keydown', this.onKeyDown.bind(this));
+            // MEMORY LEAK FIX: Namespace event handlers for cleanup
+            $htm.on('click.datatable', this.rowSelectionHandler.bind(this));
+            $htm.on('dblclick.datatable', this.rowDblClickHandler.bind(this));
+            $htm.on('keydown.datatable', this.onKeyDown.bind(this));
         }
 
         if ($header) {
+            // MEMORY LEAK FIX: Use namespaced events for proper cleanup
             if (this.options.enableColumnSelection) {
-                $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
-                $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
+                $header.find('th[data-col-selectable]').off('click.datatable');
+                $header.find('th[data-col-selectable]').on('click.datatable', this.columnSelectionHandler.bind(this));
             } else {
-                $header.find('th[data-col-selectable]').off('click');
+                $header.find('th[data-col-selectable]').off('click.datatable');
             }
 
             if (this.options.enableSort) {
                 if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+                    $header.find('th[data-col-sortable] .header-data').off('click.datatable');
+                    $header.find('th[data-col-sortable] .header-data').on('click.datatable', this.sortHandler.bind(this));
+                    $header.find('th[data-col-sortable]').off('keydown.datatable');
+                    $header.find('th[data-col-sortable]').on('keydown.datatable', this.keydownHandler.bind(this));
                 } else {
-                    $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+                    $header.find('th[data-col-sortable]').off('click.datatable');
+                    $header.find('th[data-col-sortable]').on('click.datatable', this.sortHandler.bind(this));
+                    $header.find('th[data-col-sortable]').off('keydown.datatable');
+                    $header.find('th[data-col-sortable]').on('keydown.datatable', this.keydownHandler.bind(this));
                 }
             } else {
                 if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click');
+                    $header.find('th[data-col-sortable] .header-data').off('click.datatable');
                 } else {
-                    $header.find('th[data-col-sortable]').off('click');
+                    $header.find('th[data-col-sortable]').off('click.datatable');
                 }
             }
         }
         if (this.options.rowActions.length) {
-            $htm.find('.cancel-edit-row-button').off('click');
-            $htm.find('.save-edit-row-button').off('click');
-            $htm.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
-            $htm.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
+            // MEMORY LEAK FIX: Namespace event handlers for cleanup
+            $htm.find('.cancel-edit-row-button').off('click.datatable');
+            $htm.find('.save-edit-row-button').off('click.datatable');
+            $htm.find('.cancel-edit-row-button').on('click.datatable', {action: 'cancel'}, this.toggleEditRow.bind(this));
+            $htm.find('.save-edit-row-button').on('click.datatable', {action: 'save'}, this.toggleEditRow.bind(this));
         }
         if (self.options.editmode === self.CONSTANTS.QUICK_EDIT) {
-            $htm.on('focus', 'tr.app-datagrid-row', function (e) {
+            // MEMORY LEAK FIX: Namespace event handler for cleanup
+            $htm.on('focus.datatable', 'tr.app-datagrid-row', function (e) {
                 var $row = $(e.currentTarget);
                 if (!$row.hasClass('row-editing')) {
                     self.toggleEditRow(e, { $row: $row, action: 'edit'});
@@ -3239,8 +3250,9 @@ $.widget('wm.datatable', {
             /**As jquery references the colgroup, clone the colgroup and add it to the table body**/
         }
         /**Add event handler, to the select all checkbox on the header**/
-        $header.on('click', '.app-datagrid-header-cell input:checkbox', toggleSelectAll);
-        $header.on('keydown', '.app-datagrid-header-cell input:checkbox', function(event) {
+        // MEMORY LEAK FIX: Namespace event handlers for proper cleanup
+        $header.on('click.datatable', '.app-datagrid-header-cell input:checkbox', toggleSelectAll);
+        $header.on('keydown.datatable', '.app-datagrid-header-cell input:checkbox', function(event) {
             if (event.key === 'Enter' || event.keyCode === 13) {
                 event.preventDefault(); // Prevent default behavior
 
@@ -3251,8 +3263,9 @@ $.widget('wm.datatable', {
         });
 
         if (_.isFunction(this.options.onHeaderClick)) {
-            this.gridHeaderElement.find('th.app-datagrid-header-cell').on('click', this.headerClickHandler.bind(this));
-            this.gridHeaderElement.find('th.app-datagrid-header-cell').on('keydown', function (e) {
+            // MEMORY LEAK FIX: Namespace event handlers for proper cleanup
+            this.gridHeaderElement.find('th.app-datagrid-header-cell').on('click.datatable', this.headerClickHandler.bind(this));
+            this.gridHeaderElement.find('th.app-datagrid-header-cell').on('keydown.datatable', function (e) {
                 if (e.key === 'Enter' || e.keyCode === 13) {
                     var $target = $(e.target);
                     // Only run if on the checkbox column
@@ -3651,16 +3664,55 @@ $.widget('wm.datatable', {
     },
 
     _destroy: function () {
-        console.log('destroy table');
-        this.element.empty('');
-        window.clearTimeout(this.refreshGridTimeout);
-
-        // Also add the scroll listener cleanup (see next point)
+        // PERFORMANCE FIX: Removed console.log - reduces console noise
+        
+        // MEMORY LEAK FIX: Destroy jQuery UI resizable to release event handlers and state
+        if (this.gridHeaderElement && this.gridHeaderElement.length) {
+            try {
+                this.gridHeaderElement.find('th[data-col-resizable]').resizable('destroy');
+            } catch (e) {
+                // Ignore if resizable not initialized
+            }
+        }
+        
+        // MEMORY LEAK FIX: Remove native event listener using stored bound function
+        if (this.gridElement && this.gridElement[0] && this.boundRowClickHandlerOnCapture) {
+            this.gridElement[0].removeEventListener('click', this.boundRowClickHandlerOnCapture);
+            this.boundRowClickHandlerOnCapture = null;
+        }
+        
+        // MEMORY LEAK FIX: Remove all jQuery event handlers using namespaces
+        if (this.gridHeaderElement) {
+            this.gridHeaderElement.off('.datatable');
+        }
         if (this.gridElement) {
+            this.gridElement.off('.datatable');
             this.gridElement.parent().off('scroll.datatable');
         }
+        if (this.gridSearch) {
+            this.gridSearch.off('.datatable');
+        }
+        
+        // MEMORY LEAK FIX: Clear all internal structures to release row/column references
+        this.preparedData = [];
+        this.preparedHeaderData = [];
+        this.compiledCellTemplates = {};
+        this.columnClickInfo = {};
+        
+        // Clear timeout references
+        window.clearTimeout(this.refreshGridTimeout);
         if (this.throttledScrollHandler && this.throttledScrollHandler.cancel) {
             this.throttledScrollHandler.cancel();
+            this.throttledScrollHandler = null;
         }
+        
+        // Empty and clear DOM references
+        this.element.empty('');
+        this.gridContainer = null;
+        this.gridHeaderElement = null;
+        this.gridElement = null;
+        this.gridSearch = null;
+        this.tableContainer = null;
+        this.dataStatusContainer = null;
     }
 });

@@ -46,8 +46,10 @@ export let securityService;
 export let dialogService;
 
 const DOT_EXPR_REX = /^\[("|')[\w\W]*(\1)\]$/,
-    internalBoundNodeMap = new Map(),
     timers = new Map();
+
+// MEMORY LEAK FIX: Export internalBoundNodeMap so it can be cleaned up when variables are destroyed
+export const internalBoundNodeMap = new Map();
 
 const _invoke = (variable, op) => {
     let debouncedFn,
@@ -875,3 +877,10 @@ export const decodeData = (responseContent) => {
 function htmlDecode(input) {
     return he.unescape(input);
 }
+
+// MEMORY LEAK FIX: Cleanup function to clear variable from internalBoundNodeMap
+export const clearVariableFromBoundNodeMap = (variable: any) => {
+    if (internalBoundNodeMap.has(variable)) {
+        internalBoundNodeMap.delete(variable);
+    }
+};

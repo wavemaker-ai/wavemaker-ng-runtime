@@ -188,6 +188,13 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
                         // These caches were causing the 160 MB array retention seen in heap snapshots
                         this.componentRefProvider.clearComponentFactoryRefCache();
                         
+                        // MEMORY LEAK FIX: Clear expression parser caches on navigation
+                        // exprFnCache, eventFnCache, purePipes, fnNameMap grow with each page
+                        // Without this, they accumulate 500+ expressions per page navigation
+                        if (typeof (window as any).clearExpressionCaches === 'function') {
+                            (window as any).clearExpressionCaches();
+                        }
+                        
                         // Trigger garbage collection if available (Chrome with --js-flags=--expose-gc)
                         if (window.gc && typeof window.gc === 'function') {
                             setTimeout(() => {

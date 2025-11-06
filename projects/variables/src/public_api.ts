@@ -21,5 +21,6 @@ export {
     getEvaluatedOrderBy,
     formatExportExpression,
     debounceVariableCall,
-    formatDate
+    formatDate,
+    clearVariableFromBoundNodeMap
 } from './util/variable/variables.utils'; 

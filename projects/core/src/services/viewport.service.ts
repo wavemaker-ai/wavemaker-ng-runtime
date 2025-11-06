@@ -36,11 +36,15 @@ export class Viewport implements IViewportService, OnDestroy {
     private screenWidth;
     private screenHeight;
     private selectedViewPort: any;
+    // MEMORY LEAK FIX: Store bound function reference for proper event listener removal
+    private boundResizeFn: (event: any) => void;
 
     constructor() {
         this.setScreenType();
 
-        window.addEventListener(ViewportEvent.RESIZE, this.resizeFn.bind(this));
+        // MEMORY LEAK FIX: Store the bound function so we can remove it later
+        this.boundResizeFn = this.resizeFn.bind(this);
+        window.addEventListener(ViewportEvent.RESIZE, this.boundResizeFn);
 
         const query = window.matchMedia('(orientation: portrait)');
         if (query.matches) {
@@ -124,6 +128,11 @@ export class Viewport implements IViewportService, OnDestroy {
 
     ngOnDestroy() {
         this._eventNotifier.destroy();
-        window.removeEventListener('resize', this.resizeFn);
+        
+        // MEMORY LEAK FIX: Remove event listener using the stored bound function reference
+        if (this.boundResizeFn) {
+            window.removeEventListener('resize', this.boundResizeFn);
+            this.boundResizeFn = null;
+        }
     }
 }

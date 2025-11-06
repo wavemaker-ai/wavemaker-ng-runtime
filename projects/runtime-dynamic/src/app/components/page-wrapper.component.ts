@@ -137,7 +137,14 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
         // Unsubscribe from route params
         if (this.subscription) {
             this.subscription.unsubscribe();
+            this.subscription = null;
         }
+        
+        // MEMORY LEAK FIX: Clear all service references to break circular dependencies
+        (this as any).injector = null;
+        (this as any).vcRef = null;
+        (this as any).appRef = null;
+        (this as any).router = null;
         
         // Clear instance reference
         this.instance = null;

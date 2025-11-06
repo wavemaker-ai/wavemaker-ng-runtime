@@ -381,6 +381,11 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
             }
         }
         
+        // MEMORY LEAK FIX: Clear i18n/locale references
+        // appLocale has prototype chains that prevent GC if not cleared
+        this.appLocale = null;
+        this.i18nService = null;
+        
         this.spaPageDirective = null;
         this.layoutDirective = null;
         this.$page = null;

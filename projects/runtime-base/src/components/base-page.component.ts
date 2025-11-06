@@ -401,6 +401,11 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
             }
         }
         
+        // MEMORY LEAK FIX: Clear i18n/locale references
+        // appLocale has prototype chains that prevent GC if not cleared
+        this.appLocale = null;
+        this.i18nService = null;
+        
         this.pageDirective = null;
         this.$page = null;
     }

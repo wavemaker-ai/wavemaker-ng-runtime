@@ -148,9 +148,13 @@ export class HttpServiceImpl extends AbstractHttpService implements HttpClientSe
     cancel(variable, $file?) {
         if (variable._observable) {
             variable._observable.unsubscribe();
+            // MEMORY LEAK FIX: Clear the observable reference after unsubscribe
+            variable._observable = null;
         }
         if ($file && $file._uploadProgress) {
             $file._uploadProgress.unsubscribe();
+            // MEMORY LEAK FIX: Clear the progress subscription reference
+            $file._uploadProgress = null;
         }
     }
 

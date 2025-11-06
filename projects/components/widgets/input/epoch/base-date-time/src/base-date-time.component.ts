@@ -1121,6 +1121,23 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         if (this.deregisterEventListener) {
             this.deregisterEventListener();
         }
+        
+        // MEMORY LEAK FIX: Remove all jQuery event handlers on datepicker/timepicker elements
+        // These handlers are added in addEventsOnTimePicker and various other methods
+        try {
+            $('.bs-datepicker-head').off('click');
+            $('.bs-datepicker-head').off('focus');
+            $('.bs-datepicker-head button').off('focus blur');
+            $('.bs-datepicker-body').off('click');
+            $('.bs-timepicker-field').off('keyup');
+            
+            if (this.removeKeyupListener) {
+                this.removeKeyupListener();
+                this.removeKeyupListener = null;
+            }
+        } catch (e) {
+            // Suppress cleanup errors
+        }
 
         super.ngOnDestroy();
     }

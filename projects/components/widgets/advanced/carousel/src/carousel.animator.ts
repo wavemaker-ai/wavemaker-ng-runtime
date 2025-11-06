@@ -136,6 +136,27 @@ export class CarouselAnimator extends SwipeAnimation {
             this._intervalId = 0;
         }
     }
+    
+    // MEMORY LEAK FIX: Add destroy method to clean up all event listeners and intervals
+    public destroy() {
+        // Stop the interval timer
+        this.stop();
+        
+        // Remove all jQuery event handlers using namespacing would be better, but for now use .off()
+        if (this._indicators && this._indicators.length) {
+            this._indicators.find('li').off('click');
+        }
+        if (this._$el && this._$el.length) {
+            this._$el.find('>.left.carousel-control').off('click');
+            this._$el.find('>.right.carousel-control').off('click');
+        }
+        
+        // Clear all references to allow garbage collection
+        this._$el = null;
+        this._indicators = null;
+        this._items = null;
+        (this as any).carousel = null;
+    }
 
     public threshold() {
         return 5;

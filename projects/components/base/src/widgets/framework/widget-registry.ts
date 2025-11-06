@@ -46,6 +46,16 @@ export const register = (widget: any, viewParent: any, widgetId: string, name?: 
 
     // Unregister method.
     return () => {
+        // MEMORY LEAK FIX: Clear widget object before deleting from registry
+        // Without this, the Map retains the widget object during GC delay
+        const widgetObj = registryById.get(widgetId);
+        if (widgetObj) {
+            // Clear the widget's internal references to break circular dependencies
+            widgetObj.widget = null;
+            widgetObj.viewParent = null;
+            widgetObj.context = null;
+        }
+        
         registryById.delete(widgetId);
         // DEFENSIVE FIX: Check if viewParent and Widgets still exist during cleanup
         if (registered && viewParent && viewParent.Widgets) {

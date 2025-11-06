@@ -87,6 +87,14 @@ export class I18nServiceImpl extends AbstractI18nService {
         return this.prefabLocale.get(prefabName);
     }
 
+    // MEMORY LEAK FIX: Allow prefab locale bundles to be garbage collected
+    // Without this, the prefabLocale Map grows indefinitely as prefabs are created/destroyed
+    public clearPrefabLocaleBundle(prefabName: string): void {
+        if (this.prefabLocale.has(prefabName)) {
+            this.prefabLocale.delete(prefabName);
+        }
+    }
+
     private extendPrefabMessages(messages: any): void {
         if (!messages.prefabMessages) {
             return;

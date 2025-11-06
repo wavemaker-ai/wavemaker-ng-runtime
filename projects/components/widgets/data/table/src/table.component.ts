@@ -187,6 +187,24 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     private rowDefInstances = {};
     private rowDefMap = {};
     private rowExpansionActionTl: any = {};
+    
+    // MEMORY LEAK FIX: Track row/column watchers separately to avoid destroySubscriptions accumulation
+    // Each refresh was adding new destroy subscriptions while old ones remained until component destroy
+    private rowWatcherCleanups: Map<string, Function> = new Map();
+    private colWatcherCleanups: Map<string, Function> = new Map();
+    private titleWatcherCleanups: Map<string, Function> = new Map();
+    
+    // MEMORY LEAK FIX: Helper method to clear all row watchers during data refresh
+    private clearAllRowWatchers() {
+        this.rowWatcherCleanups.forEach(cleanup => cleanup());
+        this.rowWatcherCleanups.clear();
+        
+        this.colWatcherCleanups.forEach(cleanup => cleanup());
+        this.colWatcherCleanups.clear();
+        
+        this.titleWatcherCleanups.forEach(cleanup => cleanup());
+        this.titleWatcherCleanups.clear();
+    }
 
     columns = {};
     formfields = {};
@@ -678,11 +696,20 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
             const row = this.getClonedRowObject(rowData);
             const watchName = `${this.widgetId}_rowNgClass_${index}`;
-            $unwatch(watchName);
+            
+            // MEMORY LEAK FIX: Clean up old watcher before creating new one
+            // Don't use registerDestroyListener - it accumulates subscriptions on every refresh
+            const oldCleanup = this.rowWatcherCleanups.get(watchName);
+            if (oldCleanup) {
+                oldCleanup(); // Calls $unwatch and unsubscribes
+            }
+            
             //[Todo-CSP]: generate watcher expr in page if rowngclass attr is present for table
-            this.registerDestroyListener($watch(this.rowngclass, this.viewParent, {row}, (nv, ov) => {
+            const cleanup = $watch(this.rowngclass, this.viewParent, {row}, (nv, ov) => {
                 this.callDataGridMethod('applyRowNgClass', getConditionalClasses(nv, ov), index);
-            }, watchName));
+            }, watchName);
+            
+            this.rowWatcherCleanups.set(watchName, cleanup);
         },
         registerColNgClassWatcher: (rowData, colDef, rowIndex, colIndex, summaryRow) => {
             if (!colDef['col-ng-class']) {
@@ -690,26 +717,48 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
             const row = this.getClonedRowObject(rowData);
             const watchName = summaryRow ? `${this.widgetId}_summaryRow_colNgClass_${rowIndex}_${colIndex}`: `${this.widgetId}_colNgClass_${rowIndex}_${colIndex}`;
-            $unwatch(watchName);
+            
+            // MEMORY LEAK FIX: Clean up old watcher before creating new one
+            // Don't use registerDestroyListener - it accumulates subscriptions on every refresh
+            const oldCleanup = this.colWatcherCleanups.get(watchName);
+            if (oldCleanup) {
+                oldCleanup(); // Calls $unwatch and unsubscribes
+            }
+            
             //[Todo-CSP]: generate watcher expr in page if col-ng-class attr is present for table
-            this.registerDestroyListener($watch(colDef['col-ng-class'], this.viewParent, {row}, (nv, ov) => {
+            const cleanup = $watch(colDef['col-ng-class'], this.viewParent, {row}, (nv, ov) => {
                 this.callDataGridMethod('applyColNgClass', getConditionalClasses(nv, ov), rowIndex, colIndex);
-            }, watchName));
+            }, watchName);
+            
+            this.colWatcherCleanups.set(watchName, cleanup);
         },
         registerCollapseOrExpandTitleWatch:(expr, rowData, index,titleName, element) => {
             const row = this.getClonedRowObject(rowData);
             const watchName = `${this.widgetId}_${titleName}_${index}`;
-            $unwatch(watchName);
-            this.registerDestroyListener($watch(expr, this.viewParent, {row}, (nv,ov) => {
+            
+            // MEMORY LEAK FIX: Clean up old watcher before creating new one
+            // Don't use registerDestroyListener - it accumulates subscriptions on every refresh
+            const oldCleanup = this.titleWatcherCleanups.get(watchName);
+            if (oldCleanup) {
+                oldCleanup(); // Calls $unwatch and unsubscribes
+            }
+            
+            const cleanup = $watch(expr, this.viewParent, {row}, (nv,ov) => {
                 element.removeAttribute(`${titleName}.bind`);
                 element.setAttribute(titleName, nv);
                 if(titleName === 'expandtitle') element.setAttribute('title', nv);
-            }, watchName));
+            }, watchName);
+            
+            this.titleWatcherCleanups.set(watchName, cleanup);
         },
         clearCustomExpression: () => {
             this.customExprViewRef.clear();
             this.customExprCompiledTl = {};
             this.customExprCompiledSummaryTl = {};
+            
+            // MEMORY LEAK FIX: Clear row/column watchers when expressions are cleared
+            // This prevents watcher accumulation during data refresh
+            this.clearAllRowWatchers();
         },
         clearRowDetailExpression: () => {
             this.rowDetailViewRef.clear();
@@ -1520,6 +1569,28 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (this.navigatorMaxResultWatch) {
             this.navigatorMaxResultWatch.unsubscribe();
         }
+
+        // MEMORY LEAK FIX: Clean up all row/column watchers before destroy
+        // These Maps prevent the accumulation issue in destroySubscriptions
+        this.rowWatcherCleanups.forEach(cleanup => cleanup());
+        this.rowWatcherCleanups.clear();
+        
+        this.colWatcherCleanups.forEach(cleanup => cleanup());
+        this.colWatcherCleanups.clear();
+        
+        this.titleWatcherCleanups.forEach(cleanup => cleanup());
+        this.titleWatcherCleanups.clear();
+        
+        // MEMORY LEAK FIX: Clear all internal maps and structures
+        this.rowActionsCompiledTl = null;
+        this.rowFilterCompliedTl = null;
+        this.inlineCompliedTl = null;
+        this.inlineNewCompliedTl = null;
+        this.customExprCompiledTl = null;
+        this.customExprCompiledSummaryTl = null;
+        this.rowDefInstances = null;
+        this.rowDefMap = null;
+        this.rowExpansionActionTl = null;
 
         this.callDataGridMethod('destroy');
         super.ngOnDestroy();

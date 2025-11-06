@@ -159,17 +159,22 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
         }
     }
     ngOnInit() {
+        // MEMORY LEAK FIX: Store handlers and register cleanup via destroy$ subscription
         if (this.listComponent.mouseEnterCB) {
             console.log('this.listComponent.mouseEnterCB')
-            this.nativeElement.addEventListener('mouseenter', ($event) => {
+            const mouseEnterHandler = ($event) => {
                 this.listComponent.invokeEventCallback('mouseenter', {widget: this, $event});
-            });
+            };
+            this.nativeElement.addEventListener('mouseenter', mouseEnterHandler);
+            this.destroy$.subscribe(() => this.nativeElement.removeEventListener('mouseenter', mouseEnterHandler));
         }
         if (this.listComponent.mouseLeaveCB) {
             console.log('this.listComponent.mouseLeaveCB')
-            this.nativeElement.addEventListener('mouseleave', ($event) => {
+            const mouseLeaveHandler = ($event) => {
                 this.listComponent.invokeEventCallback('mouseleave', {widget: this, $event});
-            });
+            };
+            this.nativeElement.addEventListener('mouseleave', mouseLeaveHandler);
+            this.destroy$.subscribe(() => this.nativeElement.removeEventListener('mouseleave', mouseLeaveHandler));
         }
         // adding item attribute on every list item
         $(this.nativeElement).attr('listitemindex', this.$index);
@@ -188,7 +193,7 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        console.log("ngOnDestroy listItem");
+        // PERFORMANCE FIX: Removed console.log - reduces console noise
         this.destroy.next(null);
         this.destroy.complete();
         $(this.nativeElement).removeData('listItemContext');

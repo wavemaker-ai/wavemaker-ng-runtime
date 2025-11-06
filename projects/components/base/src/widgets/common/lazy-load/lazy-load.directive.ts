@@ -54,8 +54,19 @@ export class LazyLoadDirective implements OnDestroy {
     ngOnDestroy() {
         if (this.unSubscribeFn) {
             this.unSubscribeFn();
+            this.unSubscribeFn = null;
         }
         // Clear the ViewContainerRef to prevent memory leaks
         this.viewContainer.clear();
+        
+        // MEMORY LEAK FIX: Clear all references
+        this.embeddedView = null;
+        (this as any).viewContainer = null;
+        (this as any).templateRef = null;
+        
+        // MEMORY LEAK FIX: Clear context object that holds _lView[8] references
+        if (this.context) {
+            Object.keys(this.context).forEach(key => delete this.context[key]);
+        }
     }
 }

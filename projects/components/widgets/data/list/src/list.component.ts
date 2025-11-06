@@ -187,6 +187,9 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private _listAnimator: ListAnimator;
     private _listenerDestroyers: Array<any>;
     private debouncedFetchNextDatasetOnScroll: Function;
+    // MEMORY LEAK FIX: Store bound event handlers for proper cleanup
+    private boundListContainerClickHandler: (event: any) => void;
+    private boundAddItemClickHandler: (event: any) => void;
     private isDataChanged: boolean;
     private isListElementMovable: boolean;
     private ariaText: String;
@@ -748,6 +751,34 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             this._listAnimator.$btnSubscription.unsubscribe();
         }
         this._listenerDestroyers.forEach(d => d && d());
+        
+        // MEMORY LEAK FIX: Destroy jQuery UI sortable/droppable
+        if (this.$ulEle && this.$ulEle.length) {
+            try {
+                if (this.$ulEle.hasClass && this.$ulEle.hasClass('ui-sortable')) {
+                    this.$ulEle.sortable('destroy');
+                }
+                if (this.$ulEle.hasClass && this.$ulEle.hasClass('ui-droppable')) {
+                    this.$ulEle.droppable('destroy');
+                }
+            } catch (e) {
+                // Ignore if not initialized
+            }
+        }
+        
+        // MEMORY LEAK FIX: Remove event listeners using stored bound functions
+        const listContainer = this.nativeElement.querySelector('ul.app-livelist-container');
+        if (listContainer && this.boundListContainerClickHandler) {
+            listContainer.removeEventListener('click', this.boundListContainerClickHandler, true);
+            this.boundListContainerClickHandler = null;
+        }
+        
+        const $addItem = document.getElementsByClassName("add-list-item")[0];
+        if ($addItem && this.boundAddItemClickHandler) {
+            $addItem.removeEventListener('click', this.boundAddItemClickHandler);
+            this.boundAddItemClickHandler = null;
+        }
+        
         super.ngOnDestroy();
     }
 
@@ -1214,15 +1245,20 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             this.onListRender(listItems);
             this.cdRef.detectChanges();
         });
+        // MEMORY LEAK FIX: Store bound handler for proper cleanup
         // handle click event in capturing phase.
-        this.nativeElement.querySelector('ul.app-livelist-container').addEventListener('click', ($event) => {
+        this.boundListContainerClickHandler = ($event) => {
             let target = $($event.target).closest('.app-list-item');
             // Recursively find the current list item
             while (target.get(0) && (target.closest('ul.app-livelist-container').get(0) !== $event.currentTarget)) {
                 target = target.parent().closest('.app-list-item');
             }
             this.triggerListItemSelection(target, $event);
-        }, true);
+        };
+        const listContainer = this.nativeElement.querySelector('ul.app-livelist-container');
+        if (listContainer) {
+            listContainer.addEventListener('click', this.boundListContainerClickHandler, true);
+        }
     }
 
     // Triggers on drag start while reordering.
@@ -1359,10 +1395,12 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private setUpCUDHandlers() {
         const $addItem = document.getElementsByClassName("add-list-item")[0];
         if ($addItem) {
-            // Triggered on click of add action
-            $addItem.addEventListener('click', evt => {
+            // MEMORY LEAK FIX: Store bound handler for proper cleanup
+            this.boundAddItemClickHandler = (evt) => {
                 this.create();
-            });
+            };
+            // Triggered on click of add action
+            $addItem.addEventListener('click', this.boundAddItemClickHandler);
         }
     }
 }
