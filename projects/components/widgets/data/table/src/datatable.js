@@ -3723,11 +3723,19 @@ $.widget('wm.datatable', {
         
         // MEMORY LEAK FIX: Destroy jQuery UI resizable to release event handlers and state
         if (this.gridHeaderElement && this.gridHeaderElement.length) {
+            const $resizableHeaders = this.gridHeaderElement.find('th[data-col-resizable]');
             try {
-                this.gridHeaderElement.find('th[data-col-resizable]').resizable('destroy');
+                $resizableHeaders.resizable('destroy');
             } catch (e) {
                 // Ignore if resizable not initialized
             }
+            $resizableHeaders.each(function () {
+                const $header = $(this);
+                $header.off('.resizable');
+                $header.removeData('ui-resizable');
+                $header.removeData('resizable');
+                $header.find('.ui-resizable-handle').remove();
+            });
         }
         
         // MEMORY LEAK FIX: Remove native event listener using stored bound function
@@ -3761,6 +3769,22 @@ $.widget('wm.datatable', {
             this.throttledScrollHandler = null;
         }
         
+        // MEMORY LEAK FIX: Drop references held on the options bag so GC can reclaim colDefs/headerConfig
+        if (this.options) {
+            if (Array.isArray(this.options.colDefs)) {
+                this.options.colDefs.length = 0;
+            }
+            if (Array.isArray(this.options.headerConfig)) {
+                this.options.headerConfig.length = 0;
+            }
+            if (Array.isArray(this.options.rowActions)) {
+                this.options.rowActions.length = 0;
+            }
+            if (Array.isArray(this.options.data)) {
+                this.options.data.length = 0;
+            }
+        }
+
         // Empty and clear DOM references
         this.element.empty('');
         this.gridContainer = null;
@@ -3769,5 +3793,8 @@ $.widget('wm.datatable', {
         this.gridSearch = null;
         this.tableContainer = null;
         this.dataStatusContainer = null;
+
+        // Let the base widget clean up any residual data
+        this._super();
     }
 });

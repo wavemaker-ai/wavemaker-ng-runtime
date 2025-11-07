@@ -191,6 +191,29 @@ export const getAttrMarkup = (attrs: Map<string, string>) => {
     return attrMarkup;
 };
 
+/**
+ * MEMORY OPTIMIZATION: Check if component should use @if directive instead of show.bind
+ * For memory-critical components (tables, prefabs, lists, forms), use @if for proper destruction
+ */
+const shouldUseIfDirective = (nodeName: string): boolean => {
+    const memoryCriticalComponents = [
+        'wm-table',
+        'wm-data-table', 
+        'wm-live-table',
+        'wm-prefab',
+        'wm-partial',
+        'wm-list',
+        'wm-live-list',
+        'wm-form',
+        'wm-live-form',
+        'wm-card',
+        'wm-wizard',
+        'wm-tabs',
+        'wm-accordion'
+    ];
+    return memoryCriticalComponents.includes(nodeName);
+};
+
 const getRequiredProviders = (nodeDef: IBuildTaskDef, providers: Array<IProviderInfo>, nodeAttrs) => {
     if (!nodeDef.requires) {
         return [];
@@ -319,6 +342,27 @@ export const processNode = (node, importCollector: (i: ImportDef[]) => void, pro
         processDimensionAttributes(attrMap);
 
         const nodeName = getNodeName(node.name);
+        
+        // MEMORY OPTIMIZATION: Extract show.bind for @if wrapper conversion
+        const showBinding = attrMap.get('show.bind');
+        let useIfDirective = false;
+        let ifCondition = '';
+        
+        // For memory-critical components, convert show.bind to @if directive
+        let skipIfDirectiveConversion = false;
+        if (showBinding) {
+            const normalizedShowBinding = showBinding.trim().toLowerCase();
+            if (normalizedShowBinding === 'true' || normalizedShowBinding === 'false') {
+                // Literal booleans should remain simple show.bind bindings (no structural @if conversion)
+                skipIfDirectiveConversion = true;
+            }
+        }
+
+        if (shouldUseIfDirective(node.name) && showBinding && !skipIfDirectiveConversion) {
+            useIfDirective = true;
+            ifCondition = showBinding;
+            attrMap.delete('show.bind'); // Remove from attributes
+        }
 
         if (nodeDef) {
             markup = (<any>pre)(attrMap, shared, ...requiredProviders);
@@ -337,6 +381,11 @@ export const processNode = (node, importCollector: (i: ImportDef[]) => void, pro
             }
         } else {
             markup = `<${nodeName} ${getAttrMarkup(attrMap)}>`;
+        }
+        
+        // MEMORY OPTIMIZATION: Wrap with structural directive if needed
+        if (useIfDirective && ifCondition) {
+            markup = `<ng-container *ngIf="${ifCondition}">\n${markup}`;
         }
 
         node.children.forEach((child: Node | any) => {
@@ -417,6 +466,11 @@ export const processNode = (node, importCollector: (i: ImportDef[]) => void, pro
             if (node.endSourceSpan && !getHtmlTagDefinition(node.name).isVoid) {
                 markup += `</${nodeName}>`;
             }
+        }
+        
+        // MEMORY OPTIMIZATION: Close @if wrapper if used
+        if (useIfDirective && ifCondition) {
+            markup += '\n</ng-container>';
         }
     } else if (node instanceof Text) {
         markup += node.value;
@@ -542,4 +596,3 @@ export const scopeComponentStyles = (componentName, componentType, styles = '') 
     }
     return styles;
 };
-

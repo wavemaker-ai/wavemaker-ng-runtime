@@ -1,4 +1,4 @@
-import {Directive, Inject, Self} from '@angular/core';
+import {Directive, Inject, OnDestroy, Self} from '@angular/core';
 
 import {
     $appDigest,
@@ -201,7 +201,7 @@ const addToFilterFields = (filterFields, searchObj) => {
   standalone: true,
     selector: '[wmTableFilterSort]'
 })
-export class TableFilterSortDirective {
+export class TableFilterSortDirective implements OnDestroy {
 
     constructor(@Self() @Inject(TableComponent) private table) {
         table._searchSortHandler = this.searchSortHandler.bind(this);
@@ -220,6 +220,27 @@ export class TableFilterSortDirective {
         table.refreshData = this.refreshData.bind(this);
         table.clearFilter = this.clearFilter.bind(this);
         table.adjustContainer = this.adjustContainer.bind(this);
+    }
+
+    ngOnDestroy() {
+        if (this.table) {
+            this.table._searchSortHandler = undefined;
+            this.table.getSearchResult = undefined;
+            this.table.getSortResult = undefined;
+            this.table.checkFiltersApplied = undefined;
+            this.table.getFilterFields = undefined;
+            this.table.onRowFilterChange = undefined;
+            this.table.onFilterConditionSelect = undefined;
+            this.table.showClearIcon = undefined;
+            this.table.clearRowFilter = undefined;
+            this.table.matchModeTypesMap = undefined;
+            this.table.matchModeMsgs = undefined;
+            this.table.emptyMatchModes = undefined;
+            this.table.getNavigationTargetBySortInfo = undefined;
+            this.table.refreshData = undefined;
+            this.table.clearFilter = undefined;
+            this.table.adjustContainer = undefined;
+        }
     }
 
     adjustContainer(fieldName) {

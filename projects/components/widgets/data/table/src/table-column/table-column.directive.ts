@@ -7,6 +7,7 @@ import {
     Directive,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     TemplateRef
@@ -83,7 +84,7 @@ class FieldDef {
         provideAsWidgetRef(TableColumnDirective)
     ]
 })
-export class TableColumnDirective extends BaseComponent implements OnInit, AfterContentInit, AfterViewInit {
+export class TableColumnDirective extends BaseComponent implements OnInit, AfterContentInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ContentChildren('filterWidget', { descendants: true }) _filterInstances;
@@ -784,5 +785,33 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             default:
                 this.table.redraw(true);
         }
+    }
+
+    ngOnDestroy() {
+        // Break reference chains so TableComponent and ColumnDirective can be collected
+        if (this.table) {
+            if (Array.isArray(this.table.fieldDefs)) {
+                const index = this.table.fieldDefs.indexOf(this.widget);
+                if (index > -1) {
+                    this.table.fieldDefs.splice(index, 1);
+                }
+            }
+            if (this.table.columns && this.field) {
+                delete this.table.columns[this.field];
+            }
+        }
+        this.filterInstance = null;
+        this.inlineInstance = null;
+        this.inlineInstanceNew = null;
+        this.notifyForFields = [];
+        this.syncValidators = [];
+        this.asyncValidators = [];
+        this.observeOnFields = [];
+        this._filterDataSet = null;
+        this._datasource = null;
+        this._dataoptions = null;
+        this.table = null as any;
+        this.group = null as any;
+        super.ngOnDestroy();
     }
 }

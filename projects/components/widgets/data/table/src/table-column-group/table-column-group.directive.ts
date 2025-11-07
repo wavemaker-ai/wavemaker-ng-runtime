@@ -1,4 +1,4 @@
-import {Directive, Inject, Injector, OnInit, Optional, SkipSelf} from '@angular/core';
+import {Directive, Inject, Injector, OnDestroy, OnInit, Optional, SkipSelf} from '@angular/core';
 
 import { BaseComponent,  provideAsWidgetRef, setHeaderConfigForTable} from '@wm/components/base';
 import { registerProps } from './table-column-group.props';
@@ -13,7 +13,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-table-column-group', hostClass: ''};
         provideAsWidgetRef(TableColumnGroupDirective)
     ]
 })
-export class TableColumnGroupDirective extends BaseComponent implements OnInit {
+export class TableColumnGroupDirective extends BaseComponent implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     accessroles;
@@ -63,5 +63,28 @@ export class TableColumnGroupDirective extends BaseComponent implements OnInit {
         const colIndex = parseInt(this.getAttr('index'), 10);
         const fieldName = this.group && this.group.name;
         setHeaderConfigForTable(this.table.headerConfig, this.config, fieldName, fieldName ? colIndex : headerIndex);
+    }
+
+    ngOnDestroy() {
+        if (this.table && Array.isArray(this.table.headerConfig)) {
+            const removeConfig = (configList: any[]): boolean => {
+                for (let i = configList.length - 1; i >= 0; i--) {
+                    const item = configList[i];
+                    if (item === this.config || item.field === this.config.field) {
+                        configList.splice(i, 1);
+                        return true;
+                    }
+                    if (Array.isArray(item.columns) && item.columns.length) {
+                        if (removeConfig(item.columns) && item.columns.length === 0 && item.isGroup) {
+                            configList.splice(i, 1);
+                        }
+                    }
+                }
+                return false;
+            };
+            removeConfig(this.table.headerConfig);
+        }
+        this.config = null;
+        super.ngOnDestroy();
     }
 }

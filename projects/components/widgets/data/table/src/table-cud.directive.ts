@@ -1,4 +1,4 @@
-import { Directive, Inject, Self } from '@angular/core';
+import { Directive, Inject, OnDestroy, Self } from '@angular/core';
 
 import { $invokeWatchers, $appDigest, AbstractDialogService, App, DataSource, extractCurrentItemExpr, triggerFn } from '@wm/core';
 import { refreshDataSource } from '@wm/components/base';
@@ -18,7 +18,7 @@ const OPERATION = {
   standalone: true,
     selector: '[wmTableCUD]'
 })
-export class TableCUDDirective {
+export class TableCUDDirective implements OnDestroy {
 
     constructor(
         @Self() @Inject(TableComponent) private table,
@@ -38,6 +38,25 @@ export class TableCUDDirective {
         table.hideEditRow = this.hideEditRow.bind(this);
         table.saveRow = this.saveRow.bind(this);
         table.cancelRow = this.cancelRow.bind(this);
+    }
+
+    ngOnDestroy() {
+        if (this.table) {
+            const noop = () => undefined;
+            this.table.initiateSelectItem = noop;
+            this.table.updateVariable = noop;
+            this.table.updateRecord = noop;
+            this.table.deleteRecord = noop;
+            this.table.insertRecord = noop;
+            this.table.editRow = noop;
+            this.table.addNewRow = noop;
+            this.table.addRow = noop;
+            this.table.deleteRow = noop;
+            this.table.onRecordDelete = noop;
+            this.table.hideEditRow = noop;
+            this.table.saveRow = noop;
+            this.table.cancelRow = noop;
+        }
     }
 
     private selectItemOnSuccess(row, skipSelectItem, callBack) {

@@ -1684,7 +1684,37 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.rowDefMap = null;
         this.rowExpansionActionTl = null;
 
-        this.callDataGridMethod('destroy');
+        // Ensure jQuery datatable instance is disposed and references are dropped
+        if (this.datagridElement && typeof this.datagridElement.datatable === 'function') {
+            if (this.datagridElement.datatable('instance')) {
+                this.datagridElement.datatable('destroy');
+            }
+            this.datagridElement.removeData('wmDatatable');
+        } else {
+            this.callDataGridMethod('destroy');
+        }
+
+        if (this.gridOptions) {
+            if (Array.isArray(this.gridOptions.colDefs)) {
+                this.gridOptions.colDefs.length = 0;
+            }
+            if (Array.isArray(this.gridOptions.headerConfig)) {
+                this.gridOptions.headerConfig.length = 0;
+            }
+            if (Array.isArray(this.gridOptions.rowActions)) {
+                this.gridOptions.rowActions.length = 0;
+            }
+            if (Array.isArray(this.gridOptions.data)) {
+                this.gridOptions.data.length = 0;
+            }
+        }
+        this.fieldDefs = [];
+        this.headerConfig = [];
+        this.rowActions = [];
+        this.columns = {};
+        this.rowFilter = {};
+        this.items = [];
+
         super.ngOnDestroy();
     }
 
