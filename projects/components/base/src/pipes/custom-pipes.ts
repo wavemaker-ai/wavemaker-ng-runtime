@@ -1,4 +1,4 @@
-import {Inject, Pipe, PipeTransform} from '@angular/core';
+import {inject, Inject, Pipe, PipeTransform} from '@angular/core';
 import {DatePipe, DecimalPipe} from '@angular/common';
 import {AbstractI18nService, App, CURRENCY_INFO, CustomPipeManager, hasOffsetStr, isDefined, replace} from '@wm/core';
 import {WmPipe} from "./wm-pipe";
