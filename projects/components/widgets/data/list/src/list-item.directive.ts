@@ -141,7 +141,6 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
         const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
 
         if ($editItem) {
-            console.log('this.listComponent.$editItem')
 
             // Triggered on click of edit action
             const handler = () => this.listComponent.update();
@@ -150,7 +149,6 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
         }
 
         if ($deleteItem) {
-            console.log('this.listComponent.$deleteItem')
 
             // Triggered on click of delete action
             const handler = () => this.listComponent.delete();
@@ -161,7 +159,6 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
     ngOnInit() {
         // MEMORY LEAK FIX: Store handlers and register cleanup via destroy$ subscription
         if (this.listComponent.mouseEnterCB) {
-            console.log('this.listComponent.mouseEnterCB')
             const mouseEnterHandler = ($event) => {
                 this.listComponent.invokeEventCallback('mouseenter', {widget: this, $event});
             };
@@ -169,7 +166,6 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
             this.destroy$.subscribe(() => this.nativeElement.removeEventListener('mouseenter', mouseEnterHandler));
         }
         if (this.listComponent.mouseLeaveCB) {
-            console.log('this.listComponent.mouseLeaveCB')
             const mouseLeaveHandler = ($event) => {
                 this.listComponent.invokeEventCallback('mouseleave', {widget: this, $event});
             };
