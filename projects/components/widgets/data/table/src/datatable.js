@@ -3746,6 +3746,25 @@ $.widget('wm.datatable', {
         }
         if (this.gridSearch) {
             this.gridSearch.off('.datatable');
+            // Remove search button and filter events
+            this.gridSearch.find('.app-search-button').off('click');
+            this.gridSearch.find('[data-element="dgFilterValue"]').off('change');
+            this.gridSearch.find('[data-element="dgSearchText"]').off('keyup');
+        }
+        
+        // MEMORY LEAK FIX: Remove on-demand load button events
+        this.element.find('.on-demand-load-btn').off('click.datatable');
+        
+        // MEMORY LEAK FIX: Remove new row action button events
+        var $gridActions = this.element.siblings('div.panel-footer, div.panel-heading').find('div.app-datagrid-actions');
+        if ($gridActions.length) {
+            $gridActions.find('.cancelNewRow').off('click.datatable');
+            $gridActions.find('.saveNewRow').off('click.datatable');
+        }
+        
+        // MEMORY LEAK FIX: Remove row expansion button events
+        if (this.gridElement) {
+            this.gridElement.find('[data-identifier="rowExpansionButtons"]').off('click');
         }
         
         // MEMORY LEAK FIX: Clear all internal structures to release row/column references
