@@ -102,12 +102,12 @@ export const setCSS = (node: HTMLElement, cssName: string, val?: string | number
     }
 };
 
-export const setCSSFromObj = (node: HTMLElement, cssObj: unknown, sync: boolean = true) => {
+export const setCSSFromObj = (node: HTMLElement, cssObj: any, sync: boolean = true) => {
     const keys = Object.keys(cssObj || {});
     keys.forEach(key => setCSS(node, key, cssObj[key], sync));
 };
 
-export const setProperty = (node: HTMLElement, propName: string, val: unknown, sync: boolean = true) => {
+export const setProperty = (node: HTMLElement, propName: string, val: any, sync: boolean = true) => {
     const task = () => node[propName] = val;
     if (sync) {
         task();
@@ -116,7 +116,7 @@ export const setProperty = (node: HTMLElement, propName: string, val: unknown, s
     }
 };
 
-export const setAttr = (node: HTMLElement, attrName: string, val: string, sync: boolean = true) => {
+export const setAttr = (node: HTMLElement, attrName: string, val: any, sync: boolean = true) => {
     const task = () => node instanceof Element && node.setAttribute(attrName, val);
     if (sync) {
         task();
@@ -143,7 +143,7 @@ export const removeAttr = (node: HTMLElement, attrName: string, sync: boolean = 
     }
 };
 
-export const createElement = (nodeType: string, attrs: unknown, sync: boolean = true): HTMLElement => {
+export const createElement = (nodeType: string, attrs: any, sync: boolean = true): HTMLElement => {
     const node = document.createElement(nodeType);
 
     if (attrs) {
