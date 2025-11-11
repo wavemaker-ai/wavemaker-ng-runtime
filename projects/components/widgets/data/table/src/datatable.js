@@ -1353,11 +1353,27 @@ $.widget('wm.datatable', {
     /*Set the default widths for the colgroup*/
     setColGroupWidths: function () {
         var self = this,
-            headerCols = this.options.isMobile ? this.tableContainer.find('col') : this.tableContainer.find('col'),
-            bodyCols = this.tableContainer.find('col'),
-            headerCells = this.options.showHeader ? this.gridContainer.find('th.app-datagrid-header-cell') : this.gridElement.find('tr.app-datagrid-row').first().find('td'),
+            tableContainer = this.tableContainer,
+            gridContainer = this.gridContainer,
+            gridElement = this.gridElement;
+
+        // SAFETY CHECKS: During destroy the containers are nulled out.
+        // Bail out quietly instead of throwing TypeError when timers fire post-destroy.
+        if (!tableContainer || typeof tableContainer.find !== 'function') {
+            return;
+        }
+        if (!gridContainer || typeof gridContainer.find !== 'function') {
+            return;
+        }
+        if (!gridElement || typeof gridElement.find !== 'function') {
+            return;
+        }
+
+        var headerCols = this.options.isMobile ? tableContainer.find('col') : tableContainer.find('col'),
+            bodyCols = tableContainer.find('col'),
+            headerCells = this.options.showHeader ? gridContainer.find('th.app-datagrid-header-cell') : gridElement.find('tr.app-datagrid-row').first().find('td'),
             colLength = this.preparedHeaderData.length,
-            scrollLeft = this.gridElement.parent().prop('scrollLeft'); //Preserve the scroll left to keep the same scroll after setting width
+            scrollLeft = gridElement.parent().prop('scrollLeft'); //Preserve the scroll left to keep the same scroll after setting width
         if (!headerCols.length && !headerCells.length) {
             return;
         }
@@ -1384,7 +1400,7 @@ $.widget('wm.datatable', {
                 colDef = self.preparedHeaderData[id],
                 $headerCell = self.gridContainer.find('th[data-col-id="' + id + '"]'),
                 $tdCell = self.gridElement.find('td.app-datagrid-cell[data-col-id="' + id + '"]'),
-                $footCell=self.tableContainer.find('tfoot tr.app-datagrid-row td.app-datagrid-cell[data-col-id="' + id + '"]'),
+                $footCell = tableContainer.find('tfoot tr.app-datagrid-row td.app-datagrid-cell[data-col-id="' + id + '"]'),
                 $headerCol = $(headerCols[id]),
                 $bodyCol = $(bodyCols[id]),
                 definedWidth,
@@ -1996,27 +2012,31 @@ $.widget('wm.datatable', {
     //Function to the first input element in a row
     setFocusOnElement: function (e, $el, skipDelay) {
         var $firstEl,
-            $target = e && $(e.target),
+            $target = e && e.target ? $(e.target) : null,
             $focusEl;
         //If focused directly on the cell, focus the input in the cell
         if ($target && $target.hasClass('app-datagrid-cell')) {
             $firstEl = $target.find('input');
         } else {
             if (!$el) {
+                if (!$target || !$target.closest) {
+                    // No element to focus
+                    return;
+                }
                 $el = $target.closest('tr.app-datagrid-row').find('td.cell-editing');
-            } else if ($el.hasClass('app-datagrid-row')) {
+            } else if ($el.hasClass && $el.hasClass('app-datagrid-row')) {
                 $el = $el.find('td.cell-editing');
             }
 
-            $firstEl = $($el).first().find('input');
+            $firstEl = $el && $el.length ? $($el).first().find('input') : $();
             if (!$firstEl.length) {
-                $firstEl = $($el).first().find('textarea');
+                $firstEl = $el && $el.length ? $($el).first().find('textarea') : $();
             }
             if (!$firstEl.length) {
-                $firstEl = $($el).first().find('select');
+                $firstEl = $el && $el.length ? $($el).first().find('select') : $();
             }
-            if(!($(e.target).find('td').first().hasClass('td.cell-editing'))){
-                $firstEl=$el.find('td');
+            if($target && $target.find && !$target.find('td').first().hasClass('td.cell-editing')){
+                $firstEl = $el && $el.find ? $el.find('td') : $();
             }
         }
         //Focus and select the first element
@@ -3541,6 +3561,14 @@ $.widget('wm.datatable', {
         }
     },
     __setStatus: function (isCreated) {
+        if (!this.dataStatusContainer || !this.dataStatusContainer.length) {
+            if (this.gridContainer && this.gridContainer.length) {
+                this.dataStatusContainer = this.gridContainer.find('.overlay');
+            }
+            if (!this.dataStatusContainer || !this.dataStatusContainer.length) {
+                return;
+            }
+        }
         var loadingIndicator = this.dataStatusContainer.find('i'),
             state = this.dataStatus.state,
             isScrollOrOndemand = this.options.isNavTypeScrollOrOndemand();
@@ -3729,7 +3757,7 @@ $.widget('wm.datatable', {
                 // Ignore if resizable not initialized
             }
         }
-        
+     
         // MEMORY LEAK FIX: Remove native event listener using stored bound function
         if (this.gridElement && this.gridElement[0] && this.boundRowClickHandlerOnCapture) {
             this.gridElement[0].removeEventListener('click', this.boundRowClickHandlerOnCapture);

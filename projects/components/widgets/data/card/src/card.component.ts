@@ -7,6 +7,7 @@ import {
     Component,
     ElementRef,
     Injector,
+    OnDestroy,
     OnInit,
     Renderer2,
     Optional,
@@ -35,7 +36,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(CardComponent)
     ]
 })
-export class CardComponent extends MenuAdapterComponent implements OnInit, AfterViewInit {
+export class CardComponent extends MenuAdapterComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public showHeader: boolean;
@@ -47,6 +48,8 @@ export class CardComponent extends MenuAdapterComponent implements OnInit, After
     public picturesource;
 
     @ViewChild('cardContainerWrapper', { static: true }) private cardContainerElRef: ElementRef;
+
+    private removeKeydownListener: (() => void) | null = null;
 
     constructor(inj: Injector, private render2: Renderer2, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
@@ -61,7 +64,7 @@ export class CardComponent extends MenuAdapterComponent implements OnInit, After
         super.ngOnInit();
         removeAttr(this.nativeElement.parentElement, 'tabindex');
         setAttr(this.nativeElement, 'tabindex', 0);
-        this.render2.listen(this.nativeElement, 'keydown.Enter', (e) => {
+        this.removeKeydownListener = this.render2.listen(this.nativeElement, 'keydown.Enter', (e) => {
             e.preventDefault();
             this.nativeElement.click();
         });
@@ -73,6 +76,14 @@ export class CardComponent extends MenuAdapterComponent implements OnInit, After
         } else {
             super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    ngOnDestroy() {
+        if (this.removeKeydownListener) {
+            this.removeKeydownListener();
+            this.removeKeydownListener = null;
+        }
+        super.ngOnDestroy();
     }
 }
 

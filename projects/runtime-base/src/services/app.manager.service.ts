@@ -572,14 +572,21 @@ export class AppManagerService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        console.log('AppManagerService ngOnDestroy');
         if (this.messageListener) {
             window.removeEventListener('message', this.messageListener);
             this.messageListener = null;
         }
-        this.toggleVariableStateSubscription?.();
-        this.userLoggedInSubscription?.();
-        this.userLoggedOutSubscription?.();
-        this.http401Subscription?.();
+        if (this.toggleVariableStateSubscription) {
+            this.toggleVariableStateSubscription();
+        }
+        if (this.userLoggedInSubscription) {
+            this.userLoggedInSubscription();
+        }
+        if (this.userLoggedOutSubscription) {
+            this.userLoggedOutSubscription();
+        }
+        if (this.http401Subscription) {
+            this.http401Subscription();
+        }
     }
 }

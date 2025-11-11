@@ -1,4 +1,4 @@
-import { Directive, Inject, Self } from '@angular/core';
+import { Directive, Inject, OnDestroy, Self } from '@angular/core';
 
 import { AbstractDialogService, App, DataSource, triggerFn } from '@wm/core';
 import { Live_Operations, performDataOperation } from '@wm/components/base';
@@ -8,17 +8,18 @@ import { ListComponent } from '@wm/components/data/list';
   standalone: true,
     selector: '[wmLiveActions]'
 })
-export class LiveActionsDirective {
+export class LiveActionsDirective implements OnDestroy {
+    private teardown: Array<() => void> = [];
 
     constructor(
         @Self() @Inject(ListComponent) private subscribedWidget,
         private app: App,
         private dialogService: AbstractDialogService
     ) {
-        subscribedWidget.addRow = this.addRow.bind(this);
-        subscribedWidget.updateRow = this.updateRow.bind(this);
-        subscribedWidget.deleteRow = this.deleteRow.bind(this);
-        subscribedWidget.call = this.call.bind(this);
+        this.registerOverride('addRow', this.addRow.bind(this));
+        this.registerOverride('updateRow', this.updateRow.bind(this));
+        this.registerOverride('deleteRow', this.deleteRow.bind(this));
+        this.registerOverride('call', this.call.bind(this));
     }
 
     public addRow() {
@@ -169,5 +170,25 @@ export class LiveActionsDirective {
         options.error = error;
 
         this.performOperation(operation, options);
+    }
+
+    ngOnDestroy(): void {
+        // Restore original widget methods and clear teardown callbacks
+        this.teardown.forEach(teardownFn => teardownFn());
+        this.teardown = [];
+        this.subscribedWidget = null as any;
+    }
+
+    private registerOverride(methodName: string, overrideFn: any) {
+        if (!this.subscribedWidget) {
+            return;
+        }
+        const original = (this.subscribedWidget as any)[methodName];
+        (this.subscribedWidget as any)[methodName] = overrideFn;
+        this.teardown.push(() => {
+            if (this.subscribedWidget) {
+                (this.subscribedWidget as any)[methodName] = original ?? (() => undefined);
+            }
+        });
     }
 }

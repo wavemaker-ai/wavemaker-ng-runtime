@@ -101,6 +101,8 @@ declare const $;
 const DEFAULT_CLS = 'app-grid app-panel panel';
 const WIDGET_CONFIG = {widgetType: 'wm-table', hostClass: DEFAULT_CLS};
 
+const ROW_GETTER_CONTEXT = new WeakMap<Function, any>();
+
 const exportIconMapping = {
     EXCEL: 'fa fa-file-excel-o',
     CSV: 'fa fa-file-text-o'
@@ -1718,10 +1720,29 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     }
 
     getClonedRowObject(rowData) {
-        const row = getClonedObject(rowData);
-        row.getProperty = field => {
-            return get(row, field);
+        // SAFETY: Watchers can outlive the row data (e.g., async digest after table teardown)
+        // In those cases rowData might be null/undefined and downstream expressions that
+        // assign properties such as `row.expandTable = …` will throw. Fallback to an empty
+        // object so the expression can safely materialise its own flags without crashing.
+        const safeRowData = rowData || {};
+        const row = getClonedObject(safeRowData);
+
+        // MEMORY LEAK FIX: Avoid capturing `row` via arrow-function closure while
+        // still supporting call sites that extract the method without preserving `this`.
+        const getter = function(field) {
+            const context = (this && typeof this === 'object') ? this : ROW_GETTER_CONTEXT.get(getter);
+            return context ? get(context, field) : undefined;
         };
+
+        ROW_GETTER_CONTEXT.set(getter, row);
+
+        Object.defineProperty(row, 'getProperty', {
+            value: getter,
+            writable: false,
+            enumerable: false,
+            configurable: true
+        });
+
         row.$isFirst = row.$index === 1;
         row.$isLast = this.gridData.length === row.$index;
         delete row.$$index;

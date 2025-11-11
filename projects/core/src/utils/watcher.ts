@@ -150,7 +150,7 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
             try {
                 nv = fn();
             } catch (e) {
-                console.warn(`error in executing expression: '${watchInfo.expr}'`);
+              //  console.warn(`error in executing expression: '${watchInfo.expr}'`);
             }
 
             if (!isEqual(nv, ov)) {

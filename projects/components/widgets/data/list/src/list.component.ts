@@ -164,6 +164,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private firstSelectedItem: ListItemDirective;
     private navigatorMaxResultWatch: Subscription;
     private navigatorResultWatch: Subscription;
+    private listItemsChangeSubscription: Subscription;
     private navControls: string;
     private onDemandLoad: boolean;
     private _items: Array<any>;
@@ -750,6 +751,18 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         if (this._listAnimator && this._listAnimator.$btnSubscription) {
             this._listAnimator.$btnSubscription.unsubscribe();
         }
+        if (this.listItemsChangeSubscription) {
+            this.listItemsChangeSubscription.unsubscribe();
+            this.listItemsChangeSubscription = null;
+        }
+        if (this.navigatorResultWatch) {
+            this.navigatorResultWatch.unsubscribe();
+            this.navigatorResultWatch = null;
+        }
+        if (this.navigatorMaxResultWatch) {
+            this.navigatorMaxResultWatch.unsubscribe();
+            this.navigatorMaxResultWatch = null;
+        }
         this._listenerDestroyers.forEach(d => d && d());
         
         // MEMORY LEAK FIX: Destroy jQuery UI sortable/droppable
@@ -1241,7 +1254,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     }
 
     private setupHandlers() {
-        this.listItems.changes.subscribe(listItems => {
+        this.listItemsChangeSubscription = this.listItems.changes.subscribe(listItems => {
             this.onListRender(listItems);
             this.cdRef.detectChanges();
         });

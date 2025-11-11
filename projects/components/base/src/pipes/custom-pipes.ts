@@ -1,4 +1,4 @@
-import {inject, Inject, Pipe, PipeTransform} from '@angular/core';
+import {Inject, Optional, Pipe, PipeTransform} from '@angular/core';
 import {DatePipe, DecimalPipe} from '@angular/common';
 import {AbstractI18nService, App, CURRENCY_INFO, CustomPipeManager, hasOffsetStr, isDefined, replace} from '@wm/core';
 import {WmPipe} from "./wm-pipe";
@@ -39,9 +39,7 @@ export class TrailingZeroDecimalPipe implements PipeTransform {
     name: 'toDate'
 })
 export class ToDatePipe extends WmPipe implements PipeTransform {
-    // CRITICAL FIX: Accept App as constructor parameter instead of using inject()
-    // inject() fails when pipe is created by PipeProvider outside injection context
-    private app: App;
+    private app?: App;
     
     // This method calls the custom formatter fn after applying the exisitng date pattern
     returnFn(data, args, variables) {
@@ -82,10 +80,14 @@ export class ToDatePipe extends WmPipe implements PipeTransform {
         return this.returnFn('', arguments,this.app?.Variables);
     }
 
-    constructor(private datePipe: DatePipe, private i18nService: AbstractI18nService, protected customPipeManager: CustomPipeManager, app?: App) {
+    constructor(
+        private datePipe: DatePipe,
+        private i18nService: AbstractI18nService,
+        protected customPipeManager: CustomPipeManager,
+        @Optional() app?: App
+    ) {
         super('toDate', customPipeManager);
-        // CRITICAL FIX: Accept App via constructor to avoid NG0203 injection context error
-        this.app = app || inject(App);
+        this.app = app;
     }
 }
 
@@ -156,11 +158,7 @@ export class SuffixPipe implements PipeTransform {
     name: 'custom'
 })
 export class CustomPipe implements PipeTransform {
-    private app = inject(App);
-
-    constructor(private custmeUserPipe: CustomPipeManager) {
-
-    }
+    constructor(private custmeUserPipe: CustomPipeManager, @Optional() private app?: App) {}
     transform(data, pipename) {
        let argumentArr = [];
        for(let i =2 ; i<arguments.length; i++ ){
@@ -174,7 +172,7 @@ export class CustomPipe implements PipeTransform {
         }
 
         try{
-            return pipeRef.formatter(data, ...argumentArr, this.app.Variables);
+            return pipeRef.formatter(data, ...argumentArr, this.app?.Variables);
         } catch(error){
             console.error('Pipe name: '+pipename, error);
             return data;

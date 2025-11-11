@@ -27,11 +27,15 @@ export class PartialParamHandlerDirective implements OnDestroy {
                     this.widgetRef.partialParams[name] = nv;
 
                     // notify the partial container of the param changes
-                    this.widgetRef.params$.next();
+                    if (this.widgetRef.params$) {
+                        this.widgetRef.params$.next();
+                    }
                 })
             );
         } else {
-            this.widgetRef.params$.next();
+            if (this.widgetRef.params$) {
+                this.widgetRef.params$.next();
+            }
         }
 
     }
@@ -45,8 +49,8 @@ export class PartialParamHandlerDirective implements OnDestroy {
         
         // MEMORY LEAK FIX: Clear partialParams object
         if (this.widgetRef.partialParams) {
-            this.widgetRef.partialParams = null;
-            this.widgetRef.pageParams = null;
+            this.widgetRef.partialParams = {};
+            this.widgetRef.pageParams = this.widgetRef.partialParams;
         }
     }
 }
