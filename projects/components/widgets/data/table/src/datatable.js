@@ -3692,6 +3692,92 @@ $.widget('wm.datatable', {
         $head.addClass(val.toAdd);
     },
     
+    // MEMORY LEAK FIX: Centralized cleanup function for all event listeners and references
+    _cleanupEventListeners: function () {
+        // Destroy jQuery UI resizable to release event handlers and state
+        if (this.gridHeaderElement && this.gridHeaderElement.length) {
+            try {
+                this.gridHeaderElement.find('th[data-col-resizable]').resizable('destroy');
+            } catch (e) {
+                // Ignore if resizable not initialized
+            }
+        }
+        
+        // Remove native event listener using stored bound function
+        if (this.gridElement && this.gridElement[0] && this.boundRowClickHandlerOnCapture) {
+            this.gridElement[0].removeEventListener('click', this.boundRowClickHandlerOnCapture);
+            this.boundRowClickHandlerOnCapture = null;
+        }
+        
+        // Remove specific namespaced events for clarity and documentation
+        // Then do comprehensive cleanup with .off() to catch any remaining events
+        
+        // Remove .datatable namespaced events from header
+        if (this.gridHeaderElement) {
+            this.gridHeaderElement.off('.datatable');
+            this.gridHeaderElement.find('th').off('.datatable');
+            this.gridHeaderElement.find('th[data-col-selectable]').off('.datatable');
+            this.gridHeaderElement.find('th[data-col-sortable]').off('.datatable');
+            this.gridHeaderElement.find('th[data-col-sortable] .header-data').off('.datatable');
+            this.gridHeaderElement.find('.app-datagrid-header-cell').off('.datatable');
+            this.gridHeaderElement.find('.app-datagrid-header-cell input:checkbox').off('.datatable');
+        }
+        
+        // Remove .datatable namespaced events from grid body (including dynamic elements like editable cells)
+        if (this.gridElement) {
+            this.gridElement.off('.datatable');
+            this.gridElement.parent().off('scroll.datatable');
+            this.gridElement.find('tr.app-datagrid-row').off('.datatable');
+            this.gridElement.find('td.cell-editing').off('.datatable'); // Dynamic editable cells
+            this.gridElement.find('.cancel-edit-row-button').off('.datatable');
+            this.gridElement.find('.save-edit-row-button').off('.datatable');
+            this.gridElement.find('[data-identifier="rowExpansionButtons"]').off('click');
+            this.gridElement.find('[data-identifier="actionButtons"]').off();
+        }
+        
+        // Remove search-related events
+        if (this.gridSearch) {
+            this.gridSearch.off('.datatable');
+            this.gridSearch.find('.app-search-button').off('click');
+            this.gridSearch.find('[data-element="dgFilterValue"]').off('change');
+            this.gridSearch.find('[data-element="dgSearchText"]').off('keyup');
+        }
+        
+        // Remove on-demand pagination events
+        this.element.find('.on-demand-load-btn').off('click.datatable');
+        this.element.find('.on-demand-datagrid').off();
+        
+        // Remove new row action button events
+        var $gridActions = this.element.siblings('div.panel-footer, div.panel-heading').find('div.app-datagrid-actions');
+        if ($gridActions.length) {
+            $gridActions.find('.cancelNewRow').off('click.datatable');
+            $gridActions.find('.saveNewRow').off('click.datatable');
+        }
+        
+        // COMPREHENSIVE CLEANUP: Remove ALL remaining events from containers
+        // This catches any events that weren't namespaced or were missed above
+        if (this.tableContainer) {
+            this.tableContainer.off();
+        }
+        if (this.gridContainer) {
+            this.gridContainer.off();
+        }
+        this.element.off();
+        
+        // Clear all internal structures to release row/column references
+        this.preparedData = [];
+        this.preparedHeaderData = [];
+        this.compiledCellTemplates = {};
+        this.columnClickInfo = {};
+        
+        // Clear timeout references
+        window.clearTimeout(this.refreshGridTimeout);
+        if (this.throttledScrollHandler && this.throttledScrollHandler.cancel) {
+            this.throttledScrollHandler.cancel();
+            this.throttledScrollHandler = null;
+        }
+    },
+    
     // MEMORY OPTIMIZATION: Refresh a single row to apply lazy-compiled custom expressions
     // This is called when a row scrolls into view and its popovers need to be compiled
     refreshRow: function (rowId) {
@@ -3719,68 +3805,10 @@ $.widget('wm.datatable', {
     },
 
     _destroy: function () {
-        // PERFORMANCE FIX: Removed console.log - reduces console noise
+        // MEMORY LEAK FIX: Clean up all event listeners and internal references
+        this._cleanupEventListeners();
         
-        // MEMORY LEAK FIX: Destroy jQuery UI resizable to release event handlers and state
-        if (this.gridHeaderElement && this.gridHeaderElement.length) {
-            try {
-                this.gridHeaderElement.find('th[data-col-resizable]').resizable('destroy');
-            } catch (e) {
-                // Ignore if resizable not initialized
-            }
-        }
-        
-        // MEMORY LEAK FIX: Remove native event listener using stored bound function
-        if (this.gridElement && this.gridElement[0] && this.boundRowClickHandlerOnCapture) {
-            this.gridElement[0].removeEventListener('click', this.boundRowClickHandlerOnCapture);
-            this.boundRowClickHandlerOnCapture = null;
-        }
-        
-        // MEMORY LEAK FIX: Remove all jQuery event handlers using namespaces
-        if (this.gridHeaderElement) {
-            this.gridHeaderElement.off('.datatable');
-        }
-        if (this.gridElement) {
-            this.gridElement.off('.datatable');
-            this.gridElement.parent().off('scroll.datatable');
-        }
-        if (this.gridSearch) {
-            this.gridSearch.off('.datatable');
-            // Remove search button and filter events
-            this.gridSearch.find('.app-search-button').off('click');
-            this.gridSearch.find('[data-element="dgFilterValue"]').off('change');
-            this.gridSearch.find('[data-element="dgSearchText"]').off('keyup');
-        }
-        
-        // MEMORY LEAK FIX: Remove on-demand load button events
-        this.element.find('.on-demand-load-btn').off('click.datatable');
-        
-        // MEMORY LEAK FIX: Remove new row action button events
-        var $gridActions = this.element.siblings('div.panel-footer, div.panel-heading').find('div.app-datagrid-actions');
-        if ($gridActions.length) {
-            $gridActions.find('.cancelNewRow').off('click.datatable');
-            $gridActions.find('.saveNewRow').off('click.datatable');
-        }
-        
-        // MEMORY LEAK FIX: Remove row expansion button events
-        if (this.gridElement) {
-            this.gridElement.find('[data-identifier="rowExpansionButtons"]').off('click');
-        }
-        
-        // MEMORY LEAK FIX: Clear all internal structures to release row/column references
-        this.preparedData = [];
-        this.preparedHeaderData = [];
-        this.compiledCellTemplates = {};
-        this.columnClickInfo = {};
-        
-        // Clear timeout references
-        window.clearTimeout(this.refreshGridTimeout);
-        if (this.throttledScrollHandler && this.throttledScrollHandler.cancel) {
-            this.throttledScrollHandler.cancel();
-            this.throttledScrollHandler = null;
-        }
-        
-        // Empty and clear DOM references
+        // Empty DOM and clear all references
         this.element.empty('');
         this.gridContainer = null;
         this.gridHeaderElement = null;
