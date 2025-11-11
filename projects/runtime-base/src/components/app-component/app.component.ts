@@ -31,6 +31,7 @@ import {
     AbstractSpinnerService,
     addClass,
     App,
+    clearExpressionCaches,
     CustomIconsLoaderService,
     getWmProjectProperties,
     noop,
@@ -48,13 +49,6 @@ import {DialogComponent} from '@wm/components/dialogs/design-dialog';
 import {ContainerDirective, PartialContainerDirective, PartialParamHandlerDirective} from '@wm/components/base';
 import {filter} from "rxjs/operators";
 import {Subscription} from "rxjs";
-
-// Extend window interface for gc() function (available when Chrome runs with --js-flags=--expose-gc)
-declare global {
-    interface Window {
-        gc?: () => void;
-    }
-}
 
 interface SPINNER {
     show: boolean;
@@ -191,20 +185,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
                         // MEMORY LEAK FIX: Clear expression parser caches on navigation
                         // exprFnCache, eventFnCache, purePipes, fnNameMap grow with each page
                         // Without this, they accumulate 500+ expressions per page navigation
-                        if (typeof (window as any).clearExpressionCaches === 'function') {
-                            (window as any).clearExpressionCaches();
-                        }
-                        
-                        // Trigger garbage collection if available (Chrome with --js-flags=--expose-gc)
-                        if (window.gc && typeof window.gc === 'function') {
-                            setTimeout(() => {
-                                try {
-                                    window.gc();
-                                } catch (e) {
-                                    // GC not available
-                                }
-                            }, 100);
-                        }
+                        clearExpressionCaches();
                     } catch (e) {
                         console.warn('Failed to clear component cache:', e);
                     }
@@ -245,7 +226,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         });
         setTimeout(() => {
             this.app.dynamicComponentContainerRef = this.dynamicComponentContainerRef;
-            //this.overrideRouterOutlet();
+            this.overrideRouterOutlet();
         }, 10);
     }
 
@@ -258,7 +239,9 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
             componentRef.instance.ngOnAttach();
         };
         this.routerOutlet.detach = () => {
-            this.app.activePage.ngOnDetach();
+            if (this.app.activePage && this.app.activePage.ngOnDetach) {
+                this.app.activePage.ngOnDetach();
+            }
             const componentRef = oDetach.call(this.routerOutlet);
             return componentRef;
         };

@@ -86,13 +86,8 @@ export class PageDirective extends StylableComponent implements AfterViewInit, O
     }
 
     public ngOnDestroy() {
-        super.ngOnDestroy();
         this.invokeEventCallback('destroy', { widget: this });
         this._eventNotifier.destroy();
-        
-        // CRITICAL FIX: Call super.ngOnDestroy() to unwatch all watchers
-        // Without this, all watchers registered via registerDestroyListener remain in memory
-        // This was causing the 1.3 GB memory leak on navigation
         super.ngOnDestroy();
     }
 }

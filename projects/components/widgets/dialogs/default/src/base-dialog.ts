@@ -8,8 +8,6 @@ import {AbstractDialogService, findRootContainer, generateGUId, isMobile} from '
 
 import {BaseComponent, IDialog, IWidgetConfig, WidgetConfig} from '@wm/components/base';
 
-const eventsRegistered = false;
-
 const invokeOpenedCallback = (ref) => {
     if (ref) {
         setTimeout(() => {
@@ -65,8 +63,6 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
     public sheet: string | boolean;
     public sheetPosition: string;
     private dialogOriginFocusStack: HTMLElement[] = [];
-    // MEMORY LEAK FIX: Store subscriptions for explicit cleanup
-    private modalSubscriptions: Subscription[] = [];
 
     protected constructor(
         inj: Injector,
@@ -114,7 +110,8 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
                 }
             })
         ];
-        this.registerDestroyListener(() => {// remove the dialog reference from opened dialogs and closed dialogs
+        this.registerDestroyListener(() => {
+            // remove the dialog reference from opened dialogs and closed dialogs
             this.dialogService.removeFromOpenedDialogs(this);
             this.dialogService.removeFromClosedDialogs(this);
             subscriptions.forEach(s => s.unsubscribe());
@@ -208,22 +205,6 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
 
     public ngOnDestroy() {
         this.close();
-        
-        // MEMORY LEAK FIX: Ensure all modal subscriptions are unsubscribed
-        if (this.modalSubscriptions && this.modalSubscriptions.length) {
-            this.modalSubscriptions.forEach(s => {
-                if (s && !s.closed) {
-                    s.unsubscribe();
-                }
-            });
-            this.modalSubscriptions = [];
-        }
-        
-        // MEMORY LEAK FIX: Clear dialogRef to release ngx-bootstrap modal reference
-        if (this.dialogRef) {
-            this.dialogRef = null;
-        }
-        
         this.deRegister(this.viewParent);
         super.ngOnDestroy();
     }

@@ -13,22 +13,38 @@ const invokeLater = fn => {
 
 export const appendNode = (node: HTMLElement, parent: HTMLElement, sync: boolean = true) => {
     const task = () => parent.appendChild(node);
-    sync ? task() : invokeLater(task);
+     if (sync) {
+        task();
+    } else {
+        invokeLater(task);
+    }
 };
 
 export const insertBefore = (node: HTMLElement, ref: HTMLElement, sync: boolean = true) => {
     const task = () => ref.parentNode.insertBefore(node, ref);
-    sync ? task() : invokeLater(task);
+     if (sync) {
+        task();
+    } else {
+        invokeLater(task);
+    }
 };
 
 export const insertAfter = (node: HTMLElement, ref: HTMLElement, sync: boolean = true) => {
     const task = () => ref.parentNode.insertBefore(node, ref.nextSibling);
-    sync ? task() : invokeLater(task);
+    if (sync) {
+        task();
+    } else {
+        invokeLater(task);
+    }
 };
 
 export const removeNode = (node: HTMLElement, sync: boolean = true) => {
     const task = () => node.remove();
-    sync ? task() : invokeLater(task);
+    if (sync) {
+        task();
+    } else {
+        invokeLater(task);
+    }
 };
 
 export const removeClass = (node: HTMLElement, ov: string, sync: boolean = true) => {
@@ -36,7 +52,11 @@ export const removeClass = (node: HTMLElement, ov: string, sync: boolean = true)
     const task = c => node.classList.remove(c);
     ov.split(' ').forEach(c => {
         if (c.length) {
-            sync ? task(c) : invokeLater(() => task(c));
+            if (sync) {
+                task(c);
+            } else {
+                invokeLater(() => task(c));
+            }
         }
     });
 };
@@ -46,7 +66,11 @@ export const addClass = (node: HTMLElement, nv: string, sync: boolean = true) =>
     const task = c => node.classList.add(c);
     nv.split(' ').forEach(c => {
         if (c.length) {
-            sync ? task(c) : invokeLater(() => task(c));
+            if (sync) {
+                task(c);
+            } else {
+                invokeLater(() => task(c));
+            }
         }
     });
 };
@@ -70,36 +94,56 @@ export const toggleClass = (node: HTMLElement, cls: string, condition: boolean, 
 };
 
 export const setCSS = (node: HTMLElement, cssName: string, val?: string | number, sync: boolean = true) => {
-    // const task = () => node.style[cssName] = val;
-    // sync ? task() : invokeLater(task);
+    const task = () => node.style[cssName] = val;
+    if (sync) {
+        task();
+    } else {
+        invokeLater(task);
+    }
 };
 
-export const setCSSFromObj = (node: HTMLElement, cssObj: any, sync: boolean = true) => {
+export const setCSSFromObj = (node: HTMLElement, cssObj: unknown, sync: boolean = true) => {
     const keys = Object.keys(cssObj || {});
     keys.forEach(key => setCSS(node, key, cssObj[key], sync));
 };
 
-export const setProperty = (node: HTMLElement, propName: string, val: any, sync: boolean = true) => {
+export const setProperty = (node: HTMLElement, propName: string, val: unknown, sync: boolean = true) => {
     const task = () => node[propName] = val;
-    sync ? task() : invokeLater(task);
+    if (sync) {
+        task();
+    } else {
+        invokeLater(task);
+    }
 };
 
-export const setAttr = (node: HTMLElement, attrName: string, val: any, sync: boolean = true) => {
+export const setAttr = (node: HTMLElement, attrName: string, val: string, sync: boolean = true) => {
     const task = () => node instanceof Element && node.setAttribute(attrName, val);
-    sync ? task() : invokeLater(task);
+    if (sync) {
+        task();
+    } else {
+        invokeLater(task);
+    }
 };
 
 export const setHtml = (node: HTMLElement, html: string, sync: boolean = true) => {
     const task = () => node.innerHTML = html;
-    sync ? task() : invokeLater(task);
+    if (sync) {
+        task();
+    } else {
+        invokeLater(task);
+    }
 };
 
 export const removeAttr = (node: HTMLElement, attrName: string, sync: boolean = true) => {
     const task = () => node.removeAttribute(attrName);
-    sync ? task() : invokeLater(task);
+    if (sync) {
+        task();
+    } else {
+        invokeLater(task);
+    }
 };
 
-export const createElement = (nodeType: string, attrs: any, sync: boolean = true): HTMLElement => {
+export const createElement = (nodeType: string, attrs: unknown, sync: boolean = true): HTMLElement => {
     const node = document.createElement(nodeType);
 
     if (attrs) {
@@ -113,7 +157,6 @@ export const createElement = (nodeType: string, attrs: any, sync: boolean = true
 // for width and height if a numeric value is specified return in px
 // else return the same value
 export const toDimension = (v: string | number) => {
-    // @ts-ignore
     if (v == +v) {
         return `${v}px`;
     }

@@ -32,8 +32,7 @@ export {
     getFnByExpr,
     getFnForBindExpr,
     getFnForEventExpr,
-    clearExpressionCaches,
-    getExpressionCacheSizes
+    clearExpressionCaches
 } from './utils/expression-parser';
 export {
     EVENT_LIFE,

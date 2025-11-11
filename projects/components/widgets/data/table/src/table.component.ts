@@ -199,11 +199,20 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     private compiledCustomExprRows: Set<number> = new Set();
     private lazyCompileThreshold = 20; // Only compile custom expressions for first 50 rows initially
     private rowIntersectionObserver: IntersectionObserver;
+    private observeRowsTimeout: ReturnType<typeof setTimeout> | undefined;
     
     // MEMORY OPTIMIZATION: Setup lazy loading for custom expressions (popovers)
     private setupLazyCustomExpressionLoading() {
+        // Clean up existing observer if any
         if (this.rowIntersectionObserver) {
             this.rowIntersectionObserver.disconnect();
+            this.rowIntersectionObserver = null;
+        }
+        
+        // Clear any pending observation timeout
+        if (this.observeRowsTimeout) {
+            clearTimeout(this.observeRowsTimeout);
+            this.observeRowsTimeout = null;
         }
         
         // Only setup if we have rows beyond the threshold
@@ -236,7 +245,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         });
         
         // Observe all rows beyond the threshold
-        setTimeout(() => {
+        // Store timeout reference so it can be cleared on destroy
+        this.observeRowsTimeout = setTimeout(() => {
+            // Check if observer still exists (component might have been destroyed)
+            if (!this.rowIntersectionObserver) {
+                return;
+            }
+            
             const rows = this.nativeElement.querySelectorAll(`tr.app-datagrid-row[data-row-id]`);
             rows.forEach((row: HTMLElement) => {
                 const rowId = parseInt(row.getAttribute('data-row-id') || '-1', 10);
@@ -244,6 +259,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     this.rowIntersectionObserver.observe(row);
                 }
             });
+            
+            // Clear the timeout reference after execution
+            this.observeRowsTimeout = null;
         }, 100);
     }
     
@@ -1658,6 +1676,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (this.rowIntersectionObserver) {
             this.rowIntersectionObserver.disconnect();
             this.rowIntersectionObserver = null;
+        }
+        
+        // MEMORY LEAK FIX: Clear pending observation timeout
+        if (this.observeRowsTimeout) {
+            clearTimeout(this.observeRowsTimeout);
+            this.observeRowsTimeout = null;
         }
 
         // MEMORY LEAK FIX: Clean up all row/column watchers before destroy

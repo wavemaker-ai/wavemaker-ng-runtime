@@ -224,7 +224,6 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
 
     // Trigger on hiding popover
     public onHidden() {
-        console.log("onHidden popover");
         this.onStableSubscription?.unsubscribe();
         this.onStableSubscription = null;
 
@@ -495,7 +494,6 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
 
     ngOnDestroy() {
         super.ngOnDestroy();
-        // PERFORMANCE FIX: Removed console.log - was causing 2000+ log messages and ~100ms overhead
         
         // MEMORY LEAK FIX: Hide ngx-bootstrap popover to clean up DOM and event listeners
         if (this.bsPopoverDirective && this.bsPopoverDirective.isOpen) {

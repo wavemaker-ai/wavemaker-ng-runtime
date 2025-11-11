@@ -24,7 +24,7 @@ const plus = (a, b) => void 0 === a ? b : void 0 === b ? a : a + b;
 const minus = (a, b) => ifDef(a, 0) - ifDef(b, 0);
 const noop = () => {};
 
-export type ParseExprResult = (data?: any, locals?: any) => any;
+export type ParseExprResult = (data?: unknown, locals?: unknown) => unknown;
 
 // CRITICAL FIX: Add size limits to prevent unbounded cache growth
 // These caches can grow to thousands of entries in large, long-running SPAs
@@ -32,9 +32,9 @@ const MAX_EXPR_CACHE_SIZE = 500;
 const MAX_EVENT_CACHE_SIZE = 300;
 const MAX_PIPE_CACHE_SIZE = 50;
 
-const exprFnCache = new Map();
-const eventFnCache = new Map();
-const purePipes = new Map();
+const exprFnCache = new Map<string, unknown>();
+const eventFnCache = new Map<string, unknown>();
+const purePipes = new Map<string, unknown>();
 
 const primitiveEquals = (a, b) => {
     if (typeof a === 'object' || typeof b === 'object') {
@@ -55,65 +55,74 @@ const detectChanges = (ov, nv) => {
             if (hasChange) {
                 break;
             }
+            break;
         case 9:
             hasChange = !primitiveEquals(ov[8], nv[8]);
             if (hasChange) {
                 break;
             }
+            break;
         case 8:
             hasChange = !primitiveEquals(ov[7], nv[7]);
             if (hasChange) {
                 break;
             }
+            break;
         case 7:
             hasChange = !primitiveEquals(ov[6], nv[6]);
             if (hasChange) {
                 break;
             }
+            break;
         case 6:
             hasChange = !primitiveEquals(ov[5], nv[5]);
             if (hasChange) {
                 break;
             }
+            break;
         case 5:
             hasChange = !primitiveEquals(ov[4], nv[4]);
             if (hasChange) {
                 break;
             }
+            break;
         case 4:
             hasChange = !primitiveEquals(ov[3], nv[3]);
             if (hasChange) {
                 break;
             }
+            break;
         case 3:
             hasChange = !primitiveEquals(ov[2], nv[2]);
             if (hasChange) {
                 break;
             }
+            break;
         case 2:
             hasChange = !primitiveEquals(ov[1], nv[1]);
             if (hasChange) {
                 break;
             }
+            break;
         case 1:
             hasChange = !primitiveEquals(ov[0], nv[0]);
             if (hasChange) {
                 break;
             }
+            break;
     }
     return hasChange;
 };
 
 const getPurePipeVal = (pipe, cache, identifier, ...args) => {
     let lastResult = cache.get(identifier);
-    let result;
     if (lastResult) {
         const isModified = detectChanges(lastResult.args, args);
         if (!isModified) {
             return lastResult.result;
         }
     }
-    result = pipe.transform(...args);
+    const result = pipe.transform(...args);
     lastResult = {args, result};
     cache.set(identifier, lastResult);
     return result;
@@ -483,7 +492,8 @@ const isCSPEnabled = () => {
     try {
         new Function();
         _cspEnabled = false;
-    } catch(e) {
+    } catch(error) {
+        console.error('Error checking CSP enabled:', error);
         _cspEnabled = true;
     }
     return _cspEnabled;
@@ -538,7 +548,7 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
         if (isCSPEnabled()) {
             boundFn = function(ctx, locals) {
                 // handle internal bindings for wm widgets used inside a component
-                let _ctx = Object.assign({}, locals);
+                const _ctx = Object.assign({}, locals);
                 Object.setPrototypeOf(_ctx, ctx);
                 return get(_ctx, expr);
             };
@@ -609,17 +619,17 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
 }
 
 function simpleFunctionEvaluator(expr, ctx, locals) {
-    let _ctx = Object.assign({}, locals);
+    const _ctx = Object.assign({}, locals);
     Object.setPrototypeOf(_ctx, ctx);
 
-    let parts = expr.split('(');
-    let fnName = parts[0];
-    let computedFn = get(ctx, fnName);
+    const parts = expr.split('(');
+    const fnName = parts[0];
+    const computedFn = get(ctx, fnName);
 
     if (computedFn) {
         let args = parts[1].replace(')', '');
         args = args.split(',');
-        let computedArgs = [];
+        const computedArgs = [];
         args.forEach((arg)=> {
             arg = arg && arg.trim();
             computedArgs.push(get(_ctx, arg));
@@ -768,25 +778,4 @@ export const clearExpressionCaches = () => {
     fnNameMap.clear();
     
     console.log(`Cleared expression caches: ${exprCount} expressions, ${eventCount} events, ${pipeCount} pipes, ${fnCount} registered functions`);
-}
-
-/**
- * Get current cache sizes for monitoring
- */
-export const getExpressionCacheSizes = () => {
-    return {
-        exprFnCache: exprFnCache.size,
-        eventFnCache: eventFnCache.size,
-        purePipes: purePipes.size,
-        fnNameMap: fnNameMap.size,
-        total: exprFnCache.size + eventFnCache.size + purePipes.size + fnNameMap.size
-    };
-}
-
-/**
- * Expose cache size getters for debugging
- */
-if (typeof window !== 'undefined') {
-    (window as any).getExpressionCacheSizes = getExpressionCacheSizes;
-    (window as any).clearExpressionCaches = clearExpressionCaches;
 }
