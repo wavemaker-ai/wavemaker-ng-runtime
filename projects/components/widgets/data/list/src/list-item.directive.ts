@@ -6,7 +6,7 @@ import {
     HostListener,
     inject,
     Injector,
-    Input,
+    Input, OnDestroy,
     OnInit,
     Optional,
     ViewContainerRef
@@ -27,7 +27,7 @@ declare const $;
     selector: '[wmListItem]',
     exportAs: 'listItemRef'
 })
-export class ListItemDirective implements OnInit, AfterViewInit {
+export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
 
     public item;
     public context;
@@ -75,8 +75,10 @@ export class ListItemDirective implements OnInit, AfterViewInit {
 
     get currentItemWidgets () {
         const componentElements = Array.from(this.nativeElement.querySelectorAll('[widget-id]'));
-        return Object.assign(this._currentItemWidgets, componentElements.reduce((result, comp: any) => {
-            result[comp.widget.name] = comp.widget;
+        return Object.assign({}, componentElements.reduce((result, comp: any) => {
+            if (comp.widget?.name) {
+                result[comp.widget.name] = comp.widget;
+            }
             return result;
         }, {}));
     }
@@ -125,21 +127,24 @@ export class ListItemDirective implements OnInit, AfterViewInit {
         const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
 
         if ($editItem) {
+            console.log('this.listComponent.$editItem')
+
             // Triggered on click of edit action
-            $editItem.addEventListener('click', evt => {
-                this.listComponent.update();
-            });
+            const handler = () => this.listComponent.update();
+            $editItem.addEventListener('click', handler);
+            this.destroy$.subscribe(() => $editItem.removeEventListener('click', handler));
         }
 
         if ($deleteItem) {
             // Triggered on click of delete action
-            $deleteItem.addEventListener('click', evt => {
-                this.listComponent.delete();
-            });
+            const handler = () => this.listComponent.delete();
+            $deleteItem.addEventListener('click', handler);
+            this.destroy$.subscribe(() => $deleteItem.removeEventListener('click', handler));
         }
     }
     ngOnInit() {
         if (this.listComponent.mouseEnterCB) {
+            console.log('this.listComponent.mouseEnterCB')
             this.nativeElement.addEventListener('mouseenter', ($event) => {
                 this.listComponent.invokeEventCallback('mouseenter', {widget: this, $event});
             });
@@ -163,5 +168,24 @@ export class ListItemDirective implements OnInit, AfterViewInit {
                 }
             }
         });
+    }
+
+    ngOnDestroy() {
+        this.destroy.next(null);
+        this.destroy.complete();
+        $(this.nativeElement).removeData('listItemContext');
+        this.inj = null;
+        this.nativeElement = null;
+        this.context = null;
+        this.item = null;
+        this.destroy = null;
+        this.destroy$ = null;
+        this.viewContainerRef.clear();
+        this.viewContainerRef = null;
+        this._currentItemWidgets = null;
+        this.itemClass = null;
+        this.disableItem = null;
+        this._viewParent = null;
+        this.trackId = null;
     }
 }

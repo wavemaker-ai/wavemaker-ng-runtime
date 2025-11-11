@@ -37,10 +37,12 @@ const invokeLater = fn => {
 };
 
 export class WidgetProxyProvider {
+    private static revocable    : { proxy: BaseComponent; revoke: { (): void } };
     public static create(instance: BaseComponent, widgetSubType: string, propsByWidgetSubType: Map<string, any>) {
         // If the native Proxy is supported
         if ((window as any).Proxy) {
-            return new Proxy(instance, proxyHandler);
+            this.revocable = Proxy.revocable(instance, proxyHandler);
+            return this.revocable.proxy;
         } else {
 
             // If the native Proxy is not supported, IE11
@@ -77,5 +79,10 @@ export class WidgetProxyProvider {
 
             return widget;
         }
+    }
+
+    public static revoke() {
+        this.revocable?.revoke();
+        this.revocable = undefined;
     }
 }

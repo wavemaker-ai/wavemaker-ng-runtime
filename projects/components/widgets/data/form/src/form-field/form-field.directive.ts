@@ -5,7 +5,7 @@ import {
     Directive,
     HostListener,
     Inject,
-    Injector,
+    Injector, OnDestroy,
     OnInit,
     Optional,
     Self
@@ -63,7 +63,7 @@ const FILE_TYPES = {
         {provide: Context, useFactory: () => { return {} }, multi: true}
     ]
 })
-export class FormFieldDirective extends StylableComponent implements OnInit, AfterContentInit {
+export class FormFieldDirective extends StylableComponent implements OnInit, AfterContentInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ContentChild('formWidget', {static: true}) formWidget;
@@ -684,5 +684,10 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
                 this.prepareFormWidget();
             }
         }
+    }
+
+    ngOnDestroy() {
+        this.fieldValidations = null;
+        super.ngOnDestroy();
     }
 }

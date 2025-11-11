@@ -13,7 +13,7 @@ import {
 } from '@wm/core';
 import {DISPLAY_TYPE, ImagePipe, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective} from '@wm/components/base';
 
-import {registerProps} from './anchor.props'; 
+import {registerProps} from './anchor.props';
 
 const DEFAULT_CLS = 'app-anchor';
 const WIDGET_CONFIG: IWidgetConfig = {
@@ -93,12 +93,13 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
         }
     }
 
+    private _eventNotifierSubscription: () => void;
     public onActive(callback: (data: any) =>void) {
-        this._eventNotifier.subscribe('on-active', callback);
+        this._eventNotifierSubscription = this._eventNotifier.subscribe('on-active', callback);
     }
 
     protected handleEvent(node: HTMLElement, eventName: string, eventCallback: Function, locals: any, meta?: string) {
-        super.handleEvent(
+        return super.handleEvent(
             node,
             eventName,
             e => {
@@ -174,6 +175,8 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
         if(this.cancelSubscription) {
             this.cancelSubscription();
         }
+        this.nativeElement.removeEventListener('contextmenu', disableContextMenu);
+        this._eventNotifierSubscription?.();
         super.ngOnDestroy();
     }
 }

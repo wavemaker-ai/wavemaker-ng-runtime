@@ -67,7 +67,7 @@ const getUpdatedWatcInfo = (expr, acceptsArray, listener) => {
 
     // listener accepts array
     // replace all except the last `[$i]` with `[0]` and return the expression.
-    var index           = expr.lastIndexOf($I),
+    let index           = expr.lastIndexOf($I),
         _expr           = expr.substr(0, index).replace($I, $0),
         restExpr        = expr.substr(index + 5),
         arrayConsumerFn = listener;
@@ -88,10 +88,11 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
         expr = watchInfo.expr;
         listener = watchInfo.listener;
     }
-    const fn = $parseExpr(expr);
+    let fn = $parseExpr(expr);
+    let fnBind = fn.bind(expr, $scope, $locals);
 
     registry.set(identifier, {
-        fn: fn.bind(expr, $scope, $locals),
+        fn: fnBind,
         listener,
         expr,
         last: FIRST_TIME_WATCH,
@@ -99,7 +100,12 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
         isMuted: isMuted
     });
 
-    return () => $unwatch(identifier);
+    return () => {
+        fn = null;
+        listener = null
+        fnBind = null;
+        $unwatch(identifier);
+    };
 };
 
 export const $unwatch = identifier => registry.delete(identifier);
@@ -168,7 +174,7 @@ export const setAppRef = ref => {
 export const isChangeFromWatch = () => changedByWatch;
 export const resetChangeFromWatch = () => changedByWatch = false;
 
-(<any>window).watchRegistry = registry;
+//(<any>window).watchRegistry = registry;
 
 let skipWatchers;
 

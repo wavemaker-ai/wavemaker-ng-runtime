@@ -7,9 +7,10 @@ import {extend} from "lodash-es";
     selector: '[wmShowInDevice]'
 })
 export class ShowInDeviceDirective implements OnDestroy {
-    private readonly context = {};
+    private context = {};
     private devices;
     private embeddedView;
+    private boundOnResize: () => void;
     constructor(
         private viewContainerRef: ViewContainerRef,
         inj: Injector,
@@ -18,7 +19,8 @@ export class ShowInDeviceDirective implements OnDestroy {
     ) {
         extend(this.context, (inj as any)._lView[8], explicitContext);
 
-        window.addEventListener('resize', this.onResize.bind(this));
+        this.boundOnResize = this.onResize.bind(this);
+        window.addEventListener('resize', this.boundOnResize);
     }
     @Input() set wmShowInDevice(devices) {
         this.devices = devices.split(',');
@@ -63,6 +65,10 @@ export class ShowInDeviceDirective implements OnDestroy {
     }
 
     ngOnDestroy() {
-        window.removeEventListener('resize', this.onResize);
+        window.removeEventListener('resize', this.boundOnResize);
+        this.viewContainerRef.clear();
+        this.embeddedView = null;
+        this.context = null;
+        this.templateRef = null;
     }
 }

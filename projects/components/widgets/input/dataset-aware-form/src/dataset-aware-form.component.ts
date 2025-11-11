@@ -6,7 +6,7 @@ import { BaseFormCustomComponent } from '@wm/components/input/base-form-custom';
 import {debounce as _debounce, find, isArray, isEmpty, isEqual, isNull, isObject, toString} from "lodash-es";
 
 @Injectable()
-export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent implements OnInit, OnDestroy {
+export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent {
     public dataset: any;
     public datafield: string;
     public displayfield: string;

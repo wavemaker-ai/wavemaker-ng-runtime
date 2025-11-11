@@ -6,7 +6,7 @@ import {
     ContentChildren,
     Directive,
     Inject,
-    Injector,
+    Injector, OnDestroy,
     OnInit,
     Optional,
     TemplateRef
@@ -83,7 +83,7 @@ class FieldDef {
         provideAsWidgetRef(TableColumnDirective)
     ]
 })
-export class TableColumnDirective extends BaseComponent implements OnInit, AfterContentInit, AfterViewInit {
+export class TableColumnDirective extends BaseComponent implements OnInit, AfterContentInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ContentChildren('filterWidget', { descendants: true }) _filterInstances;
@@ -784,5 +784,11 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             default:
                 this.table.redraw(true);
         }
+    }
+
+    ngOnDestroy() {
+        this.fieldValidations = null;
+        this.fieldValidations_new = null;
+        super.ngOnDestroy()
     }
 }

@@ -347,6 +347,25 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         //this.captureApplicationThumbnail();
         this.savePageSnapShot();
         this.destroy$.complete();
+        console.log("page ngOnDestroy", this.App.activePage, this.Widgets, (this.App as any).Widgets);
+        this.App.activePage = undefined;
+        this.Widgets = undefined;
+        (this.App as any).Widgets = undefined;
+        this.injector = null;
+
+        this.$page = null;
+        this.App = null;
+        this.route = null;
+        this.appManager = null;
+        this.navigationService = null;
+        this.scriptLoaderService = null;
+        this.i18nService = null;
+        this.router = null;
+        this.Viewport =null;
+        this.destroy$ = null;
+        this.viewInit$ = null;
+        this.fragmentsLoaded$ = null;
+        this.Variables = null;
     }
 
     captureApplicationThumbnail() {
