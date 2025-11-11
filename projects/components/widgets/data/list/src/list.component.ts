@@ -157,6 +157,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     public titleId: string;
     public allowpagesizechange: boolean = false;
     public pagesizeoptions: string;
+    private prevPagesizeoptions: string;
     public updatedPageSize;
     public actualPageSize;
     _isDependent;
@@ -575,8 +576,9 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         } else if (key === 'allowpagesizechange') {
             this.allowpagesizechange = nv;
         } else if(key === 'pagesizeoptions') {
-                this.pagesizeoptions = nv;
-                this.setDefaultPageSize(nv)
+                this.prevPagesizeoptions = this.sanitizeCommaSeparatedIntegers(ov);
+                this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
+                if(this.allowpagesizechange) this.setDefaultPageSize(nv)
         }else {
             super.onPropertyChange(key, nv, ov);
         }
@@ -592,6 +594,10 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             nv = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b)[0]
             this.pagesize = nv;
         }
+         if(this.isPageSizeOptionsChanged()) {
+             this.dataNavigator.defaultPageSizeOptions = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) || [];
+             this.dataNavigator.pageSizeOptions = [...this.dataNavigator.defaultPageSizeOptions];
+         }
     }
         this.updatedPageSize = nv;
         this.dataNavigator.updatedPageSize = nv;
@@ -604,6 +610,34 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         if(this.datasource){
             this.datasource.maxResults = this.pagesize || this.datasource.maxResults;
         }
+    }
+
+    isPageSizeOptionsChanged() {
+        return !isEqual(this.prevPagesizeoptions, this.pagesizeoptions);
+    }
+
+    selectPageSize(pagesize: number) {
+        if(!this.allowpagesizechange && !pagesize) return;
+
+        if(pagesize < this.dataNavigator.pageSizeOptions[0] || pagesize > this.dataNavigator.pageSizeOptions[this.dataNavigator.pageSizeOptions.length - 1]
+            || !this.dataNavigator.pageSizeOptions.includes(Number(pagesize))) {
+            pagesize = this.dataNavigator.pageSizeOptions[0];
+        }
+        this.dataNavigator.onPageSizeChange(undefined, pagesize);
+    }
+
+    sanitizeCommaSeparatedIntegers(input: string): string {
+        if (!input) return "";
+        const uniqueNumbers = Array.from(
+            new Set(
+                input
+                    .split(",")
+                    .map(v => v.trim())
+                    .filter(v => /^-?\d+$/.test(v))
+                    .map(v => Math.abs(parseInt(v, 10)))
+            )
+        );
+        return uniqueNumbers.join(",");
     }
 
     public onItemClick(evt: any, $listItem: ListItemDirective) {
