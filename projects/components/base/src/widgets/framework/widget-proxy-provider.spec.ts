@@ -45,27 +45,28 @@ describe('WidgetProxyProvider', () => {
 
     describe('create method', () => {
         it('should return a proxy-like object when Proxy is supported', () => {
-            const result = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
-            expect(typeof result).toBe('object');
-            expect(result).not.toBe(mockInstance);
+            const { proxy, revoke } = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
+            expect(typeof proxy).toBe('object');
+            expect(proxy).not.toBe(mockInstance);
+            expect(typeof revoke).toBe('function');
 
             // Check if the result has the same properties as mockInstance
-            expect(result.testMethod).toBeDefined();
-            expect(result.testProperty).toBe('initial value');
+            expect(proxy.testMethod).toBeDefined();
+            expect(proxy.testProperty).toBe('initial value');
 
             // Check if setting a property triggers globalPropertyChangeHandler
-            result.testProperty = 'new value';
+            proxy.testProperty = 'new value';
             expect(globalPropertyChangeHandler).toHaveBeenCalledWith(mockInstance, 'testProperty', 'new value');
         });
 
         it('should call globalPropertyChangeHandler when setting a property', () => {
-            const proxy = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
+            const { proxy } = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
             proxy.testProperty = 'new value';
             expect(globalPropertyChangeHandler).toHaveBeenCalledWith(mockInstance, 'testProperty', 'new value');
         });
 
         it('should return the correct value when getting a property', () => {
-            const proxy = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
+            const { proxy } = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
             expect(proxy.testProperty).toBe('initial value');
         });
     });
@@ -87,7 +88,7 @@ describe('WidgetProxyProvider', () => {
         });
 
         it('should bind methods to the correct context', (done) => {
-            const proxy = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
+            const { proxy } = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
 
             setTimeout(() => {
                 proxy.testMethod();
@@ -97,7 +98,7 @@ describe('WidgetProxyProvider', () => {
         });
 
         it('should bind Angular lifecycle methods in IE11 fallback', (done) => {
-            const proxy = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
+            const { proxy } = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
 
             setTimeout(() => {
                 proxy.ngOnInit();
@@ -108,7 +109,7 @@ describe('WidgetProxyProvider', () => {
         });
 
         it('should define setters and getters for styles', () => {
-            const proxy = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
+            const { proxy } = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
 
             proxy.color = 'red';
             expect(globalPropertyChangeHandler).toHaveBeenCalledWith(mockInstance, 'color', 'red');
@@ -117,7 +118,7 @@ describe('WidgetProxyProvider', () => {
         });
 
         it('should define setters and getters for props', () => {
-            const proxy = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
+            const { proxy } = WidgetProxyProvider.create(mockInstance, mockWidgetSubType, mockPropsByWidgetSubType);
 
             proxy.testProp = 'new value';
             expect(globalPropertyChangeHandler).toHaveBeenCalledWith(mockInstance, 'testProp', 'new value');

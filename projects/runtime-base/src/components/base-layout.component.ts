@@ -39,10 +39,6 @@ export abstract class BaseLayoutComponent implements AfterViewInit, OnDestroy {
         };
         this.routerOutlet.detach = () => {
             const componentRef = oDetach.call(this.routerOutlet);
-            // Call ngOnDetach to ensure proper cleanup of the component being detached
-            if (componentRef && componentRef.instance && componentRef.instance.ngOnDetach) {
-                componentRef.instance.ngOnDetach();
-            }
             return componentRef;
         };
     }
@@ -64,19 +60,6 @@ export abstract class BaseLayoutComponent implements AfterViewInit, OnDestroy {
 
     //TODO: To work cache properly need to implement the below methods and WmRouteReuseStrategy
     ngOnDestroy(): void {
-        // CRITICAL FIX: Clear App singleton references
-        if (this.App) {
-            if (this.App.activeLayoutName === this.layoutName) {
-                this.App.activeLayoutName = null;
-            }
-            if (this.App.layoutPages === this.layoutPages) {
-                this.App.layoutPages = null;
-            }
-        }
-        
-        // Clear references
-        this.routerOutlet = null;
-        this.pageDirective = null;
     }
 
     canReuse() {

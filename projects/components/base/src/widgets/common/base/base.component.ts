@@ -113,6 +113,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      * Proxy for the component instance.
      */
     protected widget: any;
+    private widgetProxyRevoke: () => void = () => {};
 
     /**
      * View parent component
@@ -365,14 +366,34 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     }
 
     private destroySubscription: Subscription
-    public registerDestroyListener(fn: Function, ctx?: any) {
-        if (ctx) {
-            fn = fn.bind(ctx);
+    public registerDestroyListener(fn: any, ctx?: any) {
+        if (!fn) {
+            return;
         }
+
+        let cleanup: () => void;
+
+        if (typeof fn === 'function') {
+            cleanup = ctx ? fn.bind(ctx) : fn;
+        } else if (fn && typeof fn.unsubscribe === 'function') {
+            cleanup = () => fn.unsubscribe();
+        } else if (fn && typeof fn.destroy === 'function') {
+            cleanup = () => fn.destroy();
+        }
+
+        if (!cleanup) {
+            return;
+        }
+
+        if (this.destroy.isStopped) {
+            cleanup();
+            return;
+        }
+
         // CRITICAL FIX: Store subscription to prevent memory leaks
         // The subscription object itself can retain memory even after destroy.complete()
         // By storing and explicitly unsubscribing, we ensure proper cleanup
-        const subscription = this.destroy.subscribe(() => {}, () => {}, () => fn());
+        const subscription = this.destroy.subscribe(() => {}, () => {}, () => cleanup());
         this.destroySubscriptions.push(subscription);
     }
 
@@ -381,7 +402,9 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     }
 
     protected createProxy(): any {
-        return WidgetProxyProvider.create(this, this.widgetSubType, getWidgetPropsByType(this.widgetSubType));
+        const { proxy, revoke } = WidgetProxyProvider.create(this, this.widgetSubType, getWidgetPropsByType(this.widgetSubType));
+        this.widgetProxyRevoke = revoke || (() => {});
+        return proxy;
     }
 
     protected initContext() {
@@ -889,8 +912,9 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
 
     ngOnDestroy() {
         this.isDestroyed = true;
-        
+
         this.widget = Object.create(null);
+        this.widgetProxyRevoke = () => {};
         this.styleChange.complete();
         this.propertyChange.complete();
         // Notify destroy listeners BEFORE tearing down subscriptions

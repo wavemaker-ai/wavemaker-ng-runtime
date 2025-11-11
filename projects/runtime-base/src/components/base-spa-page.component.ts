@@ -57,12 +57,6 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     destroy$ = new Subject();
     viewInit$ = new Subject();
     formatsByLocale = {'timezone': ''};
-    
-    // CRITICAL FIX: Track destroy listener subscriptions to prevent memory leaks
-    private destroySubscriptions: any[] = [];
-    
-    // CRITICAL FIX: Track if component is being destroyed to prevent async widget registration
-    private isDestroyed = false;
 
     abstract evalUserScript(prefabContext: any, appContext: any, utils: any);
     abstract getVariables();
@@ -121,9 +115,7 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     }
 
     registerDestroyListener(fn: Function) {
-        // CRITICAL FIX: Store subscription to prevent memory leaks
-        const subscription = this.destroy$.subscribe(noop, noop, () => fn());
-        this.destroySubscriptions.push(subscription);
+        this.destroy$.subscribe(noop, noop, () => fn());
     }
 
     defineI18nProps() {
@@ -339,56 +331,7 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
 
     ngOnDestroy(): void {
         this.savePageSnapShot();
-        
-        // CRITICAL FIX: Mark as destroyed FIRST to prevent async widgets from registering
-        this.isDestroyed = true;
-        
-        // CRITICAL FIX: Set Widgets to null immediately to stop widget registration
-        // Widget registry checks for null viewParent.Widgets and will warn + skip registration
-        this.Widgets = null;
-        this.Variables = null;
-        this.Actions = null;
-        
-        // CRITICAL FIX: Unsubscribe all destroy listeners BEFORE completing subject
-        if (this.destroySubscriptions && this.destroySubscriptions.length > 0) {
-            this.destroySubscriptions.forEach(sub => {
-                if (sub && typeof sub.unsubscribe === 'function') {
-                    sub.unsubscribe();
-                }
-            });
-            this.destroySubscriptions = [];
-        }
-        
         this.destroy$.complete();
-        // Complete all subjects to prevent memory leaks
-        if (this.viewInit$ && !this.viewInit$.closed) {
-            this.viewInit$.complete();
-        }
-        if (this.fragmentsLoaded$ && !this.fragmentsLoaded$.closed) {
-            this.fragmentsLoaded$.complete();
-        }
-        
-        // CRITICAL FIX: Clear App singleton references to allow page garbage collection
-        if (this.App) {
-            if (this.App.activePage === this) {
-                this.App.activePage = null;
-            }
-            if ((this.App as any).Widgets) {
-                (this.App as any).Widgets = null;
-            }
-            if (this.App.activePageName === this.pageName) {
-                this.App.activePageName = null;
-            }
-        }
-        
-        // MEMORY LEAK FIX: Clear i18n/locale references
-        // appLocale has prototype chains that prevent GC if not cleared
-        this.appLocale = null;
-        this.i18nService = null;
-        
-        this.spaPageDirective = null;
-        this.layoutDirective = null;
-        this.$page = null;
     }
 
     onReady() {}
@@ -418,10 +361,6 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     }
 
     ngOnAttach() {
-        // DEFENSIVE FIX: Don't attach if component is destroyed
-        if (this.isDestroyed) {
-            return;
-        }
         this.route.snapshot.data[CACHE_PAGE] = this.canReuse();
         this.registerPageParams();
         this.App.lastActivePageName = this.App.activePageName;
@@ -431,17 +370,13 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
         this.restoreLastPageSnapshot();
         this.unmute();
         // expose current page widgets on app
-        (this.App as any).Widgets = Object.create(this.Widgets || {});
+        (this.App as any).Widgets = Object.create(this.Widgets);
         if(this.spaPageDirective && this.spaPageDirective.refreshdataonattach) {
             const refresh = v => { v && v.startUpdate && v.invoke && v.invoke(); };
             each(this.Variables, refresh);
             each(this.Actions, refresh);
         }
         this.runPageTransition().then(() => {
-            // DEFENSIVE: Check again if destroyed during async transition
-            if (this.isDestroyed) {
-                return;
-            }
             setTimeout(() => this.restoreScrollPosition(), 100);
             each(this.Widgets, w => w && w.ngOnAttach && w.ngOnAttach());
             this.appManager.notify('pageAttach', {'name' : this.pageName, instance: this});
@@ -450,25 +385,10 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     }
 
     ngOnDetach() {
-        // DEFENSIVE FIX: Don't detach if component is destroyed
-        if (this.isDestroyed) {
-            return;
-        }
         this.saveScrollPosition();
         this.savePageSnapShot();
         this.mute();
         each(this.Widgets, w => w && w.ngOnDetach && w.ngOnDetach());
-        // CRITICAL FIX: Clear App.activePage and App.Widgets references to allow garbage collection
-        // This prevents memory leaks when navigating between pages
-        if (this.App) {
-            if (this.App.activePage === this) {
-                this.App.activePage = null;
-            }
-            // Clear App.Widgets reference to prevent retaining page widget references
-            if ((this.App as any).Widgets) {
-                (this.App as any).Widgets = null;
-            }
-        }
         this.appManager.notify('pageDetach', {'name' : this.pageName, instance: this});
     }
 

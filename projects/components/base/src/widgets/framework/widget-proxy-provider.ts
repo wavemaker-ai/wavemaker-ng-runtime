@@ -36,11 +36,28 @@ const invokeLater = fn => {
     $RAFQueue.push(fn);
 };
 
+export interface WidgetProxyResult<T = any> {
+    proxy: T;
+    revoke: () => void;
+}
+
 export class WidgetProxyProvider {
-    public static create(instance: BaseComponent, widgetSubType: string, propsByWidgetSubType: Map<string, any>) {
+    public static create(instance: BaseComponent, widgetSubType: string, propsByWidgetSubType: Map<string, any>): WidgetProxyResult {
         // If the native Proxy is supported
-        if ((window as any).Proxy) {
-            return new Proxy(instance, proxyHandler);
+        const ProxyCtor = (window as any).Proxy;
+        if (ProxyCtor) {
+            const hasRevocable = typeof ProxyCtor.revocable === 'function';
+            if (hasRevocable) {
+                const { proxy, revoke } = ProxyCtor.revocable(instance, proxyHandler);
+                return {
+                    proxy,
+                    revoke: () => revoke()
+                };
+            }
+            return {
+                proxy: new ProxyCtor(instance, proxyHandler),
+                revoke: () => {}
+            };
         } else {
 
             // If the native Proxy is not supported, IE11
@@ -75,7 +92,10 @@ export class WidgetProxyProvider {
                     });
             }
 
-            return widget;
+            return {
+                proxy: widget,
+                revoke: () => {}
+            };
         }
     }
 }
