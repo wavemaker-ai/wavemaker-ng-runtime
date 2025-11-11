@@ -540,6 +540,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         if (eventName !== 'submit') {
             return super.handleEvent(this.nativeElement, eventName, callback, locals);
         }
+        return () => {};
 
     }
 

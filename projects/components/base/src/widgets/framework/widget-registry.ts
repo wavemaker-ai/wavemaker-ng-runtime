@@ -29,6 +29,7 @@ export const register = (widget: any, viewParent: any, widgetId: string, name?: 
 
     // Unregister method.
     return () => {
+        console.log('[WidgetRegistry] Unregistering widget:', widgetId, name);
         // MEMORY LEAK FIX: Clear widget object before deleting from registry
         const widgetObj = registryById.get(widgetId);
         if (widgetObj) {

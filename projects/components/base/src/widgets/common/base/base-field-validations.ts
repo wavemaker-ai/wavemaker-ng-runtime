@@ -64,6 +64,10 @@ export class BaseFieldValidations {
     // this method returns the collection of supported default validators
     private getDefaultValidators() {
         const _validator = [];
+        // MEMORY LEAK FIX: Guard against null instance (destroyed component)
+        if (!this.instance || !this.instance.widget) {
+            return _validator;
+        }
         if(!this.instance.show) return _validator;
         if(this.widgettype!== FormWidgetType.DATE && this.widgettype!==FormWidgetType.TIME && this.widgettype!==FormWidgetType.DATETIME) {
             if (this.instance.required) {
@@ -98,6 +102,10 @@ export class BaseFieldValidations {
 
     // On change of any validation property, set the angular form validators
     setUpValidators(customValidator?) {
+        // MEMORY LEAK FIX: Guard against null instance/widget/control (destroyed component)
+        if (!this.instance || !this.instance.widget || !this.widgetControl) {
+            return;
+        }
         if (this.hasValidators) {
             return;
         }
@@ -135,12 +143,24 @@ export class BaseFieldValidations {
 
     // this method sets the asyncValidation on the form field. Assigns validationmessages from the returned response
     setAsyncValidators(validators) {
+        // MEMORY LEAK FIX: Guard against null instance/widget/control (destroyed component)
+        if (!this.instance || !this.instance.widget || !this.widgetControl) {
+            return;
+        }
         this._asyncValidatorFn = () => {
             return () => {
                 return Promise.all(this.getPromiseList(validators)).then(() => {
+                    // Guard: component may be destroyed during async validation
+                    if (!this.instance || !this.instance.widget) {
+                        return null;
+                    }
                     this.instance.validationmessage = '';
                     return null;
                 }, err => {
+                    // Guard: component may be destroyed during async validation
+                    if (!this.instance || !this.instance.widget) {
+                        return err;
+                    }
                     // if err obj has validationMessage key, then set validationMessage using this value
                     // else return the value of the first key in the err object as validation message.
                     if (err.hasOwnProperty('errorMessage')) {
@@ -151,9 +171,20 @@ export class BaseFieldValidations {
                     }
                     return err;
                 }).then(response => {
+                    // Guard: component may be destroyed during async validation
+                    if (!this.instance || !this.instance.widget || !this.widgetControl) {
+                        return response;
+                    }
                     // form control status is not changed from pending. This is an angular issue refer https://github.com/angular/angular/issues/13200
                     const checkForStatusChange = () => {
+                        // Guard inside setTimeout callback (component may be destroyed during delay)
+                        if (!this.instance || !this.instance.widget || !this.widgetControl) {
+                            return;
+                        }
                         setTimeout(() => {
+                            if (!this.instance || !this.instance.widget || !this.widgetControl) {
+                                return;
+                            }
                             if (this.widgetControl.status === 'PENDING') {
                                 checkForStatusChange();
                             } else {
@@ -186,11 +217,16 @@ export class BaseFieldValidations {
     // default validator is bound to a function then watch for value changes
     // otherwise set the value of default validator directly
     setDefaultValidator(key, value) {
+        // MEMORY LEAK FIX: Guard against null instance/widget (destroyed component)
+        // Async callbacks can fire after component destruction, causing "Cannot set properties of null"
+        if (!this.instance || !this.instance.widget) {
+            return;
+        }
         if (value && value instanceof Function) {
             // passing formfield and form as arguments to the default validator function
             this.watchDefaultValidatorExpr(value.bind(undefined, this.widgetControl, this.widgetContext), key);
         } else {
-            if (this.widgettype === 'custom-widget') {
+            if (this.widgettype === 'custom-widget' && this.instance.formWidget && this.instance.formWidget.baseWidget) {
                 this.instance.formWidget.baseWidget[key] = value;
             }
             this.instance.widget[key] = value;
@@ -200,6 +236,10 @@ export class BaseFieldValidations {
 
     // sets the default validation on the form field
     setValidators(validators) {
+        // MEMORY LEAK FIX: Guard against null instance/widget (destroyed component)
+        if (!this.instance || !this.instance.widget) {
+            return;
+        }
         let _cloneValidators = cloneDeep(validators);
         this.hasValidators = true;
         this._syncValidators = [];
@@ -243,6 +283,10 @@ export class BaseFieldValidations {
     }
 
     validate() {
+        // MEMORY LEAK FIX: Guard against null instance/widget/control (destroyed component)
+        if (!this.instance || !this.instance.widget || !this.widgetControl) {
+            return;
+        }
         this.applyDefaultValidators();
         if (this._asyncValidatorFn) {
             const opt = {};
@@ -262,10 +306,18 @@ export class BaseFieldValidations {
 
     // watches for changes in the bound function for default validators.
     watchDefaultValidatorExpr(fn, key) {
+        // MEMORY LEAK FIX: Guard against null instance/widget (destroyed component)
+        if (!this.instance || !this.instance.widget) {
+            return;
+        }
         const watchName = `${this.instance.widgetId}_` + key + '_formField';
         $unwatch(watchName);
         //[Todo-CSP]: Need clarity generate this expr fn if form is present in the page
         this.instance.registerDestroyListener($watch('boundFn(fn)', extend(this.instance, this.instance.viewParent), {fn}, (nv, ov) => {
+            // Guard inside watcher callback as well (component may be destroyed during watch execution)
+            if (!this.instance || !this.instance.widget) {
+                return;
+            }
             this.instance.widget[key] = nv;
             this.applyDefaultValidators();
         }, watchName));
@@ -276,6 +328,10 @@ export class BaseFieldValidations {
 
     // invokes both custom sync validations and default validations.
     applyDefaultValidators() {
+        // MEMORY LEAK FIX: Guard against null instance/widget/control (destroyed component)
+        if (!this.instance || !this.instance.widget || !this.widgetControl) {
+            return;
+        }
         const validators = this.getDefaultValidators();
         const opt = {};
         // updating the value only when prevData is not equal to current value. and also initially when  instance.value is empty or null for some widgets like date, checkboxset
@@ -289,6 +345,10 @@ export class BaseFieldValidations {
     }
 
     setCustomValidationMessage() {
+        // MEMORY LEAK FIX: Guard against null instance/widget/control (destroyed component)
+        if (!this.instance || !this.instance.widget || !this.widgetControl) {
+            return;
+        }
         const fieldErrors = this.widgetControl && this.widgetControl.errors;
 
         if (!fieldErrors) {

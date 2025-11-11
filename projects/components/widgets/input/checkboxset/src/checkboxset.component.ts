@@ -93,6 +93,7 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent {
         } else if (!includes(['change'], eventName)) {
             return super.handleEvent(node, eventName, callback, locals);
         }
+        return () => {};
     }
 
     @HostListener('keydown.enter', ['$event', '"ENTER"'])

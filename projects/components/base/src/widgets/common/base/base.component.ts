@@ -890,9 +890,15 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     ngOnDestroy() {
         this.isDestroyed = true;
         
-        // CRITICAL FIX: Unsubscribe all destroy listeners BEFORE completing the subject
-        // This prevents subscription objects from lingering in memory
-        // Each registerDestroyListener() call creates a subscription that needs explicit cleanup
+        this.widget = Object.create(null);
+        this.styleChange.complete();
+        this.propertyChange.complete();
+        // Notify destroy listeners BEFORE tearing down subscriptions
+        this.destroy.next(undefined);
+        this.destroy.complete();
+        
+        // CRITICAL FIX: Unsubscribe all destroy listeners AFTER completion
+        // Completion triggers registered cleanup callbacks; once they run, we can safely unsubscribe.
         if (this.destroySubscriptions && this.destroySubscriptions.length > 0) {
             this.destroySubscriptions.forEach(sub => {
                 if (sub && typeof sub.unsubscribe === 'function') {
@@ -902,10 +908,6 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
             this.destroySubscriptions = [];
         }
         
-        this.widget = Object.create(null);
-        this.styleChange.complete();
-        this.propertyChange.complete();
-        this.destroy.complete();
         this.isAttached = false;
         
         // CRITICAL FIX: Unsubscribe individual subscriptions
