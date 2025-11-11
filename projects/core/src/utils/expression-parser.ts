@@ -24,7 +24,7 @@ const plus = (a, b) => void 0 === a ? b : void 0 === b ? a : a + b;
 const minus = (a, b) => ifDef(a, 0) - ifDef(b, 0);
 const noop = () => {};
 
-export type ParseExprResult = (data?: unknown, locals?: unknown) => unknown;
+export type ParseExprResult = (data?: any, locals?: any) => any;
 
 // CRITICAL FIX: Add size limits to prevent unbounded cache growth
 // These caches can grow to thousands of entries in large, long-running SPAs
@@ -32,9 +32,9 @@ const MAX_EXPR_CACHE_SIZE = 500;
 const MAX_EVENT_CACHE_SIZE = 300;
 const MAX_PIPE_CACHE_SIZE = 50;
 
-const exprFnCache = new Map<string, unknown>();
-const eventFnCache = new Map<string, unknown>();
-const purePipes = new Map<string, unknown>();
+const exprFnCache = new Map();
+const eventFnCache = new Map();
+const purePipes = new Map();
 
 const primitiveEquals = (a, b) => {
     if (typeof a === 'object' || typeof b === 'object') {
