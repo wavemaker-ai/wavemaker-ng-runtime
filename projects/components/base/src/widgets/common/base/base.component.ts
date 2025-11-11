@@ -264,7 +264,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         // }
         this.widget = this.createProxy();
         this.eventManager = inj.get(EventManager);
-        //(this.nativeElement as any).widget = this.widget;
+        (this.nativeElement as any).widget = this.widget;
 
         this.appLocale = inj.get(App).appLocale || {};
 
@@ -919,8 +919,11 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         this.customInjectorMap = {};
         this.eventHandlers.clear();
         (this.nativeElement as any).widget = null;
-        removeNode(this.nativeElement, true);
-        this.nativeElement.remove();
+        // MEMORY LEAK FIX: removeNode already calls node.remove(), no need to call it twice
+        // Also, removeNode now has defensive checks for test environments
+        if (this.nativeElement && this.nativeElement.parentNode) {
+            removeNode(this.nativeElement, true);
+        }
         this.context = null;
         this.viewContainerRef?.clear();
         (this as any).viewParent = null;

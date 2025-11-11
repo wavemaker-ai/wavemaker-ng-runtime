@@ -768,7 +768,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         
         // MEMORY LEAK FIX: Remove event listeners using stored bound functions
         const listContainer = this.nativeElement.querySelector('ul.app-livelist-container');
-        if (listContainer && this.boundListContainerClickHandler) {
+        if (listContainer && typeof listContainer.removeEventListener === 'function' && this.boundListContainerClickHandler) {
             listContainer.removeEventListener('click', this.boundListContainerClickHandler, true);
             this.boundListContainerClickHandler = null;
         }

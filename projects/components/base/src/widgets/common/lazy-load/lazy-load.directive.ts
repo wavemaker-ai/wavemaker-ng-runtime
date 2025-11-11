@@ -44,8 +44,13 @@ export class LazyLoadDirective implements OnDestroy {
             this.context,
             (val) => {
                 if (!this.embeddedView && val) {
-                    this.embeddedView  = this.viewContainer.createEmbeddedView(this.templateRef, this.context);
-                    this.unSubscribeFn();
+                    if (this.viewContainer && this.templateRef) {
+                        this.embeddedView  = this.viewContainer.createEmbeddedView(this.templateRef, this.context);
+                    }
+                    if (typeof this.unSubscribeFn === 'function') {
+                        this.unSubscribeFn();
+                        this.unSubscribeFn = null;
+                    }
                 }
             }
         );
@@ -57,7 +62,9 @@ export class LazyLoadDirective implements OnDestroy {
             this.unSubscribeFn = null;
         }
         // Clear the ViewContainerRef to prevent memory leaks
-        this.viewContainer.clear();
+        if (this.viewContainer) {
+            this.viewContainer.clear();
+        }
         
         // MEMORY LEAK FIX: Clear all references
         this.embeddedView = null;

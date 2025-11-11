@@ -60,14 +60,25 @@ export const onClickCheckTaglengthOnBody =
     };
 
 export const onClickCheckClassEleLengthOnBody = (fixture, selector: string, classquery: string, expectedEleLength: number, callback?: Function) => {
-    let element = getHtmlSelectorElement(fixture, selector)
+    const element = getHtmlSelectorElement(fixture, selector);
     element.nativeElement.click();
     fixture.whenStable().then(() => {
-        expect(document.getElementsByClassName(classquery).length).toBeGreaterThanOrEqual(expectedEleLength);
+        const trimmedQuery = classquery.trim();
+        let count: number;
+
+        if (/^[A-Za-z0-9_-]+$/.test(trimmedQuery)) {
+            count = document.getElementsByClassName(trimmedQuery).length;
+        } else {
+            const selectorQuery = trimmedQuery.startsWith('.') || trimmedQuery.startsWith('#')
+                ? trimmedQuery
+                : trimmedQuery;
+            count = document.querySelectorAll(selectorQuery).length;
+        }
+
+        expect(count).toBeGreaterThanOrEqual(expectedEleLength);
         if (callback) {
             callback();
         }
-
     });
 };
 

@@ -32,6 +32,11 @@ const animationClasses = {
 
 const DEFAULT_CLS = 'dropdown-menu';
 
+interface ObserverAdapter {
+    disconnect?: () => void;
+    observer?: IntersectionObserver;
+}
+
 @Component({
   standalone: true,
   imports: [CommonModule, MenuDropdownItemComponent],
@@ -41,7 +46,7 @@ const DEFAULT_CLS = 'dropdown-menu';
 export class MenuDropdownComponent implements AfterViewInit, OnDestroy {
     private readonly nativeElement;
     private hasExecutedCallback;
-    private observer: IntersectionObserver;
+    private observer: ObserverAdapter | null = null;
     @Input() items;
     private menuRef = inject(MenuComponent);
     constructor(elRef: ElementRef) {
@@ -71,26 +76,30 @@ export class MenuDropdownComponent implements AfterViewInit, OnDestroy {
     }
     // function which changes the position of the menu dropdown dynamically if it exceeds viewport height
      callback(entries, observer) {
-         if (!this.hasExecutedCallback) {
+         if (!this.hasExecutedCallback && this.menuRef) {
              const self = this;
              const positions = this.menuRef.menuposition?.split(',') || [];
              entries.forEach(entry => {
                  if(entry.isIntersecting) {
                      positions[0]='down';
-                     self.menuRef.menuposition= positions.length > 1 ? positions.join() : 'down,right';
-                     self.nativeElement.parentElement?.classList.add('dropdown');
-                     self.menuRef.setMenuPosition();
+                     if (self.menuRef) {
+                         self.menuRef.menuposition= positions.length > 1 ? positions.join() : 'down,right';
+                         self.nativeElement.parentElement?.classList.add('dropdown');
+                         self.menuRef.setMenuPosition?.();
+                     }
                  } else {
                      positions[0]='up';
-                     self.menuRef.menuposition = positions.length > 1 ? positions.join() : 'up,right';
-                     self.nativeElement.parentElement?.classList.add('dropup');
-                     self.menuRef.setMenuPosition();
-                     // when container="body" is added to menu dropdown, the dropdown menu ul is attached directly to body.
-                     // so adding a class name inorder to adjust the styling of the dropdown
-                     const dropdownContainer = self.nativeElement.parentElement?.parentElement;
-                     if (dropdownContainer.tagName.toUpperCase() === "BS-DROPDOWN-CONTAINER") {
-                         // The parent element is <bs-dropdown-container>
-                         self.nativeElement.parentElement?.parentElement?.classList.add('parent-position');
+                     if (self.menuRef) {
+                         self.menuRef.menuposition = positions.length > 1 ? positions.join() : 'up,right';
+                         self.nativeElement.parentElement?.classList.add('dropup');
+                         self.menuRef.setMenuPosition?.();
+                         // when container="body" is added to menu dropdown, the dropdown menu ul is attached directly to body.
+                         // so adding a class name inorder to adjust the styling of the dropdown
+                         const dropdownContainer = self.nativeElement.parentElement?.parentElement;
+                         if (dropdownContainer && dropdownContainer.tagName && dropdownContainer.tagName.toUpperCase() === "BS-DROPDOWN-CONTAINER") {
+                             // The parent element is <bs-dropdown-container>
+                             self.nativeElement.parentElement?.parentElement?.classList.add('parent-position');
+                         }
                      }
 
                  }
@@ -106,17 +115,28 @@ export class MenuDropdownComponent implements AfterViewInit, OnDestroy {
             threshold: 1,
             once: true
         };
-        this.observer = new IntersectionObserver(callback.bind(this), options);
-        this.observer.observe(target.nativeElement);
+        const observerInstance = new IntersectionObserver(callback.bind(this), options);
+        this.observer = {
+            disconnect: observerInstance.disconnect?.bind(observerInstance),
+            observer: observerInstance
+        };
+        observerInstance.observe(target.nativeElement);
     }
 
     ngOnDestroy() {
         // CRITICAL FIX: Disconnect IntersectionObserver to prevent memory leaks
         // Observers keep references to DOM elements and callbacks
         if (this.observer) {
-            this.observer.disconnect();
+            if (typeof this.observer.disconnect === 'function') {
+                this.observer.disconnect();
+            } else if (this.observer.observer?.disconnect) {
+                this.observer.observer.disconnect();
+            }
             this.observer = null;
         }
+        // MEMORY LEAK FIX: Clear references
+        // Note: nativeElement is read-only, so we can't nullify it
+        this.menuRef = null as any;
     }
 
 }

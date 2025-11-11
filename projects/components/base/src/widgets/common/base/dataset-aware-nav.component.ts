@@ -83,7 +83,7 @@ export class DatasetAwareNavComponent extends StylableComponent {
      * @param node
      */
     private getNode(fields, node): NavNode {
-        const context = this.viewParent.pageScope || this.viewParent;
+        const context = (this.viewParent && (this.viewParent.pageScope || this.viewParent)) || {};
         const children = getEvaluatedData(node, {
             field: this.itemchildren,
             bindExpression: this.binditemchildren

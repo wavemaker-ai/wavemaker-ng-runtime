@@ -137,6 +137,10 @@ export class PanelComponent extends MenuAdapterComponent implements OnInit, Afte
 
     // calculation of dimensions when the panel the panel state changes from/to fullscreen
     private computeDimensions() {
+        // MEMORY LEAK FIX: Add null checks for ViewChild references during cleanup
+        if (!this.panelHeader || !this.panelHeader.nativeElement || !this.panelContent || !this.panelContent.nativeElement) {
+            return;
+        }
         const headerHeight = this.panelHeader.nativeElement.offsetHeight;
         const footer = this.nativeElement.querySelector('.panel-footer') as HTMLElement;
         const content = this.panelContent.nativeElement;
@@ -145,7 +149,7 @@ export class PanelComponent extends MenuAdapterComponent implements OnInit, Afte
         let inlineHeight;
 
         if (this.fullscreen) {
-            inlineHeight = this.hideFooter ? (vHeight - headerHeight) : vHeight - (footer.offsetHeight + headerHeight);
+            inlineHeight = this.hideFooter ? (vHeight - headerHeight) : vHeight - (footer?.offsetHeight || 0 + headerHeight);
         } else {
             inlineHeight = this.height || '';
         }

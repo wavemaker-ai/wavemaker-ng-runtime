@@ -27,7 +27,13 @@ export const insertAfter = (node: HTMLElement, ref: HTMLElement, sync: boolean =
 };
 
 export const removeNode = (node: HTMLElement, sync: boolean = true) => {
-    const task = () => node.remove();
+    const task = () => {
+        // MEMORY LEAK FIX: Check if node exists and has remove method before calling
+        // In test environments or if node is already removed, this prevents errors
+        if (node && typeof node.remove === 'function' && node.parentNode) {
+            node.remove();
+        }
+    };
     sync ? task() : invokeLater(task);
 };
 
@@ -70,8 +76,26 @@ export const toggleClass = (node: HTMLElement, cls: string, condition: boolean, 
 };
 
 export const setCSS = (node: HTMLElement, cssName: string, val?: string | number, sync: boolean = true) => {
-    // const task = () => node.style[cssName] = val;
-    // sync ? task() : invokeLater(task);
+    const task = () => {
+        if (!node || !node.style) {
+            return;
+        }
+
+        const style = node.style as any;
+        if (val === undefined || val === null || val === '') {
+            // Remove the inline style when value is empty/undefined
+            const cssProp = cssName.replace(/([A-Z])/g, '-$1').toLowerCase();
+            node.style.removeProperty(cssProp);
+            return;
+        }
+
+        if (cssName.indexOf('-') > -1) {
+            node.style.setProperty(cssName, val as string);
+        } else {
+            style[cssName] = val;
+        }
+    };
+    sync ? task() : invokeLater(task);
 };
 
 export const setCSSFromObj = (node: HTMLElement, cssObj: any, sync: boolean = true) => {

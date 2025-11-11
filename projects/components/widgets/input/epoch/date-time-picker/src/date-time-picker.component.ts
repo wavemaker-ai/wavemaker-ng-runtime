@@ -102,6 +102,11 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
     @Input()
     private excludedDatesToDisable;
 
+    private pickerClickHandler: ((event: Event) => void) | null = null;
+    private modalClickHandler: (() => void) | null = null;
+    private pickerElement?: HTMLElement;
+    private modalElement?: HTMLElement;
+
     constructor(
         protected inj: Injector,
         private bsModalService: BsModalService) {
@@ -189,9 +194,46 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
     }
 
     private hideOnClick() {
-        $('body>modal-container .date-picker-modal .app-datetime-picker')
-            .click(($event) => $event.stopPropagation());
-        $('body>modal-container .date-picker-modal').click(() => this.onCancelClick());
+        const pickerSelector = 'body>modal-container .date-picker-modal .app-datetime-picker';
+        const modalSelector = 'body>modal-container .date-picker-modal';
+        const hasDollar = typeof $ === 'function';
+        const pickerResult = hasDollar ? $(pickerSelector) : null;
+        const modalResult = hasDollar ? $(modalSelector) : null;
+        const supportsOnOff = !!(pickerResult && typeof pickerResult.off === 'function' && typeof pickerResult.on === 'function');
+        const supportsClick = !!(pickerResult && typeof pickerResult.click === 'function' && modalResult && typeof modalResult.click === 'function');
+
+        if (!this.pickerClickHandler) {
+            this.pickerClickHandler = ($event: Event) => $event.stopPropagation();
+        }
+        if (!this.modalClickHandler) {
+            this.modalClickHandler = () => this.onCancelClick();
+        }
+
+        if (supportsOnOff) {
+            (pickerResult as any).off('click').on('click', this.pickerClickHandler);
+            (modalResult as any).off('click').on('click', this.modalClickHandler);
+            this.pickerElement = undefined;
+            this.modalElement = undefined;
+            return;
+        }
+
+        if (supportsClick) {
+            (pickerResult as any).click(this.pickerClickHandler);
+            (modalResult as any).click(this.modalClickHandler);
+            this.pickerElement = undefined;
+            this.modalElement = undefined;
+            return;
+        } else {
+            this.removeNativeClickHandlers();
+            this.pickerElement = document.querySelector('body>modal-container .date-picker-modal .app-datetime-picker') as HTMLElement;
+            if (this.pickerElement && this.pickerClickHandler) {
+                this.pickerElement.addEventListener('click', this.pickerClickHandler);
+            }
+            this.modalElement = document.querySelector('body>modal-container .date-picker-modal') as HTMLElement;
+            if (this.modalElement && this.modalClickHandler) {
+                this.modalElement.addEventListener('click', this.modalClickHandler);
+            }
+        }
     }
 
     getDateLabel() {
@@ -286,14 +328,39 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
 
     }
 
+    private removeNativeClickHandlers() {
+        if (this.pickerElement && this.pickerClickHandler) {
+            this.pickerElement.removeEventListener('click', this.pickerClickHandler);
+        }
+        if (this.modalElement && this.modalClickHandler) {
+            this.modalElement.removeEventListener('click', this.modalClickHandler);
+        }
+        this.pickerElement = undefined;
+        this.modalElement = undefined;
+    }
+
     ngOnDestroy(): void {
         // CRITICAL FIX: Hide modal and clean up event listeners
         this.hideModal();
         
         // CRITICAL FIX: Remove jQuery click handlers that may have been added
         // hideOnClick() adds click handlers that need to be removed
-        $('body>modal-container .date-picker-modal .app-datetime-picker').off('click');
-        $('body>modal-container .date-picker-modal').off('click');
+        const pickerSelector = 'body>modal-container .date-picker-modal .app-datetime-picker';
+        const modalSelector = 'body>modal-container .date-picker-modal';
+        const hasDollar = typeof $ === 'function';
+        const pickerResult = hasDollar ? $(pickerSelector) : null;
+        const modalResult = hasDollar ? $(modalSelector) : null;
+        if (pickerResult && typeof pickerResult.off === 'function') {
+            pickerResult.off('click');
+        }
+        if (modalResult && typeof modalResult.off === 'function') {
+            modalResult.off('click');
+        } else {
+            this.removeNativeClickHandlers();
+        }
+
+        this.pickerClickHandler = null;
+        this.modalClickHandler = null;
     }
 
 }

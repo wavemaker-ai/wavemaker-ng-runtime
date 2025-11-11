@@ -138,20 +138,26 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
     protected handleEvent(node: HTMLElement, eventName: string, callback: Function, locals: any) {
         if (eventName !== 'change' && eventName !== 'blur') {
             // applying tap (Hammer event) on the label as the event handler is not getting triggered on the input.
-            const $el = eventName === 'tap' ? this.nativeElement.querySelector('label') : this.checkboxEl.nativeElement;
+            // MEMORY LEAK FIX: Add null check for checkboxEl during cleanup
+            const $el = eventName === 'tap' ? this.nativeElement.querySelector('label') : (this.checkboxEl?.nativeElement || node);
             return super.handleEvent($el, eventName, callback, locals);
         }
         return () => {}
     }
 
     handleChange(newVal: boolean) {
-        this.invokeOnChange(this.datavalue, {type: 'change'}, this.ngModel.valid);
+        // MEMORY LEAK FIX: Add null check for ngModel during cleanup
+        const isValid = this.ngModel ? this.ngModel.valid : true;
+        this.invokeOnChange(this.datavalue, {type: 'change'}, isValid);
     }
 
     @HostListener('keydown.enter', ['$event', '"ENTER"'])
     onKeyDown($event) {
         $event.preventDefault();
-        this.checkboxEl.nativeElement.click();
+        // MEMORY LEAK FIX: Add null check for checkboxEl during cleanup
+        if (this.checkboxEl && this.checkboxEl.nativeElement) {
+            this.checkboxEl.nativeElement.click();
+        }
     }
 
 

@@ -17,48 +17,27 @@ export const getById = (widgetId: string) => registryById.get(widgetId);
  * returns unRegister method
  */
 export const register = (widget: any, viewParent: any, widgetId: string, name?: string): () => void => {
-    let registered = false;
-    
-    // CRITICAL FIX: Don't register widget if viewParent or viewParent.Widgets is null
-    // This prevents orphaned widgets that can't be cleaned up
-    // Return early cleanup function to prevent memory leaks
-    if (!viewParent || !viewParent.Widgets) {
-        // Silently skip registration - parent was destroyed during async initialization
-        // This is expected behavior during navigation and is handled gracefully
-        // Debug log available for troubleshooting if needed
-        if (typeof console.debug === 'function') {
-            console.debug(`Widget ${name || widgetId} skipped registration - parent destroyed during async initialization`);
-        }
-        return () => {
-            registryById.delete(widgetId);
-        };
-    }
-    
+    let registeredWithParent = false;
+    // Always register by id so getById works even if parent is unavailable
     registryById.set(widgetId, widget);
-    
-    if (name) {
-        // Double-check Widgets still exists (might be nulled between checks)
-        if (isDefined(viewParent.Widgets) && viewParent.Widgets) {
-            registered = true;
-            viewParent.Widgets[name] = widget;
-        }
+
+    // Attach to parent Widgets map only if available
+    if (name && viewParent && isDefined(viewParent.Widgets) && viewParent.Widgets) {
+        registeredWithParent = true;
+        viewParent.Widgets[name] = widget;
     }
 
     // Unregister method.
     return () => {
         // MEMORY LEAK FIX: Clear widget object before deleting from registry
-        // Without this, the Map retains the widget object during GC delay
         const widgetObj = registryById.get(widgetId);
         if (widgetObj) {
-            // Clear the widget's internal references to break circular dependencies
             widgetObj.widget = null;
             widgetObj.viewParent = null;
             widgetObj.context = null;
         }
-        
         registryById.delete(widgetId);
-        // DEFENSIVE FIX: Check if viewParent and Widgets still exist during cleanup
-        if (registered && viewParent && viewParent.Widgets) {
+        if (registeredWithParent && viewParent && viewParent.Widgets) {
             viewParent.Widgets[name] = undefined;
         }
     };

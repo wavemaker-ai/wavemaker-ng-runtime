@@ -15,6 +15,10 @@ import {DISPLAY_TYPE, ImagePipe, IWidgetConfig, provideAsWidgetRef, StylableComp
 
 import {registerProps} from './anchor.props';
 
+export const disableContextMenu = ($event: Event) => {
+    $event.preventDefault();
+};
+
 const DEFAULT_CLS = 'app-anchor';
 const WIDGET_CONFIG: IWidgetConfig = {
     widgetType: 'wm-anchor',
@@ -110,15 +114,11 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
         );
     }
 
-    disableContextMenu ($event: Event) {
-        $event.preventDefault();
-    };
-
     onPropertyChange(key: string, nv: any, ov?: any) {
         if (key === 'hyperlink') {
             if (!nv) {
                 setAttr(this.nativeElement, 'href', 'javascript:void(0)');
-                this.nativeElement.addEventListener('contextmenu', this.disableContextMenu);
+                this.nativeElement.addEventListener('contextmenu', disableContextMenu);
                 return;
             }
             if (this.encodeurl) {
@@ -129,7 +129,7 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
                 nv = `//${nv}`;
             }
             setAttr(this.nativeElement, 'href', nv);
-            this.nativeElement.removeEventListener('contextmenu', this.disableContextMenu);
+            this.nativeElement.removeEventListener('contextmenu', disableContextMenu);
         } else {
             super.onPropertyChange(key, nv, ov);
         }
@@ -177,7 +177,7 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
             this.cancelSubscription();
         }
         // Remove contextmenu event listener to prevent memory leaks
-        this.nativeElement.removeEventListener('contextmenu', this.disableContextMenu);
+        this.nativeElement.removeEventListener('contextmenu', disableContextMenu);
         this._eventNotifierSubscription?.();
         super.ngOnDestroy();
     }

@@ -27,7 +27,7 @@ import {
     TypeaheadModule
 } from 'ngx-bootstrap/typeahead';
 
-import {addClass, adjustContainerPosition, App, DataSource, isDefined, isMobile, toBoolean} from '@wm/core';
+import {addClass, adjustContainerPosition, App, DataSource, isDefined, isMobile, setCSS, toBoolean} from '@wm/core';
 import {
     ALLFIELDS,
     convertDataToObject,
@@ -828,6 +828,9 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
         super.ngAfterViewInit();
 
         styler(this.nativeElement as HTMLElement, this);
+        if (this.display) {
+            setCSS(this.nativeElement as HTMLElement, 'display', this.display, true);
+        }
         this.containerTarget = getContainerTargetClass(this.nativeElement);
     }
 

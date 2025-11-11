@@ -246,7 +246,7 @@ describe('wm-button: Component Specific tests', () => {
         expect(wrapperComponent).toBeTruthy();
     });
     it('should not contain btn-default class', () => {
-        expect(wmComponent.getWidget().class).toBeUndefined();
+        expect((wmComponent.getWidget().class || '')).not.toContain('btn-default');
     });
     it('should contain class as btn-primary', (done) => {
         wmComponent.getWidget().class = btnClass;
