@@ -30,12 +30,29 @@ export class StatePersistence {
      * @param currentOutput
      */
     public getNestedPath(viewParent: any, widgetName: string, currentOutput?: string) {
-        let out = currentOutput || widgetName;
+        const baseName = widgetName || '';
+        let out = typeof currentOutput === 'string' ? currentOutput : baseName;
+
+        const appendSegment = (segment?: string) => {
+            if (!segment) {
+                return;
+            }
+            if (typeof out === 'string' && out.length) {
+                out = `${out}.${segment}`;
+            } else {
+                out = segment;
+            }
+        };
+
         if (viewParent && (viewParent.prefabName || viewParent.partialName)) {
-            out = out.length > 0 ? out + '.' + (viewParent.prefabName || viewParent.partialName) : (viewParent.prefabName || viewParent.partialName);
+            appendSegment(viewParent.prefabName || viewParent.partialName);
             // same partial/prefab can be dropped multiple times in a page. Appending container's name for uniqueness.
-            out = out + '.' + viewParent.containerWidget.name;
-            return this.getNestedPath(viewParent.containerWidget.viewParent, widgetName, out);
+            appendSegment(viewParent.containerWidget && viewParent.containerWidget.name);
+            return this.getNestedPath(viewParent.containerWidget?.viewParent, widgetName, out as string);
+        }
+
+        if (typeof out !== 'string' || !out.length) {
+            return '';
         }
         return out.split('.').reverse().join('.');
     }
