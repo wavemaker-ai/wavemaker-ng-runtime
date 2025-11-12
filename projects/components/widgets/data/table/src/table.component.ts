@@ -632,7 +632,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.prevData = getClonedObject(row);
         },
         afterRowUpdate: (row, e, callBack, options) => {
-            this.updateRecord(extend({}, options, {row, 'prevData': this.prevData, 'event': e, 'callBack': callBack}));
+            this.updateRecord(extend({}, options, {row, 'prevData': options.rowindex?options.rowindex:this.prevData, 'event': e, 'callBack': callBack}));
         },
         onBeforeRowUpdate: (row, e, options) => {
             return this.invokeEventCallback('beforerowupdate', {$event: e, $data: row, row, options: options});
