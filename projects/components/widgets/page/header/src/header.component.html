@@ -3,7 +3,8 @@
         <i class="wi wi-menu"></i>
     </a>
 </div>
-<div class="app-header-container" partial-container-target></div>
-@if (isInlineContent) {
-    <ng-content></ng-content>
-}
+<div class="app-header-container" partial-container-target>
+    @if (isInlineContent) {
+        <ng-content></ng-content>
+    }
+</div>
