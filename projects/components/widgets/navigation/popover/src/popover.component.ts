@@ -8,11 +8,11 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     TemplateRef,
-    ViewChild,
-    OnDestroy
+    ViewChild
 } from '@angular/core';
 
 import {PopoverDirective, PopoverModule} from 'ngx-bootstrap/popover';
@@ -52,21 +52,6 @@ const eventsMap = {
 
 let activePopover: PopoverComponent;
 
-// Patch PopoverDirective teardown to swallow duplicate view removal errors in tests and custom cleanup flows
-const originalPopoverNgOnDestroy = PopoverDirective.prototype.ngOnDestroy;
-if (originalPopoverNgOnDestroy && !(PopoverDirective.prototype as any).__wmPatchedDestroy) {
-    PopoverDirective.prototype.ngOnDestroy = function () {
-        try {
-            originalPopoverNgOnDestroy.apply(this);
-        } catch (error) {
-            if (!(error instanceof Error && error.message?.includes('ViewRef index must be positive'))) {
-                throw error;
-            }
-        }
-    };
-    (PopoverDirective.prototype as any).__wmPatchedDestroy = true;
-}
-
 @Component({
   standalone: true,
   imports: [CommonModule, AnchorComponent, PopoverModule],
@@ -79,10 +64,6 @@ if (originalPopoverNgOnDestroy && !(PopoverDirective.prototype as any).__wmPatch
 
 export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
-    
-    // MEMORY OPTIMIZATION: Lazy initialization flag
-    // Defer heavy initialization until first interaction to reduce memory footprint
-    private isContentInitialized = false;
 
     public event: string;
     public isOpen = false;
@@ -119,8 +100,8 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     private static activePopovers: PopoverComponent[] = [];
     private isHandlingClick = false;
     private preventFocusShift: boolean = false;
-    private onStableSubscription: any;
-    private deRegister: any;
+    private partialLoadedSubscription: any;
+    private arrowPositionSubscription: any;
 
     @ViewChild(PopoverDirective) private bsPopoverDirective;
     @ViewChild('anchor', { static: true }) anchorRef: ElementRef;
@@ -228,7 +209,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.isOpen) {
             this.isClosingProgrammatically = true;
             this.isOpen = false;
-            this.bsPopoverDirective?.hide?.();
+            this.bsPopoverDirective.hide();
             const index = PopoverComponent.activePopovers.indexOf(this);
             if (index > -1) {
                 PopoverComponent.activePopovers.splice(index, 1);
@@ -239,28 +220,6 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
 
     // Trigger on hiding popover
     public onHidden() {
-        console.log("onHidden popover");
-        this.onStableSubscription?.unsubscribe();
-        this.onStableSubscription = null;
-
-        this.deRegister?.();
-
-        const popoverContainer  = document.querySelector(`.${this.popoverContainerCls}`) as HTMLElement;
-        if (popoverContainer) {
-            popoverContainer.removeEventListener('click', this.stopPropagationHandler);
-            popoverContainer.onmouseenter = null;
-            popoverContainer.onmouseleave = null;
-            popoverContainer.onclick = null;
-
-            const popoverStartBtn: HTMLElement = popoverContainer.querySelector('.popover-start');
-            const popoverEndBtn: HTMLElement = popoverContainer.querySelector('.popover-end');
-            popoverStartBtn.onkeydown = null;
-            popoverEndBtn.onkeydown = null;
-        }
-
-        this.anchorRef.nativeElement.onmouseenter = null;
-        this.anchorRef.nativeElement.onmouseleave = null;
-
         if (!this.isChildPopover() || this.isClosingProgrammatically) {
             this.invokeEventCallback('hide', {$event: {type: 'hide'}});
             this.isOpen = false;
@@ -276,22 +235,19 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     }
 
     private adjustPopoverArrowPosition(popoverElem, popoverLeftShift) {
-        this.onStableSubscription?.unsubscribe();
-        const popoverInstance = (this.bsPopoverDirective as any)?._popover;
-        if (!popoverInstance) {
-            return;
+        // Clean up any existing subscription before creating a new one
+        if (this.arrowPositionSubscription) {
+            this.arrowPositionSubscription.unsubscribe();
+            this.arrowPositionSubscription = null;
         }
-        popoverInstance._ngZone.onStable.subscribe(() => {
+        
+        this.arrowPositionSubscription = this.bsPopoverDirective._popover._ngZone.onStable.subscribe(() => {
             popoverElem.find('.popover-arrow').css('left', popoverLeftShift + 'px');
         });
     }
 
     private calculatePopoverPostion(element) {
 
-        const popoverInstance = (this.bsPopoverDirective as any)?._popover;
-        if (!popoverInstance) {
-            return;
-        }
         const popoverElem = $(element);
         let popoverLeft =  popoverElem.offset().left;
         const popoverWidth = popoverElem[0].offsetWidth;
@@ -299,14 +255,14 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         const parentDimesion = this.anchorRef.nativeElement.getBoundingClientRect();
         // Adjusting popover position, if it is not visible at left side
         if (popoverLeft < 0) {
-            adjustContainerPosition(popoverElem, this.nativeElement, popoverInstance);
+            adjustContainerPosition(popoverElem, this.nativeElement, this.bsPopoverDirective._popover);
             const popoverLeftShift = 4;
             const arrowLeftShift = (parentDimesion.left + (parentDimesion.width / 2)) - popoverLeftShift;
             this.adjustPopoverArrowPosition(popoverElem, arrowLeftShift);
         }
         // Adjusting popover position, if it is not visible at right side
         if (popoverLeft + popoverWidth > viewPortWidth) {
-            adjustContainerRightEdges(popoverElem, this.nativeElement, popoverInstance);
+            adjustContainerRightEdges(popoverElem, this.nativeElement, this.bsPopoverDirective._popover);
             setTimeout(() => {
                 popoverLeft = popoverElem.offset().left;
                 const popoverLeftAdjust = (popoverLeft + popoverWidth) - viewPortWidth;
@@ -323,10 +279,6 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
                this.adjustPopoverArrowPosition(popoverElem, arrowLeftShift);
             });
         }
-    }
-
-    private stopPropagationHandler (event: Event) {
-        event.stopPropagation();
     }
 
     // Trigger on showing popover
@@ -355,70 +307,69 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             popoverContainer.setAttribute('data-popover-id', this.widgetId);
 
             // Add click event listener to stop propagation
-            popoverContainer.addEventListener('click', this.stopPropagationHandler);
-
-            setCSSFromObj(popoverContainer, {
-                height: this.popoverheight,
-                minWidth: this.popoverwidth,
-                width: this.popoverwidth
+            popoverContainer.addEventListener('click', (event: Event) => {
+                event.stopPropagation();
             });
-            if (!this.popoverarrow) {
-                addClass(popoverContainer.querySelector('.arrow') as HTMLElement, 'hidden');
-            }
-            if (this.interaction === 'hover' || this.interaction === 'default') {
-                popoverContainer.onmouseenter = () => clearTimeout(this.closePopoverTimeout);
-                popoverContainer.onmouseleave = () => this.hidePopover();
-                this.anchorRef.nativeElement.onmouseenter = () => clearTimeout(this.closePopoverTimeout);
-                this.anchorRef.nativeElement.onmouseleave = () => this.hidePopover();
-            }
-            if (this.outsideclick) {
-                this.setupDocumentClickHandler();
-            }
-            setTimeout(() => {
-                this.anchorRef.nativeElement.removeAttribute('aria-describedby');
-            });
+        }
+        setCSSFromObj(popoverContainer, {
+            height: this.popoverheight,
+            minWidth: this.popoverwidth,
+            width: this.popoverwidth
+        });
+        if (!this.popoverarrow) {
+            addClass(popoverContainer.querySelector('.arrow') as HTMLElement, 'hidden');
+        }
+        if (this.interaction === 'hover' || this.interaction === 'default') {
 
-            this.deRegister?.();
-            this.deRegister = this.eventManager.addEventListener(popoverContainer, 'keydown.esc', () => {
-                this.isOpen = false;
+            // do not use addEventListener here
+            // attaching the event this way will override the existing event handlers
+            popoverContainer.onmouseenter = () => clearTimeout(this.closePopoverTimeout);
+            popoverContainer.onmouseleave = () => this.hidePopover();
+            this.anchorRef.nativeElement.onmouseenter = () => clearTimeout(this.closePopoverTimeout);
+            this.anchorRef.nativeElement.onmouseleave = () => this.hidePopover();
+        }
+        if (this.outsideclick) {
+            this.setupDocumentClickHandler();
+        }
+        setTimeout(() => {
+            this.anchorRef.nativeElement.removeAttribute('aria-describedby');
+        });
+        const deRegister = this.eventManager.addEventListener(popoverContainer, 'keydown.esc', () => {
+            this.isOpen = false;
+            this.setFocusToPopoverLink();
+            deRegister();
+        });
+        const popoverStartBtn: HTMLElement = popoverContainer.querySelector('.popover-start');
+        const popoverEndBtn: HTMLElement = popoverContainer.querySelector('.popover-end');
+        popoverStartBtn.onkeydown = (event) => {
+            // Check for Shift+Tab key
+            if (event.shiftKey && event.key === 'Tab') {
+                this.bsPopoverDirective.hide();
+                event.preventDefault();
                 this.setFocusToPopoverLink();
-                this.deRegister();
-            });
-            const popoverStartBtn: HTMLElement = popoverContainer.querySelector('.popover-start');
-            const popoverEndBtn: HTMLElement = popoverContainer.querySelector('.popover-end');
-            if (popoverStartBtn) {
-                popoverStartBtn.onkeydown = (event) => {
-                    if (event.shiftKey && event.key === 'Tab') {
-                        this.bsPopoverDirective?.hide?.();
-                        event.preventDefault();
-                        this.setFocusToPopoverLink();
-                        this.isOpen = false;
-                    }
-                };
-            }
-            if (popoverEndBtn) {
-                popoverEndBtn.onkeydown = (event) => {
-                    if (!event.shiftKey && event.key === 'Tab') {
-                        this.bsPopoverDirective?.hide?.();
-                        event.preventDefault();
-                        this.setFocusToPopoverLink();
-                        this.isOpen = false;
-                    }
-                };
-            }
+                this.isOpen = false;            }
+        };
+        popoverEndBtn.onkeydown = (event) => {
+            // Check for Tab key
+            if (!event.shiftKey && event.key === 'Tab') {
+                this.bsPopoverDirective.hide();
+                event.preventDefault();
+                this.setFocusToPopoverLink();
+                this.isOpen = false;            }
+        };
 
-            if (this.autoclose === AUTOCLOSE_TYPE.ALWAYS) {
-                popoverContainer.onclick = () => this.close();
-            }
-
-            if (popoverStartBtn) {
-                if (this.preventFocusShift) {
-                    const activeElement = document.activeElement as HTMLElement;
-                    setTimeout(() => activeElement?.focus(), 0);
-                } else {
-                    setTimeout(() => popoverStartBtn.focus(), 50);
-                }
-            }
+        //Whenever autoclose property is set to 'always', adding the onclick listener to the popover container to close the popover.
+        if (this.autoclose === AUTOCLOSE_TYPE.ALWAYS) {
+            popoverContainer.onclick = () => this.close();
+        }
+        // Fix for [WMS-27656]: Added 'preventFocusShift' parameter (default: false).
+        // By default, focus moves to the popover when it appears.
+        // If 'preventFocusShift' is set to true, focus remains on the triggering element.
+        if (this.preventFocusShift) {
+            const activeElement = document.activeElement as HTMLElement; // Capture current focused element
+            setTimeout(() => activeElement?.focus(), 0);
+        } else {
+            setTimeout(() => popoverStartBtn.focus(), 50);
         }
 
         // Adjusting popover position if the popover placement is top or bottom
@@ -433,7 +384,18 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
 
     triggerPopoverEvents() {
         if (this.contentsource === 'partial') {
-            const cancelSubscription = this.app.subscribe('partialLoaded', (data) => {
+            this.partialLoadedSubscription = this.app.subscribe('partialLoaded', () => {
+                // Always clean up subscription first
+                if (this.partialLoadedSubscription) {
+                    this.partialLoadedSubscription();
+                    this.partialLoadedSubscription = null;
+                }
+                
+                // Check if component is still alive and partialRef exists
+                if (!this.partialRef || !this.partialRef.nativeElement) {
+                    return;
+                }
+                
                 const parEle = this.partialRef.nativeElement;
                 let partialScope;
 
@@ -445,14 +407,11 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
                     this.invokeEventCallback('load');
                     this.invokeEventCallback('show', {$event: {type: 'show'}});
                 }
-                cancelSubscription();
             });
         } else {
-            if (this.viewParent) {
-                this.Widgets   = this.viewParent.Widgets;
-                this.Variables = this.viewParent.Variables;
-                this.Actions   = this.viewParent.Actions;
-            }
+            this.Widgets   = this.viewParent.Widgets;
+            this.Variables = this.viewParent.Variables;
+            this.Actions   = this.viewParent.Actions;
             this.invokeEventCallback('show', {$event: {type: 'show'}});
         }
     }
@@ -506,20 +465,6 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         super.ngAfterViewInit();
         styler(this.anchorRef.nativeElement, this);
         this.containerTarget = getContainerTargetClass(this.nativeElement);
-        const directive = this.bsPopoverDirective as any;
-        if (directive && typeof directive.ngOnDestroy === 'function' && !directive.__wmPatchedDestroy) {
-            const originalDestroy = directive.ngOnDestroy.bind(directive);
-            directive.ngOnDestroy = () => {
-                try {
-                    originalDestroy();
-                } catch (error) {
-                    if (!(error instanceof Error && error.message?.includes('ViewRef index must be positive'))) {
-                        throw error;
-                    }
-                }
-            };
-            directive.__wmPatchedDestroy = true;
-        }
         // let parentElemPopover = $(this.nativeElement).parents();
         // if (parentElemPopover.closest('[wmTable]').length ||
         //     parentElemPopover.closest('[wmtabs]').length ||
@@ -530,65 +475,52 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
 
     ngOnDetach() {
         // Hide the popover container while attaching the next component as part of page reuse strategy.
-        const popoverLoader = (this.bsPopoverDirective as any)?._popover;
-        if (popoverLoader) {
-            popoverLoader._viewContainerRef = null;
-        }
-        if (this.bsPopoverDirective && typeof this.bsPopoverDirective.hide === 'function') {
-            try {
-                this.bsPopoverDirective.hide();
-            } catch {
-                // Ignore errors if the directive has already been disposed
-            }
-        }
-        this.isOpen = false;
-        const index = PopoverComponent.activePopovers.indexOf(this);
-        if (index > -1) {
-            PopoverComponent.activePopovers.splice(index, 1);
-        }
+        this.bsPopoverDirective.hide();
     }
 
     ngOnDestroy() {
-        const originalViewContainer = this.viewContainerRef;
-        (this as any).viewContainerRef = null;
-        try {
-            super.ngOnDestroy();
-        } catch (error) {
-            if (!(error instanceof TypeError && error.message?.includes('viewParent'))) {
-                throw error;
-            }
+        // Unsubscribe from partialLoaded event
+        if (this.partialLoadedSubscription) {
+            this.partialLoadedSubscription();
+            this.partialLoadedSubscription = null;
         }
-        // PERFORMANCE FIX: Removed console.log - was causing 2000+ log messages and ~100ms overhead
         
-        // MEMORY LEAK FIX: Hide ngx-bootstrap popover to clean up DOM and event listeners
-        if (this.documentClickHandler) {
-            document.removeEventListener('click', this.documentClickHandler, true);
-            this.documentClickHandler = null;
+        // Unsubscribe from arrow position adjustment
+        if (this.arrowPositionSubscription) {
+            this.arrowPositionSubscription.unsubscribe();
+            this.arrowPositionSubscription = null;
         }
-        const index = PopoverComponent.activePopovers.indexOf(this);
-        if (index > -1) {
-            PopoverComponent.activePopovers.splice(index, 1);
+        
+        // Close popover if open
+        if (this.isOpen && this.bsPopoverDirective) {
+            this.bsPopoverDirective.hide();
         }
-
+        
+        // Clear timeout
         if (this.closePopoverTimeout) {
             clearTimeout(this.closePopoverTimeout);
             this.closePopoverTimeout = null;
         }
-
-        this.onStableSubscription?.unsubscribe();
-        this.onStableSubscription = null;
-
-        this.deRegister?.();
-        this.deRegister = null;
         
-        // Clear reference to bsPopoverDirective
-        (this as any).bsPopoverDirective = null;
-        if (originalViewContainer) {
-            try {
-                originalViewContainer.clear();
-            } catch {
-                // Ignore errors from clearing already-destroyed view containers
-            }
+        // Remove document click handler
+        if (this.documentClickHandler) {
+            document.removeEventListener('click', this.documentClickHandler, true);
+            this.documentClickHandler = null;
         }
+        
+        // Remove from active popovers array
+        const index = PopoverComponent.activePopovers.indexOf(this);
+        if (index > -1) {
+            PopoverComponent.activePopovers.splice(index, 1);
+        }
+        
+        // Clear anchor event handlers
+        if (this.anchorRef?.nativeElement) {
+            this.anchorRef.nativeElement.onmouseenter = null;
+            this.anchorRef.nativeElement.onmouseleave = null;
+        }
+        
+        // Call parent cleanup
+        super.ngOnDestroy();
     }
 }
