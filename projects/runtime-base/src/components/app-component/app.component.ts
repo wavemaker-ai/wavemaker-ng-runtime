@@ -42,19 +42,12 @@ import {
 import {OAuthService} from '@wm/oAuth';
 import {AppManagerService} from '../../services/app.manager.service';
 import {PipeProvider} from '../../services/pipe-provider.service';
-import { ComponentRefProvider } from '../../types/types';
-import {AppSpinnerComponent} from '../app-spinner.component';
+ import {AppSpinnerComponent} from '../app-spinner.component';
 import {DialogComponent} from '@wm/components/dialogs/design-dialog';
 import {ContainerDirective, PartialContainerDirective, PartialParamHandlerDirective} from '@wm/components/base';
 import {filter} from "rxjs/operators";
 import {Subscription} from "rxjs";
 
-// Extend window interface for gc() function (available when Chrome runs with --js-flags=--expose-gc)
-declare global {
-    interface Window {
-        gc?: () => void;
-    }
-}
 
 interface SPINNER {
     show: boolean;
@@ -86,7 +79,6 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     @ViewChild('dynamicComponent', { read: ViewContainerRef }) dynamicComponentContainerRef: ViewContainerRef;
 
     spinner: SPINNER = { show: false, messages: [], arialabel: '' };
-    private navigationCount = 0;
     
     constructor(
         _pipeProvider: PipeProvider,
@@ -99,8 +91,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         private router: Router,
         public app: App,
         private appManager: AppManagerService,
-        private customIconsLoaderService: CustomIconsLoaderService,
-        private componentRefProvider: ComponentRefProvider
+        private customIconsLoaderService: CustomIconsLoaderService
     ) {
         setPipeProvider(_pipeProvider);
         setNgZone(ngZone);
@@ -171,44 +162,9 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
                     this.app.activePageLoadTime = Date.now() - pageLoadStartTime;
                 };
             } else if (e instanceof NavigationEnd || e instanceof NavigationCancel || e instanceof NavigationError) {
-                // CRITICAL FIX: Clear cache IMMEDIATELY, not after 1 second delay
-                // The old 1-second delay meant the new page loaded and cached BEFORE old cache was cleared
-                // This caused continuous memory growth as both old and new pages remained in cache
-                onPageRendered();
-                
-                this.navigationCount++;
-                
-                // Clear cache after every navigation to prevent memory buildup
-                if (this.navigationCount > 0 && this.componentRefProvider) {
-                    try {
-                        // clearComponentFactoryRefCache clears:
-                        // 1. fragmentCache (stores page/partial/prefab resources)
-                        // 2. componentFactoryRefCache (stores compiled component factories)
-                        // 3. scriptCache (stores compiled page scripts)
-                        // These caches were causing the 160 MB array retention seen in heap snapshots
-                        this.componentRefProvider.clearComponentFactoryRefCache();
-                        
-                        // MEMORY LEAK FIX: Clear expression parser caches on navigation
-                        // exprFnCache, eventFnCache, purePipes, fnNameMap grow with each page
-                        // Without this, they accumulate 500+ expressions per page navigation
-                        if (typeof (window as any).clearExpressionCaches === 'function') {
-                            (window as any).clearExpressionCaches();
-                        }
-                        
-                        // Trigger garbage collection if available (Chrome with --js-flags=--expose-gc)
-                        if (window.gc && typeof window.gc === 'function') {
-                            setTimeout(() => {
-                                try {
-                                    window.gc();
-                                } catch (e) {
-                                    // GC not available
-                                }
-                            }, 100);
-                        }
-                    } catch (e) {
-                        console.warn('Failed to clear component cache:', e);
-                    }
-                }
+                setTimeout(() => {
+                    onPageRendered();
+                }, 1000);
             }
         });
         this.pageReadyUnsubscribe = this.appManager.subscribe('pageReady', () => {
