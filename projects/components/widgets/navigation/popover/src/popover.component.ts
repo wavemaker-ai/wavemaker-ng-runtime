@@ -9,6 +9,7 @@ import {
     Inject,
     Injector,
     OnDestroy,
+    OnDestroy,
     OnInit,
     Optional,
     TemplateRef,
@@ -62,6 +63,7 @@ let activePopover: PopoverComponent;
     ]
 })
 
+export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
 export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
@@ -396,6 +398,18 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
                     return;
                 }
                 
+            this.partialLoadedSubscription = this.app.subscribe('partialLoaded', () => {
+                // Always clean up subscription first
+                if (this.partialLoadedSubscription) {
+                    this.partialLoadedSubscription();
+                    this.partialLoadedSubscription = null;
+                }
+                
+                // Check if component is still alive and partialRef exists
+                if (!this.partialRef || !this.partialRef.nativeElement) {
+                    return;
+                }
+                
                 const parEle = this.partialRef.nativeElement;
                 let partialScope;
 
@@ -506,13 +520,25 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.documentClickHandler) {
             document.removeEventListener('click', this.documentClickHandler, true);
             this.documentClickHandler = null;
+            this.documentClickHandler = null;
         }
+        
+        // Remove from active popovers array
         
         // Remove from active popovers array
         const index = PopoverComponent.activePopovers.indexOf(this);
         if (index > -1) {
             PopoverComponent.activePopovers.splice(index, 1);
         }
+        
+        // Clear anchor event handlers
+        if (this.anchorRef?.nativeElement) {
+            this.anchorRef.nativeElement.onmouseenter = null;
+            this.anchorRef.nativeElement.onmouseleave = null;
+        }
+        
+        // Call parent cleanup
+        super.ngOnDestroy();
         
         // Clear anchor event handlers
         if (this.anchorRef?.nativeElement) {
