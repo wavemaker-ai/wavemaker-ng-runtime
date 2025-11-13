@@ -101,6 +101,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     private isHandlingClick = false;
     private preventFocusShift: boolean = false;
     private partialLoadedSubscription: any;
+    private arrowPositionSubscription: any;
 
     @ViewChild(PopoverDirective) private bsPopoverDirective;
     @ViewChild('anchor', { static: true }) anchorRef: ElementRef;
@@ -234,7 +235,13 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     }
 
     private adjustPopoverArrowPosition(popoverElem, popoverLeftShift) {
-        this.bsPopoverDirective._popover._ngZone.onStable.subscribe(() => {
+        // Clean up any existing subscription before creating a new one
+        if (this.arrowPositionSubscription) {
+            this.arrowPositionSubscription.unsubscribe();
+            this.arrowPositionSubscription = null;
+        }
+        
+        this.arrowPositionSubscription = this.bsPopoverDirective._popover._ngZone.onStable.subscribe(() => {
             popoverElem.find('.popover-arrow').css('left', popoverLeftShift + 'px');
         });
     }
@@ -476,6 +483,12 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.partialLoadedSubscription) {
             this.partialLoadedSubscription();
             this.partialLoadedSubscription = null;
+        }
+        
+        // Unsubscribe from arrow position adjustment
+        if (this.arrowPositionSubscription) {
+            this.arrowPositionSubscription.unsubscribe();
+            this.arrowPositionSubscription = null;
         }
         
         // Close popover if open
