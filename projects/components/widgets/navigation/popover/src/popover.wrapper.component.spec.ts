@@ -1,12 +1,12 @@
 import { waitForAsync, ComponentFixture } from '@angular/core/testing';
 import { addClass, adjustContainerPosition, adjustContainerRightEdges, App, findRootContainer, setCSSFromObj } from '@wm/core';
-import { Component, ViewChild } from '@angular/core';
+import { Component, Directive, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { PopoverComponent } from './popover.component';
-import { PopoverConfig, PopoverModule } from 'ngx-bootstrap/popover';
-import { compileTestComponent, getHtmlSelectorElement, mockApp } from '../../../../base/src/test/util/component-test-util';
-import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
 import { AnchorComponent } from '../../../basic/anchor/src/anchor.component';
 import { AUTOCLOSE_TYPE } from '@wm/components/base';
+import { compileTestComponent, getHtmlSelectorElement, mockApp } from '../../../../base/src/test/util/component-test-util';
+import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
+import { PopoverDirective } from 'ngx-bootstrap/popover';
 
 jest.mock('@wm/core', () => ({
     ...jest.requireActual('@wm/core'),
@@ -66,6 +66,52 @@ const markup = `
         </wm-popover>
     `;
 
+@Directive({
+    selector: '[popover]',
+    exportAs: 'bsPopover'
+})
+class MockPopoverDirective {
+    @Input('popover') popover;
+    @Input() popoverContext;
+    @Input() popoverTitle;
+    @Input() placement;
+    @Input() outsideClick;
+    @Input() triggers;
+    @Input() containerClass;
+    @Input() container;
+    @Input() isOpen;
+    @Input() tabindex;
+    @Input() name;
+    @Input() adaptivePosition;
+    @Input() boundariesElement;
+    @Input() animation;
+
+    @Output() onShown = new EventEmitter<any>();
+    @Output() onHidden = new EventEmitter<any>();
+
+    _popover = {
+        _ngZone: {
+            onStable: {
+                subscribe: (fn: Function) => {
+                    fn();
+                }
+            }
+        }
+    };
+
+    show() {
+        this.isOpen = true;
+    }
+
+    hide() {
+        this.isOpen = false;
+    }
+
+    ngOnDestroy() {
+        // no-op
+    }
+}
+
 @Component({
     template: markup
 })
@@ -79,11 +125,10 @@ class PopoverwrapperComponent {
 }
 
 const testModuleDef: ITestModuleDef = {
-    imports: [PopoverModule.forRoot(), PopoverComponent, AnchorComponent],
-    declarations: [PopoverwrapperComponent],
+    imports: [PopoverComponent, AnchorComponent],
+    declarations: [PopoverwrapperComponent, MockPopoverDirective],
     providers: [
         { provide: App, useValue: mockApp },
-        { provide: PopoverConfig },
     ]
 };
 
@@ -103,6 +148,28 @@ TestBase.verifyStyles();
 TestBase.verifyAccessibility();
 
 describe('PopoverComponent', () => {
+    const originalShow = PopoverDirective.prototype.show;
+    const originalHide = PopoverDirective.prototype.hide;
+    const originalNgOnDestroy = PopoverDirective.prototype.ngOnDestroy;
+
+    beforeAll(() => {
+        PopoverDirective.prototype.show = function () {
+            // no-op for tests
+        };
+        PopoverDirective.prototype.hide = function () {
+            // no-op for tests
+        };
+        PopoverDirective.prototype.ngOnDestroy = function () {
+            // no-op to avoid component loader cleanup
+        };
+    });
+
+    afterAll(() => {
+        PopoverDirective.prototype.show = originalShow;
+        PopoverDirective.prototype.hide = originalHide;
+        PopoverDirective.prototype.ngOnDestroy = originalNgOnDestroy;
+    });
+
     let popoverWrapperComponent: PopoverwrapperComponent;
     let wmComponent: PopoverComponent;
     let fixture: ComponentFixture<PopoverwrapperComponent>;
@@ -287,6 +354,7 @@ describe('PopoverComponent', () => {
             wmComponent.invokeEventCallback = jest.fn();
             Object.defineProperty(wmComponent, 'viewParent', {
                 get: jest.fn(() => mockViewParent),
+                set: jest.fn(),
                 configurable: true
             });
             mockApp = {
@@ -437,7 +505,9 @@ describe('PopoverComponent', () => {
             jest.useFakeTimers();
         });
         afterEach(() => {
-            document.body.removeChild(mockPopoverContainer);
+            if (mockPopoverContainer.parentNode) {
+                mockPopoverContainer.parentNode.removeChild(mockPopoverContainer);
+            }
             jest.useRealTimers();
             jest.restoreAllMocks();
         });
@@ -641,6 +711,7 @@ describe('PopoverComponent', () => {
             };
             Object.defineProperty(wmComponent, 'viewParent', {
                 get: jest.fn(() => viewParentMock),
+                set: jest.fn(),
                 configurable: true
             });
             // Call the method
