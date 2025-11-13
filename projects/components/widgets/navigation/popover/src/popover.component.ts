@@ -8,6 +8,7 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     TemplateRef,
@@ -61,7 +62,7 @@ let activePopover: PopoverComponent;
     ]
 })
 
-export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit {
+export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public event: string;
@@ -99,6 +100,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     private static activePopovers: PopoverComponent[] = [];
     private isHandlingClick = false;
     private preventFocusShift: boolean = false;
+    private partialLoadedSubscription: any;
 
     @ViewChild(PopoverDirective) private bsPopoverDirective;
     @ViewChild('anchor', { static: true }) anchorRef: ElementRef;
@@ -375,7 +377,18 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
 
     triggerPopoverEvents() {
         if (this.contentsource === 'partial') {
-            const cancelSubscription = this.app.subscribe('partialLoaded', (data) => {
+            this.partialLoadedSubscription = this.app.subscribe('partialLoaded', () => {
+                // Always clean up subscription first
+                if (this.partialLoadedSubscription) {
+                    this.partialLoadedSubscription();
+                    this.partialLoadedSubscription = null;
+                }
+                
+                // Check if component is still alive and partialRef exists
+                if (!this.partialRef || !this.partialRef.nativeElement) {
+                    return;
+                }
+                
                 const parEle = this.partialRef.nativeElement;
                 let partialScope;
 
@@ -387,7 +400,6 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
                     this.invokeEventCallback('load');
                     this.invokeEventCallback('show', {$event: {type: 'show'}});
                 }
-                cancelSubscription();
             });
         } else {
             this.Widgets   = this.viewParent.Widgets;
@@ -459,13 +471,43 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         this.bsPopoverDirective.hide();
     }
 
-    OnDestroy() {
+    ngOnDestroy() {
+        // Unsubscribe from partialLoaded event
+        if (this.partialLoadedSubscription) {
+            this.partialLoadedSubscription();
+            this.partialLoadedSubscription = null;
+        }
+        
+        // Close popover if open
+        if (this.isOpen && this.bsPopoverDirective) {
+            this.bsPopoverDirective.hide();
+        }
+        
+        // Clear timeout
+        if (this.closePopoverTimeout) {
+            clearTimeout(this.closePopoverTimeout);
+            this.closePopoverTimeout = null;
+        }
+        
+        // Remove document click handler
         if (this.documentClickHandler) {
             document.removeEventListener('click', this.documentClickHandler, true);
+            this.documentClickHandler = null;
         }
+        
+        // Remove from active popovers array
         const index = PopoverComponent.activePopovers.indexOf(this);
         if (index > -1) {
             PopoverComponent.activePopovers.splice(index, 1);
         }
+        
+        // Clear anchor event handlers
+        if (this.anchorRef?.nativeElement) {
+            this.anchorRef.nativeElement.onmouseenter = null;
+            this.anchorRef.nativeElement.onmouseleave = null;
+        }
+        
+        // Call parent cleanup
+        super.ngOnDestroy();
     }
 }
