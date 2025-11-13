@@ -121,6 +121,8 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      */
     protected viewParent: any;
 
+    protected hostClass?: string;
+
     /**
      * EventManger to add/remove events
      */
@@ -271,8 +273,10 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
 
         this.initContext();
 
-        if (config.hostClass) {
-            addClass(this.nativeElement, config.hostClass);
+        this.hostClass = config.hostClass;
+
+        if (this.hostClass) {
+            addClass(this.nativeElement, this.hostClass);
         }
 
         this.widgetId = this.generateWidgetId();
@@ -781,6 +785,10 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         this.widgetProps = widgetProps;
 
         this.processAttrs();
+
+        if (this.hostClass) {
+            addClass(this.nativeElement, this.hostClass);
+        }
 
        this.registerWidget(this.initState.get('name'));
     }
