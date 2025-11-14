@@ -7,6 +7,7 @@ import {
     Component,
     ContentChildren, HostBinding, Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     QueryList
@@ -52,7 +53,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(TabsComponent)
     ]
 })
-export class TabsComponent extends StylableComponent implements AfterContentInit, OnInit, AfterViewInit {
+export class TabsComponent extends StylableComponent implements AfterContentInit, OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public defaultpaneindex: number;
@@ -76,6 +77,8 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
     public type;
     public nodatamessage;
     public autoActivation:boolean;
+    private panesChangesSubscription: any;
+    private dynamicComponentRefs: any[] = [];
 
     @HostBinding('attr.icon-position') iconposition: string = '';
 
@@ -190,7 +193,13 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
                 this._dynamicContext[this.getAttr('wmTab')] = this;
             }
 
-            this.dynamicComponentProvider.addComponent(this.getNativeElement().querySelector('.tab-content'), markup, this._dynamicContext, {inj: this.inj});
+            // MEMORY LEAK FIX: Store component reference for cleanup
+            this.dynamicComponentProvider.addComponent(this.getNativeElement().querySelector('.tab-content'), markup, this._dynamicContext, {inj: this.inj})
+                .then(componentRef => {
+                    if (componentRef) {
+                        this.dynamicComponentRefs.push(componentRef);
+                    }
+                });
 
         });
         return paneNamesList;
@@ -473,7 +482,7 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
         this.promiseResolverFn();
         super.ngAfterContentInit();
         this.setTabsPosition();
-        this.panes.changes.subscribe( slides => {
+        this.panesChangesSubscription = this.panes.changes.subscribe( slides => {
             if (this.panes.length) {
                 this.selectDefaultPaneByIndex(this.defaultpaneindex || 0);
             }
@@ -489,5 +498,48 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
         const index = this.panes.toArray().findIndex(pane =>
             this.nativeElement.querySelector(`li[data-paneid="${pane.widgetId}"]`)?.classList.contains("select"));
         return index >= 0 ? index : this.getActiveTabIndex();
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from panes changes
+        if (this.panesChangesSubscription) {
+            this.panesChangesSubscription.unsubscribe();
+            this.panesChangesSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Destroy all dynamically created component instances
+        if (this.dynamicComponentRefs && this.dynamicComponentRefs.length) {
+            this.dynamicComponentRefs.forEach(componentRef => {
+                if (componentRef && componentRef.destroy) {
+                    componentRef.destroy();
+                }
+            });
+            this.dynamicComponentRefs = [];
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic tabs array
+        if (this.dynamicTabs) {
+            this.dynamicTabs = [];
+        }
+
+        // MEMORY LEAK FIX: Destroy tabs animator
+        if (this.tabsAnimator) {
+            // TabsAnimator may have internal subscriptions or timers
+            this.tabsAnimator = null;
+        }
+
+        // MEMORY LEAK FIX: Clear field definitions and references
+        this.fieldDefs = null;
+        this.activeTab = null;
+
+        super.ngOnDestroy();
     }
 }

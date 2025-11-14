@@ -364,5 +364,29 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
         if(this.cancelLocaleChangeSubscription) {
             this.cancelLocaleChangeSubscription();
         }
+
+        // MEMORY LEAK FIX: Complete and clear Subject observables
+        if (this.dataset$) {
+            this.dataset$.complete();
+        }
+        if (this.datavalue$) {
+            this.datavalue$.complete();
+        }
+
+        // MEMORY LEAK FIX: Clear datasetItems array
+        this.datasetItems = [];
+
+        // MEMORY LEAK FIX: Clear grouped data
+        if (this.groupedData) {
+            this.groupedData = [];
+        }
+
+        // MEMORY LEAK FIX: Clear model references
+        this._modelByKey = null;
+        this._modelByValue = null;
+        this.toBeProcessedDatavalue = null;
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }

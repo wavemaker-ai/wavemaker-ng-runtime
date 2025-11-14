@@ -193,6 +193,8 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private ariaText: String;
     private _pageLoad;
     private _selectedItemsExist;
+    private listItemsChangesSubscription: any;
+    private boundClickHandler: (event: Event) => void;
 
     private touching;
     private touched;
@@ -785,6 +787,56 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             this._listAnimator.$btnSubscription.unsubscribe();
         }
         this._listenerDestroyers.forEach(d => d && d());
+
+        // MEMORY LEAK FIX: Unsubscribe from navigator watches
+        if (this.navigatorResultWatch) {
+            this.navigatorResultWatch.unsubscribe();
+            this.navigatorResultWatch = null;
+        }
+        if (this.navigatorMaxResultWatch) {
+            this.navigatorMaxResultWatch.unsubscribe();
+            this.navigatorMaxResultWatch = null;
+        }
+
+        // MEMORY LEAK FIX: Unsubscribe from listItems changes
+        if (this.listItemsChangesSubscription) {
+            this.listItemsChangesSubscription.unsubscribe();
+            this.listItemsChangesSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Remove native event listener
+        const ulElement = this.nativeElement?.querySelector('ul.app-livelist-container');
+        if (ulElement && this.boundClickHandler) {
+            ulElement.removeEventListener('click', this.boundClickHandler, true);
+            this.boundClickHandler = null;
+        }
+
+        // MEMORY LEAK FIX: Destroy jQuery sortable widget
+        if (this.$ulEle && this.$ulEle.sortable) {
+            try {
+                this.$ulEle.sortable('destroy');
+            } catch (e) {
+                // Ignore errors during destroy
+            }
+            this.$ulEle = null;
+        }
+
+        // MEMORY LEAK FIX: Clear all data arrays and objects
+        this.fieldDefs = [];
+        this._items = [];
+        this.groupedData = null;
+        if (Array.isArray(this.selectedItemWidgets)) {
+            this.selectedItemWidgets = [];
+        } else {
+            this.selectedItemWidgets = {};
+        }
+
+        // MEMORY LEAK FIX: Nullify closures and references
+        this.debouncedFetchNextDatasetOnScroll = null;
+        this.firstSelectedItem = null;
+        this.lastSelectedItem = null;
+        this.reorderProps = null;
+
         super.ngOnDestroy();
     }
 
@@ -1246,19 +1298,23 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     }
 
     private setupHandlers() {
-        this.listItems.changes.subscribe(listItems => {
+        this.listItemsChangesSubscription = this.listItems.changes.subscribe(listItems => {
             this.onListRender(listItems);
             this.cdRef.detectChanges();
         });
         // handle click event in capturing phase.
-        this.nativeElement.querySelector('ul.app-livelist-container').addEventListener('click', ($event) => {
+        this.boundClickHandler = ($event) => {
             let target = $($event.target).closest('.app-list-item');
             // Recursively find the current list item
             while (target.get(0) && (target.closest('ul.app-livelist-container').get(0) !== $event.currentTarget)) {
                 target = target.parent().closest('.app-list-item');
             }
             this.triggerListItemSelection(target, $event);
-        }, true);
+        };
+        const ulElement = this.nativeElement.querySelector('ul.app-livelist-container');
+        if (ulElement) {
+            ulElement.addEventListener('click', this.boundClickHandler, true);
+        }
     }
 
     // Triggers on drag start while reordering.

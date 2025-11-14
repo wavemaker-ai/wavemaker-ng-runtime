@@ -1,4 +1,4 @@
-import {Directive, Inject, Self} from '@angular/core';
+import {Directive, Inject, OnDestroy, Self} from '@angular/core';
 
 import {
     $appDigest,
@@ -201,7 +201,7 @@ const addToFilterFields = (filterFields, searchObj) => {
   standalone: true,
     selector: '[wmTableFilterSort]'
 })
-export class TableFilterSortDirective {
+export class TableFilterSortDirective implements OnDestroy {
 
     constructor(@Self() @Inject(TableComponent) private table) {
         table._searchSortHandler = this.searchSortHandler.bind(this);
@@ -746,5 +746,10 @@ export class TableFilterSortDirective {
             orderBy : sortOptions,
             condition : logicalOp
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear table reference
+        this.table = null;
     }
 }

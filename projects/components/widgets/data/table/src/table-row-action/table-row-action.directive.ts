@@ -1,4 +1,4 @@
-import { Directive, Inject, Injector, OnInit, Optional, Self } from '@angular/core';
+import { Directive, Inject, Injector, OnDestroy, OnInit, Optional, Self } from '@angular/core';
 
 import { BaseComponent, Context, provideAsWidgetRef } from '@wm/components/base';
 
@@ -16,7 +16,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-table-row-action', hostClass: ''};
         {provide: Context, useFactory: () => { return {} }, multi: true}
     ]
 })
-export class TableRowActionDirective extends BaseComponent implements OnInit {
+export class TableRowActionDirective extends BaseComponent implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     accessroles;
@@ -77,5 +77,14 @@ export class TableRowActionDirective extends BaseComponent implements OnInit {
         super.ngOnInit();
         this.populateAction();
         this.table.registerRowActions(this.buttonDef);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear table reference and button definition
+        this.table = null;
+        this.buttonDef = null;
+
+        // Call parent ngOnDestroy (BaseComponent has cleanup)
+        super.ngOnDestroy();
     }
 }

@@ -1,4 +1,4 @@
-import { AfterContentInit, ContentChildren, Directive, forwardRef, Inject, Injector, Optional, QueryList } from '@angular/core';
+import { AfterContentInit, ContentChildren, Directive, forwardRef, Inject, Injector, OnDestroy, Optional, QueryList } from '@angular/core';
 import { DynamicComponentRefProvider, noop, StatePersistence } from '@wm/core';
 import {
     APPLY_STYLES_TYPE,
@@ -27,7 +27,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(AccordionDirective)
     ]
 })
-export class AccordionDirective extends StylableComponent implements AfterContentInit {
+export class AccordionDirective extends StylableComponent implements AfterContentInit, OnDestroy {
     static initializeProps = registerProps();
 
     public defaultpaneindex: number;
@@ -43,6 +43,8 @@ export class AccordionDirective extends StylableComponent implements AfterConten
     private dynamicPaneIndex;
     private dynamicPanes;
     public fieldDefs;
+    private panesChangesSubscription: any;
+    private dynamicComponentRefs: any[] = [];
 
     @ContentChildren(forwardRef(() => AccordionPaneComponent)) panes: QueryList<AccordionPaneComponent>;
 
@@ -162,7 +164,13 @@ export class AccordionDirective extends StylableComponent implements AfterConten
                 this._dynamicContext[this.getAttr('wmAccordian')] = this;
             }
 
-            this.dynamicComponentProvider.addComponent(this.getNativeElement(), markup, this._dynamicContext, { inj: this.inj });
+            // MEMORY LEAK FIX: Store component reference for cleanup
+            this.dynamicComponentProvider.addComponent(this.getNativeElement(), markup, this._dynamicContext, { inj: this.inj })
+                .then(componentRef => {
+                    if (componentRef) {
+                        this.dynamicComponentRefs.push(componentRef);
+                    }
+                });
         });
         return paneNamesList;
     }
@@ -250,10 +258,47 @@ export class AccordionDirective extends StylableComponent implements AfterConten
     ngAfterContentInit() {
         super.ngAfterContentInit();
         this.promiseResolverFn();
-        this.panes.changes.subscribe(slides => {
+        this.panesChangesSubscription = this.panes.changes.subscribe(slides => {
             if (this.panes.length) {
                 this.expandPane(this.defaultpaneindex);
             }
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from panes changes
+        if (this.panesChangesSubscription) {
+            this.panesChangesSubscription.unsubscribe();
+            this.panesChangesSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Destroy all dynamically created component instances
+        if (this.dynamicComponentRefs && this.dynamicComponentRefs.length) {
+            this.dynamicComponentRefs.forEach(componentRef => {
+                if (componentRef && componentRef.destroy) {
+                    componentRef.destroy();
+                }
+            });
+            this.dynamicComponentRefs = [];
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic panes array
+        if (this.dynamicPanes) {
+            this.dynamicPanes = [];
+        }
+
+        // MEMORY LEAK FIX: Clear field definitions
+        this.fieldDefs = null;
+        this.activePane = null;
+
+        super.ngOnDestroy();
     }
 }

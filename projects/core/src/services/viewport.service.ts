@@ -36,11 +36,14 @@ export class Viewport implements IViewportService, OnDestroy {
     private screenWidth;
     private screenHeight;
     private selectedViewPort: any;
+    private boundResizeFn: (event: Event) => void; // MEMORY LEAK FIX: Store bound function
 
     constructor() {
         this.setScreenType();
 
-        window.addEventListener(ViewportEvent.RESIZE, this.resizeFn.bind(this));
+        // MEMORY LEAK FIX: Store bound function reference for proper removal
+        this.boundResizeFn = this.resizeFn.bind(this);
+        window.addEventListener(ViewportEvent.RESIZE, this.boundResizeFn);
 
         const query = window.matchMedia('(orientation: portrait)');
         if (query.matches) {
@@ -56,7 +59,7 @@ export class Viewport implements IViewportService, OnDestroy {
         }
     }
 
-    update(selectedViewPort: Object) {
+    update(selectedViewPort: object) {
         this.selectedViewPort = selectedViewPort;
         this.setScreenType();
     }
@@ -79,12 +82,12 @@ export class Viewport implements IViewportService, OnDestroy {
         this.notify(ViewportEvent.RESIZE, {$event, data: {screenWidth: this.screenWidth, screenHeight: this.screenHeight}});
     }
 
-    public subscribe(eventName, callback: (data: any) => void): () => void {
+    public subscribe(eventName: string, callback: (data: any) => void): () => void {
         return this._eventNotifier.subscribe(eventName, callback);
     }
 
     public notify(eventName: string, ...data: Array<any>) {
-        this._eventNotifier.notify.apply(this._eventNotifier, arguments);
+        this._eventNotifier.notify(eventName, ...data);
     }
 
     private setScreenType() {
@@ -92,14 +95,14 @@ export class Viewport implements IViewportService, OnDestroy {
         this.screenWidth = $el.clientWidth;
         this.screenHeight = $el.clientHeight;
 
-        var minValue = this.screenWidth < this.screenHeight ? this.screenWidth : this.screenHeight;
-        var maxValue = this.screenWidth > this.screenHeight ? this.screenWidth : this.screenHeight;
+        // const minValue = this.screenWidth < this.screenHeight ? this.screenWidth : this.screenHeight;
+        // const maxValue = this.screenWidth > this.screenHeight ? this.screenWidth : this.screenHeight;
 
         this.isTabletType = false;
         this.isMobileType = false;
 
         if (get(this.selectedViewPort, 'deviceCategory')) {
-            const deviceCategory = this.selectedViewPort.deviceCategory;
+            const deviceCategory = (this.selectedViewPort as any).deviceCategory;
             if (deviceCategory === 'Tab') {
                 this.isTabletType = true;
             } else if (deviceCategory === 'Smartphone') {
@@ -124,6 +127,11 @@ export class Viewport implements IViewportService, OnDestroy {
 
     ngOnDestroy() {
         this._eventNotifier.destroy();
-        window.removeEventListener('resize', this.resizeFn);
+        
+        // MEMORY LEAK FIX: Remove using the stored bound function reference
+        if (this.boundResizeFn) {
+            window.removeEventListener('resize', this.boundResizeFn);
+            this.boundResizeFn = null;
+        }
     }
 }

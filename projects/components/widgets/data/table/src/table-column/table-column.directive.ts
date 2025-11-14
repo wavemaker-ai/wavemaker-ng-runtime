@@ -7,6 +7,7 @@ import {
     Directive,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     TemplateRef
@@ -83,7 +84,7 @@ class FieldDef {
         provideAsWidgetRef(TableColumnDirective)
     ]
 })
-export class TableColumnDirective extends BaseComponent implements OnInit, AfterContentInit, AfterViewInit {
+export class TableColumnDirective extends BaseComponent implements OnInit, AfterContentInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ContentChildren('filterWidget', { descendants: true }) _filterInstances;
@@ -784,5 +785,56 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             default:
                 this.table.redraw(true);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear all widget instance references
+        this.filterInstance = null;
+        this.inlineInstance = null;
+        this.inlineInstanceNew = null;
+
+        // MEMORY LEAK FIX: Clear template references
+        this.customExprTmpl = null;
+        this.inlineWidthTempRef = null;
+        this.filterTemplateRef = null;
+
+        // MEMORY LEAK FIX: Clear dataset references
+        this._filterDataSet = null;
+        this.dataset = null;
+        this._dataoptions = null;
+        this._datasource = null;
+
+        // MEMORY LEAK FIX: Clear validation objects
+        if (this.fieldValidations) {
+            this.fieldValidations.destroy();
+            this.fieldValidations = null;
+        }
+        if (this.fieldValidations_new) {
+            this.fieldValidations_new.destroy();
+            this.fieldValidations_new = null;
+        }
+        this.syncValidators = [];
+        this.asyncValidators = [];
+
+        // MEMORY LEAK FIX: Clear filter control reference
+        this.filterControl = null;
+
+        // MEMORY LEAK FIX: Clear notify fields array
+        if (this.notifyForFields) {
+            this.notifyForFields = [];
+        }
+
+        // MEMORY LEAK FIX: Clear observe fields array
+        if (this.observeOnFields) {
+            this.observeOnFields = [];
+        }
+
+        // MEMORY LEAK FIX: Clear table and group references
+        // Note: These are injected dependencies, but clearing helps GC
+        this.table = null;
+        this.group = null;
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }

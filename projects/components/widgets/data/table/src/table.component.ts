@@ -1507,13 +1507,120 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     }
 
     ngOnDestroy() {
+        // MEMORY LEAK FIX: Remove document click listener
         document.removeEventListener('click', this.documentClickBind);
+        
+        // MEMORY LEAK FIX: Unsubscribe from navigator watches
         if (this.navigatorResultWatch) {
             this.navigatorResultWatch.unsubscribe();
+            this.navigatorResultWatch = null;
         }
         if (this.navigatorMaxResultWatch) {
             this.navigatorMaxResultWatch.unsubscribe();
+            this.navigatorMaxResultWatch = null;
         }
+        
+        // MEMORY LEAK FIX: Clear all ViewContainerRef embedded views
+        // These hold references to row data, custom expressions, and inline widgets
+        if (this.customExprViewRef) {
+            this.customExprViewRef.clear();
+        }
+        if (this.rowActionsViewRef) {
+            this.rowActionsViewRef.clear();
+        }
+        if (this.filterViewRef) {
+            this.filterViewRef.clear();
+        }
+        if (this.inlineEditViewRef) {
+            this.inlineEditViewRef.clear();
+        }
+        if (this.inlineEditNewViewRef) {
+            this.inlineEditNewViewRef.clear();
+        }
+        if (this.rowDetailViewRef) {
+            this.rowDetailViewRef.clear();
+        }
+        if (this.rowExpansionActionViewRef) {
+            this.rowExpansionActionViewRef.clear();
+        }
+        if (this.dynamicTableRef) {
+            this.dynamicTableRef.clear();
+        }
+        
+        // MEMORY LEAK FIX: Clear compiled template caches
+        this.rowActionsCompiledTl = {};
+        this.rowFilterCompliedTl = {};
+        this.inlineCompliedTl = {};
+        this.inlineNewCompliedTl = {};
+        this.customExprCompiledTl = {};
+        this.customExprCompiledSummaryTl = {};
+        this.rowDefInstances = {};
+        this.rowDefMap = {};
+        this.rowExpansionActionTl = {};
+        
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+        
+        // MEMORY LEAK FIX: Clear data arrays
+        this._gridData = [];
+        this.items = [];
+        this.selectedItems = [];
+        this.fieldDefs = [];
+        this.fullFieldDefs = [];
+        this.gridData = [];
+        this.__fullData = null;
+        
+        // MEMORY LEAK FIX: Clear gridOptions to release all function closures and data
+        // gridOptions holds many closures that capture 'this' and prevent GC
+        if (this.gridOptions) {
+            // Clear data array
+            if (this.gridOptions.data) {
+                this.gridOptions.data = [];
+            }
+            // Clear column definitions
+            if (this.gridOptions.colDefs) {
+                this.gridOptions.colDefs = [];
+            }
+            // Clear row actions
+            if (this.gridOptions.rowActions) {
+                this.gridOptions.rowActions = [];
+            }
+            // Clear header config
+            if (this.gridOptions.headerConfig) {
+                this.gridOptions.headerConfig = [];
+            }
+            // Nullify all function references to break closures
+            Object.keys(this.gridOptions).forEach(key => {
+                if (typeof this.gridOptions[key] === 'function') {
+                    this.gridOptions[key] = null;
+                }
+            });
+        }
+        
+        // MEMORY LEAK FIX: Clear other data structures
+        this.columns = {};
+        this.formfields = {};
+        this.rowFilter = {};
+        this.actions = [];
+        this._actions = { header: [], footer: [] };
+        this.exportOptions = [];
+        this.headerConfig = [];
+        this.rowActions = [];
+        
+        // MEMORY LEAK FIX: Destroy jQuery datatable widget
+        if (this.datagridElement && this.datagridElement.datatable) {
+            try {
+                this.datagridElement.datatable('destroy');
+            } catch (e) {
+                // Ignore errors during destroy
+            }
+        }
+        console.log("table component destroyed");
         super.ngOnDestroy();
     }
 

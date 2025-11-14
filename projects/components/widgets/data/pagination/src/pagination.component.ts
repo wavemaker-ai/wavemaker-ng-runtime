@@ -6,6 +6,7 @@ import {
     EventEmitter,
     Inject,
     Injector,
+    OnDestroy,
     Optional,
     Output,
     SkipSelf,
@@ -53,7 +54,7 @@ const sizeClasses = {
         provideAsWidgetRef(PaginationComponent)
     ]
 })
-export class PaginationComponent extends StylableComponent implements AfterViewInit {
+export class PaginationComponent extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
     @Output() resultEmitter: EventEmitter<any> = new EventEmitter();
     @Output() maxResultsEmitter: EventEmitter<any> = new EventEmitter();
@@ -811,5 +812,44 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         paginationElem.onclick = (event) => {
             event.stopPropagation();
         };
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Complete EventEmitters
+        if (this.resultEmitter) {
+            this.resultEmitter.complete();
+        }
+        if (this.maxResultsEmitter) {
+            this.maxResultsEmitter.complete();
+        }
+
+        // MEMORY LEAK FIX: Nullify debounced function closures
+        this._debouncedApplyDataset = null;
+        this._debouncedPageChanged = null;
+
+        // MEMORY LEAK FIX: Clear data arrays and objects
+        this.dataset = null;
+        this.__fullData = null;
+        this.result = null;
+        this.filterFields = null;
+        this.sortOptions = null;
+        this.options = null;
+        
+        // MEMORY LEAK FIX: Clear page size options array
+        if (this.pageSizeOptions) {
+            this.pageSizeOptions = [];
+        }
+        if (this.defaultPageSizeOptions) {
+            this.defaultPageSizeOptions = [];
+        }
+
+        // MEMORY LEAK FIX: Clear datasource reference
+        this.datasource = null;
+
+        // MEMORY LEAK FIX: Clear parent reference
+        this.parent = null;
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }
