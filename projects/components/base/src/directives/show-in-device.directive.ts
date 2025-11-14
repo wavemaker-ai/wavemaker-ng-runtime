@@ -7,9 +7,11 @@ import {extend} from "lodash-es";
     selector: '[wmShowInDevice]'
 })
 export class ShowInDeviceDirective implements OnDestroy {
-    private readonly context = {};
+    private context: any = {}; // Changed from readonly to allow cleanup
     private devices;
     private embeddedView;
+    private boundOnResize: () => void; // MEMORY LEAK FIX: Store bound function for proper cleanup
+    
     constructor(
         private viewContainerRef: ViewContainerRef,
         inj: Injector,
@@ -18,7 +20,9 @@ export class ShowInDeviceDirective implements OnDestroy {
     ) {
         extend(this.context, (inj as any)._lView[8], explicitContext);
 
-        window.addEventListener('resize', this.onResize.bind(this));
+        // MEMORY LEAK FIX: Store bound function reference for proper removal
+        this.boundOnResize = this.onResize.bind(this);
+        window.addEventListener('resize', this.boundOnResize);
     }
     @Input() set wmShowInDevice(devices) {
         this.devices = devices.split(',');
@@ -63,6 +67,24 @@ export class ShowInDeviceDirective implements OnDestroy {
     }
 
     ngOnDestroy() {
-        window.removeEventListener('resize', this.onResize);
+        // MEMORY LEAK FIX: Remove using the stored bound function reference
+        if (this.boundOnResize) {
+            window.removeEventListener('resize', this.boundOnResize);
+            this.boundOnResize = null;
+        }
+        
+        // MEMORY LEAK FIX: Clear embedded view reference
+        if (this.embeddedView) {
+            this.viewContainerRef.clear();
+            this.embeddedView = null;
+        }
+        
+        // MEMORY LEAK FIX: Clear context to release references to parent scope data
+        if (this.context) {
+            Object.keys(this.context).forEach(key => {
+                delete this.context[key];
+            });
+            this.context = null;
+        }
     }
 }

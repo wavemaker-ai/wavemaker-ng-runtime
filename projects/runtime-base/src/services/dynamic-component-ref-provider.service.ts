@@ -83,6 +83,7 @@ export class DynamicComponentRefProviderService {
                        selector: selector of the component
                        transpile: flag for transpiling HTML. By default it is true
                        nocache: flag for render it from cache or not. By default it is true
+     * @returns ComponentRef - the created component reference for cleanup
      */
     public async addComponent(target: HTMLElement, markup: string, context = {}, options: any = {}) {
         options.transpile = isDefined(options.transpile) ? options.transpile : true;
@@ -92,5 +93,7 @@ export class DynamicComponentRefProviderService {
         const component = this.app.dynamicComponentContainerRef.createComponent(componentFactoryRef, 0, get(options, 'inj'));
         extendProto(component.instance, context);
         target.appendChild(component.location.nativeElement);
+        // MEMORY LEAK FIX: Return component reference so caller can destroy it
+        return component;
     }
 }

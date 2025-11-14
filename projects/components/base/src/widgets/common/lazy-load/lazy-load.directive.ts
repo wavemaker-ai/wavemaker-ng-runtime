@@ -19,7 +19,7 @@ import {extend} from "lodash-es";
 })
 export class LazyLoadDirective implements OnDestroy {
     private readonly viewParent: any;
-    private readonly context = {};
+    private context: any = {}; // Changed from readonly to allow cleanup
     private embeddedView;
     private unSubscribeFn: Function;
 
@@ -52,6 +52,21 @@ export class LazyLoadDirective implements OnDestroy {
     }
 
     ngOnDestroy() {
-        this.unSubscribeFn();
+        if (this.unSubscribeFn) {
+            this.unSubscribeFn();
+        }
+        
+        // MEMORY LEAK FIX: Clear context to release references to parent scope data
+        if (this.context) {
+            Object.keys(this.context).forEach(key => {
+                delete this.context[key];
+            });
+            this.context = null;
+        }
+        
+        // MEMORY LEAK FIX: Clear embedded view reference
+        if (this.embeddedView) {
+            this.embeddedView = null;
+        }
     }
 }
