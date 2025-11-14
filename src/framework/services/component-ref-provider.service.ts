@@ -21,7 +21,9 @@ export class ComponentRefProviderService extends ComponentRefProvider {
     }
 
     public async getComponentFactoryRef(componentName: string, componentType: ComponentType, options?: {}): Promise<any> {
-        const value = componentRefCache.get(componentType).get(componentName);
+        const componentRefMap = componentRefCache.get(componentType);
+        const value = componentRefMap ? componentRefMap.get(componentName) : undefined;
+
         if (!value && (componentType === ComponentType.PARTIAL || componentType === ComponentType.PREFAB)) {
             const partialRef = await this.lazyComponentRef.getComponentFactoryRef(
                 componentName,
@@ -32,6 +34,11 @@ export class ComponentRefProviderService extends ComponentRefProvider {
                 return Promise.resolve(partialRef);
             }
         }
+        if (!value) {
+            console.error(`ComponentRefProviderService: Component "${componentName}" of type "${ComponentType[componentType]}" is not registered.`);
+            return null;
+        }
+
         if (!value.componentFactory) {
             value.componentFactory = this.componentFactoryResolver.resolveComponentFactory(value.ref);
         }

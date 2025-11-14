@@ -68,7 +68,8 @@ export const registerProps = () => {
                 ['subheading', PROP_STRING],
                 ['tabindex', {value: 0, ...PROP_NUMBER}],
                 ['title', PROP_STRING],
-                ['updatemessage', {value: 'Record updated successfully', ...PROP_STRING}]
+                ['updatemessage', {value: 'Record updated successfully', ...PROP_STRING}],
+                ['virtualizecells', {value: true, ...PROP_BOOLEAN}]
             ]
         )
     );

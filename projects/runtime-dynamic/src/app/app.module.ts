@@ -370,7 +370,6 @@ REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule as any, ReactiveFormsMo
         { provide: CustomWidgetRefProvider, useClass: ComponentRefProviderService },
         { provide: CustomwidgetConfigProvider, useClass: CustomwidgetConfigProviderService },
         { provide: PrefabConfigProvider, useClass: PrefabConfigProviderService },
-        { provide: RouteReuseStrategy, useClass: WmRouteReuseStrategy },
         { provide: AbstractHttpService, useClass: HttpServiceImpl }
     ],
     bootstrap: [AppComponent]

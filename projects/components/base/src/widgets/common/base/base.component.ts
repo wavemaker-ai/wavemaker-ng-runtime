@@ -963,5 +963,6 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         (this as any).viewParent = null;
         this.viewParentApp = null;
         (this as any).eventManager = null;
+        (this as any).inj = null;
     }
 }
