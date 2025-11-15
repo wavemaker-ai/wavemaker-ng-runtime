@@ -427,23 +427,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.callDataGridMethod('refreshRow', rowIndex);
     }
 
-    private shouldLazyRenderByViewport(): boolean {
-        if (typeof window === 'undefined' || !this.nativeElement) {
-            return false;
+    private isRenderWhenVisibleEnabled(): boolean {
+        const renderFlag = this.renderwhenvisible as unknown;
+        if (typeof renderFlag === 'string') {
+            return renderFlag === 'true';
         }
-        try {
-            const rect = this.nativeElement.getBoundingClientRect();
-            const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
-            const buffer = 200;
-            if (!rect || !viewportHeight) {
-                return false;
-            }
-            const aboveViewport = rect.bottom < -buffer;
-            const belowViewport = rect.top > (viewportHeight + buffer);
-            return aboveViewport || belowViewport;
-        } catch {
-            return false;
-        }
+        return !!renderFlag;
     }
     
     // MEMORY LEAK FIX: Helper method to clear all row watchers during data refresh
@@ -1651,9 +1640,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
         this.virtualizationEnabled = this.virtualizecells !== false && this.virtualizecells !== 'false';
 
-        this.renderwhenvisible = this.shouldLazyRenderByViewport();
-
-        const shouldLazyRender = this.renderwhenvisible && typeof IntersectionObserver !== 'undefined';
+        const shouldLazyRender = this.isRenderWhenVisibleEnabled() && typeof IntersectionObserver !== 'undefined';
 
         if (shouldLazyRender) {
             this.bootstrapWhenVisible();
@@ -1670,6 +1657,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 return;
             }
             this.hasRenderedGrid = false;
+        }
+        if (!this.isRenderWhenVisibleEnabled()) {
+            this.bootstrapGrid();
+            return;
         }
         if (typeof IntersectionObserver === 'undefined') {
             this.bootstrapGrid();
@@ -2576,9 +2567,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 }
                 // If dataset changes and grid hasn't been rendered or was destroyed, re-bootstrap
                 if (!this.hasRenderedGrid || !this.datagridElement || !this.datagridElement.datatable || !this.datagridElement.datatable('instance')) {
-                    // Re-check viewport visibility when dataset changes
-                    this.renderwhenvisible = this.shouldLazyRenderByViewport();
-                    const shouldLazyRender = this.renderwhenvisible && typeof IntersectionObserver !== 'undefined';
+                    const shouldLazyRender = this.isRenderWhenVisibleEnabled() && typeof IntersectionObserver !== 'undefined';
                     if (shouldLazyRender) {
                         this.bootstrapWhenVisible();
                     } else {
@@ -2692,9 +2681,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     this.invokeEventCallback('show');
                     // If table becomes visible and grid hasn't been rendered, check if it should be bootstrapped
                     if (!this.hasRenderedGrid || !this.datagridElement || !this.datagridElement.datatable || !this.datagridElement.datatable('instance')) {
-                        // Re-check viewport visibility when table becomes visible
-                        this.renderwhenvisible = this.shouldLazyRenderByViewport();
-                        const shouldLazyRender = this.renderwhenvisible && typeof IntersectionObserver !== 'undefined';
+                        const shouldLazyRender = this.isRenderWhenVisibleEnabled() && typeof IntersectionObserver !== 'undefined';
                         if (shouldLazyRender) {
                             this.bootstrapWhenVisible();
                         } else {
