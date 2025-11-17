@@ -76,8 +76,14 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
     get currentItemWidgets () {
         const componentElements = Array.from(this.nativeElement.querySelectorAll('[widget-id]'));
         return Object.assign({}, componentElements.reduce((result, comp: any) => {
-            if (comp.widget?.name) {
-                result[comp.widget.name] = comp.widget;
+            try {
+                if (comp.widget?.name) {
+                    result[comp.widget.name] = comp.widget;
+                }
+            } catch (error) {
+                if (error instanceof TypeError) {
+                    console.log('Proxy revoked currentItemWidgets : ',  error);
+                }
             }
             return result;
         }, {}));

@@ -8,6 +8,7 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     TemplateRef,
@@ -34,6 +35,7 @@ import {
 } from '@wm/components/base';
 
 import {registerProps} from './popover.props';
+import {Subscription} from "rxjs";
 
 declare const $;
 
@@ -61,7 +63,7 @@ let activePopover: PopoverComponent;
     ]
 })
 
-export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit {
+export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public event: string;
@@ -231,9 +233,11 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         setTimeout(() => this.anchorRef.nativeElement.focus(), 10);
     }
 
+    private  bsPopoverDirectiveonStableSubscription : Subscription;
     private adjustPopoverArrowPosition(popoverElem, popoverLeftShift) {
-        this.bsPopoverDirective._popover._ngZone.onStable.subscribe(() => {
+        this.bsPopoverDirectiveonStableSubscription = this.bsPopoverDirective._popover._ngZone.onStable.subscribe(() => {
             popoverElem.find('.popover-arrow').css('left', popoverLeftShift + 'px');
+            this.bsPopoverDirectiveonStableSubscription.unsubscribe();
         });
     }
 
@@ -459,7 +463,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         this.bsPopoverDirective.hide();
     }
 
-    OnDestroy() {
+    ngOnDestroy() {
         if (this.documentClickHandler) {
             document.removeEventListener('click', this.documentClickHandler, true);
         }
@@ -467,5 +471,6 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (index > -1) {
             PopoverComponent.activePopovers.splice(index, 1);
         }
+        this.bsPopoverDirectiveonStableSubscription?.unsubscribe?.();
     }
 }

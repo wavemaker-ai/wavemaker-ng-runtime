@@ -314,4 +314,11 @@ export class BaseFieldValidations {
             }
         }
     }
+    destroy() {
+        this.widgetControl = null;
+        this.instance = null;
+        this.formwidget = null;
+        this.widgettype = null;
+        this.widgetContext = null;
+    }
 }

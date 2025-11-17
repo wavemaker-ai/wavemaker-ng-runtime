@@ -15,11 +15,18 @@ export const proxyHandler = {
         return true;
     },
     get: (target: BaseComponent, key: string): any => {
-        const v = target[key];
-        if (isFunction(v)) { // bind the proper context for the methods
-            return v.bind(target);
+        try {
+            const v = target[key];
+            if (isFunction(v)) { // bind the proper context for the methods
+                return v.bind(target);
+            }
+            return v;
+
+        } catch (err) {
+            if (err instanceof TypeError) {
+                console.log('Proxy revoked proxyHandler get : ', err);
+            }
         }
-        return v;
     }
 };
 

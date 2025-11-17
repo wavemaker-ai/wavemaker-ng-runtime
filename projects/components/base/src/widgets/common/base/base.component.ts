@@ -363,15 +363,15 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         });
     }
 
-    private destroySubscription: Subscription
+    private destroySubscriptions: Subscription[] = [];
     public registerDestroyListener(fn: Function, ctx?: any) {
         if (ctx) {
             fn = fn.bind(ctx);
         }
-        this.destroySubscription = this.destroy.subscribe(() => {}, () => {}, () => {
+        this.destroySubscriptions.push(this.destroy.subscribe(() => {}, () => {}, () => {
             fn();
             fn = null;
-        });
+        }));
     }
 
     public getDisplayType(): string {
@@ -603,7 +603,13 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
                 nv => {
                     if(propName.startsWith('base-') && widget.updateData)
                         widget.updateData(propName, nv);
-                    widget[propName] = nv
+                    try {
+                        widget[propName] = nv
+                    } catch (err) {
+                        if (err instanceof TypeError) {
+                            console.log('Proxy revoked processBindAttr : ', this.widgetId, err);
+                        }
+                    }
                 },
                 getWatchIdentifier(widgetId, propName),
                 propName === 'datasource',
@@ -747,21 +753,27 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      * Invoking this method will result in invocation of propertyChange handlers on the component for the first time
      */
     protected setInitProps() {
-        if (this.initState.get('name')) {
-            this.widget.name = this.initState.get('name');
-        }
-        this.initState.forEach((v, k) => {
-            // name is already set, ignore name
-            // if the key is part of to be ignored attributes list do not set it on the component instance
-            if ((this.widgetProps.get(k) || isStyle(k)) && k !== 'name') {
-                this.widget[k] = v;
+        try {
+            if (this.initState.get('name')) {
+                this.widget.name = this.initState.get('name');
             }
-        });
-        this.initState.clear();
-        this.initState = undefined;
+            this.initState.forEach((v, k) => {
+                // name is already set, ignore name
+                // if the key is part of to be ignored attributes list do not set it on the component instance
+                if ((this.widgetProps.get(k) || isStyle(k)) && k !== 'name') {
+                    this.widget[k] = v;
+                }
+            });
+            this.initState.clear();
+            this.initState = undefined;
 
-        this.readyState.next(null);
-        this.readyState.complete();
+            this.readyState.next(null);
+            this.readyState.complete();
+        } catch (err) {
+            if (err instanceof TypeError) {
+                console.log('Proxy revoked setInitProps : ', this.widgetId, err);
+            }
+        }
     }
 
     /**
@@ -872,7 +884,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
             delete (this.nativeElement as any).widget;
         }
         this.isDestroyed = true;
-        this.widget = Object.create(null);
+        this.widget = null;
         this.styleChange.complete();
         this.propertyChange.complete();
         this.destroy.complete();
@@ -881,7 +893,8 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         this.styleChangeSubscription?.unsubscribe();
         this.readyStateSubscription?.unsubscribe()
         this.propertyChangeSubscription?.unsubscribe()
-        this.destroySubscription?.unsubscribe();
+        console.log("destroying widget", this.widgetId, this.destroySubscriptions);
+        this.destroySubscriptions.forEach(subscription => subscription?.unsubscribe());
         this.customInjectorMap = {};
         this.eventHandlers.clear();
         (this.nativeElement as any).widget = null;

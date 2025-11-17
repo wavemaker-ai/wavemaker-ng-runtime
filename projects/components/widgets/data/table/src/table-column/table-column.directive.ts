@@ -265,8 +265,10 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
                 // Listen on the inner inline widget and setup the widget
                 this.inlineInstance = val.first && val.first.widget;
                 this.fieldValidations.formwidget = val.first;
-                this.table.registerFormField(this.binding, new FieldDef(this.inlineInstance));
+                let fieldDef = new FieldDef(this.inlineInstance);
+                this.table.registerFormField(this.binding, fieldDef);
                 this.setUpInlineWidget('inlineInstance');
+                this.registerDestroyListener(() => fieldDef = null);
             });
             this.registerDestroyListener(() => s2.unsubscribe());
 
@@ -655,7 +657,13 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             prop = 'timepattern';
         }
         if (this[widget] && isDefined(nv)) {
-            this[widget][prop] = nv;
+            try {
+                this[widget][prop] = nv;
+            } catch (error) {
+                if (error instanceof TypeError) {
+                    console.log('Proxy revoked setInlineWidgetProp : ',  error);
+                }
+            }
         }
     }
 
@@ -787,8 +795,16 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
     }
 
     ngOnDestroy() {
-        this.fieldValidations = null;
-        this.fieldValidations_new = null;
-        super.ngOnDestroy()
+    this._filterInstances = null;
+    this._inlineInstances = null;
+    this._inlineInstancesNew = null;
+    this.customExprTmpl = null;
+    this.inlineWidthTempRef = null;
+
+    this.fieldValidations?.destroy();
+    this.fieldValidations_new?.destroy();
+    this.fieldValidations = null;
+    this.fieldValidations_new = null;
+    super.ngOnDestroy()
     }
 }
