@@ -1623,6 +1623,36 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 // Ignore errors during destroy
             }
         }
+        
+        // MEMORY LEAK FIX: Clear all @ContentChildren QueryLists holding template references
+        // These QueryLists hold TemplateRef instances that create circular references to the parent LView
+        if (this.rowActionTmpl) {
+            this.rowActionTmpl.reset([]);
+        }
+        if (this.filterTmpl) {
+            this.filterTmpl.reset([]);
+        }
+        if (this.inlineWidgetTmpl) {
+            this.inlineWidgetTmpl.reset([]);
+        }
+        if (this.inlineWidgetNewTmpl) {
+            this.inlineWidgetNewTmpl.reset([]);
+        }
+        if (this.customExprTmpl) {
+            this.customExprTmpl.reset([]);
+        }
+        if (this.rowExpansionActionTmpl) {
+            this.rowExpansionActionTmpl.reset([]);
+        }
+        
+        // MEMORY LEAK FIX: Clear @ContentChild template reference
+        this.rowExpansionTmpl = null;
+        
+        // MEMORY LEAK FIX: Complete and clear subjects
+        if (this.selectedItemChange) {
+            this.selectedItemChange.complete();
+        }
+        
         console.log("table component destroyed");
         super.ngOnDestroy();
     }

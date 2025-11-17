@@ -788,6 +788,17 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
     }
 
     ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ContentChildren QueryLists
+        if (this._filterInstances) {
+            this._filterInstances.reset([]);
+        }
+        if (this._inlineInstances) {
+            this._inlineInstances.reset([]);
+        }
+        if (this._inlineInstancesNew) {
+            this._inlineInstancesNew.reset([]);
+        }
+
         // MEMORY LEAK FIX: Clear all widget instance references
         this.filterInstance = null;
         this.inlineInstance = null;
