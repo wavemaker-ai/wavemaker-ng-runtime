@@ -1652,8 +1652,8 @@ $.widget('wm.datatable', {
     },
 
     /* Selects a row. */
-    selectRow: function (row, value) {
-        var rowIndex = _.isNumber(row) ? row : this.Utils.getObjectIndex(this.options.data, row),
+    selectRow: function (row, value,index) {
+        var rowIndex =index?index:( _.isNumber(row) ? row : this.Utils.getObjectIndex(this.options.data, row)),
             selector,
             $row;
         if (rowIndex !== -1) {
@@ -2150,7 +2150,8 @@ $.widget('wm.datatable', {
             $requiredEls,
             alwaysNewRow = $row.hasClass('always-new-row'),
             advancedEdit = self.options.editmode === self.CONSTANTS.QUICK_EDIT,
-            editOptions = {};
+            editOptions = {},
+            rowindex=$row.attr('data-row-id');
 
         // when a row is edited set actionrow variables
         this.options.setActionRowIndex($row.attr('data-row-id'));
@@ -2172,7 +2173,7 @@ $.widget('wm.datatable', {
         }
         //Select the current edited row
         if (options.selectRow) {
-            this.selectRow(rowData, true);
+            this.selectRow(rowData, true,rowindex);
         }
         e = e || {};
         e.data = e.data || {};
@@ -2326,6 +2327,9 @@ $.widget('wm.datatable', {
                             if (isValid === false) {
                                 return;
                             }
+                        }
+                        if(this.options?.getDataSource()?.category== "wm.Variable") {
+                            editOptions.rowindex = rowindex;
                         }
                         this.options.afterRowUpdate(rowData, e, onSaveSuccess, editOptions);
                     }
