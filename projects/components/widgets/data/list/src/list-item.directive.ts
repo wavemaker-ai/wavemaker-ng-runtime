@@ -7,8 +7,8 @@ import {
     inject,
     Injector,
     Input,
+    OnDestroy,
     OnInit,
-    Optional,
     ViewContainerRef
 } from '@angular/core';
 
@@ -27,7 +27,7 @@ declare const $;
     selector: '[wmListItem]',
     exportAs: 'listItemRef'
 })
-export class ListItemDirective implements OnInit, AfterViewInit {
+export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
 
     public item;
     public context;
@@ -163,5 +163,29 @@ export class ListItemDirective implements OnInit, AfterViewInit {
                 }
             }
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear currentItemWidgets cache
+        // The _currentItemWidgets object accumulates references to all child widgets
+        // which prevents them from being garbage collected
+        if (this._currentItemWidgets) {
+            Object.keys(this._currentItemWidgets).forEach(key => {
+                delete this._currentItemWidgets[key];
+            });
+            this._currentItemWidgets = null;
+        }
+
+        // MEMORY LEAK FIX: Clear context to release references
+        if (this.context) {
+            Object.keys(this.context).forEach(key => {
+                delete this.context[key];
+            });
+            this.context = null;
+        }
+
+        // Complete the destroy subject
+        this.destroy.next(null);
+        this.destroy.complete();
     }
 }

@@ -5,6 +5,7 @@ import {
     HostBinding,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     Self
@@ -44,7 +45,7 @@ const enum STEP_STATUS {
     ],
     exportAs: 'wmWizardStep'
 })
-export class WizardStepComponent extends StylableComponent implements OnInit, AfterViewInit {
+export class WizardStepComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public show: boolean;
@@ -197,5 +198,19 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
         if (this.isdynamic) {
             this.wizardComponent.registerDynamicStep(this);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear redrawable components references
+        if (this.reDrawableComponents) {
+            this.reDrawableComponents.reset([]);
+        }
+
+        // MEMORY LEAK FIX: Clear wizard component reference
+        this.wizardComponent = null;
+
+        // Call parent ngOnDestroy (StylableComponent → BaseComponent)
+        // This will clear the context and unregister the widget
+        super.ngOnDestroy();
     }
 }

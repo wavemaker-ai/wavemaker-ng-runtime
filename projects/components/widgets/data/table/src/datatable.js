@@ -2092,10 +2092,11 @@ $.widget('wm.datatable', {
         });
 
         $editableElements = $row.find('td.cell-editing');
-        $editableElements.on('click', function (e) {
+        // PERFORMANCE FIX: Use event delegation on row instead of individual cell listeners
+        $row.on('click.cellEdit', 'td.cell-editing', function (e) {
             e.stopPropagation();
         });
-        $editableElements.on('keydown', function (e) {
+        $row.on('keydown.cellEdit', 'td.cell-editing', function (e) {
             //To prevent up and down arrows, navigating to other rows in edit mode
             if ((e.which === 38 || e.which === 40) && (e.currentTarget && !e.currentTarget.closest('.always-new-row'))) {
                 e.stopPropagation();
@@ -2381,6 +2382,8 @@ $.widget('wm.datatable', {
 
         this.disableActions(false);
         $row.removeClass('row-editing');
+        // PERFORMANCE FIX: Remove namespaced event listeners from row
+        $row.off('.cellEdit');
         $editableElements.off('click');
         $editableElements.each(function () {
             var $el = $(this),
@@ -2429,6 +2432,8 @@ $.widget('wm.datatable', {
             $saveButton = $row.find('.save-edit-row-button'),
             self = this;
         $row.removeClass('row-editing');
+        // PERFORMANCE FIX: Remove namespaced event listeners from row
+        $row.off('.cellEdit');
         $editableElements.off('click');
         this.disableActions(false);
         this._setGridEditMode(false);
