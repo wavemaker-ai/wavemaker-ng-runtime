@@ -519,6 +519,13 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             this.anchorRef.nativeElement.onmouseenter = null;
             this.anchorRef.nativeElement.onmouseleave = null;
         }
+
+        // MEMORY LEAK FIX: Clear all ViewChild and ContentChild references
+        // These retain the entire component tree including parent contexts (colDef, etc.)
+        this.bsPopoverDirective = null;
+        this.anchorRef = null;
+        this.popoverTemplate = null;
+        this.partialRef = null;
         
         // Call parent cleanup
         super.ngOnDestroy();
