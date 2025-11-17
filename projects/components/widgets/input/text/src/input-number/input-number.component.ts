@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
 import {IWidgetConfig, provideAs, provideAsWidgetRef} from '@wm/components/base';
@@ -23,7 +23,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(InputNumberComponent)
     ]
 })
-export class InputNumberComponent extends BaseInput {
+export class InputNumberComponent extends BaseInput implements OnDestroy {
     static initializeProps = registerProps();
 
     public required: boolean;
@@ -63,5 +63,14 @@ export class InputNumberComponent extends BaseInput {
         if ($event.key === 'e' &&  $event.target.value.indexOf($event.key) !== -1) {
             return false;
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.inputEl = null;
+        this.ngModel = null;
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }

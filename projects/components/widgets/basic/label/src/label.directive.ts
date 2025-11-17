@@ -1,4 +1,4 @@
-import {Directive, Inject, Injector, Optional, SecurityContext} from '@angular/core';
+import {Directive, Inject, Injector, OnDestroy, Optional, SecurityContext} from '@angular/core';
 
 import {setProperty, toggleClass} from '@wm/core';
 import {
@@ -28,7 +28,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ],
     exportAs: 'wmLabel'
 })
-export class LabelDirective extends StylableComponent {
+export class LabelDirective extends StylableComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     constructor(inj: Injector, private sanitizePipe:SanitizePipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
@@ -62,5 +62,14 @@ export class LabelDirective extends StylableComponent {
         } else {
             super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear sanitizePipe reference
+        // This retains references to the entire DI tree
+        this.sanitizePipe = null;
+
+        // Call parent ngOnDestroy (StylableComponent → BaseComponent)
+        super.ngOnDestroy();
     }
 }
