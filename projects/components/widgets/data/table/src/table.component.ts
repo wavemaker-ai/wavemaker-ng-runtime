@@ -5,6 +5,7 @@ import {MenuComponent} from '@wm/components/navigation/menu';
 import {
     AfterContentInit,
     Attribute,
+    ChangeDetectionStrategy,
     Component,
     ContentChild,
     ContentChildren,
@@ -139,7 +140,9 @@ const isInputBodyWrapper = target => {
     providers: [
         provideAs(TableComponent, NG_VALUE_ACCESSOR, true),
         provideAsWidgetRef(TableComponent)
-    ]
+    ],
+    // PERFORMANCE FIX: Use OnPush change detection to reduce CD cycles
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TableComponent extends StylableComponent implements AfterContentInit, OnDestroy, ControlValueAccessor {
     static initializeProps = registerProps();
@@ -1698,6 +1701,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             if (!key.endsWith('_filter') && ((key.endsWith('_new') && newRow) || (!key.endsWith('_new') && !newRow))) {
                 ctrls[key].setValue('');
                 this.resetFormControl(ctrls[key]);
+                // MEMORY LEAK FIX: Clear validators to release references
+                ctrls[key].clearValidators();
+                ctrls[key].clearAsyncValidators();
             }
         });
     }
