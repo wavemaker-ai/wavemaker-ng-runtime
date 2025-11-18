@@ -155,7 +155,8 @@ export {
     isChangeFromWatch,
     resetChangeFromWatch,
     $invokeWatchers,
-    $appDigest
+    $appDigest,
+    ensureWatcherCountHelper
 } from './utils/watcher';
 export * from './utils/id-generator';
 export * from './types/types';

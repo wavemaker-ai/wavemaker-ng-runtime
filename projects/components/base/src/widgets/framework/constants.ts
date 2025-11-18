@@ -4,6 +4,33 @@ export const EVENTS_MAP = new Map<string, string>([
    ['tap', 'click']
 ]);
 
+/**
+ * DOM events that fire continuously (mouse move, scroll, pointer events).
+ * For these, forcing a digest on every event is prohibitively expensive,
+ * so we throttle watcher execution in the base widget layer.
+ */
+export const HIGH_FREQUENCY_DOM_EVENTS = new Set<string>([
+    'mousemove',
+    'mouseover',
+    'mouseout',
+    'mouseenter',
+    'mouseleave',
+    'mousewheel',
+    'wheel',
+    'scroll',
+    'touchmove',
+    'touchstart',
+    'touchend',
+    'pointermove',
+    'pointerover',
+    'pointerout',
+    'pointerenter',
+    'pointerleave'
+]);
+
+// Milliseconds between forced digests for high frequency events.
+export const HIGH_FREQ_DIGEST_INTERVAL = 80;
+
 
 // TODO: Implement touch events for the mobile
 

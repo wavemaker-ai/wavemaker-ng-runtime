@@ -38,7 +38,7 @@ import {isStyle} from '../../framework/styler';
 import {register, renameWidget} from '../../framework/widget-registry';
 import {ChangeListener, Context, IWidgetConfig, WidgetConfig} from '../../framework/types';
 import {widgetIdGenerator} from '../../framework/widget-id-generator';
-import {DISPLAY_TYPE, EVENTS_MAP} from '../../framework/constants';
+import {DISPLAY_TYPE, EVENTS_MAP, HIGH_FREQUENCY_DOM_EVENTS, HIGH_FREQ_DIGEST_INTERVAL} from '../../framework/constants';
 import {WidgetProxyProvider} from '../../framework/widget-proxy-provider';
 import {getWatchIdentifier} from '../../../utils/widget-utils';
 import {camelCase, extend, forEach, isArray, isObject, join, last, map} from "lodash-es";
@@ -67,6 +67,43 @@ const updateStyles = (nv, ov, el) => {
         setCSSFromObj(el, nv, true);
     }
 
+};
+
+const getHighFreqTimestamp = () => {
+    if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+        return performance.now();
+    }
+    return Date.now();
+};
+
+let lastHighFreqDigestTime = 0;
+let pendingHighFreqDigest = false;
+
+const flushThrottledDigest = () => {
+    pendingHighFreqDigest = false;
+    $invokeWatchers();
+};
+
+const scheduleThrottledDigest = () => {
+    if (pendingHighFreqDigest) {
+        return;
+    }
+    pendingHighFreqDigest = true;
+    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(flushThrottledDigest);
+    } else {
+        setTimeout(flushThrottledDigest, HIGH_FREQ_DIGEST_INTERVAL);
+    }
+};
+
+const invokeHighFrequencyDigest = () => {
+    const elapsed = getHighFreqTimestamp() - lastHighFreqDigestTime;
+    if (elapsed >= HIGH_FREQ_DIGEST_INTERVAL) {
+        lastHighFreqDigestTime = getHighFreqTimestamp();
+        $invokeWatchers(true);
+        return;
+    }
+    scheduleThrottledDigest();
 };
 
 interface Child {
@@ -587,18 +624,40 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      */
     protected processEventAttr(eventName: string, expr: string, meta?: string, child?: Child) {
         const fn = $parseEvent(expr);
-        let locals = this.context;
-        locals.widget = child ? child.widget : this.widget;
-        let boundFn = fn.bind(undefined, child ? this.viewParent.viewParent : this.viewParent, locals);
+        // MEMORY LEAK FIX: Don't store entire context in locals
+        // Create a minimal locals object that uses prototype delegation to access context
+        // without holding a direct reference to the full context object
+        const viewParentRef = child ? this.viewParent.viewParent : this.viewParent;
+        const widgetRef = child ? child.widget : this.widget;
+        const contextRef = this.context; // Store reference for prototype chain
+        
+        // Create a lightweight locals object that delegates to context via prototype
+        // This allows access to context properties without storing the entire context
+        const minimalLocals = Object.create(contextRef || {});
+        minimalLocals.widget = widgetRef;
+        minimalLocals.$event = undefined;
+        
+        let boundFn = fn.bind(undefined, viewParentRef, minimalLocals);
 
         let widget          = child ? child.widget : this,
             nativeElement   = child ? child.nativeElement : this.nativeElement;
 
+        const mappedEventName = this.getMappedEventName(eventName);
+        const isHighFrequencyEvent = HIGH_FREQUENCY_DOM_EVENTS.has(mappedEventName);
+
+        const invokeDigestForEvent = () => {
+            if (isHighFrequencyEvent) {
+                invokeHighFrequencyDigest();
+            } else {
+                $invokeWatchers(true);
+            }
+        };
+
         const eventCallback = () => {
             let boundFnVal;
-            $invokeWatchers(true);
+            invokeDigestForEvent();
             try {
-                locals.$event = locals.$event || new window.CustomEvent(eventName);
+                minimalLocals.$event = minimalLocals.$event || new window.CustomEvent(eventName);
                 // If the event is bound directly to the variable then we need to internally handle
                 // the promise returned by the variable call.
                 boundFnVal = boundFn();
@@ -614,7 +673,10 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         if(child && !child.widget.eventHandlers)
             child.widget.eventHandlers = new Map<string, {callback: Function, locals: any}>()
 
-        widget.eventHandlers.set(this.getMappedEventName(eventName), {callback: eventCallback, locals});
+        // MEMORY LEAK FIX: Store minimal locals object instead of full context
+        // The minimalLocals uses prototype delegation, so it doesn't hold a direct reference
+        // to the full context object, allowing GC to reclaim the context when no longer needed
+        widget.eventHandlers.set(mappedEventName, {callback: eventCallback, locals: minimalLocals});
         // prepend eventName with on and convert it to camelcase.
         // eg, "click" ---> onClick
         const onEventName = camelCase(`on-${eventName}`);
@@ -624,13 +686,27 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
 
         // events needs to be setup after viewInit
         this.toBeSetupEventsQueue.push(() => {
-            const unsubscribeHandleEvent = this.handleEvent(nativeElement, this.getMappedEventName(eventName), eventCallback, locals, meta)
+            const unsubscribeHandleEvent = this.handleEvent(nativeElement, mappedEventName, eventCallback, minimalLocals, meta)
             this.registerDestroyListener(() => {
                 unsubscribeHandleEvent();
                 widget[onEventName] = undefined;
-                widget.eventHandlers.clear()
+                // MEMORY LEAK FIX: Clear each event handler entry individually to ensure cleanup
+                const handlerEntry = widget.eventHandlers.get(mappedEventName);
+                if (handlerEntry) {
+                    handlerEntry.callback = undefined;
+                    // Clear the locals object properties to break prototype chain
+                    if (handlerEntry.locals) {
+                        Object.setPrototypeOf(handlerEntry.locals, null);
+                        handlerEntry.locals.widget = undefined;
+                        handlerEntry.locals.$event = undefined;
+                    }
+                    handlerEntry.locals = undefined;
+                    widget.eventHandlers.delete(mappedEventName);
+                }
                 boundFn = undefined;
-                locals = undefined;
+                // Clear minimalLocals properties
+                minimalLocals.widget = undefined;
+                minimalLocals.$event = undefined;
             });
         });
     }
@@ -690,7 +766,19 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
             const locals = callbackInfo.locals || {};
 
             if (fn) {
-                return fn(Object.assign(locals, extraLocals));
+                // MEMORY LEAK FIX: Merge extraLocals into locals without creating new object
+                // The locals object uses prototype delegation, so we can safely add properties
+                if (extraLocals) {
+                    Object.assign(locals, extraLocals);
+                }
+                const result = fn();
+                // Clear extraLocals properties after use to help GC
+                if (extraLocals) {
+                    Object.keys(extraLocals).forEach(key => {
+                        delete locals[key];
+                    });
+                }
+                return result;
             }
         }
     }

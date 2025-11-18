@@ -184,7 +184,65 @@ export const setAppRef = ref => {
 export const isChangeFromWatch = () => changedByWatch;
 export const resetChangeFromWatch = () => changedByWatch = false;
 
-//(<any>window).watchRegistry = registry;
+// MEMORY LEAK FIX: Ensure __wmGetWatcherCount is available on window for debugging
+// Use a function to initialize it lazily and ensure it's always available
+const initWatcherCountHelper = () => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+    
+    // Check if already defined (including inherited properties)
+    if ('__wmGetWatcherCount' in window) {
+        // If it exists but is not a function, redefine it
+        if (typeof (window as any).__wmGetWatcherCount !== 'function') {
+            try {
+                delete (window as any).__wmGetWatcherCount;
+            } catch (e) {
+                // Property might not be configurable, try to redefine
+            }
+        } else {
+            // Already correctly defined
+            return;
+        }
+    }
+    
+    try {
+        Object.defineProperty(window, '__wmGetWatcherCount', {
+            value: () => registry.size,
+            writable: false,
+            configurable: true,
+            enumerable: false
+        });
+    } catch (e) {
+        // Fallback: assign directly if defineProperty fails
+        (window as any).__wmGetWatcherCount = () => registry.size;
+    }
+};
+
+// Initialize immediately if window is available
+if (typeof window !== 'undefined') {
+    initWatcherCountHelper();
+} else {
+    // For SSR or build-time, initialize when window becomes available
+    if (typeof globalThis !== 'undefined' && globalThis !== window) {
+        // Try to initialize on globalThis as fallback
+        try {
+            Object.defineProperty(globalThis, '__wmGetWatcherCount', {
+                value: () => registry.size,
+                writable: false,
+                configurable: true,
+                enumerable: false
+            });
+        } catch (e) {
+            // Ignore if it fails
+        }
+    }
+}
+
+// Export a function to re-initialize if needed (useful for testing or late initialization)
+export const ensureWatcherCountHelper = () => {
+    initWatcherCountHelper();
+};
 
 let skipWatchers;
 
