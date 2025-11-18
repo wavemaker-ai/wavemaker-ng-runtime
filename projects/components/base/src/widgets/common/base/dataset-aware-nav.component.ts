@@ -234,6 +234,7 @@ export interface NavNode {
     badge?: string;
     children?: Array<NavNode>;
     class?: string;
+    _selected?: boolean; // Dynamic property added at runtime for active state
     disabled?: boolean;
     icon?: string;
     id?: string;

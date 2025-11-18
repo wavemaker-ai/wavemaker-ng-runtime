@@ -2,6 +2,7 @@ import { QueryList } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { SwipeAnimation } from '@swipey';
+
 import { ButtonComponent } from '@wm/components/input/button';
 
 import { ListComponent } from './list.component';
@@ -34,7 +35,7 @@ export class ListAnimator extends SwipeAnimation {
         }
 
         // initialise swipe animation on the list component.
-        this.init(this.$el);
+        this.init && this.init(this.$el);
 
         // retrieves all the button components which are placed outside the listTemplate.
         this.$btnSubscription = this.list.btnComponents.changes.subscribe(items => this.actionItems = items);

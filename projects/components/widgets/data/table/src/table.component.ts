@@ -45,7 +45,7 @@ import {
     Viewport
 } from '@wm/core';
 
-import {Observable, Subject} from 'rxjs';
+import {Observable, Subject, Subscription} from 'rxjs';
 import {
     DEBOUNCE_TIMES,
     EDIT_MODE,
@@ -155,9 +155,15 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     private scheduleDigest = () => {
         if (this.digestScheduled) { return; }
         this.digestScheduled = true;
-        requestAnimationFrame(() => {
+        // MEMORY LEAK FIX: Track animation frame for cleanup
+        if (this.digestAnimationFrameId !== null) {
+            cancelAnimationFrame(this.digestAnimationFrameId);
+        }
+        this.digestAnimationFrameId = requestAnimationFrame(() => {
+            this.digestAnimationFrameId = null;
             try { $appDigest(); } finally { this.digestScheduled = false; }
         });
+        this.pendingAnimationFrames.add(this.digestAnimationFrameId);
     };
     static initializeProps = registerProps();
     @ViewChild(PaginationComponent, {static: true}) dataNavigator;
@@ -210,58 +216,16 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     private compiledCustomExprRows: Set<number> = new Set();
     private compiledRowExpressionIndex: Map<number, Set<string>> = new Map();
     private lazyCompileThreshold = 20; // Only compile custom expressions for first 50 rows initially
-    private rowIntersectionObserver: IntersectionObserver;
+    private rowIntersectionObserver: IntersectionObserver | null = null;
     private rowVirtualizationObserver: IntersectionObserver | null = null;
     private activeVirtualRows: Set<number> = new Set();
     private virtualizationBufferPx = 600;
     private virtualizationEnabled = true;
-    
-    // MEMORY OPTIMIZATION: Setup lazy loading for custom expressions (popovers)
-    private setupLazyCustomExpressionLoading() {
-        if (this.rowIntersectionObserver) {
-            this.rowIntersectionObserver.disconnect();
-        }
-        
-        // Only setup if we have rows beyond the threshold
-        if (!this.gridData || this.gridData.length <= this.lazyCompileThreshold) {
-            return;
-        }
-        
-        // Use IntersectionObserver to compile POPOVER components when rows come into view
-        this.rowIntersectionObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const rowElement = entry.target as HTMLElement;
-                    const rowId = parseInt(rowElement.getAttribute('data-row-id') || '-1', 10);
-                    
-                    if (rowId >= 0 && rowId >= this.lazyCompileThreshold && !this.compiledCustomExprRows.has(rowId)) {
-                        // Compile this row's custom expressions on-demand
-                        const rowData = this.gridOptions.data[rowId];
-                        if (rowData) {
-                            this.gridOptions.generateCustomExpressions(rowData, rowId, false);
-                            // Re-render the row to include compiled expressions
-                            this.callDataGridMethod('refreshRow', rowId);
-                        }
-                    }
-                }
-            });
-        }, {
-            root: this.nativeElement.querySelector('.app-grid-content'),
-            rootMargin: '200px', // Start compiling 200px before row is visible
-            threshold: 0.01
-        });
-        
-        // Observe all rows beyond the threshold
-        setTimeout(() => {
-            const rows = this.nativeElement.querySelectorAll(`tr.app-datagrid-row[data-row-id]`);
-            rows.forEach((row: HTMLElement) => {
-                const rowId = parseInt(row.getAttribute('data-row-id') || '-1', 10);
-                if (rowId >= this.lazyCompileThreshold) {
-                    this.rowIntersectionObserver.observe(row);
-                }
-            });
-        }, 100);
-    }
+    private pendingRowRefreshes: Set<number> = new Set();
+    private rowRefreshScheduled = false;
+    private lazyVisibilityObservers: IntersectionObserver[] = [];
+    private lazyVisibilityPollHandle: number | null = null;
+    private lazyVisibilityForceHandle: number | null = null;
 
     private trackCompiledExpressionKey(rowIndex: number, cacheKey: string) {
         if (!this.compiledRowExpressionIndex.has(rowIndex)) {
@@ -277,87 +241,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         return (cache as CompiledExpressionCache).node || cache;
     }
 
-    private setupRowVirtualization() {
-        if (!this.virtualizationEnabled || typeof IntersectionObserver === 'undefined') {
-            this.teardownRowVirtualization();
-            return;
-        }
-
-        if (!this.gridOptions?.data || this.gridOptions.data.length <= this.lazyCompileThreshold) {
-            this.teardownRowVirtualization();
-            return;
-        }
-
-        const contentEl = this.nativeElement.querySelector('.app-grid-content');
-        if (!contentEl) {
-            return;
-        }
-
-        const rows = contentEl.querySelectorAll('tr.app-datagrid-row[data-row-id]');
-        if (!rows.length) {
-            this.teardownRowVirtualization();
-            return;
-        }
-
-        this.teardownRowVirtualization();
-
-        this.rowVirtualizationObserver = new IntersectionObserver(
-            (entries) => this.handleRowIntersection(entries),
-            {
-                root: contentEl,
-                rootMargin: `${this.virtualizationBufferPx}px 0px`
-            }
-        );
-
-        rows.forEach(row => this.rowVirtualizationObserver.observe(row));
-    }
-
-    private teardownRowVirtualization() {
-        if (this.rowVirtualizationObserver) {
-            this.rowVirtualizationObserver.disconnect();
-            this.rowVirtualizationObserver = null;
-        }
-        this.activeVirtualRows.clear();
-    }
-
-    private handleRowIntersection(entries: IntersectionObserverEntry[]) {
-        entries.forEach(entry => {
-            const target = entry.target as HTMLElement;
-            const rowId = parseInt(target.getAttribute('data-row-id') || '-1', 10);
-            if (rowId < 0) {
-                return;
-            }
-
-            if (entry.isIntersecting) {
-                if (!this.activeVirtualRows.has(rowId)) {
-                    this.activeVirtualRows.add(rowId);
-                    this.restoreRowResources(rowId);
-                }
-                return;
-            }
-
-            if (this.shouldDetachRow(entry)) {
-                this.activeVirtualRows.delete(rowId);
-                this.teardownRowResources(rowId);
-            }
-        });
-    }
-
-    private shouldDetachRow(entry: IntersectionObserverEntry): boolean {
-        if (!entry.rootBounds) {
-            return !entry.isIntersecting;
-        }
-
-        if (entry.boundingClientRect.bottom < entry.rootBounds.top - this.virtualizationBufferPx) {
-            return true;
-        }
-
-        if (entry.boundingClientRect.top > entry.rootBounds.bottom + this.virtualizationBufferPx) {
-            return true;
-        }
-
-        return false;
-    }
 
     private teardownRowResources(rowIndex: number) {
         const rowKey = this.rowWatcherKeyIndex.get(rowIndex);
@@ -424,15 +307,123 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
 
         // Re-render cells to ensure custom expressions re-attach when row becomes visible
-        this.callDataGridMethod('refreshRow', rowIndex);
+        this.queueRowRefresh(rowIndex);
     }
 
-    private isRenderWhenVisibleEnabled(): boolean {
-        const renderFlag = this.renderwhenvisible as unknown;
+    tryApplyRowUpdate(updatedRow: any): boolean {
+        if (!this.optimisticrowupdate || !updatedRow) {
+            return false;
+        }
+        const rowIndex = this.resolveActionRowIndex();
+        if (rowIndex < 0) {
+            return false;
+        }
+        const gridRows = this.gridOptions?.data;
+        if (!gridRows || !gridRows[rowIndex]) {
+            return false;
+        }
+
+        const target = gridRows[rowIndex];
+        Object.assign(target, updatedRow);
+
+        if (Array.isArray(this.gridData) && this.gridData[rowIndex]) {
+            Object.assign(this.gridData[rowIndex], updatedRow);
+        }
+
+        if (Array.isArray(this.dataset) && this.dataset[rowIndex]) {
+            Object.assign(this.dataset[rowIndex], updatedRow);
+        }
+
+        if (Array.isArray(this.__fullData)) {
+            const absoluteIndex = this.getAbsoluteRowIndex(rowIndex);
+            if (!isNaN(absoluteIndex) && this.__fullData[absoluteIndex]) {
+                Object.assign(this.__fullData[absoluteIndex], updatedRow);
+            }
+        }
+
+        this.callDataGridMethod('updatePreparedRow', rowIndex, target);
+
+        // Re-register watchers and refresh the row to reflect new values
+        this.teardownRowResources(rowIndex);
+        this.restoreRowResources(rowIndex);
+
+        // Maintain selection reference for single select tables
+        if (!this.multiselect && this.items.length) {
+            this.items[0] = target;
+        }
+
+        this.callDataGridMethod('setActiveRow', target);
+        return true;
+    }
+
+    private resolveActionRowIndex(): number {
+        if (typeof this.actionRowIndex === 'number') {
+            return this.actionRowIndex;
+        }
+        const parsed = parseInt(this.actionRowIndex as any, 10);
+        return isNaN(parsed) ? -1 : parsed;
+    }
+
+    private getAbsoluteRowIndex(relativeIndex: number): number {
+        if (!this.gridOptions?.isNavTypeScrollOrOndemand() || !this.dataNavigator?.dn) {
+            return relativeIndex;
+        }
+        const currentPage = this.dataNavigator.dn.currentPage || 1;
+        const pageSize = this.dataNavigator.maxResults || this.pagesize || this.gridOptions?.data?.length || 0;
+        if (!pageSize) {
+            return relativeIndex;
+        }
+        return (currentPage - 1) * pageSize + relativeIndex;
+    }
+
+    private isRenderWhenVisibleEnabled() {
+        const renderFlag = this.renderwhenvisible;
         if (typeof renderFlag === 'string') {
             return renderFlag === 'true';
         }
         return !!renderFlag;
+    }
+
+
+    private queueRowRefresh(rowIndex: number) {
+        if (rowIndex == null || rowIndex < 0) {
+            return;
+        }
+        this.pendingRowRefreshes.add(rowIndex);
+        if (this.rowRefreshScheduled) {
+            return;
+        }
+        this.rowRefreshScheduled = true;
+        // MEMORY LEAK FIX: Track animation frame/timeout for cleanup
+        if (typeof requestAnimationFrame === 'function') {
+            const frameId = requestAnimationFrame(() => {
+                this.pendingAnimationFrames.delete(frameId);
+                this.flushRowRefreshes();
+            });
+            this.pendingAnimationFrames.add(frameId);
+        } else {
+            const timeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
+                this.flushRowRefreshes();
+            }, 16);
+            this.pendingTimeouts.add(timeoutId);
+        }
+    }
+
+    private flushRowRefreshes() {
+        this.rowRefreshScheduled = false;
+        if (!this.pendingRowRefreshes.size) {
+            return;
+        }
+        const rowsToRefresh = Array.from(this.pendingRowRefreshes);
+        this.pendingRowRefreshes.clear();
+        rowsToRefresh.forEach(rowIndex => {
+            try {
+                this.callDataGridMethod('refreshRow', rowIndex);
+            } catch {
+                // Ignore failures triggered after grid destruction
+            }
+        });
     }
     
     // MEMORY LEAK FIX: Helper method to clear all row watchers during data refresh
@@ -449,6 +440,294 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.rowWatcherKeyIndex.clear();
         this.rowColumnWatcherIndex.clear();
         this.rowTitleWatcherIndex.clear();
+    }
+
+    // MEMORY OPTIMIZATION: Setup lazy loading for custom expressions (popovers)
+    private setupLazyCustomExpressionLoading() {
+        if (typeof IntersectionObserver === 'undefined') {
+            return;
+        }
+        if (this.rowIntersectionObserver) {
+            this.rowIntersectionObserver.disconnect();
+            this.rowIntersectionObserver = null;
+        }
+        if (!this.gridData || this.gridData.length <= this.lazyCompileThreshold) {
+            return;
+        }
+
+        const contentElement = this.nativeElement?.querySelector('.app-grid-content');
+        if (!contentElement) {
+            return;
+        }
+
+        this.rowIntersectionObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    return;
+                }
+                const rowElement = entry.target as HTMLElement;
+                const rowId = parseInt(rowElement.getAttribute('data-row-id') || '-1', 10);
+                if (rowId < 0 || rowId < this.lazyCompileThreshold || this.compiledCustomExprRows.has(rowId)) {
+                    return;
+                }
+                const rowData = this.gridOptions?.data?.[rowId];
+                if (rowData) {
+                    this.gridOptions.generateCustomExpressions(rowData, rowId, false, true);
+                    this.queueRowRefresh(rowId);
+                }
+            });
+        }, {
+            root: contentElement,
+            rootMargin: '200px',
+            threshold: 0.01
+        });
+
+        this.trackedSetTimeout(() => {
+            const rows = this.nativeElement?.querySelectorAll('tr.app-datagrid-row[data-row-id]');
+            rows?.forEach(row => {
+                const rowId = parseInt(row.getAttribute('data-row-id') || '-1', 10);
+                if (rowId >= this.lazyCompileThreshold) {
+                    this.rowIntersectionObserver?.observe(row);
+                }
+            });
+        }, 100);
+    }
+
+    private setupRowVirtualization() {
+        if (!this.virtualizationEnabled || typeof IntersectionObserver === 'undefined') {
+            this.teardownRowVirtualization();
+            return;
+        }
+        if (!this.gridOptions?.data || this.gridOptions.data.length <= this.lazyCompileThreshold) {
+            this.teardownRowVirtualization();
+            return;
+        }
+        const contentElement = this.nativeElement?.querySelector('.app-grid-content');
+        if (!contentElement) {
+            return;
+        }
+        const rows = contentElement.querySelectorAll('tr.app-datagrid-row[data-row-id]');
+        if (!rows.length) {
+            this.teardownRowVirtualization();
+            return;
+        }
+
+        this.teardownRowVirtualization();
+        this.rowVirtualizationObserver = new IntersectionObserver(entries => this.handleRowIntersection(entries), {
+            root: contentElement,
+            rootMargin: `${this.virtualizationBufferPx}px 0px`
+        });
+        rows.forEach(row => this.rowVirtualizationObserver?.observe(row));
+    }
+
+    private teardownRowVirtualization() {
+        if (this.rowVirtualizationObserver) {
+            this.rowVirtualizationObserver.disconnect();
+            this.rowVirtualizationObserver = null;
+        }
+        this.activeVirtualRows.clear();
+    }
+
+    private handleRowIntersection(entries: IntersectionObserverEntry[]) {
+        entries.forEach(entry => {
+            const target = entry.target as HTMLElement;
+            const rowId = parseInt(target.getAttribute('data-row-id') || '-1', 10);
+            if (isNaN(rowId) || rowId < 0) {
+                return;
+            }
+            if (entry.isIntersecting) {
+                if (!this.activeVirtualRows.has(rowId)) {
+                    this.activeVirtualRows.add(rowId);
+                    this.restoreRowResources(rowId);
+                }
+                return;
+            }
+            if (this.shouldDetachRow(entry)) {
+                this.activeVirtualRows.delete(rowId);
+                this.teardownRowResources(rowId);
+            }
+        });
+    }
+
+    private shouldDetachRow(entry: IntersectionObserverEntry) {
+        if (!entry.rootBounds) {
+            return !entry.isIntersecting;
+        }
+        if (entry.boundingClientRect.bottom < entry.rootBounds.top - this.virtualizationBufferPx) {
+            return true;
+        }
+        if (entry.boundingClientRect.top > entry.rootBounds.bottom + this.virtualizationBufferPx) {
+            return true;
+        }
+        return false;
+    }
+
+    private bootstrapWhenVisible() {
+        if (this.hasRenderedGrid) {
+            if (this.datagridElement && this.datagridElement.datatable && this.datagridElement.datatable('instance')) {
+                return;
+            }
+            this.hasRenderedGrid = false;
+        }
+
+        if (!this.isRenderWhenVisibleEnabled()) {
+            this.bootstrapGrid();
+            return;
+        }
+
+        if (typeof IntersectionObserver === 'undefined') {
+            this.bootstrapGrid();
+            return;
+        }
+
+        let scrollRoots: Element[] = [];
+        const customRoot = this.resolveCustomRenderRoot();
+        if (customRoot) {
+            scrollRoots = [customRoot];
+        } else {
+            scrollRoots = this.getScrollableAncestors(this.nativeElement);
+        }
+
+        const buffer = 200;
+        if (this.isElementVisibleWithinRoot(this.nativeElement, null, buffer)) {
+            this.renderwhenvisible = false;
+            this.bootstrapGrid();
+            return;
+        }
+        if (scrollRoots.some(root => this.isElementVisibleWithinRoot(this.nativeElement, root, buffer))) {
+            this.renderwhenvisible = false;
+            this.bootstrapGrid();
+            return;
+        }
+
+        this.disconnectLazyVisibilityObservers();
+        const observerCallback = (entries: IntersectionObserverEntry[]) => {
+            const hasIntersection = entries.some(entry => entry.isIntersecting);
+            if (!hasIntersection) {
+                return;
+            }
+            this.disconnectLazyVisibilityObservers();
+            this.renderwhenvisible = false;
+            this.bootstrapGrid();
+        };
+        const createObserver = (root: Element | null) => {
+            const observer = new IntersectionObserver(observerCallback, {
+                root,
+                rootMargin: '200px'
+            });
+            this.lazyVisibilityObservers.push(observer);
+            observer.observe(this.nativeElement);
+        };
+
+        if (!customRoot) {
+            createObserver(null);
+        }
+        scrollRoots.forEach(root => createObserver(root));
+        this.startLazyVisibilityFallback();
+    }
+
+    private disconnectLazyVisibilityObservers() {
+        if (!this.lazyVisibilityObservers.length) {
+            return;
+        }
+        this.lazyVisibilityObservers.forEach(observer => observer.disconnect());
+        this.lazyVisibilityObservers = [];
+    }
+
+    private startLazyVisibilityFallback() {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        if (!this.isRenderWhenVisibleEnabled() || this.hasRenderedGrid) {
+            return;
+        }
+        if (this.lazyVisibilityPollHandle !== null) {
+            return;
+        }
+
+        const poll = () => {
+            if (!this.isRenderWhenVisibleEnabled()) {
+                this.stopLazyVisibilityFallback();
+                return;
+            }
+            if (this.hasRenderedGrid) {
+                this.stopLazyVisibilityFallback();
+                return;
+            }
+            const viewportVisible = this.isElementVisibleWithinRoot(this.nativeElement, null, 150);
+            let shouldRender = viewportVisible;
+            if (!viewportVisible) {
+                const customRoot = this.resolveCustomRenderRoot();
+                const roots = customRoot ? [customRoot] : this.getScrollableAncestors(this.nativeElement);
+                shouldRender = roots.some(root => this.isElementVisibleWithinRoot(this.nativeElement, root, 150));
+            }
+            if (shouldRender) {
+                this.stopLazyVisibilityFallback();
+                this.renderwhenvisible = false;
+                this.bootstrapGrid();
+                return;
+            }
+            this.lazyVisibilityPollHandle = window.requestAnimationFrame(poll);
+        };
+
+        this.lazyVisibilityPollHandle = window.requestAnimationFrame(poll);
+        if (this.lazyVisibilityForceHandle === null) {
+            this.lazyVisibilityForceHandle = window.setTimeout(() => {
+                this.lazyVisibilityForceHandle = null;
+                if (!this.hasRenderedGrid && this.isRenderWhenVisibleEnabled()) {
+                    this.renderwhenvisible = false;
+                    this.bootstrapGrid();
+                }
+            }, 6000);
+        }
+    }
+
+    private stopLazyVisibilityFallback() {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        if (this.lazyVisibilityPollHandle !== null) {
+            window.cancelAnimationFrame(this.lazyVisibilityPollHandle);
+            this.lazyVisibilityPollHandle = null;
+        }
+        if (this.lazyVisibilityForceHandle !== null) {
+            window.clearTimeout(this.lazyVisibilityForceHandle);
+            this.lazyVisibilityForceHandle = null;
+        }
+    }
+
+    private getScrollableAncestors(element: HTMLElement) {
+        if (typeof window === 'undefined' || !element) {
+            return [] as Element[];
+        }
+        const ancestors: Element[] = [];
+        let parent = element.parentElement;
+        const scrollRegex = /(auto|scroll|overlay)/;
+        while (parent) {
+            const style = window.getComputedStyle(parent);
+            const overflowValues = [style.overflow, style.overflowY, style.overflowX].join(' ');
+            if (scrollRegex.test(overflowValues)) {
+                ancestors.push(parent);
+            }
+            parent = parent.parentElement;
+        }
+        return ancestors;
+    }
+
+    private isElementVisibleWithinRoot(element: HTMLElement, root: Element | null, buffer = 200) {
+        if (typeof window === 'undefined' || !element) {
+            return false;
+        }
+        const rect = element.getBoundingClientRect();
+        if (!rect) {
+            return false;
+        }
+        if (!root) {
+            const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+            return !!viewportHeight && (rect.top < viewportHeight + buffer && rect.bottom > -buffer);
+        }
+        const rootRect = root.getBoundingClientRect();
+        return rect.top < rootRect.bottom + buffer && rect.bottom > rootRect.top - buffer;
     }
 
     columns = {};
@@ -497,10 +776,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     subheading;
     title;
     shownewrow;
+    spacing;
     deleteoktext;
     deletecanceltext;
     renderwhenvisible = false;
+    renderrootselector: string;
     virtualizecells;
+    optimisticrowupdate = true;
     onError;
     onRowinsert;
     onRowupdate;
@@ -564,9 +846,60 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     private currentPage;
     private applyProps = new Map();
     private hasRenderedGrid = false;
-    private lazyVisibilityObservers: IntersectionObserver[] = [];
+    private selectedItemChangeSubscription: Subscription | null = null;
+    private selectedItemChangeCleanupRegistered = false;
+    // MEMORY LEAK FIX: Track pending timeouts and animation frames for cleanup
+    private pendingAnimationFrames: Set<number> = new Set();
+    private digestAnimationFrameId: number | null = null;
 
     redraw = debounce(this._redraw, 150);
+    
+    // MEMORY LEAK FIX: Helper to track and clean up timeouts
+    private trackedSetTimeout(callback: () => void, delay: number): number {
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
+            callback();
+        }, delay);
+        this.pendingTimeouts.add(timeoutId);
+        return timeoutId;
+    }
+
+    private resolveCustomRenderRoot(): Element | null {
+        if (!this.renderrootselector || typeof document === 'undefined') {
+            return null;
+        }
+        const selector = (this.renderrootselector || '').trim();
+        if (!selector) {
+            return null;
+        }
+        try {
+            const closestMatch = this.nativeElement.closest(selector);
+            if (closestMatch) {
+                return closestMatch;
+            }
+        } catch {
+            // Ignore invalid selectors for closest()
+        }
+        try {
+            const matches = Array.from(document.querySelectorAll(selector));
+            if (!matches.length) {
+                return null;
+            }
+            const candidates = new Set(matches);
+            let parent: Element | null = this.nativeElement.parentElement;
+            while (parent) {
+                if (candidates.has(parent)) {
+                    return parent;
+                }
+                parent = parent.parentElement;
+            }
+        } catch {
+            // Ignore query selector failures and treat as no custom root
+        }
+        return null;
+    }
+    
+
     debouncedHandleLoading = debounce(this.handleLoading, 350);
 
     // Filter and Sort Methods
@@ -739,8 +1072,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 if (this._isPageSearch && this.filterInfo) {
                     this.searchSortHandler(this.filterInfo, undefined, 'search');
                 }
-                
-                // MEMORY OPTIMIZATION: Setup lazy loading for custom expressions (popovers) after render
                 this.setupLazyCustomExpressionLoading();
                 this.setupRowVirtualization();
             });
@@ -925,7 +1256,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         },
         onFormRender: ($row, e, operation, alwaysNewRow) => {
             const widget = alwaysNewRow ? 'inlineInstanceNew' : 'inlineInstance';
-            setTimeout(() => {
+            // MEMORY LEAK FIX: Use tracked setTimeout
+            this.trackedSetTimeout(() => {
                 this.formWidgets = {};
                 this.fieldDefs.forEach(col => {
                     if (col[widget]) {
@@ -1077,10 +1409,18 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 extend(colDef, this.columns[fieldName]);
                 const cacheKey = fieldName + index;
                 if (!summaryRow) {
+                    if (!forceCompile && this.customExprCompiledTl[cacheKey]?.node) {
+                        customExprView.destroy();
+                        return;
+                    }
                     this.customExprCompiledTl[cacheKey] = {node: rootNode, viewRef: customExprView};
                     this.compiledCustomExprRows.add(index);
                     this.trackCompiledExpressionKey(index, cacheKey);
                 } else {
+                    if (!forceCompile && this.customExprCompiledSummaryTl[cacheKey]?.node) {
+                        customExprView.destroy();
+                        return;
+                    }
                     this.customExprCompiledSummaryTl[cacheKey] = {node: rootNode, viewRef: customExprView};
                 }
             };
@@ -1127,7 +1467,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     row,
                     rowDef,
                     containerLoad: (widget) => {
-                        setTimeout(() => {
+                        // MEMORY LEAK FIX: Use tracked setTimeout
+                        this.trackedSetTimeout(() => {
                             $overlay.hide();
                             $target.show();
                             this.rowDefInstances[rowId] = widget;
@@ -1272,7 +1613,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             if (this._gridData && this._gridData.length && this.infScroll) {
                 // smoothscroll events will be binded.
                 // Added timeout as the table html is rendered at runtime
-                setTimeout(() => {
+                // MEMORY LEAK FIX: Use tracked setTimeout
+                this.trackedSetTimeout(() => {
                     this.paginationService.bindScrollEvt(this, 'tbody', DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
                 }, 0);
             }
@@ -1339,7 +1681,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         searchHandler: this.searchSortHandler.bind(this),
         sortHandler: this.searchSortHandler.bind(this),
         timeoutCall: (fn, delay) => {
-            setTimeout(fn, delay);
+            // MEMORY LEAK FIX: Use tracked setTimeout
+            this.trackedSetTimeout(fn, delay);
         },
         runInNgZone: fn => {
             this.ngZone.run(fn);
@@ -1543,9 +1886,23 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     return;
                 }
                 this._isDependent = true;
-                this.selectedItemChange$
+                // MEMORY LEAK FIX: Unsubscribe previous subscription if it exists
+                if (this.selectedItemChangeSubscription) {
+                    this.selectedItemChangeSubscription.unsubscribe();
+                }
+                this.selectedItemChangeSubscription = this.selectedItemChange$
                     .pipe(debounceTime(250))
                     .subscribe(this.triggerWMEvent.bind(this));
+                // Track this subscription for cleanup (only register once)
+                if (!this.selectedItemChangeCleanupRegistered) {
+                    this.registerDestroyListener(() => {
+                        if (this.selectedItemChangeSubscription) {
+                            this.selectedItemChangeSubscription.unsubscribe();
+                            this.selectedItemChangeSubscription = null;
+                        }
+                    });
+                    this.selectedItemChangeCleanupRegistered = true;
+                }
             })
         ];
 
@@ -1637,11 +1994,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (this.statehandler !== 'none') {
             this.gridOptions['selectFirstRow'] = false;
         }
-
         this.virtualizationEnabled = this.virtualizecells !== false && this.virtualizecells !== 'false';
-
         const shouldLazyRender = this.isRenderWhenVisibleEnabled() && typeof IntersectionObserver !== 'undefined';
-
         if (shouldLazyRender) {
             this.bootstrapWhenVisible();
         } else {
@@ -1650,109 +2004,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
     }
 
-    private bootstrapWhenVisible() {
-        if (this.hasRenderedGrid) {
-            // Check if grid instance still exists, if not, allow re-bootstrapping
-            if (this.datagridElement && this.datagridElement.datatable && this.datagridElement.datatable('instance')) {
-                return;
-            }
-            this.hasRenderedGrid = false;
-        }
-        if (!this.isRenderWhenVisibleEnabled()) {
-            this.bootstrapGrid();
-            return;
-        }
-        if (typeof IntersectionObserver === 'undefined') {
-            this.bootstrapGrid();
-            return;
-        }
-
-        const scrollRoots = this.getScrollableAncestors(this.nativeElement);
-        const buffer = 200;
-
-        if (this.isElementVisibleWithinRoot(this.nativeElement, null, buffer)) {
-            this.renderwhenvisible = false;
-            this.bootstrapGrid();
-            return;
-        }
-
-        for (const root of scrollRoots) {
-            if (this.isElementVisibleWithinRoot(this.nativeElement, root, buffer)) {
-                this.renderwhenvisible = false;
-                this.bootstrapGrid();
-                return;
-            }
-        }
-
-        this.disconnectLazyVisibilityObservers();
-
-        const observerCallback: IntersectionObserverCallback = (entries) => {
-            const hasIntersection = entries.some(entry => entry.isIntersecting);
-            if (!hasIntersection) {
-                return;
-            }
-            this.disconnectLazyVisibilityObservers();
-            this.renderwhenvisible = false;
-            this.bootstrapGrid();
-        };
-
-        const createObserver = (root: Element | null) => {
-            const observer = new IntersectionObserver(observerCallback, {
-                root,
-                rootMargin: '200px'
-            });
-            this.lazyVisibilityObservers.push(observer);
-            observer.observe(this.nativeElement);
-        };
-
-        // Always observe the viewport
-        createObserver(null);
-        scrollRoots.forEach(root => createObserver(root));
-    }
-
-    private disconnectLazyVisibilityObservers() {
-        if (!this.lazyVisibilityObservers?.length) {
-            return;
-        }
-        this.lazyVisibilityObservers.forEach(observer => observer.disconnect());
-        this.lazyVisibilityObservers = [];
-    }
-
-    private getScrollableAncestors(element: HTMLElement | null): HTMLElement[] {
-        if (typeof window === 'undefined' || !element) {
-            return [];
-        }
-        const ancestors: HTMLElement[] = [];
-        let parent: HTMLElement | null = element.parentElement;
-        const scrollRegex = /(auto|scroll|overlay)/;
-        while (parent) {
-            const style = window.getComputedStyle(parent);
-            const overflowValues = [style.overflow, style.overflowY, style.overflowX].join(' ');
-            if (scrollRegex.test(overflowValues)) {
-                ancestors.push(parent);
-            }
-            parent = parent.parentElement;
-        }
-        return ancestors;
-    }
-
-    private isElementVisibleWithinRoot(element: HTMLElement | null, root: Element | null, buffer = 200): boolean {
-        if (typeof window === 'undefined' || !element) {
-            return false;
-        }
-        const rect = element.getBoundingClientRect();
-        if (!rect) {
-            return false;
-        }
-        if (!root) {
-            const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
-            return !!viewportHeight && (rect.top < viewportHeight + buffer && rect.bottom > -buffer);
-        }
-        const rootRect = (root as HTMLElement).getBoundingClientRect();
-        return rect.top < rootRect.bottom + buffer && rect.bottom > rootRect.top - buffer;
-    }
 
     private bootstrapGrid() {
+        this.stopLazyVisibilityFallback();
         // Check if grid is already rendered AND the instance still exists
         // This handles cases where the grid was destroyed but hasRenderedGrid is still true
         if (this.hasRenderedGrid) {
@@ -1762,19 +2016,37 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             // Grid was destroyed, reset flag to allow re-bootstrapping
             this.hasRenderedGrid = false;
         }
+        
+        // Check if jQuery and datatable widget are available
+        if (!this.datagridElement || typeof (window as any).$ === 'undefined' || typeof this.datagridElement.datatable !== 'function') {
+            console.warn('Datatable widget is not available. jQuery or datatable.js may not be loaded.');
+            // Retry after a short delay
+            setTimeout(() => {
+                if (!this.isDestroyed) {
+                    this.bootstrapGrid();
+                }
+            }, 100);
+            return;
+        }
+        
         this.hasRenderedGrid = true;
         this.renderwhenvisible = false;
         this.renderOperationColumns();
         this.gridOptions.colDefs = this.fieldDefs;
 
-        this.datagridElement.datatable(this.gridOptions);
-        this.callDataGridMethod('setStatus', 'loading', this.loadingdatamsg);
+        try {
+            this.datagridElement.datatable(this.gridOptions);
+            this.callDataGridMethod('setStatus', 'loading', this.loadingdatamsg);
 
-        this.applyProps.forEach(args => this.callDataGridMethod(...args));
+            this.applyProps.forEach(args => this.callDataGridMethod(...args));
 
-        if (this.editmode === EDIT_MODE.QUICK_EDIT) {
-            this.documentClickBind = this._documentClickBind.bind(this);
-            document.addEventListener('click', this.documentClickBind);
+            if (this.editmode === EDIT_MODE.QUICK_EDIT) {
+                this.documentClickBind = this._documentClickBind.bind(this);
+                document.addEventListener('click', this.documentClickBind);
+            }
+        } catch (e) {
+            console.error('Failed to initialize datatable:', e);
+            this.hasRenderedGrid = false;
         }
     }
     private getConfiguredState() {
@@ -1794,7 +2066,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 options.options.orderBy = get(widgetState, 'sort.field') + ' ' + get(widgetState, 'sort.direction');
             }
             if (get(widgetState, 'search')) {
-                setTimeout( () => {
+                // MEMORY LEAK FIX: Use tracked setTimeout
+                this.trackedSetTimeout(() => {
                     this.searchStateHandler(widgetState);
                 }, 500);
                 options.options.filterFields = this.getFilterFields(widgetState.search);
@@ -1802,7 +2075,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         } else {
             options.options.page = 1;
             if (get(widgetState, 'search')) {
-                setTimeout( () => {
+                // MEMORY LEAK FIX: Use tracked setTimeout
+                this.trackedSetTimeout(() => {
                     this.searchStateHandler(widgetState);
                 }, 500);
                 options.options.filterFields = this.getFilterFields(widgetState.search);
@@ -2003,15 +2277,34 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.navigatorMaxResultWatch.unsubscribe();
         }
 
-        // MEMORY OPTIMIZATION: Disconnect IntersectionObserver for lazy popover loading
         if (this.rowIntersectionObserver) {
             this.rowIntersectionObserver.disconnect();
             this.rowIntersectionObserver = null;
         }
-
         this.teardownRowVirtualization();
-
         this.disconnectLazyVisibilityObservers();
+        this.stopLazyVisibilityFallback();
+
+        this.pendingRowRefreshes.clear();
+        this.rowRefreshScheduled = false;
+
+        // MEMORY LEAK FIX: Clean up selectedItemChange subscription
+        if (this.selectedItemChangeSubscription) {
+            this.selectedItemChangeSubscription.unsubscribe();
+            this.selectedItemChangeSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Cancel all pending animation frames
+        if (this.digestAnimationFrameId !== null) {
+            cancelAnimationFrame(this.digestAnimationFrameId);
+            this.digestAnimationFrameId = null;
+        }
+        this.pendingAnimationFrames.forEach(frameId => cancelAnimationFrame(frameId));
+        this.pendingAnimationFrames.clear();
+
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => window.clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
 
         // MEMORY LEAK FIX: Clean up all row/column watchers before destroy
         // These Maps prevent the accumulation issue in destroySubscriptions
@@ -2026,6 +2319,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         
         // MEMORY OPTIMIZATION: Clear compiled row tracker
         this.compiledCustomExprRows.clear();
+        this.compiledRowExpressionIndex.clear();
+        this.activeVirtualRows.clear();
         
         // MEMORY LEAK FIX: Clear all internal maps and structures
         this.rowActionsCompiledTl = null;
@@ -2037,6 +2332,24 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.rowDefInstances = null;
         this.rowDefMap = null;
         this.rowExpansionActionTl = null;
+        this.formWidgets = null;
+
+        // MEMORY LEAK FIX: Unbind pagination scroll events
+        if (this.nativeElement && typeof $ !== 'undefined') {
+            try {
+                const $element = $(this.nativeElement);
+                const $rootEl = $element.find('tbody').first();
+                if ($rootEl && $rootEl.length) {
+                    const $scrollParent = $rootEl.scrollParent();
+                    if ($scrollParent && $scrollParent.length) {
+                        $scrollParent.off('scroll.scroll_evt');
+                    }
+                    $rootEl.off('wheel.scroll_evt');
+                }
+            } catch (e) {
+                // Ignore errors during cleanup
+            }
+        }
 
         this.callDataGridMethod('destroy');
         super.ngOnDestroy();
@@ -2567,13 +2880,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 }
                 // If dataset changes and grid hasn't been rendered or was destroyed, re-bootstrap
                 if (!this.hasRenderedGrid || !this.datagridElement || !this.datagridElement.datatable || !this.datagridElement.datatable('instance')) {
-                    const shouldLazyRender = this.isRenderWhenVisibleEnabled() && typeof IntersectionObserver !== 'undefined';
-                    if (shouldLazyRender) {
-                        this.bootstrapWhenVisible();
-                    } else {
-                        this.renderwhenvisible = false;
-                        this.bootstrapGrid();
-                    }
+                    this.renderwhenvisible = false;
+                    this.bootstrapGrid();
                 }
                 break;
             case 'filtermode':
@@ -2679,15 +2987,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             case 'show':
                 if (nv) {
                     this.invokeEventCallback('show');
-                    // If table becomes visible and grid hasn't been rendered, check if it should be bootstrapped
+                    // If table becomes visible and grid hasn't been rendered, bootstrap it
                     if (!this.hasRenderedGrid || !this.datagridElement || !this.datagridElement.datatable || !this.datagridElement.datatable('instance')) {
-                        const shouldLazyRender = this.isRenderWhenVisibleEnabled() && typeof IntersectionObserver !== 'undefined';
-                        if (shouldLazyRender) {
-                            this.bootstrapWhenVisible();
-                        } else {
-                            this.renderwhenvisible = false;
-                            this.bootstrapGrid();
-                        }
+                        this.renderwhenvisible = false;
+                        this.bootstrapGrid();
                     }
                 } else {
                     this.invokeEventCallback('hide');
@@ -2920,10 +3223,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (forceRender) {
             this.datagridElement.datatable(this.gridOptions);
         } else {
-            setTimeout(() => {
+            // MEMORY LEAK FIX: Use tracked setTimeout
+            this.trackedSetTimeout(() => {
                 this.callDataGridMethod('setColGroupWidths');
                 this.callDataGridMethod('addOrRemoveScroll');
-            });
+            }, 0);
         }
     }
 

@@ -110,9 +110,11 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
     public autoopen: string;
     public hint: string;
     public arialabel: string;
+    public iconposition: string;
+    public caption: string;
 
     private itemActionFn: Function;
-    private menuCaret = 'fa-caret-down';
+    public menuCaret = 'fa-caret-down';
     private _selectFirstItem = false;
 
     public type: any;
@@ -121,9 +123,11 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
     @HostListener('onShown') onShow() {
         this._menuposition = this.menuposition;
         if (this._selectFirstItem) {
-            setTimeout(() => {
+            const timeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
                 this.$element.find('> ul[wmmenudropdown] li.app-menu-item').first().find('> a').focus();
-            });
+            }, 0);
+            this.pendingTimeouts.add(timeoutId);
         }
         $appDigest();
     }
@@ -293,5 +297,14 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
     ngAfterViewInit() {
         super.ngAfterViewInit();
         styler(this.nativeElement.querySelector('.dropdown-toggle') as HTMLElement, this);
+    }
+
+    ngOnDestroy() {
+        // Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => {
+            clearTimeout(timeoutId);
+        });
+        this.pendingTimeouts.clear();
+        super.ngOnDestroy();
     }
 }

@@ -30,10 +30,12 @@ export class SpinnerComponent extends StylableComponent implements OnInit, OnDes
     public imageheight;
     public servicevariabletotrack: string;
     public show: boolean;
-    private picture: string;
+    public picture: string;
     private _spinnerMessages;
     public showCaption = true;
     public type: any;
+    public iconsize: string;
+    public caption: string;
     private dataSourceSubscription;
 
     public get spinnerMessages() {

@@ -20,17 +20,38 @@ import {
 
 declare const $;
 import * as momentLib  from 'moment';
-const moment = momentLib.default || window['moment'];
-const momentLocale: any = moment.localeData();
-const momentCalendarOptions = getClonedObject(momentLocale._calendar);
-const momentCalendarDayOptions = momentLocale._calendarDay || {
-        lastDay: '[Yesterday]',
-        lastWeek: '[Last] dddd',
-        nextDay: '[Tomorrow]',
-        nextWeek: 'dddd',
-        sameDay: '[Today]',
-        sameElse: 'L'
-    };
+// Typings for moment don't declare a `default` export in this setup.
+// Use the namespace import directly and fall back to global if needed.
+const moment: any = (momentLib as any) || (window as any)['moment'];
+
+// Safely get moment locale data - handle case where moment is not yet initialized
+let momentLocale: any = null;
+let momentCalendarOptions: any = {};
+let momentCalendarDayOptions: any = {
+    lastDay: '[Yesterday]',
+    lastWeek: '[Last] dddd',
+    nextDay: '[Tomorrow]',
+    nextWeek: 'dddd',
+    sameDay: '[Today]',
+    sameElse: 'L'
+};
+
+function initializeMomentLocale() {
+    if (!momentLocale && moment && typeof moment.localeData === 'function') {
+        try {
+            momentLocale = moment.localeData();
+            if (momentLocale && momentLocale._calendar) {
+                momentCalendarOptions = getClonedObject(momentLocale._calendar);
+                momentCalendarDayOptions = momentLocale._calendarDay || momentCalendarDayOptions;
+            }
+        } catch (e) {
+            console.warn('Failed to initialize moment locale:', e);
+        }
+    }
+}
+
+// Try to initialize immediately, but allow lazy initialization
+initializeMomentLocale();
 const GROUP_BY_OPTIONS = {
         ALPHABET: 'alphabet',
         WORD: 'word',
@@ -325,6 +346,12 @@ export const groupData = (compRef: any, data: Array<Object | DataSetItem>, group
  * @param innerItem, item to look for in the passed data
  */
 const getGroupedData = (fieldDefs: Array<Object | DataSetItem>, groupby: string, match: string, orderby: string, dateFormat: string, datePipe: ToDatePipe, innerItem?: string, AppDefaults?: any) => {
+    // Ensure moment locale is initialized
+    initializeMomentLocale();
+    if (!momentLocale) {
+        // Fallback if moment is not available
+        return groupBy(fieldDefs, () => GROUP_BY_OPTIONS.OTHERS);
+    }
     // For day, set the relevant moment calendar options
     if (match === TIME_ROLLUP_OPTIONS.DAY) {
         momentLocale._calendar = momentCalendarDayOptions;
@@ -364,6 +391,12 @@ export const filterDate = (value: string | number, format: string, defaultFormat
  * @param dateformat string containing the date format to display the date.
  */
 const getTimeRolledUpString = (concatStr: string, rollUp: string, dateformat: string, datePipe?: ToDatePipe, AppDefaults?: any) => {
+    // Ensure moment locale is initialized
+    initializeMomentLocale();
+    if (!momentLocale || !moment) {
+        // Fallback if moment is not available
+        return GROUP_BY_OPTIONS.OTHERS;
+    }
     let groupByKey,
         strMoment  = moment(concatStr),
         dateFormat = dateformat;

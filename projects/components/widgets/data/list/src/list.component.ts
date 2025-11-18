@@ -126,6 +126,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     public paginationclass: string;
     public ondemandmessage: string;
     public loadingdatamsg: string;
+    public nodatamessage: string;
     public selectionlimit: number;
     public infScroll: boolean;
     public enablereorder: boolean;
@@ -141,6 +142,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     public toggleAllHeaders: void;
     public groupby: string;
     public collapsible: string;
+    public showcount: boolean;
     public datePipe: ToDatePipe;
     public binditemclass: string;
     public binddisableitem: string;
@@ -153,6 +155,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     public iconclass: string;
     public listclass: any;
     public statehandler: any;
+    public renderwhenvisible: any;
     public currentIndex: number;
     public titleId: string;
     public allowpagesizechange: boolean = false;
@@ -160,17 +163,17 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     public updatedPageSize;
     public actualPageSize;
     _isDependent;
-    private itemsPerRowClass: string;
+    public itemsPerRowClass: string;
     private firstSelectedItem: ListItemDirective;
     private navigatorMaxResultWatch: Subscription;
     private navigatorResultWatch: Subscription;
     private listItemsChangeSubscription: Subscription;
     private navControls: string;
-    private onDemandLoad: boolean;
+    public onDemandLoad: boolean;
     private _items: Array<any>;
     private dataNavigatorWatched: boolean;
     private datasource: any;
-    private showNavigation: boolean;
+    public showNavigation: boolean;
     private reorderProps: any;
     private app: any;
     private appDefaults: any;
@@ -180,7 +183,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private binddatasource: string;
     private match: string;
     private dateformat: string;
-    private groupedData: any;
+    public groupedData: any;
     private cdRef: ChangeDetectorRef;
     private promiseResolverFn: Function;
     private propsInitPromise: Promise<any>;
@@ -193,12 +196,17 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private boundAddItemClickHandler: (event: any) => void;
     private isDataChanged: boolean;
     private isListElementMovable: boolean;
-    private ariaText: String;
+    public ariaText: string;
     private _pageLoad;
     private _selectedItemsExist;
 
     private touching;
     private touched;
+    private lazyVisibilityObservers: IntersectionObserver[] = [];
+    private lazyRenderActivated = false;
+    private pendingDatasetValue: any;
+    private hasPendingDatasetValue = false;
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup
 
     constructor(
         inj: Injector,
@@ -562,7 +570,18 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         } else if (key === 'paginationclass') {
             if (this.dataNavigator) {
                 // Adding setTimeout because in pagination component updateNavSize method is overriding navigationclass
-                setTimeout(() => this.dataNavigator.navigationClass = nv);
+                // MEMORY LEAK FIX: Track timeout for cleanup
+                const timeoutId = window.setTimeout(() => {
+                    this.pendingTimeouts.delete(timeoutId);
+                    this.dataNavigator.navigationClass = nv;
+                });
+                this.pendingTimeouts.add(timeoutId);
+            }
+        } else if (key === 'renderwhenvisible') {
+            if (this.shouldDeferDataRender()) {
+                this.bootstrapWhenVisible();
+            } else {
+                this.activateLazyRender();
             }
         } else if (key === 'pagesize') {
             this.actualPageSize = nv; // maintain default page size to calculate pagesize options
@@ -696,9 +715,12 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     ngOnInit() {
         super.ngOnInit();
         this.handleHeaderClick = noop;
-        setTimeout(() => {
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
             this.debouncedFetchNextDatasetOnScroll = this.paginationService.debouncedFetchNextDatasetOnScroll(this.dataNavigator, DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME, this);
         }, 0);
+        this.pendingTimeouts.add(timeoutId);
         this._items = [];
         this.fieldDefs = [];
         this.reorderProps = {
@@ -731,6 +753,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 this.toggleAllHeaders = toggleAllHeaders.bind(undefined, this);
             }
             setListClass(this);
+            this.bootstrapWhenVisible();
         });
         this.setupHandlers();
         const $ul = this.nativeElement.querySelector('ul.app-livelist-container');
@@ -748,6 +771,9 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     }
 
     ngOnDestroy() {
+        this.disconnectLazyVisibilityObservers();
+        this.pendingDatasetValue = null;
+        this.hasPendingDatasetValue = false;
         if (this._listAnimator && this._listAnimator.$btnSubscription) {
             this._listAnimator.$btnSubscription.unsubscribe();
         }
@@ -791,6 +817,10 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             $addItem.removeEventListener('click', this.boundAddItemClickHandler);
             this.boundAddItemClickHandler = null;
         }
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
         
         super.ngOnDestroy();
     }
@@ -956,7 +986,124 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         this.listItems.setDirty();
     }
 
+    private shouldDeferDataRender(): boolean {
+        return this.isRenderWhenVisibleEnabled() && !this.lazyRenderActivated;
+    }
+
+    private isRenderWhenVisibleEnabled(): boolean {
+        const flag = this.renderwhenvisible as unknown;
+        if (typeof flag === 'string') {
+            return flag === 'true';
+        }
+        return !!flag;
+    }
+
+    private activateLazyRender() {
+        if (this.lazyRenderActivated) {
+            return;
+        }
+        this.lazyRenderActivated = true;
+        this.disconnectLazyVisibilityObservers();
+        if (this.hasPendingDatasetValue) {
+            const pending = this.pendingDatasetValue;
+            this.pendingDatasetValue = undefined;
+            this.hasPendingDatasetValue = false;
+            this.onDataChange(pending);
+        }
+    }
+
+    private bootstrapWhenVisible() {
+        if (!this.isRenderWhenVisibleEnabled()) {
+            this.activateLazyRender();
+            return;
+        }
+        if (typeof IntersectionObserver === 'undefined' || !this.nativeElement) {
+            this.activateLazyRender();
+            return;
+        }
+
+        const buffer = 200;
+        const scrollRoots = this.getScrollableAncestors(this.nativeElement);
+
+        if (this.isElementVisibleWithinRoot(this.nativeElement, null, buffer) ||
+            scrollRoots.some(root => this.isElementVisibleWithinRoot(this.nativeElement, root, buffer))) {
+            this.activateLazyRender();
+            return;
+        }
+
+        this.disconnectLazyVisibilityObservers();
+
+        const observerCallback: IntersectionObserverCallback = (entries) => {
+            if (entries.some(entry => entry.isIntersecting)) {
+                this.disconnectLazyVisibilityObservers();
+                this.activateLazyRender();
+            }
+        };
+
+        const createObserver = (root: Element | null) => {
+            const observer = new IntersectionObserver(observerCallback, {
+                root,
+                rootMargin: '200px'
+            });
+            this.lazyVisibilityObservers.push(observer);
+            observer.observe(this.nativeElement);
+        };
+
+        createObserver(null);
+        scrollRoots.forEach(root => createObserver(root));
+    }
+
+    private disconnectLazyVisibilityObservers() {
+        if (!this.lazyVisibilityObservers.length) {
+            return;
+        }
+        this.lazyVisibilityObservers.forEach(observer => observer.disconnect());
+        this.lazyVisibilityObservers = [];
+    }
+
+    private getScrollableAncestors(element: HTMLElement | null): HTMLElement[] {
+        if (typeof window === 'undefined' || !element) {
+            return [];
+        }
+        const ancestors: HTMLElement[] = [];
+        let parent: HTMLElement | null = element.parentElement;
+        const scrollRegex = /(auto|scroll|overlay)/;
+        while (parent) {
+            const style = window.getComputedStyle(parent);
+            const overflowValues = [style.overflow, style.overflowY, style.overflowX].join(' ');
+            if (scrollRegex.test(overflowValues)) {
+                ancestors.push(parent);
+            }
+            parent = parent.parentElement;
+        }
+        return ancestors;
+    }
+
+    private isElementVisibleWithinRoot(element: HTMLElement | null, root: Element | null, buffer = 200): boolean {
+        if (typeof window === 'undefined' || !element) {
+            return false;
+        }
+        const rect = element.getBoundingClientRect();
+        if (!rect) {
+            return false;
+        }
+        if (!root) {
+            const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+            if (!viewportHeight) {
+                return false;
+            }
+            return rect.top < viewportHeight + buffer && rect.bottom > -buffer;
+        }
+        const rootRect = (root as HTMLElement).getBoundingClientRect();
+        return rect.top < rootRect.bottom + buffer && rect.bottom > rootRect.top - buffer;
+    }
+
     private onDataChange(newVal) {
+        if (this.shouldDeferDataRender()) {
+            this.pendingDatasetValue = newVal;
+            this.hasPendingDatasetValue = true;
+            return;
+        }
         // Check for newVal is not empty
         if (!isEmpty(newVal)) {
 

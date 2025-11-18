@@ -14,7 +14,8 @@ export const registerProps = () => {
                 ['show', {value: true, ...PROP_BOOLEAN}],
                 ['statehandler', {value: 'none', ...PROP_STRING}],
                 ['tabindex', {value: 0, ...PROP_NUMBER}],
-                ['type', PROP_STRING]
+                ['type', PROP_STRING],
+                ['renderwhenvisible', {value: false, ...PROP_BOOLEAN}]
             ]
         )
     );

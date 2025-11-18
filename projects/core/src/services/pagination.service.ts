@@ -97,6 +97,31 @@ export class PaginationService {
 
     /**
      * @description
+     * This function unregisters scroll events that were registered by bindScrollEvt
+     * @param {object} parent table / list instance
+     * @param {string} nodeName tbody/ul
+     * @returns null
+     */
+    public unbindScrollEvt(parent, nodeName) {
+        const $el = parent.$element;
+        const $rootEl = $el.find(nodeName);
+        const $firstChild = $rootEl.children().first();
+
+        if (!$firstChild.length) {
+            return;
+        }
+
+        const $scrollParent = $firstChild.scrollParent(false);
+        
+        // Remove scroll event
+        $scrollParent.off('scroll.scroll_evt');
+        
+        // Remove wheel event
+        $rootEl.off('wheel.scroll_evt');
+    }
+
+    /**
+     * @description
      * This function registers scroll events on the scrollable el, if the page doesn't have a scroll el then wheel event is registered on the requested node
      * @param {object} parent table / list instance
      * @param {string} nodeName tbody/ul
@@ -219,16 +244,36 @@ export class PaginationService {
 
         // when iscroll is not initialised the notify the smoothscroll and subscribe to the iscroll update
         if (!iScroll) {
+            // MEMORY LEAK FIX: Store subscription reference on parent for cleanup
             const iScrollSubscription = app.subscribe('iscroll-update', (_el) => {
                 if (!isEmpty(_el) && _el.isSameNode($scrollParent[0])) {
+                    // Store parent reference on element for cleanup
+                    ($scrollParent[0] as any)._parent = parent;
                     this.setIscrollHandlers($scrollParent[0], dataNavigator, debounceNum);
                     iScrollSubscription();
                 }
             });
+            // Store subscription reference for cleanup
+            (parent as any)._iScrollSubscription = iScrollSubscription;
             app.notify('no-iscroll', $scrollParent[0]);
             return;
         }
+        // Store parent reference on element for cleanup
+        ($scrollParent[0] as any)._parent = parent;
         this.setIscrollHandlers($scrollParent[0], dataNavigator, debounceNum);
+    }
+
+    /**
+     * @description
+     * This function unregisters scrollEnd event that was registered by setIscrollHandlers
+     * @param {object} el scrollable element scope
+     * @returns null
+     */
+    public unsetIscrollHandlers(el) {
+        if (el && el.iscroll && typeof el.iscroll.off === 'function' && el._scrollEndHandler) {
+            el.iscroll.off('scrollEnd', el._scrollEndHandler);
+            el._scrollEndHandler = null;
+        }
     }
 
     /**
@@ -243,20 +288,29 @@ export class PaginationService {
         let lastScrollTop = 0;
         const wrapper = get(el.iscroll, 'wrapper');
         const self = el.iscroll;
+        // Get parent reference from element or dataNavigator
+        const parent = (el as any)._parent || (dataNavigator as any).parent;
 
-        el.iscroll.on('scrollEnd', () => {
+        // MEMORY LEAK FIX: Store the handler function reference for cleanup
+        const scrollEndHandler = () => {
             const clientHeight = wrapper.clientHeight,
                 totalHeight = wrapper.scrollHeight,
                 scrollTop = Math.abs(el.iscroll.y);
 
             if ((lastScrollTop < scrollTop) && (totalHeight * 0.9 < scrollTop + clientHeight)) {
-                this.debouncedFetchNextDatasetOnScroll(dataNavigator, debounceNum, parent)();
+                if (parent) {
+                    this.debouncedFetchNextDatasetOnScroll(dataNavigator, debounceNum, parent)();
+                }
                 if (self.indicatorRefresh) {
                     self.indicatorRefresh();
                 }
             }
 
             lastScrollTop = scrollTop;
-        });
+        };
+
+        // Store handler reference on element for cleanup
+        el._scrollEndHandler = scrollEndHandler;
+        el.iscroll.on('scrollEnd', scrollEndHandler);
     }
 }

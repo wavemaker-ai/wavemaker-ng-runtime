@@ -78,7 +78,11 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
     public type;
     public nodatamessage;
     public autoActivation:boolean;
+    public renderwhenvisible: any;
     private panesChangesSubscription;
+    private lazyVisibilityObservers: IntersectionObserver[] = [];
+    private lazyRenderActivated = false;
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup
 
     @HostBinding('attr.icon-position') iconposition: string = '';
 
@@ -142,9 +146,12 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
                 if (!isPaneAlreadyExist) {
                     this.panes.reset([...this.panes.toArray(), newPaneRef]);
                     if (newPaneRef.active) {
-                        setTimeout(() => {
+                        // MEMORY LEAK FIX: Track timeout for cleanup
+                        const timeoutId = window.setTimeout(() => {
+                            this.pendingTimeouts.delete(timeoutId);
                             newPaneRef.select();
                         }, 20);
+                        this.pendingTimeouts.add(timeoutId);
                     }
                 }
             }
@@ -389,7 +396,12 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
 
     private onDataChange(newVal) {
         this.fieldDefs = createArrayFrom(newVal);
-        setTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0));
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
+            this.selectDefaultPaneByIndex(this.defaultpaneindex || 0);
+        });
+        this.pendingTimeouts.add(timeoutId);
     }
 
     onPropertyChange(key: string, nv: any, ov) {
@@ -407,23 +419,46 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
                 });
                 if (!paneToSelect.length) {
                     console.warn('Tab pane name ' + widgetState + ' in State is incorrect. Falling back to the default pane');
-                    setTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0), 20);
+                    // MEMORY LEAK FIX: Track timeout for cleanup
+                    const timeoutId1 = window.setTimeout(() => {
+                        this.pendingTimeouts.delete(timeoutId1);
+                        this.selectDefaultPaneByIndex(this.defaultpaneindex || 0);
+                    }, 20);
+                    this.pendingTimeouts.add(timeoutId1);
                 } else {
                     const index = this.getPaneIndexByRef(paneToSelect[0]);
-                    setTimeout(() => this.selectDefaultPaneByIndex(index), 20);
+                    // MEMORY LEAK FIX: Track timeout for cleanup
+                    const timeoutId2 = window.setTimeout(() => {
+                        this.pendingTimeouts.delete(timeoutId2);
+                        this.selectDefaultPaneByIndex(index);
+                    }, 20);
+                    this.pendingTimeouts.add(timeoutId2);
                 }
             } else {
-                setTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0), 20);
+                // MEMORY LEAK FIX: Track timeout for cleanup
+                const timeoutId3 = window.setTimeout(() => {
+                    this.pendingTimeouts.delete(timeoutId3);
+                    this.selectDefaultPaneByIndex(this.defaultpaneindex || 0);
+                }, 20);
+                this.pendingTimeouts.add(timeoutId3);
             }
         } else if (key === 'autotabactivation'){
             this.autoActivation = nv;
+        } else if (key === 'renderwhenvisible') {
+            if (this.shouldLazyRender()) {
+                this.bootstrapWhenVisible();
+            } else {
+                this.activateLazyRender();
+            }
         } else {
             super.onPropertyChange(key, nv, ov);
         }
     }
 
     registerTabsScroll() {
-        setTimeout(() => {
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
             const $ul = this.$element.find('> ul');
             let $liPosition;
 
@@ -439,6 +474,109 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
                 });
             }
         });
+        this.pendingTimeouts.add(timeoutId);
+    }
+
+    private shouldLazyRender(): boolean {
+        const flag = this.renderwhenvisible as unknown;
+        const enabled = typeof flag === 'string' ? flag === 'true' : !!flag;
+        return enabled && !this.lazyRenderActivated;
+    }
+
+    private activateLazyRender() {
+        if (this.lazyRenderActivated) {
+            return;
+        }
+        this.lazyRenderActivated = true;
+        this.disconnectLazyVisibilityObservers();
+        super.ngAfterViewInit();
+        this.registerTabsScroll();
+    }
+
+    private bootstrapWhenVisible() {
+        if (!this.shouldLazyRender()) {
+            this.activateLazyRender();
+            return;
+        }
+        if (typeof IntersectionObserver === 'undefined' || !this.nativeElement) {
+            this.activateLazyRender();
+            return;
+        }
+
+        const buffer = 200;
+        const scrollRoots = this.getScrollableAncestors(this.nativeElement);
+
+        if (this.isElementVisibleWithinRoot(this.nativeElement, null, buffer) ||
+            scrollRoots.some(root => this.isElementVisibleWithinRoot(this.nativeElement, root, buffer))) {
+            this.activateLazyRender();
+            return;
+        }
+
+        this.disconnectLazyVisibilityObservers();
+
+        const observerCallback: IntersectionObserverCallback = (entries) => {
+            if (entries.some(entry => entry.isIntersecting)) {
+                this.disconnectLazyVisibilityObservers();
+                this.activateLazyRender();
+            }
+        };
+
+        const createObserver = (root: Element | null) => {
+            const observer = new IntersectionObserver(observerCallback, {
+                root,
+                rootMargin: '200px'
+            });
+            this.lazyVisibilityObservers.push(observer);
+            observer.observe(this.nativeElement);
+        };
+
+        createObserver(null);
+        scrollRoots.forEach(root => createObserver(root));
+    }
+
+    private disconnectLazyVisibilityObservers() {
+        if (!this.lazyVisibilityObservers.length) {
+            return;
+        }
+        this.lazyVisibilityObservers.forEach(observer => observer.disconnect());
+        this.lazyVisibilityObservers = [];
+    }
+
+    private getScrollableAncestors(element: HTMLElement | null): HTMLElement[] {
+        if (typeof window === 'undefined' || !element) {
+            return [];
+        }
+        const ancestors: HTMLElement[] = [];
+        let parent: HTMLElement | null = element.parentElement;
+        const scrollRegex = /(auto|scroll|overlay)/;
+        while (parent) {
+            const style = window.getComputedStyle(parent);
+            const overflowValues = [style.overflow, style.overflowY, style.overflowX].join(' ');
+            if (scrollRegex.test(overflowValues)) {
+                ancestors.push(parent);
+            }
+            parent = parent.parentElement;
+        }
+        return ancestors;
+    }
+
+    private isElementVisibleWithinRoot(element: HTMLElement | null, root: Element | null, buffer = 200): boolean {
+        if (typeof window === 'undefined' || !element) {
+            return false;
+        }
+        const rect = element.getBoundingClientRect();
+        if (!rect) {
+            return false;
+        }
+        if (!root) {
+            const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+            if (!viewportHeight) {
+                return false;
+            }
+            return rect.top < viewportHeight + buffer && rect.bottom > -buffer;
+        }
+        const rootRect = (root as HTMLElement).getBoundingClientRect();
+        return rect.top < rootRect.bottom + buffer && rect.bottom > rootRect.top - buffer;
     }
     onkeydown(event) {
         let newPane;
@@ -485,6 +623,7 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
     }
 
     ngOnDestroy() {
+        this.disconnectLazyVisibilityObservers();
         // Unsubscribe from panes.changes to prevent memory leak
         if (this.panesChangesSubscription) {
             this.panesChangesSubscription.unsubscribe();
@@ -496,12 +635,19 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
             $ul.off('mousewheel');
         }
         
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
+        
         super.ngOnDestroy();
     }
 
     ngAfterViewInit() {
-        super.ngAfterViewInit();
-        this.registerTabsScroll();
+        if (this.shouldLazyRender()) {
+            this.bootstrapWhenVisible();
+        } else {
+            this.activateLazyRender();
+        }
     }
 
     getSelectedPaneIndex() {

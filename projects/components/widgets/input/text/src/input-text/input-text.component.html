@@ -4,7 +4,7 @@
        [attr.name]="name"
        [attr.aria-label]="arialabel"
        [(ngModel)]="datavalue"
-       [imask]="mask"
+       [imask]="mask || undefined"
        [unmask]="true"
        [ngModelOptions]="ngModelOptions"
        [readonly]="readonly"

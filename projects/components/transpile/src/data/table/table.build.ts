@@ -74,6 +74,13 @@ register('wm-table', (): IBuildTaskDef => {
             attrs.set('isdynamictable', shared.get('isdynamictable'));
             attrs.set('isrowexpansionenabled', shared.get('isrowexpansionenabled'));
             attrs.set('table_reference', counter);
+            // If lazy render is enabled and no explicit root is provided, default to app content container
+            const rwv = attrs.get('renderwhenvisible');
+            const rwvStr = rwv === undefined || rwv === null ? '' : String(rwv).toLowerCase();
+            const hasLazy = rwvStr === '' || rwvStr === 'true';
+            if (hasLazy && !attrs.get('renderrootselector')) {
+                attrs.set('renderrootselector', '.app-content');
+            }
             return `<${tagName} wmTable="${counter}" wmTableFilterSort wmTableCUD #${counter} data-identifier="table" ${getAttrMarkup(attrs)}>`;
         },
         post: () => `</${tagName}>`,

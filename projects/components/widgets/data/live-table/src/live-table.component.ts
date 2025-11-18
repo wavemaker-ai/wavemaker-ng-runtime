@@ -101,10 +101,18 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
                     }
                 } else {
                     // Parent table not initialized yet, retry
-                    setTimeout(configureLiveTable, 50);
+                    const retryTimeoutId = window.setTimeout(() => {
+                        this.pendingTimeouts.delete(retryTimeoutId);
+                        configureLiveTable();
+                    }, 50);
+                    this.pendingTimeouts.add(retryTimeoutId);
                 }
             };
-            setTimeout(configureLiveTable, 0);
+            const initTimeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(initTimeoutId);
+                configureLiveTable();
+            }, 0);
+            this.pendingTimeouts.add(initTimeoutId);
         }
     }
 
@@ -274,14 +282,22 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
     // In dialog mode, on form render call the queued functions
     onFormReady(form) {
         this.form = form;
-        setTimeout(() => {
+        const queueTimeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(queueTimeoutId);
             triggerFn(this.$queue.pop());
-        });
+        }, 0);
+        this.pendingTimeouts.add(queueTimeoutId);
     }
 
     ngOnDestroy() {
         // Set destroyed flag to prevent pending async callbacks
         this.isDestroyed = true;
+        
+        // Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => {
+            clearTimeout(timeoutId);
+        });
+        this.pendingTimeouts.clear();
         
         // Unsubscribe from selectedItemChange subscription to prevent memory leak
         if (this.selectedItemChangeSubscription) {

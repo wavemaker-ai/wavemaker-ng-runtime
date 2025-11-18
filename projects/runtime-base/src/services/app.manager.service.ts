@@ -44,6 +44,8 @@ export class AppManagerService implements OnDestroy {
     private readonly userLoggedInSubscription: () => void;
     private readonly userLoggedOutSubscription: () => void;
     private readonly http401Subscription: () => void;
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup
+    private pendingTimeouts: Set<number> = new Set();
 
     constructor(
         private $http: AbstractHttpService,
@@ -533,9 +535,12 @@ export class AppManagerService implements OnDestroy {
             }
         };
 
-        setTimeout(() => {
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
             this.postMessage({key: POST_MESSAGES.ON_LOAD});
         });
+        this.pendingTimeouts.add(timeoutId);
 
         return fetchContent('json', './config.json', true, response => {
             this.templates = [];
@@ -588,5 +593,9 @@ export class AppManagerService implements OnDestroy {
         if (this.http401Subscription) {
             this.http401Subscription();
         }
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
     }
 }

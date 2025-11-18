@@ -74,6 +74,9 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
     
     // CRITICAL FIX: Track if component is being destroyed to prevent async widget registration
     private isDestroyed = false;
+    
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup
+    private pendingTimeouts: Set<number> = new Set();
 
 
     abstract evalUserScript(prefabContext: any, appContext: any, utils: any);
@@ -174,9 +177,12 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
                     this.appManager.notify('page-variables-data-loaded', {pageName: this.pageName});
                     this.startupVariablesLoaded = true;
                     // hide the loader only after the some setTimeout for smooth page load.
-                    setTimeout(() => {
+                    // MEMORY LEAK FIX: Track timeout for cleanup
+                    const timeoutId = window.setTimeout(() => {
+                        this.pendingTimeouts.delete(timeoutId);
                         this.showPageContent = true;
                     }, 100);
+                    this.pendingTimeouts.add(timeoutId);
                 });
             variableCollection.callback(variableCollection.Actions);
 
@@ -223,7 +229,14 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
                 $target.addClass(transition);
                 $target.on('animationend', onTransitionEnd);
                 // Wait for a maximum of 1 second for transition to end.
-                setTimeout(onTransitionEnd, 1000);
+                // MEMORY LEAK FIX: Track timeout for cleanup
+                const timeoutId = window.setTimeout(() => {
+                    this.pendingTimeouts.delete(timeoutId);
+                    if (resolve) {
+                        onTransitionEnd(null as any);
+                    }
+                }, 1000);
+                this.pendingTimeouts.add(timeoutId);
             } else {
                 resolve();
             }
@@ -337,7 +350,9 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
             this.runPageTransition()
                 .then(() => {
                     (this as any).compilePageContent = true;
-                    setTimeout(() => {
+                    // MEMORY LEAK FIX: Track timeout for cleanup
+                    const timeoutId = window.setTimeout(() => {
+                        this.pendingTimeouts.delete(timeoutId);
                         this.onPageContentReady = () => {
                             this.fragmentsLoaded$.subscribe(noop, noop, () => {
                                 this.invokeOnReady();
@@ -347,6 +362,7 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
                             this.onPageContentReady = noop;
                         };
                     }, 0);
+                    this.pendingTimeouts.add(timeoutId);
                 });
         });
     }
@@ -382,6 +398,10 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         if (this.fragmentsLoaded$ && !this.fragmentsLoaded$.closed) {
             this.fragmentsLoaded$.complete();
         }
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
         
         // CRITICAL FIX: Clear App singleton references to allow page garbage collection
         // App is a singleton that lives for the entire app lifetime
@@ -487,7 +507,12 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
             if (this.isDestroyed) {
                 return;
             }
-            setTimeout(() => this.restoreScrollPosition(), 100);
+            // MEMORY LEAK FIX: Track timeout for cleanup
+            const timeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
+                this.restoreScrollPosition();
+            }, 100);
+            this.pendingTimeouts.add(timeoutId);
             each(this.Widgets, w => w && w.ngOnAttach && w.ngOnAttach());
             this.appManager.notify('pageAttach', {'name' : this.pageName, instance: this});
         });

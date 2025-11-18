@@ -27,7 +27,9 @@ import {BsDropdownModule} from "ngx-bootstrap/dropdown";
 import * as momentLib from 'moment';
 
 declare const $;
-const moment = momentLib.default || window['moment'];
+// Typings for moment don't declare a `default` export in this setup.
+// Use the namespace import directly and fall back to global if needed.
+const moment: any = (momentLib as any) || (window as any)['moment'];
 
 const CURRENT_TIME = 'CURRENT_TIME';
 const DEFAULT_CLS = 'input-group app-timeinput';
@@ -62,6 +64,7 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
     public maxtime;
     public hint: string;
     public arialabel: string;
+    public modal: string;
 
     protected deregisterEventListener;
     private app: App;
@@ -135,7 +138,7 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
     /**
      * This is an internal property used to map the main model to the time widget
      */
-    private bsTimeValue: Date;
+    public bsTimeValue: Date;
 
     constructor(
         inj: Injector,
@@ -283,7 +286,7 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
     /**
      * This is an internal method used to execute the on time change functionality
      */
-    private onTimeChange(newVal, isNativePicker?: boolean) {
+    public onTimeChange(newVal, isNativePicker?: boolean) {
         let timeValue,
             timeInputValue,
             minTimeMeridian,

@@ -220,6 +220,13 @@ export class TableCUDDirective {
             if (!this.table.onRowupdate) {
                 this.table.toggleMessage(true, 'success', this.table.updatemessage);
             }
+            const updatedRow = response && !response.error ? response : options.row;
+            if (typeof this.table.tryApplyRowUpdate === 'function' && this.table.tryApplyRowUpdate(updatedRow)) {
+                triggerFn(options.success, updatedRow);
+                this.table.invokeEventCallback('rowupdate', {$event: options.event, $data: updatedRow, row: updatedRow});
+                triggerFn(options.callBack, updatedRow);
+                return;
+            }
             if (this.table.datasource.execute(DataSource.Operation.SUPPORTS_CRUD)) {
                 this.table.initiateSelectItem('current', response, undefined, false, options.callBack);
                 this.updateVariable(response, options.callBack);

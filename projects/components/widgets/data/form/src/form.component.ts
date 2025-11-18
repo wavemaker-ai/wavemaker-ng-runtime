@@ -214,6 +214,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     _liveTableParent;
     updateMode;
     name;
+    public renderwhenvisible: any;
     // Live Form Methods
     clearData: Function;
     cancel: Function;
@@ -247,6 +248,13 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     private bindingValue;
     private _formIsInList;
     private _triggeredByUser: boolean;
+    private lazyVisibilityObservers: IntersectionObserver[] = [];
+    private lazyRenderActivated = false;
+    private contentInitExecuted = false;
+    private viewInitExecuted = false;
+    private deferredPropertyChanges: Map<string, { nv: any; ov?: any }> = new Map();
+    private readonly deferredPropertyKeys: Set<string> = new Set(['dataset', 'datasource', 'formdatasource', 'formdata', 'metadata', 'defaultmode', 'readonly']);
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup
 
 
     private _debouncedSubmitForm = debounce(($event) => {
@@ -355,7 +363,30 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     }
 
     ngAfterContentInit() {
-       setTimeout(() => {
+        if (this.shouldLazyRender()) {
+            this.bootstrapWhenVisible();
+        } else {
+            this.runContentInitialization();
+        }
+    }
+
+    ngAfterViewInit() {
+        if (this.shouldLazyRender()) {
+            this.bootstrapWhenVisible();
+        } else {
+            this.runViewInitialization();
+        }
+    }
+
+    private runContentInitialization() {
+        if (this.contentInitExecuted) {
+            return;
+        }
+        this.contentInitExecuted = true;
+        super.ngAfterContentInit();
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
             this.componentRefs.forEach(componentRef => {
                 if (componentRef.name) {
                     // Register widgets inside form with formWidgets
@@ -363,9 +394,18 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 }
             });
         }, 250);
+        this.pendingTimeouts.add(timeoutId);
+        if (this.metadata && !this.formFields.length) {
+            this.generateFormFields();
+        }
     }
 
-    ngAfterViewInit() {
+    private runViewInitialization() {
+        if (this.viewInitExecuted) {
+            return;
+        }
+        this.viewInitExecuted = true;
+        super.ngAfterViewInit();
         if (this.parentForm && this.parentForm.ngform && this.isParentList) {
             // setting formArray control on ngform.
             if (!get(this.parentForm.ngform.controls, this.parentList.name)) {
@@ -376,6 +416,118 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             this.formArrayIndex = this.parentFormArray.length - 1;
         }
         this.addInnerNgFormToForm(this.bindingValue);
+    }
+
+    private activateLazyRender() {
+        if (this.lazyRenderActivated) {
+            this.runContentInitialization();
+            this.runViewInitialization();
+            this.flushDeferredPropertyChanges();
+            return;
+        }
+        this.lazyRenderActivated = true;
+        this.disconnectLazyVisibilityObservers();
+        this.runContentInitialization();
+        this.runViewInitialization();
+        this.flushDeferredPropertyChanges();
+    }
+
+    private shouldLazyRender(): boolean {
+        return this.isRenderWhenVisibleEnabled() && !this.lazyRenderActivated;
+    }
+
+    private isRenderWhenVisibleEnabled(): boolean {
+        const flag = this.renderwhenvisible as unknown;
+        if (typeof flag === 'string') {
+            return flag === 'true';
+        }
+        return !!flag;
+    }
+
+    private bootstrapWhenVisible() {
+        if (!this.shouldLazyRender()) {
+            this.activateLazyRender();
+            return;
+        }
+        if (typeof IntersectionObserver === 'undefined' || !this.nativeElement) {
+            this.activateLazyRender();
+            return;
+        }
+
+        const buffer = 200;
+        const scrollRoots = this.getScrollableAncestors(this.nativeElement);
+
+        if (this.isElementVisibleWithinRoot(this.nativeElement, null, buffer) ||
+            scrollRoots.some(root => this.isElementVisibleWithinRoot(this.nativeElement, root, buffer))) {
+            this.activateLazyRender();
+            return;
+        }
+
+        this.disconnectLazyVisibilityObservers();
+
+        const observerCallback: IntersectionObserverCallback = (entries) => {
+            if (entries.some(entry => entry.isIntersecting)) {
+                this.disconnectLazyVisibilityObservers();
+                this.activateLazyRender();
+            }
+        };
+
+        const createObserver = (root: Element | null) => {
+            const observer = new IntersectionObserver(observerCallback, {
+                root,
+                rootMargin: '200px'
+            });
+            this.lazyVisibilityObservers.push(observer);
+            observer.observe(this.nativeElement);
+        };
+
+        createObserver(null);
+        scrollRoots.forEach(root => createObserver(root));
+    }
+
+    private disconnectLazyVisibilityObservers() {
+        if (!this.lazyVisibilityObservers.length) {
+            return;
+        }
+        this.lazyVisibilityObservers.forEach(observer => observer.disconnect());
+        this.lazyVisibilityObservers = [];
+    }
+
+    private getScrollableAncestors(element: HTMLElement | null): HTMLElement[] {
+        if (typeof window === 'undefined' || !element) {
+            return [];
+        }
+        const ancestors: HTMLElement[] = [];
+        let parent: HTMLElement | null = element.parentElement;
+        const scrollRegex = /(auto|scroll|overlay)/;
+        while (parent) {
+            const style = window.getComputedStyle(parent);
+            const overflowValues = [style.overflow, style.overflowY, style.overflowX].join(' ');
+            if (scrollRegex.test(overflowValues)) {
+                ancestors.push(parent);
+            }
+            parent = parent.parentElement;
+        }
+        return ancestors;
+    }
+
+    private isElementVisibleWithinRoot(element: HTMLElement | null, root: Element | null, buffer = 200): boolean {
+        if (typeof window === 'undefined' || !element) {
+            return false;
+        }
+        const rect = element.getBoundingClientRect();
+        if (!rect) {
+            return false;
+        }
+        if (!root) {
+            const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+            if (!viewportHeight) {
+                return false;
+            }
+            return rect.top < viewportHeight + buffer && rect.bottom > -buffer;
+        }
+        const rootRect = (root as HTMLElement).getBoundingClientRect();
+        return rect.top < rootRect.bottom + buffer && rect.bottom > rootRect.top - buffer;
     }
 
     findOperationType() {}
@@ -601,6 +753,14 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     }
 
     onPropertyChange(key, nv, ov?) {
+        if (this.deferPropertyChangeIfNeeded(key, nv, ov)) {
+            return;
+        }
+
+        this.applyPropertyChange(key, nv, ov);
+    }
+
+    private applyPropertyChange(key, nv?, ov?) {
         switch (key) {
             case 'captionalign':
                 this.captionAlignClass = 'align-' + nv;
@@ -615,16 +775,13 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 this.captionsize = nv;
                 break;
             case 'novalidate':
-                //  Set validation type based on the novalidate property
                 this.widget.validationtype = (nv === true || nv === 'true') ? 'none' : 'default';
                 break;
             case 'formdata':
-                // For livelist when multiselect is enabled, formdata will be array of objects. In this case consider the last object as formdata.
                 if (isEqual(nv, ov)) {
                     break;
                 }
                 isArray(nv) ? this.setFormData(last(nv)) : this.setFormData(nv);
-                // if dataset on the formFields are not set as the datasourceChange is triggered before the formFields are registered.
                 if (!this.isDataSourceUpdated && this.datasource) {
                     this.onDataSourceChange();
                 }
@@ -651,7 +808,6 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             case 'dataset':
                 const formFields = this.getFormFields();
                 formFields.forEach(field => {
-                    // notifying the dataset change to the form-field widget.
                     if (!field.isDataSetBound && get(field.formWidget, 'dataset$')) {
                         field.formWidget.dataset$.next();
                     }
@@ -670,9 +826,37 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                     });
                 }
                 break;
+            case 'renderwhenvisible':
+                if (this.shouldLazyRender()) {
+                    this.bootstrapWhenVisible();
+                } else {
+                    this.activateLazyRender();
+                }
+                break;
             default:
                 super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    private deferPropertyChangeIfNeeded(key: string, nv: any, ov: any): boolean {
+        if (!this.shouldDeferPropertyChange(key)) {
+            return false;
+        }
+        this.deferredPropertyChanges.set(key, { nv, ov });
+        return true;
+    }
+
+    private shouldDeferPropertyChange(key: string): boolean {
+        return this.isRenderWhenVisibleEnabled() && !this.lazyRenderActivated && this.deferredPropertyKeys.has(key);
+    }
+
+    private flushDeferredPropertyChanges() {
+        if (!this.deferredPropertyChanges.size) {
+            return;
+        }
+        const pendingChanges = Array.from(this.deferredPropertyChanges.entries());
+        this.deferredPropertyChanges.clear();
+        pendingChanges.forEach(([key, value]) => this.applyPropertyChange(key, value.nv, value.ov));
     }
 
     // Event callbacks on success/error
@@ -963,11 +1147,14 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             this.savePrevformFields();
         }
         this.emptyDataModel();
-        setTimeout(() => {
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
             this.setDefaultValues();
             this.savePrevDataValues();
             this.constructDataObject();
         });
+        this.pendingTimeouts.add(timeoutId);
         this.isUpdateMode = true;
     }
 
@@ -1332,9 +1519,17 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     }
 
     ngOnDestroy() {
+        this.disconnectLazyVisibilityObservers();
+        this.deferredPropertyChanges.clear();
         // Clear dynamic form view container to prevent view leaks
         if (this.dynamicFormRef) {
             this.dynamicFormRef.clear();
+        }
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        if (this.pendingTimeouts) {
+            this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            this.pendingTimeouts.clear();
         }
         
         // on form destroy, removing this form from the parentForm too.

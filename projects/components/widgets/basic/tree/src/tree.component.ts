@@ -27,6 +27,7 @@ export class TreeComponent extends StylableComponent implements OnInit, OnDestro
     private treeClass;
     private name;
     private zTree;
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup
 
     public datavalue: string;
     public treeicons: string;
@@ -180,10 +181,15 @@ export class TreeComponent extends StylableComponent implements OnInit, OnDestro
 
         $(eleClose).map((idx, ele) => {
             $(ele).addClass(nv);
-            $(ele).on("click",function(e) {
-                setTimeout(() => {
+            $(ele).on("click", (e) => {
+                // MEMORY LEAK FIX: Track timeout for cleanup
+                // Note: These timeouts are very short (0ms) and fire immediately
+                // They're stored on the component for cleanup, but the element may be removed before cleanup
+                const timeoutId = window.setTimeout(() => {
+                    this.pendingTimeouts.delete(timeoutId);
                     $(ele).addClass(nv);
                 }, 0);
+                this.pendingTimeouts.add(timeoutId);
             });
         })
     }
@@ -226,10 +232,14 @@ export class TreeComponent extends StylableComponent implements OnInit, OnDestro
             if (el.isParent) {
                 let ele = $(`#${el.tId}_switch`);
                 $(ele).addClass(self.treeicons || defaultTreeIconClass);
-                $(ele).on("click", function(e) {
-                    setTimeout(() => {
+                $(ele).on("click", (e) => {
+                    // MEMORY LEAK FIX: Track timeout for cleanup
+                    // Note: These timeouts are very short (0ms) and fire immediately
+                    const timeoutId = window.setTimeout(() => {
+                        self.pendingTimeouts.delete(timeoutId);
                         $(ele).addClass(self.treeicons || defaultTreeIconClass);
                     }, 0);
+                    self.pendingTimeouts.add(timeoutId);
                 });
             }
         });
@@ -331,7 +341,9 @@ export class TreeComponent extends StylableComponent implements OnInit, OnDestro
     }
 
     private postRenderTree() {
-        setTimeout(() => {
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
             this.changeTreeIcons(this.treeicons || defaultTreeIconClass);
 
             if (this.datavalue && !this.selecteditem) {
@@ -353,6 +365,7 @@ export class TreeComponent extends StylableComponent implements OnInit, OnDestro
                 }
             }
         }, 200);
+        this.pendingTimeouts.add(timeoutId);
     }
 
     private selectById(value?) {
@@ -374,6 +387,11 @@ export class TreeComponent extends StylableComponent implements OnInit, OnDestro
         if (treeElements.length) {
             treeElements.off('click');
         }
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
+        
         super.ngOnDestroy();
     }
 }

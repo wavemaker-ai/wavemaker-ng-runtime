@@ -175,7 +175,14 @@ export class WebSocketVariableManager extends BaseVariableManager {
     }
 
     private freeSocket(variable) {
-        this.scope_var_socket_map.set(variable, undefined);
+        // MEMORY LEAK FIX: Remove socket entry from the Map to avoid retaining variable references
+        if (this.scope_var_socket_map.has(variable)) {
+            this.scope_var_socket_map.delete(variable);
+        }
+        // Clear back-reference from variable to socket instance
+        if ((variable as any)._socket) {
+            (variable as any)._socket = null;
+        }
     }
 
     /**

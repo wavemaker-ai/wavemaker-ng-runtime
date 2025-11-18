@@ -164,6 +164,12 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      * Without this, subscription objects linger even after destroy.complete()
      */
     private destroySubscriptions: Array<any> = [];
+    
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup.
+    // Marked as protected so derived components can reuse the same
+    // tracking Set instead of declaring their own, which breaks
+    // TypeScript's inheritance rules for private fields.
+    protected pendingTimeouts: Set<number> = new Set();
 
     /**
      * context of the widget
@@ -555,7 +561,12 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
             e => {
                 locals.$event = e;
                 if (meta === 'delayed') {
-                   setTimeout(() => eventCallback(), 150);
+                   // MEMORY LEAK FIX: Track timeout for cleanup
+                   const timeoutId = window.setTimeout(() => {
+                       this.pendingTimeouts.delete(timeoutId);
+                       eventCallback();
+                   }, 150);
+                   this.pendingTimeouts.add(timeoutId);
                 } else {
                     return eventCallback();
                 }
@@ -946,6 +957,10 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         this.styleChangeSubscription?.unsubscribe();
         this.readyStateSubscription?.unsubscribe();
         this.propertyChangeSubscription?.unsubscribe();
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
         
         // CRITICAL FIX: Clear all references to enable garbage collection
         // Without clearing these, components remain in memory even after destruction

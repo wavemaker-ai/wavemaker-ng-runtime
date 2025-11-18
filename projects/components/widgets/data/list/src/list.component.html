@@ -67,8 +67,7 @@
         [attr.tabindex]="tabindex"
         role="listitem">
         <ng-container [ngTemplateOutlet]="listTemplate"
-          [ngTemplateOutletInjector]="createCustomInjector('falt_' + listItemRef.trackId, {item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"
-        [ngTemplateOutletContext]="{item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets}"></ng-container>
+          [ngTemplateOutletInjector]="createCustomInjector('falt_' + listItemRef.trackId, {item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"></ng-container>
       </li>
     }
   } @else {
@@ -89,14 +88,13 @@
           </li>
           <li class="list-group-container">
             <ul class="list-group clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}}">
-              @for (item of groupObj.data; track trackByFn($index, item)) {
+               @for (item of groupObj.data; track $index) {
                 <li [attr.tabindex]="tabindex"
                   class="app-list-item group-list-item {{itemsPerRowClass}}"
                   [ngClass]="listItemRef.itemClass"
                   [wmListItem]="item" #listItemRef="listItemRef">
                   <ng-container [ngTemplateOutlet]="listTemplate"
-                    [ngTemplateOutletInjector]="createCustomInjector('group_' + listItemRef.trackId, {item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"
-                  [ngTemplateOutletContext]="{item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets}"></ng-container>
+                    [ngTemplateOutletInjector]="createCustomInjector('group_' + listItemRef.trackId, {item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"></ng-container>
                 </li>
               }
             </ul>

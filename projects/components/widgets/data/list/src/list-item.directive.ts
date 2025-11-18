@@ -36,13 +36,13 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
     public nativeElement: HTMLElement;
     public readonly listComponent: ListComponent;
 
-    private itemClass = '';
+    public itemClass = '';
     private _currentItemWidgets = {};
     private viewContainerRef: ViewContainerRef;
     /**
      * To avoid re-rendering of widget, passing unique id as contextKey to createCustomInjector
      */
-    protected trackId = widgetIdGenerator.nextUid();
+    public trackId = widgetIdGenerator.nextUid();
 
     @HostBinding('class.active') isActive = false;
     @HostBinding('class.disable-item') disableItem = false;

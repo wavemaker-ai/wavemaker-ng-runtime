@@ -135,7 +135,7 @@ export class MockAbstractI18nService {
 
     }
     public getTimezone() {
-
+        return '';
     }
 
 }
@@ -160,7 +160,7 @@ export class MockAbstractI18nServiceDe {
 
     }
     public getTimezone() {
-
+        return '';
     }
 }
 
@@ -184,6 +184,6 @@ export class MockAbstractI18nServiceRO {
 
     }
     public getTimezone() {
-
+        return '';
     }
 }

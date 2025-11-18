@@ -50,6 +50,7 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
     public hyperlink;
     public iconheight: string;
     public iconwidth: string;
+    public iconmargin: string;
     public iconurl: string;
     public iconclass: string;
     public caption: any;

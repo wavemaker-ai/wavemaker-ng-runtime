@@ -5,6 +5,7 @@ export const prefabProps = new Map(
         ['animation', PROP_STRING],
         ['class', {value: '', ...PROP_STRING}],
         ['name', PROP_STRING],
-        ['show', {value: true, ...PROP_BOOLEAN}]
+        ['show', {value: true, ...PROP_BOOLEAN}],
+        ['renderwhenvisible', {value: false, ...PROP_BOOLEAN}]
     ]
 );

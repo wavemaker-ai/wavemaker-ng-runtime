@@ -72,6 +72,8 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     private spinnerSubscription!: Subscription;
     private pageReadyUnsubscribe: () => void;
     private pageAttachUnsubscribe: () => void;
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup
+    private pendingTimeouts: Set<number> = new Set();
     appLocale: any = {};
 
     @ViewChild(RouterOutlet) routerOutlet: RouterOutlet;
@@ -116,11 +118,14 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         // Subscribe to the message source to show/hide app spinner
         this.spinnerSubscription = this.spinnerService.getMessageSource().asObservable().subscribe((data: any) => {
             // setTimeout is to avoid 'ExpressionChangedAfterItHasBeenCheckedError'
-            setTimeout(() => {
+            // MEMORY LEAK FIX: Track timeout for cleanup
+            const timeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
                 this.spinner.show = data.show;
                 this.spinner.messages = data.messages;
                 this.spinner.arialabel = data.messages.toString();
             });
+            this.pendingTimeouts.add(timeoutId);
         });
 
         // set theme to bs3 on ngx-bootstrap. This avoids runtime calculation to determine bs theme. Thus resolves performance.
@@ -162,9 +167,12 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
                     this.app.activePageLoadTime = Date.now() - pageLoadStartTime;
                 };
             } else if (e instanceof NavigationEnd || e instanceof NavigationCancel || e instanceof NavigationError) {
-                setTimeout(() => {
+                // MEMORY LEAK FIX: Track timeout for cleanup
+                const timeoutId = window.setTimeout(() => {
+                    this.pendingTimeouts.delete(timeoutId);
                     onPageRendered();
                 }, 1000);
+                this.pendingTimeouts.add(timeoutId);
             }
         });
         this.pageReadyUnsubscribe = this.appManager.subscribe('pageReady', () => {
@@ -196,13 +204,19 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         //to fix the issue that happens only in the development mode
         //ExpressionChangedAfterItHasBeenCheckedError
         //fix: https://blog.angular-university.io/angular-debugging/
-        setTimeout(() => {
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId1 = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId1);
             this.startApp = true;
         });
-        setTimeout(() => {
+        this.pendingTimeouts.add(timeoutId1);
+        
+        const timeoutId2 = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId2);
             this.app.dynamicComponentContainerRef = this.dynamicComponentContainerRef;
             //this.overrideRouterOutlet();
         }, 10);
+        this.pendingTimeouts.add(timeoutId2);
     }
 
     private overrideRouterOutlet() {
@@ -235,7 +249,12 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
             contentEl.scrollIntoView({ behavior: 'smooth' });
         } else if (this.retryCount < 10) {
             this.retryCount++;
-            setTimeout(() => this.tryFocusContent(), 100); // Retry every 100ms
+            // MEMORY LEAK FIX: Track timeout for cleanup
+            const timeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
+                this.tryFocusContent();
+            }, 100); // Retry every 100ms
+            this.pendingTimeouts.add(timeoutId);
         }
     }
 
@@ -279,5 +298,9 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         if (this.pageAttachUnsubscribe) {
             this.pageAttachUnsubscribe();
         }
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
     }
 }

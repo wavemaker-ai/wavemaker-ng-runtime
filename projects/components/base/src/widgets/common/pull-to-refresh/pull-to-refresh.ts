@@ -22,7 +22,8 @@ export class PullToRefresh extends SwipeAnimation {
             this.infoContainer.addClass('ios-refresh-container');
         }
 
-        this.init(this.$el);
+        // `init` is provided by the SwipeAnimation implementation at runtime.
+        this.init && this.init(this.$el);
     }
 
     public threshold() {

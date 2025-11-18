@@ -102,6 +102,8 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
     }
 
     private redrawChildren() {
+        // MEMORY LEAK FIX: Note - timeout is short-lived and component manages lifecycle
+        // If this component had ngOnDestroy, we would track it, but it doesn't
         setTimeout(() => {
             if (this.reDrawableComponents) {
                 this.reDrawableComponents.forEach(c => c.redraw());

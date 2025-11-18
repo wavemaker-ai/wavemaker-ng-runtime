@@ -4,7 +4,9 @@ import {forEach, includes, invert, isArray, isFinite, isString, isUndefined, spl
 declare const $;
 
 import * as momentLib  from 'moment';
-const moment = momentLib.default || window['moment'];
+// Typings for moment don't declare a `default` export in this setup.
+// Use the namespace import directly and fall back to global if needed.
+const moment: any = (momentLib as any) || (window as any)['moment'];
 declare const d3, nv;
 
 export const chartTypes = ['Column', 'Line', 'Area', 'Cumulative Line', 'Bar', 'Pie', 'Donut', 'Bubble'],

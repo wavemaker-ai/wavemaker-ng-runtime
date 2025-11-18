@@ -51,6 +51,19 @@ const DOT_EXPR_REX = /^\[("|')[\w\W]*(\1)\]$/,
 // MEMORY LEAK FIX: Export internalBoundNodeMap so it can be cleaned up when variables are destroyed
 export const internalBoundNodeMap = new Map();
 
+// MEMORY LEAK FIX: Clear debounce timer entry for a variable when it is destroyed
+export const clearVariableFromDebounceMap = (variable: any) => {
+    if (!variable || !timers.has(variable)) {
+        return;
+    }
+    const entry: any = timers.get(variable);
+    if (entry && typeof entry.cancel === 'function') {
+        // Cancel any pending debounced invocation
+        entry.cancel();
+    }
+    timers.delete(variable);
+};
+
 const _invoke = (variable, op) => {
     let debouncedFn,
         cancelFn = noop,

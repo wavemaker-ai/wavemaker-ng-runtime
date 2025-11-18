@@ -32,11 +32,14 @@ export abstract class BaseContainerComponent extends StylableComponent {
         if (this.content && this.Widgets) {
             this.updateRedrawableComponents(this.Widgets);
         }
-        setTimeout(() => {
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
             if (this.reDrawableComponents) {
                 this.reDrawableComponents.forEach(c => c.redraw());
             }
         }, 100);
+        this.pendingTimeouts.add(timeoutId);
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
@@ -46,5 +49,14 @@ export abstract class BaseContainerComponent extends StylableComponent {
                 this.redrawChildren();
             }
         }
+    }
+    
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear container-specific pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
+        
+        // Call parent cleanup
+        super.ngOnDestroy();
     }
 }

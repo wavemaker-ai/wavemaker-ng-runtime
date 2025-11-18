@@ -16,9 +16,8 @@
     </div>
     @if (actions) {
       <div class="panel-actions">
-        <!-- TODO(punith) need to bind autoclose-->
         <div wmMenu dropdown
-          [autoClose]="autoclose !== 'disabled'"
+          [autoclose]="autoclose || 'always'"
           class="panel-action"
           type="anchor"
           iconclass="wm-sl-l sl-more-menu-vertical"

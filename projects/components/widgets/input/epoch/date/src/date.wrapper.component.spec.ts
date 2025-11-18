@@ -29,6 +29,14 @@ import localeDE from '@angular/common/locales/de';
 import { IMaskDirective, IMaskModule } from 'angular-imask';
 import { BsDatepickerDirective } from 'ngx-bootstrap/datepicker';
 
+jest.mock('@wm/components/base', () => ({
+    ...jest.requireActual('@wm/components/base'),
+    setFocusTrap: jest.fn(() => ({
+        activate: jest.fn(),
+        deactivate: jest.fn()
+    }))
+}));
+
 const currentDate = new Date().toISOString().split('T')[0];
 class MockIMaskDirective {
     destroyMask() {
@@ -97,6 +105,13 @@ const dateComponentModuleDef: ITestModuleDef = {
     teardown: { destroyAfterEach: false }
 };
 
+const ensureMockFocusTrap = (component: DateComponent) => {
+    (component as any).focusTrap = {
+        activate: jest.fn(),
+        deactivate: jest.fn()
+    };
+};
+
 const dateComponentDef: ITestComponentDef = {
     $unCompiled: $(markup),
     type: 'wm-date',
@@ -151,8 +166,8 @@ describe('DateComponent', () => {
         fixture = compileTestComponent(dateComponentModuleDef, DateWrapperComponent);
         dateWrapperComponent = fixture.componentInstance;
         wmComponent = dateWrapperComponent.wmComponent;
-        // wmComponent.imask = TestBed.inject(IMaskDirective);
         fixture.detectChanges();
+        ensureMockFocusTrap(wmComponent);
     }));
     afterEach(() => {
         if (fixture) {
@@ -506,6 +521,7 @@ describe(('Date Component with Localization'), () => {
         dateWrapperComponent = fixture.componentInstance;
         wmComponent = dateWrapperComponent.wmComponent;
         fixture.detectChanges();
+        ensureMockFocusTrap(wmComponent);
     }));
     afterEach(() => {
         if (fixture) {

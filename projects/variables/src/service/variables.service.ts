@@ -14,7 +14,7 @@ import { SecurityService } from '@wm/security';
 
 import { VariableFactory } from '../factory/variable.factory';
 import { wmSetDependency, BaseAction, getTarget, setValueToNode, getTargetNodeKey, internalBoundNodeMap } from '@wavemaker/variables';
-import {setDependency, simulateFileDownload, clearVariableFromBoundNodeMap} from '../util/variable/variables.utils';
+import {setDependency, simulateFileDownload, clearVariableFromBoundNodeMap, clearVariableFromDebounceMap} from '../util/variable/variables.utils';
 import { MetadataService } from './metadata-service/metadata.service';
 import { VARIABLE_CONSTANTS } from '../constants/variables.constants';
 import {appManager} from '../util/variable/variables.utils';
@@ -70,6 +70,10 @@ export class VariablesService {
             // MEMORY LEAK FIX: Clear variable from internalBoundNodeMap
             // This Map stores binding data and grows indefinitely without cleanup
             clearVariableFromBoundNodeMap(variable);
+
+            // MEMORY LEAK FIX: Clear variable from debounce timers map
+            // Debounced variable calls were retaining variables in a global Map
+            clearVariableFromDebounceMap(variable);
             
             // MEMORY LEAK FIX: Clear event subscriptions
             // Variables subscribe to 'afterInvoke' but never unsubscribe

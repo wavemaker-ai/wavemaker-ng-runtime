@@ -51,10 +51,16 @@ export class InputTextComponent extends BaseInput implements OnInit{
 
     @ViewChild('input', {static: true}) inputEl: ElementRef;
     @ViewChild(NgModel) ngModel: NgModel;
-    @ViewChild('input', {read: IMaskDirective}) imask: IMaskDirective<any>;
+    @ViewChild('input', {read: IMaskDirective}) imaskDirective: IMaskDirective<any>;
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
+    }
+
+    ngAfterViewInit() {
+        super.ngAfterViewInit();
+        // Assign the directive to the base class imask property
+        this.imask = this.imaskDirective;
     }
 
     /* Define the property change handler. This function will be triggered when there is a change in the widget property */
@@ -86,7 +92,7 @@ export class InputTextComponent extends BaseInput implements OnInit{
                 }
             };
         } else {
-            return false;
+            return null;
         }
     }
 

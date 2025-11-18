@@ -16,6 +16,7 @@ const propsMap = new Map(
         ['name', PROP_STRING],
         ['numberOfFields', PROP_NUMBER],
         ['show', {value: true, ...PROP_BOOLEAN}],
+        ['renderwhenvisible', {value: false, ...PROP_BOOLEAN}],
         ['showindevice', {displayType: 'inline-block', value: 'all', ...PROP_STRING}],
         ['subheading', PROP_STRING],
         ['tabindex', {value: 0, ...PROP_NUMBER}],

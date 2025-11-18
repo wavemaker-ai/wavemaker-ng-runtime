@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { AnchorComponent } from '@wm/components/basic/anchor';
 import { MenuComponent } from '../menu.component';
 import { NavItemDirective } from './nav-item/nav-item.directive';
+import { NavigationControlDirective } from './navigation-control.directive';
 import { Attribute, ChangeDetectorRef, Component, forwardRef, Inject, Injector, OnInit, Optional } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -23,7 +24,7 @@ const NavClassMap = {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, BsDropdownModule, AnchorComponent, forwardRef(() => MenuComponent), NavItemDirective, ],
+    imports: [CommonModule, BsDropdownModule, AnchorComponent, forwardRef(() => MenuComponent), NavItemDirective, NavigationControlDirective],
     selector: '[wmNav]',
     templateUrl: './nav.component.html',
     providers: [
@@ -40,7 +41,7 @@ export class NavComponent extends DatasetAwareNavComponent implements OnInit {
     public showonhover: boolean;
     private itemActionFn: Function;
     private pageScope: any;
-    private get activePageName() {
+    public get activePageName() {
         return this.app.activePageName;
     }
 

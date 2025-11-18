@@ -14,8 +14,8 @@ export abstract class BaseInput extends BaseFormCustomComponent implements After
 
     // possible values for ngModelOptions are 'blur' and 'change'
     // default is 'blur'
-    public ngModelOptions = {
-        updateOn: '',
+    public ngModelOptions: { updateOn?: 'blur' | 'change' | 'submit'; standalone?: boolean } = {
+        updateOn: 'blur',
         standalone: true
     };
 
@@ -41,7 +41,7 @@ export abstract class BaseInput extends BaseFormCustomComponent implements After
             this._onChange(this.datavalue);
         }
         if (key === 'updateon') {
-            this.ngModelOptions.updateOn = nv === 'default' ? 'change' : 'blur';
+            this.ngModelOptions.updateOn = (nv === 'default' ? 'change' : 'blur') as 'blur' | 'change' | 'submit';
         }
         if (key === 'class') {
             if (this.inputEl.nativeElement) {
@@ -105,6 +105,6 @@ export abstract class BaseInput extends BaseFormCustomComponent implements After
         super(inj, config, explicitContext);
         let updateOn = this.nativeElement.getAttribute('updateon') || 'blur';
         updateOn = updateOn === 'default' ? 'change' : updateOn;
-        this.ngModelOptions.updateOn = updateOn;
+        this.ngModelOptions.updateOn = updateOn as 'blur' | 'change' | 'submit';
     }
 }

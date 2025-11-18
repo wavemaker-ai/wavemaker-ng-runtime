@@ -7,6 +7,7 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     ViewChild
@@ -33,7 +34,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAUL
     exportAs: 'wmPanel'
 })
 
-export class PanelComponent extends MenuAdapterComponent implements OnInit, AfterContentInit {
+export class PanelComponent extends MenuAdapterComponent implements OnInit, AfterContentInit, OnDestroy {
     static initializeProps = registerProps();
 
     public $lazyLoad = noop;
@@ -159,22 +160,26 @@ export class PanelComponent extends MenuAdapterComponent implements OnInit, Afte
 
     // notify the redrawable components(charts, grid)
     private reDrawChildren() {
-        setTimeout(() => {
+        const timeoutId1 = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId1);
             if (this.reDrawableComponents) {
                 this.reDrawableComponents.forEach(c => c.redraw());
             }
         }, 100);
+        this.pendingTimeouts.add(timeoutId1);
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
         if (key === 'expanded') {
             this.expanded = nv;
         } else if (key === 'content') {
-            setTimeout(() => {
+            const timeoutId2 = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId2);
                 if (this.expanded || !this.collapsible) {
                     this.$lazyLoad();
                 }
             }, 20);
+            this.pendingTimeouts.add(timeoutId2);
         } else {
             super.onPropertyChange(key, nv, ov);
         }
@@ -184,5 +189,14 @@ export class PanelComponent extends MenuAdapterComponent implements OnInit, Afte
         super.ngAfterContentInit();
         this.hasFooter = !!this.nativeElement.querySelector('[wmPanelFooter]');
         styler(this.panelBody.nativeElement as HTMLElement, this, APPLY_STYLES_TYPE.INNER_SHELL);
+    }
+
+    ngOnDestroy() {
+        // Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => {
+            clearTimeout(timeoutId);
+        });
+        this.pendingTimeouts.clear();
+        super.ngOnDestroy();
     }
 }

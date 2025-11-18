@@ -153,11 +153,10 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
     showContentLoadError;
     invalidConfig;
     errMsg;
+    hintMsg: string;
     shape: string;
     datasource: any;
-    fontsize: string;
     selecteditem: any;
-    fontunit: string;
     offsettop: number;
     offsetleft: number;
     offsetright: number;
@@ -194,6 +193,7 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
     private _boundHideTooltip: any;
 
     @HostBinding('class.panel') title;
+    subheading: string;
 
     isGroupByEnabled() {
         return !!(this.groupby && this.groupby !== NONE);
@@ -872,9 +872,12 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
             /*Bubble chart has an time out delay of 300ms in their implementation due to which we
             * won't be getting required data points on attaching events
             * hence delaying it 600ms*/
-            setTimeout( () => {
+            // MEMORY LEAK FIX: Track timeout for cleanup
+            const timeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
                 this.attachClickEvent();
             }, 600);
+            this.pendingTimeouts.add(timeoutId);
         });
         this.isLoadInProgress = false;
     }
@@ -1182,6 +1185,10 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
         this._boundHandleLoading = null;
         this._boundHideTooltip = null;
         this.redraw = null;
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
         
         super.ngOnDestroy();
     }

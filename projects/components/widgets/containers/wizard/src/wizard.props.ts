@@ -20,7 +20,8 @@ export const registerProps = () => {
                 ['previousbtnlabel', {value: 'Previous', ...PROP_STRING}],
                 ['show', {value: true, ...PROP_BOOLEAN}],
                 ['stepstyle', {value: 'auto', ...PROP_STRING}],
-                ['type', PROP_STRING]
+                ['type', PROP_STRING],
+                ['renderwhenvisible', {value: false, ...PROP_BOOLEAN}]
             ]
         )
     );

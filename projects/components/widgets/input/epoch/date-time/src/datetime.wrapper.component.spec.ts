@@ -170,6 +170,15 @@ describe("DatetimeComponent", () => {
     let dateWrapperComponent: DatetimeWrapperComponent;
     let wmComponent: DatetimeComponent;
     let fixture: ComponentFixture<DatetimeWrapperComponent>;
+    let timeZoneSpy: jest.SpyInstance;
+
+    beforeAll(() => {
+        timeZoneSpy = jest.spyOn(DatetimeComponent.prototype as any, 'timeZone', 'get').mockReturnValue('');
+    });
+
+    afterAll(() => {
+        timeZoneSpy?.mockRestore();
+    });
 
     beforeEach((async () => {
         fixture = compileTestComponent(dateComponentModuleDef, DatetimeWrapperComponent);
@@ -398,6 +407,15 @@ describe(('Datetime Component with Localization'), () => {
     let dateWrapperComponent: DatetimeWrapperComponent;
     let wmComponent: DatetimeComponent;
     let fixture: ComponentFixture<DatetimeWrapperComponent>;
+    let timeZoneSpy: jest.SpyInstance;
+
+    beforeAll(() => {
+        timeZoneSpy = jest.spyOn(DatetimeComponent.prototype as any, 'timeZone', 'get').mockReturnValue('');
+    });
+
+    afterAll(() => {
+        timeZoneSpy?.mockRestore();
+    });
 
     beforeEach((async () => {
         // register the selected locale language
@@ -1042,6 +1060,15 @@ describe(('Datetime Component with ro(Romania) Localization'), () => {
     let dateWrapperComponent: DatetimeWrapperComponent;
     let wmComponent: DatetimeComponent;
     let fixture: ComponentFixture<DatetimeWrapperComponent>;
+    let timeZoneSpy: jest.SpyInstance;
+
+    beforeAll(() => {
+        timeZoneSpy = jest.spyOn(DatetimeComponent.prototype as any, 'timeZone', 'get').mockReturnValue('');
+    });
+
+    afterAll(() => {
+        timeZoneSpy?.mockRestore();
+    });
 
     beforeEach((async () => {
         // register the selected locale language

@@ -77,6 +77,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     public fieldDefs;
     public type;
     public nodatamessage;
+    public renderwhenvisible: any;
     private dynamicComponentProvider;
     private _dynamicContext;
     private dynamicStepIndex;
@@ -84,6 +85,13 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     public defaultstepindex;
     private _isFirstLoad: boolean = true;
     public autoActivation:boolean;
+    private lazyVisibilityObservers: IntersectionObserver[] = [];
+    private lazyRenderActivated = false;
+    private contentInitExecuted = false;
+    private viewInitExecuted = false;
+    private pendingDatasetValue: any;
+    private hasPendingDatasetValue = false;
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup
 
     get hasPrevStep(): boolean {
         return !this._isFirstStep(this.currentStep);
@@ -176,9 +184,12 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
                 if (!isStepAlreadyExist) {
                     this.steps.reset([...this.steps.toArray(), newStepRef]);
                     if (newStepRef.active) {
-                        setTimeout(() => {
+                        // MEMORY LEAK FIX: Track timeout for cleanup
+                        const timeoutId = window.setTimeout(() => {
+                            this.pendingTimeouts.delete(timeoutId);
                             newStepRef.select();
                         }, 20);
+                        this.pendingTimeouts.add(timeoutId);
                     }
                 }
             }
@@ -528,25 +539,28 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         this.invokeEventCallback('cancel', {steps: this.steps.toArray()});
     }
     public addMoreText(){
-        setTimeout(() => {
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
 
 
-        var newWindowWidth = $(window).width();
-        if(newWindowWidth < 768){
-        $(".app-wizard-step.current .subtitle-wrapper .step-title").css({"height":"auto","display":"block"});
-        var subtitleTextLength = $(".app-wizard-step.current .subtitle-wrapper .step-title").height();
-        $(".read_more").css("display","none");
-        $(".current .subtitle-wrapper").removeClass("readmore_subtitle");
+            var newWindowWidth = $(window).width();
+            if(newWindowWidth < 768){
+            $(".app-wizard-step.current .subtitle-wrapper .step-title").css({"height":"auto","display":"block"});
+            var subtitleTextLength = $(".app-wizard-step.current .subtitle-wrapper .step-title").height();
+            $(".read_more").css("display","none");
+            $(".current .subtitle-wrapper").removeClass("readmore_subtitle");
 
-        if(subtitleTextLength>44){
-            $(".app-wizard-step.current .subtitle-wrapper .step-title").css({"height":"44px","display":"-webkit-box"});
+            if(subtitleTextLength>44){
+                $(".app-wizard-step.current .subtitle-wrapper .step-title").css({"height":"44px","display":"-webkit-box"});
             $(".current .read_more").css("display","block");
             $(".active .read_more").css("display","none");
             $(".disable .read_more").css("display","none");
             $(".app-wizard-step>a").css("height","100px")
             }
         }
-    });
+        });
+        this.pendingTimeouts.add(timeoutId);
 
     }
     public readMoreSubtitle(){
@@ -581,14 +595,22 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     }
 
     private onDataChange(newVal) {
+        if (this.shouldDeferDataRender()) {
+            this.pendingDatasetValue = newVal;
+            this.hasPendingDatasetValue = true;
+            return;
+        }
         this.fieldDefs = createArrayFrom(newVal);
     }
 
     private updateStepFocus() {
-        setTimeout(() => {
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
             const currentStepElement = this.nativeElement.querySelector(".app-wizard-heading li.current a") as HTMLElement;
             currentStepElement?.focus();
         });
+        this.pendingTimeouts.add(timeoutId);
     }
 
     // Define the property change handler. This Method will be triggered when there is a change in the widget property
@@ -603,38 +625,23 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             this.setDefaultStep(this.getStepRefByName(nv));
         } else if (key === 'actionsalignment') {
             this.nativeElement.querySelector('div.app-wizard-actions')?.classList.replace(ov, nv);
+        } else if (key === 'renderwhenvisible') {
+            if (this.shouldLazyRender()) {
+                this.bootstrapWhenVisible();
+            } else {
+                this.activateLazyRender();
+            }
         } else {
             super.onPropertyChange(key, nv, ov);
         }
     }
 
     ngAfterContentInit() {
-        super.ngAfterContentInit();
-        this.promiseResolverFn();
-        this.wizContext.hasNextStep = () => this.hasNextStep;
-        this.wizContext.hasPreviousStep = () => this.hasPrevStep;
-        this.wizContext.hasNoNextStep = () => this.showDoneBtn;
-        this.wizContext.cancelable = () => this.cancelable;
-        this.wizContext.skippable = () => this.currentStep?.enableskip;
-        this.wizContext.next = () => this.next();
-        this.wizContext.previous = () => this.prev();
-        this.wizContext.done = () => this.done();
-        this.wizContext.cancel = () => this.cancel();
-        this.wizContext.skip = () => this.skip();
-        this.wizContext.nextbtnlabel = () => this.nextbtnlabel;
-        this.wizContext.previousbtnlabel = () => this.previousbtnlabel;
-        this.wizContext.donebtnlabel = () => this.donebtnlabel;
-        this.wizContext.cancelbtnlabel = () => this.cancelbtnlabel;
-        this.wizContext.actionsalignment = () => this.actionsalignment;
-        this.wizContext.disableNext = () => !this.enableNext;
-        this.wizContext.disablePrevious = () => !this.enablePrev;
-        this.wizContext.disableDone = () => !this.enableDone;
-        this.stepsChangesSubscription = this.steps.changes.subscribe( slides => {
-            if (this.steps.length > 1 && this.type === 'dynamic' && this._isFirstLoad) {
-                this.setDefaultStep(this.getStepRefByIndex(this.defaultstepindex));
-                this._isFirstLoad = false;
-            }
-        });
+        if (this.shouldLazyRender()) {
+            this.bootstrapWhenVisible();
+        } else {
+            this.activateLazyRender();
+        }
     }
     private isSelectableStep(stepRef: WizardStepComponent): boolean {
             return stepRef.show && !stepRef.disabled;
@@ -669,18 +676,16 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             }
 
     ngAfterViewInit() {
-        super.ngAfterViewInit();
-        styler(
-            this.nativeElement.querySelector('.panel-body') as HTMLElement,
-            this,
-            APPLY_STYLES_TYPE.INNER_SHELL
-        );
-        setTimeout(() => { if($(window).width()<768) {
-            $(".app-wizard").removeClass("vertical");
+        if (this.shouldLazyRender()) {
+            this.bootstrapWhenVisible();
+        } else {
+            this.activateLazyRender();
         }
-        });
     }
     ngAfterViewChecked() {
+        if (!this.lazyRenderActivated) {
+            return;
+        }
         this.nativeElement.querySelectorAll('div.app-wizard-actions').forEach(el => el?.classList.add(this.actionsalignment));
         this.nativeElement.querySelectorAll('div.app-wizard-actions-right').forEach(el => el?.classList.remove('app-container'));
     }
@@ -705,7 +710,9 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             case ' ':
             case 'Spacebar':
                 event.preventDefault();
-                setTimeout(() => {
+                // MEMORY LEAK FIX: Track timeout for cleanup
+                const timeoutId = window.setTimeout(() => {
+                    this.pendingTimeouts.delete(timeoutId);
                     const activeElement  = this.nativeElement.querySelector('li.current');
                     const stepLi = activeElement.closest('li[data-stepid]');
                     const isInWizardHeader = activeElement.closest('.app-wizard-heading');
@@ -732,6 +739,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
                         }
                     }
                 }, 0);
+                this.pendingTimeouts.add(timeoutId);
                 break;
             default:
                 return;
@@ -754,7 +762,184 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         return index >= 0 ? index : this.getActiveStepIndex();
     }
 
+    private ensureContentInit() {
+        if (this.contentInitExecuted) {
+            return;
+        }
+        this.contentInitExecuted = true;
+        super.ngAfterContentInit();
+        this.promiseResolverFn();
+        this.wizContext.hasNextStep = () => this.hasNextStep;
+        this.wizContext.hasPreviousStep = () => this.hasPrevStep;
+        this.wizContext.hasNoNextStep = () => this.showDoneBtn;
+        this.wizContext.cancelable = () => this.cancelable;
+        this.wizContext.skippable = () => this.currentStep?.enableskip;
+        this.wizContext.next = () => this.next();
+        this.wizContext.previous = () => this.prev();
+        this.wizContext.done = () => this.done();
+        this.wizContext.cancel = () => this.cancel();
+        this.wizContext.skip = () => this.skip();
+        this.wizContext.nextbtnlabel = () => this.nextbtnlabel;
+        this.wizContext.previousbtnlabel = () => this.previousbtnlabel;
+        this.wizContext.donebtnlabel = () => this.donebtnlabel;
+        this.wizContext.cancelbtnlabel = () => this.cancelbtnlabel;
+        this.wizContext.actionsalignment = () => this.actionsalignment;
+        this.wizContext.disableNext = () => !this.enableNext;
+        this.wizContext.disablePrevious = () => !this.enablePrev;
+        this.wizContext.disableDone = () => !this.enableDone;
+        this.stepsChangesSubscription = this.steps.changes.subscribe(slides => {
+            if (this.steps.length > 1 && this.type === 'dynamic' && this._isFirstLoad) {
+                this.setDefaultStep(this.getStepRefByIndex(this.defaultstepindex));
+                this._isFirstLoad = false;
+            }
+        });
+    }
+
+    private ensureViewInit() {
+        if (this.viewInitExecuted) {
+            return;
+        }
+        this.viewInitExecuted = true;
+        super.ngAfterViewInit();
+        styler(
+            this.nativeElement.querySelector('.panel-body') as HTMLElement,
+            this,
+            APPLY_STYLES_TYPE.INNER_SHELL
+        );
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
+            if ($(window).width() < 768) {
+                $(".app-wizard").removeClass("vertical");
+            }
+        });
+        this.pendingTimeouts.add(timeoutId);
+    }
+
+    private activateLazyRender() {
+        if (this.lazyRenderActivated) {
+            this.ensureContentInit();
+            this.ensureViewInit();
+            this.flushPendingDataset();
+            return;
+        }
+        this.lazyRenderActivated = true;
+        this.disconnectLazyVisibilityObservers();
+        this.ensureContentInit();
+        this.ensureViewInit();
+        this.flushPendingDataset();
+    }
+
+    private flushPendingDataset() {
+        if (!this.hasPendingDatasetValue) {
+            return;
+        }
+        const pending = this.pendingDatasetValue;
+        this.pendingDatasetValue = undefined;
+        this.hasPendingDatasetValue = false;
+        this.onDataChange(pending);
+    }
+
+    private shouldLazyRender(): boolean {
+        const flag = this.renderwhenvisible as unknown;
+        const enabled = typeof flag === 'string' ? flag === 'true' : !!flag;
+        return enabled && !this.lazyRenderActivated;
+    }
+
+    private shouldDeferDataRender(): boolean {
+        return this.shouldLazyRender();
+    }
+
+    private bootstrapWhenVisible() {
+        if (!this.shouldLazyRender()) {
+            this.activateLazyRender();
+            return;
+        }
+        if (typeof IntersectionObserver === 'undefined' || !this.nativeElement) {
+            this.activateLazyRender();
+            return;
+        }
+
+        const buffer = 200;
+        const scrollRoots = this.getScrollableAncestors(this.nativeElement);
+
+        if (this.isElementVisibleWithinRoot(this.nativeElement, null, buffer) ||
+            scrollRoots.some(root => this.isElementVisibleWithinRoot(this.nativeElement, root, buffer))) {
+            this.activateLazyRender();
+            return;
+        }
+
+        this.disconnectLazyVisibilityObservers();
+
+        const observerCallback: IntersectionObserverCallback = (entries) => {
+            if (entries.some(entry => entry.isIntersecting)) {
+                this.disconnectLazyVisibilityObservers();
+                this.activateLazyRender();
+            }
+        };
+
+        const createObserver = (root: Element | null) => {
+            const observer = new IntersectionObserver(observerCallback, {
+                root,
+                rootMargin: '200px'
+            });
+            this.lazyVisibilityObservers.push(observer);
+            observer.observe(this.nativeElement);
+        };
+
+        createObserver(null);
+        scrollRoots.forEach(root => createObserver(root));
+    }
+
+    private disconnectLazyVisibilityObservers() {
+        if (!this.lazyVisibilityObservers.length) {
+            return;
+        }
+        this.lazyVisibilityObservers.forEach(observer => observer.disconnect());
+        this.lazyVisibilityObservers = [];
+    }
+
+    private getScrollableAncestors(element: HTMLElement | null): HTMLElement[] {
+        if (typeof window === 'undefined' || !element) {
+            return [];
+        }
+        const ancestors: HTMLElement[] = [];
+        let parent: HTMLElement | null = element.parentElement;
+        const scrollRegex = /(auto|scroll|overlay)/;
+        while (parent) {
+            const style = window.getComputedStyle(parent);
+            const overflowValues = [style.overflow, style.overflowY, style.overflowX].join(' ');
+            if (scrollRegex.test(overflowValues)) {
+                ancestors.push(parent);
+            }
+            parent = parent.parentElement;
+        }
+        return ancestors;
+    }
+
+    private isElementVisibleWithinRoot(element: HTMLElement | null, root: Element | null, buffer = 200): boolean {
+        if (typeof window === 'undefined' || !element) {
+            return false;
+        }
+        const rect = element.getBoundingClientRect();
+        if (!rect) {
+            return false;
+        }
+        if (!root) {
+            const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+            if (!viewportHeight) {
+                return false;
+            }
+            return rect.top < viewportHeight + buffer && rect.bottom > -buffer;
+        }
+        const rootRect = (root as HTMLElement).getBoundingClientRect();
+        return rect.top < rootRect.bottom + buffer && rect.bottom > rootRect.top - buffer;
+    }
+
     ngOnDestroy() {
+        this.disconnectLazyVisibilityObservers();
+        this.pendingDatasetValue = null;
+        this.hasPendingDatasetValue = false;
         // Unsubscribe from steps.changes to prevent memory leak
         if (this.stepsChangesSubscription) {
             this.stepsChangesSubscription.unsubscribe();
@@ -765,6 +950,10 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             $(document).off("mouseup", this.documentMouseUpHandler);
             this.documentMouseUpHandler = null;
         }
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
         
         super.ngOnDestroy();
     }

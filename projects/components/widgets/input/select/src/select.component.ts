@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {DataSource, isIos, removeAttr, setAttr, isSafari} from '@wm/core';
 import {provideAs, provideAsWidgetRef, styler, TextContentDirective} from '@wm/components/base';
@@ -21,7 +21,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-select', hostClass: 'app-select-wrapper'}
         provideAsWidgetRef(SelectComponent)
     ]
 })
-export class SelectComponent extends DatasetAwareFormComponent implements AfterViewInit {
+export class SelectComponent extends DatasetAwareFormComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public readonly: boolean;
@@ -60,20 +60,24 @@ export class SelectComponent extends DatasetAwareFormComponent implements AfterV
                 if (this.datavalue) {
                     const selectedItem = this.datasetItems.find(item => item.selected);
                     if (!selectedItem) {
-                        setTimeout(() => {
+                        const timeoutId1 = window.setTimeout(() => {
+                            this.pendingTimeouts.delete(timeoutId1);
                             if(!this.placeholder) {
                                 this.selectEl.nativeElement.value = '';
                             }
                             this.modelByKey = undefined;
                         }, 100);
+                        this.pendingTimeouts.add(timeoutId1);
                     }
                 } else {
-                    setTimeout(() => {
+                    const timeoutId2 = window.setTimeout(() => {
+                        this.pendingTimeouts.delete(timeoutId2);
                         if(!this.placeholder) {
                             this.selectEl.nativeElement.value = '';
                         }
 
                     }, 100);
+                    this.pendingTimeouts.add(timeoutId2);
                 }
             }
         });
@@ -118,11 +122,13 @@ export class SelectComponent extends DatasetAwareFormComponent implements AfterV
                 // After NG15 upgrade ng-invalid class is added even the field is valid, so we are removing the ng-invalid manually
                 const isNgUntouchedValid = this.selectEl.nativeElement.classList.contains('ng-untouched') && this.selectEl.nativeElement.classList.contains('ng-valid')
                 if(isNgUntouchedValid && nv.includes('ng-untouched') && nv.includes('ng-invalid')) {
-                    setTimeout(()=> {
+                    const timeoutId3 = window.setTimeout(() => {
+                        this.pendingTimeouts.delete(timeoutId3);
                         if(this.selectEl.nativeElement.classList.contains('ng-untouched') && this.selectEl.nativeElement.classList.contains('ng-valid') && this.selectEl.nativeElement.classList.contains('ng-invalid')) {
                             this.selectEl.nativeElement.classList.remove('ng-invalid');
                         }
-                    });
+                    }, 0);
+                    this.pendingTimeouts.add(timeoutId3);
                 }
             }
             return;
@@ -130,6 +136,15 @@ export class SelectComponent extends DatasetAwareFormComponent implements AfterV
              (nv === true) ? setAttr(this.selectEl.nativeElement, 'readonly', 'readonly') : removeAttr(this.selectEl.nativeElement, 'readonly') ;
         }
         super.onPropertyChange(key, nv, ov);
+    }
+
+    ngOnDestroy() {
+        // Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => {
+            clearTimeout(timeoutId);
+        });
+        this.pendingTimeouts.clear();
+        super.ngOnDestroy();
     }
 
     /**

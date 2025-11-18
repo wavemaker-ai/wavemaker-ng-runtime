@@ -40,6 +40,7 @@ export class CarouselDirective extends StylableComponent implements AfterContent
     private fieldDefs;
     private interval;
     private slidesChangesSubscription;
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup
 
     public animationinterval;
     public animation;
@@ -77,9 +78,12 @@ export class CarouselDirective extends StylableComponent implements AfterContent
             this.currentslide = this.fieldDefs[0];
         }
         if (slides.length) {
-            setTimeout(() => {
+            // MEMORY LEAK FIX: Track timeout for cleanup
+            const timeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
                 this.animator = new CarouselAnimator(this, this.interval, this.ngZone);
             }, 50);
+            this.pendingTimeouts.add(timeoutId);
         }
     }
 
@@ -112,6 +116,11 @@ export class CarouselDirective extends StylableComponent implements AfterContent
         if (this.slidesChangesSubscription) {
             this.slidesChangesSubscription.unsubscribe();
         }
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
+        
         super.ngOnDestroy();
     }
 

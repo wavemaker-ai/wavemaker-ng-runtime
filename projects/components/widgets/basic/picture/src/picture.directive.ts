@@ -31,7 +31,7 @@ export class PictureDirective extends StylableComponent implements OnInit {
     static initializeProps = registerProps();
 
     encodeurl;
-    picturesource;
+    // picturesource is inherited from StylableComponent
     pictureplaceholder;
     alttext;
 

@@ -43,7 +43,7 @@ import {
 import * as momentLib from 'moment';
 
 declare const $;
-const moment = momentLib.default || window['moment'];
+const moment = (momentLib as any)?.default || momentLib || (window as any)['moment'];
 
 const emptyMatchModes = ['null', 'empty', 'nullorempty', 'isnotnull', 'isnotempty'];
 

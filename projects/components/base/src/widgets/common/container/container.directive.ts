@@ -47,6 +47,8 @@ export class ContainerDirective extends BaseContainerComponent {
     public alignment: string;
     public gap: string;
     public columngap:string;
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup (in addition to base class)
+    private containerPendingTimeouts: Set<number> = new Set();
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext?: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
@@ -76,9 +78,12 @@ export class ContainerDirective extends BaseContainerComponent {
                 break;
             case 'gap':
             case 'columngap':
-                setTimeout(() => {
-                    this.applySpacing(nv,key)
+                // MEMORY LEAK FIX: Track timeout for cleanup
+                const timeoutId = window.setTimeout(() => {
+                    this.containerPendingTimeouts.delete(timeoutId);
+                    this.applySpacing(nv,key);
                 });
+                this.containerPendingTimeouts.add(timeoutId);
                 break;
         }
         super.onPropertyChange(key, nv, ov);
@@ -193,5 +198,14 @@ export class ContainerDirective extends BaseContainerComponent {
             this.columngap = columngap?.toString();
         }
            this.gap = gap?.toString();
+    }
+    
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear container-specific pending timeouts
+        this.containerPendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.containerPendingTimeouts.clear();
+        
+        // Call parent cleanup
+        super.ngOnDestroy();
     }
 }

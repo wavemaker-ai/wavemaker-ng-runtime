@@ -7,7 +7,8 @@ import {
     TextContentDirective
 } from "@wm/components/base";
 import {FormsModule, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
-import {Component, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {BaseFormCustomComponent} from '@wm/components/input/base-form-custom';
 
 import {registerProps} from './slider.props';
@@ -22,7 +23,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
     standalone: true,
-    imports: [TextContentDirective, FormsModule],
+    imports: [TextContentDirective, FormsModule, CommonModule],
     selector: '[wmSlider]',
     templateUrl: './slider.component.html',
     providers: [
@@ -30,7 +31,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(SliderComponent)
     ]
 })
-export class SliderComponent extends BaseFormCustomComponent {
+export class SliderComponent extends BaseFormCustomComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     public minvalue: number;
@@ -99,7 +100,20 @@ export class SliderComponent extends BaseFormCustomComponent {
     ngAfterViewInit() {
         super.ngAfterViewInit();
         if(this.showmarkers) {
-            setTimeout(() => {this.renderMarkers();}, 40);
+            const timeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
+                this.renderMarkers();
+            }, 40);
+            this.pendingTimeouts.add(timeoutId);
         }
+    }
+
+    ngOnDestroy() {
+        // Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => {
+            clearTimeout(timeoutId);
+        });
+        this.pendingTimeouts.clear();
+        super.ngOnDestroy();
     }
 }

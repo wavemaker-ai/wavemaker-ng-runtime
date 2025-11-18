@@ -15,6 +15,8 @@ export class PartialContainerDirective implements OnDestroy {
 
     private contentInitialized = false;
     private $target;
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup
+    protected pendingTimeouts: Set<number> = new Set();
 
     get name() {
         return this.componentInstance.name;
@@ -55,7 +57,12 @@ export class PartialContainerDirective implements OnDestroy {
             this.$target.innerHTML = '';
             this.$target.appendChild(instanceRef.location.nativeElement);
             this.contentInitialized = true;
-            setTimeout(() => this.onLoadSuccess(), 200);
+            // MEMORY LEAK FIX: Track timeout for cleanup
+            const timeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
+                this.onLoadSuccess();
+            }, 200);
+            this.pendingTimeouts.add(timeoutId);
         } catch (error) {
             console.error(`Error rendering partial ${nv}:`, error);
         }
@@ -106,5 +113,9 @@ export class PartialContainerDirective implements OnDestroy {
     ngOnDestroy() {
         // Clear the ViewContainerRef to prevent memory leaks
         this.vcRef.clear();
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        this.pendingTimeouts.clear();
     }
 }

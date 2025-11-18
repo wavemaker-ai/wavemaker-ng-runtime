@@ -29,7 +29,9 @@ import {capitalize, clone, each, extend, get, includes, isDate, isEmpty, isObjec
 
 declare const $;
 import * as momentLib  from 'moment';
-const moment = momentLib.default || window['moment'];
+// Typings for moment don't declare a `default` export in this setup.
+// Use the namespace import directly and fall back to global if needed.
+const moment: any = (momentLib as any) || (window as any)['moment'];
 import {Calendar} from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -541,9 +543,11 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         $(".fc-today-button").attr("aria-label", "today");
 
         //WMS-22412 : change calender's view based on the configuration set from studio
-        setTimeout(() => {
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
             this.$fullCalendar.changeView(this.getViewType(this.view ? this.view : 'dayGridMonth'));
-        },50);
+        }, 50);
+        this.pendingTimeouts.add(timeoutId);
     }
 
     // constructs the calendar dataset by mapping the eventstart, eventend, eventtitle etc.,
@@ -732,6 +736,12 @@ export class CalendarComponent extends StylableComponent implements AfterContent
     }
 
     ngOnDestroy() {
+        // Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => {
+            clearTimeout(timeoutId);
+        });
+        this.pendingTimeouts.clear();
+        
         // Destroy FullCalendar instance if it exists and has destroy method
         if (this.$fullCalendar && typeof this.$fullCalendar.destroy === 'function') {
             try {

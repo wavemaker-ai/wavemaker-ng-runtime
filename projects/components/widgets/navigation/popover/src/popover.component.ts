@@ -159,9 +159,11 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
                 }
             } finally {
                 // Always reset the flag when click handling is done
-                setTimeout(() => {
+                const timeoutId = window.setTimeout(() => {
+                    this.pendingTimeouts.delete(timeoutId);
                     this.isHandlingClick = false;
                 }, 0);
+                this.pendingTimeouts.add(timeoutId);
             }
         };
 
@@ -231,7 +233,11 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     }
 
     private setFocusToPopoverLink() {
-        setTimeout(() => this.anchorRef.nativeElement.focus(), 10);
+        const timeoutId = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId);
+            this.anchorRef.nativeElement.focus();
+        }, 10);
+        this.pendingTimeouts.add(timeoutId);
     }
 
     private adjustPopoverArrowPosition(popoverElem, popoverLeftShift) {
@@ -263,7 +269,8 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         // Adjusting popover position, if it is not visible at right side
         if (popoverLeft + popoverWidth > viewPortWidth) {
             adjustContainerRightEdges(popoverElem, this.nativeElement, this.bsPopoverDirective._popover);
-            setTimeout(() => {
+            const timeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
                 popoverLeft = popoverElem.offset().left;
                 const popoverLeftAdjust = (popoverLeft + popoverWidth) - viewPortWidth;
                 const popoverLeftShift =  popoverLeft - popoverLeftAdjust;
@@ -277,7 +284,8 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
                     arrowLeftShift += 30;
                 }
                this.adjustPopoverArrowPosition(popoverElem, arrowLeftShift);
-            });
+            }, 0);
+            this.pendingTimeouts.add(timeoutId);
         }
     }
 
@@ -331,9 +339,11 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.outsideclick) {
             this.setupDocumentClickHandler();
         }
-        setTimeout(() => {
+        const timeoutId1 = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId1);
             this.anchorRef.nativeElement.removeAttribute('aria-describedby');
-        });
+        }, 0);
+        this.pendingTimeouts.add(timeoutId1);
         const deRegister = this.eventManager.addEventListener(popoverContainer, 'keydown.esc', () => {
             this.isOpen = false;
             this.setFocusToPopoverLink();
@@ -367,19 +377,29 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         // If 'preventFocusShift' is set to true, focus remains on the triggering element.
         if (this.preventFocusShift) {
             const activeElement = document.activeElement as HTMLElement; // Capture current focused element
-            setTimeout(() => activeElement?.focus(), 0);
+            const timeoutId2 = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId2);
+                activeElement?.focus();
+            }, 0);
+            this.pendingTimeouts.add(timeoutId2);
         } else {
-            setTimeout(() => popoverStartBtn.focus(), 50);
+            const timeoutId3 = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId3);
+                popoverStartBtn.focus();
+            }, 50);
+            this.pendingTimeouts.add(timeoutId3);
         }
 
         // Adjusting popover position if the popover placement is top or bottom
-        setTimeout( () => {
+        const timeoutId4 = window.setTimeout(() => {
+            this.pendingTimeouts.delete(timeoutId4);
             if (!this.adaptiveposition ) {
                 this.calculatePopoverPostion(popoverContainer);
             }
             // triggering onload and onshow events after popover content has rendered
             this.triggerPopoverEvents();
-        });
+        }, 0);
+        this.pendingTimeouts.add(timeoutId4);
     }
 
     triggerPopoverEvents() {
@@ -495,6 +515,12 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.isOpen && this.bsPopoverDirective) {
             this.bsPopoverDirective.hide();
         }
+        
+        // Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => {
+            clearTimeout(timeoutId);
+        });
+        this.pendingTimeouts.clear();
         
         // Clear timeout
         if (this.closePopoverTimeout) {

@@ -31,11 +31,8 @@ const WIDGET_CONFIG = {widgetType: 'wm-item-template'};
 })
 export class ItemTemplateDirective extends StylableComponent {
     static initializeProps = registerProps();
-    public context;
     public content;
     public partialParams;
-    public nativeElement: HTMLElement;
-    public viewContainerRef: ViewContainerRef;
     get $index() {
         return this.context.index;
     }
@@ -48,7 +45,8 @@ export class ItemTemplateDirective extends StylableComponent {
 
     constructor(inj: Injector, elRef: ElementRef, private app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
-        this.nativeElement = elRef.nativeElement;
+        // Use the base class' nativeElement and context instead of redeclaring them.
+        (this.nativeElement as any) = elRef.nativeElement;
         // this.context = (<NgForOfContext<ItemTemplateDirective>>(<any>inj).view.context);
         this.context = (this.inj as any)._lView[8];
     }

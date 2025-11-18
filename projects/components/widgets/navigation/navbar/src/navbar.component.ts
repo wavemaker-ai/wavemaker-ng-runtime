@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 
 import { APPLY_STYLES_TYPE, styler, StylableComponent, provideAsWidgetRef, TextContentDirective ,TrustAsPipe} from '@wm/components/base';
 
@@ -19,7 +19,7 @@ declare const $;
         provideAsWidgetRef(NavbarComponent)
     ]
 })
-export class NavbarComponent extends StylableComponent implements AfterViewInit {
+export class NavbarComponent extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public menuiconclass: any;
@@ -36,7 +36,11 @@ export class NavbarComponent extends StylableComponent implements AfterViewInit 
         const $navContent = $(this.navContent.nativeElement);
         $navContent.animate({ 'height': 'toggle'});
         if ($navContent.hasClass('in')) {
-            setTimeout(() => this.toggleNavCollapse(), 500);
+            const timeoutId = window.setTimeout(() => {
+                this.pendingTimeouts.delete(timeoutId);
+                this.toggleNavCollapse();
+            }, 500);
+            this.pendingTimeouts.add(timeoutId);
         } else {
             this.toggleNavCollapse();
         }
@@ -44,5 +48,14 @@ export class NavbarComponent extends StylableComponent implements AfterViewInit 
 
     private toggleNavCollapse() {
         this.navContent.nativeElement.classList.toggle('in');
+    }
+
+    ngOnDestroy() {
+        // Clear all pending timeouts
+        this.pendingTimeouts.forEach(timeoutId => {
+            clearTimeout(timeoutId);
+        });
+        this.pendingTimeouts.clear();
+        super.ngOnDestroy();
     }
 }

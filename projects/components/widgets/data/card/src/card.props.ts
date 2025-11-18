@@ -19,6 +19,7 @@ export const registerProps = () => {
                 ['name', PROP_STRING],
                 ['picturesource', PROP_STRING],
                 ['picturetitle', {value: '', ...PROP_STRING}],
+                ['renderwhenvisible', {value: false, ...PROP_BOOLEAN}],
                 ['show', {value: true, ...PROP_BOOLEAN}],
                 ['subheading', PROP_STRING],
                 ['title', PROP_STRING],

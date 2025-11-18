@@ -35,6 +35,7 @@ export const registerProps = () => {
                 ['paginationclass', PROP_STRING],
                 ['pagesize', PROP_NUMBER],
                 ['pulltorefresh', {value: false, ...PROP_BOOLEAN}],
+                ['renderwhenvisible', {value: false, ...PROP_BOOLEAN}],
                 ['selectfirstitem', PROP_BOOLEAN],
                 ['selectionlimit', PROP_NUMBER],
                 ['show', {value: true, ...PROP_BOOLEAN}],

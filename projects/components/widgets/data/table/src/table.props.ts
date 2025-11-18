@@ -63,13 +63,16 @@ export const registerProps = () => {
                 ['shownewrow', {value: true, ...PROP_BOOLEAN}],
                 ['showrecordcount', PROP_BOOLEAN],
                 ['showrowindex', PROP_BOOLEAN],
+                ['renderwhenvisible', {value: true, ...PROP_BOOLEAN}],
+                ['renderrootselector', PROP_STRING],
                 ['spacing', {value: 'normal', ...PROP_STRING}],
                 ['statehandler', {value: 'none', ...PROP_STRING}],
                 ['subheading', PROP_STRING],
                 ['tabindex', {value: 0, ...PROP_NUMBER}],
                 ['title', PROP_STRING],
                 ['updatemessage', {value: 'Record updated successfully', ...PROP_STRING}],
-                ['virtualizecells', {value: true, ...PROP_BOOLEAN}]
+                ['virtualizecells', {value: true, ...PROP_BOOLEAN}],
+                ['optimisticrowupdate', {value: true, ...PROP_BOOLEAN}]
             ]
         )
     );

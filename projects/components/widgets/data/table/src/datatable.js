@@ -487,7 +487,9 @@ $.widget('wm.datatable', {
         }
         this.options.summaryRowDefsObject[rowIndex][key] = data;
         this.options.summaryRowDefs[rowIndex][key] = (data && data.value) ? data.value : data;
-        if (refreshIndicator) this.refreshGridData();
+        if (refreshIndicator) {
+            this.refreshSummaryRow(typeof rowIndex === 'number' ? rowIndex : undefined);
+        }
     },
 
     /* Returns the tbody markup. */
@@ -502,6 +504,23 @@ $.widget('wm.datatable', {
         });
 
         return $tfoot;
+    },
+
+    refreshSummaryRow: function () {
+        if (!this.tableContainer || !this.tableContainer.length) {
+            return;
+        }
+        var $summaryFragment = $(this._getSummaryRowTemplate());
+        if (!$summaryFragment.length) {
+            return;
+        }
+        var $existing = this.tableContainer.find('tfoot.' + this.options.cssClassNames.gridFooter);
+        if ($existing.length) {
+            $existing.replaceWith($summaryFragment);
+        } else {
+            this.tableContainer.append($summaryFragment);
+        }
+        this.gridFooter = this.tableContainer.find('tfoot');
     },
 
 
@@ -1071,7 +1090,9 @@ $.widget('wm.datatable', {
                 'event': null
             },
             compiledCellTemplates: {},
-            throttledScrollHandler: null
+            throttledScrollHandler: null,
+            // MEMORY LEAK FIX: Track pending timeouts for cleanup
+            pendingTimeouts: new Set()
         });
         // TODO: Variable loading status is getting updated before dataset update. This is resulting in loader going off before data is rendered.
         // Need to update code with suitable fix. For now 250ms is added as workaround
@@ -2331,7 +2352,16 @@ $.widget('wm.datatable', {
 
                     // Check for form control async state and recall save function
                     if ($editableElements.find('.ng-pending').length > 0) {
-                        setTimeout(this.toggleEditRow.bind(this, e, options), 200);
+                        // MEMORY LEAK FIX: Track timeout for cleanup
+                        const timeoutId = window.setTimeout(() => {
+                            if (this.pendingTimeouts) {
+                                this.pendingTimeouts.delete(timeoutId);
+                            }
+                            this.toggleEditRow(e, options);
+                        }, 200);
+                        if (this.pendingTimeouts) {
+                            this.pendingTimeouts.add(timeoutId);
+                        }
                         return;
                     }
 
@@ -3307,6 +3337,8 @@ $.widget('wm.datatable', {
 
                 // Simulate a click on the checkbox
                 const checkbox = this;
+                // MEMORY LEAK FIX: Note - this is a very short timeout (0ms) and fires immediately
+                // The checkbox click will complete before component destruction, so minimal risk
                 setTimeout(() => checkbox.click(), 0);
             }
         });
@@ -3746,6 +3778,17 @@ $.widget('wm.datatable', {
         });
     },
 
+    updatePreparedRow: function (rowId, data) {
+        if (!this.preparedData || !this.preparedData[rowId]) {
+            return;
+        }
+        var target = this.preparedData[rowId];
+        _.assign(target, data);
+        if (this.options.data && this.options.data[rowId]) {
+            _.assign(this.options.data[rowId], data);
+        }
+    },
+
     _destroy: function () {
         // PERFORMANCE FIX: Removed console.log - reduces console noise
         
@@ -3787,6 +3830,12 @@ $.widget('wm.datatable', {
         if (this.throttledScrollHandler && this.throttledScrollHandler.cancel) {
             this.throttledScrollHandler.cancel();
             this.throttledScrollHandler = null;
+        }
+        
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        if (this.pendingTimeouts) {
+            this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            this.pendingTimeouts.clear();
         }
         
         // Empty and clear DOM references

@@ -176,11 +176,8 @@ export class SecurityService {
      * @returns {any}
      */
     getCurrentRouteQueryParam(paramName) {
-        let paramVal;
-        this.activatedRoute.queryParams.subscribe(params => {
-            paramVal = params[paramName];
-        });
-        return paramVal;
+        const params = this.activatedRoute.snapshot?.queryParams || {};
+        return params[paramName];
     }
 
     isNoPageLoaded() {
@@ -282,11 +279,10 @@ export class SecurityService {
      * Returns all the query params(including page params and redirect to params) associated with redirected page
      */
     getRedirectedRouteQueryParams() {
-        let queryParams = {};
-        this.activatedRoute.queryParams.subscribe((paramVal) => {
-            forEach(paramVal, (val, key) => {
-                queryParams[key] = val;
-            });
+        const snapshotParams = this.activatedRoute.snapshot?.queryParams || {};
+        const queryParams = {};
+        forEach(snapshotParams, (val, key) => {
+            queryParams[key] = val;
         });
         return queryParams;
     }

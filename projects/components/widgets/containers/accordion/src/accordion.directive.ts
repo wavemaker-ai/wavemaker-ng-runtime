@@ -33,6 +33,7 @@ export class AccordionDirective extends StylableComponent implements AfterConten
     public defaultpaneindex: number;
     public closeothers: boolean;
     public statehandler: any;
+    public renderwhenvisible: any;
     private statePersistence: StatePersistence;
 
     private activePaneIndex: number;
@@ -44,6 +45,11 @@ export class AccordionDirective extends StylableComponent implements AfterConten
     private dynamicPanes;
     public fieldDefs;
     private panesChangesSubscription;
+    private lazyVisibilityObservers: IntersectionObserver[] = [];
+    private lazyRenderActivated = false;
+    private lazyInitExecuted = false;
+    private pendingDatasetValue: any;
+    private hasPendingDatasetValue = false;
 
     @ContentChildren(forwardRef(() => AccordionPaneComponent)) panes: QueryList<AccordionPaneComponent>;
 
@@ -214,6 +220,11 @@ export class AccordionDirective extends StylableComponent implements AfterConten
         this.panes.toArray()[index].expand();
     }
     private onDataChange(newVal) {
+        if (this.shouldDeferDataRender()) {
+            this.pendingDatasetValue = newVal;
+            this.hasPendingDatasetValue = true;
+            return;
+        }
         this.fieldDefs = createArrayFrom(newVal);
     }
 
@@ -243,12 +254,41 @@ export class AccordionDirective extends StylableComponent implements AfterConten
             }
         } else if (key === 'tabindex') {
             return;
+        } else if (key === 'renderwhenvisible') {
+            if (this.shouldLazyRender()) {
+                this.bootstrapWhenVisible();
+            } else {
+                this.activateLazyRender();
+            }
         } else {
             super.onPropertyChange(key, nv, ov);
         }
     }
 
     ngAfterContentInit() {
+        if (this.shouldLazyRender()) {
+            this.bootstrapWhenVisible();
+        } else {
+            this.activateLazyRender();
+        }
+    }
+
+    ngOnDestroy() {
+        this.disconnectLazyVisibilityObservers();
+        this.pendingDatasetValue = null;
+        this.hasPendingDatasetValue = false;
+        // Unsubscribe from panes.changes to prevent memory leak
+        if (this.panesChangesSubscription) {
+            this.panesChangesSubscription.unsubscribe();
+        }
+        super.ngOnDestroy();
+    }
+
+    private ensureInitialized() {
+        if (this.lazyInitExecuted) {
+            return;
+        }
+        this.lazyInitExecuted = true;
         super.ngAfterContentInit();
         this.promiseResolverFn();
         this.panesChangesSubscription = this.panes.changes.subscribe(slides => {
@@ -256,13 +296,120 @@ export class AccordionDirective extends StylableComponent implements AfterConten
                 this.expandPane(this.defaultpaneindex);
             }
         });
+        if (this.panes.length) {
+            this.expandPane(this.defaultpaneindex);
+        }
     }
 
-    ngOnDestroy() {
-        // Unsubscribe from panes.changes to prevent memory leak
-        if (this.panesChangesSubscription) {
-            this.panesChangesSubscription.unsubscribe();
+    private activateLazyRender() {
+        if (this.lazyRenderActivated) {
+            this.ensureInitialized();
+            return;
         }
-        super.ngOnDestroy();
+        this.lazyRenderActivated = true;
+        this.disconnectLazyVisibilityObservers();
+        this.ensureInitialized();
+        if (this.hasPendingDatasetValue) {
+            const pending = this.pendingDatasetValue;
+            this.pendingDatasetValue = undefined;
+            this.hasPendingDatasetValue = false;
+            this.onDataChange(pending);
+        }
+    }
+
+    private shouldLazyRender(): boolean {
+        const flag = this.renderwhenvisible as unknown;
+        const enabled = typeof flag === 'string' ? flag === 'true' : !!flag;
+        return enabled && !this.lazyRenderActivated;
+    }
+
+    private shouldDeferDataRender(): boolean {
+        return this.shouldLazyRender();
+    }
+
+    private bootstrapWhenVisible() {
+        if (!this.shouldLazyRender()) {
+            this.activateLazyRender();
+            return;
+        }
+        if (typeof IntersectionObserver === 'undefined' || !this.nativeElement) {
+            this.activateLazyRender();
+            return;
+        }
+
+        const buffer = 200;
+        const scrollRoots = this.getScrollableAncestors(this.nativeElement);
+
+        if (this.isElementVisibleWithinRoot(this.nativeElement, null, buffer) ||
+            scrollRoots.some(root => this.isElementVisibleWithinRoot(this.nativeElement, root, buffer))) {
+            this.activateLazyRender();
+            return;
+        }
+
+        this.disconnectLazyVisibilityObservers();
+
+        const observerCallback: IntersectionObserverCallback = (entries) => {
+            if (entries.some(entry => entry.isIntersecting)) {
+                this.disconnectLazyVisibilityObservers();
+                this.activateLazyRender();
+            }
+        };
+
+        const createObserver = (root: Element | null) => {
+            const observer = new IntersectionObserver(observerCallback, {
+                root,
+                rootMargin: '200px'
+            });
+            this.lazyVisibilityObservers.push(observer);
+            observer.observe(this.nativeElement);
+        };
+
+        createObserver(null);
+        scrollRoots.forEach(root => createObserver(root));
+    }
+
+    private disconnectLazyVisibilityObservers() {
+        if (!this.lazyVisibilityObservers.length) {
+            return;
+        }
+        this.lazyVisibilityObservers.forEach(observer => observer.disconnect());
+        this.lazyVisibilityObservers = [];
+    }
+
+    private getScrollableAncestors(element: HTMLElement | null): HTMLElement[] {
+        if (typeof window === 'undefined' || !element) {
+            return [];
+        }
+        const ancestors: HTMLElement[] = [];
+        let parent: HTMLElement | null = element.parentElement;
+        const scrollRegex = /(auto|scroll|overlay)/;
+        while (parent) {
+            const style = window.getComputedStyle(parent);
+            const overflowValues = [style.overflow, style.overflowY, style.overflowX].join(' ');
+            if (scrollRegex.test(overflowValues)) {
+                ancestors.push(parent);
+            }
+            parent = parent.parentElement;
+        }
+        return ancestors;
+    }
+
+    private isElementVisibleWithinRoot(element: HTMLElement | null, root: Element | null, buffer = 200): boolean {
+        if (typeof window === 'undefined' || !element) {
+            return false;
+        }
+        const rect = element.getBoundingClientRect();
+        if (!rect) {
+            return false;
+        }
+        if (!root) {
+            const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+            if (!viewportHeight) {
+                return false;
+            }
+            return rect.top < viewportHeight + buffer && rect.bottom > -buffer;
+        }
+        const rootRect = (root as HTMLElement).getBoundingClientRect();
+        return rect.top < rootRect.bottom + buffer && rect.bottom > rootRect.top - buffer;
     }
 }

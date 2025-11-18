@@ -152,12 +152,18 @@ export class I18nServiceImpl extends AbstractI18nService {
     }
 
     protected loadScriptForMoment(momentLocale){
+            if (!moment || typeof moment.locale !== 'function') {
+                console.warn('Moment.js is not available');
+                return;
+            }
             moment.locale(this.selectedLocale);
             // For ngx bootstrap locale, get the config from script and apply locale
             // moment.localeData(momentLocale) will return moment locale instance. _config inside will have actual config
-            let _config: any = moment.localeData(momentLocale);
-            _config = _config && _config._config;
-            defineLocale(this.selectedLocale, _config);
+            if (moment.localeData && typeof moment.localeData === 'function') {
+                let _config: any = moment.localeData(momentLocale);
+                _config = _config && _config._config;
+                defineLocale(this.selectedLocale, _config);
+            }
             this.bsLocaleService.use(this.getSelectedLocale() || this.defaultSupportedLocale);
             this.bundleLoaded.moment = true;
             this.notifyLocaleChanged();
@@ -295,18 +301,24 @@ export class I18nServiceImpl extends AbstractI18nService {
     private deduceAppLocale() {
         // computation to find app default locale
         const _acceptLang = this.getAcceptedLanguages();
-        const _defaultLanguage = getWmProjectProperties().defaultLanguage;
-        _acceptLang.push(_defaultLanguage);
+        const wmProps = getWmProjectProperties();
+        const _defaultLanguage = wmProps?.defaultLanguage;
+        if (_defaultLanguage) {
+            _acceptLang.push(_defaultLanguage);
+        }
 
         // checks whether user preference is based on browser set languages or default language set in project
-        let preferBrowserLang = getWmProjectProperties().preferBrowserLang;
+        let preferBrowserLang = wmProps?.preferBrowserLang;
         if (!preferBrowserLang) { // when preferBrowserLang is not defined, set to its default value
             preferBrowserLang  = true;
         } else { // convert stringified boolean values recieved from BE to booleans
             preferBrowserLang= (preferBrowserLang === 'true' || preferBrowserLang === true) ? true : false;
         }
 
-        let _supportedLang = Object.keys(getWmProjectProperties().supportedLanguages) || [this.defaultSupportedLocale];
+        const supportedLanguages = wmProps?.supportedLanguages;
+        let _supportedLang = (supportedLanguages && typeof supportedLanguages === 'object') 
+            ? Object.keys(supportedLanguages) 
+            : [this.defaultSupportedLocale];
 
         // when preference is given to browser set languages, do not populate _selectedDefaultLang variable
         let _selectedDefaultLang = preferBrowserLang ? undefined : _defaultLanguage;

@@ -107,6 +107,10 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
         toggleClass(this.nativeElement, 'app-toggle', type === 'toggle');
     }
 
+    ngOnInit() {
+        super.ngOnInit();
+    }
+
     onPropertyChange(key, nv, ov) {
         if (key === 'tabindex') {
             return;
