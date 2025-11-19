@@ -1,6 +1,6 @@
 import {Directive, Inject, Injector, Optional} from '@angular/core';
 
-import {App, switchClass} from '@wm/core';
+import {switchClass} from '@wm/core';
 
 import { IWidgetConfig, provideAsWidgetRef, StylableComponent } from '@wm/components/base';
 import { registerProps } from './router-outlet.props';
@@ -20,14 +20,12 @@ const WIDGET_CONFIG: IWidgetConfig = {
 })
 export class RouterOutletDirective extends StylableComponent {
     static initializeProps = registerProps();
-    isPrism: boolean;
-    constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, public app: App) {
+    constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
-        this.isPrism = this.app.isPrism;
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
-        if (key === 'columnwidth' && !this.isPrism) {
+        if (key === 'columnwidth') {
             switchClass(this.nativeElement, `col-md-${nv} col-sm-${nv}`, `col-md-${ov} col-sm-${ov}`);
         } else {
             super.onPropertyChange(key, nv, ov);
