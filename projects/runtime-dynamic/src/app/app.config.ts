@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, LOCALE_ID, RendererFactory2 } from "@angular/core";
+import { ApplicationConfig, importProvidersFrom, LOCALE_ID, RendererFactory2, APP_INITIALIZER } from "@angular/core";
 import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation } from "@angular/router";
 import { provideHttpClient, withXsrfConfiguration, withInterceptorsFromDi, withFetch } from "@angular/common/http";
 import { provideAnimations } from "@angular/platform-browser/animations";
@@ -202,11 +202,18 @@ export const appConfig: ApplicationConfig = {
             ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true }),
             ModalModule.forRoot()
         ),
-        // APP_INITIALIZER removed - initialization will happen after bootstrap in main.ts
-        // LOCALE_ID set to default value - will be updated after bootstrap
+        // APP_INITIALIZER for locale and app initialization
+        {
+            provide: APP_INITIALIZER,
+            useFactory: InitializeApp,
+            deps: [AbstractI18nService, AppJSResolve, AppBeforeLoadResolve, AppVariablesResolve, AppExtensionJSResolve],
+            multi: true
+        },
+        // LOCALE_ID will be set by I18n service
         {
             provide: LOCALE_ID,
-            useValue: 'en'
+            useFactory: setAngularLocale,
+            deps: [AbstractI18nService]
         }
     ]
 };
