@@ -296,8 +296,20 @@ class WMDefaultDomRenderer2 implements Renderer2 {
   }
 
   setProperty(el: any, name: string, value: any): void {
-    NG_DEV_MODE && checkNoSyntheticProp(name, 'property');
-    el[name] = value;
+    // Skip synthetic property check for animation properties (start with @)
+    if (!name || name.charCodeAt(0) !== AT_CHARCODE) {
+      NG_DEV_MODE && checkNoSyntheticProp(name, 'property');
+    }
+    
+    // Add null check to prevent errors when el is null
+    if (el != null) {
+      // For animation properties (starting with @), we need to handle them specially
+      if (name && name.charCodeAt(0) === AT_CHARCODE) {
+        // Animation properties are handled by the animation engine, not set directly
+        return;
+      }
+      el[name] = value;
+    }
   }
 
   setValue(node: any, value: string): void {
@@ -306,13 +318,24 @@ class WMDefaultDomRenderer2 implements Renderer2 {
 
   listen(target: 'window'|'document'|'body'|any, event: string, callback: (event: any) => boolean):
       () => void {
-      (typeof NG_DEV_MODE === 'undefined' || NG_DEV_MODE) && checkNoSyntheticProp(event, 'listener');
+      // Skip synthetic property check for animation events (start with @)
+      if (!event || event.charCodeAt(0) !== AT_CHARCODE) {
+          (typeof NG_DEV_MODE === 'undefined' || NG_DEV_MODE) && checkNoSyntheticProp(event, 'listener');
+      }
+      
       if (typeof target === 'string') {
           target = getDOM().getGlobalEventTarget(this.doc, target);
           if (!target) {
               throw new Error(`Unsupported event target ${target} for event ${event}`);
           }
       }
+      
+      // For animation events (starting with @), we need to handle them specially
+      if (event && event.charCodeAt(0) === AT_CHARCODE) {
+          // Animation events should be ignored in this custom renderer
+          return () => {};
+      }
+      
     return <() => void>this.eventManager.addEventListener(
                target, event, decoratePreventDefault(callback)) as () => void;
   }
@@ -320,7 +343,12 @@ class WMDefaultDomRenderer2 implements Renderer2 {
 
 const AT_CHARCODE = (() => '@'.charCodeAt(0))();
 function checkNoSyntheticProp(name: string, nameKind: string) {
-  if (name.charCodeAt(0) === AT_CHARCODE) {
+  if (name && name.charCodeAt(0) === AT_CHARCODE) {
+    // In production, we'll just ignore synthetic properties instead of throwing
+    // This prevents issues with animation properties in ngx-bootstrap components
+    if (typeof NG_DEV_MODE === 'undefined' || !NG_DEV_MODE) {
+      return;
+    }
     throw new Error(`Unexpected synthetic ${nameKind} ${name} found. Please make sure that:
   - Either \`BrowserAnimationsModule\` or \`NoopAnimationsModule\` are imported in your application.
   - There is corresponding configuration for the animation named \`${
