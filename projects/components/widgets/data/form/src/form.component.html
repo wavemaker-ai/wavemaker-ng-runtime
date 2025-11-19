@@ -24,7 +24,7 @@
             </ng-container>
           }
           @if (collapsible) {
-            <button type="button" class="app-icon wi panel-action" [title]="expanded? (this.appLocale?.LABEL_COLLAPSE||'Collapse'):(this.appLocale?.LABEL_EXPAND||'Expand')"
+            <button type="button" class="app-icon wi panel-action" [title]="expanded? (appLocale?.LABEL_COLLAPSE||'Collapse'):(appLocale?.LABEL_EXPAND||'Expand')"
             [ngClass]="expanded ? 'wi-minus': 'wi-plus'" (click)="expandCollapsePanel();"></button>
           }
         </div>

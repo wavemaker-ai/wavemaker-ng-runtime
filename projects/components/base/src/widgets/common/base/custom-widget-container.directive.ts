@@ -23,7 +23,10 @@ export class CustomWidgetContainerDirective {
         const widgetnames = this.componentInstance.widgetname;
         this.customWidgetRefProvider.getComponentFactoryRef(widgetname, ComponentType.WIDGET).then((componentFactory) => {
             if (componentFactory) {
-                const instanceRef = this.vcRef.createComponent(componentFactory, 0, this.inj);
+                const instanceRef = this.vcRef.createComponent(componentFactory, {
+                    index: 0,
+                    injector: this.inj
+                });
                 this.elRef.nativeElement.appendChild(instanceRef.location.nativeElement);
             }
         });

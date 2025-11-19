@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom, LOCALE_ID, Compiler, RendererFactory2 } from "@angular/core";
+import { ApplicationConfig, importProvidersFrom, LOCALE_ID, RendererFactory2 } from "@angular/core";
 import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation } from "@angular/router";
 import { provideHttpClient, withXsrfConfiguration, withInterceptorsFromDi, withFetch } from "@angular/common/http";
 import { provideAnimations } from "@angular/platform-browser/animations";
@@ -168,7 +168,6 @@ export const appConfig: ApplicationConfig = {
         AppResourceManagerService,
         PipeService,
         CustomIconsLoaderService,
-        Compiler,
         Viewport,
         DecimalPipe,
         SanitizePipe,

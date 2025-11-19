@@ -34,7 +34,10 @@ export class PrefabDirective {
             .then(async () => {
                 const componentFactory = await this.componentRefProvider.getComponentFactoryRef(prefabName, ComponentType.PREFAB);
                 if (componentFactory) {
-                    const instanceRef = this.vcRef.createComponent(componentFactory, 0, injector);
+                    const instanceRef = this.vcRef.createComponent(componentFactory, {
+                        index: 0,
+                        injector: injector
+                    });
                     this.elRef.nativeElement.appendChild(instanceRef.location.nativeElement);
                 }
             });

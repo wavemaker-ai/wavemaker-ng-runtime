@@ -36,7 +36,10 @@ export class PartialContainerDirective {
 
         const componentFactory = await this.partialRefProvider.getComponentFactoryRef(nv, ComponentType.PARTIAL, {prefab: prefabName});
         if (componentFactory) {
-            const instanceRef = this.vcRef.createComponent(componentFactory, 0, this.inj);
+            const instanceRef = this.vcRef.createComponent(componentFactory, {
+                index: 0,
+                injector: this.inj
+            });
             if (instanceRef && instanceRef['instance'] && prefabName) {
                 // @ts-ignore
                 instanceRef['instance'].prefabName = prefabName;
