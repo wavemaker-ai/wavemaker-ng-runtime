@@ -1,99 +1,150 @@
 import {
-    Compiler,
     Component,
+    ComponentRef,
+    ApplicationRef,
     CUSTOM_ELEMENTS_SCHEMA,
+    EnvironmentInjector,
     Injectable,
-    NgModule,
+    Injector,
     NO_ERRORS_SCHEMA,
-    ViewEncapsulation
+    Type,
+    ViewEncapsulation,
+    createComponent,
+    inject
 } from '@angular/core';
 
-import {App, extendProto, isDefined} from '@wm/core';
-import {transpile} from '@wm/transpiler';
-import {initComponentsBuildTask} from '@wm/build-task';
-
-import {AppManagerService} from './app.manager.service';
-import {RuntimeBaseModule} from '../runtime-base.module';
-import {get} from "lodash-es";
+import { extendProto, isDefined } from '@wm/core';
+import { transpile } from '@wm/transpiler';
+import { initComponentsBuildTask } from '@wm/build-task';
+import { AppManagerService } from './app.manager.service';
 
 initComponentsBuildTask();
 
-const componentFactoryRefCache = new Map<string, any>();
+// ==================== Types ====================
 
-const getDynamicModule = (componentRef: any) => {
-    return NgModule({
-        declarations: [componentRef],
-        imports: [
-            RuntimeBaseModule,
-        ],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
-    })(class DynamicModule {});
-};
+interface DynamicOptions {
+    selector?: string;
+    transpile?: boolean;
+    noCache?: boolean;
+    styles?: string;
+    inj?: Injector;
+}
 
-const getDynamicComponent = (
-    selector: any,
-    template: string,
-    css: string = '') => {
-    // @ts-ignore
+// ==================== Cache ====================
+
+const cache = new Map<string, Type<unknown>>();
+
+// ==================== Utilities ====================
+
+const isValidSelector = (s: string) => /^[a-zA-Z][a-zA-Z0-9-]*$/.test(s);
+const isValidMarkup = (m: string) => typeof m === 'string' && m.trim().length > 0;
+
+// ==================== Component Factory ====================
+
+let counter = 1;
+
+const createDynamicComponent = (selector: string, template: string, css = ''): Type<unknown> => {
+    if (!isValidSelector(selector)) throw new Error(`Invalid selector: ${selector}`);
+    if (!isValidMarkup(template)) throw new Error('Invalid markup');
+
+    class DynamicComponent {
+        readonly isDynamicComponent = true;
+    }
+
+    // Apply Component decorator as a function to avoid AOT compilation issues
     return Component({
         template,
         styles: [css],
         encapsulation: ViewEncapsulation.None,
-        selector
-    })(class DynamicComponent {
-        isDynamicComponent: boolean = true;
-    });
+        selector,
+        standalone: true,
+        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
+    })(DynamicComponent);
 };
+
+// ==================== Service ====================
 
 @Injectable()
 export class DynamicComponentRefProviderService {
-    private counter = 1;
+    private readonly appManager = inject(AppManagerService);
+    private readonly envInjector = inject(EnvironmentInjector);
+    private readonly injector = inject(Injector);
+    private readonly appRef = inject(ApplicationRef);
 
-    constructor(
-        private app: App,
-        private appManager: AppManagerService,
-        private compiler: Compiler
-    ) {}
-
-    public async getComponentFactoryRef(selector: string, markup: string, options: any = {}): Promise<any> {
-        // check in the cache.
-        let componentFactoryRef = componentFactoryRefCache.get(selector);
-
-        markup = options.transpile ? transpile(markup).markup : markup;
-        if (!componentFactoryRef || options.noCache) {
-            const componentDef = getDynamicComponent(selector, markup, options.styles);
-            const moduleDef = getDynamicModule(componentDef);
-
-            componentFactoryRef = this.compiler
-                .compileModuleAndAllComponentsSync(moduleDef)
-                .componentFactories
-                .filter(factory => factory.componentType === componentDef)[0];
-
-            componentFactoryRefCache.set(selector, componentFactoryRef);
-        }
-        return componentFactoryRef;
+    private normalize(opts: DynamicOptions = {}): Required<DynamicOptions> {
+        return {
+            selector: opts.selector ?? `wm-dynamic-component-${counter++}`,
+            transpile: isDefined(opts.transpile) ? opts.transpile : true,
+            noCache: isDefined(opts.noCache) ? opts.noCache : true,
+            styles: opts.styles ?? '',
+            inj: opts.inj ?? this.injector
+        };
     }
 
-    /**
-     * Creates the component dynamically and add it to the DOM
-     * @param target: HTML element where we need to append the created component
-     * @param markup: Template of the component
-     * @param context: Scope of the component
-     * @param options: We have options like
-                       selector: selector of the component
-                       transpile: flag for transpiling HTML. By default it is true
-                       nocache: flag for render it from cache or not. By default it is true
-     */
-    public async addComponent(target: HTMLElement, markup: string, context = {}, options: any = {}) {
-        options.transpile = isDefined(options.transpile) ? options.transpile : true;
-        options.noCache = isDefined(options.noCache) ? options.noCache : true;
-        options.selector = isDefined(options.selector) ? options.selector : 'wm-dynamic-component-' + this.counter++;
-        const componentFactoryRef = await this.getComponentFactoryRef(options.selector, markup, options);
-        const component = this.app.dynamicComponentContainerRef.createComponent(componentFactoryRef, {
-            index: 0,
-            injector: get(options, 'inj')
-        });
-        extendProto(component.instance, context);
-        target.appendChild(component.location.nativeElement);
+    public async getComponentFactoryRef(selector: string, markup: string, opts: DynamicOptions = {}): Promise<Type<unknown>> {
+        if (!isValidSelector(selector)) throw new Error(`Invalid selector: ${selector}`);
+
+        const options = this.normalize(opts);
+
+        // Check cache
+        if (!options.noCache && cache.has(selector)) {
+            return cache.get(selector)!;
+        }
+
+        try {
+            const processed = options.transpile ? transpile(markup).markup : markup;
+            const component = createDynamicComponent(selector, processed, options.styles);
+
+            if (!options.noCache) cache.set(selector, component);
+            return component;
+        } catch (err) {
+            this.handleError(err, selector);
+            throw err;
+        }
+    }
+
+    public async addComponent(
+        target: HTMLElement,
+        markup: string,
+        context: Record<string, unknown> = {},
+        opts: DynamicOptions = {}
+    ): Promise<ComponentRef<unknown>> {
+        if (!(target instanceof HTMLElement)) throw new Error('Invalid target element');
+
+        const options = this.normalize(opts);
+
+        try {
+            const componentType = await this.getComponentFactoryRef(options.selector, markup, options);
+            const ref = createComponent(componentType, {
+                environmentInjector: this.envInjector,
+                elementInjector: options.inj
+            });
+
+            if (Object.keys(context).length) extendProto(ref.instance, context);
+
+            this.appRef.attachView(ref.hostView);
+            target.appendChild(ref.location.nativeElement);
+
+            ref.onDestroy(() => this.appRef.detachView(ref.hostView));
+
+            return ref;
+        } catch (err) {
+            this.handleError(err, options.selector);
+            throw err;
+        }
+    }
+
+    public clearCache(): void {
+        cache.clear();
+    }
+
+    public getCacheSize(): number {
+        return cache.size;
+    }
+
+    private handleError(err: unknown, selector: string): void {
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        console.error(`Error creating component [${selector}]:`, msg, err);
+        this.appManager.notifyApp?.(`Failed to create component: ${msg}`, 'error');
     }
 }

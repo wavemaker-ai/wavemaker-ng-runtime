@@ -1,6 +1,7 @@
 import {
     Component,
-    CUSTOM_ELEMENTS_SCHEMA, Inject,
+    CUSTOM_ELEMENTS_SCHEMA,
+    Inject,
     Injectable,
     Injector,
     NO_ERRORS_SCHEMA,
@@ -21,26 +22,30 @@ import {
     ComponentType,
     getPrefabMinJsonUrl,
     getPrefabPartialJsonUrl,
-    AccessrolesDirective,
-    AppSpinnerComponent,
-    CustomToasterComponent,
-    AppComponent,
-    PrefabPreviewComponent,
-    EmptyPageComponent,
-    PrefabDirective as PrefabLoader,
     REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
 } from '@wm/runtime/base';
 import { AppResourceManagerService } from './app-resource-manager.service';
 import { isString, isUndefined } from "lodash-es";
 import * as customWidgets from '@wavemaker/custom-widgets-m3';
-import { ContentComponent, LayoutDirective, PageContentComponent, PageDirective, RouterOutletDirective, SpaPageDirective } from '@wm/components/page';
 import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+
+// All the directive/component imports
+import {
+    AccessrolesDirective, AppSpinnerComponent, CustomToasterComponent, AppComponent,
+    PrefabPreviewComponent, EmptyPageComponent, PrefabDirective as PrefabLoader
+} from '@wm/runtime/base';
+import {
+    ContentComponent, LayoutDirective, PageContentComponent, PageDirective,
+    RouterOutletDirective, SpaPageDirective
+} from '@wm/components/page';
 import { PartialDirective } from '@wm/components/base';
 import { ProgressBarComponent } from '@wm/components/basic/progress/progress-bar';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PrefabContainerDirective } from '@wm/components/prefab';
 
-interface IPageMinJSON {
+// ==================== Types ====================
+
+interface PageMinJSON {
     markup: string;
     script: string;
     styles: string;
@@ -48,273 +53,206 @@ interface IPageMinJSON {
     config?: string;
 }
 
-declare const window: Window & { resourceCache?: Map<string, any> };
+interface FragmentOptions {
+    prefab?: string;
+    [key: string]: unknown;
+}
 
-const fragmentCache = new Map<string, Promise<IPageMinJSON>>();
+type ScriptFn = (instance: Record<string, unknown>, app: Record<string, unknown>, utils: Record<string, unknown>) => void;
 
+// ==================== Caches ====================
+
+const fragmentCache = new Map<string, Promise<PageMinJSON>>();
+const componentCache = new Map<ComponentType, Map<string, Type<unknown>>>([
+    [ComponentType.PAGE, new Map()],
+    [ComponentType.PARTIAL, new Map()],
+    [ComponentType.PREFAB, new Map()],
+    [ComponentType.WIDGET, new Map()]
+]);
+const scriptCache = new Map<string, ScriptFn>();
+
+declare global {
+    interface Window { resourceCache?: Map<string, Promise<PageMinJSON>>; }
+}
 window.resourceCache = fragmentCache;
 
-const componentFactoryRefCache = new Map<ComponentType, Map<string, Type<any>>>();
+// ==================== Utilities ====================
 
-componentFactoryRefCache.set(ComponentType.PAGE, new Map<string, Type<any>>());
-componentFactoryRefCache.set(ComponentType.PARTIAL, new Map<string, Type<any>>());
-componentFactoryRefCache.set(ComponentType.PREFAB, new Map<string, Type<any>>());
-componentFactoryRefCache.set(ComponentType.WIDGET, new Map<string, Type<any>>());
-
-const _decodeURIComponent = (str: string) => decodeURIComponent(str.replace(/\+/g, ' '));
-
-const getFragmentUrl = (fragmentName: string, type: ComponentType, options?: any): string | undefined => {
-    if (type === ComponentType.PAGE || type === ComponentType.PARTIAL) {
-        return options && options.prefab ? getPrefabPartialJsonUrl(options.prefab, fragmentName) : `./pages/${fragmentName}/page.min.json`;
-    } else if (type === ComponentType.PREFAB) {
-        return getPrefabMinJsonUrl(fragmentName);
-    } else if (type === ComponentType.WIDGET) {
-        return `./custom-widgets/${fragmentName}/page.min.json`
+const decode = (str: string): string => {
+    try {
+        return decodeURIComponent(str.replace(/\+/g, ' '));
+    } catch {
+        return str;
     }
 };
 
-const scriptCache = new Map<string, Function>();
-const execScript = (
-    script: string,
-    identifier: string,
-    ctx: string,
-    instance: any,
-    app: any,
-    utils: any
-): void => {
-    let fn = scriptCache.get(identifier);
-    // Fix for [WMS-21196]: Incorrect script is being assigned,  when 2 prefabs have same partial name (i.e. same identifier).
+const getUrl = (name: string, type: ComponentType, options?: FragmentOptions): string => {
+    if (type === ComponentType.PAGE || type === ComponentType.PARTIAL) {
+        return options?.prefab ? getPrefabPartialJsonUrl(options.prefab, name) : `./pages/${name}/page.min.json`;
+    }
+    return type === ComponentType.PREFAB ? getPrefabMinJsonUrl(name) : `./custom-widgets/${name}/page.min.json`;
+};
+
+const execScript = (script: string, id: string, ctx: string, instance: Record<string, unknown>,
+    app: Record<string, unknown>, utils: Record<string, unknown>): void => {
+    let fn = scriptCache.get(id);
     if ((ctx === 'Partial' && !isUndefined(instance.Prefab)) || !fn) {
-        fn = new Function(ctx, 'App', 'Utils', script) as (instance: any, app: any, utils: any) => void;
-        scriptCache.set(identifier, fn);
+        fn = new Function(ctx, 'App', 'Utils', script) as ScriptFn;
+        scriptCache.set(id, fn);
     }
     fn(instance, app, utils);
 };
 
-class BaseDynamicComponent {
-    init() { }
-}
+// ==================== Component Imports ====================
 
-const imports = [
-    PartialDirective,
-    PageDirective,
-    AccessrolesDirective,
-    AppSpinnerComponent,
-    CustomToasterComponent,
-    AppComponent,
-    PrefabLoader,
-    PrefabPreviewComponent,
-    EmptyPageComponent,
-    LayoutDirective,
-    ContentComponent,
-    PageContentComponent,
-    SpaPageDirective,
-    RouterOutletDirective,
-    ProgressBarComponent,
-    PrefabContainerDirective,
-]
+const IMPORTS = [
+    ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS, CommonModule, FormsModule, ReactiveFormsModule,
+    PartialDirective, PageDirective, AccessrolesDirective, AppSpinnerComponent, CustomToasterComponent,
+    AppComponent, PrefabLoader, PrefabPreviewComponent, EmptyPageComponent, LayoutDirective,
+    ContentComponent, PageContentComponent, SpaPageDirective, RouterOutletDirective,
+    ProgressBarComponent, PrefabContainerDirective
+] as const;
 
-// Providers are now included directly in standalone components
-// The getDynamicProviders function is no longer needed since providers
-// are declared in the component decorator
+// ==================== Component Factory ====================
 
-const getDynamicComponent = (
-    componentName: string,
-    type: ComponentType,
-    template: string,
-    css: string,
-    script: string,
-    variables: string,
-): Type<any> => {
+const CONFIG_MAP = {
+    [ComponentType.PAGE]: { Base: BasePageComponent, prefix: 'app-page-', ctx: 'Page' },
+    [ComponentType.PARTIAL]: { Base: BasePartialComponent, prefix: 'app-partial-', ctx: 'Partial' },
+    [ComponentType.PREFAB]: { Base: BasePrefabComponent, prefix: 'app-prefab-', ctx: 'Prefab' },
+    [ComponentType.WIDGET]: { Base: BaseCustomWidgetComponent, prefix: 'app-custom-', ctx: 'Widget' }
+};
 
-    const componentDef = {
-        template,
-        styles: [css],
-        encapsulation: ViewEncapsulation.None
-    };
+const createComponent = (name: string, type: ComponentType, template: string,
+    css: string, script: string, variables: string): Type<unknown> => {
+    const { Base, prefix, ctx } = CONFIG_MAP[type];
+    const selector = prefix + name;
 
-    let BaseClass: any = BaseDynamicComponent;
-    let selector = '';
-    let context = '';
+    class DynamicComponent extends Base {
+        isDynamicComponent = true;
+        pageName?: string;
+        partialName?: string;
+        prefabName?: string;
+        customWidgetName?: string;
 
-    switch (type) {
-        case ComponentType.PAGE:
-            BaseClass = BasePageComponent;
-            selector = `app-page-${componentName}`;
-            context = 'Page';
-            break;
-        case ComponentType.PARTIAL:
-            BaseClass = BasePartialComponent;
-            selector = `app-partial-${componentName}`;
-            context = 'Partial';
-            break;
-        case ComponentType.PREFAB:
-            BaseClass = BasePrefabComponent;
-            selector = `app-prefab-${componentName}`;
-            context = 'Prefab';
-            break;
-        case ComponentType.WIDGET:
-            BaseClass = BaseCustomWidgetComponent;
-            selector = `app-custom-${componentName}`;
-            context = 'Widget';
-            break;
-    }
-
-    class DynamicComponent extends BaseClass {
-        isDynamicComponent: boolean = true;
-        pageName;
-        partialName;
-        prefabName;
-        customWidgetName;
         constructor(@Inject(Injector) public injector: Injector) {
             super();
             this.injector = injector;
-            switch (type) {
-                case ComponentType.PAGE:
-                    this.pageName = componentName;
-                    break;
-                case ComponentType.PARTIAL:
-                    this.partialName = componentName;
-                    break;
-                case ComponentType.PREFAB:
-                    this.prefabName = componentName;
-                    break;
-                case ComponentType.WIDGET:
-                    this.customWidgetName = componentName;
-                    break;
-            }
+
+            // Set component name based on type
+            if (type === ComponentType.PAGE) this.pageName = name;
+            else if (type === ComponentType.PARTIAL) this.partialName = name;
+            else if (type === ComponentType.PREFAB) this.prefabName = name;
+            else if (type === ComponentType.WIDGET) this.customWidgetName = name;
 
             super.init();
         }
 
-        evalUserScript(instance: any, appContext: any, utils: any): void {
-            execScript(script, selector, context, instance, appContext, utils);
+        evalUserScript(instance: Record<string, unknown>, app: Record<string, unknown>, utils: Record<string, unknown>): void {
+            execScript(script, selector, ctx, instance, app, utils);
         }
 
-        getVariables() {
-            return JSON.parse(variables);
+        getVariables(): Record<string, unknown> {
+            try {
+                return JSON.parse(variables) || {};
+            } catch {
+                return {};
+            }
         }
 
-        // in preview mode, there will be no function registered. functions will be generated dynamically through $parseEvent and $parseExpr
-        getExpressions() {
+        getExpressions(): Record<string, unknown> {
             return {};
         }
     }
 
-    const component = Component({
-        ...componentDef,
+    return Component({
+        template,
+        styles: [css],
+        encapsulation: ViewEncapsulation.None,
         selector,
         standalone: true,
-        imports: [
-            ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
-            CommonModule,
-            FormsModule,
-            ReactiveFormsModule,
-            ...imports
-        ],
-        providers: [
-            {
-                provide: UserDefinedExecutionContext,
-                useExisting: DynamicComponent
-            }
-        ],
+        imports: [...IMPORTS],
+        providers: [{ provide: UserDefinedExecutionContext, useExisting: DynamicComponent }],
         schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
-    })(DynamicComponent)
-    return component;
+    })(DynamicComponent);
 };
+
+// ==================== Service ====================
 
 @Injectable()
 export class ComponentRefProviderService extends ComponentRefProvider {
-    private dynamicComponentCache = new Map<string, Type<any>>(); 
-    private app: App = inject(App);
-    private appManager: AppManagerService = inject(AppManagerService);
-    private resouceMngr: AppResourceManagerService = inject(AppResourceManagerService);
-
-    private loadResourcesOfFragment(componentName: string, componentType: ComponentType, options?: any): Promise<IPageMinJSON> {
-        const url = getFragmentUrl(componentName, componentType, options);
-
-        const resource = fragmentCache.get(url);
-
-        if (resource) {
-            return resource;
-        }
-        const promise = (((componentType === ComponentType.WIDGET && !customWidgets[componentName]) || componentType !== ComponentType.WIDGET) ? this.resouceMngr.get(url, true) : Promise.resolve(customWidgets[componentName]))
-            .then(({ markup, script, styles, variables, config }: IPageMinJSON) => {
-                const response = {
-                    markup: transpile(_decodeURIComponent(markup)).markup,
-                    script: _decodeURIComponent(script),
-                    styles: scopeComponentStyles(componentName, componentType, _decodeURIComponent(styles)),
-                    variables: getValidJSON(_decodeURIComponent(variables)),
-                    ...(config ? { config: getValidJSON(_decodeURIComponent(config)) } : {})
-                };
-                fragmentCache.set(url, Promise.resolve(response));
-
-                return response;
-            }, (e: any) => {
-                const status = e.details.status;
-                const errorMsgMap = {
-                    404: this.app.appLocale.MESSAGE_PAGE_NOT_FOUND || 'The page you are trying to reach is not available',
-                    403: this.app.appLocale.LABEL_ACCESS_DENIED || 'Access Denied'
-                };
-                return Promise.reject(errorMsgMap[status]);
-            });
-        fragmentCache.set(url, promise);
-        return promise as Promise<IPageMinJSON>;
-    }
+    private readonly cache = new Map<string, Type<unknown>>();
+    private readonly app = inject(App);
+    private readonly appManager = inject(AppManagerService);
+    private readonly resourceMngr = inject(AppResourceManagerService);
 
     constructor() {
         super();
     }
 
-    public async getComponentFactoryRef(componentName: string, componentType: ComponentType, options?: Record<string, string>): Promise<Type<any> | void> {
-        // check in the cache.
-        const componentFactoryMap = componentFactoryRefCache.get(componentType);
-        let componentClass: Type<any>;
-        const updatedComponentName = (options && options['prefab']) ? options['prefab'] + componentName : componentName;
-        
-        if (componentFactoryMap) {
-            componentClass = componentFactoryMap.get(updatedComponentName);
-            if (componentClass) {
-                return componentClass;
+    private async loadFragment(name: string, type: ComponentType, options?: FragmentOptions): Promise<PageMinJSON> {
+        const url = getUrl(name, type, options);
+
+        if (fragmentCache.has(url)) {
+            return fragmentCache.get(url)!;
+        }
+
+        const promise = (async () => {
+            try {
+                const shouldFetch = type === ComponentType.WIDGET && !customWidgets[name];
+                const raw = shouldFetch || type !== ComponentType.WIDGET
+                    ? await this.resourceMngr.get(url, true)
+                    : customWidgets[name];
+
+                return {
+                    markup: transpile(decode(raw.markup)).markup,
+                    script: decode(raw.script),
+                    styles: scopeComponentStyles(name, type, decode(raw.styles)),
+                    variables: getValidJSON(decode(raw.variables)),
+                    ...(raw.config && { config: getValidJSON(decode(raw.config)) })
+                };
+            } catch (err: unknown) {
+                const status = (err as { details?: { status?: number } })?.details?.status;
+                const msgs: Record<number, string> = {
+                    404: this.app.appLocale?.MESSAGE_PAGE_NOT_FOUND || 'Page not available',
+                    403: this.app.appLocale?.LABEL_ACCESS_DENIED || 'Access Denied'
+                };
+                throw msgs[status!] || 'Unknown error';
             }
-        }
+        })();
 
-        // Check dynamic component cache
-        const cacheKey = `${componentType}-${updatedComponentName}`;
-        const cachedComponent = this.dynamicComponentCache.get(cacheKey);
-        if (cachedComponent) {
-            return cachedComponent;
-        }
-
-        return this.loadResourcesOfFragment(componentName, componentType, options)
-            .then(({ markup, script, styles, variables }) => {
-                componentClass = getDynamicComponent(componentName, componentType, markup, styles, script, JSON.stringify(variables));
-                
-                // Store in both caches
-                this.dynamicComponentCache.set(cacheKey, componentClass);
-                componentFactoryRefCache.get(componentType).set(updatedComponentName, componentClass);
-
-                return componentClass;
-            }, (err: any) => {
-                if (err) {
-                    const msg = "Error while loading page";
-                    // console the error for easy debugging
-                    console.log(msg, err);
-                    this.appManager.notifyApp(
-                        isString(err) ? err : msg + ', check browser console for error details',
-                        'error'
-                    );
-                }
-            });
+        fragmentCache.set(url, promise);
+        return promise;
     }
 
-    // clears the cache map
-    public clearComponentFactoryRefCache() {
-        this.resouceMngr.clearCache();
+    public async getComponentFactoryRef(name: string, type: ComponentType, options?: FragmentOptions): Promise<Type<unknown> | void> {
+        const cacheKey = options?.prefab ? `${options.prefab}${name}` : name;
+        const fullKey = `${type}-${cacheKey}`;
+
+        // Check both caches
+        const map = componentCache.get(type);
+        if (map?.has(cacheKey)) return map.get(cacheKey);
+        if (this.cache.has(fullKey)) return this.cache.get(fullKey);
+
+        try {
+            const { markup, script, styles, variables } = await this.loadFragment(name, type, options);
+            const component = createComponent(name, type, markup, styles, script, JSON.stringify(variables));
+
+            // Store in both caches
+            this.cache.set(fullKey, component);
+            map?.set(cacheKey, component);
+
+            return component;
+        } catch (err: unknown) {
+            const msg = isString(err) ? err : 'Error loading page, check console';
+            console.error('Component load error:', err);
+            this.appManager.notifyApp(msg, 'error');
+        }
+    }
+
+    public clearComponentFactoryRefCache(): void {
+        this.resourceMngr.clearCache();
         fragmentCache.clear();
-        this.dynamicComponentCache.clear();
-        componentFactoryRefCache.forEach(map => {
-            map.clear();
-        });
+        this.cache.clear();
+        componentCache.forEach(m => m.clear());
     }
 }
