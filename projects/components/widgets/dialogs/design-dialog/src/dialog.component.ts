@@ -71,8 +71,9 @@ export class DialogComponent extends BaseDialog implements OnInit {
             {
                 class: `${DIALOG_CLS} ${dialogClass || ''}`,
                 backdrop,
-                keyboard: toBoolean(closable) ? true : !toBoolean(modal),
-                ignoreBackdropClick: toBoolean(modal)
+                keyboard: toBoolean(closable) ? true : !toBoolean(modal)
+                // ignoreBackdropClick is deprecated in ngx-bootstrap v20
+                // backdrop: 'static' already prevents closing on backdrop click
             },
             explicitContext
         );
