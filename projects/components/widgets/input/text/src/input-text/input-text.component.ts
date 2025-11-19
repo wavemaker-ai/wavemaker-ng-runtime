@@ -27,6 +27,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 })
 export class InputTextComponent extends BaseInput implements OnInit{
     static initializeProps = registerProps();
+    // datavalue is an accessor (getter/setter) in BaseInput, not a property - do not redeclare
 
     public required: boolean;
     public maxchars: number;

@@ -29,6 +29,17 @@ const WIDGET_CONFIG = {widgetType: 'wm-radioset', hostClass: DEFAULT_CLS};
 export class RadiosetComponent extends DatasetAwareFormComponent {
     static initializeProps = registerProps();
 
+    // Explicit declarations for TypeScript - these properties are inherited from base classes
+    declare public readonly nativeElement: HTMLElement;
+    declare protected viewParent: any;
+    // datavalue and modelByKey are inherited as accessors from DatasetAwareFormComponent, not as instance properties
+    declare public invokeOnChange: (value: any, $event?: Event | any, valid?: boolean) => void;
+    declare public invokeOnTouched: ($event?: Event) => void;
+    declare public multiple: boolean;
+    declare protected eventManager: any;
+    declare public readonly: boolean;
+    declare public groupby: string;
+
     public layout = '';
     public disabled: boolean;
     public itemsperrow: string;
@@ -36,7 +47,7 @@ export class RadiosetComponent extends DatasetAwareFormComponent {
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
-        styler(this.nativeElement, this);
+        styler(this.nativeElement, this as any);
         this.multiple = false;
     }
 

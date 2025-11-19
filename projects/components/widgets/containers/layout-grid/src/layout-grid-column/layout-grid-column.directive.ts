@@ -21,7 +21,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 })
 export class LayoutGridColumnDirective extends StylableComponent {
     static initializeProps = registerProps();
-    constructor(inj: Injector, @Attribute('height') height, private viewport: Viewport, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, @Attribute('height') height: string | null, private viewport: Viewport, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
 
         // if the height is provided set the overflow to auto
@@ -32,7 +32,7 @@ export class LayoutGridColumnDirective extends StylableComponent {
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER);
     }
 
-    onPropertyChange(key, nv, ov?) {
+    onPropertyChange(key: string, nv: any, ov?: any) {
         const prefix = 'sm';
         if (key === 'columnwidth') {
             if ((this.viewport.isMobileType && !this.getAttr('xscolumnwidth')) || !this.viewport.isMobileType) {

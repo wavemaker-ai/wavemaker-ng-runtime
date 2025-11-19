@@ -30,6 +30,12 @@ const WIDGET_INFO = {widgetType: 'wm-login', hostClass: 'app-login'};
     ]
 })
 export class LoginComponent extends StylableComponent implements AfterViewInit, OnDestroy {
+    /**
+     * DOM node reference of the component root
+     * This property is inherited from BaseComponent but TypeScript needs explicit type declaration here
+     */
+    public readonly nativeElement: HTMLElement;
+
     static initializeProps = registerProps();
     loginBtnCmp: ButtonComponent;
 
@@ -45,21 +51,25 @@ export class LoginComponent extends StylableComponent implements AfterViewInit, 
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_INFO, explicitContext);
-        styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER);
+        // Access inherited nativeElement from BaseComponent
+        styler((this as any).nativeElement, this, APPLY_STYLES_TYPE.CONTAINER);
     }
 
     onSuccessCB() {
-        this.invokeEventCallback('success');
+        // Access inherited invokeEventCallback from BaseComponent
+        (this as any).invokeEventCallback('success');
     }
 
     onErrorCB(error?) {
         this.loginMessage = {
             type: 'error',
-            caption: this.errormessage || error || this.appLocale.LABEL_INVALID_USERNAME_OR_PASSWORD,
+            // Access inherited appLocale from BaseComponent
+            caption: this.errormessage || error || (this as any).appLocale.LABEL_INVALID_USERNAME_OR_PASSWORD,
             show: true
         };
         this.messageCmp.showMessage(this.loginMessage.caption, this.loginMessage.type);
-        this.invokeEventCallback('error');
+        // Access inherited invokeEventCallback from BaseComponent
+        (this as any).invokeEventCallback('error');
     }
 
     getLoginDetails(): any {
@@ -77,7 +87,8 @@ export class LoginComponent extends StylableComponent implements AfterViewInit, 
     initLoginButtonActions() {
         this.loginBtnClickHandler = event => {
             // if no event is attached to the onSubmit of login widget or loginButton inside it, invoke default login action
-            if (!this.nativeElement.hasAttribute('submit.event') && !this.loginBtnCmp.getNativeElement().hasAttribute('click.event') && !this.loginBtnCmp.getNativeElement().hasAttribute('tap.event')) {
+            // Access inherited nativeElement from BaseComponent
+            if (!(this as any).nativeElement.hasAttribute('submit.event') && !this.loginBtnCmp.getNativeElement().hasAttribute('click.event') && !this.loginBtnCmp.getNativeElement().hasAttribute('tap.event')) {
                 this.doLogin();
             }
         };

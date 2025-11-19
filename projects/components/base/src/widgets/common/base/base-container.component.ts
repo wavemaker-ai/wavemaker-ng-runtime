@@ -1,7 +1,7 @@
 import {ContentChildren, Directive, Inject, Injector, Optional} from '@angular/core';
 import { StylableComponent } from "./stylable.component";
 import { RedrawableDirective } from "../redraw/redrawable.directive";
-import { IWidgetConfig } from '../../framework/types';
+import { IWidgetConfig, WidgetConfig } from '../../framework/types';
 import {includes, pickBy} from "lodash-es";
 
 @Directive()
@@ -11,7 +11,7 @@ export abstract class BaseContainerComponent extends StylableComponent {
     public content;
     public Widgets;
 
-    constructor(inj: Injector, WIDGET_CONFIG: IWidgetConfig, explicitContext: any) {
+    constructor(inj: Injector, @Inject(WidgetConfig) WIDGET_CONFIG: IWidgetConfig, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
     }
 

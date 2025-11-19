@@ -29,6 +29,12 @@ declare const _;
     exportAs: 'wmWidgetContainer'
 })
 export class CustomWidgetContainerDirective extends DatasetAwareFormComponent implements OnInit, OnDestroy {
+    /**
+     * Properties inherited from base classes but TypeScript needs explicit type declarations here
+     */
+    public readonly nativeElement: HTMLElement;
+    // formControl is inherited as a getter from BaseFormCustomComponent, no need to redeclare
+
     static initializeProps = registerProps();
 
     widgetType: string;
@@ -60,14 +66,14 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
         this.widgetType = widgetType;
         this.name = elRef.nativeElement.getAttribute('name');
 
-        styler(this.nativeElement, this);
+        styler(this.nativeElement, this as any);
 
         // Call on property change on name to set name attribute on element.
-        this.registerReadyStateListener(() => {
+        (this as any).registerReadyStateListener(() => {
             super.onPropertyChange('name', this.name);
         });
 
-        this.registerPropertyChangeListener(((key: string, nv: any, ov?: any) => {
+        (this as any).registerPropertyChangeListener(((key: string, nv: any, ov?: any) => {
             if (!key.startsWith('prop-')) return;
             const propName = key.slice(5)
             if (this.props.hasOwnProperty(propName) && this.props[propName] !== nv) {
@@ -122,6 +128,11 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
         this.propsReady(resolveFn);
     }
 
+    ngOnInit() {
+        // OnInit implementation required by interface
+        // Base class handles initialization
+    }
+
     private prepareProps(props = {}) {
         const propsMap = new Map(customWidgetProps);
         Object.entries(props).forEach(([k, v]: [string, any]) => {
@@ -147,9 +158,10 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
     }
 
     updateDataValue(value) {
-        if(this.formControl && this.formControl.control && value !== this.formControl.control.value) {
-            this.formControl.control.setValue(value);
-            if (this.formControl.control.invalid) {
+        // Access inherited formControl from base class
+        if((this as any).formControl && (this as any).formControl.control && value !== (this as any).formControl.control.value) {
+            (this as any).formControl.control.setValue(value);
+            if ((this as any).formControl.control.invalid) {
                 this.onErroSubject.next(null);
             }
         }
@@ -159,13 +171,14 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
         let modifiedKey = key.replace('base-', '');
         if(this.asAttr) {
             this[this.baseWidgetName][modifiedKey] = value;
-            this.nativeElement.children[0].children[0]['widget'].viewParent[this.baseWidgetName][modifiedKey] = value;
+            (this as any).nativeElement.children[0].children[0]['widget'].viewParent[this.baseWidgetName][modifiedKey] = value;
             this[this.baseWidgetName].initDatasetItems();
         } else {
             this[modifiedKey] = value;
-            this.nativeElement.children[0].children[0]['widget'].viewParent[modifiedKey] = value;
+            (this as any).nativeElement.children[0].children[0]['widget'].viewParent[modifiedKey] = value;
         }
-        if(this.formControl && modifiedKey === 'datavalue'){
+        // Access inherited formControl from base class
+        if((this as any).formControl && modifiedKey === 'datavalue'){
             this.updateDataValue(value);
         }
     }

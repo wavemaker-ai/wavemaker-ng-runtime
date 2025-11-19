@@ -9,6 +9,13 @@ import { BaseInput } from '../base-input/base-input';
 import {includes, intersection, isNull, isString, isUndefined, round, toArray} from "lodash-es";
 
 export abstract class NumberLocale extends BaseInput implements Validator {
+    // TypeScript fix: Explicitly declare inherited properties for type resolution
+    public readonly nativeElement: HTMLElement;
+    // $element is an accessor (getter) in BaseComponent, not a property - do not redeclare
+    public readonly widgetType: string;
+    protected _onChange: any;
+    // getAttr and getPrevDataValue are inherited methods from base classes - do not redeclare
+    
     private DECIMAL: string;
     private GROUP: string;
     private selectedLocale: string;
@@ -64,7 +71,7 @@ export abstract class NumberLocale extends BaseInput implements Validator {
             // handleChange() should be called when the invalid datavalue (e.g., "3.") is removed, and the value becomes an empty string ("").
             if ((prevDataValue || prevDataValue == 0 || prevDataValue == null) && !this.isDefaultQuery) {
                 this.handleChange(value);
-                this._onChange();
+                (this as any)._onChange();
             }
             return;
         }
@@ -478,7 +485,7 @@ export abstract class NumberLocale extends BaseInput implements Validator {
 
         // allow actions if control key is pressed or if backspace is pressed. (for Mozilla).
         if ($event.ctrlKey || includes(['Backspace', 'ArrowRight', 'ArrowLeft', 'Tab', 'Enter', 'Delete'], $event.key)) {
-            return;
+            return true; // Fix TS2416: Return boolean instead of void to match expected signature
         }
 
         const validity = new RegExp(`^[\\d\\s-,.e+${this.GROUP}${this.DECIMAL}]$`, 'i');
@@ -543,6 +550,8 @@ export abstract class NumberLocale extends BaseInput implements Validator {
         if (!inputValue && $event.code === 'Space') {
             return false;
         }
+        // Fix TS2416: Always return a boolean value - if we reach here, input is valid
+        return true;
     }
     onBackspace($event) {
         this.isDefaultQuery = false;

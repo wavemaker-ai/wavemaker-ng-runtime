@@ -15,6 +15,12 @@ const WIDGET_CONFIG = {widgetType: 'wm-top-nav', hostClass: DEFAULT_CLS};
     exportAs: 'wmTopNav'
 })
 export class TopNavDirective extends StylableComponent {
+    /**
+     * DOM node reference of the component root
+     * This property is inherited from BaseComponent but TypeScript needs explicit type declaration here
+     */
+    public readonly nativeElement: HTMLElement;
+
     static initializeProps = registerProps();
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {

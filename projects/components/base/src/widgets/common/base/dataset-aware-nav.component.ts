@@ -1,4 +1,4 @@
-import {Inject, Injector, Optional} from '@angular/core';
+import {Injectable, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 
 import { Subject } from 'rxjs';
 
@@ -9,6 +9,7 @@ import { createArrayFrom } from '../../../utils/data-utils';
 import { getEvaluatedData } from '../../../utils/widget-utils';
 import { getOrderedDataset } from '../../../utils/form-utils';
 import { StylableComponent } from './stylable.component';
+import { IWidgetConfig, WidgetConfig } from '../../framework/types';
 import {debounce, first, get, isUndefined, omitBy, startsWith} from "lodash-es";
 
 const getValidLink = (link) => {
@@ -25,7 +26,8 @@ const getValidLink = (link) => {
     }
 };
 
-export class DatasetAwareNavComponent extends StylableComponent {
+@Injectable()
+export class DatasetAwareNavComponent extends StylableComponent implements OnDestroy {
 
     public nodes: Array<NavNode> = [];
     public dataset: any;
@@ -61,21 +63,6 @@ export class DatasetAwareNavComponent extends StylableComponent {
     protected binditemid: string | null;
     protected nodes$ = new Subject();
 
-    constructor(inj: Injector, WIDGET_CONFIG, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
-        super(inj, WIDGET_CONFIG, explicitContext);
-        this.securityService = this.inj.get(SecurityService);
-        this.binditemlabel = this.nativeElement.getAttribute('itemlabel.bind');
-        this.binditemhint = this.nativeElement.getAttribute('itemhint.bind');
-        this.binditemicon = this.nativeElement.getAttribute('itemicon.bind');
-        this.binditemaction = this.nativeElement.getAttribute('itemaction.bind');
-        this.binditembadge = this.nativeElement.getAttribute('itembadge.bind');
-        this.binditemchildren = this.nativeElement.getAttribute('itemchildren.bind');
-        this.binditemid = this.nativeElement.getAttribute('itemid.bind');
-        this.binditemlink = this.nativeElement.getAttribute('itemlink.bind');
-        this.binditemtarget = this.nativeElement.getAttribute('itemtarget.bind');
-        this.binduserrole = this.nativeElement.getAttribute('userrole.bind');
-        this.bindisactive = this.nativeElement.getAttribute('isactive.bind');
-    }
 
     /**
      * constructs individual node for the widget model.
@@ -206,7 +193,28 @@ export class DatasetAwareNavComponent extends StylableComponent {
     }
 
     // debounce function for reset nodes functions.
-    private _resetNodes = debounce(this.resetNodes, 50);
+    private _resetNodes: Function;
+
+    constructor(inj: Injector, @Inject(WidgetConfig) WIDGET_CONFIG: IWidgetConfig, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+        super(inj, WIDGET_CONFIG, explicitContext);
+        // Access inherited inj property from BaseComponent
+        this.securityService = (this as any).inj.get(SecurityService);
+        // Access inherited nativeElement property from BaseComponent
+        this.binditemlabel = (this as any).nativeElement.getAttribute('itemlabel.bind');
+        this.binditemhint = (this as any).nativeElement.getAttribute('itemhint.bind');
+        this.binditemicon = (this as any).nativeElement.getAttribute('itemicon.bind');
+        this.binditemaction = (this as any).nativeElement.getAttribute('itemaction.bind');
+        this.binditembadge = (this as any).nativeElement.getAttribute('itembadge.bind');
+        this.binditemchildren = (this as any).nativeElement.getAttribute('itemchildren.bind');
+        this.binditemid = (this as any).nativeElement.getAttribute('itemid.bind');
+        this.binditemlink = (this as any).nativeElement.getAttribute('itemlink.bind');
+        this.binditemtarget = (this as any).nativeElement.getAttribute('itemtarget.bind');
+        this.binduserrole = (this as any).nativeElement.getAttribute('userrole.bind');
+        this.bindisactive = (this as any).nativeElement.getAttribute('isactive.bind');
+        
+        // MEMORY LEAK FIX: Store debounced function reference for cleanup
+        this._resetNodes = debounce(this.resetNodes.bind(this), 50);
+    }
 
     onPropertyChange(key, nv, ov) {
         switch (key) {
@@ -225,6 +233,22 @@ export class DatasetAwareNavComponent extends StylableComponent {
                 break;
         }
         super.onPropertyChange(key, nv, ov);
+    }
+    
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Complete Subject to prevent memory leaks
+        if (this.nodes$ && !this.nodes$.closed) {
+            this.nodes$.complete();
+        }
+        
+        // MEMORY LEAK FIX: Cancel debounced function to prevent memory leaks
+        // Debounced functions hold references to the original function and arguments
+        if (this._resetNodes && typeof (this._resetNodes as any).cancel === 'function') {
+            (this._resetNodes as any).cancel();
+        }
+        
+        // CRITICAL FIX: Call super.ngOnDestroy() to unwatch all watchers
+        super.ngOnDestroy();
     }
 }
 

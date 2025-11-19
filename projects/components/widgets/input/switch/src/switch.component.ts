@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {AfterViewInit, Component, Inject, Injector, Optional} from '@angular/core';
+import {AfterViewInit, Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import {$appDigest, debounce, isDefined, setCSS, toBoolean} from '@wm/core';
@@ -25,8 +25,23 @@ const WIDGET_CONFIG = {widgetType: 'wm-switch', hostClass: DEFAULT_CLS};
     ],
     exportAs: 'wmSwitch'
 })
-export class SwitchComponent extends DatasetAwareFormComponent implements AfterViewInit {
+export class SwitchComponent extends DatasetAwareFormComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
+
+    // Explicit declarations for TypeScript - these properties are inherited from base classes
+    declare public readonly nativeElement: HTMLElement;
+    // getAttr is public in BaseComponent, so it should be public here too
+    declare public getAttr: (attrName: string) => string | null;
+    declare protected dataset$: any;
+    declare protected datavalue$: any;
+    declare public registerDestroyListener: (fn: any) => void;
+    // datavalue and modelByKey are inherited as accessors from DatasetAwareFormComponent, not as instance properties
+    declare public toBeProcessedDatavalue: any;
+    declare public datasetItems: any[];
+    // _modelByValue is public in DatasetAwareFormComponent, so it should be public here too
+    declare public _modelByValue: any;
+    declare public invokeOnChange: (value: any, $event?: Event | any, valid?: boolean) => void;
+    declare public invokeOnTouched: ($event?: Event) => void;
 
     options = [];
     selectedItem: DataSetItem;
@@ -55,7 +70,6 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
         }, 200);
 
         const datasetSubscription = this.dataset$.subscribe(() => this.updateSwitchOptions());
-
         this.registerDestroyListener(() => datasetSubscription.unsubscribe());
 
         const datavalueSubscription = this.datavalue$.subscribe(() => {
@@ -66,7 +80,7 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
-        styler(this.nativeElement as HTMLElement, this);
+        styler(this.nativeElement as HTMLElement, this as any);
     }
 
     onStyleChange(key: string, nv: any, ov?: any) {
@@ -182,5 +196,16 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
             }
             super.onPropertyChange(key, nv, ov);
         }
+    }
+    
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Cancel debounced function to prevent memory leaks
+        // Debounced functions hold references to the original function and arguments
+        if (this._debounceSetSelectedValue && typeof (this._debounceSetSelectedValue as any).cancel === 'function') {
+            (this._debounceSetSelectedValue as any).cancel();
+        }
+        
+        // CRITICAL FIX: Call super.ngOnDestroy() to clean up parent class resources
+        super.ngOnDestroy();
     }
 }

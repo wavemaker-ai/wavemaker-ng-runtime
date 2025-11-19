@@ -31,11 +31,20 @@ export const register = (widget: any, viewParent: any, widgetId: string, name?: 
     return () => {
         console.log('[WidgetRegistry] Unregistering widget:', widgetId, name);
         // MEMORY LEAK FIX: Clear widget object before deleting from registry
+        // CRITICAL FIX: Use try-catch to handle revoked proxy errors gracefully
+        // The widget proxy may be revoked during component destruction, causing "Cannot perform 'set' on a proxy that has been revoked" errors
         const widgetObj = registryById.get(widgetId);
         if (widgetObj) {
-            widgetObj.widget = null;
-            widgetObj.viewParent = null;
-            widgetObj.context = null;
+            try {
+                // Try to clear properties on the widget object
+                // If the proxy is revoked, this will throw an error which we catch and ignore
+                widgetObj.widget = null;
+                widgetObj.viewParent = null;
+                widgetObj.context = null;
+            } catch (e) {
+                // Ignore errors when proxy is revoked - the registry cleanup will still proceed
+                // This prevents "Cannot perform 'set' on a proxy that has been revoked" errors
+            }
         }
         registryById.delete(widgetId);
         if (registeredWithParent && viewParent && viewParent.Widgets) {

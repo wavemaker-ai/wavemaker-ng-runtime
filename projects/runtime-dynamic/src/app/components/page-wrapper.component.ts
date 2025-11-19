@@ -26,6 +26,8 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
     subscription: Subscription;
     instance: any;
 
+    private appManager: AppManagerService;
+
     constructor(
         private injector: Injector,
         private route: ActivatedRoute,
@@ -33,14 +35,18 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
         private appRef: ApplicationRef,
         private metadataService: MetadataService,
         private securityService: SecurityService,
-        private appManager: AppManagerService,
         private app: App,
         private ngZone: NgZone,
         private elRef: ElementRef,
         private spinnerService: AbstractSpinnerService,
         private componentRefProvider: ComponentRefProvider,
         private router: Router
-    ) {}
+    ) {
+        // Fix NG2003: Get AppManagerService from injector instead of constructor injection
+        // This matches the pattern used in BasePageComponent
+        // AppManagerService may not be available as an injection token, so use injector.get
+        this.appManager = this.injector.get(AppManagerService);
+    }
 
     getTargetNode() {
         return this.elRef.nativeElement;
@@ -77,6 +83,13 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
                 // Clear previous components to prevent memory leaks
                 if (this.vcRef.length > 0) {
                     this.vcRef.clear();
+                }
+                
+                // PERFORMANCE OPTIMIZATION: Clear component factory cache before loading new page
+                // This prevents accumulation of compiled code from previous pages
+                // Only clear if componentRefProvider has the method (runtime-dynamic version)
+                if (this.componentRefProvider && typeof (this.componentRefProvider as any).clearComponentFactoryRefCache === 'function') {
+                    (this.componentRefProvider as any).clearComponentFactoryRefCache();
                 }
                 
                 const pageComponentFactoryRef = await this.componentRefProvider.getComponentFactoryRef(pageName, ComponentType.PAGE);

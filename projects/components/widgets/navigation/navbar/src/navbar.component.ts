@@ -50,6 +50,10 @@ export class NavbarComponent extends StylableComponent implements AfterViewInit,
         this.navContent.nativeElement.classList.toggle('in');
     }
 
+    ngAfterViewInit() {
+        super.ngAfterViewInit();
+    }
+
     ngOnDestroy() {
         // Clear all pending timeouts
         this.pendingTimeouts.forEach(timeoutId => {

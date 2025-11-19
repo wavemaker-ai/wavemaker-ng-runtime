@@ -293,13 +293,18 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
 
+    // MEMORY LEAK FIX: Track timeout for cleanup
+    private viewInitTimeoutId: number | null = null;
+
     ngAfterViewChecked(): void {
         if (!this.scriptsLoaded && this.prefabContainerDirective) {
             this.scriptsLoaded = true;
             this.loadScripts().then(() => {
                 this.compileContent = true;
                 this.registerChangeListeners();
-                setTimeout(() => {
+                // MEMORY LEAK FIX: Track timeout for cleanup
+                this.viewInitTimeoutId = window.setTimeout(() => {
+                    this.viewInitTimeoutId = null;
                     // trigger viewInit$.complete after a timeout so that the widget listeners are ready before Variable xhr call.
                     this.viewInit$.complete();
                     this.fragmentsLoaded$.subscribe(noop, noop, () => this.invokeOnReady());
@@ -347,6 +352,12 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
         // appLocale has prototype chains that prevent GC if not cleared
         this.appLocale = null;
         this.i18nService = null;
+        
+        // MEMORY LEAK FIX: Clear pending timeout
+        if (this.viewInitTimeoutId !== null) {
+            clearTimeout(this.viewInitTimeoutId);
+            this.viewInitTimeoutId = null;
+        }
         
         this.containerWidget = null;
         this.viewParent = null;

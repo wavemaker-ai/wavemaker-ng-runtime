@@ -1,12 +1,12 @@
-import { AfterViewInit, QueryList, ViewChildren, Directive, Optional, Inject } from '@angular/core';
+import { AfterViewInit, OnDestroy, QueryList, ViewChildren, Directive, Optional, Inject, Injector } from '@angular/core';
 import { MenuComponent } from './menu.component';
-import { BaseContainerComponent } from '@wm/components/base';
+import { BaseContainerComponent, IWidgetConfig } from '@wm/components/base';
 import { includes } from "lodash-es";
 
 const menuProps = ['itemlabel', 'itemicon', 'itemlink', 'itemaction', 'itemchildren', 'userrole'];
 
 @Directive()
-export class MenuAdapterComponent extends BaseContainerComponent implements AfterViewInit {
+export class MenuAdapterComponent extends BaseContainerComponent implements AfterViewInit, OnDestroy {
 
     private itemlabel;
     private menuRef;
@@ -20,10 +20,11 @@ export class MenuAdapterComponent extends BaseContainerComponent implements Afte
     private binduserrole;
 
     @ViewChildren(MenuComponent) private menuRefQL: QueryList<MenuComponent>;
+    private menuRefQLSubscription: any;
 
     constructor(
-        inj,
-        WIDGET_CONFIG,
+        inj: Injector,
+        WIDGET_CONFIG: IWidgetConfig,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);
@@ -49,12 +50,25 @@ export class MenuAdapterComponent extends BaseContainerComponent implements Afte
         super.ngAfterViewInit();
         if(this.menuRefQL['first'])
         {this.setMenuProperty();}
-        const subscriber = this.menuRefQL.changes.subscribe((menuRefQL: QueryList<MenuComponent>) => {
+        // MEMORY LEAK FIX: Store subscription for cleanup
+        this.menuRefQLSubscription = this.menuRefQL.changes.subscribe((menuRefQL: QueryList<MenuComponent>) => {
             if (menuRefQL.first) {
                 this.setMenuProperty()
-                subscriber.unsubscribe();
+                if (this.menuRefQLSubscription) {
+                    this.menuRefQLSubscription.unsubscribe();
+                    this.menuRefQLSubscription = null;
+                }
             }
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clean up subscription if it still exists
+        if (this.menuRefQLSubscription) {
+            this.menuRefQLSubscription.unsubscribe();
+            this.menuRefQLSubscription = null;
+        }
+        super.ngOnDestroy();
     }
     protected setMenuProperty(){
         if(this.menuRefQL['first']) {

@@ -63,6 +63,13 @@ export const unStringify = (val, defaultVal?) => {
 export class CheckboxComponent extends BaseFormCustomComponent implements OnInit, AfterViewInit {
     static initializeProps = registerProps();
 
+    // Explicit declarations for TypeScript - these properties are inherited from base classes
+    declare public readonly nativeElement: HTMLElement;
+    declare protected _onChange: any;
+    declare protected updatePrevDatavalue: (val: any) => void;
+    declare public invokeOnChange: (value: any, $event?: Event | any, valid?: boolean) => void;
+    declare public invokeOnTouched: ($event?: Event) => void;
+
     public proxyModel: boolean;
     public disabled: boolean;
     public readonly: boolean;

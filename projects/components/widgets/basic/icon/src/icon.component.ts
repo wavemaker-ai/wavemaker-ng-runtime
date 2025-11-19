@@ -1,4 +1,4 @@
-import {Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
+import {ChangeDetectionStrategy, Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
 
 import {IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective} from '@wm/components/base';
 import {registerProps} from './icon.props';
@@ -16,7 +16,8 @@ const WIDGET_CONFIG: IWidgetConfig = {
     templateUrl: './icon.component.html',
     providers: [
         provideAsWidgetRef(IconComponent)
-    ]
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class IconComponent extends StylableComponent {
     static initializeProps = registerProps();

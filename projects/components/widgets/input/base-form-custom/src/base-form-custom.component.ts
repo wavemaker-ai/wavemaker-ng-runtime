@@ -1,5 +1,5 @@
 import { ControlValueAccessor, FormControlName, Validator, ValidatorFn, AbstractControl } from '@angular/forms';
-import { Injectable, OnInit } from '@angular/core';
+import { Injectable, OnInit, Injector } from '@angular/core';
 
 import { BaseFormComponent } from '@wm/components/input/base-form';
 
@@ -29,6 +29,10 @@ function validateRequiredBind(required: boolean): ValidatorFn {
 
 @Injectable()
 export abstract class BaseFormCustomComponent extends BaseFormComponent implements ControlValueAccessor, OnInit, Validator {
+    // TypeScript fix: Explicitly declare inherited properties for type resolution
+    protected inj: Injector;
+    public isDestroyed: boolean;
+    // datavalue is inherited from BaseFormComponent as an accessor (getter/setter), not as an instance property
 
     private _formControl: FormControlName;
     protected _onChange: any = () => {};
@@ -57,8 +61,8 @@ export abstract class BaseFormCustomComponent extends BaseFormComponent implemen
                 return;
 
             this.datavalue = value;
-            this.onPropertyChange('datavalue', value);
-            this.updatePrevDatavalue(value);
+            (this as any).onPropertyChange('datavalue', value);
+            (this as any).updatePrevDatavalue(value);
         }
         /*
          * WMS:18246
@@ -79,7 +83,7 @@ export abstract class BaseFormCustomComponent extends BaseFormComponent implemen
             super.invokeOnChange(value, $event);
         } else if (valid) {
             // Fix for [WMS-24869]: updating PrevDatavalue when there is a default value for the widget.
-            this.updatePrevDatavalue(value);
+            (this as any).updatePrevDatavalue(value);
         }
     }
 
@@ -87,12 +91,12 @@ export abstract class BaseFormCustomComponent extends BaseFormComponent implemen
         this._onTouched();
 
         if ($event) {
-            this.invokeEventCallback('blur', {$event});
+            (this as any).invokeEventCallback('blur', {$event});
         }
     }
 
     public invokeOnFocus($event: Event) {
-        this.invokeEventCallback('focus', {$event});
+        (this as any).invokeEventCallback('focus', {$event});
     }
     /* WMS-18269 */
     validate(control: AbstractControl):{[key: string]:any} {

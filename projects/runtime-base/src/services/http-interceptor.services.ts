@@ -84,6 +84,16 @@ export class HttpCallInterceptor implements HttpInterceptor {
                             extend(error, modifiedResp);
                         }
                     }
+                    // PERFORMANCE OPTIMIZATION: Complete subject after handling to prevent memory leaks
+                    // Note: The subject is used by httpService.handleSessionTimeout, so we complete it
+                    // after a timeout to ensure it's not needed anymore
+                    if (error._401Subscriber && !error._401Subscriber.closed) {
+                        setTimeout(() => {
+                            if (error._401Subscriber && !error._401Subscriber.closed) {
+                                error._401Subscriber.complete();
+                            }
+                        }, 1000);
+                    }
                 }
             )
         );

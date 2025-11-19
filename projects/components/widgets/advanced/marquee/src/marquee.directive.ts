@@ -23,6 +23,7 @@ export class MarqueeDirective extends StylableComponent {
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
 
-        styler(this.nativeElement, this);
+        // Access inherited nativeElement from BaseComponent
+        styler((this as any).nativeElement, this);
     }
 }

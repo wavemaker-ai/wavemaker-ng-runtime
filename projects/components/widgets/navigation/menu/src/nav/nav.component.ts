@@ -34,6 +34,10 @@ const NavClassMap = {
 export class NavComponent extends DatasetAwareNavComponent implements OnInit {
     static initializeProps = registerProps();
 
+    // Explicit declarations for TypeScript - these properties are inherited from base classes
+    declare public readonly nativeElement: HTMLElement;
+    declare public nodes: Array<any>;
+
     public selecteditem;
     public type;
     public disableMenuContext: boolean;
@@ -70,7 +74,7 @@ export class NavComponent extends DatasetAwareNavComponent implements OnInit {
                         if (item.isactive) {
                             itemFound = true;
                             this.selecteditem = isMenuWidget ? omit(item, ['children', 'value']) : item.value;
-                            this.invokeEventCallback('select', { $event: {}, $item: item.value });
+                            super.invokeEventCallback('select', { $event: {}, $item: item.value });
                             // Trigger the action associated with active item
                             triggerItemAction(this, item);
                             // _selected is used to add active class for nav item. If we have children inside nav widget then it is not required.
@@ -87,7 +91,7 @@ export class NavComponent extends DatasetAwareNavComponent implements OnInit {
                 getItem(this.nodes);
             }
         });
-        this.registerDestroyListener(() => datasetSubscription.unsubscribe());
+        super.registerDestroyListener(() => datasetSubscription.unsubscribe());
 
     }
 
@@ -111,7 +115,7 @@ export class NavComponent extends DatasetAwareNavComponent implements OnInit {
 
         this.selecteditem = item.value;
 
-        this.invokeEventCallback('select', { $event, $item: item.value });
+        super.invokeEventCallback('select', { $event, $item: item.value });
         // Trigger the action associated with active item
         triggerItemAction(this, item);
     }
@@ -130,6 +134,6 @@ export class NavComponent extends DatasetAwareNavComponent implements OnInit {
      */
     onMenuItemSelect($event, widget, $item) {
         this.selecteditem = omit($item, ['children', 'value']);
-        this.invokeEventCallback('select', { $event, $item: this.selecteditem });
+        super.invokeEventCallback('select', { $event, $item: this.selecteditem });
     }
 }

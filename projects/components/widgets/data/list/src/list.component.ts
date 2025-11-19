@@ -101,6 +101,12 @@ const WIDGET_CONFIG = {widgetType: 'wm-list', hostClass: DEFAULT_CLS};
     ]
 })
 export class ListComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
+    /**
+     * DOM node reference of the component root
+     * This property is inherited from BaseComponent but TypeScript needs explicit type declaration here
+     */
+    public readonly nativeElement: HTMLElement;
+
     static initializeProps = registerProps();
 
     @ContentChild('listTemplate') listTemplate: TemplateRef<ElementRef>;

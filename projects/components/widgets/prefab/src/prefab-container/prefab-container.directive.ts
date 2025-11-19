@@ -19,19 +19,25 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class PrefabContainerDirective extends StylableComponent  implements OnDestroy {
+    /**
+     * DOM node reference of the component root
+     * This property is inherited from BaseComponent but TypeScript needs explicit type declaration here
+     */
+    public readonly nativeElement: HTMLElement;
+
     static initializeProps = registerProps();
 
     constructor(inj: Injector, private viewport: Viewport, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
 
-        this.registerDestroyListener(this.viewport.subscribe(ViewportEvent.RESIZE, data => this.callback('resize', data)));
-        this.registerDestroyListener(this.viewport.subscribe(ViewportEvent.ORIENTATION_CHANGE, data => this.callback('orientationchange', data)));
+        (this as any).registerDestroyListener(this.viewport.subscribe(ViewportEvent.RESIZE, data => this.callback('resize', data)));
+        (this as any).registerDestroyListener(this.viewport.subscribe(ViewportEvent.ORIENTATION_CHANGE, data => this.callback('orientationchange', data)));
     }
 
     private callback(eventName, locals?: object) {
         locals = assign({widget: this}, locals);
-        this.invokeEventCallback(eventName, locals);
+        (this as any).invokeEventCallback(eventName, locals);
     }
 
     public ngOnAttach() {

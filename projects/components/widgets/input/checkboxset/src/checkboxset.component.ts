@@ -30,6 +30,18 @@ const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-checkboxset', hostClass: D
 export class CheckboxsetComponent extends DatasetAwareFormComponent {
     static initializeProps = registerProps();
 
+    // Explicit declarations for TypeScript - these properties are inherited from base classes
+    declare public readonly nativeElement: HTMLElement;
+    declare protected viewParent: any;
+    // datavalue is an accessor (getter/setter) in DatasetAwareFormComponent, not a property - do not redeclare
+    declare public invokeOnChange: (value: any, $event?: Event | any, valid?: boolean) => void;
+    declare public invokeOnTouched: ($event?: Event) => void;
+    // modelByKey is an accessor (getter/setter) in DatasetAwareFormComponent, not a property - do not redeclare
+    declare public multiple: boolean;
+    declare protected eventManager: any;
+    declare public readonly: boolean;
+    declare public groupby: string;
+
     public layout = '';
     public collapsible: boolean;
 
@@ -42,7 +54,8 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent {
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
-        styler(this.nativeElement, this);
+        // Access inherited nativeElement from BaseComponent and pass this as any for type compatibility
+        styler((this as any).nativeElement, this as any);
         this.multiple = true;
     }
 
@@ -111,7 +124,8 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent {
             return;
         }
         if (key === 'required') {
-            this._onChange(this.datavalue);
+            // Access inherited _onChange from base class
+            (this as any)._onChange(this.datavalue);
             return;
         }
         if (key === 'itemsperrow') {

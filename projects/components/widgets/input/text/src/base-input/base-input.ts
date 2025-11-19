@@ -8,6 +8,13 @@ import {get, isString} from "lodash-es";
 
 @Injectable()
 export abstract class BaseInput extends BaseFormCustomComponent implements AfterViewInit {
+    // TypeScript fix: Explicitly declare inherited properties for type resolution
+    public readonly nativeElement: HTMLElement;
+    // datavalue is an accessor (getter/setter) in BaseFormComponent, not a property - do not redeclare
+    protected _onChange: any;
+    protected updatePrevDatavalue: (value: any) => void;
+    // invokeOnChange and invokeOnTouched are methods in BaseFormCustomComponent - do not redeclare
+    
     public class: string;
     public autotrim: boolean;
     public imask;
@@ -38,7 +45,7 @@ export abstract class BaseInput extends BaseFormCustomComponent implements After
         }
         if (key === 'required') {
             /* WMS-18269 | Update Angular about the required attr value change */
-            this._onChange(this.datavalue);
+            (this as any)._onChange(this.datavalue);
         }
         if (key === 'updateon') {
             this.ngModelOptions.updateOn = (nv === 'default' ? 'change' : 'blur') as 'blur' | 'change' | 'submit';
@@ -49,8 +56,8 @@ export abstract class BaseInput extends BaseFormCustomComponent implements After
             }
         } else if (key === 'datavalue') {
             // update the oldDataValue when the datavalue is modified programmatically
-            this.updatePrevDatavalue(nv);
-            this._onChange(this.datavalue);
+            (this as any).updatePrevDatavalue(nv);
+            (this as any)._onChange(this.datavalue);
         } else {
             super.onPropertyChange(key, nv, ov);
         }
@@ -62,7 +69,7 @@ export abstract class BaseInput extends BaseFormCustomComponent implements After
             this.datavalue = this.datavalue.trim();
         }
 
-        this.invokeOnChange(this.datavalue, {type: 'change'}, this.ngModel.valid);
+        (this as any).invokeOnChange(this.datavalue, {type: 'change'}, this.ngModel.valid);
     }
 
     // Change event is registered from the template, Prevent the framework from registering one more event
@@ -75,7 +82,7 @@ export abstract class BaseInput extends BaseFormCustomComponent implements After
 
     // invoke the blur callback
     handleBlur($event) {
-        this.invokeOnTouched($event);
+        (this as any).invokeOnTouched($event);
     }
 
     // Update the model on enter key press
@@ -94,7 +101,7 @@ export abstract class BaseInput extends BaseFormCustomComponent implements After
         if (this.class) {
             addClass(this.inputEl.nativeElement, this.class);
         }
-        styler(this.inputEl.nativeElement, this);
+        styler(this.inputEl.nativeElement, this as any);
     }
 
     protected constructor(
@@ -103,7 +110,7 @@ export abstract class BaseInput extends BaseFormCustomComponent implements After
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, config, explicitContext);
-        let updateOn = this.nativeElement.getAttribute('updateon') || 'blur';
+        let updateOn = (this as any).nativeElement.getAttribute('updateon') || 'blur';
         updateOn = updateOn === 'default' ? 'change' : updateOn;
         this.ngModelOptions.updateOn = updateOn as 'blur' | 'change' | 'submit';
     }

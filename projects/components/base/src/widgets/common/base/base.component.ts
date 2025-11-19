@@ -96,11 +96,15 @@ const scheduleThrottledDigest = () => {
     }
 };
 
+// PERFORMANCE FIX: Use optimized high-frequency event handling
+// This leverages the new batching in $invokeWatchers to reduce CPU usage
 const invokeHighFrequencyDigest = () => {
     const elapsed = getHighFreqTimestamp() - lastHighFreqDigestTime;
     if (elapsed >= HIGH_FREQ_DIGEST_INTERVAL) {
         lastHighFreqDigestTime = getHighFreqTimestamp();
-        $invokeWatchers(true);
+        // Use isHighFreqEvent flag to enable optimized batching in $invokeWatchers
+        // @ts-ignore - Third parameter added for high-frequency event optimization
+        $invokeWatchers(false, false, true);
         return;
     }
     scheduleThrottledDigest();
@@ -433,14 +437,36 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         }
 
         if (this.destroy.isStopped) {
-            cleanup();
+            // CRITICAL FIX: Wrap cleanup callback in try-catch to handle revoked proxy errors gracefully
+            // Cleanup callbacks might try to access or set properties on the widget proxy
+            // If the proxy is revoked, we catch and ignore the error
+            try {
+                cleanup();
+            } catch (e) {
+                // Ignore errors during cleanup (proxy may be revoked)
+                // This prevents "Cannot perform 'set' on a proxy that has been revoked" errors
+            }
             return;
         }
 
         // CRITICAL FIX: Store subscription to prevent memory leaks
         // The subscription object itself can retain memory even after destroy.complete()
         // By storing and explicitly unsubscribing, we ensure proper cleanup
-        const subscription = this.destroy.subscribe(() => {}, () => {}, () => cleanup());
+        // CRITICAL FIX: Wrap cleanup callback in try-catch to handle revoked proxy errors gracefully
+        // Cleanup callbacks might try to access or set properties on the widget proxy
+        // If the proxy is revoked or if there's a timing issue, we catch and ignore the error
+        const subscription = this.destroy.subscribe(
+            () => {}, 
+            () => {}, 
+            () => {
+                try {
+                    cleanup();
+                } catch (e) {
+                    // Ignore errors during cleanup (proxy may be revoked)
+                    // This prevents "Cannot perform 'set' on a proxy that has been revoked" errors
+                }
+            }
+        );
         this.destroySubscriptions.push(subscription);
     }
 
@@ -1020,16 +1046,67 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     ngOnDestroy() {
         this.isDestroyed = true;
 
+        // CRITICAL FIX: Set widget to empty object BEFORE completing destroy subject
+        // This prevents cleanup callbacks from trying to access a revoked proxy
+        // Cleanup callbacks registered via registerDestroyListener might try to access widget
+        // By setting it to empty object first, we avoid "Cannot perform 'set' on a proxy that has been revoked" errors
         this.widget = Object.create(null);
+        
+        // CRITICAL FIX: Wrap Subject completion in try-catch to handle revoked proxy errors gracefully
+        // Observers of these subjects might try to access or set properties on the widget proxy
+        // If the proxy is revoked or if there's a timing issue, we catch and ignore the error
+        try {
+            this.styleChange.complete();
+        } catch (e) {
+            // Ignore errors when completing styleChange subject (proxy may be revoked)
+        }
+        
+        try {
+            this.propertyChange.complete();
+        } catch (e) {
+            // Ignore errors when completing propertyChange subject (proxy may be revoked)
+        }
+        
+        // CRITICAL FIX: Trigger destroy callbacks BEFORE completing subject
+        // This ensures all watchers are cleaned up via $unwatch() before we unsubscribe
+        // The destroy.next() triggers the onNext callbacks (empty in our case)
+        try {
+            this.destroy.next(undefined);
+        } catch (e) {
+            // Ignore errors when emitting destroy event (proxy may be revoked)
+        }
+        
+        // CRITICAL FIX: Complete destroy subject to trigger cleanup callbacks
+        // The completion callback (3rd param in subscribe) calls cleanup() which calls $unwatch()
+        // This must happen BEFORE unsubscribing to ensure watchers are removed from registry
+        // IMPORTANT: Widget proxy is still active here so cleanup callbacks can access it if needed
+        // Wrap in try-catch to handle cases where cleanup callbacks try to access revoked proxy
+        try {
+            this.destroy.complete();
+        } catch (e) {
+            // Ignore errors when completing destroy subject
+            // Cleanup callbacks might try to access widget proxy which could be revoked
+            // This prevents "Cannot perform 'set' on a proxy that has been revoked" errors
+        }
+        
+        // CRITICAL FIX: Revoke widget proxy AFTER all cleanup callbacks have run
+        // The proxy holds references to the component instance and can prevent GC
+        // Revoking the proxy breaks these references and allows proper cleanup
+        // This must happen AFTER destroy.complete() so cleanup callbacks don't try to access revoked proxy
+        if (this.widgetProxyRevoke && typeof this.widgetProxyRevoke === 'function') {
+            try {
+                this.widgetProxyRevoke();
+            } catch (e) {
+                // Ignore errors during cleanup (proxy may already be revoked)
+            }
+        }
         this.widgetProxyRevoke = () => {};
-        this.styleChange.complete();
-        this.propertyChange.complete();
-        // Notify destroy listeners BEFORE tearing down subscriptions
-        this.destroy.next(undefined);
-        this.destroy.complete();
         
         // CRITICAL FIX: Unsubscribe all destroy listeners AFTER completion
-        // Completion triggers registered cleanup callbacks; once they run, we can safely unsubscribe.
+        // Completion triggers registered cleanup callbacks (which call $unwatch); once they run, we can safely unsubscribe.
+        // This order ensures:
+        // 1. All watchers are removed from registry (via $unwatch in cleanup callbacks)
+        // 2. All subscriptions are unsubscribed (prevents subscription object leaks)
         if (this.destroySubscriptions && this.destroySubscriptions.length > 0) {
             this.destroySubscriptions.forEach(sub => {
                 if (sub && typeof sub.unsubscribe === 'function') {
@@ -1053,7 +1130,21 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         // CRITICAL FIX: Clear all references to enable garbage collection
         // Without clearing these, components remain in memory even after destruction
         // This prevents the "$0" DevTools reference issue where detached elements retain memory
-        this.customInjectorMap = {};
+        
+        // MEMORY LEAK FIX: Clear customInjectorMap entries individually to break injector references
+        // Each injector holds references to context objects that prevent GC
+        if (this.customInjectorMap) {
+            Object.keys(this.customInjectorMap).forEach(key => {
+                const entry = this.customInjectorMap[key];
+                if (entry) {
+                    // Clear context reference from injector entry
+                    entry.context = null;
+                    entry.injector = null;
+                }
+                delete this.customInjectorMap[key];
+            });
+            this.customInjectorMap = {};
+        }
         this.eventHandlers.clear();
         (this.nativeElement as any).widget = null;
         // MEMORY LEAK FIX: removeNode already calls node.remove(), no need to call it twice

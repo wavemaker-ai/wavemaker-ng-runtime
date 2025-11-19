@@ -62,10 +62,16 @@ interface IPageMinJSON {
 
 declare const window: any;
 
+// PERFORMANCE OPTIMIZATION: Add size limit to prevent unbounded fragment cache growth
+// Fragment cache stores decoded markup/scripts/styles which can be large
+const MAX_FRAGMENT_CACHE_SIZE = 200;
 const fragmentCache = new Map<string, any>();
 
 window.resourceCache = fragmentCache;
 
+// PERFORMANCE OPTIMIZATION: Add size limit per component type to prevent unbounded cache growth
+// Component factories hold compiled code references and can cause memory bloat
+const MAX_FACTORY_CACHE_SIZE_PER_TYPE = 50;
 const componentFactoryRefCache = new Map<ComponentType, Map<string, any>>();
 
 componentFactoryRefCache.set(ComponentType.PAGE, new Map<string, any>());
@@ -85,6 +91,9 @@ const getFragmentUrl = (fragmentName: string, type: ComponentType, options?) => 
     }
 };
 
+// PERFORMANCE OPTIMIZATION: Add size limit to prevent unbounded script cache growth
+// Script cache stores compiled Function objects which can hold ArrayBuffer references
+const MAX_SCRIPT_CACHE_SIZE = 100;
 const scriptCache = new Map<string, Function>();
 const execScript = (
     script: string,
@@ -98,6 +107,15 @@ const execScript = (
     // Fix for [WMS-21196]: Incorrect script is being assigned,  when 2 prefabs have same partial name (i.e. same identifier).
     if ((ctx === 'Partial' && !isUndefined(instance.Prefab)) || !fn) {
         fn = new Function(ctx, 'App', 'Utils', script);
+        
+        // PERFORMANCE OPTIMIZATION: Implement LRU-style cache eviction for script cache
+        // When cache reaches max size, remove oldest entry to prevent unbounded growth
+        if (scriptCache.size >= MAX_SCRIPT_CACHE_SIZE) {
+            const firstKey = scriptCache.keys().next().value;
+            scriptCache.delete(firstKey);
+            console.warn(`Script cache limit reached (${MAX_SCRIPT_CACHE_SIZE}). Evicted: ${firstKey}`);
+        }
+        
         scriptCache.set(identifier, fn);
     }
     fn(instance, app, utils);
@@ -274,6 +292,16 @@ export class ComponentRefProviderService extends ComponentRefProvider {
                     variables: getValidJSON(_decodeURIComponent(variables)),
                     ...(config ? { config: getValidJSON(_decodeURIComponent(config)) } : {})
                 };
+                
+                // PERFORMANCE OPTIMIZATION: Implement LRU-style cache eviction for fragment cache
+                // When cache reaches max size, remove oldest entry to prevent unbounded growth
+                // Check before setting the resolved response
+                if (fragmentCache.size >= MAX_FRAGMENT_CACHE_SIZE) {
+                    const firstKey = fragmentCache.keys().next().value;
+                    fragmentCache.delete(firstKey);
+                    console.warn(`Fragment cache limit reached (${MAX_FRAGMENT_CACHE_SIZE}). Evicted: ${firstKey}`);
+                }
+                
                 fragmentCache.set(url, Promise.resolve(response));
 
                 return response;
@@ -285,6 +313,15 @@ export class ComponentRefProviderService extends ComponentRefProvider {
                 };
                 return Promise.reject(errorMsgMap[status]);
             });
+        
+        // PERFORMANCE OPTIMIZATION: Check cache size before adding promise to cache
+        // This prevents the promise from being cached if cache is full
+        if (fragmentCache.size >= MAX_FRAGMENT_CACHE_SIZE) {
+            const firstKey = fragmentCache.keys().next().value;
+            fragmentCache.delete(firstKey);
+            console.warn(`Fragment cache limit reached (${MAX_FRAGMENT_CACHE_SIZE}). Evicted: ${firstKey}`);
+        }
+        
         fragmentCache.set(url, promise);
         return promise;
     }
@@ -292,7 +329,7 @@ export class ComponentRefProviderService extends ComponentRefProvider {
     constructor(
         private resouceMngr: AppResourceManagerService,
         private app: App,
-        private appManager: AppManagerService,
+        @Inject(AppManagerService) private appManager: AppManagerService,
         private compiler: Compiler
     ) {
         super();
@@ -329,7 +366,17 @@ export class ComponentRefProviderService extends ComponentRefProvider {
                 }
                 
                 const updatedComponentName = (options && options['prefab']) ? options['prefab'] + componentName : componentName;
-                componentFactoryRefCache.get(componentType).set(updatedComponentName, componentFactoryRef);
+                const factoryCache = componentFactoryRefCache.get(componentType);
+                
+                // PERFORMANCE OPTIMIZATION: Implement LRU-style cache eviction per component type
+                // When cache reaches max size, remove oldest entry to prevent unbounded growth
+                if (factoryCache && factoryCache.size >= MAX_FACTORY_CACHE_SIZE_PER_TYPE) {
+                    const firstKey = factoryCache.keys().next().value;
+                    factoryCache.delete(firstKey);
+                    console.warn(`Component factory cache limit reached for ${ComponentType[componentType]} (${MAX_FACTORY_CACHE_SIZE_PER_TYPE}). Evicted: ${firstKey}`);
+                }
+                
+                factoryCache.set(updatedComponentName, componentFactoryRef);
 
                 return componentFactoryRef;
             }, (err) => {

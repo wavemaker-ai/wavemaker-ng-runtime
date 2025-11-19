@@ -24,10 +24,20 @@ export class ListAnimator extends SwipeAnimation {
 
     constructor(private list: ListComponent) {
         super();
-        this.$el = $(this.list.getNativeElement()).find('ul.app-livelist-container').first();
+        this.$el = $((this.list as any).getNativeElement()).find('ul.app-livelist-container').first();
 
-        this.leftChildrenCount = this.$el.find('>.app-list-item-left-action-panel > button:visible').length;
-        this.rightChildrenCount = this.$el.find('>.app-list-item-right-action-panel > button:visible').length;
+        // PERFORMANCE FIX: Replace :visible with class check to avoid forced reflow
+        // :visible forces layout calculation, causing performance issues
+        const leftPanel = this.$el.find('>.app-list-item-left-action-panel > button').filter((i, el) => {
+            const $el = $(el);
+            return !$el.hasClass('hidden') && $el[0].offsetWidth > 0 && $el[0].offsetHeight > 0;
+        });
+        const rightPanel = this.$el.find('>.app-list-item-right-action-panel > button').filter((i, el) => {
+            const $el = $(el);
+            return !$el.hasClass('hidden') && $el[0].offsetWidth > 0 && $el[0].offsetHeight > 0;
+        });
+        this.leftChildrenCount = leftPanel.length;
+        this.rightChildrenCount = rightPanel.length;
 
         // when there are no children in both the templates then do not apply swipeAnimation;
         if (!this.leftChildrenCount && !this.rightChildrenCount) {
@@ -137,8 +147,13 @@ export class ListAnimator extends SwipeAnimation {
                 actionTemplate = this.$el.find('>' + selector);
             }
 
+            // PERFORMANCE FIX: Replace :visible with class check to avoid forced reflow
             // check for children visiblity. If children are visible then initiate the action panel.
-            if (!actionTemplate.length || !actionTemplate.find('button:visible').length) {
+            const visibleButtons = actionTemplate.find('button').filter((i, el) => {
+                const $el = $(el);
+                return !$el.hasClass('hidden') && el.offsetWidth > 0 && el.offsetHeight > 0;
+            });
+            if (!actionTemplate.length || !visibleButtons.length) {
                 return bounds;
             }
 
@@ -214,15 +229,22 @@ export class ListAnimator extends SwipeAnimation {
     // Triggers full swipe event on the target element.
     public invokeFullSwipeEvt($event: Event): void {
         let target, actions, index;
+        // PERFORMANCE FIX: Replace :visible with class check to avoid forced reflow
         // Check if button are visible or not, invoke the tap event of the last button which is visible.
         if (this.position === 'left') {
             actions = this.actionItems.filter(btn => {
-                return btn.getAttr('swipe-position') === 'left' && btn.$element.is(':visible');
+                const el = btn.$element[0];
+                return btn.getAttr('swipe-position') === 'left' && 
+                       el && !btn.$element.hasClass('hidden') && 
+                       el.offsetWidth > 0 && el.offsetHeight > 0;
             });
             index = 0;
         } else {
             actions = this.actionItems.filter(btn => {
-                return btn.getAttr('swipe-position') === 'right' && btn.$element.is(':visible');
+                const el = btn.$element[0];
+                return btn.getAttr('swipe-position') === 'right' && 
+                       el && !btn.$element.hasClass('hidden') && 
+                       el.offsetWidth > 0 && el.offsetHeight > 0;
             });
             index = actions.length - 1;
         }

@@ -1,4 +1,4 @@
-import { Component, Inject, Injector, Optional } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject, Injector, Optional } from '@angular/core';
 
 import { switchClass } from '@wm/core';
 
@@ -18,7 +18,8 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-message', hostClass: DEFA
     providers: [
         provideAsWidgetRef(MessageComponent)
     ],
-    exportAs: 'wmMessage'
+    exportAs: 'wmMessage',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MessageComponent extends StylableComponent {
     static initializeProps = registerProps();

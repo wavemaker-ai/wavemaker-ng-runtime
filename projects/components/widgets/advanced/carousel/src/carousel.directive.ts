@@ -52,7 +52,8 @@ export class CarouselDirective extends StylableComponent implements AfterContent
 
     constructor(public component: CarouselComponent, inj: Injector, private ngZone: NgZone, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
-        styler(this.nativeElement, this);
+        // Access inherited nativeElement from BaseComponent
+        styler((this as any).nativeElement, this);
     }
 
     private onDataChange(newVal) {
@@ -79,11 +80,12 @@ export class CarouselDirective extends StylableComponent implements AfterContent
         }
         if (slides.length) {
             // MEMORY LEAK FIX: Track timeout for cleanup
+            // Access inherited pendingTimeouts from BaseComponent
             const timeoutId = window.setTimeout(() => {
-                this.pendingTimeouts.delete(timeoutId);
+                (this as any).pendingTimeouts.delete(timeoutId);
                 this.animator = new CarouselAnimator(this, this.interval, this.ngZone);
             }, 50);
-            this.pendingTimeouts.add(timeoutId);
+            (this as any).pendingTimeouts.add(timeoutId);
         }
     }
 
@@ -98,7 +100,8 @@ export class CarouselDirective extends StylableComponent implements AfterContent
         // assign current and previous slides on widget. In case of static carousel, fieldDefs will be undefined, hence the check
         this.currentslide = this.fieldDefs && this.fieldDefs[newIndex];
         this.previousslide = this.fieldDefs && this.fieldDefs[oldIndex];
-        this.invokeEventCallback('change', {newIndex: newIndex, oldIndex: oldIndex});
+        // Access inherited invokeEventCallback from BaseComponent
+        (this as any).invokeEventCallback('change', {newIndex: newIndex, oldIndex: oldIndex});
     }
 
     ngAfterContentInit() {
@@ -118,8 +121,11 @@ export class CarouselDirective extends StylableComponent implements AfterContent
         }
         
         // MEMORY LEAK FIX: Clear all pending timeouts
-        this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
-        this.pendingTimeouts.clear();
+        // Access inherited pendingTimeouts from BaseComponent
+        if ((this as any).pendingTimeouts) {
+            (this as any).pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            (this as any).pendingTimeouts.clear();
+        }
         
         super.ngOnDestroy();
     }

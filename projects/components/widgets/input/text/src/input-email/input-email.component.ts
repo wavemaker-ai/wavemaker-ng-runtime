@@ -26,6 +26,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 })
 export class InputEmailComponent extends BaseInput {
     static initializeProps = registerProps();
+    // datavalue is an accessor (getter/setter) in BaseInput, not a property - do not redeclare
 
     public required: boolean;
     public maxchars: number;

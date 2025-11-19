@@ -97,6 +97,16 @@ const WIDGET_CONFIG = { widgetType: 'wm-menu', hostClass: 'dropdown app-menu' };
 export class MenuComponent extends DatasetAwareNavComponent implements OnInit, OnDestroy, AfterViewInit {
     static initializeProps = registerProps();
 
+    // Explicit declarations for TypeScript - these properties are inherited from base classes
+    // Note: Methods (registerDestroyListener, invokeEventCallback) and getters ($element) are inherited
+    // but TypeScript may not recognize them without these declarations
+    declare public readonly nativeElement: HTMLElement;
+    declare public nodes: Array<any>;
+    declare protected pendingTimeouts: Set<number>;
+    declare protected nodes$: any;
+    // $element is a getter in BaseComponent, so we can't redeclare it as a property
+    // It should be accessible via inheritance
+
     public menualign: string;
     public menuposition: string;
     public menulayout: string;
@@ -224,7 +234,7 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
                 getItem(this.nodes);
             }
         });
-        this.registerDestroyListener(() => datasetSubscription.unsubscribe());
+        super.registerDestroyListener(() => datasetSubscription.unsubscribe());
 
     }
 
@@ -243,7 +253,7 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
         const cancelSubscription = this.app.subscribe("highlightActiveLink", (data) => {
             toggleClass(this.nativeElement.querySelector('.dropdown-toggle') as HTMLElement, 'active', hasLinkToCurrentPage(this.nodes, this.route.url ));
         });
-        this.registerDestroyListener(() => cancelSubscription());
+        super.registerDestroyListener(() => cancelSubscription());
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
@@ -291,7 +301,7 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
     public onMenuItemSelect(args) {
         const { $event } = args;
         const $item = args.$item.value;
-        this.invokeEventCallback('select', { $event, $item });
+        super.invokeEventCallback('select', { $event, $item });
     }
 
     ngAfterViewInit() {

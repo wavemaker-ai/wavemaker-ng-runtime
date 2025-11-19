@@ -59,6 +59,11 @@ const overrideSummerNote = () => {
 })
 export class RichTextEditorComponent extends BaseFormCustomComponent implements OnInit, OnDestroy {
     static initializeProps = registerProps();
+    // TypeScript fix: Explicitly declare inherited properties
+    public readonly nativeElement: HTMLElement;
+    public invokeOnChange: (value: any, $event?: Event | any, valid?: boolean) => void;
+    public invokeOnTouched: ($event?: Event) => void;
+    public invokeEventCallback: (eventName: string, data?: any) => void;
 
     $richTextEditor;
     $hiddenInputEle;
@@ -99,8 +104,8 @@ export class RichTextEditorComponent extends BaseFormCustomComponent implements 
             },
             onChange: (contents, editable) => {
                 this.proxyModel = this.sanitizePipe.transform(contents, SecurityContext.HTML);
-                this.invokeOnChange(contents, getChangeEvt(), true);
-                this.invokeOnTouched();
+                (this as any).invokeOnChange(contents, getChangeEvt(), true);
+                (this as any).invokeOnTouched();
             }
         },
         fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 'Merriweather'],
@@ -129,13 +134,13 @@ export class RichTextEditorComponent extends BaseFormCustomComponent implements 
 
     constructor(inj: Injector, private sanitizePipe: SanitizePipe, private ngZone: NgZone, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_INFO, explicitContext);
-        styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER, ['height']);
+        styler((this as any).nativeElement, this as any, APPLY_STYLES_TYPE.CONTAINER, ['height']);
         overrideSummerNote();
     }
 
     ngOnInit() {
-        this.$richTextEditor = $(this.nativeElement.querySelector('[richTextEditor]'));
-        this.$hiddenInputEle = $(this.nativeElement.querySelector('input.model-holder'));
+        this.$richTextEditor = $((this as any).nativeElement.querySelector('[richTextEditor]'));
+        this.$hiddenInputEle = $((this as any).nativeElement.querySelector('input.model-holder'));
         super.ngOnInit();
         this.initEditor();
         $('.note-editable').attr('aria-label', 'textbox');
@@ -143,7 +148,7 @@ export class RichTextEditorComponent extends BaseFormCustomComponent implements 
 
     initEditor() {
         this.ngZone.runOutsideAngular(() => {
-            this.invokeEventCallback('beforerender', {'$event' : {}});
+            (this as any).invokeEventCallback('beforerender', {'$event' : {}});
             this.$richTextEditor.summernote(this.EDITOR_DEFAULT_OPTIONS);
         });
 
@@ -180,10 +185,10 @@ export class RichTextEditorComponent extends BaseFormCustomComponent implements 
     performEditorOperation(key, value?) {
         if (this.isEditorLoaded) {
             if (key === 'height') {
-                setCSS(this.nativeElement.querySelector('div.note-editable'), key, value, true);
+                setCSS((this as any).nativeElement.querySelector('div.note-editable'), key, value, true);
             } else if (key === 'placeholder') {
-                setAttr(this.nativeElement, key, value);
-                setHtml(this.nativeElement.querySelector('div.note-placeholder'), value, true);
+                setAttr((this as any).nativeElement, key, value);
+                setHtml((this as any).nativeElement.querySelector('div.note-placeholder'), value, true);
             } else {
                 // if editor content is empty then summernote('code') is returning empty p tags like <p></br></p>. So checking for empty and returning undefined.
                 if (arguments.length === 1 && key === 'code' && this.$richTextEditor.summernote('isEmpty')) {

@@ -253,10 +253,15 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
     //     this.init();
     // }
 
+    // MEMORY LEAK FIX: Track timeout for cleanup
+    private viewInitTimeoutId: number | null = null;
+
     ngAfterViewInit(): void {
         this.loadScripts().then(() => {
             this.compileContent = true;
-            setTimeout(() => {
+            // MEMORY LEAK FIX: Track timeout for cleanup
+            this.viewInitTimeoutId = window.setTimeout(() => {
+                this.viewInitTimeoutId = null;
                 this.viewInit$.complete();
 
                 this.fragmentsLoaded$.subscribe(noop, noop, () => this.invokeOnReady());
@@ -298,6 +303,12 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
         // appLocale has prototype chains that prevent GC if not cleared
         this.appLocale = null;
         this.i18nService = null;
+        
+        // MEMORY LEAK FIX: Clear pending timeout
+        if (this.viewInitTimeoutId !== null) {
+            clearTimeout(this.viewInitTimeoutId);
+            this.viewInitTimeoutId = null;
+        }
         
         this.viewParent = null;
         this.containerWidget = null;

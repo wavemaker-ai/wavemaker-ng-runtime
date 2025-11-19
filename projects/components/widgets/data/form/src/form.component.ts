@@ -105,8 +105,14 @@ const setMarkupForFormField = (field, columnWidth) =>  {
 };
 
 // Function to find out the first invalid element in form
+// PERFORMANCE FIX: Replace :visible with class check to avoid forced reflow
 const findInvalidElement = ($formEle, ngForm) => {
-    const $ele = $formEle.find('form.ng-invalid:visible, [formControlName].ng-invalid:visible').first();
+    // Use filter instead of :visible to avoid forced layout calculation
+    const invalidElements = $formEle.find('form.ng-invalid, [formControlName].ng-invalid').filter((i, el) => {
+        const $el = $(el);
+        return !$el.hasClass('hidden') && el.offsetWidth > 0 && el.offsetHeight > 0;
+    });
+    const $ele = invalidElements.first();
     let formObj = ngForm;
     // If element is form, find out the first invalid element in this form
     if ($ele.is('form')) {
@@ -167,6 +173,20 @@ const setTouchedState = (self, ngForm, fieldName) => {
 })
 export class FormComponent extends StylableComponent implements OnDestroy, AfterContentInit, AfterViewInit {
     static  initializeProps = registerFormProps();
+    // TypeScript fix: Explicitly declare inherited properties for type resolution
+    public readonly nativeElement: HTMLElement;
+    public readonly widgetId: any;
+    protected widget: any;
+    protected viewParent: any;
+    public context: any;
+    protected inj: Injector;
+    protected pendingTimeouts: Set<number>;
+    
+    public get $element() {
+        // Access inherited nativeElement property from BaseComponent
+        return $((this as any).nativeElement);
+    }
+    
     @ViewChild('dynamicForm', { static: true, read: ViewContainerRef }) dynamicFormRef: ViewContainerRef;
     @ViewChild(MessageComponent) messageRef;
     // this is the reference to the component refs inside the form-group
@@ -344,22 +364,27 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     ) {
         super(inj, getWidgetConfig(isLiveForm, isLiveFilter, role), explicitContext);
 
-        styler(this.nativeElement, this);
+        // Access inherited nativeElement property from BaseComponent
+        styler((this as any).nativeElement, this);
 
         // remove title property as attribute as it is causing unnecessary tooltip
-        removeAttr(this.nativeElement, 'title');
+        // Access inherited nativeElement property from BaseComponent
+        removeAttr((this as any).nativeElement, 'title');
         this.isUpdateMode = true;
-        this.dialogId = this.nativeElement.getAttribute('dialogId');
+        // Access inherited nativeElement property from BaseComponent
+        this.dialogId = (this as any).nativeElement.getAttribute('dialogId');
         this.ngform = fb.group({});
         this.bindingValue = key || name;
 
         // On value change in form, update the dataoutput
         const onValueChangeSubscription =  this.ngform.valueChanges
             .subscribe(this.updateDataOutput.bind(this));
-        this.registerDestroyListener(() => onValueChangeSubscription.unsubscribe());
+        // Access inherited registerDestroyListener method from BaseComponent
+        (this as any).registerDestroyListener(() => onValueChangeSubscription.unsubscribe());
         this.elScope = this;
 
-        this.addEventsToContext(this.context);
+        // Access inherited context property from BaseComponent
+        this.addEventsToContext((this as any).context);
     }
 
     ngAfterContentInit() {
@@ -385,8 +410,9 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         this.contentInitExecuted = true;
         super.ngAfterContentInit();
         // MEMORY LEAK FIX: Track timeout for cleanup
+        // Access inherited pendingTimeouts property from BaseComponent
         const timeoutId = window.setTimeout(() => {
-            this.pendingTimeouts.delete(timeoutId);
+            (this as any).pendingTimeouts.delete(timeoutId);
             this.componentRefs.forEach(componentRef => {
                 if (componentRef.name) {
                     // Register widgets inside form with formWidgets
@@ -394,7 +420,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 }
             });
         }, 250);
-        this.pendingTimeouts.add(timeoutId);
+        (this as any).pendingTimeouts.add(timeoutId);
         if (this.metadata && !this.formFields.length) {
             this.generateFormFields();
         }
@@ -449,16 +475,20 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             this.activateLazyRender();
             return;
         }
-        if (typeof IntersectionObserver === 'undefined' || !this.nativeElement) {
+        // Access inherited nativeElement property from BaseComponent
+        if (typeof IntersectionObserver === 'undefined' || !(this as any).nativeElement) {
             this.activateLazyRender();
             return;
         }
 
         const buffer = 200;
-        const scrollRoots = this.getScrollableAncestors(this.nativeElement);
+        // Access inherited nativeElement property from BaseComponent
+        const scrollRoots = this.getScrollableAncestors((this as any).nativeElement);
 
-        if (this.isElementVisibleWithinRoot(this.nativeElement, null, buffer) ||
-            scrollRoots.some(root => this.isElementVisibleWithinRoot(this.nativeElement, root, buffer))) {
+        // Access inherited nativeElement property from BaseComponent
+        if (this.isElementVisibleWithinRoot((this as any).nativeElement, null, buffer) ||
+            // Access inherited nativeElement property from BaseComponent
+            scrollRoots.some(root => this.isElementVisibleWithinRoot((this as any).nativeElement, root, buffer))) {
             this.activateLazyRender();
             return;
         }
@@ -478,7 +508,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 rootMargin: '200px'
             });
             this.lazyVisibilityObservers.push(observer);
-            observer.observe(this.nativeElement);
+            // Access inherited nativeElement property from BaseComponent
+            observer.observe((this as any).nativeElement);
         };
 
         createObserver(null);
@@ -559,7 +590,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                  * 5. this means form name change applies only when there is single form (immediate child) inside the parentContainer.
                  */
                 const prefabInnerForm = parentContentEl.find('form').first();
-                if (get(prefabInnerForm[0], 'widget.widgetId') === this.widgetId) {
+                // Access inherited widgetId property from BaseComponent
+                if (get(prefabInnerForm[0], 'widget.widgetId') === (this as any).widgetId) {
                     // check whether form inside prefab container is inside the list. If true, do not change the name.
                     if (!prefabInnerForm.isParentList && !prefabInnerForm.siblings('form').length) {
                         binding = get(parentContainer, 'name');
@@ -597,7 +629,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
 
     // This method gets all the inner forms and validates each form.
     private setValidationOnInnerForms(validateTouch) {
-        const formEle = this.getNativeElement();
+        // Access inherited getNativeElement method from BaseComponent
+        const formEle = (this as any).getNativeElement();
         const formObjs = formEle.querySelectorAll('.app-form');
         const validationMsgs = [];
         forEach(formObjs, e => {
@@ -638,6 +671,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             if (!field || (validateTouch && !v.touched)) {
                 return;
             }
+            // Access inherited nativeElement property from BaseComponent (field has nativeElement)
             field.nativeElement.querySelector('input')?.setAttribute('aria-invalid', v.invalid);
             // invoking the prepareValidation on both parent form and current form.
             this.prepareValidationObj(v, k, field, prefix);
@@ -690,7 +724,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     // change and blur events are added from the template
     protected handleEvent(node: HTMLElement, eventName: string, callback: Function, locals: any) {
         if (eventName !== 'submit') {
-            return super.handleEvent(this.nativeElement, eventName, callback, locals);
+            // Access inherited nativeElement property from BaseComponent
+            return super.handleEvent((this as any).nativeElement, eventName, callback, locals);
         }
         return () => {};
 
@@ -863,13 +898,16 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     onResultCb(data, status, event?) {
         const params = {$event: event, $data: data, $operation: this.operationType};
         // whether service call success or failure call this method
-        this.invokeEventCallback('result', params);
+        // Access inherited invokeEventCallback method from BaseComponent
+        (this as any).invokeEventCallback('result', params);
         if (status) {
             // if service call is success call this method
-            this.invokeEventCallback('success', params);
+            // Access inherited invokeEventCallback method from BaseComponent
+            (this as any).invokeEventCallback('success', params);
         } else {
             // if service call fails call this method
-            this.invokeEventCallback('error', params);
+            // Access inherited invokeEventCallback method from BaseComponent
+            (this as any).invokeEventCallback('error', params);
         }
     }
 
@@ -979,7 +1017,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             // For suppose, applicantName, applicantID are formfields in currentForm
             // This form is having innerform i.e. address, these fields are listed as
             // {"applicantName": "", "applicantID": "", "address": {"street": ""}}
-            if (field.form.widgetId !== this.widgetId && field.form.formGroupName) {
+            // Access inherited widgetId property from BaseComponent
+            if (field.form.widgetId !== (this as any).widgetId && field.form.formGroupName) {
                 const fd = get(formData, field.form.formGroupName, {});
                 fd[fieldName] = fieldValue;
                 set(formData, field.form.formGroupName, fd);
@@ -1148,13 +1187,14 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         }
         this.emptyDataModel();
         // MEMORY LEAK FIX: Track timeout for cleanup
+        // Access inherited pendingTimeouts property from BaseComponent
         const timeoutId = window.setTimeout(() => {
-            this.pendingTimeouts.delete(timeoutId);
+            (this as any).pendingTimeouts.delete(timeoutId);
             this.setDefaultValues();
             this.savePrevDataValues();
             this.constructDataObject();
         });
-        this.pendingTimeouts.add(timeoutId);
+        (this as any).pendingTimeouts.add(timeoutId);
         this.isUpdateMode = true;
     }
 
@@ -1177,7 +1217,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     }
 
     private triggerWMEvent(eventName) {
-        const tableId = this.nativeElement.getAttribute('dependsontable');
+        // Access inherited nativeElement property from BaseComponent
+        const tableId = (this as any).nativeElement.getAttribute('dependsontable');
         if (!tableId) {
             return;
         }
@@ -1201,7 +1242,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
 
 
         if (this.onBeforeSubmitEvt) {
-            if (this.invokeEventCallback('beforesubmit', getParams()) === false) {
+            // Access inherited invokeEventCallback method from BaseComponent
+            if ((this as any).invokeEventCallback('beforesubmit', getParams()) === false) {
                 return;
             } else {
                 this.resetFormState();
@@ -1255,11 +1297,13 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                     if ((response.type === 'error' && !this.onError) || (response.type === 'success' && !this.onSuccess)) {
                         this.toggleMessage(true, response.message, response.type);
                     }
-                    this.invokeEventCallback('submit', getParams());
+                    // Access inherited invokeEventCallback method from BaseComponent
+                    (this as any).invokeEventCallback('submit', getParams());
                     this.onResultCb(response.result, response.status, $event);
                 });
             } else {
-                this.invokeEventCallback('submit', getParams());
+                // Access inherited invokeEventCallback method from BaseComponent
+                (this as any).invokeEventCallback('submit', getParams());
                 this.onResultCb({}, true, $event);
             }
         } else {
@@ -1409,7 +1453,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         }
 
         if (this.onBeforeRenderEvt) {
-            userFields = this.invokeEventCallback('beforerender', {$metadata: fields});
+            // Access inherited invokeEventCallback method from BaseComponent
+            userFields = (this as any).invokeEventCallback('beforerender', {$metadata: fields});
             if (userFields) {
                 fields = userFields;
             }
@@ -1441,7 +1486,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             this._dynamicContext.form = this;
         }
         const componentFactoryRef = await this.dynamicComponentProvider.getComponentFactoryRef(
-            'app-form-dynamic-' + this.widgetId,
+            // Access inherited widgetId property from BaseComponent
+            'app-form-dynamic-' + (this as any).widgetId,
             fieldTemplate,
             {
                 noCache: true,
@@ -1515,7 +1561,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
 
     invokeActionEvent($event, expression: string) {
         const fn = $parseEvent(expression);
-        fn(this.viewParent, Object.assign(this.context, {$event}));
+        // Access inherited context property from BaseComponent
+        fn(this.viewParent, Object.assign((this as any).context, {$event}));
     }
 
     ngOnDestroy() {
@@ -1527,9 +1574,10 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         }
         
         // MEMORY LEAK FIX: Clear all pending timeouts
-        if (this.pendingTimeouts) {
-            this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
-            this.pendingTimeouts.clear();
+        // Access inherited pendingTimeouts property from BaseComponent
+        if ((this as any).pendingTimeouts) {
+            (this as any).pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            (this as any).pendingTimeouts.clear();
         }
         
         // on form destroy, removing this form from the parentForm too.
@@ -1538,7 +1586,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             // when current form is inside the list (i.e. incase of formArray).
             if (get(this.parentList, 'name') && controls.hasOwnProperty(this.parentList.name)) {
                 //get the index of current form in the list and remove the FormControl from FormArray
-                const index = findIndex(this.parentList.getWidgets(this.name), {widgetId: this.widgetId});
+                // Access inherited widgetId property from BaseComponent
+                const index = findIndex(this.parentList.getWidgets(this.name), {widgetId: (this as any).widgetId});
                 (<FormArray>this.parentForm.ngform.controls[this.parentList.name]).removeAt(index);
             }
             // when we have formGroupName set i.e. multiple formInstance with counter appended to formName

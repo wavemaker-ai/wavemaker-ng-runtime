@@ -625,7 +625,12 @@ $.widget('wm.datatable', {
             fragment.appendChild(rowTemplate[0]);
             if (self.options.rowExpansionEnabled) {
                 var rowHeight = self.options.rowDef.height;
-                var colSpanLength = _.filter(self.preparedHeaderData, function(c) {return c.show}).length;
+                // PERFORMANCE OPTIMIZATION: Cache colSpanLength calculation outside loop
+                // This avoids recalculating on every row iteration
+                if (self._cachedColSpanLength === undefined) {
+                    self._cachedColSpanLength = _.filter(self.preparedHeaderData, function(c) {return c.show !== false}).length;
+                }
+                var colSpanLength = self._cachedColSpanLength;
                 var $tr = $('<tr class="app-datagrid-detail-row" tabindex="0" role="row" data-row-id="' + row.$$pk + '"><td colspan="' + colSpanLength + '" class="app-datagrid-row-details-cell">' +
                     '<div class="row-overlay"><div class="row-status"><i class="' + self.options.loadingicon + '"></i></div></div><div class="details-section"></div>' +
                     '</td></tr>');
@@ -912,6 +917,8 @@ $.widget('wm.datatable', {
 
         $.extend(this.preparedHeaderData, this.options.colDefs);
         this.setDefaultColsData(true);
+        // PERFORMANCE OPTIMIZATION: Invalidate colSpanLength cache when header data changes
+        this._cachedColSpanLength = undefined;
     },
 
     /* Generates default column definitions from given data. */
@@ -1104,6 +1111,8 @@ $.widget('wm.datatable', {
         }, 150);
         this.options.summaryRow = false;
         this.options.summaryRowDefs = [];
+        // PERFORMANCE OPTIMIZATION: Initialize cache for colSpanLength
+        this._cachedColSpanLength = undefined;
         this._prepareHeaderData();
         this._prepareData();
         this._render(true);
@@ -1115,6 +1124,8 @@ $.widget('wm.datatable', {
     },
     /* Re-renders the whole grid. */
     _refreshGrid: function () {
+        // PERFORMANCE OPTIMIZATION: Invalidate colSpanLength cache when header data changes
+        this._cachedColSpanLength = undefined;
         this._prepareHeaderData();
         this._prepareData();
         this._render();
@@ -1123,8 +1134,26 @@ $.widget('wm.datatable', {
     },
 
     refreshGrid: function () {
-        window.clearTimeout(this.refreshGridTimeout);
-        this.refreshGridTimeout = window.setTimeout(this._refreshGrid.bind(this), 50);
+        // MEMORY LEAK FIX: Clear previous timeout if exists
+        if (this.refreshGridTimeout) {
+            window.clearTimeout(this.refreshGridTimeout);
+            if (this.pendingTimeouts) {
+                this.pendingTimeouts.delete(this.refreshGridTimeout);
+            }
+            this.refreshGridTimeout = null;
+        }
+        // MEMORY LEAK FIX: Track timeout for cleanup
+        this.refreshGridTimeout = window.setTimeout(() => {
+            const timeoutId = this.refreshGridTimeout;
+            this.refreshGridTimeout = null;
+            if (this.pendingTimeouts) {
+                this.pendingTimeouts.delete(timeoutId);
+            }
+            this._refreshGrid();
+        }, 50);
+        if (this.pendingTimeouts) {
+            this.pendingTimeouts.add(this.refreshGridTimeout);
+        }
     },
     /* Function to call the renderGrid method for infinite scroll pagination type
     * Remove the markup of grid-footer and always-new-row
@@ -2449,7 +2478,8 @@ $.widget('wm.datatable', {
 
         this.disableActions(false);
         $row.removeClass('row-editing');
-        $editableElements.off('click');
+        // MEMORY LEAK FIX: Use namespaced event removal for proper cleanup
+        $editableElements.off('click.datatable keydown.datatable');
         $editableElements.each(function () {
             var $el = $(this),
                 value = $el.data('originalValue');
@@ -2497,7 +2527,8 @@ $.widget('wm.datatable', {
             $saveButton = $row.find('.save-edit-row-button'),
             self = this;
         $row.removeClass('row-editing');
-        $editableElements.off('click');
+        // MEMORY LEAK FIX: Use namespaced event removal for proper cleanup
+        $editableElements.off('click.datatable keydown.datatable');
         this.disableActions(false);
         this._setGridEditMode(false);
         $editableElements.each(function () {
@@ -3005,7 +3036,8 @@ $.widget('wm.datatable', {
                 }
             });
             //On tab out of a row, save the current row and make next row editable
-            $htm.on('focusout', 'tr.app-datagrid-row','thead.table-header', function (e) {
+            // MEMORY LEAK FIX: Namespace focusout event handler for proper cleanup
+            $htm.off('focusout.datatable', 'tr.app-datagrid-row','thead.table-header').on('focusout.datatable', 'tr.app-datagrid-row','thead.table-header', function (e) {
                 var $target = $(e.target),
                     $row = $target.closest('tr.app-datagrid-row'),
                     $relatedTarget = $(e.relatedTarget),
@@ -3058,8 +3090,9 @@ $.widget('wm.datatable', {
         }
 
         // row selection
-        $htm.find('[data-identifier="rowExpansionButtons"]').off("click");
-        $htm.find('[data-identifier="rowExpansionButtons"]').on('click', function (e) {
+        // MEMORY LEAK FIX: Namespace row expansion button click handler for proper cleanup
+        $htm.find('[data-identifier="rowExpansionButtons"]').off('click.datatable');
+        $htm.find('[data-identifier="rowExpansionButtons"]').on('click.datatable', function (e) {
             var $row = $(e.target).closest('tr.app-datagrid-row');
             if ($(this).find('.app-button').attr('disabled')) {
                 return;
@@ -3189,14 +3222,15 @@ $.widget('wm.datatable', {
         this.gridSearch = this.element.find('.form-search');
 
         $searchBox = this.gridSearch.find('[data-element="dgSearchText"]');
-        this.gridSearch.find('.app-search-button').on('click', search);
-        this.gridSearch.find('[data-element="dgFilterValue"]').on('change', function (e) {
+        // MEMORY LEAK FIX: Namespace all search event handlers for proper cleanup
+        this.gridSearch.find('.app-search-button').off('click.datatable').on('click.datatable', search);
+        this.gridSearch.find('[data-element="dgFilterValue"]').off('change.datatable').on('change.datatable', function (e) {
             // If "No data found" message is shown, and user changes the selection, then fetch all data.
             if (self.dataStatusContainer.find('.status').text() === self.options.dataStates.nodata) {
                 search(e);
             }
         });
-        $searchBox.on('keyup', function (e) {
+        $searchBox.off('keyup.datatable').on('keyup.datatable', function (e) {
             e.stopPropagation();
             // If the search text is empty then show all the rows.
             if (!$(this).val()) {
@@ -3816,7 +3850,15 @@ $.widget('wm.datatable', {
             this.gridElement.parent().off('scroll.datatable');
         }
         if (this.gridSearch) {
+            // CRITICAL FIX: Remove all search-related event handlers
             this.gridSearch.off('.datatable');
+            this.gridSearch.find('.app-search-button').off('.datatable');
+            this.gridSearch.find('[data-element="dgSearchText"]').off('.datatable');
+            this.gridSearch.find('[data-element="dgFilterValue"]').off('.datatable');
+        }
+        // MEMORY LEAK FIX: Remove focusout handler from grid element
+        if (this.gridElement) {
+            this.gridElement.off('focusout.datatable');
         }
         
         // MEMORY LEAK FIX: Clear all internal structures to release row/column references
@@ -3825,15 +3867,18 @@ $.widget('wm.datatable', {
         this.compiledCellTemplates = {};
         this.columnClickInfo = {};
         
-        // Clear timeout references
-        window.clearTimeout(this.refreshGridTimeout);
+        // MEMORY LEAK FIX: Clear timeout references
+        if (this.refreshGridTimeout) {
+            window.clearTimeout(this.refreshGridTimeout);
+            this.refreshGridTimeout = null;
+        }
         if (this.throttledScrollHandler && this.throttledScrollHandler.cancel) {
             this.throttledScrollHandler.cancel();
             this.throttledScrollHandler = null;
         }
         
         // MEMORY LEAK FIX: Clear all pending timeouts
-        if (this.pendingTimeouts) {
+        if (this.pendingTimeouts && this.pendingTimeouts.size > 0) {
             this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
             this.pendingTimeouts.clear();
         }

@@ -28,7 +28,8 @@ export class ScrollableDirective implements AfterContentInit, AfterViewInit, OnD
     ngAfterViewInit() {
         if (!this.searchRef.isMobileAutoComplete()) {
             // assigning width for the dropdown.
-            const typeAheadInput = this.searchRef.$element.find('input').first();
+            // Access inherited $element getter from SearchComponent
+            const typeAheadInput = (this.searchRef as any).$element.find('input').first();
             this.searchRef.dropdownEl.width(typeAheadInput.outerWidth());
         }
     }

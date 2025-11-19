@@ -101,6 +101,14 @@ export class NavigationServiceImpl implements AbstractNavigationService {
         }
     }
 
+    /**
+     * PERFORMANCE OPTIMIZATION: Clear navigation history to free memory
+     * Useful when navigating away from app or on logout
+     */
+    public clearHistory(): void {
+        this.history.clear();
+    }
+
     /** Todo[Shubham] Need to handle gotoElement in other partials
      * Navigates to particular view
      * @param viewName
@@ -288,6 +296,8 @@ class PageInfo {
 class History {
     private stack: Array<PageInfo> = [];
     private currentPage: PageInfo;
+    // PERFORMANCE OPTIMIZATION: Limit history size to prevent unbounded memory growth
+    private readonly MAX_HISTORY_SIZE = 50;
 
     public getCurrentPage() {
         return this.currentPage;
@@ -304,6 +314,10 @@ class History {
     public push(pageInfo: PageInfo) {
         if (this.currentPage) {
             this.stack.push(this.currentPage);
+            // PERFORMANCE OPTIMIZATION: Implement LRU eviction to prevent unbounded growth
+            if (this.stack.length > this.MAX_HISTORY_SIZE) {
+                this.stack.shift(); // Remove oldest entry (FIFO)
+            }
         }
         this.currentPage = pageInfo;
     }
@@ -315,5 +329,14 @@ class History {
 
     public getLastPage() {
         return this.stack.length > 0 ? this.stack[this.stack.length - 1] : undefined;
+    }
+
+    /**
+     * PERFORMANCE OPTIMIZATION: Clear history to free memory
+     * Useful when navigating away from app or on logout
+     */
+    public clear() {
+        this.stack = [];
+        this.currentPage = null;
     }
 }

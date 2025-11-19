@@ -34,6 +34,11 @@ const WIDGET_CONFIG = {widgetType: 'wm-livetable', hostClass: DEFAULT_CLS};
 })
 export class LiveTableComponent extends StylableComponent implements AfterContentInit, OnDestroy {
     static initializeProps = registerProps();
+    // TypeScript fix: Explicitly declare inherited properties for type resolution
+    public readonly nativeElement: HTMLElement;
+    protected viewParent: any;
+    public readonly appLocale: any;
+    
     @ContentChild(TableComponent) table: TableComponent;
 
     form;
@@ -42,6 +47,9 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
     private dialogId;
     private $queue = [];
     private selectedItemChangeSubscription;
+    // MEMORY LEAK FIX: Track pending timeouts for cleanup
+    // Note: Changed from private to protected to match base class and fix TypeScript errors
+    protected pendingTimeouts: Set<number> = new Set();
     public isDestroyed = false;
 
     private tableOptions: any = {

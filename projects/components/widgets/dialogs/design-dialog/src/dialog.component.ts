@@ -35,6 +35,13 @@ const WIDGET_INFO = {widgetType: 'wm-dialog'};
 })
 export class DialogComponent extends BaseDialog implements OnInit {
     static initializeProps = registerProps();
+    // TypeScript fix: Explicitly declare inherited properties
+    public readonly nativeElement: HTMLElement;
+    public sheet: string | boolean;
+    public sheetPosition: string;
+    public close: () => void;
+    protected viewParent: any;
+    protected register: (parent: any) => void;
     isDialogComponent: boolean = true;
 
     @ViewChild('dialogTemplate', { static: true, read: TemplateRef }) dialogTemplate: TemplateRef<any>;

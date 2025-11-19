@@ -15,6 +15,23 @@ export class ComponentRefProviderService extends ComponentRefProvider {
     static registerComponentRef(name: string, type: ComponentType, ref: any, componentFactory?: any) {
         componentRefCache.get(type).set(name, {ref: ref, componentFactory: componentFactory});
     }
+    
+    /**
+     * MEMORY LEAK FIX: Clear component reference cache
+     * This should be called when navigating away from pages to prevent unbounded cache growth
+     * Component factories can hold references to compiled code and prevent garbage collection
+     */
+    static clearComponentRefCache(type?: ComponentType) {
+        if (type) {
+            const cache = componentRefCache.get(type);
+            if (cache) {
+                cache.clear();
+            }
+        } else {
+            // Clear all caches
+            componentRefCache.forEach(cache => cache.clear());
+        }
+    }
 
     constructor(private componentFactoryResolver: ComponentFactoryResolver, @Inject(LazyComponentRefProviderService) private lazyComponentRef) {
         super();

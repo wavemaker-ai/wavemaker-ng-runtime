@@ -17,6 +17,9 @@ export class PartialContainerDirective implements OnDestroy {
     private $target;
     // MEMORY LEAK FIX: Track pending timeouts for cleanup
     protected pendingTimeouts: Set<number> = new Set();
+    // PERFORMANCE OPTIMIZATION: Cache prefab element and name to avoid repeated jQuery queries
+    private cachedPrefabElement: any = null;
+    private cachedPrefabName: string | null = null;
 
     get name() {
         return this.componentInstance.name;
@@ -27,13 +30,20 @@ export class PartialContainerDirective implements OnDestroy {
         this.vcRef.clear();
         // when the container-target is inside the component template, it can be queried after viewInit of the component.
         $invokeWatchers(true);
+        // PERFORMANCE OPTIMIZATION: Cache prefab lookup to avoid repeated jQuery queries
         // for partials with popovers and page dialogs which are inside a prefab, prefab name needs to be computed and appended
-        const prefab = $(this.elRef.nativeElement).closest('.app-prefab');
-        let prefabName;
-        if (prefab.length) {
-            prefabName = prefab.attr('prefabname');
-        } else if (this.componentInstance.viewParent) {
-            prefabName = this.componentInstance.viewParent.prefabName;
+        let prefabName = this.cachedPrefabName;
+        if (prefabName === null) {
+            // Only query DOM if not cached
+            if (!this.cachedPrefabElement) {
+                this.cachedPrefabElement = $(this.elRef.nativeElement).closest('.app-prefab');
+            }
+            if (this.cachedPrefabElement && this.cachedPrefabElement.length) {
+                prefabName = this.cachedPrefabElement.attr('prefabname');
+            } else if (this.componentInstance.viewParent) {
+                prefabName = this.componentInstance.viewParent.prefabName;
+            }
+            this.cachedPrefabName = prefabName || '';
         }
 
         try {
@@ -68,7 +78,8 @@ export class PartialContainerDirective implements OnDestroy {
         }
     }
 
-    renderPartial = debounce(this._renderPartial, 200);
+    // MEMORY LEAK FIX: Store debounced function reference for cleanup
+    private renderPartial: Function;
 
     onLoadSuccess() {
         this.componentInstance.invokeEventCallback('load');
@@ -86,6 +97,8 @@ export class PartialContainerDirective implements OnDestroy {
         private resolver: ComponentFactoryResolver,
         private partialRefProvider: PartialRefProvider
     ) {
+        // MEMORY LEAK FIX: Create debounced function and store reference for cleanup
+        this.renderPartial = debounce(this._renderPartial.bind(this), 200);
 
         componentInstance.registerPropertyChangeListener((key: string, nv: any, ov?: any) => {
             if (key === 'content') {
@@ -117,5 +130,16 @@ export class PartialContainerDirective implements OnDestroy {
         // MEMORY LEAK FIX: Clear all pending timeouts
         this.pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
         this.pendingTimeouts.clear();
+        
+        // MEMORY LEAK FIX: Cancel debounced function to prevent memory leaks
+        // Debounced functions hold references to the original function and arguments
+        if (this.renderPartial && typeof (this.renderPartial as any).cancel === 'function') {
+            (this.renderPartial as any).cancel();
+        }
+        
+        // PERFORMANCE OPTIMIZATION: Clear cached references
+        this.cachedPrefabElement = null;
+        this.cachedPrefabName = null;
+        this.$target = null;
     }
 }

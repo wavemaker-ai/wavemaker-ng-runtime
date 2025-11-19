@@ -171,14 +171,14 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
         // MEMORY LEAK FIX: Store handlers and register cleanup via destroy$ subscription
         if (this.listComponent.mouseEnterCB) {
             const mouseEnterHandler = ($event) => {
-                this.listComponent.invokeEventCallback('mouseenter', {widget: this, $event});
+                (this.listComponent as any).invokeEventCallback('mouseenter', {widget: this, $event});
             };
             this.nativeElement.addEventListener('mouseenter', mouseEnterHandler);
             this.destroy$.subscribe(() => this.nativeElement.removeEventListener('mouseenter', mouseEnterHandler));
         }
         if (this.listComponent.mouseLeaveCB) {
             const mouseLeaveHandler = ($event) => {
-                this.listComponent.invokeEventCallback('mouseleave', {widget: this, $event});
+                (this.listComponent as any).invokeEventCallback('mouseleave', {widget: this, $event});
             };
             this.nativeElement.addEventListener('mouseleave', mouseLeaveHandler);
             this.destroy$.subscribe(() => this.nativeElement.removeEventListener('mouseleave', mouseLeaveHandler));

@@ -27,6 +27,11 @@ const registeredPropsSet = new Set<string>();
     ]
 })
 export class PrefabDirective extends StylableComponent implements OnDestroy, AfterViewInit {
+    /**
+     * DOM node reference of the component root
+     * This property is inherited from BaseComponent but TypeScript needs explicit type declaration here
+     */
+    public readonly nativeElement: HTMLElement;
 
     widgetType: string;
     prefabName: string;
@@ -214,10 +219,22 @@ export class PrefabDirective extends StylableComponent implements OnDestroy, Aft
         const ancestors: HTMLElement[] = [];
         let parent: HTMLElement | null = element.parentElement;
         const scrollRegex = /(auto|scroll|overlay)/;
+        
+        // PERFORMANCE OPTIMIZATION: Cache computed styles to avoid repeated getComputedStyle calls
+        // getComputedStyle is expensive (forces layout calculation), so we batch the checks
+        const styleCache = new WeakMap<HTMLElement, string>();
 
         while (parent) {
-            const style = window.getComputedStyle(parent);
-            const overflowValues = [style.overflow, style.overflowY, style.overflowX].join(' ');
+            // PERFORMANCE OPTIMIZATION: Use cached style if available
+            let overflowValues: string;
+            if (styleCache.has(parent)) {
+                overflowValues = styleCache.get(parent)!;
+            } else {
+                const style = window.getComputedStyle(parent);
+                overflowValues = [style.overflow, style.overflowY, style.overflowX].join(' ');
+                styleCache.set(parent, overflowValues);
+            }
+            
             if (scrollRegex.test(overflowValues)) {
                 ancestors.push(parent);
             }
@@ -271,7 +288,7 @@ export class PrefabDirective extends StylableComponent implements OnDestroy, Aft
 
     ngOnDestroy() {
         this.disconnectLazyVisibilityObservers();
-        this.invokeEventCallback('destroy', { widget: this });
+        (this as any).invokeEventCallback('destroy', { widget: this });
         
         // CRITICAL FIX: Call super.ngOnDestroy() to unwatch all watchers
         // Without this, all watchers in prefabs remain in memory

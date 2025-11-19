@@ -1,8 +1,8 @@
 import {FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {DateTimePickerComponent} from '@wm/components/input/epoch/date-time-picker';
 import {CommonModule} from '@angular/common';
-import {Component, Inject, Injector, NgZone, OnDestroy, Optional} from '@angular/core';
-import {TimepickerConfig, TimepickerModule} from 'ngx-bootstrap/timepicker';
+import {Component, Inject, Injector, NgZone, OnDestroy, Optional, ViewChild} from '@angular/core';
+import {TimepickerComponent, TimepickerConfig, TimepickerModule} from 'ngx-bootstrap/timepicker';
 import {
     $appDigest,
     AbstractI18nService,
@@ -139,6 +139,13 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
      * This is an internal property used to map the main model to the time widget
      */
     public bsTimeValue: Date;
+
+    /**
+     * ViewChild reference to the timepicker component from base class
+     * This property is declared in BaseDateTimeComponent but TypeScript needs explicit type declaration here
+     * The @ViewChild decorator is already applied in the base class
+     */
+    protected bsTimePicker: TimepickerComponent;
 
     constructor(
         inj: Injector,

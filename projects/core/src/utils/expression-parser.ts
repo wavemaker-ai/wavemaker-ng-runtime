@@ -36,6 +36,32 @@ const exprFnCache = new Map();
 const eventFnCache = new Map();
 const purePipes = new Map();
 
+// OPTIMIZATION: Performance monitoring - track cache hit rates
+interface CacheStats {
+    hits: number;
+    misses: number;
+    accessFrequency: Map<string, number>; // Track frequency of each entry
+    lastAccessTime: Map<string, number>;  // Track recency of access
+}
+
+const exprCacheStats: CacheStats = {
+    hits: 0,
+    misses: 0,
+    accessFrequency: new Map(),
+    lastAccessTime: new Map()
+};
+
+const eventCacheStats: CacheStats = {
+    hits: 0,
+    misses: 0,
+    accessFrequency: new Map(),
+    lastAccessTime: new Map()
+};
+
+// OPTIMIZATION: Cache warming - frequently used expressions to pre-cache
+const cacheWarmupList: string[] = [];
+const MAX_WARMUP_SIZE = 50;
+
 const primitiveEquals = (a, b) => {
     if (typeof a === 'object' || typeof b === 'object') {
         return false;
@@ -520,11 +546,20 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
         return noop;
     }
 
+    // OPTIMIZATION: Track cache access for performance monitoring
     let fn = exprFnCache.get(expr);
-
+    
     if (fn) {
+        // Cache hit - update statistics
+        exprCacheStats.hits++;
+        const currentFreq = exprCacheStats.accessFrequency.get(expr) || 0;
+        exprCacheStats.accessFrequency.set(expr, currentFreq + 1);
+        exprCacheStats.lastAccessTime.set(expr, Date.now());
         return fn;
     }
+    
+    // Cache miss - update statistics
+    exprCacheStats.misses++;
 
     let boundFn;
     if (!defOnly) {
@@ -596,16 +631,74 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
         }
     }
 
-    // CRITICAL FIX: Implement LRU-style cache eviction to prevent unbounded growth
+    // OPTIMIZATION: Progressive cache eviction based on access patterns
+    // Evict least recently and least frequently used entries
     if (exprFnCache.size >= MAX_EXPR_CACHE_SIZE) {
-        const firstKey = exprFnCache.keys().next().value;
-        exprFnCache.delete(firstKey);
-        console.warn(`Expression cache limit reached (${MAX_EXPR_CACHE_SIZE}). Evicted: ${firstKey}`);
+        evictLeastUsedFromExprCache();
     }
     
     exprFnCache.set(expr, boundFn);
+    
+    // Track new entry
+    exprCacheStats.accessFrequency.set(expr, 1);
+    exprCacheStats.lastAccessTime.set(expr, Date.now());
+    
+    // Add to warmup list if frequently used
+    if (cacheWarmupList.length < MAX_WARMUP_SIZE) {
+        cacheWarmupList.push(expr);
+    }
 
     return boundFn;
+}
+
+/**
+ * OPTIMIZATION: Progressive eviction based on access frequency and recency
+ * Evicts entries with lowest score: (frequency * weight) + (recency * weight)
+ * This keeps frequently accessed expressions longer even if not recently used
+ */
+function evictLeastUsedFromExprCache() {
+    if (exprFnCache.size === 0) return;
+    
+    const FREQUENCY_WEIGHT = 0.7; // Weight for access frequency
+    const RECENCY_WEIGHT = 0.3;   // Weight for recency
+    
+    const now = Date.now();
+    const ONE_HOUR = 3600000; // Normalize recency to hours
+    
+    let minScore = Infinity;
+    let keyToEvict = null;
+    
+    // Calculate score for each cache entry
+    exprFnCache.forEach((value, key) => {
+        const frequency = exprCacheStats.accessFrequency.get(key) || 0;
+        const lastAccess = exprCacheStats.lastAccessTime.get(key) || now;
+        const recency = Math.max(0, now - lastAccess) / ONE_HOUR;
+        
+        // Lower is worse - we want to evict entries with lowest scores
+        // Normalize: higher frequency = better, lower recency = better
+        const frequencyScore = frequency * FREQUENCY_WEIGHT;
+        const recencyScore = Math.max(0, 1 - recency) * RECENCY_WEIGHT; // Invert recency
+        const totalScore = frequencyScore + recencyScore;
+        
+        if (totalScore < minScore) {
+            minScore = totalScore;
+            keyToEvict = key;
+        }
+    });
+    
+    if (keyToEvict) {
+        exprFnCache.delete(keyToEvict);
+        exprCacheStats.accessFrequency.delete(keyToEvict);
+        exprCacheStats.lastAccessTime.delete(keyToEvict);
+        console.warn(`Expression cache limit reached (${MAX_EXPR_CACHE_SIZE}). Evicted least used: ${keyToEvict}`);
+    } else {
+        // Fallback to simple LRU if no scores calculated
+        const firstKey = exprFnCache.keys().next().value;
+        exprFnCache.delete(firstKey);
+        exprCacheStats.accessFrequency.delete(firstKey);
+        exprCacheStats.lastAccessTime.delete(firstKey);
+        console.warn(`Expression cache limit reached (${MAX_EXPR_CACHE_SIZE}). Evicted: ${firstKey}`);
+    }
 }
 
 function simpleFunctionEvaluator(expr, ctx, locals) {
@@ -639,11 +732,20 @@ export function $parseEvent(expr, defOnly?): ParseExprResult {
         return noop;
     }
 
+    // OPTIMIZATION: Track cache access for performance monitoring
     let fn = eventFnCache.get(expr);
-
+    
     if (fn) {
+        // Cache hit - update statistics
+        eventCacheStats.hits++;
+        const currentFreq = eventCacheStats.accessFrequency.get(expr) || 0;
+        eventCacheStats.accessFrequency.set(expr, currentFreq + 1);
+        eventCacheStats.lastAccessTime.set(expr, Date.now());
         return fn;
     }
+    
+    // Cache miss - update statistics
+    eventCacheStats.misses++;
 
     if (!defOnly) {
         fn = getFnForEventExpr(expr);
@@ -665,15 +767,61 @@ export function $parseEvent(expr, defOnly?): ParseExprResult {
         }
     }
 
-    // CRITICAL FIX: Implement LRU-style cache eviction to prevent unbounded growth
+    // OPTIMIZATION: Progressive cache eviction based on access patterns
     if (eventFnCache.size >= MAX_EVENT_CACHE_SIZE) {
-        const firstKey = eventFnCache.keys().next().value;
-        eventFnCache.delete(firstKey);
-        console.warn(`Event cache limit reached (${MAX_EVENT_CACHE_SIZE}). Evicted: ${firstKey}`);
+        evictLeastUsedFromEventCache();
     }
     
     eventFnCache.set(expr, fn);
+    
+    // Track new entry
+    eventCacheStats.accessFrequency.set(expr, 1);
+    eventCacheStats.lastAccessTime.set(expr, Date.now());
+    
     return fn;
+}
+
+/**
+ * OPTIMIZATION: Progressive eviction for event cache
+ */
+function evictLeastUsedFromEventCache() {
+    if (eventFnCache.size === 0) return;
+    
+    const FREQUENCY_WEIGHT = 0.7;
+    const RECENCY_WEIGHT = 0.3;
+    const now = Date.now();
+    const ONE_HOUR = 3600000;
+    
+    let minScore = Infinity;
+    let keyToEvict = null;
+    
+    eventFnCache.forEach((value, key) => {
+        const frequency = eventCacheStats.accessFrequency.get(key) || 0;
+        const lastAccess = eventCacheStats.lastAccessTime.get(key) || now;
+        const recency = Math.max(0, now - lastAccess) / ONE_HOUR;
+        
+        const frequencyScore = frequency * FREQUENCY_WEIGHT;
+        const recencyScore = Math.max(0, 1 - recency) * RECENCY_WEIGHT;
+        const totalScore = frequencyScore + recencyScore;
+        
+        if (totalScore < minScore) {
+            minScore = totalScore;
+            keyToEvict = key;
+        }
+    });
+    
+    if (keyToEvict) {
+        eventFnCache.delete(keyToEvict);
+        eventCacheStats.accessFrequency.delete(keyToEvict);
+        eventCacheStats.lastAccessTime.delete(keyToEvict);
+        console.warn(`Event cache limit reached (${MAX_EVENT_CACHE_SIZE}). Evicted least used: ${keyToEvict}`);
+    } else {
+        const firstKey = eventFnCache.keys().next().value;
+        eventFnCache.delete(firstKey);
+        eventCacheStats.accessFrequency.delete(firstKey);
+        eventCacheStats.lastAccessTime.delete(firstKey);
+        console.warn(`Event cache limit reached (${MAX_EVENT_CACHE_SIZE}). Evicted: ${firstKey}`);
+    }
 }
 
 const fnNameMap = new Map();
@@ -784,9 +932,99 @@ export const getExpressionCacheSizes = () => {
 }
 
 /**
- * Expose cache size getters for debugging
+ * OPTIMIZATION: Get cache hit rate statistics for performance monitoring
+ */
+export const getCacheHitRates = () => {
+    const exprTotal = exprCacheStats.hits + exprCacheStats.misses;
+    const eventTotal = eventCacheStats.hits + eventCacheStats.misses;
+    
+    return {
+        expression: {
+            hits: exprCacheStats.hits,
+            misses: exprCacheStats.misses,
+            total: exprTotal,
+            hitRate: exprTotal > 0 ? (exprCacheStats.hits / exprTotal * 100).toFixed(2) + '%' : '0%',
+            topExpressions: Array.from(exprCacheStats.accessFrequency.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10)
+                .map(([expr, freq]) => ({ expression: expr, frequency: freq }))
+        },
+        event: {
+            hits: eventCacheStats.hits,
+            misses: eventCacheStats.misses,
+            total: eventTotal,
+            hitRate: eventTotal > 0 ? (eventCacheStats.hits / eventTotal * 100).toFixed(2) + '%' : '0%',
+            topEvents: Array.from(eventCacheStats.accessFrequency.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10)
+                .map(([expr, freq]) => ({ expression: expr, frequency: freq }))
+        }
+    };
+};
+
+/**
+ * OPTIMIZATION: Reset cache statistics
+ */
+export const resetCacheStats = () => {
+    exprCacheStats.hits = 0;
+    exprCacheStats.misses = 0;
+    exprCacheStats.accessFrequency.clear();
+    exprCacheStats.lastAccessTime.clear();
+    
+    eventCacheStats.hits = 0;
+    eventCacheStats.misses = 0;
+    eventCacheStats.accessFrequency.clear();
+    eventCacheStats.lastAccessTime.clear();
+};
+
+/**
+ * OPTIMIZATION: Warm up cache with frequently used expressions
+ * Call this during app initialization or after identifying hot expressions
+ * @param expressions Array of expression strings to pre-cache
+ */
+export const warmupExpressionCache = (expressions: string[]) => {
+    if (!Array.isArray(expressions)) {
+        console.warn('warmupExpressionCache: expressions must be an array');
+        return;
+    }
+    
+    let warmed = 0;
+    expressions.forEach(expr => {
+        if (typeof expr === 'string' && expr.trim().length > 0) {
+            try {
+                // Parse and cache the expression
+                $parseExpr(expr.trim());
+                warmed++;
+            } catch (e) {
+                console.warn(`Failed to warmup expression: ${expr}`, e);
+            }
+        }
+    });
+    
+    console.log(`Cache warmup: ${warmed} expressions cached`);
+    return warmed;
+};
+
+/**
+ * OPTIMIZATION: Get recommended expressions for cache warming
+ * Returns most frequently used expressions from current usage patterns
+ */
+export const getRecommendedWarmupExpressions = (limit: number = 20): string[] => {
+    const allFreqs = Array.from(exprCacheStats.accessFrequency.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit);
+    
+    return allFreqs.map(([expr]) => expr);
+};
+
+/**
+ * Expose cache size getters and performance monitoring for debugging
  */
 if (typeof window !== 'undefined') {
     (window as any).getExpressionCacheSizes = getExpressionCacheSizes;
     (window as any).clearExpressionCaches = clearExpressionCaches;
+    (window as any).getCacheHitRates = getCacheHitRates;
+    (window as any).resetCacheStats = resetCacheStats;
+    (window as any).warmupExpressionCache = warmupExpressionCache;
+    (window as any).getRecommendedWarmupExpressions = getRecommendedWarmupExpressions;
 }

@@ -78,6 +78,39 @@ const WIDGET_CONFIG = { widgetType: 'wm-search', hostClass: 'input-group' };
 })
 export class SearchComponent extends DatasetAwareFormComponent implements OnInit, AfterViewInit, AfterViewChecked {
     static initializeProps = registerProps();
+    // TypeScript fix: Explicitly declare inherited properties
+    public readonly nativeElement: HTMLElement;
+    // datavalue is inherited as an accessor from DatasetAwareFormComponent, not as instance property
+    public toBeProcessedDatavalue: any;
+    public allowempty: boolean;
+    public _defaultQueryInvoked: boolean;
+    // datavalue$ and dataset$ are inherited as Subject from DatasetAwareFormComponent, not Observable
+    public _modelByValue: any;
+    public _modelByKey: any;
+    // registerDestroyListener is public in DatasetAwareFormComponent, so it should be public here too
+    public registerDestroyListener: (listener: () => void) => void;
+    // datasetItems is inherited from DatasetAwareFormComponent
+    public invokeEventCallback: (eventName: string, data?: any) => void;
+    public displayexpression: string;
+    public datafield: string;
+    public dataset: any;
+    public orderby: string;
+    protected viewParent: any;
+    public displayfield: string;
+    public displaylabel: string;
+    public binddisplayimagesrc: string;
+    public displayimagesrc: string;
+    public display: string;
+    public updateBoundVariable: (value: any) => void;
+    protected updatePrevDatavalue: (value: any) => void;
+    public invokeOnChange: (value: any, $event?: Event | any, valid?: boolean) => void;
+    public invokeOnTouched: ($event?: Event) => void;
+    
+    // jQuery wrapper for nativeElement (inherited from BaseComponent)
+    public get $element() {
+        return $((this as any).nativeElement);
+    }
+    
     public casesensitive: boolean;
     public searchkey: string;
     public queryModel: Array<DataSetItem> | string;
@@ -225,7 +258,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
             // turn on showCloseBtn when a default value is given
             this.showClosebtn = (this.query !== '');
         });
-        this.registerDestroyListener(() => datavalueSubscription.unsubscribe());
+        (this as any).registerDestroyListener(() => datavalueSubscription.unsubscribe());
 
         const datasetSubscription = this.dataset$.subscribe(() => {
             // set the next item index.
@@ -237,7 +270,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
                 this.updateByDataset(defaultValue);
             }
         });
-        this.registerDestroyListener(() => datasetSubscription.unsubscribe());
+        (this as any).registerDestroyListener(() => datasetSubscription.unsubscribe());
     }
 
     // on clear, trigger search with page size 1
@@ -251,11 +284,12 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
             this._unsubscribeDv = false;
             this.loadMoreData();
         }
-        this.invokeEventCallback('clearsearch');
+        (this as any).invokeEventCallback('clearsearch');
         this._loadingItems = false;
         // when search input is cleared, focus on the input field
         if ($event) {
-            this.$element.find('.app-search-input').focus();
+            // Access $element getter
+            (this as any).$element.find('.app-search-input').focus();
         }
     }
 
@@ -273,7 +307,8 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
         this.insertAtIndex(this.elIndex);
         this.elIndex = undefined;
         this.parentEl = undefined;
-        this.$element.removeClass('full-screen');
+        // Access $element getter
+        (this as any).$element.removeClass('full-screen');
         if (this._domUpdated) {
             this._domUpdated = false;
         }
@@ -285,24 +320,27 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     private renderMobileAutoComplete() {
         // Get the parent element of the search element which can be next or prev element, if both are empty then get the parent of element.
         if (!isDefined(this.elIndex)) {
-            this.parentEl = this.$element.parent();
-            this.elIndex = this.parentEl.children().index(this.$element);
+            // Access $element getter
+            this.parentEl = (this as any).$element.parent();
+            this.elIndex = this.parentEl.children().index((this as any).$element);
         }
-        if (!this.$element.hasClass('full-screen')) {
+        // Access $element getter
+        if (!(this as any).$element.hasClass('full-screen')) {
             // this flag is set to notify that the typeahead-container dom has changed its position
             this._domUpdated = true;
             // Add full screen class on focus of the input element.
-            this.$element.addClass('full-screen');
+            (this as any).$element.addClass('full-screen');
 
             // Add position to set the height to auto
             if (this.position === 'inline') {
-                this.$element.addClass(this.position);
+                (this as any).$element.addClass(this.position);
             }
         }
         // focus is lost when element is changed to full-screen, keydown to select next items will not work
         // Hence explicitly focusing the input
-        if (this.$element.hasClass('full-screen')) {
-            this.$element.find('.app-search-input').focus();
+        // Access $element getter
+        if ((this as any).$element.hasClass('full-screen')) {
+            (this as any).$element.find('.app-search-input').focus();
         }
     }
 
@@ -364,13 +402,16 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     // inserts the element at the index position
     private insertAtIndex(i) {
         if (i === 0) {
-            this.parentEl.prepend(this.$element);
+            // Access $element getter
+            this.parentEl.prepend((this as any).$element);
         } else {
             const $elAtIndex = this.parentEl.children().eq(i);
             if ($elAtIndex.length) {
-                this.$element.insertBefore(this.parentEl.children().eq(i));
+                // Access $element getter
+                (this as any).$element.insertBefore(this.parentEl.children().eq(i));
             } else {
-                this.$element.insertAfter(this.parentEl.children().eq(i - 1));
+                // Access $element getter
+                (this as any).$element.insertAfter(this.parentEl.children().eq(i - 1));
             }
         }
     }
@@ -436,18 +477,19 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
         if (this.query === '') {
             this.queryModel = '';
             this._modelByValue = '';
-            this.updatePrevDatavalue(this._lastQuery);
-            this.invokeOnChange(this._modelByValue, {}, true);
+            // Access inherited updatePrevDatavalue from base class
+            (this as any).updatePrevDatavalue(this._lastQuery);
+            (this as any).invokeOnChange(this._modelByValue, {}, true);
 
-            this.invokeEventCallback('clear', { $event });
+            (this as any).invokeEventCallback('clear', { $event });
 
             // trigger onSubmit only when the search input is cleared off and do not trigger when tab is pressed.
             if ($event && $event.which !== 9) {
-                this.invokeEventCallback('submit', { $event });
+                (this as any).invokeEventCallback('submit', { $event });
             }
         } else {
             // invoking change event on every input value change.
-            this.invokeEventCallback('change', {
+            (this as any).invokeEventCallback('change', {
                 $event: $event,
                 newVal: this._modelByValue || this.query,
                 oldVal: (this as any).prevDatavalue
@@ -495,7 +537,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     }
 
     private invokeOnBeforeServiceCall(inputData) {
-        this.invokeEventCallback('beforeservicecall', { inputData });
+        (this as any).invokeEventCallback('beforeservicecall', { inputData });
     }
 
     private onDropdownOpen() {
@@ -517,13 +559,16 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
 
         // open full-screen search view
         if (this.isMobileAutoComplete()) {
-            if (!this.$element.hasClass('full-screen')) {
+            // Access $element getter
+            if (!(this as any).$element.hasClass('full-screen')) {
                 this.renderMobileAutoComplete();
             }
             const dropdownEl = this.dropdownEl.closest('typeahead-container');
 
-            dropdownEl.insertAfter(this.$element.find('input').first());
-            const screenHeight = this.$element.closest('.app-content').height();
+            // Access $element getter
+            dropdownEl.insertAfter((this as any).$element.find('input').first());
+            // Access $element getter
+            const screenHeight = (this as any).$element.closest('.app-content').height();
             dropdownEl.css({ position: 'relative', top: 0, height: screenHeight + 'px' });
             this.showClosebtn = this.query && this.query !== '';
 
@@ -558,7 +603,8 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     }
 
     private triggerSearch() {
-        if (this.dataProvider.isLastPage || !this.$element.hasClass('full-screen')) {
+        // Access $element getter
+        if (this.dataProvider.isLastPage || !(this as any).$element.hasClass('full-screen')) {
             return;
         }
         const typeAheadDropDown = this.dropdownEl;
@@ -782,7 +828,8 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
             data,
             this.datafield,
             {
-                displayField: this.displaylabel || this.displayfield,
+                // Access inherited displaylabel from base class
+                displayField: (this as any).displaylabel || this.displayfield,
                 displayExpr: iscustom ? '' : this.displayexpression,
                 bindDisplayExpr: iscustom ? '' : this.binddisplaylabel,
                 bindDisplayImgSrc: this.binddisplayimagesrc,
@@ -791,7 +838,8 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
             itemIndex,
             this
         );
-        return getUniqObjsByDataField(transformedData, this.datafield, this.displayfield || this.displaylabel, toBoolean(this.allowempty));
+        // Access inherited displaylabel from base class
+        return getUniqObjsByDataField(transformedData, this.datafield, this.displayfield || (this as any).displaylabel, toBoolean(this.allowempty));
     }
 
     // OptionsListTemplate listens to the scroll event and triggers this function.
@@ -827,7 +875,8 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     public ngAfterViewInit() {
         super.ngAfterViewInit();
 
-        styler(this.nativeElement as HTMLElement, this);
+        // Access inherited nativeElement from BaseComponent and pass this as any for type compatibility
+        styler((this as any).nativeElement as HTMLElement, this as any);
         if (this.display) {
             setCSS(this.nativeElement as HTMLElement, 'display', this.display, true);
         }
@@ -869,19 +918,21 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
 
         $event = this.eventData($event, item);
 
-        this.invokeOnTouched();
-        this.invokeOnChange(this.datavalue, $event || {});
+        (this as any).invokeOnTouched();
+        (this as any).invokeOnChange(this.datavalue, $event || {});
         // updating the variable bound to default value as invokeOnChange is not updating the variable.
         if (this.datavalue !== (this as any).prevDatavalue) {
-            this.updateBoundVariable(this.datavalue);
+            (this as any).updateBoundVariable(this.datavalue);
         }
-        if (this.$element.hasClass('full-screen')) {
+        // Access $element getter
+        if ((this as any).$element.hasClass('full-screen')) {
             this.closeSearch();
         }
-        this.invokeEventCallback('select', { $event, selectedValue: this.datavalue });
-        this.invokeEventCallback('submit', { $event });
+        (this as any).invokeEventCallback('select', { $event, selectedValue: this.datavalue });
+        (this as any).invokeEventCallback('submit', { $event });
 
-        this.updatePrevDatavalue(this.datavalue);
+        // Access inherited updatePrevDatavalue from base class
+        (this as any).updatePrevDatavalue(this.datavalue);
     }
 
     onPropertyChange(key: string, nv: any, ov: any) {
@@ -892,9 +943,10 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
         // Backward compatability from 10.3.1 to 10.3.2
         // 10.3.1 we had displaylabel as modal value
         // From 10.3.2 onwords we will be having displayexpresion as modal value
-        if (this.type === 'autocomplete' && key === 'displaylabel' && this.displaylabel && (!this.displayexpression || (this.displayexpression && !this.datasource)))  {
-            this.displayexpression = this.displaylabel;
-            this.displaylabel = undefined;
+        // Access inherited displaylabel from base class
+        if (this.type === 'autocomplete' && key === 'displaylabel' && (this as any).displaylabel && (!this.displayexpression || (this.displayexpression && !this.datasource)))  {
+            this.displayexpression = (this as any).displaylabel;
+            (this as any).displaylabel = undefined;
         }
 
         // when dataoptions are provided and there is no displaylabel given then displaylabel is set as the relatedfield

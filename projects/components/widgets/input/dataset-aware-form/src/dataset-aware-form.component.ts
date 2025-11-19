@@ -7,6 +7,15 @@ import {debounce as _debounce, find, isArray, isEmpty, isEqual, isNull, isObject
 
 @Injectable()
 export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent implements OnInit, OnDestroy {
+    // TypeScript fix: Explicitly declare inherited properties for type resolution
+    protected viewParent: any;
+    protected _onChange: any;
+    public widgetType: string;
+    // getAppInstance is public in BaseComponent, must be public here too
+    public getAppInstance: () => any;
+    // registerDestroyListener is public in BaseComponent, so it should be public here too
+    public registerDestroyListener: (cleanup: () => void) => void;
+    
     public dataset: any;
     public datafield: string;
     public displayfield: string;
@@ -61,7 +70,8 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
         this.selectByKey(val);
 
         // invoke on datavalue change.
-        this.invokeOnChange(this._modelByValue);
+        // invokeOnChange is inherited from BaseFormCustomComponent
+        (this as any).invokeOnChange(this._modelByValue);
     }
 
     // @ts-ignore
@@ -83,18 +93,21 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
         this.datavalue$.next(val);
 
         // invoke on datavalue change.
-        this.invokeOnChange(val, undefined, true);
+        // invokeOnChange is inherited from BaseFormCustomComponent
+        (this as any).invokeOnChange(val, undefined, true);
     }
 
     protected constructor(inj: Injector,  @Inject(WidgetConfig) config: IWidgetConfig,
                           @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any,
                           @Attribute('groupby') public groupby?: string, initPromise?: Promise<any>) {
         super(inj, config, explicitContext, initPromise);
-        this.datePipe = this.inj.get(ToDatePipe);
-        this.appDefaults = this.inj.get(AppDefaults);
-        this.binddisplayexpression = this.nativeElement.getAttribute('displayexpression.bind');
-        this.binddisplayimagesrc = this.nativeElement.getAttribute('displayimagesrc.bind');
-        this.binddisplaylabel = this.nativeElement.getAttribute('displaylabel.bind');
+        // Access inherited protected inj property from BaseFormComponent
+        this.datePipe = (this as any).inj.get(ToDatePipe);
+        this.appDefaults = (this as any).inj.get(AppDefaults);
+        // Access inherited nativeElement property from BaseComponent
+        this.binddisplayexpression = (this as any).nativeElement.getAttribute('displayexpression.bind');
+        this.binddisplayimagesrc = (this as any).nativeElement.getAttribute('displayimagesrc.bind');
+        this.binddisplaylabel = (this as any).nativeElement.getAttribute('displaylabel.bind');
 
         this._debouncedInitDatasetItems = debounce(() => {
             this.initDatasetItems();
@@ -315,7 +328,7 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
         const datasetSubscription = this.dataset$.subscribe(() => {
             this.groupedData = this.getGroupedData();
         });
-        this.registerDestroyListener(() => datasetSubscription.unsubscribe());
+        (this as any).registerDestroyListener(() => datasetSubscription.unsubscribe());
     }
 
     protected setGroupData() {
@@ -339,11 +352,11 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
                 break;
             case 'required':
             case 'datavalue':
-                this._onChange(this.datavalue);
+                (this as any)._onChange(this.datavalue);
                 break;
             case 'groupby':
             case 'match':
-                if (this.widgetType !== 'wm-search' && this.widgetType !== 'wm-chips') {
+                if ((this as any).widgetType !== 'wm-search' && (this as any).widgetType !== 'wm-chips') {
                     this.setGroupData();
                 }
             break;
@@ -352,7 +365,7 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
 
     ngOnInit() {
         super.ngOnInit();
-        if (this.groupby && (this.widgetType !== 'wm-search' && this.widgetType !== 'wm-chips')) {
+        if (this.groupby && ((this as any).widgetType !== 'wm-search' && (this as any).widgetType !== 'wm-chips')) {
             this.setGroupData();
         }
         // adding the handler for header click and toggle headers.
@@ -367,11 +380,33 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
             this.cancelLocaleChangeSubscription();
         }
         // Complete Subjects to prevent memory leaks
+        // CRITICAL FIX: Wrap Subject completion in try-catch to handle revoked proxy errors gracefully
+        // Observers of these subjects might try to access or set properties on the widget proxy
+        // If the proxy is revoked or if there's a timing issue, we catch and ignore the error
         if (this.dataset$ && !this.dataset$.closed) {
-            this.dataset$.complete();
+            try {
+                this.dataset$.complete();
+            } catch (e) {
+                // Ignore errors when completing dataset$ subject (proxy may be revoked)
+                // This prevents "Cannot perform 'set' on a proxy that has been revoked" errors
+            }
         }
         if (this.datavalue$ && !this.datavalue$.closed) {
-            this.datavalue$.complete();
+            try {
+                this.datavalue$.complete();
+            } catch (e) {
+                // Ignore errors when completing datavalue$ subject (proxy may be revoked)
+                // This prevents "Cannot perform 'set' on a proxy that has been revoked" errors
+            }
+        }
+        
+        // MEMORY LEAK FIX: Cancel debounced functions to prevent memory leaks
+        // Debounced functions hold references to the original function and arguments
+        if (this._debouncedInitDatasetItems && typeof (this._debouncedInitDatasetItems as any).cancel === 'function') {
+            (this._debouncedInitDatasetItems as any).cancel();
+        }
+        if (this._debounceDatavalueUpdation && typeof (this._debounceDatavalueUpdation as any).cancel === 'function') {
+            (this._debounceDatavalueUpdation as any).cancel();
         }
         
         // CRITICAL FIX: Call super.ngOnDestroy() to unwatch all watchers

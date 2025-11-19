@@ -4,6 +4,7 @@ import {
     ContentChild,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     TemplateRef,
@@ -31,8 +32,12 @@ const WIDGET_INFO = { widgetType: 'wm-partialdialog' };
         provideAsDialogRef(PartialDialogComponent)
     ]
 })
-export class PartialDialogComponent extends BaseDialog implements OnInit {
+export class PartialDialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
+    // TypeScript fix: Explicitly declare inherited properties
+    protected viewParent: any;
+    protected register: (parent: any) => void;
+    // invokeEventCallback is a public method inherited from BaseComponent, no need to redeclare
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate: TemplateRef<any>;
     @ContentChild(TemplateRef) dialogContent: TemplateRef<any>;
     @ContentChild('partial') partialRef;
@@ -41,6 +46,7 @@ export class PartialDialogComponent extends BaseDialog implements OnInit {
     protected Widgets;
     protected Variables;
     protected Actions;
+    private partialLoadSubscription: () => void;
 
     constructor(
         inj: Injector,
@@ -84,16 +90,17 @@ export class PartialDialogComponent extends BaseDialog implements OnInit {
      * @param {Event} $event
      */
     onOk($event: Event) {
-        this.invokeEventCallback('ok', { $event });
+        (this as any).invokeEventCallback('ok', { $event });
     }
 
     ngOnInit() {
         super.ngOnInit();
-        this.register(this.viewParent);
+        (this as any).register((this as any).viewParent);
     }
 
     private setPartialLoadListener() {
-        const cancelSubscription = this.app.subscribe('partialLoaded', () => {
+        // MEMORY LEAK FIX: Store subscription for cleanup
+        this.partialLoadSubscription = this.app.subscribe('partialLoaded', () => {
             const parEle = this.partialRef.nativeElement;
             let partialScope;
             if (parEle) {
@@ -102,8 +109,21 @@ export class PartialDialogComponent extends BaseDialog implements OnInit {
                 this.Variables = partialScope.Variables;
                 this.Actions = partialScope.Actions;
             }
-            cancelSubscription();
+            // Clean up subscription after it fires
+            if (this.partialLoadSubscription) {
+                this.partialLoadSubscription();
+                this.partialLoadSubscription = null;
+            }
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clean up subscription if it still exists
+        if (this.partialLoadSubscription) {
+            this.partialLoadSubscription();
+            this.partialLoadSubscription = null;
+        }
+        super.ngOnDestroy();
     }
 
     public open(initState?: any) {

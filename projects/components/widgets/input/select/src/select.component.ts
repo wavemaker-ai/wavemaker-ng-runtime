@@ -24,6 +24,20 @@ const WIDGET_CONFIG = {widgetType: 'wm-select', hostClass: 'app-select-wrapper'}
 export class SelectComponent extends DatasetAwareFormComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
+    // Explicit declarations for TypeScript - these properties are inherited from base classes
+    declare public readonly nativeElement: HTMLElement;
+    // datavalue and modelByKey are inherited as accessors from DatasetAwareFormComponent, not as instance properties
+    declare protected dataset$: any;
+    declare protected pendingTimeouts: Set<number>;
+    declare public registerDestroyListener: (fn: any) => void;
+    declare public invokeOnChange: (value: any, $event?: Event | any, valid?: boolean) => void;
+    declare public invokeOnTouched: ($event?: Event) => void;
+    declare protected _onChange: any;
+    declare public multiple: boolean;
+    declare public groupby: string;
+    declare public acceptsArray: boolean;
+    declare public datasetItems: any[];
+
     public readonly: boolean;
     public placeholder: string;
     public navsearchbar: any;
@@ -86,7 +100,7 @@ export class SelectComponent extends DatasetAwareFormComponent implements AfterV
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
-        styler(this.selectEl.nativeElement as HTMLElement, this);
+        styler(this.selectEl.nativeElement as HTMLElement, this as any);
     }
 
     // Change event is registered from the template, Prevent the framework from registering one more event

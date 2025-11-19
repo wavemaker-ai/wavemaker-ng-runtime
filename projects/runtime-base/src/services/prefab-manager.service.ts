@@ -107,4 +107,34 @@ export class PrefabManagerService {
                 });
             });
     }
+
+    /**
+     * PERFORMANCE OPTIMIZATION: Clear prefab cache for a specific prefab
+     * Useful when prefab is no longer needed or needs to be reloaded
+     * @param prefabName - Name of the prefab to clear from cache
+     */
+    public clearPrefabCache(prefabName?: string): void {
+        if (prefabName) {
+            resolvedPrefabs.delete(prefabName);
+            prefabsWithError.delete(prefabName);
+            inProgress.delete(prefabName);
+        } else {
+            // Clear all caches
+            resolvedPrefabs.clear();
+            prefabsWithError.clear();
+            inProgress.clear();
+        }
+    }
+
+    /**
+     * PERFORMANCE OPTIMIZATION: Get cache statistics for monitoring
+     * @returns Object with cache sizes
+     */
+    public getCacheStats(): { resolved: number; errors: number; inProgress: number } {
+        return {
+            resolved: resolvedPrefabs.size,
+            errors: prefabsWithError.size,
+            inProgress: inProgress.size
+        };
+    }
 }

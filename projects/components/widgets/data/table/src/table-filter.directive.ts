@@ -71,29 +71,51 @@ const getFilteredData = (data, searchObj, visibleCols = []) => {
     if ((!isDefined(searchVal) && !includes(emptyMatchModes, searchObj.matchMode)) || (isNumberType(searchObj.type) && isNull(searchObj.value))) {
         return data;
     }
+    
+    // PERFORMANCE OPTIMIZATION: Pre-build lookup structures for O(1) access
+    // This reduces complexity from O(n*m*k) to O(n*m) where n=data.length, m=keys, k=visibleCols.length
+    const visibleColsSet = new Set(visibleCols);
+    // Build a map of key -> visibleCol indices for nested key matching (e.g., "user" -> indices of cols like "user.name", "user.email")
+    const keyToColIndicesMap = new Map<string, number[]>();
+    visibleCols.forEach((col, index) => {
+        // Extract base key (part before first dot) for nested columns
+        const baseKey = col.split('.')[0];
+        if (!keyToColIndicesMap.has(baseKey)) {
+            keyToColIndicesMap.set(baseKey, []);
+        }
+        keyToColIndicesMap.get(baseKey)!.push(index);
+    });
+    
     data = data.filter((obj) => {
         let isExists;
         if (searchObj.field) {
             currentVal = getSearchValue(get(obj, searchObj.field), searchObj.type);
         } else {
-            currentVal = [];
+            // PERFORMANCE OPTIMIZATION: Use Set to avoid duplicate values and indexOf O(n) lookups
+            const currentValSet = new Set<string | number>();
             forEach(obj, (val, key) => {
-                if ((includes(visibleCols, key))) {
-                    currentVal.push(val);
+                if (visibleColsSet.has(key)) {
+                    // Direct match - add value directly
+                    if (val != null) {
+                        currentValSet.add(val);
+                    }
                 } else {
-                    // WMS-22271 If the key is in nested key format (dot format)
-                    // Find all the indexes of the key in visiblecols and extract their values from obj
-                    const colIndex = filter(range(visibleCols.length), (i) => visibleCols[i].includes(key));
-                    forEach(colIndex, (index) => {
-                        // @ts-ignore
-                        const value = get(obj, visibleCols[index]);
-                        if (currentVal.indexOf(value) < 0) {
-                            currentVal.push(value);
-                        }
-                    });
+                    // PERFORMANCE OPTIMIZATION: Use pre-built map instead of filter+forEach
+                    // Check if this key matches any visible column base (for nested keys)
+                    const matchingIndices = keyToColIndicesMap.get(key);
+                    if (matchingIndices) {
+                        matchingIndices.forEach((index) => {
+                            // @ts-ignore
+                            const value = get(obj, visibleCols[index]);
+                            if (value != null) {
+                                currentValSet.add(value);
+                            }
+                        });
+                    }
                 }
             });
-            currentVal = currentVal.join(' ').toLowerCase(); // If field is not there, search on all the columns
+            // Convert Set to array and join for string matching
+            currentVal = Array.from(currentValSet).join(' ').toLowerCase(); // If field is not there, search on all the columns
         }
         switch (searchObj.matchMode) {
             case 'start':
@@ -433,10 +455,23 @@ export class TableFilterSortDirective {
         const $rows = this.table.datagridElement.find('tbody tr.app-datagrid-row');
         this.table.filterInfo = searchObj;
         data = this.getSearchResult(data, searchObj);
+        
+        // PERFORMANCE OPTIMIZATION: Use Set for O(1) lookup instead of find() which is O(n)
+        // Convert filtered data to a Set of stringified objects for fast comparison
+        // This reduces complexity from O(n*m) to O(n+m) where n=gridData.length, m=filteredData.length
+        const filteredDataSet = new Set<string>();
+        data.forEach(obj => {
+            // Use JSON.stringify for object comparison (isEqual is too slow for large datasets)
+            // Note: This assumes object structure is consistent
+            filteredDataSet.add(JSON.stringify(obj));
+        });
+        
         // Compared the filtered data and original data, to show or hide the rows
         forEach(this.table.gridData, (value, index) => {
             const $row = $($rows[index]);
-            if (find(data, obj => isEqual(obj, value))) {
+            // PERFORMANCE OPTIMIZATION: O(1) Set lookup instead of O(m) find operation
+            const valueStr = JSON.stringify(value);
+            if (filteredDataSet.has(valueStr)) {
                 $row.show();
             } else {
                 $row.hide();

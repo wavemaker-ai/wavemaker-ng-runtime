@@ -92,6 +92,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     private pendingDatasetValue: any;
     private hasPendingDatasetValue = false;
     // MEMORY LEAK FIX: Track pending timeouts for cleanup
+    protected pendingTimeouts: Set<number> = new Set();
 
     get hasPrevStep(): boolean {
         return !this._isFirstStep(this.currentStep);
@@ -906,9 +907,22 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         const ancestors: HTMLElement[] = [];
         let parent: HTMLElement | null = element.parentElement;
         const scrollRegex = /(auto|scroll|overlay)/;
+        
+        // PERFORMANCE OPTIMIZATION: Cache computed styles to avoid repeated getComputedStyle calls
+        // getComputedStyle is expensive (forces layout calculation), so we batch the checks
+        const styleCache = new WeakMap<HTMLElement, string>();
+        
         while (parent) {
-            const style = window.getComputedStyle(parent);
-            const overflowValues = [style.overflow, style.overflowY, style.overflowX].join(' ');
+            // PERFORMANCE OPTIMIZATION: Use cached style if available
+            let overflowValues: string;
+            if (styleCache.has(parent)) {
+                overflowValues = styleCache.get(parent)!;
+            } else {
+                const style = window.getComputedStyle(parent);
+                overflowValues = [style.overflow, style.overflowY, style.overflowX].join(' ');
+                styleCache.set(parent, overflowValues);
+            }
+            
             if (scrollRegex.test(overflowValues)) {
                 ancestors.push(parent);
             }

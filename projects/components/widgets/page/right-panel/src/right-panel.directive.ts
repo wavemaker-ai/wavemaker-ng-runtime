@@ -2,6 +2,8 @@ import {Attribute, Directive, Inject, Injector, Optional} from '@angular/core';
 
 import {getNavClass, switchClass} from '@wm/core';
 
+declare const $;
+
 import { APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 import { registerProps } from './right-panel.props';
 
@@ -20,6 +22,20 @@ const WIDGET_CONFIG: IWidgetConfig = {
     exportAs: 'wmRightPanel'
 })
 export class RightPanelDirective extends StylableComponent {
+    /**
+     * DOM node reference of the component root
+     * This property is inherited from BaseComponent but TypeScript needs explicit type declaration here
+     */
+    public readonly nativeElement: HTMLElement;
+
+    /**
+     * jQuery element reference of the component root
+     * This property is inherited from BaseComponent but TypeScript needs explicit type declaration here
+     */
+    public get $element() {
+        return $(this.nativeElement);
+    }
+
     static initializeProps = registerProps();
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, @Attribute('navtype') navtype: string) {
         super(inj, WIDGET_CONFIG, explicitContext);

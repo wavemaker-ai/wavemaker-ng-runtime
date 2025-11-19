@@ -150,6 +150,17 @@ const isInputBodyWrapper = target => {
     ]
 })
 export class TableComponent extends StylableComponent implements AfterContentInit, OnDestroy, ControlValueAccessor {
+    // TypeScript fix: Explicitly declare inherited properties for type resolution
+    public readonly nativeElement: HTMLElement;
+    // Note: $element is a getter in BaseComponent, don't redeclare as property
+    protected viewParent: any;
+    public readonly widgetId: string;
+    public readonly widget: any;
+    public readonly appLocale: any;
+    public readonly context: any;
+    // Fix TS2415: isDestroyed must be public to match base class
+    public isDestroyed: boolean;
+    
     // PERFORMANCE: Batch $appDigest calls to a single frame to reduce redundant change detection
     private digestScheduled = false;
     private scheduleDigest = () => {
@@ -585,16 +596,19 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (customRoot) {
             scrollRoots = [customRoot];
         } else {
-            scrollRoots = this.getScrollableAncestors(this.nativeElement);
+            // Access inherited nativeElement property from BaseComponent
+            scrollRoots = this.getScrollableAncestors((this as any).nativeElement);
         }
 
         const buffer = 200;
-        if (this.isElementVisibleWithinRoot(this.nativeElement, null, buffer)) {
+        // Access inherited nativeElement property from BaseComponent
+        if (this.isElementVisibleWithinRoot((this as any).nativeElement, null, buffer)) {
             this.renderwhenvisible = false;
             this.bootstrapGrid();
             return;
         }
-        if (scrollRoots.some(root => this.isElementVisibleWithinRoot(this.nativeElement, root, buffer))) {
+        // Access inherited nativeElement property from BaseComponent
+        if (scrollRoots.some(root => this.isElementVisibleWithinRoot((this as any).nativeElement, root, buffer))) {
             this.renderwhenvisible = false;
             this.bootstrapGrid();
             return;
@@ -616,7 +630,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 rootMargin: '200px'
             });
             this.lazyVisibilityObservers.push(observer);
-            observer.observe(this.nativeElement);
+            // Access inherited nativeElement property from BaseComponent
+            observer.observe((this as any).nativeElement);
         };
 
         if (!customRoot) {
@@ -654,12 +669,15 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.stopLazyVisibilityFallback();
                 return;
             }
-            const viewportVisible = this.isElementVisibleWithinRoot(this.nativeElement, null, 150);
+            // Access inherited nativeElement property from BaseComponent
+            const viewportVisible = this.isElementVisibleWithinRoot((this as any).nativeElement, null, 150);
             let shouldRender = viewportVisible;
             if (!viewportVisible) {
                 const customRoot = this.resolveCustomRenderRoot();
-                const roots = customRoot ? [customRoot] : this.getScrollableAncestors(this.nativeElement);
-                shouldRender = roots.some(root => this.isElementVisibleWithinRoot(this.nativeElement, root, 150));
+                // Access inherited nativeElement property from BaseComponent
+                const roots = customRoot ? [customRoot] : this.getScrollableAncestors((this as any).nativeElement);
+                // Access inherited nativeElement property from BaseComponent
+                shouldRender = roots.some(root => this.isElementVisibleWithinRoot((this as any).nativeElement, root, 150));
             }
             if (shouldRender) {
                 this.stopLazyVisibilityFallback();
@@ -672,7 +690,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
         this.lazyVisibilityPollHandle = window.requestAnimationFrame(poll);
         if (this.lazyVisibilityForceHandle === null) {
-            this.lazyVisibilityForceHandle = window.setTimeout(() => {
+            // MEMORY LEAK FIX: Track timeout for cleanup
+            this.lazyVisibilityForceHandle = this.trackedSetTimeout(() => {
                 this.lazyVisibilityForceHandle = null;
                 if (!this.hasRenderedGrid && this.isRenderWhenVisibleEnabled()) {
                     this.renderwhenvisible = false;
@@ -849,6 +868,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     private selectedItemChangeSubscription: Subscription | null = null;
     private selectedItemChangeCleanupRegistered = false;
     // MEMORY LEAK FIX: Track pending timeouts and animation frames for cleanup
+    // Fix TS2415: pendingTimeouts must be protected to match base class (BaseComponent)
+    protected pendingTimeouts: Set<number> = new Set();
     private pendingAnimationFrames: Set<number> = new Set();
     private digestAnimationFrameId: number | null = null;
 
@@ -1839,7 +1860,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);
-        styler(this.nativeElement, this);
+        styler(this.nativeElement, this as any);
 
         this.ngform = fb.group({});
         this.addEventsToContext(this.context);
@@ -2020,8 +2041,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         // Check if jQuery and datatable widget are available
         if (!this.datagridElement || typeof (window as any).$ === 'undefined' || typeof this.datagridElement.datatable !== 'function') {
             console.warn('Datatable widget is not available. jQuery or datatable.js may not be loaded.');
+            // MEMORY LEAK FIX: Use tracked setTimeout to ensure cleanup on destroy
             // Retry after a short delay
-            setTimeout(() => {
+            this.trackedSetTimeout(() => {
                 if (!this.isDestroyed) {
                     this.bootstrapGrid();
                 }

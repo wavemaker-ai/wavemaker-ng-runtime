@@ -42,22 +42,32 @@
                 "node_modules/@wavemaker/custom-widgets-m3/"
             ],
             "@wm/components/base": [
-                "libraries/components/base"
+                "libraries/components/base",
+                "projects/components/base/index.ts"
             ],
             "@wm/components/basic/*": [
-                "libraries/components/basic/*"
+                "libraries/components/basic/*",
+                "projects/components/widgets/basic/*/src/public_api.ts"
             ],
             "@wm/components/input/*": [
-                "libraries/components/input/*"
+                "libraries/components/input/*",
+                "projects/components/widgets/input/*/src/public_api.ts"
+            ],
+            "@wm/components/input/epoch/*": [
+                "libraries/components/input/epoch/*",
+                "projects/components/widgets/input/epoch/*/src/public_api.ts"
             ],
             "@wm/components/page": [
-                "libraries/components/page/default"
+                "libraries/components/page/default",
+                "projects/components/widgets/page/default/src/public_api.ts"
             ],
             "@wm/components/dialogs": [
                 "libraries/components/dialogs/default"
             ],
             "@wm/components/*": [
-                "libraries/components/*"
+                "libraries/components/*",
+                "projects/components/widgets/*/src/public_api.ts",
+                "projects/components/widgets/*/default/src/public_api.ts"
             ],
             "@wm/transpiler": [
                 "libraries/transpiler"
@@ -78,10 +88,12 @@
                 "libraries/variables"
             ],
             "@wm/runtime/base": [
-                "libraries/runtime/base"
+                "libraries/runtime/base",
+                "projects/runtime-base/src/public_api.ts"
             ],
             "@wm/runtime/dynamic": [
-                "libraries/runtime/dynamic"
+                "libraries/runtime/dynamic",
+                "projects/runtime-dynamic/src/public_api.ts"
             ]
         },
         "useDefineForClassFields": false

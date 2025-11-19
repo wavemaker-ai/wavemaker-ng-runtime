@@ -5,6 +5,7 @@ import {
     ContentChildren,
     HostBinding, inject, Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional
 } from '@angular/core';
@@ -29,7 +30,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(TabPaneComponent)
     ]
 })
-export class TabPaneComponent extends StylableComponent implements OnInit, AfterViewInit {
+export class TabPaneComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     private _isFirstLoad: boolean = true;
@@ -40,6 +41,7 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
     public smoothscroll: any;
     private isdynamic: boolean;
     public content: string;
+    private _timeoutIds: number[] = [];
 
     @HostBinding('class.active') isActive = false;
     @HostBinding('class.disabled') disabled = false;
@@ -102,9 +104,8 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
     }
 
     private redrawChildren() {
-        // MEMORY LEAK FIX: Note - timeout is short-lived and component manages lifecycle
-        // If this component had ngOnDestroy, we would track it, but it doesn't
-        setTimeout(() => {
+        // MEMORY LEAK FIX: Track timeout IDs for cleanup
+        const timeoutId = window.setTimeout(() => {
             if (this.reDrawableComponents) {
                 this.reDrawableComponents.forEach(c => c.redraw());
             }
@@ -113,7 +114,13 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
                 this.invokeEventCallback('load');
                 this._isOnLoadTriggered = true;
             }
+            // Remove timeout ID from tracking array after execution
+            const index = this._timeoutIds.indexOf(timeoutId);
+            if (index > -1) {
+                this._timeoutIds.splice(index, 1);
+            }
         }, 100);
+        this._timeoutIds.push(timeoutId);
     }
 
     private notifyParent(evt?: Event, isKeyBoardEvent?: boolean) {
@@ -141,7 +148,15 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
     onPropertyChange(key: string, nv: any, ov?: any) {
         if (key === 'content') {
             if (this.isActive) {
-                setTimeout(() => this.$lazyLoad(), 100);
+                // MEMORY LEAK FIX: Track timeout ID for cleanup
+                const timeoutId = window.setTimeout(() => {
+                    this.$lazyLoad();
+                    const index = this._timeoutIds.indexOf(timeoutId);
+                    if (index > -1) {
+                        this._timeoutIds.splice(index, 1);
+                    }
+                }, 100);
+                this._timeoutIds.push(timeoutId);
             }
         } else if (key === 'show') {
             // overridding the base component show propertyChangeHandler
@@ -175,5 +190,12 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
         if (this.isdynamic) {
             this.tabsRef.registerDynamicTab(this);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this._timeoutIds.forEach(timeoutId => clearTimeout(timeoutId));
+        this._timeoutIds = [];
+        super.ngOnDestroy();
     }
 }

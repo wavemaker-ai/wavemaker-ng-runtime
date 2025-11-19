@@ -44,6 +44,8 @@ export class PipeProvider {
     _pipeMeta;
     _locale = getSessionStorageItem('selectedLocale') || 'en';
     formatsByLocale;
+    // PERFORMANCE OPTIMIZATION: Cache pipe instances to avoid recreating them
+    private _pipeInstanceCache = new Map<string, Pipe>();
     preparePipeMeta = (
         reference: Pipe,
         name: string,
@@ -146,6 +148,11 @@ export class PipeProvider {
     }
 
     getInstance(name) {
+        // PERFORMANCE OPTIMIZATION: Return cached instance if available
+        if (this._pipeInstanceCache.has(name)) {
+            return this._pipeInstanceCache.get(name);
+        }
+
         const {
             type: { reference: ref, diDeps: deps }
         } = this.meta(name);
@@ -153,14 +160,41 @@ export class PipeProvider {
             this.unknownPipe(name);
         }
 
+        let instance: Pipe;
         if (!deps.length) {
-            return new ref();
+            instance = new ref();
         } else {
             const args = [];
             for (const dep of deps) {
                 args.push(dep);
             }
-            return new ref(...args);
+            instance = new ref(...args);
+        }
+
+        // PERFORMANCE OPTIMIZATION: Cache the instance for reuse
+        this._pipeInstanceCache.set(name, instance);
+        return instance;
+    }
+
+    /**
+     * PERFORMANCE OPTIMIZATION: Clear pipe instance cache
+     * Useful when locale changes or pipes need to be recreated
+     */
+    clearInstanceCache(): void {
+        this._pipeInstanceCache.clear();
+    }
+
+    /**
+     * PERFORMANCE OPTIMIZATION: Update locale and clear cache if locale changed
+     * @param newLocale - New locale value
+     */
+    updateLocale(newLocale: string): void {
+        if (this._locale !== newLocale) {
+            this._locale = newLocale;
+            // Clear cache when locale changes as pipes may depend on locale
+            this.clearInstanceCache();
+            // Reinitialize pipe data with new locale
+            this.setPipeData();
         }
     }
 }

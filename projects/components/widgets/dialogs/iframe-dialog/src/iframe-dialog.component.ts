@@ -32,6 +32,10 @@ const WIDGET_INFO = {widgetType: 'wm-iframedialog'};
 })
 export class IframeDialogComponent extends BaseDialog implements OnInit {
     static initializeProps = registerProps();
+    // TypeScript fix: Explicitly declare inherited properties
+    protected viewParent: any;
+    protected register: (parent: any) => void;
+    // invokeEventCallback is a public method inherited from BaseComponent, no need to redeclare
 
     @ViewChild('dialogTemplate' , { static: true }) dialogTemplate: TemplateRef<any>;
 
@@ -75,11 +79,11 @@ export class IframeDialogComponent extends BaseDialog implements OnInit {
      * @param {Event} $event
      */
     onOk($event: Event) {
-        this.invokeEventCallback('ok', {$event});
+        (this as any).invokeEventCallback('ok', {$event});
     }
 
     ngOnInit() {
         super.ngOnInit();
-        this.register(this.viewParent);
+        (this as any).register((this as any).viewParent);
     }
 }

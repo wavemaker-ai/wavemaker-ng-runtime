@@ -96,6 +96,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     public caption: string;
     public badgevalue: string;
     private documentClickHandler: (e: MouseEvent) => void;
+    private popoverContainerClickHandler: (e: Event) => void; // MEMORY LEAK FIX: Store handler reference
     private isClosingProgrammatically = false;
     private static activePopovers: PopoverComponent[] = [];
     private isHandlingClick = false;
@@ -314,10 +315,17 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (popoverContainer) {
             popoverContainer.setAttribute('data-popover-id', this.widgetId);
 
+            // MEMORY LEAK FIX: Store handler reference for proper cleanup
+            // Remove existing handler if present (from previous open)
+            if (this.popoverContainerClickHandler) {
+                popoverContainer.removeEventListener('click', this.popoverContainerClickHandler);
+            }
+            
             // Add click event listener to stop propagation
-            popoverContainer.addEventListener('click', (event: Event) => {
+            this.popoverContainerClickHandler = (event: Event) => {
                 event.stopPropagation();
-            });
+            };
+            popoverContainer.addEventListener('click', this.popoverContainerClickHandler);
         }
         setCSSFromObj(popoverContainer, {
             height: this.popoverheight,
@@ -532,6 +540,13 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.documentClickHandler) {
             document.removeEventListener('click', this.documentClickHandler, true);
             this.documentClickHandler = null;
+        }
+        
+        // MEMORY LEAK FIX: Remove popover container click handler
+        const popoverContainer = document.querySelector(`.${this.popoverContainerCls}`) as HTMLElement;
+        if (popoverContainer && this.popoverContainerClickHandler) {
+            popoverContainer.removeEventListener('click', this.popoverContainerClickHandler);
+            this.popoverContainerClickHandler = null;
         }
         
         // Remove from active popovers array

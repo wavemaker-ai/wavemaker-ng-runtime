@@ -23,6 +23,12 @@ const WIDGET_CONFIG: IWidgetConfig = {
     exportAs: 'wmButton'
 })
 export class ButtonComponent extends StylableComponent {
+    /**
+     * DOM node reference of the component root
+     * This property is inherited from BaseComponent but TypeScript needs explicit type declaration here
+     */
+    public readonly nativeElement: HTMLElement;
+
     static initializeProps = registerProps();
 
     public iconurl: string;

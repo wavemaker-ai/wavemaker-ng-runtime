@@ -8,6 +8,7 @@
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "importHelpers": true,
+        "skipLibCheck": true,
         "types": [
             "jquery"
         ],
@@ -20,7 +21,8 @@
         "skipTemplateCodegen": true,
         "compilationMode": "partial",
         "strictInjectionParameters": true,
-        "enableResourceInlining": true
+        "enableResourceInlining": true,
+        "preserveWhitespaces": false
     },
     "exclude": [
         "src/test.ts",

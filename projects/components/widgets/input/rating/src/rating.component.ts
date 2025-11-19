@@ -58,17 +58,22 @@ export class RatingComponent extends DatasetAwareFormComponent {
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         this._id = generateGUId();
-        styler(this.nativeElement, this);
+        // Access inherited nativeElement from BaseComponent and pass this as any for type compatibility
+        styler((this as any).nativeElement, this as any);
 
         // prepare the rating options on dataset ready.
-        const datasetSubscription = this.dataset$.subscribe(() => {
+        // Access inherited dataset$ from DatasetAwareFormComponent
+        const datasetSubscription = (this as any).dataset$.subscribe(() => {
             this.prepareRatingDataset();
         });
-        this.registerDestroyListener(() => datasetSubscription.unsubscribe());
+        // Access inherited registerDestroyListener from BaseComponent
+        (this as any).registerDestroyListener(() => datasetSubscription.unsubscribe());
 
         // listen to changes in datavalue.
-        const datavalueSubscription = this.datavalue$.subscribe(() => this.onDatavalueChange(this.datavalue));
-        this.registerDestroyListener(() => datavalueSubscription.unsubscribe());
+        // Access inherited datavalue$ and datavalue from DatasetAwareFormComponent
+        const datavalueSubscription = (this as any).datavalue$.subscribe(() => this.onDatavalueChange((this as any).datavalue));
+        // Access inherited registerDestroyListener from BaseComponent
+        (this as any).registerDestroyListener(() => datavalueSubscription.unsubscribe());
     }
 
     // Change event is registered from the template, Prevent the framework from registering one more event
@@ -81,14 +86,16 @@ export class RatingComponent extends DatasetAwareFormComponent {
 
     // This function returns the rating widget dataset containing the index, value and label
     private prepareRatingDataset() {
-        if (!this.datasetItems.length) {
+        // Access inherited datasetItems from DatasetAwareFormComponent
+        if (!(this as any).datasetItems.length) {
             this.ratingItems = [];
             this.caption = '';
         }
 
         let ratingItems = [];
-        let data = this.datasetItems;
-        const maxvalue = parseInt(this.maxvalue || this.datasetItems.length, 10);
+        // Access inherited datasetItems from DatasetAwareFormComponent
+        let data = (this as any).datasetItems;
+        const maxvalue = parseInt(this.maxvalue || (this as any).datasetItems.length, 10);
         const maxValue = (maxvalue > MAX_RATING ? MAX_RATING : maxvalue) || DEFAULT_RATING;
 
         /**
@@ -116,13 +123,16 @@ export class RatingComponent extends DatasetAwareFormComponent {
 
         this.ratingItems = ratingItems;
         if (!data.length) { // constructs default datasetItems when there is no dataset binding.
-            this.datasetItems = ratingItems;
+            // Access inherited datasetItems from DatasetAwareFormComponent
+            (this as any).datasetItems = ratingItems;
         }
-        this.onDatavalueChange(this.datavalue);
+        // Access inherited datavalue from DatasetAwareFormComponent
+        this.onDatavalueChange((this as any).datavalue);
     }
 
     onRatingClick($event, rate) {
-        this.modelByKey = rate.key;
+        // Access inherited modelByKey from DatasetAwareFormComponent
+        (this as any).modelByKey = rate.key;
         this.selectedRatingValue = rate.index;
 
         // support if the caption is binded in the old projects for backward compatibility
@@ -130,9 +140,11 @@ export class RatingComponent extends DatasetAwareFormComponent {
             this.caption = rate.label;
         }
 
-        this.invokeOnTouched();
+        // Access inherited invokeOnTouched from BaseFormCustomComponent
+        (this as any).invokeOnTouched();
         // invoke on datavalue change.
-        this.invokeOnChange(this.datavalue, $event || {}, true);
+        // Access inherited invokeOnChange and datavalue from base classes
+        (this as any).invokeOnChange((this as any).datavalue, $event || {}, true);
     }
 
     // Update the selected flag on datasetItems and assign the ratingValue.
@@ -144,11 +156,13 @@ export class RatingComponent extends DatasetAwareFormComponent {
      * @param dataVal datavalue
      */
     onDatavalueChange(dataVal) {
-        if (!isEmpty(this.datasetItems)) {
-            let selectedItem = find(this.datasetItems, {'selected': true});
+        // Access inherited datasetItems from DatasetAwareFormComponent
+        if (!isEmpty((this as any).datasetItems)) {
+            let selectedItem = find((this as any).datasetItems, {'selected': true});
 
             if (!selectedItem && !isUndefined(dataVal)) {
-                selectedItem = find(this.datasetItems, function (item) {
+                // Access inherited datasetItems from DatasetAwareFormComponent
+                selectedItem = find((this as any).datasetItems, function (item) {
                     return toString(item.index) === dataVal;
                 });
                 if (selectedItem) {
@@ -158,7 +172,8 @@ export class RatingComponent extends DatasetAwareFormComponent {
 
             if (!selectedItem) {
                 // reset the  model if there is no item found.
-                this.modelByKey = undefined;
+                // Access inherited modelByKey from DatasetAwareFormComponent
+                (this as any).modelByKey = undefined;
                 this.caption = '';
             }
 
@@ -181,9 +196,11 @@ export class RatingComponent extends DatasetAwareFormComponent {
     calculateRatingsWidth(dataVal?: any) {
         const selectedRating = parseFloat(this.selectedRatingValue),
             starWidth = 0.925,
-            maxValue = parseInt(this.maxvalue || this.datasetItems.length, 10) || DEFAULT_RATING;
+            // Access inherited datasetItems from DatasetAwareFormComponent
+            maxValue = parseInt(this.maxvalue || (this as any).datasetItems.length, 10) || DEFAULT_RATING;
 
-        dataVal = dataVal || this.datavalue;
+        // Access inherited datavalue from DatasetAwareFormComponent
+        dataVal = dataVal || (this as any).datavalue;
         if (dataVal === undefined || dataVal === '' || dataVal === null) {
             this.caption = '';
             return 0;
@@ -207,12 +224,14 @@ export class RatingComponent extends DatasetAwareFormComponent {
              * as the datavalue property change is triggering first rather than maxvalue
              * in the rating widget is used inside a datatable
              */
-            let tempDataValue = this.datavalue;
+            // Access inherited datavalue from DatasetAwareFormComponent
+            let tempDataValue = (this as any).datavalue;
             this.prepareRatingDataset();
             // reset all the items.
             this.resetDatasetItems();
             if (!isUndefined(tempDataValue)) {
-                this.datavalue = tempDataValue;
+                // Access inherited datavalue from DatasetAwareFormComponent
+                (this as any).datavalue = tempDataValue;
             }
         } else {
             super.onPropertyChange(key, nv, ov);

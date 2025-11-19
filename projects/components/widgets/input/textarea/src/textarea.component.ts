@@ -26,6 +26,13 @@ const WIDGET_CONFIG = {
 })
 export class TextareaComponent extends BaseInput implements AfterViewChecked {
     static initializeProps = registerProps();
+
+    // Explicit declarations for TypeScript - these properties are inherited from base classes
+    // datavalue is inherited as an accessor from BaseInput, not as an instance property
+    declare public handleChange: (value: any) => void;
+    declare public handleBlur: ($event: Event) => void;
+    declare public ngModelOptions: { updateOn?: 'blur' | 'change' | 'submit'; standalone?: boolean };
+
     public required: boolean;
     public maxchars: number;
     public disabled: boolean;

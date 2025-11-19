@@ -28,6 +28,13 @@ const WIDGET_CONFIG: IWidgetConfig = {
 export class NumberComponent extends NumberLocale {
     static initializeProps = registerProps();
 
+    // Explicit declarations for TypeScript - these properties are inherited from base classes
+    // Properties can use 'declare', but methods are inherited and don't need declarations
+    declare public displayValue: string;
+    declare public ngModelOptions: { updateOn?: 'blur' | 'change' | 'submit'; standalone?: boolean };
+    declare public readonly: boolean;
+    declare public placeholder: string;
+
     public required: boolean;
     public regexp: string;
     public disabled: boolean;
@@ -41,6 +48,19 @@ export class NumberComponent extends NumberLocale {
     public autofocus: boolean;
     @ViewChild('input', {static: true}) inputEl: ElementRef;
     @ViewChild(NgModel, {static: true}) ngModel: NgModel;
+
+    // Explicit method declarations to help TypeScript recognize inherited methods from NumberLocale
+    declare public onModelChange: ($event: any) => void;
+    declare public handleBlur: ($event: Event) => void;
+    declare public checkForTrailingZeros: ($event: any) => void;
+    declare public onInputChange: (value: any) => void;
+    // Fix TS2416: Return type must be boolean (not boolean | void) to match base class
+    declare public validateInputEntry: ($event: KeyboardEvent) => boolean;
+    declare public onPaste: ($event: ClipboardEvent) => void;
+    declare public onBackspace: ($event: KeyboardEvent) => void;
+    declare public onDelete: ($event: KeyboardEvent) => void;
+    declare public onEnter: ($event: KeyboardEvent) => void;
+    declare public onArrowPress: ($event: KeyboardEvent, key: string) => void;
 
     constructor(inj: Injector, i18nService: AbstractI18nService, trailingZeroDecimalPipe: TrailingZeroDecimalPipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, i18nService, trailingZeroDecimalPipe, explicitContext);

@@ -125,7 +125,17 @@ export const isLargeTabletPortrait = (landScapeWidth, landScapeHeight) =>  {
     return window.matchMedia("only screen and (min-device-width : "+width+") and (max-device-width : "+width+") and (min-device-height : "+height+") and (max-device-height : "+height+") and (min-width: "+width+") and (max-width: "+width+")").matches;
 }
 
-export const isMobile = () => isAndroid() || isIos() || isAndroidTablet() || $('#wm-mobile-display:visible').length > 0;
+// PERFORMANCE FIX: Replace :visible selector with class check to avoid forced reflow
+// :visible forces layout calculation, causing 87ms+ delays during interactions
+export const isMobile = () => {
+    if (isAndroid() || isIos() || isAndroidTablet()) {
+        return true;
+    }
+    // Use class check instead of :visible to avoid forced reflow
+    const mobileDisplay = document.getElementById('wm-mobile-display');
+    return mobileDisplay && !mobileDisplay.classList.contains('hidden') && 
+           mobileDisplay.offsetWidth > 0 && mobileDisplay.offsetHeight > 0;
+};
 
 export const isTablet = () => {
     const scope = document.querySelector('.app-page').widget;

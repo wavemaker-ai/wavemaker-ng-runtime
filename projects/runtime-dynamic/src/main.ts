@@ -21,18 +21,36 @@ fetch('./font.config.js')
     })
 console.time('bootstrap');
 
+// MEMORY LEAK FIX: Store event handler references for cleanup
+let domContentLoadedHandler: (() => void) | null = null;
+let unloadHandler: ((event: Event) => void) | null = null;
 
-document.addEventListener('DOMContentLoaded', () => {
+domContentLoadedHandler = () => {
   new Promise<Event | void>(resolve => {
       resolve();
   }).then(() => bootstrapApplication(AppComponent, appConfig))
     .then((appRef: ApplicationRef) => { 
-      window.addEventListener('unload', () => {
+      // MEMORY LEAK FIX: Store unload handler reference for potential cleanup
+      unloadHandler = (event: Event) => {
         appRef.components.map(c => c?.destroy());
-      });
+        // MEMORY LEAK FIX: Remove event listener after use
+        if (unloadHandler) {
+          window.removeEventListener('unload', unloadHandler);
+          unloadHandler = null;
+        }
+      };
+      window.addEventListener('unload', unloadHandler);
     })
     .catch(err => console.error('Error bootstrapping app:', err));
-});
+    
+  // MEMORY LEAK FIX: Remove DOMContentLoaded listener after use
+  if (domContentLoadedHandler) {
+    document.removeEventListener('DOMContentLoaded', domContentLoadedHandler);
+    domContentLoadedHandler = null;
+  }
+};
+
+document.addEventListener('DOMContentLoaded', domContentLoadedHandler);
 
 (window as any).debugMode = function (on) {
     if (isEmpty(on)) {

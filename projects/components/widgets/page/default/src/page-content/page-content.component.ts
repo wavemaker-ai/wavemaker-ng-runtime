@@ -26,9 +26,11 @@ export class PageContentComponent extends StylableComponent {
     constructor(inj: Injector, private app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
 
-        styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER);
+        // Access inherited nativeElement property from BaseComponent
+        styler((this as any).nativeElement, this, APPLY_STYLES_TYPE.CONTAINER);
 
-        this.registerDestroyListener(this.app.subscribe('pullToRefresh:enable', () => {
+        // Access inherited registerDestroyListener method from BaseComponent
+        (this as any).registerDestroyListener(this.app.subscribe('pullToRefresh:enable', () => {
             this.childPullToRefresh = true;
             this.initPullToRefresh();
         }));
@@ -36,7 +38,8 @@ export class PageContentComponent extends StylableComponent {
 
     onPropertyChange(key: string, nv: any, ov?: any) {
         if (key === 'columnwidth') {
-            switchClass(this.nativeElement, `col-md-${nv} col-sm-${nv}`, `col-md-${ov} col-sm-${ov}`);
+            // Access inherited nativeElement property from BaseComponent
+            switchClass((this as any).nativeElement, `col-md-${nv} col-sm-${nv}`, `col-md-${ov} col-sm-${ov}`);
         } else if (key === 'pulltorefresh' && nv) {
             // creating instance after timeout as the smoothscroll styles where getting added on pull refresh-container
             setTimeout(() => {
@@ -49,16 +52,19 @@ export class PageContentComponent extends StylableComponent {
 
     // when list component is ready, pulltorefresh instance is created and this appends pullToRefresh element on the page content.
     private initPullToRefresh() {
-        const hasPullToRefreshEvent = this.hasEventCallback('pulltorefresh');
+        // Access inherited hasEventCallback method from BaseComponent
+        const hasPullToRefreshEvent = (this as any).hasEventCallback('pulltorefresh');
         if (!this.pullToRefreshIns && (this.childPullToRefresh || hasPullToRefreshEvent) && this.pulltorefresh) {
-            this.pullToRefreshIns = new PullToRefresh($(this.nativeElement), this.app, () => {
+            // Access inherited nativeElement property from BaseComponent
+            this.pullToRefreshIns = new PullToRefresh($((this as any).nativeElement), this.app, () => {
                 if (hasPullToRefreshEvent) {
-                    this.invokeEventCallback('pulltorefresh');
+                    (this as any).invokeEventCallback('pulltorefresh');
                 } else {
                     this.app.notify('pulltorefresh');
                 }
             });
-            this.registerDestroyListener(() => {
+            // Access inherited registerDestroyListener method from BaseComponent
+            (this as any).registerDestroyListener(() => {
                 if (this.pullToRefreshIns.cancelSubscription) {
                     this.pullToRefreshIns.cancelSubscription();
                 }
