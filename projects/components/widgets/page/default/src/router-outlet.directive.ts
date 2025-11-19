@@ -1,6 +1,6 @@
-import {Directive, Inject, Injector, Optional} from '@angular/core';
+import { Directive, Inject, Injector, Optional } from '@angular/core';
 
-import {App, switchClass} from '@wm/core';
+import { App, switchClass } from '@wm/core';
 
 import { IWidgetConfig, provideAsWidgetRef, StylableComponent } from '@wm/components/base';
 import { registerProps } from './router-outlet.props';
@@ -12,7 +12,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Directive({
-  standalone: true,
+    standalone: true,
     selector: '[wmRouterOutlet]',
     providers: [
         provideAsWidgetRef(RouterOutletDirective)
@@ -24,6 +24,10 @@ export class RouterOutletDirective extends StylableComponent {
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, public app: App) {
         super(inj, WIDGET_CONFIG, explicitContext);
         this.isPrism = this.app.isPrism;
+           // Add w-100 class only for Prism appsmvn -v
+        if (this.isPrism) {
+            this.nativeElement.classList.add('w-100');
+        }
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
