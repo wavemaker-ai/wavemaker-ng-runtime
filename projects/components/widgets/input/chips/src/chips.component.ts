@@ -186,8 +186,18 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
     }
 
     private applyItemClass(val, index) {
-        const chipItem = this.nativeElement.querySelectorAll('.chip-item').item(index);
-        $(chipItem).removeClass(val.toRemove).addClass(val.toAdd);
+        const chipItems = this.nativeElement.querySelectorAll('.chip-item');
+        const chipItem = chipItems.item(index);
+        if (chipItem) {
+            $(chipItem).removeClass(val.toRemove).addClass(val.toAdd);
+            return;
+        }
+        setTimeout(() => {
+            const retryChip = this.nativeElement.querySelectorAll('.chip-item').item(index);
+            if (retryChip) {
+                $(retryChip).removeClass(val.toRemove).addClass(val.toAdd);
+            }
+        }, 50);
     }
 
     private removeDuplicates() {
