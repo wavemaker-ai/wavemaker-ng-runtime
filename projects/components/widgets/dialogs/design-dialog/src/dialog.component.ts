@@ -5,6 +5,7 @@ import {
     Inject,
     Injector,
     OnInit,
+    OnDestroy,
     Optional,
     Self,
     TemplateRef,
@@ -33,7 +34,7 @@ const WIDGET_INFO = {widgetType: 'wm-dialog'};
         {provide: Context, useFactory: () => { return {} }, multi: true}
     ]
 })
-export class DialogComponent extends BaseDialog implements OnInit {
+export class DialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
     isDialogComponent: boolean = true;
 
@@ -101,5 +102,14 @@ export class DialogComponent extends BaseDialog implements OnInit {
         if(key === 'title') {
             this.nativeElement.setAttribute('title', nv);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild and ContentChild references
+        this.dialogTemplate = null;
+        this.dialogBody = null;
+        this.dialogFooter = null;
+
+        super.ngOnDestroy();
     }
 }

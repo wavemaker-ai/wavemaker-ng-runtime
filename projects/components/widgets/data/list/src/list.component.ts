@@ -785,8 +785,14 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     ngOnDestroy() {
         if (this._listAnimator && this._listAnimator.$btnSubscription) {
             this._listAnimator.$btnSubscription.unsubscribe();
+            this._listAnimator = null;
         }
-        this._listenerDestroyers.forEach(d => d && d());
+        
+        // MEMORY LEAK FIX: Unsubscribe from all app subscriptions
+        if (this._listenerDestroyers) {
+            this._listenerDestroyers.forEach(d => d && d());
+            this._listenerDestroyers = [];
+        }
 
         // MEMORY LEAK FIX: Unsubscribe from navigator watches
         if (this.navigatorResultWatch) {
@@ -821,6 +827,20 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             this.$ulEle = null;
         }
 
+        // MEMORY LEAK FIX: Clear QueryList references
+        if (this.listItems) {
+            this.listItems = null;
+        }
+        if (this.btnComponents) {
+            this.btnComponents = null;
+        }
+
+        // MEMORY LEAK FIX: Clear ViewChild and ContentChild references
+        this.dataNavigator = null;
+        this.listTemplate = null;
+        this.listLeftActionTemplate = null;
+        this.listRightActionTemplate = null;
+
         // MEMORY LEAK FIX: Clear all data arrays and objects
         this.fieldDefs = [];
         this._items = [];
@@ -829,6 +849,13 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             this.selectedItemWidgets = [];
         } else {
             this.selectedItemWidgets = {};
+        }
+
+        // MEMORY LEAK FIX: Remove add item event listener
+        const $addItem = document.getElementsByClassName("add-list-item")[0];
+        if ($addItem && this.boundAddItemHandler) {
+            $addItem.removeEventListener('click', this.boundAddItemHandler);
+            this.boundAddItemHandler = null;
         }
 
         // MEMORY LEAK FIX: Nullify closures and references
@@ -1448,13 +1475,17 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         }));
     }
 
+    private boundAddItemHandler: (event: Event) => void;
+
     private setUpCUDHandlers() {
         const $addItem = document.getElementsByClassName("add-list-item")[0];
         if ($addItem) {
-            // Triggered on click of add action
-            $addItem.addEventListener('click', evt => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundAddItemHandler = (evt: Event) => {
                 this.create();
-            });
+            };
+            // Triggered on click of add action
+            $addItem.addEventListener('click', this.boundAddItemHandler);
         }
     }
 }

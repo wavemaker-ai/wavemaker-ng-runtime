@@ -5,6 +5,7 @@ import {
     Inject,
     Injector,
     OnInit,
+    OnDestroy,
     Optional,
     TemplateRef,
     ViewChild
@@ -31,7 +32,7 @@ const WIDGET_INFO = { widgetType: 'wm-partialdialog' };
         provideAsDialogRef(PartialDialogComponent)
     ]
 })
-export class PartialDialogComponent extends BaseDialog implements OnInit {
+export class PartialDialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate: TemplateRef<any>;
     @ContentChild(TemplateRef) dialogContent: TemplateRef<any>;
@@ -41,6 +42,7 @@ export class PartialDialogComponent extends BaseDialog implements OnInit {
     protected Widgets;
     protected Variables;
     protected Actions;
+    private partialLoadedSubscription: any;
 
     constructor(
         inj: Injector,
@@ -93,8 +95,14 @@ export class PartialDialogComponent extends BaseDialog implements OnInit {
     }
 
     private setPartialLoadListener() {
-        const cancelSubscription = this.app.subscribe('partialLoaded', () => {
-            const parEle = this.partialRef.nativeElement;
+        // Clean up existing subscription if any
+        if (this.partialLoadedSubscription) {
+            this.partialLoadedSubscription();
+            this.partialLoadedSubscription = null;
+        }
+
+        this.partialLoadedSubscription = this.app.subscribe('partialLoaded', () => {
+            const parEle = this.partialRef?.nativeElement;
             let partialScope;
             if (parEle) {
                 partialScope = parEle.widget;
@@ -102,7 +110,12 @@ export class PartialDialogComponent extends BaseDialog implements OnInit {
                 this.Variables = partialScope.Variables;
                 this.Actions = partialScope.Actions;
             }
-            cancelSubscription();
+
+            // Clean up subscription after use
+            if (this.partialLoadedSubscription) {
+                this.partialLoadedSubscription();
+                this.partialLoadedSubscription = null;
+            }
         });
     }
 
@@ -110,5 +123,19 @@ export class PartialDialogComponent extends BaseDialog implements OnInit {
         super.open(initState);
         // WMS-19410 - Set the partial load listener to access widgets, variables and actions of page dialog
         this.setPartialLoadListener();
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from partialLoaded event
+        if (this.partialLoadedSubscription) {
+            this.partialLoadedSubscription();
+            this.partialLoadedSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Clear ContentChild references
+        this.partialRef = null;
+        this.dialogContent = null;
+
+        super.ngOnDestroy();
     }
 }

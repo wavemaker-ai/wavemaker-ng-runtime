@@ -1,4 +1,4 @@
-import {AfterViewInit, Inject, Injectable, Injector, Optional} from '@angular/core';
+import {AfterViewInit, Inject, Injectable, Injector, OnDestroy, Optional} from '@angular/core';
 
 import {DataSource} from '@wm/core';
 
@@ -6,7 +6,7 @@ import {IWidgetConfig, StylableComponent, WidgetConfig} from '@wm/components/bas
 import {has, set} from "lodash-es";
 
 @Injectable()
-export abstract class BaseFormComponent extends StylableComponent implements AfterViewInit{
+export abstract class BaseFormComponent extends StylableComponent implements AfterViewInit, OnDestroy {
 
     private dataval;
     private prevDatavalue;
@@ -104,17 +104,36 @@ export abstract class BaseFormComponent extends StylableComponent implements Aft
         return this.prevDatavalue;
     }
 
+    private boundKeydownHandler: (event: JQuery.Event) => void;
+
     ngAfterViewInit() {
         super.ngAfterViewInit();
 
 // [WMS-18892]- stopping event propagation [for ArrowLeft, ArrowUp, ArrowRight, ArrowDown actions]  when form widgets or form is inside list widget
         let parentElemList = $(this.nativeElement).parents();
         if (parentElemList.closest('[wmList]').length) {
-            this.$element.keydown(function($event) {
+            // MEMORY LEAK FIX: Store bound function reference for cleanup
+            this.boundKeydownHandler = function($event) {
                 if ($event.keyCode === 37 || $event.keyCode === 38 || $event.keyCode === 39 || $event.keyCode === 40) {
                     $event.stopPropagation();
                 }
-            });
+            };
+            this.$element.keydown(this.boundKeydownHandler);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Remove jQuery event listener
+        if (this.boundKeydownHandler) {
+            this.$element.off('keydown', this.boundKeydownHandler);
+            this.boundKeydownHandler = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references
+        this.prevDatavalue = null;
+        this.datavaluesource = null;
+        this.binddatavalue = null;
+
+        super.ngOnDestroy();
     }
 }

@@ -1651,7 +1651,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         // MEMORY LEAK FIX: Complete and clear subjects
         if (this.selectedItemChange) {
             this.selectedItemChange.complete();
+            this.selectedItemChange = null;
         }
+        
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.dataNavigator = null;
+        this._tableElement = null;
         
         console.log("table component destroyed");
         super.ngOnDestroy();

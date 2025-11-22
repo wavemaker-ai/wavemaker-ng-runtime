@@ -37,6 +37,8 @@ export class Viewport implements IViewportService, OnDestroy {
     private screenHeight;
     private selectedViewPort: any;
     private boundResizeFn: (event: Event) => void; // MEMORY LEAK FIX: Store bound function
+    private mediaQuery: MediaQueryList; // MEMORY LEAK FIX: Store media query reference for cleanup
+    private boundOrientationChange: (event: MediaQueryListEvent) => void; // MEMORY LEAK FIX: Store bound function
 
     constructor() {
         this.setScreenType();
@@ -45,8 +47,8 @@ export class Viewport implements IViewportService, OnDestroy {
         this.boundResizeFn = this.resizeFn.bind(this);
         window.addEventListener(ViewportEvent.RESIZE, this.boundResizeFn);
 
-        const query = window.matchMedia('(orientation: portrait)');
-        if (query.matches) {
+        this.mediaQuery = window.matchMedia('(orientation: portrait)');
+        if (this.mediaQuery.matches) {
             this.orientation.isPortrait = true;
         } else {
             this.orientation.isLandscape = true;
@@ -54,8 +56,10 @@ export class Viewport implements IViewportService, OnDestroy {
 
         // Add a media query change listener
         // addEventListener is not supported ios browser
-        if (query.addEventListener) {
-            query.addEventListener('change', $event => this.orientationChange($event, !$event.matches));
+        if (this.mediaQuery.addEventListener) {
+            // MEMORY LEAK FIX: Store bound function reference for proper removal
+            this.boundOrientationChange = ($event) => this.orientationChange($event, !$event.matches);
+            this.mediaQuery.addEventListener('change', this.boundOrientationChange);
         }
     }
 
@@ -128,10 +132,17 @@ export class Viewport implements IViewportService, OnDestroy {
     ngOnDestroy() {
         this._eventNotifier.destroy();
         
-        // MEMORY LEAK FIX: Remove using the stored bound function reference
+        // MEMORY LEAK FIX: Remove resize event listener using stored bound function reference
         if (this.boundResizeFn) {
             window.removeEventListener('resize', this.boundResizeFn);
             this.boundResizeFn = null;
         }
+
+        // MEMORY LEAK FIX: Remove media query orientation change listener
+        if (this.mediaQuery && this.boundOrientationChange && this.mediaQuery.removeEventListener) {
+            this.mediaQuery.removeEventListener('change', this.boundOrientationChange);
+            this.boundOrientationChange = null;
+        }
+        this.mediaQuery = null;
     }
 }

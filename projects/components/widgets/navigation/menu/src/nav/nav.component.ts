@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { AnchorComponent } from '@wm/components/basic/anchor';
 import { MenuComponent } from '../menu.component';
 import { NavItemDirective } from './nav-item/nav-item.directive';
-import { Attribute, ChangeDetectorRef, Component, forwardRef, Inject, Injector, OnInit, Optional } from '@angular/core';
+import { Attribute, ChangeDetectorRef, Component, forwardRef, Inject, Injector, OnDestroy, OnInit, Optional } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { addClass, App, triggerItemAction, UserDefinedExecutionContext } from '@wm/core';
@@ -30,7 +30,7 @@ const NavClassMap = {
         provideAsWidgetRef(NavComponent)
     ]
 })
-export class NavComponent extends DatasetAwareNavComponent implements OnInit {
+export class NavComponent extends DatasetAwareNavComponent implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     public selecteditem;
@@ -130,5 +130,18 @@ export class NavComponent extends DatasetAwareNavComponent implements OnInit {
     onMenuItemSelect($event, widget, $item) {
         this.selecteditem = omit($item, ['children', 'value']);
         this.invokeEventCallback('select', { $event, $item: this.selecteditem });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Cleanup
+        // Note: Subscription is already cleaned up via registerDestroyListener in constructor
+        // but adding explicit OnDestroy to ensure proper cleanup lifecycle
+        
+        // Clear references
+        this.selecteditem = null;
+        this.pageScope = null;
+        this.itemActionFn = null;
+
+        super.ngOnDestroy();
     }
 }

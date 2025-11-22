@@ -285,7 +285,33 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
     ngOnDestroy(): void {
-        this.destroy$.complete();
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
+        if (this.destroy$) {
+            this.destroy$.complete();
+            this.destroy$ = null;
+        }
+        if (this.viewInit$) {
+            this.viewInit$.complete();
+            this.viewInit$ = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references to prevent memory leaks
+        this.Widgets = null;
+        this.Variables = null;
+        this.Actions = null;
+        this.App = null;
+        this.containerWidget = null;
+        this.prefabMngr = null;
+        this.i18nService = null;
+        this.appLocale = null;
+        this.prefabContainerDirective = null;
+        this.scriptLoaderService = null;
+        this.pageDirective = null;
+        this.Viewport = null;
+        this.viewParent = null;
+
+        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
+        this.cleanupFragmentMonitor();
     }
 
     // user overrides this

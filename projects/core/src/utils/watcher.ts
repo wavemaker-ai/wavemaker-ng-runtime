@@ -102,7 +102,17 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
     return () => $unwatch(identifier);
 };
 
-export const $unwatch = identifier => registry.delete(identifier);
+export const $unwatch = identifier => {
+    // MEMORY LEAK FIX: Clear watchInfo contents before deleting from registry
+    const watchInfo = registry.get(identifier);
+    if (watchInfo) {
+        watchInfo.last = null;        // Clear large cloned objects
+        watchInfo.fn = null;          // Release $scope/$locals references
+        watchInfo.listener = null;    // Clear callback
+        watchInfo.isMuted = null;     // Clear isMuted function
+    }
+    return registry.delete(identifier);
+};
 
 let changedByWatch = false;
 

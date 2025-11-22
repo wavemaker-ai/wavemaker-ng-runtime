@@ -209,7 +209,9 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.isOpen) {
             this.isClosingProgrammatically = true;
             this.isOpen = false;
-            this.bsPopoverDirective.hide();
+            if (this.bsPopoverDirective) {
+                this.bsPopoverDirective.hide();
+            }
             const index = PopoverComponent.activePopovers.indexOf(this);
             if (index > -1) {
                 PopoverComponent.activePopovers.splice(index, 1);
@@ -332,7 +334,9 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             this.setupDocumentClickHandler();
         }
         setTimeout(() => {
-            this.anchorRef.nativeElement.removeAttribute('aria-describedby');
+            if (this.anchorRef?.nativeElement) {
+                this.anchorRef.nativeElement.removeAttribute('aria-describedby');
+            }
         });
         const deRegister = this.eventManager.addEventListener(popoverContainer, 'keydown.esc', () => {
             this.isOpen = false;

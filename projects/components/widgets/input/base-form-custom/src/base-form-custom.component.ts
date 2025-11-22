@@ -1,5 +1,5 @@
 import { ControlValueAccessor, FormControlName, Validator, ValidatorFn, AbstractControl } from '@angular/forms';
-import { Injectable, OnInit } from '@angular/core';
+import { Injectable, OnDestroy, OnInit } from '@angular/core';
 
 import { BaseFormComponent } from '@wm/components/input/base-form';
 
@@ -28,7 +28,7 @@ function validateRequiredBind(required: boolean): ValidatorFn {
 }
 
 @Injectable()
-export abstract class BaseFormCustomComponent extends BaseFormComponent implements ControlValueAccessor, OnInit, Validator {
+export abstract class BaseFormCustomComponent extends BaseFormComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
 
     private _formControl: FormControlName;
     protected _onChange: any = () => {};
@@ -97,5 +97,14 @@ export abstract class BaseFormCustomComponent extends BaseFormComponent implemen
     /* WMS-18269 */
     validate(control: AbstractControl):{[key: string]:any} {
         return this['show'] ? validateRequiredBind(this['required'])(control) : null;
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear form control reference
+        this._formControl = null;
+        this._onChange = null;
+        this._onTouched = null;
+
+        super.ngOnDestroy();
     }
 }

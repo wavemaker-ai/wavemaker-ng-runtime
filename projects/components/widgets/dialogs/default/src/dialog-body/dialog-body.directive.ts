@@ -1,4 +1,5 @@
-import { Directive, ElementRef, HostBinding, Inject, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, HostBinding, Inject, OnDestroy, Renderer2 } from '@angular/core';
+import { Subscription } from 'rxjs';
 
 import { BsModalService } from 'ngx-bootstrap/modal';
 
@@ -14,8 +15,10 @@ const DEFAULT_CLS = 'app-dialog-body modal-body';
   standalone: true,
     selector: 'div[wmDialogBody]',
 })
-export class DialogBodyDirective {
+export class DialogBodyDirective implements OnDestroy {
     @HostBinding('style.height') height;
+    private bsModalShownSubscription: Subscription;
+
     constructor(
         elRef: ElementRef,
         @Inject(DialogRef) private dialogRef,
@@ -24,7 +27,7 @@ export class DialogBodyDirective {
     ) {
         addClass(elRef.nativeElement, DEFAULT_CLS);
 
-        const subscription = bsModal.onShown.subscribe(() => {
+        this.bsModalShownSubscription = bsModal.onShown.subscribe(() => {
             const dialogRoot = $(elRef.nativeElement).closest('.app-dialog')[0];
             const dialogContent = $(elRef.nativeElement).closest('.modal-content')[0];
             let dialogRootContainer = $('body.wm-app')[0];
@@ -67,7 +70,22 @@ export class DialogBodyDirective {
                 setAttr(dialogRoot, 'name', this.dialogRef.name);
 
             }
-            subscription.unsubscribe();
+            // Clean up subscription after first use
+            if (this.bsModalShownSubscription) {
+                this.bsModalShownSubscription.unsubscribe();
+                this.bsModalShownSubscription = null;
+            }
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from bsModal.onShown if not already unsubscribed
+        if (this.bsModalShownSubscription) {
+            this.bsModalShownSubscription.unsubscribe();
+            this.bsModalShownSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Clear dialogRef reference
+        this.dialogRef = null;
     }
 }
