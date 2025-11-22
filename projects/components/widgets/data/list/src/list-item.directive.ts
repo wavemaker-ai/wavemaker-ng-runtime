@@ -120,34 +120,47 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
         }
     }
 
+    private boundEditHandler: (event: Event) => void;
+    private boundDeleteHandler: (event: Event) => void;
+    private boundMouseEnterHandler: (event: Event) => void;
+    private boundMouseLeaveHandler: (event: Event) => void;
+
     private setUpCUDHandlers() {
         const $editItem = this.nativeElement.querySelector('.edit-list-item');
         const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
 
         if ($editItem) {
-            // Triggered on click of edit action
-            $editItem.addEventListener('click', evt => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundEditHandler = (evt: Event) => {
                 this.listComponent.update();
-            });
+            };
+            // Triggered on click of edit action
+            $editItem.addEventListener('click', this.boundEditHandler);
         }
 
         if ($deleteItem) {
-            // Triggered on click of delete action
-            $deleteItem.addEventListener('click', evt => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundDeleteHandler = (evt: Event) => {
                 this.listComponent.delete();
-            });
+            };
+            // Triggered on click of delete action
+            $deleteItem.addEventListener('click', this.boundDeleteHandler);
         }
     }
     ngOnInit() {
         if (this.listComponent.mouseEnterCB) {
-            this.nativeElement.addEventListener('mouseenter', ($event) => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundMouseEnterHandler = ($event: Event) => {
                 this.listComponent.invokeEventCallback('mouseenter', {widget: this, $event});
-            });
+            };
+            this.nativeElement.addEventListener('mouseenter', this.boundMouseEnterHandler);
         }
         if (this.listComponent.mouseLeaveCB) {
-            this.nativeElement.addEventListener('mouseleave', ($event) => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundMouseLeaveHandler = ($event: Event) => {
                 this.listComponent.invokeEventCallback('mouseleave', {widget: this, $event});
-            });
+            };
+            this.nativeElement.addEventListener('mouseleave', this.boundMouseLeaveHandler);
         }
         // adding item attribute on every list item
         $(this.nativeElement).attr('listitemindex', this.$index);
@@ -166,6 +179,28 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        // MEMORY LEAK FIX: Remove event listeners
+        if (this.boundMouseEnterHandler) {
+            this.nativeElement.removeEventListener('mouseenter', this.boundMouseEnterHandler);
+            this.boundMouseEnterHandler = null;
+        }
+        if (this.boundMouseLeaveHandler) {
+            this.nativeElement.removeEventListener('mouseleave', this.boundMouseLeaveHandler);
+            this.boundMouseLeaveHandler = null;
+        }
+
+        const $editItem = this.nativeElement.querySelector('.edit-list-item');
+        if ($editItem && this.boundEditHandler) {
+            $editItem.removeEventListener('click', this.boundEditHandler);
+            this.boundEditHandler = null;
+        }
+
+        const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
+        if ($deleteItem && this.boundDeleteHandler) {
+            $deleteItem.removeEventListener('click', this.boundDeleteHandler);
+            this.boundDeleteHandler = null;
+        }
+
         // MEMORY LEAK FIX: Clear currentItemWidgets cache
         // The _currentItemWidgets object accumulates references to all child widgets
         // which prevents them from being garbage collected
@@ -184,8 +219,16 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
             this.context = null;
         }
 
-        // Complete the destroy subject
-        this.destroy.next(null);
-        this.destroy.complete();
+        // MEMORY LEAK FIX: Clear ViewContainerRef reference
+        if (this.viewContainerRef) {
+            this.viewContainerRef = null;
+        }
+
+        // MEMORY LEAK FIX: Complete the destroy subject
+        if (this.destroy) {
+            this.destroy.next(null);
+            this.destroy.complete();
+            this.destroy = null;
+        }
     }
 }

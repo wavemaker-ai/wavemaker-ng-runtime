@@ -1,4 +1,4 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable, Injector, OnDestroy } from '@angular/core';
 import { RouteReuseStrategy } from '@angular/router';
 
 import {
@@ -67,7 +67,7 @@ const getHttpDependency = function () {
 };
 
 @Injectable()
-export class AppRef {
+export class AppRef implements OnDestroy {
     Variables: any = {};
     Actions: any = {};
     onAppVariablesReady = noop;
@@ -98,6 +98,7 @@ export class AppRef {
     setwidgetLocale = this.i18nService.setwidgetLocale.bind(this.i18nService);
 
     private _eventNotifier = new EventNotifier();
+    private sessionTimeoutUnsubscribe: () => void; // MEMORY LEAK FIX: Store unsubscribe function
 
     landingPageName = getWmProjectProperties().homePage;
 
@@ -124,7 +125,8 @@ export class AppRef {
         this.isPrism = wmProjectProperties.template === "PRISM";
 
 
-        this.httpService.registerOnSessionTimeout(this.on401.bind(this));
+        // MEMORY LEAK FIX: Store unsubscribe function for cleanup
+        this.sessionTimeoutUnsubscribe = this.httpService.registerOnSessionTimeout(this.on401.bind(this));
 
         this.appLocale = this.i18nService.getAppLocale();
         this.httpService.setLocale(this.appLocale);
@@ -248,4 +250,25 @@ export class AppRef {
         //if shoudlPersist is true, set the modes object in the localStorage
         if (shouldPersist) localStorage.setItem('wm-app-modes', JSON.stringify(modes));
     };
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Destroy EventNotifier to release subscribers
+        if (this._eventNotifier) {
+            this._eventNotifier.destroy();
+            this._eventNotifier = null;
+        }
+
+        // MEMORY LEAK FIX: Unsubscribe from session timeout
+        if (this.sessionTimeoutUnsubscribe) {
+            this.sessionTimeoutUnsubscribe();
+            this.sessionTimeoutUnsubscribe = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references
+        this.Variables = null;
+        this.Actions = null;
+        this.appLocale = null;
+        this.modes = null;
+        this.dynamicComponentContainerRef = null;
+    }
 }

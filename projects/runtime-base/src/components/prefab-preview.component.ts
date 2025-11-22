@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, ViewChild } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { PrefabDirective } from '@wm/components/prefab';
 import { PrefabManagerService } from '../services/prefab-manager.service';
 import { PrefabDirective as PrefabLoader } from '../directives/prefab.directive';
@@ -15,15 +16,18 @@ const PREFAB = 'PREFAB';
         </div>
     `
 })
-export class PrefabPreviewComponent implements AfterViewInit {
+export class PrefabPreviewComponent implements AfterViewInit, OnDestroy {
     private config: any;
     private previewMode: boolean;
 
     @ViewChild(PrefabDirective, { static: true }) prefabInstance;
+    private windowMessageListener: (e: MessageEvent) => void;
+    private readyStateSubscription: Subscription;
 
     constructor(private prefabManager: PrefabManagerService) {
 
-        window.addEventListener('message', e => {
+        // MEMORY LEAK FIX: Store bound function reference for cleanup
+        this.windowMessageListener = (e: MessageEvent) => {
             const context = e.data && e.data.context;
 
             if (context !== PREFAB) {
@@ -42,7 +46,9 @@ export class PrefabPreviewComponent implements AfterViewInit {
             } else if (action === 'invoke-script') {
                 this.invokeScript(payload);
             }
-        });
+        };
+        
+        window.addEventListener('message', this.windowMessageListener);
     }
 
     postMessage(action, payload?: any) {
@@ -63,7 +69,8 @@ export class PrefabPreviewComponent implements AfterViewInit {
     init() {
         this.previewMode = true;
 
-        this.prefabInstance.readyState.subscribe(
+        // MEMORY LEAK FIX: Store subscription reference
+        this.readyStateSubscription = this.prefabInstance.readyState.subscribe(
             () => { },
             () => { },
             () => {
@@ -110,6 +117,26 @@ export class PrefabPreviewComponent implements AfterViewInit {
     ngAfterViewInit() {
         this.setupEventListeners();
         this.postMessage('init');
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Remove window message listener
+        if (this.windowMessageListener) {
+            window.removeEventListener('message', this.windowMessageListener);
+            this.windowMessageListener = null;
+        }
+
+        // MEMORY LEAK FIX: Unsubscribe from readyState
+        if (this.readyStateSubscription) {
+            this.readyStateSubscription.unsubscribe();
+            this.readyStateSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.prefabInstance = null;
+
+        // MEMORY LEAK FIX: Clear config
+        this.config = null;
     }
 }
 

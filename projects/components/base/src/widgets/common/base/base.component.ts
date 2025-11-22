@@ -354,6 +354,9 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     }
 
     public registerDestroyListener(fn: Function, ctx?: any) {
+        if (!fn) {
+            return;
+        }
         if (ctx) {
             fn = fn.bind(ctx);
         }

@@ -1,4 +1,4 @@
-import {Component, Inject, Injector, Optional} from '@angular/core';
+import {Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 
 import {App, switchClass} from '@wm/core';
 import { APPLY_STYLES_TYPE, PullToRefresh, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
@@ -16,7 +16,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-page-content', hostClass: DEFAULT_CLS};
         provideAsWidgetRef(PageContentComponent)
     ]
 })
-export class PageContentComponent extends StylableComponent {
+export class PageContentComponent extends StylableComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     public pullToRefreshIns: PullToRefresh;
@@ -65,5 +65,16 @@ export class PageContentComponent extends StylableComponent {
                 }
             });
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clean up pullToRefresh instance
+        // This is already handled by registerDestroyListener, but adding explicit cleanup as backup
+        if (this.pullToRefreshIns && this.pullToRefreshIns.destroy) {
+            this.pullToRefreshIns.destroy();
+            this.pullToRefreshIns = null;
+        }
+
+        super.ngOnDestroy();
     }
 }

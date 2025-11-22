@@ -164,8 +164,10 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
             if (this.reDrawableComponents) {
                 this.reDrawableComponents.forEach(c => c.redraw());
             }
-            const stepIndex = (this as any).wizardComponent.getCurrentStepIndex();
-            this.invokeEventCallback('load', { stepIndex });
+            if ((this as any).wizardComponent) {
+                const stepIndex = (this as any).wizardComponent.getCurrentStepIndex();
+                this.invokeEventCallback('load', { stepIndex });
+            }
         }, 100);
     }
 

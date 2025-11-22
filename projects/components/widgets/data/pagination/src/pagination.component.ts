@@ -575,7 +575,9 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         }
         if (!binddatasource && dataset && !datasetBoundExpr) {
             this.dataset = dataset;
-            this._debouncedApplyDataset();
+            if (this._debouncedApplyDataset) {
+                this._debouncedApplyDataset();
+            }
             return;
         }
         this.binddataset = binddataset;
@@ -591,7 +593,9 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     nv =>  {
                         if (nv) {
                             this.dataset = nv;
-                            this._debouncedApplyDataset();
+                            if (this._debouncedApplyDataset) {
+                                this._debouncedApplyDataset();
+                            }
                         } else {
                            // WMS-19285: Setting dataset on proxy only to handle propertychange handler call for undefined cases
                             this.widget.dataset = nv;
@@ -610,7 +614,11 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     bindPagingOptions,
                     parent,
                     {},
-                    () => this._debouncedApplyDataset()
+                    () => {
+                        if (this._debouncedApplyDataset) {
+                            this._debouncedApplyDataset();
+                        }
+                    }
                 )
             );
         });
