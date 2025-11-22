@@ -507,7 +507,22 @@ $.widget('wm.datatable', {
 
     /* function to get start index of the current active page */
     getPageStartIndex: function() {
-        var currentPage = this.options.getCurrentPage(), pagesize = this.options.getPageSize();
+        // Guard against undefined getCurrentPage or getPageSize functions
+        var getCurrentPageFn = this.options.getCurrentPage;
+        var getPageSizeFn = this.options.getPageSize;
+        var currentPage, pagesize;
+        if (!getCurrentPageFn || typeof getCurrentPageFn !== 'function') {
+            // Default to page 1 if getCurrentPage is not available
+            currentPage = 1;
+        } else {
+            currentPage = getCurrentPageFn();
+        }
+        if (!getPageSizeFn || typeof getPageSizeFn !== 'function') {
+            // Default to 10 if getPageSize is not available
+            pagesize = 10;
+        } else {
+            pagesize = getPageSizeFn();
+        }
         var isPrevPageUpdated = this.options.actionRowPage < currentPage;
         var pageIndex = isPrevPageUpdated ? this.options.actionRowPage : currentPage;
         return ((pageIndex - 1) * pagesize);
@@ -1278,7 +1293,9 @@ $.widget('wm.datatable', {
             this.element.find('.loading-data-msg').hide();
             this.element.find('.on-demand-load-btn').text(this.options.ondemandmessage);
             this.element.find('.on-demand-load-btn').show();
-        } else if((this.options.getCurrentPage() == this.options.getPageCount()) && this.options.showviewlessbutton) {
+        } else if(this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' && 
+                   this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
+                   (this.options.getCurrentPage() == this.options.getPageCount()) && this.options.showviewlessbutton) {
                 this.element.find('.on-demand-load-btn').show().text(this.options.viewlessmessage);
                 this.element.find('.loading-data-msg').hide();
                 if(infScroll) {
@@ -3527,7 +3544,11 @@ $.widget('wm.datatable', {
             this.dataStatusContainer.hide();
         } else {
             // [WMS-23839] always show load more btn if show view less btn is true
-            if (this.options.isNavTypeScrollOrOndemand() && (state === 'nodata' || ((this.options.getCurrentPage() == this.options.getPageCount())  && !this.options.showviewlessbutton))) {
+            if (this.options.isNavTypeScrollOrOndemand() && 
+                (state === 'nodata' || 
+                 (this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                  this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
+                  (this.options.getCurrentPage() == this.options.getPageCount()) && !this.options.showviewlessbutton))) {
                 this.element.find('.on-demand-datagrid a').hide();
             }
             this.dataStatusContainer.show();
@@ -3537,7 +3558,9 @@ $.widget('wm.datatable', {
                 if (state === 'nodata') {
                     this.dataStatusContainer.css('height', 'auto');
                     this.dataStatus.contentHeight = 0;
-                }  else if (this.options.isNavTypeScrollOrOndemand() && this.options.getCurrentPage() > 1){
+                }  else if (this.options.isNavTypeScrollOrOndemand() && 
+                           this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                           this.options.getCurrentPage() > 1){
                     // showing the loading icon only for the first page
                     // from second page there is another loader which is being shown instead of LoadMore btn
                     this.dataStatusContainer.hide();
@@ -3547,7 +3570,9 @@ $.widget('wm.datatable', {
                     this.dataStatusContainer.css('height', this.dataStatus.height > this.dataStatus.contentHeight ? 'auto' : this.dataStatus.contentHeight);
                 }
             }
-            if (!isScrollOrOndemand || (isScrollOrOndemand && this.options.getCurrentPage() === 1)) {
+            if (!isScrollOrOndemand || (isScrollOrOndemand && 
+                this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                this.options.getCurrentPage() === 1)) {
                 this.gridContainer.addClass("show-msg");
             }
         } else {

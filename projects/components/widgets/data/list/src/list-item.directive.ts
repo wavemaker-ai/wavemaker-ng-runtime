@@ -180,25 +180,43 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
 
     ngOnDestroy() {
         // MEMORY LEAK FIX: Remove event listeners
-        if (this.boundMouseEnterHandler) {
-            this.nativeElement.removeEventListener('mouseenter', this.boundMouseEnterHandler);
+        if (this.boundMouseEnterHandler && this.nativeElement) {
+            try {
+                this.nativeElement.removeEventListener('mouseenter', this.boundMouseEnterHandler);
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
             this.boundMouseEnterHandler = null;
         }
-        if (this.boundMouseLeaveHandler) {
-            this.nativeElement.removeEventListener('mouseleave', this.boundMouseLeaveHandler);
+        if (this.boundMouseLeaveHandler && this.nativeElement) {
+            try {
+                this.nativeElement.removeEventListener('mouseleave', this.boundMouseLeaveHandler);
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
             this.boundMouseLeaveHandler = null;
         }
 
-        const $editItem = this.nativeElement.querySelector('.edit-list-item');
-        if ($editItem && this.boundEditHandler) {
-            $editItem.removeEventListener('click', this.boundEditHandler);
-            this.boundEditHandler = null;
-        }
+        if (this.nativeElement) {
+            const $editItem = this.nativeElement.querySelector('.edit-list-item');
+            if ($editItem && this.boundEditHandler) {
+                try {
+                    $editItem.removeEventListener('click', this.boundEditHandler);
+                } catch (e) {
+                    // Silently handle cleanup errors
+                }
+                this.boundEditHandler = null;
+            }
 
-        const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
-        if ($deleteItem && this.boundDeleteHandler) {
-            $deleteItem.removeEventListener('click', this.boundDeleteHandler);
-            this.boundDeleteHandler = null;
+            const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
+            if ($deleteItem && this.boundDeleteHandler) {
+                try {
+                    $deleteItem.removeEventListener('click', this.boundDeleteHandler);
+                } catch (e) {
+                    // Silently handle cleanup errors
+                }
+                this.boundDeleteHandler = null;
+            }
         }
 
         // MEMORY LEAK FIX: Clear currentItemWidgets cache
@@ -226,8 +244,14 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
 
         // MEMORY LEAK FIX: Complete the destroy subject
         if (this.destroy) {
-            this.destroy.next(null);
-            this.destroy.complete();
+            try {
+                if (!this.destroy.closed) {
+                    this.destroy.next(null);
+                    this.destroy.complete();
+                }
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
             this.destroy = null;
         }
     }

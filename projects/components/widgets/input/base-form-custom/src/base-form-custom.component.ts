@@ -74,7 +74,9 @@ export abstract class BaseFormCustomComponent extends BaseFormComponent implemen
 
     public invokeOnChange(value, $event?: Event | any, valid?: boolean) {
         // let the angular know about the change
-        this._onChange(value);
+        if (this._onChange) {
+            this._onChange(value);
+        }
         if ($event) {
             super.invokeOnChange(value, $event);
         } else if (valid) {
@@ -84,7 +86,9 @@ export abstract class BaseFormCustomComponent extends BaseFormComponent implemen
     }
 
     public invokeOnTouched($event?: Event) {
-        this._onTouched();
+        if (this._onTouched) {
+            this._onTouched();
+        }
 
         if ($event) {
             this.invokeEventCallback('blur', {$event});

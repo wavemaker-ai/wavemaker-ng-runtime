@@ -813,7 +813,11 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         // MEMORY LEAK FIX: Remove native event listener
         const ulElement = this.nativeElement?.querySelector('ul.app-livelist-container');
         if (ulElement && this.boundClickHandler) {
-            ulElement.removeEventListener('click', this.boundClickHandler, true);
+            try {
+                ulElement.removeEventListener('click', this.boundClickHandler, true);
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
             this.boundClickHandler = null;
         }
 
