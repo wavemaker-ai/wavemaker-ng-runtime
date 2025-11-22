@@ -64,7 +64,9 @@ export class CompositeDirective extends StylableComponent implements AfterViewIn
     protected assignRequiredToSubComponents() {
         if (this.required && this.componentRefs) {
             setTimeout(() => {
-                this.componentRefs.forEach(componentRef => componentRef.widget.required = true);
+                if (this.componentRefs) {
+                    this.componentRefs.forEach(componentRef => componentRef.widget.required = true);
+                }
             }, 50);
         }
     }

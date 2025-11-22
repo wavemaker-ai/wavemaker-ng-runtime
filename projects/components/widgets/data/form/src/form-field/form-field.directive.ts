@@ -690,7 +690,11 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
     ngOnDestroy() {
         // MEMORY LEAK FIX: Destroy BaseFieldValidations instance
         if (this.fieldValidations) {
-            this.fieldValidations.destroy();
+            try {
+                this.fieldValidations.destroy();
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
             this.fieldValidations = null;
         }
 

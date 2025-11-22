@@ -104,6 +104,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     pagination;
     logicalOp;
 
+    private _initTimeoutId: any; // Store timeout ID for cleanup
     private _debouncedApplyDataset = debounce(() => this.widget.dataset = this.dataset, DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
     private _debouncedPageChanged = debounce(event => {
         const currentPage = event && event.page;
@@ -141,7 +142,11 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     constructor(inj: Injector, @SkipSelf() @Inject(WidgetRef) public parent, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
-        setTimeout(()=> {
+        this._initTimeoutId = setTimeout(()=> {
+            // Guard against component destruction or parent being null
+            if (this.isDestroyed || !this.parent) {
+                return;
+            }
             this.allowpagesizechange = this.parent.allowpagesizechange;
             if(this.allowpagesizechange)
                 this.defaultPageSizeOptions = this.parent?.pagesizeoptions ? this.parent.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) : [];
@@ -823,6 +828,12 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     }
 
     ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear initialization timeout if still pending
+        if (this._initTimeoutId) {
+            clearTimeout(this._initTimeoutId);
+            this._initTimeoutId = null;
+        }
+
         // MEMORY LEAK FIX: Complete EventEmitters
         if (this.resultEmitter) {
             this.resultEmitter.complete();
@@ -857,7 +868,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         // MEMORY LEAK FIX: Clear parent reference
         this.parent = null;
 
-        // Call parent ngOnDestroy
+        // Call parent ngOnDestroy (sets isDestroyed = true)
         super.ngOnDestroy();
     }
 }

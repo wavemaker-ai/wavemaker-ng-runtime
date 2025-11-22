@@ -52,6 +52,56 @@ const arrayConsumer = (listenerFn, restExpr, newVal, oldVal) => {
     }
 };
 
+/**
+ * Detects if an expression is static (doesn't change during runtime)
+ * Static expressions can be evaluated once and don't need to be watched
+ */
+const isStaticExpression = (expr: string): boolean => {
+    if (typeof expr !== 'string') {
+        return false;
+    }
+    
+    const trimmedExpr = expr.trim();
+    
+    // appLocale expressions are static (localization strings)
+    if (trimmedExpr.startsWith('appLocale') && 
+        (trimmedExpr.length === 9 || trimmedExpr[9] === '.' || trimmedExpr[9] === '[')) {
+        return true;
+    }
+    
+    // Static property names (simple identifiers without dots, functions, or operators)
+    const staticPropertyNames = [
+        'canceltext', 'iconclass', 'message', 
+        'directionlinks', 'navControls', 
+        'iconposition', 'iconwidth'
+    ];
+    if (staticPropertyNames.includes(trimmedExpr)) {
+        return true;
+    }
+    
+    // Simple literal strings (no variables, functions, operators, or special syntax)
+    // Check for dynamic indicators
+    if (trimmedExpr.includes('Variables.') || 
+        trimmedExpr.includes('()') || 
+        trimmedExpr.includes('row.') || 
+        trimmedExpr.includes('?') || 
+        trimmedExpr.includes('|') ||
+        trimmedExpr.includes('notification.') ||
+        trimmedExpr.includes('Actions.') ||
+        trimmedExpr.includes('[') ||
+        trimmedExpr.includes('(')) {
+        return false; // Contains dynamic indicators
+    }
+    
+    // Simple identifier without special characters - likely static
+    // But only if it's a single word (no dots, brackets, etc.)
+    if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmedExpr)) {
+        return true;
+    }
+    
+    return false; // Default to dynamic
+};
+
 const getUpdatedWatcInfo = (expr, acceptsArray, listener) => {
     // listener doesn't accept array
     // replace all `[$i]` with `[0]` and return the expression
@@ -83,6 +133,25 @@ const getUpdatedWatcInfo = (expr, acceptsArray, listener) => {
 };
 
 export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGenerator.nextUid(), doNotClone = false, config:any={}, isMuted?: () => boolean) => {
+    // OPTIMIZATION: Evaluate static expressions once and skip registry
+    // Static expressions (appLocale, static properties) don't change during runtime
+    if (typeof expr === 'string' && isStaticExpression(expr)) {
+        // Evaluate once immediately
+        const fn = $parseExpr(expr);
+        try {
+            const value = fn($scope, $locals);
+            // Call listener to set the value (triggers initial update)
+            listener(value, FIRST_TIME_WATCH);
+            // Return no-op unwatch function (nothing to unwatch, not added to registry)
+            return () => {};
+        } catch (e) {
+            console.warn(`error in evaluating static expression: '${expr}'`, e);
+            // If evaluation fails, fall through to normal watch registration
+            // This ensures the app doesn't break if expression evaluation fails
+        }
+    }
+    
+    // Normal flow for dynamic expressions (non-static)
     if (expr.indexOf('[$i]') !== -1) {
         let watchInfo = getUpdatedWatcInfo(expr, config && (config.arrayType || config.isList), listener);
         expr = watchInfo.expr;
@@ -178,7 +247,7 @@ export const setAppRef = ref => {
 export const isChangeFromWatch = () => changedByWatch;
 export const resetChangeFromWatch = () => changedByWatch = false;
 
-// (<any>window).watchRegistry = registry;
+(<any>window).watchRegistry = registry;
 
 let skipWatchers;
 

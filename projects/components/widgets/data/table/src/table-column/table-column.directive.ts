@@ -316,6 +316,10 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     // Remove validators for the inline widget and set form to untouched
     removeValidations() {
+        // Guard against component destruction or table/ngform being null
+        if (this.isDestroyed || !this.table || !this.table.ngform) {
+            return;
+        }
         this.table.ngform.markAsUntouched();
         const control = this.getFormControl();
         if (!control) {
@@ -328,6 +332,10 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     // Apply default|sync|async|prop validators for QuickEdit new row form control
     applyNewRowValidations() {
+        // Guard against component destruction or table/ngform being null
+        if (this.isDestroyed || !this.table || !this.table.ngform) {
+            return;
+        }
         if (!this._checkNewEditableRowControl()) {
             return;
         }
@@ -345,24 +353,39 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     // Remove validators for the QuickEdit new row widget and set form to untouched
     removeNewRowValidations() {
+        // Guard against component destruction or table/ngform being null
+        if (this.isDestroyed || !this.table || !this.table.ngform) {
+            return;
+        }
         this.table.ngform.markAsUntouched();
         if (!this._checkNewEditableRowControl()) {
             return;
         }
         const control = this.getFormControl('_new');
+        if (!control) {
+            return;
+        }
         control.clearValidators();
         control.clearAsyncValidators();
         control.updateValueAndValidity();
     }
 
     addFormControl(suffix?: string) {
+        // Guard against component destruction or table/ngform being null
+        if (this.isDestroyed || !this.table || !this.table.ngform) {
+            return;
+        }
         const ctrlName = suffix ? (this.binding + suffix) : this.binding;
         this.table.ngform.addControl(ctrlName, this.table.fb.control(''));
     }
 
     getFormControl(suffix?: string) {
+        // Guard against component destruction or table/ngform being null
+        if (this.isDestroyed || !this.table || !this.table.ngform) {
+            return null;
+        }
         const ctrlName = suffix ? (this.binding + suffix) : this.binding;
-        return this.table.ngform.controls[ctrlName];
+        return this.table.ngform.controls[ctrlName] || null;
     }
 
     private _checkNewEditableRowControl() {
@@ -447,12 +470,16 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     // On field value change, apply cascading filter and set validation message
     onValueChange(val, widget) {
+        // Guard against component destruction or table being null
+        if (this.isDestroyed || !this.table) {
+            return;
+        }
         if (val !== null) {
             applyFilterOnField(this.table.datasource, this.widget, this.table.fieldDefs, val, {
                 widget: 'edit-widget-type'
             });
         }
-        if (this.table.ngform.touched) {
+        if (this.table.ngform && this.table.ngform.touched) {
             this.activeControlType = widget;
             if (widget === 'inlineInstance') {
                 this.notifyChanges();
@@ -790,13 +817,25 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
     ngOnDestroy() {
         // MEMORY LEAK FIX: Clear ContentChildren QueryLists
         if (this._filterInstances) {
-            this._filterInstances.reset([]);
+            try {
+                this._filterInstances.reset([]);
+            } catch (e) {
+                // Silently handle cleanup errors - QueryList might already be destroyed
+            }
         }
         if (this._inlineInstances) {
-            this._inlineInstances.reset([]);
+            try {
+                this._inlineInstances.reset([]);
+            } catch (e) {
+                // Silently handle cleanup errors - QueryList might already be destroyed
+            }
         }
         if (this._inlineInstancesNew) {
-            this._inlineInstancesNew.reset([]);
+            try {
+                this._inlineInstancesNew.reset([]);
+            } catch (e) {
+                // Silently handle cleanup errors - QueryList might already be destroyed
+            }
         }
 
         // MEMORY LEAK FIX: Clear all widget instance references
@@ -817,11 +856,19 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
         // MEMORY LEAK FIX: Clear validation objects
         if (this.fieldValidations) {
-            this.fieldValidations.destroy();
+            try {
+                this.fieldValidations.destroy();
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
             this.fieldValidations = null;
         }
         if (this.fieldValidations_new) {
-            this.fieldValidations_new.destroy();
+            try {
+                this.fieldValidations_new.destroy();
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
             this.fieldValidations_new = null;
         }
         this.syncValidators = [];

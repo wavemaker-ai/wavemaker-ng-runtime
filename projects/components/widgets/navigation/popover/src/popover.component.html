@@ -9,7 +9,7 @@
     containerClass="app-popover animated {{contentanimation}} {{popoverContainerCls}}"
     [container]="containerTarget || '.wm-app'"
     [isOpen]="isOpen"
-    [tabindex]="tabindex"
+    [attr.tabindex]="tabindex"
     [name]="name"
     [class]="class"
     [ngClass]="{'disable-popover': !canPopoverOpen}"
