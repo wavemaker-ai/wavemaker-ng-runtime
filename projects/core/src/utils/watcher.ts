@@ -68,14 +68,21 @@ const isStaticExpression = (expr: string): boolean => {
         (trimmedExpr.length === 9 || trimmedExpr[9] === '.' || trimmedExpr[9] === '[')) {
         return true;
     }
-   
-    const staticExpressionNames = [
-        'row.getProperty(\'investment\')',
-        'row.getProperty(\'factsheetLink\')',
-        'row.getProperty(\'isRebalanceEligible\')'
-    ];
-    if (staticExpressionNames.includes(trimmedExpr)) {
-        // console.log("------------ staticExpressionNames ------------", trimmedExpr)
+    
+    // Literal values are static
+    // Check for string literals (single or double quotes)
+    if ((trimmedExpr.startsWith('"') && trimmedExpr.endsWith('"')) ||
+        (trimmedExpr.startsWith("'") && trimmedExpr.endsWith("'"))) {
+        return true;
+    }
+    
+    // Check for boolean literals
+    if (trimmedExpr === 'true' || trimmedExpr === 'false') {
+        return true;
+    }
+    
+    // Check for null/undefined
+    if (trimmedExpr === 'null' || trimmedExpr === 'undefined') {
         return true;
     }
     
@@ -84,6 +91,13 @@ const isStaticExpression = (expr: string): boolean => {
     if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmedExpr)) {
         return true;
     }
+    
+    // Everything else is dynamic - including:
+    // - Component properties (isOpen, content, etc.)
+    // - Single-word identifiers (they're variables/properties that can change!)
+    // - row.getProperty() calls (data can change)
+    // - Variables, Actions, Widgets references
+    // - Any expressions with operators, functions, etc.
     
     return false; // Default to dynamic
 };
