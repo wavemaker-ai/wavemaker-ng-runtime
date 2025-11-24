@@ -78,6 +78,15 @@ const isStaticExpression = (expr: string): boolean => {
     if (staticPropertyNames.includes(trimmedExpr)) {
         return true;
     }
+    const staticExpressionNames = [
+        'row.getProperty(\'investment\')',
+        'row.getProperty(\'factsheetLink\')',
+        'row.getProperty(\'isRebalanceEligible\')'
+    ];
+    if (staticExpressionNames.includes(trimmedExpr)) {
+        // console.log("------------ staticExpressionNames ------------", trimmedExpr)
+        return true;
+    }
     
     // Simple literal strings (no variables, functions, operators, or special syntax)
     // Check for dynamic indicators
@@ -88,6 +97,7 @@ const isStaticExpression = (expr: string): boolean => {
         trimmedExpr.includes('|') ||
         trimmedExpr.includes('notification.') ||
         trimmedExpr.includes('Actions.') ||
+        trimmedExpr.includes('Widgets.') ||
         trimmedExpr.includes('[') ||
         trimmedExpr.includes('(')) {
         return false; // Contains dynamic indicators
@@ -234,7 +244,7 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
         return;
     }
 
-    const limit = 5;
+    const limit = 3;
     let pass = 1;
     let changeDetected;
 
@@ -334,8 +344,8 @@ let skipWatchers;
 
 const debouncedTriggerWatchers = debounce(() => {
     skipWatchers = true;
-    ngZone.run(() => triggerWatchers());
-}, 100);
+    ngZone.runOutsideAngular(() => triggerWatchers());
+}, 300);
 
 export const $invokeWatchers = (force?: boolean, ignoreMuted?: boolean) => {
     if (force) {
