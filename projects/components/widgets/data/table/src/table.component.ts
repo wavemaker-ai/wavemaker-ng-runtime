@@ -1600,6 +1600,15 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.gridData = [];
         this.__fullData = null;
         
+        // MEMORY LEAK FIX: Destroy jQuery datatable widget before clearing gridOptions
+        if (this.datagridElement && this.datagridElement.datatable) {
+            try {
+                this.datagridElement.datatable('destroy');
+            } catch (e) {
+                // Ignore errors during destroy
+            }
+        }
+
         // MEMORY LEAK FIX: Clear gridOptions to release all function closures and data
         // gridOptions holds many closures that capture 'this' and prevent GC
         if (this.gridOptions) {
@@ -1636,15 +1645,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.exportOptions = [];
         this.headerConfig = [];
         this.rowActions = [];
-        
-        // MEMORY LEAK FIX: Destroy jQuery datatable widget
-        if (this.datagridElement && this.datagridElement.datatable) {
-            try {
-                this.datagridElement.datatable('destroy');
-            } catch (e) {
-                // Ignore errors during destroy
-            }
-        }
         
         // MEMORY LEAK FIX: Clear all @ContentChildren QueryLists holding template references
         // These QueryLists hold TemplateRef instances that create circular references to the parent LView
