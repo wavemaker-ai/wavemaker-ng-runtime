@@ -60,7 +60,7 @@ export class LabelDirective extends StylableComponent implements OnDestroy {
             }  else {
                 // Guard against sanitizePipe being null/undefined (e.g., after ngOnDestroy)
                 if (this.sanitizePipe) {
-                    setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(insertZWSP(nv), SecurityContext.HTML));
+                setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(insertZWSP(nv), SecurityContext.HTML));
                 } else {
                     // Fallback to textContent if sanitizePipe is not available
                     setProperty(this.nativeElement, 'textContent', insertZWSP(nv));

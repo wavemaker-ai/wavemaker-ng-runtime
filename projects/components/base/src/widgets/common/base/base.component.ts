@@ -18,7 +18,6 @@ import {ReplaySubject, Subject} from 'rxjs';
 import {
     $invokeWatchers,
     $parseEvent,
-    $parseExpr,
     $unwatch,
     $watch,
     addClass,
@@ -599,22 +598,6 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
             widgetProps = child ? child.widget.widgetProps : this.widgetProps,
             widgetId    = child ? child.widget.widgetId : this.widgetId;
         
-        // OPTIMIZATION: Skip watcher for hidden widgets (non-critical properties only)
-        if (this.shouldSkipWatcher(propName, widget, child)) {
-            // Evaluate once and set value, but don't register watcher
-            try {
-                const fn = $parseExpr(expr);
-                const value = fn(viewParent, context);
-                if(propName.startsWith('base-') && widget.updateData) {
-                    widget.updateData(propName, value);
-                }
-                widget[propName] = value;
-                return; // No watcher needed for hidden widgets
-            } catch (e) {
-                // If evaluation fails, fall through to normal watcher registration
-            }
-        }
-        
         // OPTIMIZATION: Apply throttling for non-critical properties
         const watchConfig: any = widgetProps.get(propName) || {};
         const throttledProps = ['class', 'style', 'ngclass', 'ngstyle'];
@@ -638,78 +621,6 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
                 () => isMuted
             )
         );
-    }
-
-    /**
-     * Check if watcher should be skipped for this property
-     * Skips non-critical watchers for hidden/invisible widgets
-     */
-    private shouldSkipWatcher(propName: string, widget: any, child?: any): boolean {
-        // Critical properties always need watchers (even if hidden)
-        // Expanded list to include properties that affect data rendering
-        const criticalProps = ['datasource', 'show', 'visible', 'enabled', 'disabled', 'dataset', 'datafield', 'displayfield'];
-        if (criticalProps.includes(propName)) {
-            return false;
-        }
-        
-        // For tables and data widgets, be more conservative - don't skip watchers
-        // as they need to update when data changes even if temporarily hidden
-        const widgetType = this.widgetSubType || (this as any).widgetType || '';
-        const isDataWidget = widgetType.includes('table') || 
-                            widgetType.includes('list') || 
-                            widgetType.includes('datagrid') ||
-                            widgetType.includes('chart') ||
-                            widgetType.includes('tabs') ||
-                            widgetType.includes('accordion') ||
-                            widgetType.includes('wizard') ||
-                            widgetType.includes('form') ||
-                            widgetType.includes('liveform') ||
-                            widgetType.includes('livetable') ||
-                            widgetType.includes('card') ||
-                            widgetType.includes('pagination');
-        
-        if (isDataWidget) {
-            // Only skip if explicitly hidden via show/visible properties
-            // Don't check DOM state as it might be temporarily hidden during updates
-            const isExplicitlyHidden = widget.show === false || widget.visible === false;
-            if (isExplicitlyHidden && !criticalProps.includes(propName)) {
-                return true;
-            }
-            return false; // Always register watchers for data widgets
-        }
-        
-        // Check if widget is hidden (for non-data widgets)
-        const nativeEl = child ? child.nativeElement : this.nativeElement;
-        const isHidden = widget.show === false || 
-                        widget.visible === false || 
-                        (nativeEl && (nativeEl.hidden || 
-                                     nativeEl.style.display === 'none' ||
-                                     nativeEl.classList.contains('ng-hide')));
-        
-        if (isHidden) {
-            return true; // Skip watcher for hidden widgets (non-critical props)
-        }
-        
-        // Don't check parent containers for data widgets to avoid false positives
-        // during DOM updates
-        if (!isDataWidget && nativeEl) {
-            let parent = nativeEl.parentElement;
-            let depth = 0;
-            while (parent && parent !== document.body && depth < 5) {
-                // Only check immediate parent, not deep ancestors
-                // to avoid issues during DOM transitions
-                if (parent.hidden || 
-                    parent.style.display === 'none' || 
-                    parent.classList.contains('ng-hide') ||
-                    parent.classList.contains('hidden')) {
-                    return true; // Skip watcher if in hidden container
-                }
-                parent = parent.parentElement;
-                depth++;
-            }
-        }
-        
-        return false;
     }
 
     /**
