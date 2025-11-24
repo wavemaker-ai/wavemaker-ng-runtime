@@ -36,7 +36,7 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
     private btnwidth;
     public disabled: boolean;
     public required: boolean;
-    private _debounceSetSelectedValue: Function;
+    private _debounceSetSelectedValue: Function | null = null;
     public name: string;
     public hint:any;
 
@@ -59,7 +59,9 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
         this.registerDestroyListener(() => datasetSubscription.unsubscribe());
 
         const datavalueSubscription = this.datavalue$.subscribe(() => {
-            this._debounceSetSelectedValue(true);
+            if (this._debounceSetSelectedValue) {
+                this._debounceSetSelectedValue(true);
+            }
         });
         this.registerDestroyListener(() => datavalueSubscription.unsubscribe());
     }
@@ -96,7 +98,9 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
             setCSS(this.nativeElement.querySelector('.app-switch-overlay') as HTMLElement, 'width', this.btnwidth + '%');
         }
 
-        this._debounceSetSelectedValue(true);
+        if (this._debounceSetSelectedValue) {
+            this._debounceSetSelectedValue(true);
+        }
     }
 
     // This function animates the highlighted span on to the selected value.

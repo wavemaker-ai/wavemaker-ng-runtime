@@ -316,7 +316,7 @@ describe("TimeComponent", () => {
                             foundDisabled = true;
                             break;
                         }
-                        if (elem && (elem.hasAttribute('disabled') || elem.disabled)) {
+                        if (elem && (elem.hasAttribute('disabled') || (elem as any).disabled)) {
                             foundDisabled = true;
                             break;
                         }

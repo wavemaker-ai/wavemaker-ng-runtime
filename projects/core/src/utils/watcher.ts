@@ -157,11 +157,50 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
         expr = watchInfo.expr;
         listener = watchInfo.listener;
     }
+    
+    // OPTIMIZATION: Apply throttling for low-priority watchers (after array handling)
+    let wrappedListener = listener;
+    if (config && config.throttle && config.throttle > 0) {
+        const throttleMs = config.throttle;
+        let lastCall = 0;
+        let pendingValue: any = null;
+        let pendingOldValue: any = null;
+        let timeoutId: any = null;
+        
+        wrappedListener = (nv, ov) => {
+            const now = Date.now();
+            pendingValue = nv;
+            pendingOldValue = ov;
+            
+            if (now - lastCall >= throttleMs) {
+                lastCall = now;
+                listener(nv, ov);
+                pendingValue = null;
+                pendingOldValue = null;
+                if (timeoutId) {
+                    window['__zone_symbol__clearTimeout'](timeoutId);
+                    timeoutId = null;
+                }
+            } else if (!timeoutId) {
+                // Schedule delayed call if not already scheduled
+                const remaining = throttleMs - (now - lastCall);
+                timeoutId = window['__zone_symbol__setTimeout'](() => {
+                    if (pendingValue !== null) {
+                        lastCall = Date.now();
+                        listener(pendingValue, pendingOldValue);
+                        pendingValue = null;
+                        pendingOldValue = null;
+                    }
+                    timeoutId = null;
+                }, remaining);
+            }
+        };
+    }
     const fn = $parseExpr(expr);
 
     registry.set(identifier, {
         fn: fn.bind(expr, $scope, $locals),
-        listener,
+        listener: wrappedListener,
         expr,
         last: FIRST_TIME_WATCH,
         doNotClone,
@@ -201,10 +240,38 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
 
     do {
         changeDetected = false;
-        registry.forEach(watchInfo => {
-            if(watchInfo.isMuted && watchInfo.isMuted()) {
-                return;
+        
+        // OPTIMIZATION: Filter out muted watchers before iteration
+        // This avoids calling isMuted() repeatedly and skips expression evaluation for muted watchers
+        const activeWatchers: Array<[string, any]> = [];
+        registry.forEach((watchInfo, identifier) => {
+            // Guard against invalid watchInfo (being cleaned up by $unwatch)
+            // $unwatch sets fn/listener to null before deleting from registry, creating a race condition
+            if (!watchInfo) {
+                return; // Skip completely missing watchInfo
             }
+            // CRITICAL: Check if fn and listener are valid functions
+            // When $unwatch is called, it sets these to null before registry.delete()
+            // This check prevents "listener is not a function" errors
+            if (typeof watchInfo.fn !== 'function' || typeof watchInfo.listener !== 'function') {
+                return; // Skip watchers being cleaned up (fn/listener set to null by $unwatch)
+            }
+            // Skip muted watchers - don't even add them to the active list
+            // isMuted can be null (not muted), undefined (not muted), or a function
+            if (!watchInfo.isMuted || (typeof watchInfo.isMuted === 'function' && !watchInfo.isMuted())) {
+                activeWatchers.push([identifier, watchInfo]);
+            }
+        });
+        
+        // Only iterate through non-muted watchers
+        activeWatchers.forEach(([identifier, watchInfo]) => {
+            // Guard against watchers being cleaned up (listener/fn set to null by $unwatch)
+            // This can happen if $unwatch is called while triggerWatchers is running
+            // Check watchInfo exists and has required properties
+            if (!watchInfo || typeof watchInfo.fn !== 'function' || typeof watchInfo.listener !== 'function') {
+                return; // Skip this watcher - it's being cleaned up or invalid
+            }
+            
             const fn = watchInfo.fn;
             const listener = watchInfo.listener;
             const ov = watchInfo.last;
@@ -214,6 +281,7 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
                 nv = fn();
             } catch (e) {
                 console.warn(`error in executing expression: '${watchInfo.expr}'`);
+                return; // Skip listener call if expression evaluation failed
             }
 
             if (!isEqual(nv, ov)) {
@@ -225,7 +293,20 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
                 if (isObject(nv) && !watchInfo.doNotClone && nv.__cloneable__ !== false) {
                     watchInfo.last = clone(nv);
                 }
-                listener(nv, ov);
+                
+                // Final check before calling listener - ensure it's still valid
+                // Re-check watchInfo.listener in case it was cleared during execution
+                const currentListener = watchInfo.listener;
+                if (typeof currentListener === 'function') {
+                    try {
+                        currentListener(nv, ov);
+                    } catch (e) {
+                        console.warn(`Error in watcher listener for expression '${watchInfo.expr || identifier}':`, e);
+                    }
+                } else {
+                    // Listener was cleared during execution - log for debugging
+                    console.warn(`Watcher listener was cleared during execution for identifier: ${identifier}`);
+                }
                 resetChangeFromWatch();
             }
         });

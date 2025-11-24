@@ -46,7 +46,7 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
 
     // this field contains the initial datavalue which needs to be processed once the dataset is available
     public toBeProcessedDatavalue: any;
-    private readonly _debouncedInitDatasetItems: Function;
+    private readonly _debouncedInitDatasetItems: Function | null = null;
     protected allowempty = true;
     public compareby: any;
 
@@ -103,7 +103,9 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
         this.handleHeaderClick = noop;
 
         this.cancelLocaleChangeSubscription = this.getAppInstance().subscribe("locale-changed", () => {
-            this._debouncedInitDatasetItems();
+            if (this._debouncedInitDatasetItems) {
+                this._debouncedInitDatasetItems();
+            }
         });
     }
 
@@ -333,7 +335,9 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
             case 'displayexpression':
             case 'orderby':
             case 'usekeys':
-                this._debouncedInitDatasetItems();
+                if (this._debouncedInitDatasetItems) {
+                    this._debouncedInitDatasetItems();
+                }
                 break;
             case 'required':
             case 'datavalue':

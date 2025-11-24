@@ -71,7 +71,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
     private _datasource: any;
     private _unsubscribeDv = false;
     private searchkey: string;
-    private _debounceUpdateQueryModel: any;
+    private _debounceUpdateQueryModel: any = null;
     private limit: number;
     private _classExpr: any;
     private minchars: number;
@@ -85,7 +85,9 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
     set datasource(nv) {
         this._datasource = nv;
         this.searchComponent.datasource = nv;
-        this._debounceUpdateQueryModel(this.datavalue || this.toBeProcessedDatavalue);
+        if (this._debounceUpdateQueryModel) {
+            this._debounceUpdateQueryModel(this.datavalue || this.toBeProcessedDatavalue);
+        }
     }
 
     constructor(
@@ -124,7 +126,9 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
             // clearing the last results when dataset is reassigned
             (this.searchComponent as any)._lastResult = undefined;
             this.nextItemIndex = this.datasetItems.length;
-            this._debounceUpdateQueryModel(this.datavalue || this.toBeProcessedDatavalue);
+            if (this._debounceUpdateQueryModel) {
+                this._debounceUpdateQueryModel(this.datavalue || this.toBeProcessedDatavalue);
+            }
         });
         this.registerDestroyListener(() => datasetSubscription.unsubscribe());
 
@@ -134,7 +138,9 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
                 this.chipsList = [];
                 // if the datafield is ALLFILEDS do not fetch the records
                 // update the query model with the values we have
-                this._debounceUpdateQueryModel(val);
+                if (this._debounceUpdateQueryModel) {
+                    this._debounceUpdateQueryModel(val);
+                }
             }
         });
         this.registerDestroyListener(() => datavalueSubscription.unsubscribe());
