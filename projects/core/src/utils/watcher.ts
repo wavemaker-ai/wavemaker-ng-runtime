@@ -68,7 +68,6 @@ const isStaticExpression = (expr: string): boolean => {
         (trimmedExpr.length === 9 || trimmedExpr[9] === '.' || trimmedExpr[9] === '[')) {
         return true;
     }
-    
    
     const staticExpressionNames = [
         'row.getProperty(\'investment\')',
@@ -78,21 +77,6 @@ const isStaticExpression = (expr: string): boolean => {
     if (staticExpressionNames.includes(trimmedExpr)) {
         // console.log("------------ staticExpressionNames ------------", trimmedExpr)
         return true;
-    }
-    
-    // Simple literal strings (no variables, functions, operators, or special syntax)
-    // Check for dynamic indicators
-    if (trimmedExpr.includes('Variables.') || 
-        trimmedExpr.includes('()') || 
-        trimmedExpr.includes('row.') || 
-        trimmedExpr.includes('?') || 
-        trimmedExpr.includes('|') ||
-        trimmedExpr.includes('notification.') ||
-        trimmedExpr.includes('Actions.') ||
-        trimmedExpr.includes('Widgets.') ||
-        trimmedExpr.includes('[') ||
-        trimmedExpr.includes('(')) {
-        return false; // Contains dynamic indicators
     }
     
     // Simple identifier without special characters - likely static
