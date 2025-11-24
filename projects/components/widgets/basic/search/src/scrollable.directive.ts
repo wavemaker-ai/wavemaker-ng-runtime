@@ -1,12 +1,12 @@
-import { AfterContentInit, AfterViewInit, Directive, ElementRef, inject, Injector } from '@angular/core';
+import {AfterContentInit, AfterViewInit, Directive, ElementRef, inject, Injector} from '@angular/core';
 
-import { SearchComponent } from './search.component';
+import {SearchComponent} from './search.component';
 
 declare const $;
 
 @Directive({
   standalone: true,
-    selector: '[scrollable]'
+    selector: '[scrollableHandler]'
 })
 export class ScrollableDirective implements AfterContentInit, AfterViewInit {
     private elementRef: ElementRef;

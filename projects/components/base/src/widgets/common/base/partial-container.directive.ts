@@ -1,10 +1,19 @@
-import { Attribute, ComponentFactoryResolver, Directive, ElementRef, Inject, Injector, Self, ViewContainerRef } from '@angular/core';
+import {
+    Attribute,
+    ComponentFactoryResolver,
+    Directive,
+    ElementRef,
+    Inject,
+    Injector,
+    Self,
+    ViewContainerRef
+} from '@angular/core';
 
-import { debounceTime, filter } from 'rxjs/operators';
+import {debounceTime, filter} from 'rxjs/operators';
 
-import { App, $invokeWatchers, noop, ComponentType, PartialRefProvider } from '@wm/core';
+import {$invokeWatchers, App, ComponentType, noop, PartialRefProvider} from '@wm/core';
 
-import { WidgetRef } from "../../framework/types";
+import {WidgetRef} from "../../framework/types";
 import {debounce} from "lodash-es";
 
 @Directive({
@@ -76,6 +85,9 @@ export class PartialContainerDirective {
 
         componentInstance.registerPropertyChangeListener((key: string, nv: any, ov?: any) => {
             if (key === 'content') {
+                if('isInlineContent' in componentInstance) {
+                    componentInstance.isInlineContent = !(nv && nv !== '');
+                }
                 if (componentInstance.$lazyLoad) {
                     componentInstance.$lazyLoad = () => {
                         this.renderPartial(nv);

@@ -568,6 +568,8 @@ $.widget('wm.datatable', {
         var self = this, preparedData,$tbody,pageStartIndex = self.getPageStartIndex(),
             startRowIndex = self.options.startRowIndex,
             isScrollorOnDemand = self.options.isNavTypeScrollOrOndemand();
+            var $activeRow = self.gridElement.find('tr.row-editing:not(.always-new-row)').first();
+            var index = $activeRow.index();
             if(isScrollorOnDemand) {
                 $tbody = this.gridElement;
                 if(this.renderTableOnViewLess) {
@@ -623,6 +625,16 @@ $.widget('wm.datatable', {
             this.options.setIsDataUpdatedByUser(false);
             this.options.clearActionRowIndex();
         }
+        if(this.options.editmode===this.CONSTANTS.QUICK_EDIT){
+            if (index>=0) {
+                const $newActiveRow = self.gridElement.find('tr').eq(index);
+                if ($newActiveRow && $newActiveRow.length) {
+                    $newActiveRow.addClass('active');
+                    $newActiveRow.trigger('click', [undefined, {action: 'edit', skipFocus:false}]);
+                    self.setActiveRow($newActiveRow);
+                    self.focusActiveRow();
+                }
+            }}
         return $tbody;
     },
 
@@ -1652,8 +1664,8 @@ $.widget('wm.datatable', {
     },
 
     /* Selects a row. */
-    selectRow: function (row, value) {
-        var rowIndex = _.isNumber(row) ? row : this.Utils.getObjectIndex(this.options.data, row),
+    selectRow: function (row, value,index) {
+        var rowIndex =index?index:( _.isNumber(row) ? row : this.Utils.getObjectIndex(this.options.data, row)),
             selector,
             $row;
         if (rowIndex !== -1) {
@@ -2150,7 +2162,8 @@ $.widget('wm.datatable', {
             $requiredEls,
             alwaysNewRow = $row.hasClass('always-new-row'),
             advancedEdit = self.options.editmode === self.CONSTANTS.QUICK_EDIT,
-            editOptions = {};
+            editOptions = {},
+            rowindex=$row.attr('data-row-id');
 
         // when a row is edited set actionrow variables
         this.options.setActionRowIndex($row.attr('data-row-id'));
@@ -2172,7 +2185,7 @@ $.widget('wm.datatable', {
         }
         //Select the current edited row
         if (options.selectRow) {
-            this.selectRow(rowData, true);
+            this.selectRow(rowData, true,rowindex);
         }
         e = e || {};
         e.data = e.data || {};
@@ -2326,6 +2339,9 @@ $.widget('wm.datatable', {
                             if (isValid === false) {
                                 return;
                             }
+                        }
+                        if(this.options?.getDataSource()?.category== "wm.Variable") {
+                            editOptions.rowindex = rowindex;
                         }
                         this.options.afterRowUpdate(rowData, e, onSaveSuccess, editOptions);
                     }
@@ -2906,6 +2922,9 @@ $.widget('wm.datatable', {
             $htm.on('focus', 'tr.app-datagrid-row', function (e) {
                 var $row = $(e.currentTarget);
                 if (!$row.hasClass('row-editing')) {
+                    if(e.target===e.currentTarget && (e.which===0||!e.which)) {
+                        return;
+                    }
                     self.toggleEditRow(e, { $row: $row, action: 'edit'});
                 }
             });

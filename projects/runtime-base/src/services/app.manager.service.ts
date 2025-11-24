@@ -17,7 +17,7 @@ import {
 import {SecurityService} from '@wm/security';
 import {$rootScope, MetadataService, VariablesService} from '@wm/variables';
 import {extend, forEach, get, isEmpty, isObject, isUndefined, merge, trim} from "lodash-es";
-import { getModesFromLocalStorage } from '../public_api';
+import {getModesFromLocalStorage} from '../public_api';
 
 enum POST_MESSAGES {
     HIDE_TEMPLATES_SHOW_CASE = 'hide-templates-show-case',
@@ -362,9 +362,10 @@ export class AppManagerService {
     reloadAppData() {
         return this.loadSecurityConfig(true).then(() => {
             return this.loadMetadata().then(() => {
-               return this.updateLoggedInUserVariable().then(() => {
-                return this.beforeAppReady();
-               })
+                return this.updateLoggedInUserVariable().then((config) => {
+                    return Promise.resolve(this.beforeAppReady())
+                        .then(() => Promise.resolve(config));
+                })
             });
         });
     }
@@ -546,13 +547,13 @@ export class AppManagerService {
         }
     }
 
-    initAppModes(): void {    
+    initAppModes(): void {
         // get modes from local storage
         let storedModes = getModesFromLocalStorage();
-        
+
         // Apply restored modes
         this.$app.setMode(storedModes);
-    
+
         // Listener for postMessage-based mode changes
         window.addEventListener('message', (event) => {
             const { key, modes, shouldPersist } = event.data || {};
