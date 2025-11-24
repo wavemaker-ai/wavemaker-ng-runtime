@@ -1293,7 +1293,7 @@ $.widget('wm.datatable', {
             this.element.find('.loading-data-msg').hide();
             this.element.find('.on-demand-load-btn').text(this.options.ondemandmessage);
             this.element.find('.on-demand-load-btn').show();
-        } else if(this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' && 
+        } else if(this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
                    this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
                    (this.options.getCurrentPage() == this.options.getPageCount()) && this.options.showviewlessbutton) {
                 this.element.find('.on-demand-load-btn').show().text(this.options.viewlessmessage);

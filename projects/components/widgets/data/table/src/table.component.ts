@@ -246,7 +246,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     exportOptions = [];
     exportdatasize;
     formWidgets;
-    headerConfig = [];
+    headerConfig: any = [];
     items = [];
     navControls;
     rowActions = [];
@@ -265,7 +265,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     actionRowIndex;
     actionRowPage;
     prevFilterExpression: any = [];
-    fieldDefs = [];
+    fieldDefs: any = [];
     rowDef: any = {};
     rowInstance: any = {};
     pagesizeoptions;

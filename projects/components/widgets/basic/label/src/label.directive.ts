@@ -43,7 +43,6 @@ export class LabelDirective extends StylableComponent implements OnDestroy {
         if (this.isDestroyed) {
             return;
         }
-
         if (key === 'caption') {
             // Check for trustPipe safe values
             let bindContent = this.nativeElement.getAttribute('caption.bind');
