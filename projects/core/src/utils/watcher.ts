@@ -69,15 +69,7 @@ const isStaticExpression = (expr: string): boolean => {
         return true;
     }
     
-    // Static property names (simple identifiers without dots, functions, or operators)
-    const staticPropertyNames = [
-        'canceltext', 'iconclass', 'message', 
-        'directionlinks', 'navControls', 
-        'iconposition', 'iconwidth'
-    ];
-    if (staticPropertyNames.includes(trimmedExpr)) {
-        return true;
-    }
+   
     const staticExpressionNames = [
         'row.getProperty(\'investment\')',
         'row.getProperty(\'factsheetLink\')',
