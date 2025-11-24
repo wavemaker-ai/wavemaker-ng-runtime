@@ -21,6 +21,7 @@
     role="button"
     href="javascript:void(0)"
     target="_self"
+    class="app-anchor"
     #anchor
     (keydown)="onPopoverAnchorKeydown($event)">
     @if (iconurl) {
@@ -34,6 +35,6 @@
     }
     <span class="anchor-caption" [innerHTML]="caption"></span>
     @if (badgevalue) {
-      <span class="badge" [textContent]="badgevalue"></span>
+      <span class="badge pull-right" [textContent]="badgevalue"></span>
     }
 </a>
