@@ -222,6 +222,20 @@ export class AppRef implements OnDestroy {
         });
     }
 
+    /**
+     * Utility method to check if an object has a property
+     * This is commonly used in expressions to check object properties
+     * @param obj The object to check
+     * @param prop The property name to check
+     * @returns true if the object has the property, false otherwise
+     */
+    hasOwnObjectProperty(obj: any, prop: string): boolean {
+        if (!obj || typeof obj !== 'object') {
+            return false;
+        }
+        return Object.prototype.hasOwnProperty.call(obj, prop);
+    }
+
     setMode(modes: Record<string, string>, shouldPersist = false) {
         const htmlEl = document.getElementsByTagName('html')[0];
         //html element sanity check
