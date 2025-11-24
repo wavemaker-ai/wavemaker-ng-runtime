@@ -507,7 +507,22 @@ $.widget('wm.datatable', {
 
     /* function to get start index of the current active page */
     getPageStartIndex: function() {
-        var currentPage = this.options.getCurrentPage(), pagesize = this.options.getPageSize();
+        // Guard against undefined getCurrentPage or getPageSize functions
+        var getCurrentPageFn = this.options.getCurrentPage;
+        var getPageSizeFn = this.options.getPageSize;
+        var currentPage, pagesize;
+        if (!getCurrentPageFn || typeof getCurrentPageFn !== 'function') {
+            // Default to page 1 if getCurrentPage is not available
+            currentPage = 1;
+        } else {
+            currentPage = getCurrentPageFn();
+        }
+        if (!getPageSizeFn || typeof getPageSizeFn !== 'function') {
+            // Default to 10 if getPageSize is not available
+            pagesize = 10;
+        } else {
+            pagesize = getPageSizeFn();
+        }
         var isPrevPageUpdated = this.options.actionRowPage < currentPage;
         var pageIndex = isPrevPageUpdated ? this.options.actionRowPage : currentPage;
         return ((pageIndex - 1) * pagesize);
@@ -1264,7 +1279,9 @@ $.widget('wm.datatable', {
             this.element.find('.loading-data-msg').hide();
             this.element.find('.on-demand-load-btn').text(this.options.ondemandmessage);
             this.element.find('.on-demand-load-btn').show();
-        } else if((this.options.getCurrentPage() == this.options.getPageCount()) && this.options.showviewlessbutton) {
+        } else if(this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                   this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
+                   (this.options.getCurrentPage() == this.options.getPageCount()) && this.options.showviewlessbutton) {
                 this.element.find('.on-demand-load-btn').show().text(this.options.viewlessmessage);
                 this.element.find('.loading-data-msg').hide();
                 if(infScroll) {

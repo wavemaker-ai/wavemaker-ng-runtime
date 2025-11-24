@@ -35,11 +35,10 @@ export class TrailingZeroDecimalPipe implements PipeTransform {
 }
 
 @Pipe({
-    standalone: true,
+  standalone: true,
     name: 'toDate'
 })
 export class ToDatePipe extends WmPipe implements PipeTransform {
-    private app = inject(App);
     // This method calls the custom formatter fn after applying the exisitng date pattern
     returnFn(data, args, variables) {
         if (this.isCustomPipe) {
@@ -79,7 +78,12 @@ export class ToDatePipe extends WmPipe implements PipeTransform {
         return this.returnFn('', arguments,this.app.Variables);
     }
 
-    constructor(private datePipe: DatePipe, private i18nService: AbstractI18nService, protected customPipeManager: CustomPipeManager) {
+    constructor(
+        private datePipe: DatePipe,
+        private i18nService: AbstractI18nService,
+        protected customPipeManager: CustomPipeManager,
+        private app: App
+    ) {
         super('toDate', customPipeManager);
     }
 }

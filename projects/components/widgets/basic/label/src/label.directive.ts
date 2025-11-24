@@ -38,7 +38,9 @@ export class LabelDirective extends StylableComponent {
     }
 
     onPropertyChange(key, nv, ov?) {
-
+        if (this.isDestroyed) {
+            return;
+        }
         if (key === 'caption') {
             // Check for trustPipe safe values
             let bindContent = this.nativeElement.getAttribute('caption.bind');
@@ -54,7 +56,11 @@ export class LabelDirective extends StylableComponent {
             } else if (isObject(nv) && safeValue) {
                 setProperty(this.nativeElement, 'innerHTML', nv[Object.keys(nv)[0]]);
             }  else {
-                setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(insertZWSP(nv), SecurityContext.HTML));
+                if (this.sanitizePipe) {
+                    setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(insertZWSP(nv), SecurityContext.HTML));
+                } else {
+                    setProperty(this.nativeElement, 'textContent', insertZWSP(nv));
+                }
             }
 
         } else if (key === 'required') {
