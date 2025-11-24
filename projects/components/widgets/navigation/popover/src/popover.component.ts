@@ -33,6 +33,7 @@ import {
     StylableComponent,
     styler
 } from '@wm/components/base';
+import { AnchorComponent } from '@wm/components/basic/anchor';
 
 import {registerProps} from './popover.props';
 
