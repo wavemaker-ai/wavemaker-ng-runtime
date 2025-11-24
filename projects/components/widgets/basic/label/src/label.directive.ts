@@ -57,7 +57,7 @@ export class LabelDirective extends StylableComponent {
                 setProperty(this.nativeElement, 'innerHTML', nv[Object.keys(nv)[0]]);
             }  else {
                 if (this.sanitizePipe) {
-                    setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(insertZWSP(nv), SecurityContext.HTML));
+                setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(insertZWSP(nv), SecurityContext.HTML));
                 } else {
                     setProperty(this.nativeElement, 'textContent', insertZWSP(nv));
                 }
