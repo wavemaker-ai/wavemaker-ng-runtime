@@ -265,7 +265,7 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
         return;
     }
 
-    const limit = 5;
+    const limit = 3;
     let pass = 1;
     let changeDetected;
 
@@ -352,8 +352,8 @@ let skipWatchers;
 
 const debouncedTriggerWatchers = debounce(() => {
     skipWatchers = true;
-    ngZone.runOutsideAngular(() => triggerWatchers());
-}, 300);
+    ngZone.run(() => triggerWatchers());
+}, 500);
 
 export const $invokeWatchers = (force?: boolean, ignoreMuted?: boolean) => {
     if (force) {
