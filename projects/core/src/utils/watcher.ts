@@ -75,6 +75,17 @@ const isStaticExpression = (expr: string): boolean => {
         (trimmedExpr.startsWith("'") && trimmedExpr.endsWith("'"))) {
         return true;
     }
+
+    const staticExpressionNames = [
+        'row.getProperty(\'investment\')',
+        'row.getProperty(\'factsheetLink\')',
+        'row.getProperty(\'isRebalanceEligible\')'
+    ];
+    if (staticExpressionNames.includes(trimmedExpr)) {
+        // console.log("------------ staticExpressionNames ------------", trimmedExpr)
+        return true;
+    }
+
     
     // Check for boolean literals
     if (trimmedExpr === 'true' || trimmedExpr === 'false') {

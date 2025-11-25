@@ -38,6 +38,16 @@ export class LazyLoadDirective implements OnDestroy {
 
     @Input()
     set lazyLoad(expr) {
+        // MEMORY LEAK FIX: Unsubscribe from previous watcher if it exists
+        if (this.unSubscribeFn && typeof this.unSubscribeFn === 'function') {
+            try {
+                this.unSubscribeFn();
+            } catch (e) {
+                console.warn('Error unsubscribing from previous lazyLoad watcher:', e);
+            }
+            this.unSubscribeFn = null;
+        }
+        
         this.unSubscribeFn = $watch(
             expr,
             this.viewParent,
@@ -45,15 +55,30 @@ export class LazyLoadDirective implements OnDestroy {
             (val) => {
                 if (!this.embeddedView && val) {
                     this.embeddedView  = this.viewContainer.createEmbeddedView(this.templateRef, this.context);
-                    this.unSubscribeFn();
+                    // Unsubscribe after creating the view (lazy load is complete)
+                    if (this.unSubscribeFn && typeof this.unSubscribeFn === 'function') {
+                        try {
+                            this.unSubscribeFn();
+                            this.unSubscribeFn = null; // Clear after calling to prevent double-call
+                        } catch (e) {
+                            console.warn('Error unsubscribing from lazyLoad watcher:', e);
+                            this.unSubscribeFn = null;
+                        }
+                    }
                 }
             }
         );
     }
 
     ngOnDestroy() {
-        if (this.unSubscribeFn) {
-            this.unSubscribeFn();
+        // MEMORY LEAK FIX: Safely unsubscribe from watcher
+        if (this.unSubscribeFn && typeof this.unSubscribeFn === 'function') {
+            try {
+                this.unSubscribeFn();
+            } catch (e) {
+                console.warn('Error unsubscribing from lazyLoad watcher in ngOnDestroy:', e);
+            }
+            this.unSubscribeFn = null;
         }
         
         // MEMORY LEAK FIX: Clear context to release references to parent scope data
