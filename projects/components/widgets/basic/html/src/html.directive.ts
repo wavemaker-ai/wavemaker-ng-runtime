@@ -1,4 +1,4 @@
-import {Attribute, Directive, Inject, Injector, OnInit, Optional, SecurityContext} from '@angular/core';
+import {Attribute, Directive, Inject, Injector, OnInit, Optional, Renderer2, SecurityContext} from '@angular/core';
 
 import {setCSS, setProperty} from '@wm/core';
 import { IWidgetConfig, provideAsWidgetRef, SanitizePipe, StylableComponent, styler } from '@wm/components/base';
@@ -25,6 +25,7 @@ export class HtmlDirective extends StylableComponent implements OnInit {
 
     constructor(
         inj: Injector,
+        private renderer: Renderer2,
         @Attribute('height') height: string,
         @Attribute('content.bind') private boundContent: string,
         private sanitizePipe:SanitizePipe,
@@ -43,8 +44,13 @@ export class HtmlDirective extends StylableComponent implements OnInit {
     ngOnInit() {
         super.ngOnInit();
         if (this.boundContent) {
-            this.nativeElement.innerHTML = '';
+            // Clear existing content using Renderer2
+            while (this.nativeElement.firstChild) {
+                this.renderer.removeChild(this.nativeElement, this.nativeElement.firstChild);
+            }
         }
+        // Read initial innerHTML content if no content property is set
+        // This is safe to read (not manipulate) for initial state
         if (!this.content && this.nativeElement.innerHTML) {
             this.content = this.nativeElement.innerHTML;
         }
