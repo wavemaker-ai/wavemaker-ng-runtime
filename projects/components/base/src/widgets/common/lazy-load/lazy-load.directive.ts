@@ -45,13 +45,17 @@ export class LazyLoadDirective implements OnDestroy {
             (val) => {
                 if (!this.embeddedView && val) {
                     this.embeddedView  = this.viewContainer.createEmbeddedView(this.templateRef, this.context);
-                    this.unSubscribeFn();
+                    if (this.unSubscribeFn && typeof this.unSubscribeFn === 'function') {
+                        this.unSubscribeFn();
+                    }
                 }
             }
         );
     }
 
     ngOnDestroy() {
-        this.unSubscribeFn();
+        if (this.unSubscribeFn && typeof this.unSubscribeFn === 'function') {
+            this.unSubscribeFn();
+        }
     }
 }

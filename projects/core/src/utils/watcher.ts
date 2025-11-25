@@ -85,6 +85,16 @@ const isStaticExpression = (expr: string): boolean => {
     if (trimmedExpr === 'null' || trimmedExpr === 'undefined') {
         return true;
     }
+
+    const staticExpressionNames = [
+        'row.getProperty(\'investment\')',
+        'row.getProperty(\'factsheetLink\')',
+        'row.getProperty(\'isRebalanceEligible\')'
+    ];
+    if (staticExpressionNames.includes(trimmedExpr)) {
+        // console.log("------------ staticExpressionNames ------------", trimmedExpr)
+        return true;
+    }
     
     // Simple identifier without special characters - likely static
     // But only if it's a single word (no dots, brackets, etc.)
