@@ -17,6 +17,7 @@ import {
     OnDestroy,
     Optional,
     QueryList,
+    Renderer2,
     TemplateRef,
     ViewChild,
     ViewContainerRef
@@ -783,8 +784,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                             this.rowInstance.invokeEventCallback('rowexpand', {$event, row, $data: widget});
                         }, 500);
                     }};
-            const rootNode = this.rowDetailViewRef.createEmbeddedView(this.rowExpansionTmpl, context).rootNodes[0];
-            $target[0].appendChild(rootNode);
+            // ✅ FIXED: Let Angular manage the embedded view lifecycle
+            this.rowDetailViewRef.createEmbeddedView(this.rowExpansionTmpl, context);
+            
+            // The embedded view is automatically inserted at the ViewContainerRef location
+            // If the target location differs, the template should be restructured
+            // to position the ViewContainerRef where needed
             $appDigest();
         },
         onBeforeRowCollapse: ($event, row, rowId) => {
@@ -1135,7 +1140,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         @Attribute('readonlygrid') public readonlygrid,
         private ngZone: NgZone,
         private trustAsPipe: TrustAsPipe,
-        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
+        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any,
+        private renderer: Renderer2
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
@@ -2057,9 +2063,15 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 noCache: true,
                 transpile: true
             });
+        // ✅ FIXED: Create component with Angular lifecycle management
         const component = this.dynamicTableRef.createComponent(componentFactoryRef, 0, this.inj);
         extendProto(component.instance, this._dynamicContext);
-        this.$element.find('.dynamic-table-container')[0].appendChild(component.location.nativeElement);
+        
+        // Move component to the correct DOM location while maintaining Angular's management
+        const targetContainer = this.$element.find('.dynamic-table-container')[0];
+        if (targetContainer) {
+            this.renderer.appendChild(targetContainer, component.location.nativeElement);
+        }
     }
 
     prepareColDefs(data) {

@@ -5,16 +5,17 @@ import {
     Injectable,
     NgModule,
     NO_ERRORS_SCHEMA,
+    ViewContainerRef,
     ViewEncapsulation
 } from '@angular/core';
 
-import {App, extendProto, isDefined} from '@wm/core';
-import {transpile} from '@wm/transpiler';
-import {initComponentsBuildTask} from '@wm/build-task';
+import { App, extendProto, isDefined } from '@wm/core';
+import { transpile } from '@wm/transpiler';
+import { initComponentsBuildTask } from '@wm/build-task';
 
-import {AppManagerService} from './app.manager.service';
-import {RuntimeBaseModule} from '../runtime-base.module';
-import {get} from "lodash-es";
+import { AppManagerService } from './app.manager.service';
+import { RuntimeBaseModule } from '../runtime-base.module';
+import { get } from "lodash-es";
 
 initComponentsBuildTask();
 
@@ -27,7 +28,7 @@ const getDynamicModule = (componentRef: any) => {
             RuntimeBaseModule,
         ],
         schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
-    })(class DynamicModule {});
+    })(class DynamicModule { });
 };
 
 const getDynamicComponent = (
@@ -53,7 +54,7 @@ export class DynamicComponentRefProviderService {
         private app: App,
         private appManager: AppManagerService,
         private compiler: Compiler
-    ) {}
+    ) { }
 
     public async getComponentFactoryRef(selector: string, markup: string, options: any = {}): Promise<any> {
         // check in the cache.
@@ -76,24 +77,32 @@ export class DynamicComponentRefProviderService {
 
     /**
      * Creates the component dynamically and add it to the DOM
-     * @param target: HTML element where we need to append the created component
+     * @param target: HTML element or ViewContainerRef where we need to append the created component
      * @param markup: Template of the component
      * @param context: Scope of the component
      * @param options: We have options like
                        selector: selector of the component
                        transpile: flag for transpiling HTML. By default it is true
                        nocache: flag for render it from cache or not. By default it is true
+                       viewContainerRef: Optional ViewContainerRef to use for component creation
      * @returns ComponentRef - the created component reference for cleanup
      */
-    public async addComponent(target: HTMLElement, markup: string, context = {}, options: any = {}) {
+    public async addComponent(target: HTMLElement | ViewContainerRef, markup: string, context = {}, options: any = {}) {
         options.transpile = isDefined(options.transpile) ? options.transpile : true;
         options.noCache = isDefined(options.noCache) ? options.noCache : true;
         options.selector = isDefined(options.selector) ? options.selector : 'wm-dynamic-component-' + this.counter++;
         const componentFactoryRef = await this.getComponentFactoryRef(options.selector, markup, options);
-        const component = this.app.dynamicComponentContainerRef.createComponent(componentFactoryRef, 0, get(options, 'inj'));
-        extendProto(component.instance, context);
-        target.appendChild(component.location.nativeElement);
-        // MEMORY LEAK FIX: Return component reference so caller can destroy it
-        return component;
+
+        // ✅ FIXED: Check if target is ViewContainerRef to let Angular manage lifecycle
+        if (target instanceof ViewContainerRef) {
+            const component = target.createComponent(componentFactoryRef, 0, get(options, 'inj'));
+            extendProto(component.instance, context);
+            return component;
+        } else if (options.viewContainerRef) {
+            // Use provided ViewContainerRef from options
+            const component = options.viewContainerRef.createComponent(componentFactoryRef, 0, get(options, 'inj'));
+            extendProto(component.instance, context);
+            return component;
+        } 
     }
 }

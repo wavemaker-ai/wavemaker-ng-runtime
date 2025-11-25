@@ -1,5 +1,5 @@
-import { Attribute, ComponentFactoryResolver, Directive, ElementRef, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
-import { App, $invokeWatchers, noop, ComponentType, CustomWidgetRefProvider } from '@wm/core';
+import { Attribute, Directive, ElementRef, Inject, Injector, OnDestroy, Renderer2, Self, ViewContainerRef } from '@angular/core';
+import { App, ComponentType, CustomWidgetRefProvider } from '@wm/core';
 import { WidgetRef } from "../../framework/types";
 
 
@@ -18,13 +18,23 @@ export class CustomWidgetContainerDirective implements OnDestroy {
         public inj: Injector,
         private app: App,
         @Attribute('widgetname') widgetname: string,
-        private customWidgetRefProvider: CustomWidgetRefProvider
+        private customWidgetRefProvider: CustomWidgetRefProvider,
+        private renderer: Renderer2
     ) {
         const widgetnames = this.componentInstance.widgetname;
         this.customWidgetRefProvider.getComponentFactoryRef(widgetname, ComponentType.WIDGET).then((componentFactory) => {
             if (componentFactory) {
+                // ✅ FIXED: Create component and ensure it's inside the host element
                 const instanceRef = this.vcRef.createComponent(componentFactory, 0, this.inj);
-                this.elRef.nativeElement.appendChild(instanceRef.location.nativeElement);
+                
+                // If the component was created as a sibling, move it inside the host element
+                const componentEl = instanceRef.location.nativeElement;
+                const hostEl = this.elRef.nativeElement;
+                
+                // Check if component is inside the host element
+                if (componentEl.parentElement !== hostEl) {
+                    this.renderer.appendChild(hostEl, componentEl);
+                }
             }
         });
     }

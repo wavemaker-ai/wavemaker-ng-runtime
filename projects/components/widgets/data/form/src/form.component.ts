@@ -14,6 +14,7 @@ import {
     NgZone,
     OnDestroy,
     Optional,
+    Renderer2,
     SkipSelf,
     ViewChild,
     ViewContainerRef
@@ -332,7 +333,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         @Attribute('data-role') role,
         @Attribute('key') key,
         @Attribute('name') name,
-        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
+        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any,
+        private renderer: Renderer2
     ) {
         super(inj, getWidgetConfig(isLiveForm, isLiveFilter, role), explicitContext);
 
@@ -1258,9 +1260,14 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 noCache: true,
                 transpile: true
             });
+        // ✅ FIXED: Create component with Angular lifecycle management
         const component = this.dynamicFormRef.createComponent(componentFactoryRef, 0, this.inj);
         extendProto(component.instance, this._dynamicContext);
-        $gridLayout[0].appendChild(component.location.nativeElement);
+        
+        // Move component to the correct DOM location while maintaining Angular's management
+        if ($gridLayout && $gridLayout[0]) {
+            this.renderer.appendChild($gridLayout[0], component.location.nativeElement);
+        }
         this.setFormData(this.formdata);
     }
 

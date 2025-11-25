@@ -1,4 +1,4 @@
-import { Attribute, ComponentFactoryResolver, Directive, ElementRef, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
+import { Attribute, ComponentFactoryResolver, Directive, ElementRef, Inject, Injector, OnDestroy, Renderer2, Self, ViewContainerRef } from '@angular/core';
 
 import { debounceTime, filter } from 'rxjs/operators';
 
@@ -14,7 +14,6 @@ import {debounce} from "lodash-es";
 export class PartialContainerDirective implements OnDestroy {
 
     private contentInitialized = false;
-    private $target;
 
     get name() {
         return this.componentInstance.name;
@@ -41,12 +40,22 @@ export class PartialContainerDirective implements OnDestroy {
                 // @ts-ignore
                 instanceRef['instance'].prefabName = prefabName;
             }
-            if (!this.$target) {
-                this.$target = this.elRef.nativeElement.querySelector('[partial-container-target]') || this.elRef.nativeElement;
+            
+            // ✅ FIXED: Move component to correct location while maintaining Angular lifecycle
+            const componentElement = instanceRef.location.nativeElement;
+            const targetElement = this.elRef.nativeElement.querySelector('[partial-container-target]');
+            const hostElement = this.elRef.nativeElement;
+            
+            if (targetElement) {
+                // If there's a specific target element, use it
+                targetElement.innerHTML = '';
+                this.renderer.appendChild(targetElement, componentElement);
+            } else {
+                // If no target element, append directly to the host element
+                // This handles cases like topnav where content should be inside the section
+                this.renderer.appendChild(hostElement, componentElement);
             }
-
-            this.$target.innerHTML = '';
-            this.$target.appendChild(instanceRef.location.nativeElement);
+            
             this.contentInitialized = true;
             setTimeout(() => this.onLoadSuccess(), 200);
         }
@@ -68,7 +77,8 @@ export class PartialContainerDirective implements OnDestroy {
         private app: App,
         @Attribute('content') _content: string,
         private resolver: ComponentFactoryResolver,
-        private partialRefProvider: PartialRefProvider
+        private partialRefProvider: PartialRefProvider,
+        private renderer: Renderer2
     ) {
 
         componentInstance.registerPropertyChangeListener((key: string, nv: any, ov?: any) => {
@@ -106,13 +116,6 @@ export class PartialContainerDirective implements OnDestroy {
             (this.renderPartial as any).cancel();
         }
         this.renderPartial = null;
-
-        // MEMORY LEAK FIX: Clear DOM reference
-        this.$target = null;
-
-        // MEMORY LEAK FIX: Clear component instance reference
-        // Note: We don't null componentInstance as it's injected and managed by Angular
-        // but we clear our internal references
 
         // Reset content flag
         this.contentInitialized = false;

@@ -5,6 +5,7 @@ import {
     Inject,
     Injector,
     OnDestroy,
+    Renderer2,
     Self,
     ViewContainerRef
 } from '@angular/core';
@@ -27,7 +28,8 @@ export class PrefabDirective implements OnDestroy {
         private prefabMngr: PrefabManagerService,
         private resolver: ComponentFactoryResolver,
         private injector: Injector,
-        private componentRefProvider: ComponentRefProvider
+        private componentRefProvider: ComponentRefProvider,
+        private renderer: Renderer2
     ) {
         const prefabName = this.componentInstance.prefabName;
 
@@ -35,8 +37,17 @@ export class PrefabDirective implements OnDestroy {
             .then(async () => {
                 const componentFactory = await this.componentRefProvider.getComponentFactoryRef(prefabName, ComponentType.PREFAB);
                 if (componentFactory) {
+                    // ✅ FIXED: Create component and ensure it's inside the host element
                     const instanceRef = this.vcRef.createComponent(componentFactory, 0, injector);
-                    this.elRef.nativeElement.appendChild(instanceRef.location.nativeElement);
+                    
+                    // If the component was created as a sibling, move it inside the host element
+                    const componentEl = instanceRef.location.nativeElement;
+                    const hostEl = this.elRef.nativeElement;
+                    
+                    // Check if component is inside the host element
+                    if (componentEl.parentElement !== hostEl) {
+                        this.renderer.appendChild(hostEl, componentEl);
+                    }
                 }
             });
     }
