@@ -9,6 +9,7 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     QueryList,
@@ -75,7 +76,7 @@ const WIDGET_CONFIG = { widgetType: 'wm-search', hostClass: 'input-group' };
         provideAsWidgetRef(SearchComponent)
     ]
 })
-export class SearchComponent extends DatasetAwareFormComponent implements OnInit, AfterViewInit, AfterViewChecked {
+export class SearchComponent extends DatasetAwareFormComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
     static initializeProps = registerProps();
     public casesensitive: boolean;
     public searchkey: string;
@@ -910,5 +911,27 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
         }
 
         super.onPropertyChange(key, nv, ov);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear QueryList reference
+        this.liElements = null;
+
+        // MEMORY LEAK FIX: Clear data provider
+        if (this.dataProvider) {
+            this.dataProvider = null;
+        }
+
+        // MEMORY LEAK FIX: Clear typeahead reference
+        if (this.typeahead) {
+            this.typeahead = null;
+        }
+
+        // MEMORY LEAK FIX: Clear query model
+        this.queryModel = null;
+        this.query = '';
+
+        // Call parent ngOnDestroy (DatasetAwareFormComponent has cleanup)
+        super.ngOnDestroy();
     }
 }

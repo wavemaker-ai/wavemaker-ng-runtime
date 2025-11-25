@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient, HttpEvent, HttpHeaders, HttpParams, HttpRequest, HttpResponse } from '@angular/common/http';
 
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 
 import { AbstractHttpService } from '@wm/core';
 import { HttpClientService, getErrMessage } from '@wavemaker/variables';
@@ -21,11 +21,12 @@ enum HTTP_EVENT_TYPE {
         providedIn: 'root'
     }
 )
-export class HttpServiceImpl extends AbstractHttpService implements HttpClientService {
+export class HttpServiceImpl extends AbstractHttpService implements HttpClientService, OnDestroy {
     nonBodyTypeMethods = ['GET', 'DELETE', 'HEAD', 'OPTIONS', 'JSONP'];
     sessionTimeoutObservable = new Subject();
     sessionTimeoutQueue = [];
     localeObject: any;
+    private sessionTimeoutSubscriptions: Subscription[] = []; // MEMORY LEAK FIX: Track subscriptions
 
     constructor(private httpClient: HttpClient) {
         super();
@@ -252,9 +253,20 @@ export class HttpServiceImpl extends AbstractHttpService implements HttpClientSe
     /**
      * registers a callback to be trigerred on session timeout
      * @param callback
+     * @returns unsubscribe function
      */
     registerOnSessionTimeout(callback) {
-        this.sessionTimeoutObservable.asObservable().subscribe(callback);
+        // MEMORY LEAK FIX: Store subscription reference for cleanup
+        const subscription = this.sessionTimeoutObservable.asObservable().subscribe(callback);
+        this.sessionTimeoutSubscriptions.push(subscription);
+        // Return unsubscribe function so caller can clean up if needed
+        return () => {
+            subscription.unsubscribe();
+            const index = this.sessionTimeoutSubscriptions.indexOf(subscription);
+            if (index > -1) {
+                this.sessionTimeoutSubscriptions.splice(index, 1);
+            }
+        };
     }
 
     /**
@@ -293,5 +305,27 @@ export class HttpServiceImpl extends AbstractHttpService implements HttpClientSe
                         });
             }
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from all session timeout subscriptions
+        this.sessionTimeoutSubscriptions.forEach(sub => {
+            if (sub && !sub.closed) {
+                sub.unsubscribe();
+            }
+        });
+        this.sessionTimeoutSubscriptions = [];
+
+        // MEMORY LEAK FIX: Complete Subject to release subscriptions
+        if (this.sessionTimeoutObservable) {
+            this.sessionTimeoutObservable.complete();
+            this.sessionTimeoutObservable = null;
+        }
+
+        // MEMORY LEAK FIX: Clear session timeout queue
+        this.sessionTimeoutQueue = [];
+
+        // MEMORY LEAK FIX: Clear locale object
+        this.localeObject = null;
     }
 }

@@ -507,7 +507,22 @@ $.widget('wm.datatable', {
 
     /* function to get start index of the current active page */
     getPageStartIndex: function() {
-        var currentPage = this.options.getCurrentPage(), pagesize = this.options.getPageSize();
+        // Guard against undefined getCurrentPage or getPageSize functions
+        var getCurrentPageFn = this.options.getCurrentPage;
+        var getPageSizeFn = this.options.getPageSize;
+        var currentPage, pagesize;
+        if (!getCurrentPageFn || typeof getCurrentPageFn !== 'function') {
+            // Default to page 1 if getCurrentPage is not available
+            currentPage = 1;
+        } else {
+            currentPage = getCurrentPageFn();
+        }
+        if (!getPageSizeFn || typeof getPageSizeFn !== 'function') {
+            // Default to 10 if getPageSize is not available
+            pagesize = 10;
+        } else {
+            pagesize = getPageSizeFn();
+        }
         var isPrevPageUpdated = this.options.actionRowPage < currentPage;
         var pageIndex = isPrevPageUpdated ? this.options.actionRowPage : currentPage;
         return ((pageIndex - 1) * pagesize);
@@ -568,6 +583,8 @@ $.widget('wm.datatable', {
         var self = this, preparedData,$tbody,pageStartIndex = self.getPageStartIndex(),
             startRowIndex = self.options.startRowIndex,
             isScrollorOnDemand = self.options.isNavTypeScrollOrOndemand();
+            var $activeRow = self.gridElement.find('tr.row-editing:not(.always-new-row)').first();
+            var index = $activeRow.index();
             if(isScrollorOnDemand) {
                 $tbody = this.gridElement;
                 if(this.renderTableOnViewLess) {
@@ -623,6 +640,16 @@ $.widget('wm.datatable', {
             this.options.setIsDataUpdatedByUser(false);
             this.options.clearActionRowIndex();
         }
+        if(this.options.editmode===this.CONSTANTS.QUICK_EDIT){
+            if (index>=0) {
+                const $newActiveRow = self.gridElement.find('tr').eq(index);
+                if ($newActiveRow && $newActiveRow.length) {
+                    $newActiveRow.addClass('active');
+                    $newActiveRow.trigger('click', [undefined, {action: 'edit', skipFocus:false}]);
+                    self.setActiveRow($newActiveRow);
+                    self.focusActiveRow();
+                }
+            }}
         return $tbody;
     },
 
@@ -1042,7 +1069,9 @@ $.widget('wm.datatable', {
                 'value': '',
                 'event': null
             },
-            compiledCellTemplates: {}
+            compiledCellTemplates: {},
+            // MEMORY LEAK FIX: Store bound function for proper event listener cleanup
+            boundRowClickHandlerOnCapture: null
         });
         // TODO: Variable loading status is getting updated before dataset update. This is resulting in loader going off before data is rendered.
         // Need to update code with suitable fix. For now 250ms is added as workaround
@@ -1264,7 +1293,9 @@ $.widget('wm.datatable', {
             this.element.find('.loading-data-msg').hide();
             this.element.find('.on-demand-load-btn').text(this.options.ondemandmessage);
             this.element.find('.on-demand-load-btn').show();
-        } else if((this.options.getCurrentPage() == this.options.getPageCount()) && this.options.showviewlessbutton) {
+        } else if(this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                   this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
+                   (this.options.getCurrentPage() == this.options.getPageCount()) && this.options.showviewlessbutton) {
                 this.element.find('.on-demand-load-btn').show().text(this.options.viewlessmessage);
                 this.element.find('.loading-data-msg').hide();
                 if(infScroll) {
@@ -1652,8 +1683,8 @@ $.widget('wm.datatable', {
     },
 
     /* Selects a row. */
-    selectRow: function (row, value) {
-        var rowIndex = _.isNumber(row) ? row : this.Utils.getObjectIndex(this.options.data, row),
+    selectRow: function (row, value,index) {
+        var rowIndex =index?index:( _.isNumber(row) ? row : this.Utils.getObjectIndex(this.options.data, row)),
             selector,
             $row;
         if (rowIndex !== -1) {
@@ -2078,10 +2109,11 @@ $.widget('wm.datatable', {
         });
 
         $editableElements = $row.find('td.cell-editing');
-        $editableElements.on('click', function (e) {
+        // PERFORMANCE FIX: Use event delegation on row instead of individual cell listeners
+        $row.on('click.cellEdit', 'td.cell-editing', function (e) {
             e.stopPropagation();
         });
-        $editableElements.on('keydown', function (e) {
+        $row.on('keydown.cellEdit', 'td.cell-editing', function (e) {
             //To prevent up and down arrows, navigating to other rows in edit mode
             if ((e.which === 38 || e.which === 40) && (e.currentTarget && !e.currentTarget.closest('.always-new-row'))) {
                 e.stopPropagation();
@@ -2150,7 +2182,8 @@ $.widget('wm.datatable', {
             $requiredEls,
             alwaysNewRow = $row.hasClass('always-new-row'),
             advancedEdit = self.options.editmode === self.CONSTANTS.QUICK_EDIT,
-            editOptions = {};
+            editOptions = {},
+            rowindex=$row.attr('data-row-id');
 
         // when a row is edited set actionrow variables
         this.options.setActionRowIndex($row.attr('data-row-id'));
@@ -2172,7 +2205,7 @@ $.widget('wm.datatable', {
         }
         //Select the current edited row
         if (options.selectRow) {
-            this.selectRow(rowData, true);
+            this.selectRow(rowData, true,rowindex);
         }
         e = e || {};
         e.data = e.data || {};
@@ -2327,6 +2360,9 @@ $.widget('wm.datatable', {
                                 return;
                             }
                         }
+                        if(this.options?.getDataSource()?.category== "wm.Variable") {
+                            editOptions.rowindex = rowindex;
+                        }
                         this.options.afterRowUpdate(rowData, e, onSaveSuccess, editOptions);
                     }
                 } else {
@@ -2363,6 +2399,8 @@ $.widget('wm.datatable', {
 
         this.disableActions(false);
         $row.removeClass('row-editing');
+        // PERFORMANCE FIX: Remove namespaced event listeners from row
+        $row.off('.cellEdit');
         $editableElements.off('click');
         $editableElements.each(function () {
             var $el = $(this),
@@ -2411,6 +2449,8 @@ $.widget('wm.datatable', {
             $saveButton = $row.find('.save-edit-row-button'),
             self = this;
         $row.removeClass('row-editing');
+        // PERFORMANCE FIX: Remove namespaced event listeners from row
+        $row.off('.cellEdit');
         $editableElements.off('click');
         this.disableActions(false);
         this._setGridEditMode(false);
@@ -2858,9 +2898,16 @@ $.widget('wm.datatable', {
             self = this;
 
         if (this.options.enableRowSelection) {
-            $htm[0].removeEventListener('click', this.rowClickHandlerOnCapture.bind(this));
+            // MEMORY LEAK FIX: Remove old listener if exists before adding new one
+            if (this.boundRowClickHandlerOnCapture && $htm[0]) {
+                $htm[0].removeEventListener('click', this.boundRowClickHandlerOnCapture, true);
+            }
             $htm.off();
-            $htm[0].addEventListener('click', this.rowClickHandlerOnCapture.bind(this));
+            
+            // MEMORY LEAK FIX: Store bound function reference for proper removal
+            this.boundRowClickHandlerOnCapture = this.rowClickHandlerOnCapture.bind(this);
+            $htm[0].addEventListener('click', this.boundRowClickHandlerOnCapture, true);
+            
             // add js click handler for capture phase in order to first listen on grid and
             // assign selectedItems so that any child actions can have access to the selectedItems.
             $htm.on('click', this.rowSelectionHandler.bind(this));
@@ -2906,6 +2953,9 @@ $.widget('wm.datatable', {
             $htm.on('focus', 'tr.app-datagrid-row', function (e) {
                 var $row = $(e.currentTarget);
                 if (!$row.hasClass('row-editing')) {
+                    if(e.target===e.currentTarget && (e.which===0||!e.which)) {
+                        return;
+                    }
                     self.toggleEditRow(e, { $row: $row, action: 'edit'});
                 }
             });
@@ -3494,7 +3544,11 @@ $.widget('wm.datatable', {
             this.dataStatusContainer.hide();
         } else {
             // [WMS-23839] always show load more btn if show view less btn is true
-            if (this.options.isNavTypeScrollOrOndemand() && (state === 'nodata' || ((this.options.getCurrentPage() == this.options.getPageCount())  && !this.options.showviewlessbutton))) {
+            if (this.options.isNavTypeScrollOrOndemand() && 
+                (state === 'nodata' || 
+                 (this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                  this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
+                  (this.options.getCurrentPage() == this.options.getPageCount()) && !this.options.showviewlessbutton))) {
                 this.element.find('.on-demand-datagrid a').hide();
             }
             this.dataStatusContainer.show();
@@ -3504,7 +3558,9 @@ $.widget('wm.datatable', {
                 if (state === 'nodata') {
                     this.dataStatusContainer.css('height', 'auto');
                     this.dataStatus.contentHeight = 0;
-                }  else if (this.options.isNavTypeScrollOrOndemand() && this.options.getCurrentPage() > 1){
+                }  else if (this.options.isNavTypeScrollOrOndemand() && 
+                           this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                           this.options.getCurrentPage() > 1){
                     // showing the loading icon only for the first page
                     // from second page there is another loader which is being shown instead of LoadMore btn
                     this.dataStatusContainer.hide();
@@ -3514,7 +3570,9 @@ $.widget('wm.datatable', {
                     this.dataStatusContainer.css('height', this.dataStatus.height > this.dataStatus.contentHeight ? 'auto' : this.dataStatus.contentHeight);
                 }
             }
-            if (!isScrollOrOndemand || (isScrollOrOndemand && this.options.getCurrentPage() === 1)) {
+            if (!isScrollOrOndemand || (isScrollOrOndemand && 
+                this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                this.options.getCurrentPage() === 1)) {
                 this.gridContainer.addClass("show-msg");
             }
         } else {
@@ -3633,6 +3691,34 @@ $.widget('wm.datatable', {
     },
 
     _destroy: function () {
+        // MEMORY LEAK FIX: Remove native event listener using stored bound function
+        if (this.gridElement && this.gridElement[0] && this.boundRowClickHandlerOnCapture) {
+            this.gridElement[0].removeEventListener('click', this.boundRowClickHandlerOnCapture, true);
+            this.boundRowClickHandlerOnCapture = null;
+        }
+        
+        // MEMORY LEAK FIX: Remove all jQuery event handlers
+        if (this.gridHeaderElement) {
+            this.gridHeaderElement.off();
+        }
+        if (this.gridElement) {
+            this.gridElement.off();
+        }
+        if (this.gridSearch) {
+            this.gridSearch.off();
+        }
+        if (this.tableContainer) {
+            this.tableContainer.off();
+        }
+        if (this.gridContainer) {
+            this.gridContainer.off();
+        }
+        
+        // MEMORY LEAK FIX: Clear all internal structures
+        this.preparedData = [];
+        this.preparedHeaderData = [];
+        this.compiledCellTemplates = {};
+        
         this.element.text('');
         window.clearTimeout(this.refreshGridTimeout);
     }

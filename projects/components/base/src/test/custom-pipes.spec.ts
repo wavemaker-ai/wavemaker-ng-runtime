@@ -117,7 +117,7 @@ describe('ToDate pipe', () => {
         i18nService = TestBed.inject(AbstractI18nService);
         datePipe = TestBed.inject(DatePipe);
         app = TestBed.inject(App);
-        pipe = TestBed.runInInjectionContext(() => new ToDatePipe(datePipe, i18nService, app, customPipeManager));
+        pipe = TestBed.runInInjectionContext(() => new ToDatePipe(datePipe, i18nService, customPipeManager, app));
     });
 
     it('create an instance', () => {
@@ -186,8 +186,9 @@ describe('ToDate pipe', () => {
         jest.spyOn(customPipeManager, 'getCustomPipe').mockReturnValue(customPipe);
 
         // Re-instantiate the pipe to trigger the constructor logic
-        pipe = TestBed.runInInjectionContext(() =>
-            new ToDatePipe(datePipe, i18nService, app, customPipeManager)
+        app = TestBed.inject(App);
+        pipe = TestBed.runInInjectionContext(() => 
+            new ToDatePipe(datePipe, i18nService, customPipeManager, app)
         );
 
         const result = pipe.transform('2021-09-20', 'yyyy-MM-dd');

@@ -4,6 +4,7 @@ import {
     Inject,
     Injector,
     OnInit,
+    OnDestroy,
     Optional,
     TemplateRef,
     ViewChild
@@ -30,7 +31,7 @@ const WIDGET_INFO: IWidgetConfig = { widgetType: 'wm-alertdialog' };
         provideAsDialogRef(AlertDialogComponent)
     ]
 })
-export class AlertDialogComponent extends BaseDialog implements OnInit {
+export class AlertDialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate: TemplateRef<any>;
@@ -81,5 +82,12 @@ export class AlertDialogComponent extends BaseDialog implements OnInit {
     ngOnInit() {
         super.ngOnInit();
         this.register(this.viewParent);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.dialogTemplate = null;
+
+        super.ngOnDestroy();
     }
 }

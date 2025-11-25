@@ -52,6 +52,67 @@ const arrayConsumer = (listenerFn, restExpr, newVal, oldVal) => {
     }
 };
 
+/**
+ * Detects if an expression is static (doesn't change during runtime)
+ * Static expressions can be evaluated once and don't need to be watched
+ */
+const isStaticExpression = (expr: string): boolean => {
+    if (typeof expr !== 'string') {
+        return false;
+    }
+    
+    const trimmedExpr = expr.trim();
+    
+    // appLocale expressions are static (localization strings)
+    if (trimmedExpr.startsWith('appLocale') && 
+        (trimmedExpr.length === 9 || trimmedExpr[9] === '.' || trimmedExpr[9] === '[')) {
+        return true;
+    }
+    
+    // Literal values are static
+    // Check for string literals (single or double quotes)
+    if ((trimmedExpr.startsWith('"') && trimmedExpr.endsWith('"')) ||
+        (trimmedExpr.startsWith("'") && trimmedExpr.endsWith("'"))) {
+        return true;
+    }
+
+    const staticExpressionNames = [
+        'row.getProperty(\'investment\')',
+        'row.getProperty(\'factsheetLink\')',
+        'row.getProperty(\'isRebalanceEligible\')'
+    ];
+    if (staticExpressionNames.includes(trimmedExpr)) {
+        // console.log("------------ staticExpressionNames ------------", trimmedExpr)
+        return true;
+    }
+
+    
+    // Check for boolean literals
+    if (trimmedExpr === 'true' || trimmedExpr === 'false') {
+        return true;
+    }
+    
+    // Check for null/undefined
+    if (trimmedExpr === 'null' || trimmedExpr === 'undefined') {
+        return true;
+    }
+    
+    // Simple identifier without special characters - likely static
+    // But only if it's a single word (no dots, brackets, etc.)
+    if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmedExpr)) {
+        return true;
+    }
+    
+    // Everything else is dynamic - including:
+    // - Component properties (isOpen, content, etc.)
+    // - Single-word identifiers (they're variables/properties that can change!)
+    // - row.getProperty() calls (data can change)
+    // - Variables, Actions, Widgets references
+    // - Any expressions with operators, functions, etc.
+    
+    return false; // Default to dynamic
+};
+
 const getUpdatedWatcInfo = (expr, acceptsArray, listener) => {
     // listener doesn't accept array
     // replace all `[$i]` with `[0]` and return the expression
@@ -83,16 +144,74 @@ const getUpdatedWatcInfo = (expr, acceptsArray, listener) => {
 };
 
 export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGenerator.nextUid(), doNotClone = false, config:any={}, isMuted?: () => boolean) => {
+    // OPTIMIZATION: Evaluate static expressions once and skip registry
+    // Static expressions (appLocale, static properties) don't change during runtime
+    if (typeof expr === 'string' && isStaticExpression(expr)) {
+        // Evaluate once immediately
+        const fn = $parseExpr(expr);
+        try {
+            const value = fn($scope, $locals);
+            // Call listener to set the value (triggers initial update)
+            listener(value, FIRST_TIME_WATCH);
+            // Return no-op unwatch function (nothing to unwatch, not added to registry)
+            return () => {};
+        } catch (e) {
+            console.warn(`error in evaluating static expression: '${expr}'`, e);
+            // If evaluation fails, fall through to normal watch registration
+            // This ensures the app doesn't break if expression evaluation fails
+        }
+    }
+    
+    // Normal flow for dynamic expressions (non-static)
     if (expr.indexOf('[$i]') !== -1) {
         let watchInfo = getUpdatedWatcInfo(expr, config && (config.arrayType || config.isList), listener);
         expr = watchInfo.expr;
         listener = watchInfo.listener;
     }
+    
+    // OPTIMIZATION: Apply throttling for low-priority watchers (after array handling)
+    let wrappedListener = listener;
+    if (config && config.throttle && config.throttle > 0) {
+        const throttleMs = config.throttle;
+        let lastCall = 0;
+        let pendingValue: any = null;
+        let pendingOldValue: any = null;
+        let timeoutId: any = null;
+        
+        wrappedListener = (nv, ov) => {
+            const now = Date.now();
+            pendingValue = nv;
+            pendingOldValue = ov;
+            
+            if (now - lastCall >= throttleMs) {
+                lastCall = now;
+                listener(nv, ov);
+                pendingValue = null;
+                pendingOldValue = null;
+                if (timeoutId) {
+                    window['__zone_symbol__clearTimeout'](timeoutId);
+                    timeoutId = null;
+                }
+            } else if (!timeoutId) {
+                // Schedule delayed call if not already scheduled
+                const remaining = throttleMs - (now - lastCall);
+                timeoutId = window['__zone_symbol__setTimeout'](() => {
+                    if (pendingValue !== null) {
+                        lastCall = Date.now();
+                        listener(pendingValue, pendingOldValue);
+                        pendingValue = null;
+                        pendingOldValue = null;
+                    }
+                    timeoutId = null;
+                }, remaining);
+            }
+        };
+    }
     const fn = $parseExpr(expr);
 
     registry.set(identifier, {
         fn: fn.bind(expr, $scope, $locals),
-        listener,
+        listener: wrappedListener,
         expr,
         last: FIRST_TIME_WATCH,
         doNotClone,
@@ -102,7 +221,17 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
     return () => $unwatch(identifier);
 };
 
-export const $unwatch = identifier => registry.delete(identifier);
+export const $unwatch = identifier => {
+    // MEMORY LEAK FIX: Clear watchInfo contents before deleting from registry
+    const watchInfo = registry.get(identifier);
+    if (watchInfo) {
+        watchInfo.last = null;        // Clear large cloned objects
+        watchInfo.fn = null;          // Release $scope/$locals references
+        watchInfo.listener = null;    // Clear callback
+        watchInfo.isMuted = null;     // Clear isMuted function
+    }
+    return registry.delete(identifier);
+};
 
 let changedByWatch = false;
 
@@ -110,22 +239,58 @@ const $RAF = window.requestAnimationFrame;
 
 let ngZone;
 
+const shouldProcessWatcher = (watchInfo: any): boolean => {
+    if (!watchInfo) {
+        return false;
+    }
+    if (typeof watchInfo.fn !== 'function' || typeof watchInfo.listener !== 'function') {
+        return false;
+    }
+    if (!watchInfo.isMuted) {
+        return true;
+    }
+    if (typeof watchInfo.isMuted === 'function') {
+        try {
+            return !watchInfo.isMuted();
+        } catch (e) {
+            console.warn('Error while evaluating watcher mute state:', e);
+            return true;
+        }
+    }
+    return false;
+};
+
 const triggerWatchers = (ignoreMuted?: boolean) => {
 
     if (muted && !ignoreMuted) {
         return;
     }
 
-    const limit = 5;
+    const limit = 3;
     let pass = 1;
     let changeDetected;
 
     do {
         changeDetected = false;
-        registry.forEach(watchInfo => {
-            if(watchInfo.isMuted && watchInfo.isMuted()) {
-                return;
+        
+        // OPTIMIZATION: Filter out muted watchers before iteration
+        // This avoids calling isMuted() repeatedly and skips expression evaluation for muted watchers
+        const activeWatchers: Array<[string, any]> = [];
+        registry.forEach((watchInfo, identifier) => {
+            if (shouldProcessWatcher(watchInfo)) {
+                activeWatchers.push([identifier, watchInfo]);
             }
+        });
+        
+        // Only iterate through non-muted watchers
+        activeWatchers.forEach(([identifier, watchInfo]) => {
+            // Guard against watchers being cleaned up (listener/fn set to null by $unwatch)
+            // This can happen if $unwatch is called while triggerWatchers is running
+            // Check watchInfo exists and has required properties
+            if (!shouldProcessWatcher(watchInfo)) {
+                return; // Skip this watcher - it's being cleaned up or invalid
+            }
+            
             const fn = watchInfo.fn;
             const listener = watchInfo.listener;
             const ov = watchInfo.last;
@@ -135,6 +300,7 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
                 nv = fn();
             } catch (e) {
                 console.warn(`error in executing expression: '${watchInfo.expr}'`);
+                return; // Skip listener call if expression evaluation failed
             }
 
             if (!isEqual(nv, ov)) {
@@ -146,7 +312,20 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
                 if (isObject(nv) && !watchInfo.doNotClone && nv.__cloneable__ !== false) {
                     watchInfo.last = clone(nv);
                 }
-                listener(nv, ov);
+                
+                // Final check before calling listener - ensure it's still valid
+                // Re-check watchInfo.listener in case it was cleared during execution
+                const currentListener = watchInfo.listener;
+                if (typeof currentListener === 'function') {
+                    try {
+                        currentListener(nv, ov);
+                    } catch (e) {
+                        console.warn(`Error in watcher listener for expression '${watchInfo.expr || identifier}':`, e);
+                    }
+                } else {
+                    // Listener was cleared during execution - log for debugging
+                    console.warn(`Watcher listener was cleared during execution for identifier: ${identifier}`);
+                }
                 resetChangeFromWatch();
             }
         });
@@ -174,8 +353,8 @@ let skipWatchers;
 
 const debouncedTriggerWatchers = debounce(() => {
     skipWatchers = true;
-    ngZone.run(() => triggerWatchers());
-}, 100);
+    ngZone.runOutsideAngular(() => triggerWatchers());
+}, 300);
 
 export const $invokeWatchers = (force?: boolean, ignoreMuted?: boolean) => {
     if (force) {

@@ -5,6 +5,7 @@ import {
     ContentChildren,
     HostBinding, inject, Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional
 } from '@angular/core';
@@ -29,7 +30,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(TabPaneComponent)
     ]
 })
-export class TabPaneComponent extends StylableComponent implements OnInit, AfterViewInit {
+export class TabPaneComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     private _isFirstLoad: boolean = true;
@@ -172,5 +173,17 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
         if (this.isdynamic) {
             this.tabsRef.registerDynamicTab(this);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ContentChildren QueryList reference
+        if (this.reDrawableComponents) {
+            this.reDrawableComponents = null;
+        }
+
+        // MEMORY LEAK FIX: Clear lazy load function reference
+        this.$lazyLoad = null;
+
+        super.ngOnDestroy();
     }
 }

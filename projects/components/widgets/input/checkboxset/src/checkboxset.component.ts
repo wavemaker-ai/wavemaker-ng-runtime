@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {Component, HostListener, Inject, Injector, Optional} from '@angular/core';
+import {Component, HostListener, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 import { NG_VALUE_ACCESSOR, NG_VALIDATORS } from '@angular/forms';
 
 import {setListClass} from '@wm/core';
@@ -27,7 +27,7 @@ const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-checkboxset', hostClass: D
     ]
 })
 
-export class CheckboxsetComponent extends DatasetAwareFormComponent {
+export class CheckboxsetComponent extends DatasetAwareFormComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     public layout = '';
@@ -73,20 +73,21 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent {
         this.triggerInvokeOnChange(keys, $event);
     }
 
+    private eventListeners: Map<HTMLElement, Function> = new Map();
+
     // change and blur events are added from the template
     protected handleEvent(node: HTMLElement, eventName: string, callback: Function, locals: any) {
         if (eventName === 'click') {
-            this.eventManager.addEventListener(
-                node,
-                eventName,
-                e => {
-                    if (!$(e.target).is('input')) {
-                        return;
-                    }
-                    locals.$event = e;
-                    return callback();
+            const handler = (e) => {
+                if (!$(e.target).is('input')) {
+                    return;
                 }
-            );
+                locals.$event = e;
+                return callback();
+            };
+            
+            const deregister = this.eventManager.addEventListener(node, eventName, handler);
+            this.eventListeners.set(node, deregister);
         } else if (!includes(['change'], eventName)) {
             super.handleEvent(node, eventName, callback, locals);
         }
@@ -112,5 +113,20 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent {
         } else {
             super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Remove all event listeners
+        if (this.eventListeners && this.eventListeners.size > 0) {
+            this.eventListeners.forEach((deregister) => {
+                if (deregister && typeof deregister === 'function') {
+                    deregister();
+                }
+            });
+            this.eventListeners.clear();
+            this.eventListeners = null;
+        }
+
+        super.ngOnDestroy();
     }
 }

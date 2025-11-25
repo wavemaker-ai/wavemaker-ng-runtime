@@ -1,5 +1,5 @@
 import {IMaskDirective, IMaskModule} from 'angular-imask';
-import {ChangeDetectorRef, Component, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {BsDatepickerDirective, BsDatepickerModule} from 'ngx-bootstrap/datepicker';
 import {
@@ -347,5 +347,32 @@ export class DateComponent extends BaseDateTimeComponent {
         } else {
             super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clean up event listener deregister function
+        if (this.deregisterEventListener) {
+            this.deregisterEventListener();
+            this.deregisterEventListener = null;
+        }
+
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.bsDatePickerDirective = null;
+        this.imask = null;
+
+        // MEMORY LEAK FIX: Deactivate focus trap if active
+        if (this.focusTrap) {
+            this.focusTrap.deactivate();
+            this.focusTrap = null;
+        }
+
+        // MEMORY LEAK FIX: Clear removeKeyupListener if set
+        if (this.removeKeyupListener) {
+            this.removeKeyupListener();
+            this.removeKeyupListener = null;
+        }
+
+        // Call parent ngOnDestroy (BaseDateTimeComponent has cleanup)
+        super.ngOnDestroy();
     }
 }
