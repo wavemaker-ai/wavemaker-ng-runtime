@@ -53,8 +53,7 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
         if (this.pageVcRef) {
             this.pageVcRef.clear();
         }
-        const $target = this.getTargetNode();
-        $target.innerHTML = '';
+        // ViewContainerRef.clear() already removes all views, no need for manual innerHTML manipulation
     }
 
     renderPage(pageName) {

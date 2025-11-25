@@ -1203,8 +1203,19 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         } else {
             $gridLayout = this.$element.find('.form-elements .dynamic-form-container');
             if (!$gridLayout.length) {
-                this.$element.find('.form-elements').prepend('<div class="dynamic-form-container"></div>');
-                $gridLayout = this.$element.find('.form-elements .dynamic-form-container');
+                // Create container using Renderer2
+                const formElements = this.$element.find('.form-elements')[0];
+                if (formElements) {
+                    const container = this.renderer.createElement('div');
+                    this.renderer.addClass(container, 'dynamic-form-container');
+                    // Insert at the beginning
+                    if (formElements.firstChild) {
+                        this.renderer.insertBefore(formElements, container, formElements.firstChild);
+                    } else {
+                        this.renderer.appendChild(formElements, container);
+                    }
+                    $gridLayout = $(container);
+                }
             }
             noOfColumns = 1;
         }

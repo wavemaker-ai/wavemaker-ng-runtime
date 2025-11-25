@@ -784,12 +784,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                             this.rowInstance.invokeEventCallback('rowexpand', {$event, row, $data: widget});
                         }, 500);
                     }};
-            // ✅ FIXED: Let Angular manage the embedded view lifecycle
-            this.rowDetailViewRef.createEmbeddedView(this.rowExpansionTmpl, context);
-            
-            // The embedded view is automatically inserted at the ViewContainerRef location
-            // If the target location differs, the template should be restructured
-            // to position the ViewContainerRef where needed
+            // Create embedded view and extract rootNodes for datatable.js plugin
+            // This is necessary for jQuery datatable interop
+            const rootNode = this.rowDetailViewRef.createEmbeddedView(this.rowExpansionTmpl, context).rootNodes[0];
+            $target[0].appendChild(rootNode);
             $appDigest();
         },
         onBeforeRowCollapse: ($event, row, rowId) => {

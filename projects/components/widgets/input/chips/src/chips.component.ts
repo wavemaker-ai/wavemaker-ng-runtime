@@ -1,5 +1,5 @@
 import {CommonModule} from '@angular/common';
-import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional, Renderer2, ViewChild} from '@angular/core';
 import {NG_VALUE_ACCESSOR} from '@angular/forms';
 
 import {$appDigest, $unwatch, $watch, debounce, isAppleProduct, isDefined, toBoolean} from '@wm/core';
@@ -92,6 +92,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
 
     constructor(
         inj: Injector,
+        private renderer: Renderer2,
         @Attribute('displayfield.bind') private bindDisplayField,
         @Attribute('displayexpression.bind') private bindDisplayExpr,
         @Attribute('displayimagesrc.bind') private bindDisplayImgSrc,
@@ -734,10 +735,21 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
         }
         if (key === 'inputposition') {
             const $inputEl = this.$element.find('li.app-chip-search');
-            if (nv === 'first') {
-                this.$element.prepend($inputEl);
-            } else {
-                this.$element.append($inputEl);
+            const inputEl = $inputEl[0];
+            const hostEl = this.nativeElement;
+            
+            if (inputEl && hostEl) {
+                if (nv === 'first') {
+                    // Move to first position
+                    if (hostEl.firstChild) {
+                        this.renderer.insertBefore(hostEl, inputEl, hostEl.firstChild);
+                    } else {
+                        this.renderer.appendChild(hostEl, inputEl);
+                    }
+                } else {
+                    // Move to last position
+                    this.renderer.appendChild(hostEl, inputEl);
+                }
             }
         }
         if (key === 'autofocus' && nv) {

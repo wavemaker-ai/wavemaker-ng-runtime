@@ -48,7 +48,10 @@ export class PartialContainerDirective implements OnDestroy {
             
             if (targetElement) {
                 // If there's a specific target element, use it
-                targetElement.innerHTML = '';
+                // Clear existing content using Renderer2
+                while (targetElement.firstChild) {
+                    this.renderer.removeChild(targetElement, targetElement.firstChild);
+                }
                 this.renderer.appendChild(targetElement, componentElement);
             } else {
                 // If no target element, append directly to the host element

@@ -14,8 +14,9 @@ declare const $;
     imports: [CommonModule, ContainerDirective, PartialParamHandlerDirective, PartialContainerDirective, PartialParamDirective],
     selector: '[custom-toaster-component]',
     template: `
-        <div class="parent-custom-toast"></div>
-        <ng-container #customToast></ng-container>
+        <div class="parent-custom-toast">
+          <ng-container #customToast></ng-container>
+        </div>
         <ng-template #customToastTmpl>
           <div wmContainer partialContainer content.bind="pagename">
             @for (param of params | keyvalue; track param) {
@@ -65,11 +66,9 @@ export class CustomToasterComponent extends Toast implements AfterViewInit, OnDe
     }
 
     async generateDynamicComponent() {
-        const $targetLayout = $('.parent-custom-toast');
-
         this.customToastRef.clear();
-
-        $targetLayout[0].appendChild(this.customToastRef.createEmbeddedView(this.customToastTmpl).rootNodes[0]);
+        // ViewContainerRef now creates the embedded view at the correct location
+        this.customToastRef.createEmbeddedView(this.customToastTmpl);
     }
 
     ngAfterViewInit() {

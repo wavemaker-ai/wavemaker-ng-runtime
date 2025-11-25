@@ -13,6 +13,7 @@ import {
     OnInit,
     Optional,
     QueryList,
+    Renderer2,
     ViewChild,
     ViewChildren
 } from '@angular/core';
@@ -153,6 +154,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     constructor(
         inj: Injector,
         app: App,
+        private renderer: Renderer2,
         @Attribute('datavalue.bind') public binddatavalue,
         @Attribute('dataset.bind') public binddataset,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
@@ -362,14 +364,30 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
 
     // inserts the element at the index position
     private insertAtIndex(i) {
+        const element = this.nativeElement;
+        const parent = this.parentEl[0];
+        
+        if (!element || !parent) {
+            return;
+        }
+        
         if (i === 0) {
-            this.parentEl.prepend(this.$element);
-        } else {
-            const $elAtIndex = this.parentEl.children().eq(i);
-            if ($elAtIndex.length) {
-                this.$element.insertBefore(this.parentEl.children().eq(i));
+            // Insert at beginning
+            if (parent.firstChild) {
+                this.renderer.insertBefore(parent, element, parent.firstChild);
             } else {
-                this.$element.insertAfter(this.parentEl.children().eq(i - 1));
+                this.renderer.appendChild(parent, element);
+            }
+        } else {
+            const children = Array.from(parent.children);
+            const targetChild = children[i];
+            
+            if (targetChild) {
+                // Insert before the element at index i
+                this.renderer.insertBefore(parent, element, targetChild);
+            } else {
+                // Insert at the end if index is beyond children
+                this.renderer.appendChild(parent, element);
             }
         }
     }
