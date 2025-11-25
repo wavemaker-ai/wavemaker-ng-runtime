@@ -160,3 +160,4 @@ For even more reduction, consider implementing:
 - Throttling only affects style/class properties (non-critical)
 - Static expression detection is conservative (falls back to watching if unsure)
 
+

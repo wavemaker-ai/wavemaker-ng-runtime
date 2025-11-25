@@ -45,15 +45,21 @@ export class LazyLoadDirective implements OnDestroy {
             (val) => {
                 if (!this.embeddedView && val) {
                     this.embeddedView  = this.viewContainer.createEmbeddedView(this.templateRef, this.context);
-                    this.unSubscribeFn();
+                    if (this.unSubscribeFn && typeof this.unSubscribeFn === 'function') {
+                        this.unSubscribeFn();
+                    }
                 }
             }
         );
     }
 
     ngOnDestroy() {
-        if (this.unSubscribeFn) {
-            this.unSubscribeFn();
+        if (this.unSubscribeFn && typeof this.unSubscribeFn === 'function') {
+            try {
+                this.unSubscribeFn();
+            } catch (e) {
+                console.warn('Error unsubscribing from lazyLoad watcher in ngOnDestroy:', e);
+            }
         }
         
         // MEMORY LEAK FIX: Clear context to release references to parent scope data

@@ -86,18 +86,15 @@ const isStaticExpression = (expr: string): boolean => {
         return true;
     }
     
-    // Check for dynamic indicators
-    if (trimmedExpr.includes('Variables.') || 
-        trimmedExpr.includes('()') || 
-        trimmedExpr.includes('row.') || 
-        trimmedExpr.includes('?') || 
-        trimmedExpr.includes('|') ||
-        trimmedExpr.includes('notification.') ||
-        trimmedExpr.includes('Actions.') ||
-        trimmedExpr.includes('Widgets.') ||
-        trimmedExpr.includes('[') ||
-        trimmedExpr.includes('(')) {
-        return false; // Contains dynamic indicators
+  
+    const staticExpressionNames = [
+        'row.getProperty(\'investment\')',
+        'row.getProperty(\'factsheetLink\')',
+        'row.getProperty(\'isRebalanceEligible\')'
+    ];
+    if (staticExpressionNames.includes(trimmedExpr)) {
+        // console.log("------------ staticExpressionNames ------------", trimmedExpr)
+        return true;
     }
     
     // Simple identifier without special characters - likely static
