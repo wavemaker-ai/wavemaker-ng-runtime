@@ -33,7 +33,12 @@ const parseValue = (key: string, value: any, type: PROP_TYPE): any => {
     }
 
     if (type === PROP_TYPE.NUMBER) {
-        return +value;
+        const numValue = +value;
+        // Fix NaN for tabindex - default to 0 if value is invalid
+        if (key === 'tabindex' && isNaN(numValue)) {
+            return value === null || value === undefined || value === '' ? 0 : numValue;
+        }
+        return numValue;
     }
 
     return value;

@@ -582,7 +582,8 @@ $.widget('wm.datatable', {
 
         var self = this, preparedData,$tbody,pageStartIndex = self.getPageStartIndex(),
             startRowIndex = self.options.startRowIndex,
-            isScrollorOnDemand = self.options.isNavTypeScrollOrOndemand();
+            isNavTypeScrollOrOndemandFn = self.options.isNavTypeScrollOrOndemand,
+            isScrollorOnDemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
             var $activeRow = self.gridElement.find('tr.row-editing:not(.always-new-row)').first();
             var index = $activeRow.index();
             if(isScrollorOnDemand) {
@@ -952,7 +953,9 @@ $.widget('wm.datatable', {
         if (!this.options.colDefs.length && this.options.data.length) {
             this._generateCustomColDefs();
         }
-        gridData = this.options.isNavTypeScrollOrOndemand() ? this.options.data.slice(pageStartIndex) : this.options.data;
+        var isNavTypeScrollOrOndemandFn = this.options.isNavTypeScrollOrOndemand;
+        var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+        gridData = isScrollOrOndemand ? this.options.data.slice(pageStartIndex) : this.options.data;
         gridData.forEach(function (item, i) {
             var rowData = $.extend(true, {}, item);
             colDefs.forEach(function (colDef) {
@@ -996,10 +999,14 @@ $.widget('wm.datatable', {
 
             /* Add a unique identifier for each row. */
             rowData.$$index = pageStartIndex + i + 1;
-            rowData.$$pk = (self.options.isNavTypeScrollOrOndemand()) ? (pageStartIndex + i ) : i;
+            var isNavTypeScrollOrOndemandFn = self.options.isNavTypeScrollOrOndemand;
+            var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+            rowData.$$pk = isScrollOrOndemand ? (pageStartIndex + i ) : i;
             data.push(rowData);
         });
-        if (self.options.isNavTypeScrollOrOndemand()) {
+        var isNavTypeScrollOrOndemandFn = self.options.isNavTypeScrollOrOndemand;
+        var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+        if (isScrollOrOndemand) {
             // If search action is performed or dataset is updated, then directly assign data to preparedData
             if((self.options.isSearchTrigerred && !self.emptySearch) || self.options.isDatasetUpdated){
                 self.preparedData = data;
@@ -1120,7 +1127,9 @@ $.widget('wm.datatable', {
     refreshGridData: function () {
         this._prepareData();
         //If the pagination type is not Infinite Scroll or On-demand, remove the tbody and footer
-        if (!this.options.isNavTypeScrollOrOndemand()) {
+        var isNavTypeScrollOrOndemandFn = this.options.isNavTypeScrollOrOndemand;
+        var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+        if (!isScrollOrOndemand) {
             this.gridFooter.remove();
             this._renderGrid();
         } else {
@@ -1290,10 +1299,10 @@ $.widget('wm.datatable', {
     hideLoadingIndicator: function (showLoadBtn, infScroll) {
         if (!showLoadBtn && !infScroll) {
             // In case of on demand pagination, when the next page is not disabled hide the individual elements
-            this.element.find('.loading-data-msg').hide();
-            this.element.find('.on-demand-load-btn').text(this.options.ondemandmessage);
-            this.element.find('.on-demand-load-btn').show();
-        } else if(this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' && 
+        this.element.find('.loading-data-msg').hide();
+        this.element.find('.on-demand-load-btn').text(this.options.ondemandmessage);
+        this.element.find('.on-demand-load-btn').show();
+        } else if(this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
                    this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
                    (this.options.getCurrentPage() == this.options.getPageCount()) && this.options.showviewlessbutton) {
                 this.element.find('.on-demand-load-btn').show().text(this.options.viewlessmessage);
@@ -1588,7 +1597,9 @@ $.widget('wm.datatable', {
                 this.dataStatusContainer.find('i').removeClass().addClass(this.options.loadingicon);
                 break;
             case 'colDefs':
-                if(this.options.isNavTypeScrollOrOndemand() && this.options.isNextPageData) {
+                var isNavTypeScrollOrOndemandFn = this.options.isNavTypeScrollOrOndemand;
+                var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+                if(isScrollOrOndemand && this.options.isNextPageData) {
                     this.tableContainer.find('colgroup').remove();
                     this._prepareHeaderData();
                     this.setColGroupWidths();
@@ -2350,7 +2361,9 @@ $.widget('wm.datatable', {
                          * Once the new row is added remove it from the view
                          * As the newly added data will be shown as the last record of the whole dataset
                          */
-                        if (!$row.hasClass('always-new-row') && (self.options.isNavTypeScrollOrOndemand())) {
+                        var isNavTypeScrollOrOndemandFn = self.options.isNavTypeScrollOrOndemand;
+                        var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+                        if (!$row.hasClass('always-new-row') && isScrollOrOndemand) {
                             self.removeNewRow($row);
                         }
                     } else {
@@ -2439,7 +2452,9 @@ $.widget('wm.datatable', {
          * Once the new row is added, reset the row values
          * Row will always be shown to have a provision of inserting new reccords
          */
-        if ($row.hasClass('always-new-row') && (this.options.isNavTypeScrollOrOndemand())) {
+        var isNavTypeScrollOrOndemandFn = this.options.isNavTypeScrollOrOndemand;
+        var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+        if ($row.hasClass('always-new-row') && isScrollOrOndemand) {
             this.resetNewRow($row);
             return;
         }
@@ -2528,7 +2543,9 @@ $.widget('wm.datatable', {
                 $row.removeClass(className);
                 self.addOrRemoveScroll();
             }, e, function (skipFocus, error) {
-                if (self.options.isNavTypeScrollOrOndemand()) {
+                var isNavTypeScrollOrOndemandFn = self.options.isNavTypeScrollOrOndemand;
+                var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+                if (isScrollOrOndemand) {
                     var rowId = +$(e.target).closest("tr.app-datagrid-row").attr("data-row-id");
                     // remove existing row from tbody
                     var $row = self.gridElement.find('tr.app-datagrid-row[data-row-id="' + rowId + '"]');
@@ -3390,7 +3407,9 @@ $.widget('wm.datatable', {
     },
     /* Renders the table body. */
     _renderGrid: function (isCreated) {
-        var $htm, isScrollorOnDemand = this.options.isNavTypeScrollOrOndemand(), pageStartIndex = this.getPageStartIndex();
+        var isNavTypeScrollOrOndemandFn = this.options.isNavTypeScrollOrOndemand;
+        var isScrollorOnDemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+        var $htm, pageStartIndex = this.getPageStartIndex();
         $('table.table-bordered').parents('.app-grid-header-inner').addClass('table_border');
         if(isScrollorOnDemand) {
             var $tbody = this.gridElement;
@@ -3460,7 +3479,9 @@ $.widget('wm.datatable', {
         if (!this.tableId) {
             this.tableId = this.Utils.generateGuid();
         }
-        var overflow = (this.options.isNavTypeScrollOrOndemand() && (this.options.height === '100%' || this.options.height === 'auto')) ? 'hidden' : 'auto';
+        var isNavTypeScrollOrOndemandFn = this.options.isNavTypeScrollOrOndemand;
+        var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+        var overflow = (isScrollOrOndemand && (this.options.height === '100%' || this.options.height === 'auto')) ? 'hidden' : 'auto';
         var statusContainer =
                 '<div class="overlay">' +
                 '<div class="status"><i class="' + this.options.loadingicon + '"></i><span class="message"></span></div>' +
@@ -3484,7 +3505,9 @@ $.widget('wm.datatable', {
         this.gridElement = this.gridContainer.find('.app-grid-content');
 
 
-        if ((this.options.isNavTypeScrollOrOndemand() && (!$tableContainer.length || !this.options.isNextPageData)) || (!this.options.isNavTypeScrollOrOndemand())) {
+        var isNavTypeScrollOrOndemandFn = this.options.isNavTypeScrollOrOndemand;
+        var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+        if ((isScrollOrOndemand && (!$tableContainer.length || !this.options.isNextPageData)) || (!isScrollOrOndemand)) {
             this.element.find('.table-container').remove();
             this.element.append(this.gridContainer);
 
@@ -3532,8 +3555,9 @@ $.widget('wm.datatable', {
     },
     __setStatus: function (isCreated) {
         var loadingIndicator = this.dataStatusContainer.find('i'),
-            state = this.dataStatus.state,
-            isScrollOrOndemand = this.options.isNavTypeScrollOrOndemand();
+            state = this.dataStatus.state;
+        var isNavTypeScrollOrOndemandFn = this.options.isNavTypeScrollOrOndemand;
+        var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
         this.dataStatusContainer.find('.message').text(this.dataStatus.message);
         if (state === 'loading') {
             loadingIndicator.removeClass('hidden');
@@ -3544,7 +3568,7 @@ $.widget('wm.datatable', {
             this.dataStatusContainer.hide();
         } else {
             // [WMS-23839] always show load more btn if show view less btn is true
-            if (this.options.isNavTypeScrollOrOndemand() && 
+            if (isScrollOrOndemand && 
                 (state === 'nodata' || 
                  (this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
                   this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
@@ -3558,7 +3582,7 @@ $.widget('wm.datatable', {
                 if (state === 'nodata') {
                     this.dataStatusContainer.css('height', 'auto');
                     this.dataStatus.contentHeight = 0;
-                }  else if (this.options.isNavTypeScrollOrOndemand() && 
+                }  else if (isScrollOrOndemand && 
                            this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
                            this.options.getCurrentPage() > 1){
                     // showing the loading icon only for the first page
@@ -3649,7 +3673,9 @@ $.widget('wm.datatable', {
             //}
             this.gridContainer.find('.app-grid-header-inner').css(key, value);
             // this.gridContainer.find('.app-grid-header-inner').css('border', '1px solid #eee');
-            if (this.options.isNavTypeScrollOrOndemand() && (this.options.height != '100%' && this.options.height != 'auto')) {
+            var isNavTypeScrollOrOndemandFn = this.options.isNavTypeScrollOrOndemand;
+            var isScrollOrOndemand = (isNavTypeScrollOrOndemandFn && typeof isNavTypeScrollOrOndemandFn === 'function') ? isNavTypeScrollOrOndemandFn() : false;
+            if (isScrollOrOndemand && (this.options.height != '100%' && this.options.height != 'auto')) {
                 this.gridContainer.find('.app-grid-header-inner').css('overflow', 'auto');
             }
             this.dataStatusContainer.css(key, value);

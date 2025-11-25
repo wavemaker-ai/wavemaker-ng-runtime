@@ -1,0 +1,12 @@
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/base'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy full compilation mode.
+✖ Compiling with Angular sources in Ivy full compilation mode.
+[96mprojects/components/base/src/widgets/common/base/dataset-aware-nav.component.ts[0m:[93m28[0m:[93m14[0m - [91merror[0m[90m NG2007: [0mClass is using Angular features but is not decorated. Please add an explicit Angular decorator.
+
+[7m28[0m export class DatasetAwareNavComponent extends StylableComponent implements OnDestroy {
+[7m  [0m [91m             ~~~~~~~~~~~~~~~~~~~~~~~~[0m
+

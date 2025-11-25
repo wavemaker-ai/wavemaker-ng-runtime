@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { AnchorComponent } from '@wm/components/basic/anchor';
 import {
     AfterViewInit,
     ChangeDetectorRef,
@@ -28,11 +27,13 @@ import {
 import {
     AUTOCLOSE_TYPE,
     getContainerTargetClass,
+    ImagePipe,
     IWidgetConfig,
     provideAsWidgetRef,
     StylableComponent,
     styler
 } from '@wm/components/base';
+import { AnchorComponent } from '@wm/components/basic/anchor';
 
 import {registerProps} from './popover.props';
 
@@ -54,7 +55,7 @@ let activePopover: PopoverComponent;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, AnchorComponent, PopoverModule],
+  imports: [CommonModule, PopoverModule, ImagePipe],
     selector: 'wm-popover',
     templateUrl: './popover.component.html',
     providers: [
@@ -95,6 +96,14 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     public arialabel: string;
     public caption: string;
     public badgevalue: string;
+    
+    // Anchor display properties
+    public iconurl: string;
+    public iconwidth: string;
+    public iconheight: string;
+    public iconmargin: string;
+    public iconclass: string;
+    public iconposition: string;
     private documentClickHandler: (e: MouseEvent) => void;
     private isClosingProgrammatically = false;
     private static activePopovers: PopoverComponent[] = [];

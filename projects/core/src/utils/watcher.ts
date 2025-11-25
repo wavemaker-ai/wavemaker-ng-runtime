@@ -69,18 +69,23 @@ const isStaticExpression = (expr: string): boolean => {
         return true;
     }
     
-   
-    const staticExpressionNames = [
-        'row.getProperty(\'investment\')',
-        'row.getProperty(\'factsheetLink\')',
-        'row.getProperty(\'isRebalanceEligible\')'
-    ];
-    if (staticExpressionNames.includes(trimmedExpr)) {
-        // console.log("------------ staticExpressionNames ------------", trimmedExpr)
+    // Literal values are static
+    // Check for string literals (single or double quotes)
+    if ((trimmedExpr.startsWith('"') && trimmedExpr.endsWith('"')) ||
+        (trimmedExpr.startsWith("'") && trimmedExpr.endsWith("'"))) {
         return true;
     }
     
-    // Simple literal strings (no variables, functions, operators, or special syntax)
+    // Check for boolean literals
+    if (trimmedExpr === 'true' || trimmedExpr === 'false') {
+        return true;
+    }
+    
+    // Check for null/undefined
+    if (trimmedExpr === 'null' || trimmedExpr === 'undefined') {
+        return true;
+    }
+    
     // Check for dynamic indicators
     if (trimmedExpr.includes('Variables.') || 
         trimmedExpr.includes('()') || 
@@ -100,6 +105,13 @@ const isStaticExpression = (expr: string): boolean => {
     if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmedExpr)) {
         return true;
     }
+    
+    // Everything else is dynamic - including:
+    // - Component properties (isOpen, content, etc.)
+    // - Single-word identifiers (they're variables/properties that can change!)
+    // - row.getProperty() calls (data can change)
+    // - Variables, Actions, Widgets references
+    // - Any expressions with operators, functions, etc.
     
     return false; // Default to dynamic
 };
@@ -230,6 +242,27 @@ const $RAF = window.requestAnimationFrame;
 
 let ngZone;
 
+const shouldProcessWatcher = (watchInfo: any): boolean => {
+    if (!watchInfo) {
+        return false;
+    }
+    if (typeof watchInfo.fn !== 'function' || typeof watchInfo.listener !== 'function') {
+        return false;
+    }
+    if (!watchInfo.isMuted) {
+        return true;
+    }
+    if (typeof watchInfo.isMuted === 'function') {
+        try {
+            return !watchInfo.isMuted();
+        } catch (e) {
+            console.warn('Error while evaluating watcher mute state:', e);
+            return true;
+        }
+    }
+    return false;
+};
+
 const triggerWatchers = (ignoreMuted?: boolean) => {
 
     if (muted && !ignoreMuted) {
@@ -247,20 +280,7 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
         // This avoids calling isMuted() repeatedly and skips expression evaluation for muted watchers
         const activeWatchers: Array<[string, any]> = [];
         registry.forEach((watchInfo, identifier) => {
-            // Guard against invalid watchInfo (being cleaned up by $unwatch)
-            // $unwatch sets fn/listener to null before deleting from registry, creating a race condition
-            if (!watchInfo) {
-                return; // Skip completely missing watchInfo
-            }
-            // CRITICAL: Check if fn and listener are valid functions
-            // When $unwatch is called, it sets these to null before registry.delete()
-            // This check prevents "listener is not a function" errors
-            if (typeof watchInfo.fn !== 'function' || typeof watchInfo.listener !== 'function') {
-                return; // Skip watchers being cleaned up (fn/listener set to null by $unwatch)
-            }
-            // Skip muted watchers - don't even add them to the active list
-            // isMuted can be null (not muted), undefined (not muted), or a function
-            if (!watchInfo.isMuted || (typeof watchInfo.isMuted === 'function' && !watchInfo.isMuted())) {
+            if (shouldProcessWatcher(watchInfo)) {
                 activeWatchers.push([identifier, watchInfo]);
             }
         });
@@ -270,7 +290,7 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
             // Guard against watchers being cleaned up (listener/fn set to null by $unwatch)
             // This can happen if $unwatch is called while triggerWatchers is running
             // Check watchInfo exists and has required properties
-            if (!watchInfo || typeof watchInfo.fn !== 'function' || typeof watchInfo.listener !== 'function') {
+            if (!shouldProcessWatcher(watchInfo)) {
                 return; // Skip this watcher - it's being cleaned up or invalid
             }
             

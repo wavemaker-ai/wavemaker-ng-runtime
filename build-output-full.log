@@ -1,0 +1,2618 @@
+
+up to date, audited 1686 packages in 4s
+
+263 packages are looking for funding
+  run `npm fund` for details
+
+11 vulnerabilities (5 low, 6 moderate)
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+up to date, audited 1686 packages in 2m
+
+263 packages are looking for funding
+  run `npm fund` for details
+
+11 vulnerabilities (5 low, 6 moderate)
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+rollup: core-js
+
+./node_modules/core-js/index.js → ./dist/tmp/libs/core-js/core-js.umd.js...
+created ./dist/tmp/libs/core-js/core-js.umd.js in 1.5s
+rollup: core-js - success
+rollup: tslib
+rollup: tslib - success
+rollup: ngx-bootstrap-libs
+
+node_modules/ngx-bootstrap/collapse/fesm2020/ngx-bootstrap-collapse.mjs → node_modules/ngx-bootstrap/collapse/bundles/ngx-bootstrap-collapse.umd.js...
+created node_modules/ngx-bootstrap/collapse/bundles/ngx-bootstrap-collapse.umd.js in 50ms
+
+./node_modules/ngx-bootstrap/chronos/fesm2020/ngx-bootstrap-chronos.mjs → node_modules/ngx-bootstrap/chronos/bundles/ngx-bootstrap-chronos.umd.js...
+created node_modules/ngx-bootstrap/chronos/bundles/ngx-bootstrap-chronos.umd.js in 203ms
+
+node_modules/ngx-bootstrap/utils/fesm2020/ngx-bootstrap-utils.mjs → node_modules/ngx-bootstrap/utils/bundles/ngx-bootstrap-utils.umd.js...
+created node_modules/ngx-bootstrap/utils/bundles/ngx-bootstrap-utils.umd.js in 15ms
+
+node_modules/ngx-bootstrap/positioning/fesm2020/ngx-bootstrap-positioning.mjs → node_modules/ngx-bootstrap/positioning/bundles/ngx-bootstrap-positioning.umd.js...
+created node_modules/ngx-bootstrap/positioning/bundles/ngx-bootstrap-positioning.umd.js in 31ms
+
+node_modules/ngx-bootstrap/component-loader/fesm2020/ngx-bootstrap-component-loader.mjs → node_modules/ngx-bootstrap/component-loader/bundles/ngx-bootstrap-component-loader.umd.js...
+created node_modules/ngx-bootstrap/component-loader/bundles/ngx-bootstrap-component-loader.umd.js in 17ms
+
+node_modules/ngx-bootstrap/dropdown/fesm2020/ngx-bootstrap-dropdown.mjs → node_modules/ngx-bootstrap/dropdown/bundles/ngx-bootstrap-dropdown.umd.js...
+created node_modules/ngx-bootstrap/dropdown/bundles/ngx-bootstrap-dropdown.umd.js in 22ms
+
+node_modules/ngx-bootstrap/locale/fesm2020/ngx-bootstrap-locale.mjs → node_modules/ngx-bootstrap/locale/bundles/ngx-bootstrap-locale.umd.js...
+created node_modules/ngx-bootstrap/locale/bundles/ngx-bootstrap-locale.umd.js in 4ms
+
+node_modules/ngx-bootstrap/buttons/fesm2020/ngx-bootstrap-buttons.mjs → node_modules/ngx-bootstrap/buttons/bundles/ngx-bootstrap-buttons.umd.js...
+created node_modules/ngx-bootstrap/buttons/bundles/ngx-bootstrap-buttons.umd.js in 15ms
+
+node_modules/ngx-bootstrap/carousel/fesm2020/ngx-bootstrap-carousel.mjs → node_modules/ngx-bootstrap/carousel/bundles/ngx-bootstrap-carousel.umd.js...
+created node_modules/ngx-bootstrap/carousel/bundles/ngx-bootstrap-carousel.umd.js in 16ms
+
+node_modules/ngx-bootstrap/mini-ngrx/fesm2020/ngx-bootstrap-mini-ngrx.mjs → node_modules/ngx-bootstrap/mini-ngrx/bundles/ngx-bootstrap-mini-ngrx.umd.js...
+created node_modules/ngx-bootstrap/mini-ngrx/bundles/ngx-bootstrap-mini-ngrx.umd.js in 4ms
+
+node_modules/ngx-bootstrap/focus-trap/fesm2020/ngx-bootstrap-focus-trap.mjs → node_modules/ngx-bootstrap/focus-trap/bundles/ngx-bootstrap-focus-trap.umd.js...
+created node_modules/ngx-bootstrap/focus-trap/bundles/ngx-bootstrap-focus-trap.umd.js in 14ms
+
+node_modules/ngx-bootstrap/modal/fesm2020/ngx-bootstrap-modal.mjs → node_modules/ngx-bootstrap/modal/bundles/ngx-bootstrap-modal.umd.js...
+created node_modules/ngx-bootstrap/modal/bundles/ngx-bootstrap-modal.umd.js in 18ms
+
+node_modules/ngx-bootstrap/pagination/fesm2020/ngx-bootstrap-pagination.mjs → node_modules/ngx-bootstrap/pagination/bundles/ngx-bootstrap-pagination.umd.js...
+created node_modules/ngx-bootstrap/pagination/bundles/ngx-bootstrap-pagination.umd.js in 11ms
+
+node_modules/ngx-bootstrap/popover/fesm2020/ngx-bootstrap-popover.mjs → node_modules/ngx-bootstrap/popover/bundles/ngx-bootstrap-popover.umd.js...
+created node_modules/ngx-bootstrap/popover/bundles/ngx-bootstrap-popover.umd.js in 5ms
+
+node_modules/ngx-bootstrap/progressbar/fesm2020/ngx-bootstrap-progressbar.mjs → node_modules/ngx-bootstrap/progressbar/bundles/ngx-bootstrap-progressbar.umd.js...
+created node_modules/ngx-bootstrap/progressbar/bundles/ngx-bootstrap-progressbar.umd.js in 4ms
+
+node_modules/ngx-bootstrap/rating/fesm2020/ngx-bootstrap-rating.mjs → node_modules/ngx-bootstrap/rating/bundles/ngx-bootstrap-rating.umd.js...
+created node_modules/ngx-bootstrap/rating/bundles/ngx-bootstrap-rating.umd.js in 4ms
+
+node_modules/ngx-bootstrap/sortable/fesm2020/ngx-bootstrap-sortable.mjs → node_modules/ngx-bootstrap/sortable/bundles/ngx-bootstrap-sortable.umd.js...
+created node_modules/ngx-bootstrap/sortable/bundles/ngx-bootstrap-sortable.umd.js in 6ms
+
+node_modules/ngx-bootstrap/tabs/fesm2020/ngx-bootstrap-tabs.mjs → node_modules/ngx-bootstrap/tabs/bundles/ngx-bootstrap-tabs.umd.js...
+created node_modules/ngx-bootstrap/tabs/bundles/ngx-bootstrap-tabs.umd.js in 11ms
+
+node_modules/ngx-bootstrap/timepicker/fesm2020/ngx-bootstrap-timepicker.mjs → node_modules/ngx-bootstrap/timepicker/bundles/ngx-bootstrap-timepicker.umd.js...
+created node_modules/ngx-bootstrap/timepicker/bundles/ngx-bootstrap-timepicker.umd.js in 15ms
+
+node_modules/ngx-bootstrap/tooltip/fesm2020/ngx-bootstrap-tooltip.mjs → node_modules/ngx-bootstrap/tooltip/bundles/ngx-bootstrap-tooltip.umd.js...
+created node_modules/ngx-bootstrap/tooltip/bundles/ngx-bootstrap-tooltip.umd.js in 7ms
+
+node_modules/ngx-bootstrap/typeahead/fesm2020/ngx-bootstrap-typeahead.mjs → node_modules/ngx-bootstrap/typeahead/bundles/ngx-bootstrap-typeahead.umd.js...
+created node_modules/ngx-bootstrap/typeahead/bundles/ngx-bootstrap-typeahead.umd.js in 22ms
+
+node_modules/ngx-bootstrap/datepicker/fesm2020/ngx-bootstrap-datepicker.mjs → node_modules/ngx-bootstrap/datepicker/bundles/ngx-bootstrap-datepicker.umd.js...
+created node_modules/ngx-bootstrap/datepicker/bundles/ngx-bootstrap-datepicker.umd.js in 68ms
+
+node_modules/ngx-bootstrap/accordion/fesm2020/ngx-bootstrap-accordion.mjs → node_modules/ngx-bootstrap/accordion/bundles/ngx-bootstrap-accordion.umd.js...
+created node_modules/ngx-bootstrap/accordion/bundles/ngx-bootstrap-accordion.umd.js in 5ms
+rollup: ngx-bootstrap-libs - success
+rollup: ng-libs-umd
+
+node_modules/@angular/core/fesm2022/core.mjs → node_modules/@angular/core/bundles/core.umd.js...
+created node_modules/@angular/core/bundles/core.umd.js in 638ms
+
+node_modules/@angular/animations/fesm2022/animations.mjs → node_modules/@angular/animations/bundles/animations.umd.js...
+created node_modules/@angular/animations/bundles/animations.umd.js in 19ms
+
+node_modules/@angular/common/fesm2022/common.mjs → node_modules/@angular/common/bundles/common.umd.js...
+created node_modules/@angular/common/bundles/common.umd.js in 89ms
+
+node_modules/@angular/compiler/fesm2022/compiler.mjs → node_modules/@angular/compiler/bundles/compiler.umd.js...
+created node_modules/@angular/compiler/bundles/compiler.umd.js in 427ms
+
+node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs → node_modules/@angular/platform-browser/bundles/platform-browser.umd.js...
+created node_modules/@angular/platform-browser/bundles/platform-browser.umd.js in 44ms
+
+node_modules/@angular/platform-browser-dynamic/fesm2022/platform-browser-dynamic.mjs → node_modules/@angular/platform-browser-dynamic/bundles/platform-browser-dynamic.umd.js...
+created node_modules/@angular/platform-browser-dynamic/bundles/platform-browser-dynamic.umd.js in 4ms
+
+./node_modules/@angular/common/fesm2022/http.mjs → node_modules/@angular/common/bundles/common-http.umd.js...
+created node_modules/@angular/common/bundles/common-http.umd.js in 32ms
+
+node_modules/@angular/core/fesm2022/primitives/signals.mjs → node_modules/@angular/core/bundles/core-signals.umd.js...
+created node_modules/@angular/core/bundles/core-signals.umd.js in 6ms
+
+node_modules/@angular/core/fesm2022/primitives/event-dispatch.mjs → node_modules/@angular/core/bundles/core-event-dispatch.umd.js...
+created node_modules/@angular/core/bundles/core-event-dispatch.umd.js in 16ms
+
+node_modules/@angular/forms/fesm2022/forms.mjs → node_modules/@angular/forms/bundles/forms.umd.js...
+created node_modules/@angular/forms/bundles/forms.umd.js in 67ms
+
+node_modules/@angular/router/fesm2022/router.mjs → node_modules/@angular/router/bundles/router.umd.js...
+created node_modules/@angular/router/bundles/router.umd.js in 94ms
+
+node_modules/@angular/animations/fesm2022/browser.mjs → node_modules/@angular/animations/bundles/animations-browser.umd.js...
+created node_modules/@angular/animations/bundles/animations-browser.umd.js in 73ms
+
+node_modules/@angular/platform-browser/fesm2022/animations.mjs → node_modules/@angular/platform-browser/bundles/platform-browser-animations.umd.js...
+created node_modules/@angular/platform-browser/bundles/platform-browser-animations.umd.js in 4ms
+rollup: ng-libs-umd - success
+rollup: ngx-toastr
+
+./node_modules/ngx-toastr/fesm2022/ngx-toastr.mjs → ./node_modules/ngx-toastr/bundles/ngx-toastr.umd.js...
+created ./node_modules/ngx-toastr/bundles/ngx-toastr.umd.js in 82ms
+rollup: ngx-toastr - success
+rollup: angular-websocket
+
+./node_modules/angular2-websocket/angular2-websocket.js → ./dist/tmp/libs/angular-websocket/angular-websocket.umd.js...
+created ./dist/tmp/libs/angular-websocket/angular-websocket.umd.js in 551ms
+rollup: angular-websocket - success
+rollup: ng-circle-progress
+
+./node_modules/ng-circle-progress/fesm2020/ng-circle-progress.mjs → ./dist/tmp/libs/ng-circle-progress/ng-circle-progress.umd.js...
+created ./dist/tmp/libs/ng-circle-progress/ng-circle-progress.umd.js in 68ms
+rollup: ng-circle-progress - success
+rollup: ngx-libs
+
+./node_modules/ngx-color-picker/fesm2022/ngx-color-picker.mjs → ./node_modules/ngx-color-picker/bundles/ngx-color-picker.umd.js...
+created ./node_modules/ngx-color-picker/bundles/ngx-color-picker.umd.js in 107ms
+
+./node_modules/angular-imask/fesm2022/angular-imask.mjs → ./node_modules/angular-imask/bundles/angular-imask.umd.js...
+created ./node_modules/angular-imask/bundles/angular-imask.umd.js in 10ms
+rollup: ngx-libs - success
+uglify: web-libs
+uglify: web-libs - success
+Copying foundation folder to bundle directory
+Foundation folder copied successfully
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/core'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/core
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/core
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/core
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:37:50.232Z - Time: 2203ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/transpiler'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/transpiler
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/transpiler
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/transpiler
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:37:53.337Z - Time: 2745ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/swipey'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/swipey
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/swipey
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/swipey
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:37:54.808Z - Time: 1054ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/http'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/http
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/http-service
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/http
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:37:57.299Z - Time: 2006ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/oAuth'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/oAuth
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/oAuth
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/oAuth
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:37:59.404Z - Time: 1754ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/security'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/security
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/security
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/security
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:01.480Z - Time: 1705ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/variables'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/variables
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/variables
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/variables
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:03.694Z - Time: 1879ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/base'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy full compilation mode.
+✔ Compiling with Angular sources in Ivy full compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/base
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/base
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/base
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:06.539Z - Time: 2506ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/button'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/button
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/button
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/button
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:08.811Z - Time: 1840ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/base-form'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+WARNING: libraries/components/input/base-form/esm2022/base-form.component.mjs (38:30): Use of eval in "libraries/components/input/base-form/esm2022/base-form.component.mjs" is strongly discouraged as it poses security risks and may cause issues with minification.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/base-form
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/base-form
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/base-form
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:10.697Z - Time: 1528ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/base-form-custom'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/base-form-custom
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/base-form-custom
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/base-form-custom
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:12.474Z - Time: 1446ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/dataset-aware-form'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/dataset-aware-form
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/dataset-aware-form
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/dataset-aware-form
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:16.380Z - Time: 3569ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/text'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/text
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/text
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/text
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:18.666Z - Time: 1929ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/button-group'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/button-group
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/button-group
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/button-group
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:20.343Z - Time: 1358ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/caption-position'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/caption-position
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/caption-position
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/caption-position
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:22.218Z - Time: 1535ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/checkbox'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/checkbox
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/checkbox
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/checkbox
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:24.017Z - Time: 1443ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/checkboxset'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/checkboxset
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/checkboxset
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/checkboxset
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:25.948Z - Time: 1615ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/composite'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/composite
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/composite
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/composite
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:27.796Z - Time: 1493ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/number'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/number
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/number
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/number
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:29.725Z - Time: 1613ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/radioset'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/radioset
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/radioset
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/radioset
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:31.778Z - Time: 1716ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/select'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/select
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/select
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/select
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:33.836Z - Time: 1662ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/textarea'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/textarea
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/textarea
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/textarea
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:35.874Z - Time: 1699ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/switch'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/switch
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/switch
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/switch
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:38.079Z - Time: 1874ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/anchor'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/anchor
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/anchor
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/anchor
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:43.629Z - Time: 3792ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/audio'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/audio
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/audio
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/audio
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:45.445Z - Time: 1463ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/html'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/html
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/html
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/html
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:47.155Z - Time: 1362ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/icon'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/icon
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/icon
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/icon
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:48.883Z - Time: 1383ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/iframe'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/iframe
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/iframe
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/iframe
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:50.717Z - Time: 1512ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/label'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/label
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/label
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/label
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:52.530Z - Time: 1479ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/picture'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/picture
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/picture
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/picture
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:54.240Z - Time: 1376ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/spinner'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/spinner
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/spinner
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/spinner
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:56.151Z - Time: 1574ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/video'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/video
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/video
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/video
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:57.891Z - Time: 1410ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/progress/progress-utils'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/progress/progress-utils
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/progress/progress-utils
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/progress/progress-utils
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:38:59.341Z - Time: 1133ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/progress/progress-bar'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/progress/progress-bar
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/progress/progress-bar
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/progress/progress-bar
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:01.131Z - Time: 1461ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/progress/progress-circle'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/progress/progress-circle
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/progress/progress-circle
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/progress/progress-circle
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:02.991Z - Time: 1537ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/rich-text-editor'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/rich-text-editor
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/rich-text-editor
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/rich-text-editor
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:06.713Z - Time: 3355ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/search'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/search
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/search
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/search
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:08.899Z - Time: 1858ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/basic/tree'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/basic/tree
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/basic/tree
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/basic/tree
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:10.837Z - Time: 1597ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/calendar'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/calendar
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/calendar
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/calendar
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:12.792Z - Time: 1624ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/chips'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/chips
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/chips
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/chips
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:14.705Z - Time: 1576ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/color-picker'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/color-picker
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/color-picker
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/color-picker
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:16.527Z - Time: 1474ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/currency'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/currency
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/currency
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/currency
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:18.460Z - Time: 1601ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/epoch/picker'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/epoch/picker
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/epoch/picker
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/epoch/picker
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:19.903Z - Time: 1128ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/epoch/date-time-picker'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/epoch/date-time-picker
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/epoch/date-time-picker
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/epoch/date-time-picker
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:21.883Z - Time: 1640ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/epoch/base-date-time'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/epoch/base-date-time
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/epoch/base-date-time
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/epoch/base-date-time
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:23.921Z - Time: 1679ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/epoch/date'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/epoch/date
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/epoch/date
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/epoch/date
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:26.150Z - Time: 1892ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/epoch/date-time'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/epoch/date-time
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/epoch/date-time
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/epoch/date-time
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:28.157Z - Time: 1666ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/epoch/time'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/epoch/time
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/epoch/time
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/epoch/time
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:30.129Z - Time: 1640ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/file-upload'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/file-upload
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/file-upload
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/file-upload
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:32.020Z - Time: 1572ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/rating'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/rating
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/rating
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/rating
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:33.879Z - Time: 1520ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/input/slider'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/input/slider
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/input/slider
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/input/slider
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:35.684Z - Time: 1458ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/chart'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/chart
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/chart
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/chart
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:40.565Z - Time: 4567ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/navigation/menu'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/navigation/menu
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/navigation/menu
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/navigation/menu
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:44.840Z - Time: 3723ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/navigation/navbar'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/navigation/navbar
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/navigation/navbar
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/navigation/navbar
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:46.689Z - Time: 1504ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/navigation/breadcrumb'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/navigation/breadcrumb
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/navigation/breadcrumb
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/navigation/breadcrumb
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:48.487Z - Time: 1458ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/navigation/popover'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/navigation/popover
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/navigation/popover
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/navigation/popover
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:50.361Z - Time: 1540ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/containers/accordion'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/containers/accordion
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/containers/accordion
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/containers/accordion
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:52.416Z - Time: 1730ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/containers/linear-layout'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/containers/linear-layout
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/containers/linear-layout
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/containers/linear-layout
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:54.192Z - Time: 1419ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/containers/layout-grid'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/containers/layout-grid
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/containers/layout-grid
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/containers/layout-grid
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:55.901Z - Time: 1360ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/containers/panel'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/containers/panel
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/containers/panel
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/containers/panel
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:57.859Z - Time: 1623ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/containers/tabs'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/containers/tabs
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/containers/tabs
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/containers/tabs
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:39:59.875Z - Time: 1686ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/containers/tile'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/containers/tile
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/containers/tile
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/containers/tile
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:01.600Z - Time: 1387ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/containers/wizard'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/containers/wizard
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/containers/wizard
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/containers/wizard
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:03.739Z - Time: 1799ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/dialogs'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/dialogs
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/dialogs/default
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/dialogs/default
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:07.233Z - Time: 3140ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/dialogs/alert-dialog'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/dialogs/alert-dialog
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/dialogs/alert-dialog
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/dialogs/alert-dialog
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:09.267Z - Time: 1705ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/dialogs/confirm-dialog'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/dialogs/confirm-dialog
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/dialogs/confirm-dialog
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/dialogs/confirm-dialog
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:11.053Z - Time: 1456ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/dialogs/design-dialog'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/dialogs/design-dialog
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/dialogs/design-dialog
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/dialogs/design-dialog
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:12.887Z - Time: 1488ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/dialogs/iframe-dialog'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/dialogs/iframe-dialog
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/dialogs/iframe-dialog
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/dialogs/iframe-dialog
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:14.781Z - Time: 1578ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/dialogs/partial-dialog'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/dialogs/partial-dialog
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/dialogs/partial-dialog
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/dialogs/partial-dialog
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:16.604Z - Time: 1472ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/page'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/page
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/page/default
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/page/default
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:18.588Z - Time: 1659ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/page/footer'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/page/footer
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/page/footer
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/page/footer
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:20.285Z - Time: 1354ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/page/header'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/page/header
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/page/header
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/page/header
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:22.038Z - Time: 1398ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/page/left-panel'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/page/left-panel
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/page/left-panel
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/page/left-panel
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:23.868Z - Time: 1483ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/page/right-panel'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/page/right-panel
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/page/right-panel
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/page/right-panel
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:25.541Z - Time: 1328ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/page/top-nav'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/page/top-nav
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/page/top-nav
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/page/top-nav
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:27.212Z - Time: 1332ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/prefab'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/prefab
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/prefab
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/prefab
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:29.103Z - Time: 1552ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/data/card'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/data/card
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/data/card
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/data/card
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:31.020Z - Time: 1593ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/data/pagination'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/data/pagination
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/data/pagination
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/data/pagination
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:33.062Z - Time: 1712ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/data/list'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/data/list
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/data/list
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/data/list
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:35.299Z - Time: 1898ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/data/table'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/data/table
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/data/table
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/data/table
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:37.829Z - Time: 2184ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/data/live-table'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/data/live-table
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/data/live-table
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/data/live-table
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:44.004Z - Time: 4495ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/data/form'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/data/form
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/data/form
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/data/form
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:46.591Z - Time: 2233ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/dialogs/login-dialog'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/dialogs/login-dialog
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/dialogs/login-dialog
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/dialogs/login-dialog
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:48.385Z - Time: 1456ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/advanced/carousel'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/advanced/carousel
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/advanced/carousel
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/advanced/carousel
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:50.233Z - Time: 1520ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/advanced/marquee'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/advanced/marquee
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/advanced/marquee
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/advanced/marquee
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:51.976Z - Time: 1394ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/advanced/login'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/advanced/login
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/advanced/login
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/advanced/login
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:53.865Z - Time: 1551ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/components/advanced/custom'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/components/advanced/custom
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/widgets/advanced/custom
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/components/advanced/custom
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:40:59.610Z - Time: 5401ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/buildTask'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+- Writing FESM bundles
+✔ Writing FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/buildTask
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/components/transpile
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/build-task
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:57:29.948Z - Time: 989858ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/runtime/base'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/runtime/base
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/runtime-base
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/runtime/base
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:57:40.649Z - Time: 10191ms
+
+Building Angular Package
+
+------------------------------------------------------------------------------
+Building entry point '@wm/runtime/dynamic'
+------------------------------------------------------------------------------
+- Compiling with Angular sources in Ivy partial compilation mode.
+✔ Compiling with Angular sources in Ivy partial compilation mode.
+✔ Generating FESM bundles
+- Copying assets
+✔ Copying assets
+- Writing package manifest
+✔ Writing package manifest
+✔ Built @wm/runtime/dynamic
+
+------------------------------------------------------------------------------
+Built Angular Package
+ - from: /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/projects/runtime-dynamic
+ - to:   /Users/bhargavig_500297/projects/wavemaker-studio-frontend/wavemaker-ng-runtime/libraries/runtime/dynamic
+------------------------------------------------------------------------------
+
+Build at: 2025-11-22T02:57:45.011Z - Time: 3922ms
+
+rollup: wm-components-umd
+(!) You have passed an unrecognized option
+Unknown input options: type. Allowed options: cache, context, experimentalCacheExpiry, experimentalLogSideEffects, external, input, jsx, logLevel, makeAbsoluteExternalsRelative, maxParallelFileOps, moduleContext, onLog, onwarn, perf, plugins, preserveEntrySignatures, preserveSymlinks, shimMissingExports, strictDeprecations, treeshake, watch
+
+./libraries/core/fesm2022/index.mjs → ./libraries/core/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+x2js (imported by "libraries/core/fesm2022/index.mjs")
+moment-timezone/moment-timezone (imported by "libraries/core/fesm2022/index.mjs")
+(!) Missing global variable names
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+x2js (guessing "X2JS")
+moment-timezone/moment-timezone (guessing "momentLib")
+created ./libraries/core/bundles/index.umd.js in 226ms
+
+./libraries/swipey/fesm2022/index.mjs → ./libraries/swipey/bundles/index.umd.js...
+created ./libraries/swipey/bundles/index.umd.js in 4ms
+
+./libraries/transpiler/fesm2022/index.mjs → ./libraries/transpiler/bundles/index.umd.js...
+created ./libraries/transpiler/bundles/index.umd.js in 28ms
+
+./libraries/http/fesm2022/index.mjs → ./libraries/http/bundles/index.umd.js...
+created ./libraries/http/bundles/index.umd.js in 21ms
+
+./libraries/oAuth/fesm2022/index.mjs → ./libraries/oAuth/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment (imported by "libraries/oAuth/fesm2022/index.mjs")
+(!) Missing global variable name
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment (guessing "momentLib")
+created ./libraries/oAuth/bundles/index.umd.js in 15ms
+
+./libraries/security/fesm2022/index.mjs → ./libraries/security/bundles/index.umd.js...
+created ./libraries/security/bundles/index.umd.js in 10ms
+
+./libraries/components/base/fesm2022/index.mjs → ./libraries/components/base/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment (imported by "libraries/components/base/fesm2022/index.mjs")
+moment-timezone/moment-timezone (imported by "libraries/components/base/fesm2022/index.mjs")
+(!) Missing global variable names
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment (guessing "momentLib")
+moment-timezone/moment-timezone (guessing "momentLib$1")
+(!) "this" has been rewritten to "undefined"
+https://rollupjs.org/troubleshooting/#error-this-is-undefined
+libraries/components/base/fesm2022/index.mjs
+4165:     if (!isTablet) {
+4166:         // touch content to hide nav pane and left panel
+4167:         bindTapEvtHandler(pageContainer, hidePageContainers.bind(this, leftNavEle, searchContainer));
+                                                                       ^
+4168:     }
+4169: };
+created ./libraries/components/base/bundles/index.umd.js in 155ms
+
+./libraries/build-task/fesm2022/index.mjs → ./libraries/build-task/bundles/index.umd.js...
+(!) "this" has been rewritten to "undefined"
+https://rollupjs.org/troubleshooting/#error-this-is-undefined
+libraries/build-task/fesm2022/index.mjs
+1183:     };
+1184: };
+1185: register('wm-form-field', registerFormField.bind(this, true));
+                                                       ^
+1186: register('wm-filter-field', registerFormField.bind(this, false));
+1187: var formField_build = () => { };
+...and 3 other occurrences
+created ./libraries/build-task/bundles/index.umd.js in 60ms
+
+./libraries/components/input/button/fesm2022/index.mjs → ./libraries/components/input/button/bundles/index.umd.js...
+created ./libraries/components/input/button/bundles/index.umd.js in 7ms
+
+./libraries/components/input/base-form/fesm2022/index.mjs → ./libraries/components/input/base-form/bundles/index.umd.js...
+(!) Use of eval is strongly discouraged
+https://rollupjs.org/troubleshooting/#avoiding-eval
+libraries/components/input/base-form/fesm2022/index.mjs
+37:         binddatavalue = binddatavalue.replace(/\[(.*?)\]/g, (_match, key) => {
+38:             try {
+39:                 const value = eval(`this.viewParent.${key}`);
+                                  ^
+40:                 if (typeof value === 'string' || typeof value === 'number')
+41:                     return `[${value}]`;
+created ./libraries/components/input/base-form/bundles/index.umd.js in 4ms
+
+./libraries/components/input/base-form-custom/fesm2022/index.mjs → ./libraries/components/input/base-form-custom/bundles/index.umd.js...
+created ./libraries/components/input/base-form-custom/bundles/index.umd.js in 3ms
+
+./libraries/components/input/text/fesm2022/index.mjs → ./libraries/components/input/text/bundles/index.umd.js...
+created ./libraries/components/input/text/bundles/index.umd.js in 24ms
+
+./libraries/components/input/dataset-aware-form/fesm2022/index.mjs → ./libraries/components/input/dataset-aware-form/bundles/index.umd.js...
+created ./libraries/components/input/dataset-aware-form/bundles/index.umd.js in 8ms
+
+./libraries/components/input/button-group/fesm2022/index.mjs → ./libraries/components/input/button-group/bundles/index.umd.js...
+created ./libraries/components/input/button-group/bundles/index.umd.js in 2ms
+
+./libraries/components/input/caption-position/fesm2022/index.mjs → ./libraries/components/input/caption-position/bundles/index.umd.js...
+created ./libraries/components/input/caption-position/bundles/index.umd.js in 4ms
+
+./libraries/components/input/checkbox/fesm2022/index.mjs → ./libraries/components/input/checkbox/bundles/index.umd.js...
+created ./libraries/components/input/checkbox/bundles/index.umd.js in 4ms
+
+./libraries/components/input/checkboxset/fesm2022/index.mjs → ./libraries/components/input/checkboxset/bundles/index.umd.js...
+created ./libraries/components/input/checkboxset/bundles/index.umd.js in 4ms
+
+./libraries/components/input/composite/fesm2022/index.mjs → ./libraries/components/input/composite/bundles/index.umd.js...
+created ./libraries/components/input/composite/bundles/index.umd.js in 3ms
+
+./libraries/components/input/number/fesm2022/index.mjs → ./libraries/components/input/number/bundles/index.umd.js...
+created ./libraries/components/input/number/bundles/index.umd.js in 4ms
+
+./libraries/components/input/radioset/fesm2022/index.mjs → ./libraries/components/input/radioset/bundles/index.umd.js...
+created ./libraries/components/input/radioset/bundles/index.umd.js in 3ms
+
+./libraries/components/input/select/fesm2022/index.mjs → ./libraries/components/input/select/bundles/index.umd.js...
+created ./libraries/components/input/select/bundles/index.umd.js in 7ms
+
+./libraries/components/input/textarea/fesm2022/index.mjs → ./libraries/components/input/textarea/bundles/index.umd.js...
+created ./libraries/components/input/textarea/bundles/index.umd.js in 4ms
+
+./libraries/components/input/switch/fesm2022/index.mjs → ./libraries/components/input/switch/bundles/index.umd.js...
+created ./libraries/components/input/switch/bundles/index.umd.js in 8ms
+
+./libraries/components/basic/anchor/fesm2022/index.mjs → ./libraries/components/basic/anchor/bundles/index.umd.js...
+created ./libraries/components/basic/anchor/bundles/index.umd.js in 6ms
+
+./libraries/components/basic/audio/fesm2022/index.mjs → ./libraries/components/basic/audio/bundles/index.umd.js...
+created ./libraries/components/basic/audio/bundles/index.umd.js in 3ms
+
+./libraries/components/basic/html/fesm2022/index.mjs → ./libraries/components/basic/html/bundles/index.umd.js...
+created ./libraries/components/basic/html/bundles/index.umd.js in 3ms
+
+./libraries/components/basic/icon/fesm2022/index.mjs → ./libraries/components/basic/icon/bundles/index.umd.js...
+created ./libraries/components/basic/icon/bundles/index.umd.js in 4ms
+
+./libraries/components/basic/iframe/fesm2022/index.mjs → ./libraries/components/basic/iframe/bundles/index.umd.js...
+created ./libraries/components/basic/iframe/bundles/index.umd.js in 3ms
+
+./libraries/components/basic/label/fesm2022/index.mjs → ./libraries/components/basic/label/bundles/index.umd.js...
+created ./libraries/components/basic/label/bundles/index.umd.js in 3ms
+
+./libraries/components/basic/picture/fesm2022/index.mjs → ./libraries/components/basic/picture/bundles/index.umd.js...
+created ./libraries/components/basic/picture/bundles/index.umd.js in 2ms
+
+./libraries/components/basic/spinner/fesm2022/index.mjs → ./libraries/components/basic/spinner/bundles/index.umd.js...
+created ./libraries/components/basic/spinner/bundles/index.umd.js in 9ms
+
+./libraries/components/basic/video/fesm2022/index.mjs → ./libraries/components/basic/video/bundles/index.umd.js...
+created ./libraries/components/basic/video/bundles/index.umd.js in 4ms
+
+./libraries/components/basic/progress/progress-utils/fesm2022/index.mjs → ./libraries/components/basic/progress/progress-utils/bundles/index.umd.js...
+created ./libraries/components/basic/progress/progress-utils/bundles/index.umd.js in 2ms
+
+./libraries/components/basic/progress/progress-bar/fesm2022/index.mjs → ./libraries/components/basic/progress/progress-bar/bundles/index.umd.js...
+created ./libraries/components/basic/progress/progress-bar/bundles/index.umd.js in 8ms
+
+./libraries/components/basic/progress/progress-circle/fesm2022/index.mjs → ./libraries/components/basic/progress/progress-circle/bundles/index.umd.js...
+created ./libraries/components/basic/progress/progress-circle/bundles/index.umd.js in 6ms
+
+./libraries/components/basic/rich-text-editor/fesm2022/index.mjs → ./libraries/components/basic/rich-text-editor/bundles/index.umd.js...
+created ./libraries/components/basic/rich-text-editor/bundles/index.umd.js in 8ms
+
+./libraries/components/basic/search/fesm2022/index.mjs → ./libraries/components/basic/search/bundles/index.umd.js...
+created ./libraries/components/basic/search/bundles/index.umd.js in 29ms
+
+./libraries/components/basic/tree/fesm2022/index.mjs → ./libraries/components/basic/tree/bundles/index.umd.js...
+created ./libraries/components/basic/tree/bundles/index.umd.js in 18ms
+
+./libraries/components/input/calendar/fesm2022/index.mjs → ./libraries/components/input/calendar/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment (imported by "libraries/components/input/calendar/fesm2022/index.mjs")
+@fullcalendar/core (imported by "libraries/components/input/calendar/fesm2022/index.mjs")
+@fullcalendar/daygrid (imported by "libraries/components/input/calendar/fesm2022/index.mjs")
+@fullcalendar/timegrid (imported by "libraries/components/input/calendar/fesm2022/index.mjs")
+@fullcalendar/list (imported by "libraries/components/input/calendar/fesm2022/index.mjs")
+@fullcalendar/interaction (imported by "libraries/components/input/calendar/fesm2022/index.mjs")
+@fullcalendar/core/locales-all (imported by "libraries/components/input/calendar/fesm2022/index.mjs")
+(!) Missing global variable names
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment (guessing "momentLib")
+@fullcalendar/core (guessing "core")
+@fullcalendar/daygrid (guessing "dayGridPlugin")
+@fullcalendar/timegrid (guessing "timeGridPlugin")
+@fullcalendar/list (guessing "listPlugin")
+@fullcalendar/interaction (guessing "interactionPlugin")
+@fullcalendar/core/locales-all (guessing "allLocales")
+created ./libraries/components/input/calendar/bundles/index.umd.js in 11ms
+
+./libraries/components/input/chips/fesm2022/index.mjs → ./libraries/components/input/chips/bundles/index.umd.js...
+created ./libraries/components/input/chips/bundles/index.umd.js in 11ms
+
+./libraries/components/input/color-picker/fesm2022/index.mjs → ./libraries/components/input/color-picker/bundles/index.umd.js...
+created ./libraries/components/input/color-picker/bundles/index.umd.js in 4ms
+
+./libraries/components/input/currency/fesm2022/index.mjs → ./libraries/components/input/currency/bundles/index.umd.js...
+created ./libraries/components/input/currency/bundles/index.umd.js in 7ms
+
+./libraries/components/input/epoch/picker/fesm2022/index.mjs → ./libraries/components/input/epoch/picker/bundles/index.umd.js...
+created ./libraries/components/input/epoch/picker/bundles/index.umd.js in 13ms
+
+./libraries/components/input/epoch/date-time-picker/fesm2022/index.mjs → ./libraries/components/input/epoch/date-time-picker/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment (imported by "libraries/components/input/epoch/date-time-picker/fesm2022/index.mjs")
+(!) Missing global variable name
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment (guessing "momentLib")
+created ./libraries/components/input/epoch/date-time-picker/bundles/index.umd.js in 24ms
+
+./libraries/components/input/epoch/base-date-time/fesm2022/index.mjs → ./libraries/components/input/epoch/base-date-time/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment (imported by "libraries/components/input/epoch/base-date-time/fesm2022/index.mjs")
+(!) Missing global variable name
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment (guessing "momentLib")
+created ./libraries/components/input/epoch/base-date-time/bundles/index.umd.js in 21ms
+
+./libraries/components/input/epoch/date/fesm2022/index.mjs → ./libraries/components/input/epoch/date/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment (imported by "libraries/components/input/epoch/date/fesm2022/index.mjs")
+(!) Missing global variable name
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment (guessing "momentLib")
+created ./libraries/components/input/epoch/date/bundles/index.umd.js in 9ms
+
+./libraries/components/input/epoch/date-time/fesm2022/index.mjs → ./libraries/components/input/epoch/date-time/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment (imported by "libraries/components/input/epoch/date-time/fesm2022/index.mjs")
+(!) Missing global variable name
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment (guessing "momentLib")
+created ./libraries/components/input/epoch/date-time/bundles/index.umd.js in 10ms
+
+./libraries/components/input/epoch/time/fesm2022/index.mjs → ./libraries/components/input/epoch/time/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment (imported by "libraries/components/input/epoch/time/fesm2022/index.mjs")
+(!) Missing global variable name
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment (guessing "momentLib")
+created ./libraries/components/input/epoch/time/bundles/index.umd.js in 9ms
+
+./libraries/components/input/file-upload/fesm2022/index.mjs → ./libraries/components/input/file-upload/bundles/index.umd.js...
+created ./libraries/components/input/file-upload/bundles/index.umd.js in 10ms
+
+./libraries/components/input/rating/fesm2022/index.mjs → ./libraries/components/input/rating/bundles/index.umd.js...
+created ./libraries/components/input/rating/bundles/index.umd.js in 8ms
+
+./libraries/components/input/slider/fesm2022/index.mjs → ./libraries/components/input/slider/bundles/index.umd.js...
+created ./libraries/components/input/slider/bundles/index.umd.js in 11ms
+
+./libraries/components/chart/fesm2022/index.mjs → ./libraries/components/chart/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment (imported by "libraries/components/chart/fesm2022/index.mjs")
+(!) Missing global variable name
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment (guessing "momentLib")
+created ./libraries/components/chart/bundles/index.umd.js in 53ms
+
+./libraries/components/navigation/menu/fesm2022/index.mjs → ./libraries/components/navigation/menu/bundles/index.umd.js...
+created ./libraries/components/navigation/menu/bundles/index.umd.js in 25ms
+
+./libraries/components/navigation/navbar/fesm2022/index.mjs → ./libraries/components/navigation/navbar/bundles/index.umd.js...
+created ./libraries/components/navigation/navbar/bundles/index.umd.js in 3ms
+
+./libraries/components/navigation/breadcrumb/fesm2022/index.mjs → ./libraries/components/navigation/breadcrumb/bundles/index.umd.js...
+created ./libraries/components/navigation/breadcrumb/bundles/index.umd.js in 5ms
+
+./libraries/components/navigation/popover/fesm2022/index.mjs → ./libraries/components/navigation/popover/bundles/index.umd.js...
+created ./libraries/components/navigation/popover/bundles/index.umd.js in 14ms
+
+./libraries/components/dialogs/default/fesm2022/index.mjs → ./libraries/components/dialogs/default/bundles/index.umd.js...
+created ./libraries/components/dialogs/default/bundles/index.umd.js in 12ms
+
+./libraries/components/dialogs/alert-dialog/fesm2022/index.mjs → ./libraries/components/dialogs/alert-dialog/bundles/index.umd.js...
+created ./libraries/components/dialogs/alert-dialog/bundles/index.umd.js in 7ms
+
+./libraries/components/dialogs/confirm-dialog/fesm2022/index.mjs → ./libraries/components/dialogs/confirm-dialog/bundles/index.umd.js...
+created ./libraries/components/dialogs/confirm-dialog/bundles/index.umd.js in 10ms
+
+./libraries/components/dialogs/design-dialog/fesm2022/index.mjs → ./libraries/components/dialogs/design-dialog/bundles/index.umd.js...
+created ./libraries/components/dialogs/design-dialog/bundles/index.umd.js in 12ms
+
+./libraries/components/page/default/fesm2022/index.mjs → ./libraries/components/page/default/bundles/index.umd.js...
+created ./libraries/components/page/default/bundles/index.umd.js in 11ms
+
+./libraries/components/page/footer/fesm2022/index.mjs → ./libraries/components/page/footer/bundles/index.umd.js...
+created ./libraries/components/page/footer/bundles/index.umd.js in 5ms
+
+./libraries/components/page/header/fesm2022/index.mjs → ./libraries/components/page/header/bundles/index.umd.js...
+created ./libraries/components/page/header/bundles/index.umd.js in 5ms
+
+./libraries/components/page/left-panel/fesm2022/index.mjs → ./libraries/components/page/left-panel/bundles/index.umd.js...
+created ./libraries/components/page/left-panel/bundles/index.umd.js in 16ms
+
+./libraries/components/page/right-panel/fesm2022/index.mjs → ./libraries/components/page/right-panel/bundles/index.umd.js...
+created ./libraries/components/page/right-panel/bundles/index.umd.js in 6ms
+
+./libraries/components/page/top-nav/fesm2022/index.mjs → ./libraries/components/page/top-nav/bundles/index.umd.js...
+created ./libraries/components/page/top-nav/bundles/index.umd.js in 6ms
+
+./libraries/components/prefab/fesm2022/index.mjs → ./libraries/components/prefab/bundles/index.umd.js...
+created ./libraries/components/prefab/bundles/index.umd.js in 7ms
+
+./libraries/components/data/pagination/fesm2022/index.mjs → ./libraries/components/data/pagination/bundles/index.umd.js...
+created ./libraries/components/data/pagination/bundles/index.umd.js in 22ms
+
+./libraries/components/data/card/fesm2022/index.mjs → ./libraries/components/data/card/bundles/index.umd.js...
+created ./libraries/components/data/card/bundles/index.umd.js in 9ms
+
+./libraries/components/data/list/fesm2022/index.mjs → ./libraries/components/data/list/bundles/index.umd.js...
+created ./libraries/components/data/list/bundles/index.umd.js in 45ms
+
+./libraries/components/data/table/fesm2022/index.mjs → ./libraries/components/data/table/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment (imported by "libraries/components/data/table/fesm2022/index.mjs")
+(!) Missing global variable name
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment (guessing "momentLib")
+created ./libraries/components/data/table/bundles/index.umd.js in 77ms
+
+./libraries/components/data/live-table/fesm2022/index.mjs → ./libraries/components/data/live-table/bundles/index.umd.js...
+created ./libraries/components/data/live-table/bundles/index.umd.js in 14ms
+
+./libraries/components/data/form/fesm2022/index.mjs → ./libraries/components/data/form/bundles/index.umd.js...
+created ./libraries/components/data/form/bundles/index.umd.js in 54ms
+
+./libraries/components/dialogs/iframe-dialog/fesm2022/index.mjs → ./libraries/components/dialogs/iframe-dialog/bundles/index.umd.js...
+created ./libraries/components/dialogs/iframe-dialog/bundles/index.umd.js in 4ms
+
+./libraries/components/dialogs/login-dialog/fesm2022/index.mjs → ./libraries/components/dialogs/login-dialog/bundles/index.umd.js...
+created ./libraries/components/dialogs/login-dialog/bundles/index.umd.js in 6ms
+
+./libraries/components/dialogs/partial-dialog/fesm2022/index.mjs → ./libraries/components/dialogs/partial-dialog/bundles/index.umd.js...
+created ./libraries/components/dialogs/partial-dialog/bundles/index.umd.js in 4ms
+
+./libraries/components/containers/accordion/fesm2022/index.mjs → ./libraries/components/containers/accordion/bundles/index.umd.js...
+created ./libraries/components/containers/accordion/bundles/index.umd.js in 10ms
+
+./libraries/components/containers/layout-grid/fesm2022/index.mjs → ./libraries/components/containers/layout-grid/bundles/index.umd.js...
+created ./libraries/components/containers/layout-grid/bundles/index.umd.js in 4ms
+
+./libraries/components/containers/linear-layout/fesm2022/index.mjs → ./libraries/components/containers/linear-layout/bundles/index.umd.js...
+created ./libraries/components/containers/linear-layout/bundles/index.umd.js in 5ms
+
+./libraries/components/containers/panel/fesm2022/index.mjs → ./libraries/components/containers/panel/bundles/index.umd.js...
+created ./libraries/components/containers/panel/bundles/index.umd.js in 11ms
+
+./libraries/components/containers/tabs/fesm2022/index.mjs → ./libraries/components/containers/tabs/bundles/index.umd.js...
+created ./libraries/components/containers/tabs/bundles/index.umd.js in 16ms
+
+./libraries/components/containers/wizard/fesm2022/index.mjs → ./libraries/components/containers/wizard/bundles/index.umd.js...
+created ./libraries/components/containers/wizard/bundles/index.umd.js in 23ms
+
+./libraries/components/containers/tile/fesm2022/index.mjs → ./libraries/components/containers/tile/bundles/index.umd.js...
+created ./libraries/components/containers/tile/bundles/index.umd.js in 2ms
+
+./libraries/components/advanced/carousel/fesm2022/index.mjs → ./libraries/components/advanced/carousel/bundles/index.umd.js...
+created ./libraries/components/advanced/carousel/bundles/index.umd.js in 12ms
+
+./libraries/components/advanced/marquee/fesm2022/index.mjs → ./libraries/components/advanced/marquee/bundles/index.umd.js...
+created ./libraries/components/advanced/marquee/bundles/index.umd.js in 3ms
+
+./libraries/components/advanced/login/fesm2022/index.mjs → ./libraries/components/advanced/login/bundles/index.umd.js...
+created ./libraries/components/advanced/login/bundles/index.umd.js in 4ms
+
+./libraries/components/advanced/custom/fesm2022/index.mjs → ./libraries/components/advanced/custom/bundles/index.umd.js...
+created ./libraries/components/advanced/custom/bundles/index.umd.js in 8ms
+
+./libraries/variables/fesm2022/index.mjs → ./libraries/variables/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment (imported by "libraries/variables/fesm2022/index.mjs")
+(!) Missing global variable name
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment (guessing "momentLib")
+created ./libraries/variables/bundles/index.umd.js in 59ms
+
+./libraries/runtime/base/fesm2022/index.mjs → ./libraries/runtime/base/bundles/index.umd.js...
+(!) Unresolved dependencies
+https://rollupjs.org/troubleshooting/#warning-treating-module-as-external-dependency
+moment-timezone/moment-timezone (imported by "libraries/runtime/base/fesm2022/index.mjs")
+(!) Missing global variable name
+https://rollupjs.org/configuration-options/#output-globals
+Use "output.globals" to specify browser global variable names corresponding to external modules:
+moment-timezone/moment-timezone (guessing "momentLib")
+created ./libraries/runtime/base/bundles/index.umd.js in 123ms
+
+./libraries/runtime/dynamic/fesm2022/index.mjs → ./libraries/runtime/dynamic/bundles/index.umd.js...
+created ./libraries/runtime/dynamic/bundles/index.umd.js in 20ms
+rollup: wm-components-umd - success
+uglify: web
+uglify: web - success
+Execution time: 1356sec
