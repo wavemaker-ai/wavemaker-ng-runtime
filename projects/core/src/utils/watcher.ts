@@ -265,7 +265,7 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
         return;
     }
 
-    const limit = 3;
+    const limit = 5;
     let pass = 1;
     let changeDetected;
 
