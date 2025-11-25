@@ -15,6 +15,7 @@ export class PartialContainerDirective {
 
     private contentInitialized = false;
     private $target;
+    private isPrism:boolean
 
     get name() {
         return this.componentInstance.name;
@@ -44,7 +45,9 @@ export class PartialContainerDirective {
             if (!this.$target) {
                 this.$target = this.elRef.nativeElement.querySelector('[partial-container-target]') || this.elRef.nativeElement;
             }
-
+            if (this.isPrism && nv !== 'header' && nv !== 'footer' && nv !== 'Common' && nv !== 'topnav' && nv !== 'leftnav' && nv !== 'rightnav') {
+                instanceRef.location.nativeElement.classList.add('w-100');
+            }
             this.$target.innerHTML = '';
             this.$target.appendChild(instanceRef.location.nativeElement);
             this.contentInitialized = true;
@@ -70,6 +73,7 @@ export class PartialContainerDirective {
         private resolver: ComponentFactoryResolver,
         private partialRefProvider: PartialRefProvider
     ) {
+        this.isPrism = this.app.isPrism;
 
         componentInstance.registerPropertyChangeListener((key: string, nv: any, ov?: any) => {
             if (key === 'content') {
