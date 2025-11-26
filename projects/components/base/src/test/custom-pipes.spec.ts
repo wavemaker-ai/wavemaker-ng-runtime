@@ -1,15 +1,34 @@
-import { ToNumberPipe } from '../pipes/custom-pipes';
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BrowserModule, DomSanitizer } from '@angular/platform-browser';
-import { Component, Injector, OnInit } from '@angular/core';
-import { compileTestComponent, mockApp } from './util/component-test-util';
-import { ITestModuleDef } from './common-widget.specs';
-import { CustomPipe, FileExtensionFromMimePipe, FileIconClassPipe, FileSizePipe, FilterPipe, ImagePipe, NumberToStringPipe, PrefixPipe, StateClassPipe, StringToNumberPipe, SuffixPipe, TimeFromNowPipe, ToCurrencyPipe, ToDatePipe, TrailingZeroDecimalPipe, TrustAsPipe, SanitizePipe } from '@wm/components/base';
-import { AbstractI18nService, App, CustomPipeManager } from '@wm/core';
-import { MockAbstractI18nService } from './util/date-test-util';
+import {ToNumberPipe} from '../pipes/custom-pipes';
+import {DatePipe, DecimalPipe} from '@angular/common';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {BrowserModule, DomSanitizer} from '@angular/platform-browser';
+import {Component, Injector, OnInit} from '@angular/core';
+import {compileTestComponent, mockApp} from './util/component-test-util';
+import {ITestModuleDef} from './common-widget.specs';
+import {
+    CustomPipe,
+    FileExtensionFromMimePipe,
+    FileIconClassPipe,
+    FileSizePipe,
+    FilterPipe,
+    ImagePipe,
+    NumberToStringPipe,
+    PrefixPipe,
+    SanitizePipe,
+    StateClassPipe,
+    StringToNumberPipe,
+    SuffixPipe,
+    TimeFromNowPipe,
+    ToCurrencyPipe,
+    ToDatePipe,
+    TrailingZeroDecimalPipe,
+    TrustAsPipe
+} from '@wm/components/base';
+import {AbstractI18nService, App, CustomPipeManager} from '@wm/core';
+import {MockAbstractI18nService} from './util/date-test-util';
 
-import * as momentLib  from 'moment';
+import * as momentLib from 'moment';
+
 const moment = momentLib.default || window['moment'];
 
 jest.mock('@wm/core', () => ({
@@ -98,7 +117,7 @@ describe('ToDate pipe', () => {
         i18nService = TestBed.inject(AbstractI18nService);
         datePipe = TestBed.inject(DatePipe);
         app = TestBed.inject(App);
-        pipe = TestBed.runInInjectionContext(() => new ToDatePipe(datePipe, i18nService, customPipeManager, app));
+        pipe = TestBed.runInInjectionContext(() => new ToDatePipe(datePipe, i18nService, app, customPipeManager, app));
     });
 
     it('create an instance', () => {
@@ -168,8 +187,8 @@ describe('ToDate pipe', () => {
 
         // Re-instantiate the pipe to trigger the constructor logic
         app = TestBed.inject(App);
-        pipe = TestBed.runInInjectionContext(() => 
-            new ToDatePipe(datePipe, i18nService, customPipeManager, app)
+        pipe = TestBed.runInInjectionContext(() =>
+            new ToDatePipe(datePipe, i18nService, app, customPipeManager, app)
         );
 
         const result = pipe.transform('2021-09-20', 'yyyy-MM-dd');
@@ -725,14 +744,16 @@ describe('Custom pipe', () => {
     let pipe: CustomPipe;
     let wrapperComponent: PipeWrapperComponent;
     let customPipeManager: CustomPipeManager;
-    let injector : Injector
+    let injector : Injector;
+    let app: App;
 
     beforeEach(() => {
         fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
         wrapperComponent = fixture.componentInstance;
         customPipeManager = TestBed.inject(CustomPipeManager);
-        injector = TestBed.inject(Injector)
-         pipe = TestBed.runInInjectionContext(() => new CustomPipe(customPipeManager));
+        injector = TestBed.inject(Injector);
+        app = TestBed.inject(App);
+         pipe = TestBed.runInInjectionContext(() => new CustomPipe(app, customPipeManager));
     });
 
     it('create an instance', () => {
