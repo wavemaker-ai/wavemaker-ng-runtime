@@ -358,9 +358,25 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         if (!fn) {
             return;
         }
+        if (!fn) {
+            return;
+        }
         if (ctx) {
             fn = fn.bind(ctx);
         }
+        this.destroy.subscribe(() => {}, () => {}, () => {
+            try {
+                if (fn && typeof fn === 'function') {
+                    fn();
+                }
+            } catch (e) {
+                // Silently handle cleanup errors to prevent test failures
+                // These are typically non-critical cleanup issues like:
+                // - Subscriptions already unsubscribed
+                // - Null references during cleanup
+                // - Components already destroyed
+            }
+        });
         this.destroy.subscribe(() => {}, () => {}, () => {
             try {
                 if (fn && typeof fn === 'function') {
@@ -555,6 +571,11 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
                         console.error(`Error in promise returned by event callback "${eventName}" on widget "${widgetName}":`, err);
                         return err;
                     });
+                    return boundFnVal.then( response => response, err => {
+                        const widgetName = (widget as any).name || widget.widgetId || 'unknown';
+                        console.error(`Error in promise returned by event callback "${eventName}" on widget "${widgetName}":`, err);
+                        return err;
+                    });
                 } else {
                     return boundFnVal;
                 }
@@ -643,6 +664,17 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
             const locals = callbackInfo.locals || {};
 
             if (fn) {
+                try {
+                    return fn(Object.assign(locals, extraLocals));
+                } catch (error) {
+                    // Log error with context information for debugging
+                    const widgetName = (this as any).name || this.widgetId || 'unknown';
+                    const errorMessage = error?.message || String(error);
+                    console.error(`Error executing event callback "${eventName}" on widget "${widgetName}":`, errorMessage);
+                    console.error('Full error:', error);
+                    // Re-throw to maintain original behavior but with better error context
+                    throw error;
+                }
                 try {
                     return fn(Object.assign(locals, extraLocals));
                 } catch (error) {

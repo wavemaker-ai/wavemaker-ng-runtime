@@ -314,4 +314,24 @@ export class BaseFieldValidations {
             }
         }
     }
+
+    // MEMORY LEAK FIX: Cleanup method to release all references
+    destroy() {
+        // Clear all references to prevent memory leaks
+        this.instance = null;
+        this.formwidget = null;
+        this.widgetControl = null;
+        this.widgetContext = null;
+        
+        // Clear validators array and async validator function
+        if (this._syncValidators) {
+            this._syncValidators = [];
+        }
+        this._asyncValidatorFn = null;
+        
+        // Clear default validator messages
+        if (this.defaultValidatorMessages) {
+            this.defaultValidatorMessages = [];
+        }
+    }
 }

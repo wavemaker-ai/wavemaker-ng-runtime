@@ -633,6 +633,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         },
         afterRowUpdate: (row, e, callBack, options) => {
             this.updateRecord(extend({}, options, {row, 'prevData': options.rowindex?options.rowindex:this.prevData, 'event': e, 'callBack': callBack}));
+            this.updateRecord(extend({}, options, {row, 'prevData': options.rowindex?options.rowindex:this.prevData, 'event': e, 'callBack': callBack}));
         },
         onBeforeRowUpdate: (row, e, options) => {
             return this.invokeEventCallback('beforerowupdate', {$event: e, $data: row, row, options: options});
@@ -1080,7 +1081,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
             // If data and colDefs are present, call on before data render event
             // Note: Errors in beforedatarender should not prevent table rendering
+            // Note: Errors in beforedatarender should not prevent table rendering
             if (!this.isdynamictable && !isEmpty(newValue) && gridOptions.colDefs.length) {
+                try {
+                    this.invokeEventCallback('beforedatarender', {$data: this._gridData, $columns: this.columns, data: this._gridData, columns: this.columns});
+                } catch (error) {
+                    // Log error but continue with rendering - beforedatarender errors should not block table rendering
+                    console.warn('Error in beforedatarender event callback, continuing with table rendering:', error);
+                }
                 try {
                     this.invokeEventCallback('beforedatarender', {$data: this._gridData, $columns: this.columns, data: this._gridData, columns: this.columns});
                 } catch (error) {
@@ -1418,6 +1426,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             return;
         }
         
+        // Guard against component destruction
+        if (this.isDestroyed) {
+            return;
+        }
+        
         let result;
         // Check for Variable filters if applied
         if (this.gridOptions.isNavTypeScrollOrOndemand()) {
@@ -1484,6 +1497,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.variableInflight = false;
                 this.setGridData([]);
             }
+            // If data is invalid and variableInflight is still true, clear loading state
+            // This prevents tables from getting stuck in loading when data is invalid
+            if (this.variableInflight) {
+                this.variableInflight = false;
+                this.setGridData([]);
+            }
             return;
         }
 
@@ -1519,6 +1538,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 // If variableInflight is still true but we have invalid/empty data, clear loading state
                 // This handles cases where data never arrives or is invalid
                 this.variableInflight = false;
+                // If variable has finished loading and resultSet is empty, render empty data
                 this.setGridData([]);
             }
             return;
@@ -1530,11 +1550,15 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     ngOnDestroy() {
         // MEMORY LEAK FIX: Remove document click listener
+        // MEMORY LEAK FIX: Remove document click listener
         document.removeEventListener('click', this.documentClickBind);
+        
+        // MEMORY LEAK FIX: Unsubscribe from navigator watches
         
         // MEMORY LEAK FIX: Unsubscribe from navigator watches
         if (this.navigatorResultWatch) {
             this.navigatorResultWatch.unsubscribe();
+            this.navigatorResultWatch = null;
             this.navigatorResultWatch = null;
         }
         if (this.navigatorMaxResultWatch) {
@@ -1755,6 +1779,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             if (!key.endsWith('_filter') && ((key.endsWith('_new') && newRow) || (!key.endsWith('_new') && !newRow))) {
                 ctrls[key].setValue('');
                 this.resetFormControl(ctrls[key]);
+                // MEMORY LEAK FIX: Clear validators to release references
+                ctrls[key].clearValidators();
+                ctrls[key].clearAsyncValidators();
                 // MEMORY LEAK FIX: Clear validators to release references
                 ctrls[key].clearValidators();
                 ctrls[key].clearAsyncValidators();
@@ -2102,6 +2129,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             // Log error but continue with rendering - beforedatarender errors should not block table rendering
             console.warn('Error in beforedatarender event callback, continuing with table rendering:', error);
         }
+        // Note: Errors in beforedatarender should not prevent table rendering
+        try {
+            this.invokeEventCallback('beforedatarender', {$data: data, $columns: this.columns, data: data, columns: this.columns});
+        } catch (error) {
+            // Log error but continue with rendering - beforedatarender errors should not block table rendering
+            console.warn('Error in beforedatarender event callback, continuing with table rendering:', error);
+        }
 
         defaultFieldDefs = [];
         // Apply the changes made by the user
@@ -2290,6 +2324,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.gridOptions.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
                 this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
                 if(this.allowpagesizechange) this.setDefaultPageSize(nv);
+                this.prevPagesizeoptions = this.sanitizeCommaSeparatedIntegers(ov);
+                this.gridOptions.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
+                this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
+                if(this.allowpagesizechange) this.setDefaultPageSize(nv);
                 break;
             case 'multiselecttitle':
                 this.setDataGridOption('multiselecttitle', nv);
@@ -2332,6 +2370,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.pagesize = nv;
             }
             this.updatedPageSize = nv;
+            if(this.isPageSizeOptionsChanged()) {
+                this.dataNavigator.defaultPageSizeOptions = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) || [];
+                this.dataNavigator.pageSizeOptions = [...this.dataNavigator.defaultPageSizeOptions];
+            }
             if(this.isPageSizeOptionsChanged()) {
                 this.dataNavigator.defaultPageSizeOptions = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) || [];
                 this.dataNavigator.pageSizeOptions = [...this.dataNavigator.defaultPageSizeOptions];

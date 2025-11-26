@@ -278,15 +278,41 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
     ngOnDestroy(): void {
-        // MEMORY LEAK FIX: Unwatch all Prefab-scoped watchers for THIS specific prefab when prefab is destroyed
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
+        if (this.destroy$) {
+            // MEMORY LEAK FIX: Unwatch all Prefab-scoped watchers for THIS specific prefab when prefab is destroyed
         // Only unwatch watchers for this prefab, not all prefabs (other prefabs may still be on the page)
         if (this.prefabName) {
-            const removedCount = $unwatchAllByScope('Prefab', this.prefabName);
-            if (removedCount > 0) {
-                console.log(`🧹 Cleaned up ${removedCount} Prefab-scoped watcher(s) for prefab ${this.prefabName}`);
-            }
+            $unwatchAllByScope('Prefab', this.prefabName);
+            // if (removedCount > 0) {
+            //     console.log(`🧹 Cleaned up ${removedCount} Prefab-scoped watcher(s) for prefab ${this.prefabName}`);
+            // }
         }
         this.destroy$.complete();
+            this.destroy$ = null;
+        }
+        if (this.viewInit$) {
+            this.viewInit$.complete();
+            this.viewInit$ = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references to prevent memory leaks
+        this.Widgets = null;
+        this.Variables = null;
+        this.Actions = null;
+        this.App = null;
+        this.containerWidget = null;
+        this.prefabMngr = null;
+        this.i18nService = null;
+        this.appLocale = null;
+        this.prefabContainerDirective = null;
+        this.scriptLoaderService = null;
+        this.pageDirective = null;
+        this.Viewport = null;
+        this.viewParent = null;
+
+        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
+        this.cleanupFragmentMonitor();
     }
 
     // user overrides this

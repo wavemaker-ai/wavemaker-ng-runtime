@@ -107,7 +107,7 @@ export class PipeProvider {
                 new DecimalPipe(this._locale)
             ]),
             this.preparePipeMeta(StringToNumberPipe, 'stringToNumber', true),
-            this.preparePipeMeta(CustomPipe, 'custom', true, [this.injector.get(CustomPipeManager)]),
+            this.preparePipeMeta(CustomPipe, 'custom', true, [this.injector.get(App), this.injector.get(CustomPipeManager)]),
             this.preparePipeMeta(TrustAsPipe, 'trustAs', true, [this.domSanitizer]),
             this.preparePipeMeta(SanitizePipe, 'sanitize', true, [this.domSanitizer]),
             this.preparePipeMeta(TemplateReplacePipe, 'templateReplace', true),

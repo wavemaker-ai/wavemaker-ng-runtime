@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ContentChildren, Inject, Injector, Optional } from '@angular/core';
+import { AfterViewInit, Component, ContentChildren, Inject, Injector, OnDestroy, Optional } from '@angular/core';
 import { noop, removeAttr } from '@wm/core';
 import {
     APPLY_STYLES_TYPE,
@@ -26,7 +26,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-accordionpane', hostClass
     ],
     exportAs: 'wmAccordionPane'
 })
-export class AccordionPaneComponent extends StylableComponent implements AfterViewInit {
+export class AccordionPaneComponent extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public isActive = false;
@@ -142,5 +142,17 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
         if (this.isdynamic) {
             this.accordionRef.registerDynamicPane(this);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ContentChildren QueryList reference
+        if (this.reDrawableComponents) {
+            this.reDrawableComponents = null;
+        }
+
+        // MEMORY LEAK FIX: Clear lazy load function reference
+        this.$lazyLoad = null;
+
+        super.ngOnDestroy();
     }
 }
