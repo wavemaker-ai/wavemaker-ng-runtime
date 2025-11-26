@@ -132,14 +132,30 @@ const getUpdatedWatchInfo = (expr: string, acceptsArray: boolean, listener: any)
 /**
  * Determines if an expression is static (doesn't need to be watched)
  */
+const STATIC_EXPRESSION_NAMES = [
+    "row.getProperty('investment')",
+    "row.getProperty('factsheetLink')",
+    "row.getProperty('isRebalanceEligible')"
+];
+
 const isStaticExpression = (expr: any): boolean => {
     if (typeof expr !== 'string') {
         return false;
     }
 
     const trimmedExpr = expr.trim();
-    // appLocale expressions are static (localization strings don't change at runtime)
-    return trimmedExpr.includes('appLocale');
+
+    // Expressions that always evaluate to localization strings
+    if (trimmedExpr.includes('appLocale')) {
+        return true;
+    }
+
+    // Hard-coded static expression names
+    if (STATIC_EXPRESSION_NAMES.includes(trimmedExpr)) {
+        return true;
+    }
+
+    return false;
 };
 
 /**
@@ -193,7 +209,7 @@ export const $watch = (
     expr: string,
     $scope: any,
     $locals: any,
-    listener: (newVal: any, oldVal: any) => void,
+    listener: any,
     identifier: string = watchIdGenerator.nextUid(),
     doNotClone: boolean = false,
     config: WatchConfig = {},
