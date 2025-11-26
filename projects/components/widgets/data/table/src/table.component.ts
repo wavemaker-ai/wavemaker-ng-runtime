@@ -1677,7 +1677,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.dataNavigator = null;
         this._tableElement = null;
         
-        console.log("table component destroyed");
+       // console.log("table component destroyed");
         super.ngOnDestroy();
     }
 

@@ -4,16 +4,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { isAndroid, isIos, Viewport, ScriptLoaderService, registerFnByExpr } from '@wm/core';
 import { LayoutDirective, SpaPageDirective } from '@wm/components/page';
 
-import {Subject, Subscription} from 'rxjs';
+import {Subject} from 'rxjs';
 
 import {
+    $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
-    addClass,
     App,
     muteWatchers,
     noop,
-    removeClass,
     unMuteWatchers,
     UtilsService
 } from '@wm/core';
@@ -330,6 +329,13 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     }
 
     ngOnDestroy(): void {
+        // MEMORY LEAK FIX: Unwatch all Page-scoped watchers for THIS specific page when page is destroyed
+        if (this.pageName) {
+            $unwatchAllByScope('Page', this.pageName);
+            // if (removedCount > 0) {
+            //     console.log(`🧹 Cleaned up ${removedCount} Page-scoped watcher(s) for page ${this.pageName}`);
+            // }
+        }
         this.savePageSnapShot();
 
         // MEMORY LEAK FIX: Complete Subjects to release subscriptions

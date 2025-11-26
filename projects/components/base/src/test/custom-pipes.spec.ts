@@ -188,7 +188,7 @@ describe('ToDate pipe', () => {
         // Re-instantiate the pipe to trigger the constructor logic
         app = TestBed.inject(App);
         pipe = TestBed.runInInjectionContext(() =>
-            new ToDatePipe(datePipe, i18nService, app, customPipeManager)
+            new ToDatePipe(datePipe, i18nService, customPipeManager, app)
         );
 
         const result = pipe.transform('2021-09-20', 'yyyy-MM-dd');
