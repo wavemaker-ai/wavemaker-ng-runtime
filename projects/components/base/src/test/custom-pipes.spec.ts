@@ -117,7 +117,7 @@ describe('ToDate pipe', () => {
         i18nService = TestBed.inject(AbstractI18nService);
         datePipe = TestBed.inject(DatePipe);
         app = TestBed.inject(App);
-        pipe = TestBed.runInInjectionContext(() => new ToDatePipe(datePipe, i18nService, app, customPipeManager, app));
+        pipe = TestBed.runInInjectionContext(() => new ToDatePipe(datePipe, i18nService, app, customPipeManager));
     });
 
     it('create an instance', () => {
@@ -188,7 +188,7 @@ describe('ToDate pipe', () => {
         // Re-instantiate the pipe to trigger the constructor logic
         app = TestBed.inject(App);
         pipe = TestBed.runInInjectionContext(() =>
-            new ToDatePipe(datePipe, i18nService, app, customPipeManager, app)
+            new ToDatePipe(datePipe, i18nService, app, customPipeManager)
         );
 
         const result = pipe.transform('2021-09-20', 'yyyy-MM-dd');
