@@ -9,32 +9,31 @@
     containerClass="app-popover animated {{contentanimation}} {{popoverContainerCls}}"
     [container]="containerTarget || '.wm-app'"
     [isOpen]="isOpen"
-    [attr.tabindex]="tabindex"
-    [attr.name]="name"
+    [tabindex]="tabindex"
+    [name]="name"
     [class]="class"
     [ngClass]="{'disable-popover': !canPopoverOpen}"
     [adaptivePosition]="adaptiveposition"
    boundariesElement="window"
    [attr.aria-label]="arialabel || (badgevalue ? caption + ' ' + badgevalue : caption) || 'Popover menu'"
     [attr.aria-expanded]="isOpen"
-    [attr.title]="hint"
     role="button"
-    href="javascript:void(0)"
-    target="_self"
-    class="app-anchor"
     #anchor
+    name.bind="name"
+    wmAnchor
+    animation.bind="animation"
+    badgevalue.bind="badgevalue"
+    caption.bind="caption"
+    encodeurl.bind="encodeurl"
+    hint.bind="hint"
+    hyperlink.bind="hyperlink"
+    iconurl.bind="iconurl"
+    iconwidth.bind="iconwidth"
+    iconheight.bind="iconheight"
+    iconmargin.bind="iconmargin"
+    iconclass.bind="iconclass"
+    iconposition.bind="iconposition"
+    shortcutkey.bind="shortcutkey"
+    tabindex.bind="tabindex"
     (keydown)="onPopoverAnchorKeydown($event)">
-    @if (iconurl) {
-      <img data-identifier="img" alt="Image" class="anchor-image-icon" [src]="iconurl | image" [ngStyle]="{width:iconwidth, height:iconheight, margin:iconmargin}"/>
-    }
-    @if (iconclass) {
-      <i class="app-icon {{iconclass}}" aria-hidden="true" [ngStyle]="{width:iconwidth, height:iconheight, margin:iconmargin}"></i>
-    }
-    @if (iconclass) {
-      <span class="sr-only">{{caption}} {{appLocale.LABEL_ICON}}</span>
-    }
-    <span class="anchor-caption" [innerHTML]="caption"></span>
-    @if (badgevalue) {
-      <span class="badge pull-right" [textContent]="badgevalue"></span>
-    }
 </a>
