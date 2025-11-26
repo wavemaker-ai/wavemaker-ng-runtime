@@ -503,4 +503,4 @@ export const $appDigest = (() => {
 })();
 
 // Export registry for debugging
-// (window as any).watchRegistry = registry;
+(window as any).watchRegistry = registry;
