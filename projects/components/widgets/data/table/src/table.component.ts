@@ -266,6 +266,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     rowDef: any = {};
     rowInstance: any = {};
     pagesizeoptions;
+    prevPagesizeoptions;
     multiselecttitle;
     multiselectarialabel;
     radioselecttitle;
@@ -2098,9 +2099,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.allowpagesizechange = nv;
                 break;
             case 'pagesizeoptions':
-                this.gridOptions.pagesizeoptions = nv;
-                this.pagesizeoptions = nv;
-                this.setDefaultPageSize(nv)
+                this.prevPagesizeoptions = this.sanitizeCommaSeparatedIntegers(ov);
+                this.gridOptions.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
+                this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
+                if(this.allowpagesizechange) this.setDefaultPageSize(nv);
                 break;
             case 'multiselecttitle':
                 this.setDataGridOption('multiselecttitle', nv);
@@ -2143,12 +2145,47 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.pagesize = nv;
             }
             this.updatedPageSize = nv;
+            if(this.isPageSizeOptionsChanged()) {
+                this.dataNavigator.defaultPageSizeOptions = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) || [];
+                this.dataNavigator.pageSizeOptions = [...this.dataNavigator.defaultPageSizeOptions];
+            }
         }
         this.dataNavigator.options = {
             maxResults: nv
         };
         this.dataNavigator.widget.maxResults = nv;
         this.dataNavigator.maxResults = nv;
+        if(this.datasource) {
+            this.datasource.maxResults = this.pagesize || this.datasource.maxResults;
+        }
+    }
+
+    isPageSizeOptionsChanged() {
+        return !isEqual(this.prevPagesizeoptions, this.pagesizeoptions);
+    }
+
+    selectPageSize(pagesize: number) {
+        if(!this.allowpagesizechange && !pagesize) return;
+
+        if(pagesize < this.dataNavigator.pageSizeOptions[0] || pagesize > this.dataNavigator.pageSizeOptions[this.dataNavigator.pageSizeOptions.length - 1]
+            || !this.dataNavigator.pageSizeOptions.includes(Number(pagesize))) {
+            pagesize = this.dataNavigator.pageSizeOptions[0];
+        }
+        this.dataNavigator.onPageSizeChange(undefined, pagesize);
+    }
+
+    sanitizeCommaSeparatedIntegers(input: string): string {
+        if (!input) return "";
+        const uniqueNumbers = Array.from(
+            new Set(
+                input
+                    .split(",")
+                    .map(v => v.trim())
+                    .filter(v => /^-?\d+$/.test(v))
+                    .map(v => Math.abs(parseInt(v, 10)))
+            )
+        );
+        return uniqueNumbers.join(",");
     }
 
     onDataSourceChange() {

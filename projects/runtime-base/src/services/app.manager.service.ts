@@ -362,12 +362,13 @@ export class AppManagerService {
     reloadAppData() {
         return this.loadSecurityConfig(true).then(() => {
             return this.loadMetadata().then(() => {
-               return this.updateLoggedInUserVariable().then(() => {
-                return this.beforeAppReady();
-               })
+                return this.updateLoggedInUserVariable().then((config) => {
+                    return Promise.resolve(this.beforeAppReady())
+                        .then(() => Promise.resolve(config));
+                })
             });
         });
-    }
+    } 
 
     noRedirect(value?: boolean) {
         if (isUndefined(value)) {
