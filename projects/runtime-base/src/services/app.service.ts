@@ -85,6 +85,7 @@ export class AppRef {
     isApplicationType: boolean;
     isTabletApplicationType: boolean;
     isTemplateBundleType: boolean;
+    isPrism: boolean;
 
     targetPlatform: string;
 
@@ -120,6 +121,8 @@ export class AppRef {
         this.isApplicationType = wmProjectProperties.type === PROJECT_TYPE.APPLICATION;
         this.isTemplateBundleType = wmProjectProperties.type === PROJECT_TYPE.TEMPLATE_BUNDLE;
         this.targetPlatform = wmProjectProperties.platformType;
+        this.isPrism = wmProjectProperties.template === "PRISM";
+
 
         this.httpService.registerOnSessionTimeout(this.on401.bind(this));
 
@@ -140,6 +143,9 @@ export class AppRef {
     public importModule(moduleName: string) {
         if (moduleName === 'moment') {
             return moment;
+        }
+        else if (moduleName === 'moment-tz-data') {
+            return this.i18nService.setTimezoneEarly();
         }
     }
 

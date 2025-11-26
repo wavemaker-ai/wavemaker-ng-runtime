@@ -1,4 +1,4 @@
-import {inject, Inject, Pipe, PipeTransform} from '@angular/core';
+import {Inject, Pipe, PipeTransform} from '@angular/core';
 import {DatePipe, DecimalPipe} from '@angular/common';
 import {AbstractI18nService, App, CURRENCY_INFO, CustomPipeManager, hasOffsetStr, isDefined, replace} from '@wm/core';
 import {WmPipe} from "./wm-pipe";
@@ -39,7 +39,6 @@ export class TrailingZeroDecimalPipe implements PipeTransform {
     name: 'toDate'
 })
 export class ToDatePipe extends WmPipe implements PipeTransform {
-    private app = inject(App);
     // This method calls the custom formatter fn after applying the exisitng date pattern
     returnFn(data, args, variables) {
         if (this.isCustomPipe) {
@@ -79,7 +78,7 @@ export class ToDatePipe extends WmPipe implements PipeTransform {
         return this.returnFn('', arguments,this.app.Variables);
     }
 
-    constructor(private datePipe: DatePipe, private i18nService: AbstractI18nService, protected customPipeManager: CustomPipeManager) {
+    constructor(private datePipe: DatePipe, private i18nService: AbstractI18nService, private app: App, protected customPipeManager: CustomPipeManager) {
         super('toDate', customPipeManager);
     }
 }
@@ -151,9 +150,7 @@ export class SuffixPipe implements PipeTransform {
     name: 'custom'
 })
 export class CustomPipe implements PipeTransform {
-    private app = inject(App);
-
-    constructor(private custmeUserPipe: CustomPipeManager) {
+    constructor(private app: App, private custmeUserPipe: CustomPipeManager) {
 
     }
     transform(data, pipename) {
