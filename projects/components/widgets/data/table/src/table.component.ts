@@ -5,7 +5,6 @@ import {MenuComponent} from '@wm/components/navigation/menu';
 import {
     AfterContentInit,
     Attribute,
-    ChangeDetectionStrategy,
     Component,
     ContentChild,
     ContentChildren,
@@ -141,9 +140,7 @@ const isInputBodyWrapper = target => {
     providers: [
         provideAs(TableComponent, NG_VALUE_ACCESSOR, true),
         provideAsWidgetRef(TableComponent)
-    ],
-    // PERFORMANCE FIX: Use OnPush change detection to reduce CD cycles
-    changeDetection: ChangeDetectionStrategy.OnPush
+    ]
 })
 export class TableComponent extends StylableComponent implements AfterContentInit, OnDestroy, ControlValueAccessor {
     static initializeProps = registerProps();
@@ -1684,7 +1681,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.dataNavigator = null;
         this._tableElement = null;
         
-        console.log("table component destroyed");
+       // console.log("table component destroyed");
         super.ngOnDestroy();
     }
 

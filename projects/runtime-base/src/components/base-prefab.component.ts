@@ -3,6 +3,7 @@ import { Subject } from 'rxjs';
 
 import {
     $watch,
+    $unwatchAllByScope,
     AbstractI18nService,
     App,
     isIE,
@@ -277,6 +278,11 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
     ngOnDestroy(): void {
+        // MEMORY LEAK FIX: Unwatch all Prefab-scoped watchers for THIS specific prefab when prefab is destroyed
+        // Only unwatch watchers for this prefab, not all prefabs (other prefabs may still be on the page)
+        if (this.prefabName) {
+            $unwatchAllByScope('Prefab', this.prefabName);
+        }
         // MEMORY LEAK FIX: Complete Subjects to release subscriptions
         if (this.destroy$) {
             this.destroy$.complete();
