@@ -231,11 +231,6 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
     
     // Check if expression is static - these should not be watched, but listener should be called once
     if (isStaticExpression(expr)) {
-        console.log('🚫 STATIC expression - NOT added to watch registry, but calling listener once:', {
-            expr: typeof expr === 'string' ? expr.trim() : expr,
-            identifier
-        });
-        
         // For static expressions, evaluate once and call the listener with the initial value
         try {
             const fn = $parseExpr(expr);
@@ -301,16 +296,6 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
             } else {
                 window['PageScoped'].set(identifier, watchInfo);
             }
-            
-            console.log('📄 PAGE-SCOPED expression added to registries:', {
-                expr,
-                identifier,
-                widgetId: widgetId || 'no widget',
-                propertyName: widgetId ? propertyName : 'N/A',
-                mainRegistrySize: registry.size,
-                totalWatchers: getTotalWatcherCount(),
-                pageScopedSize: window['PageScoped'].size
-            });
         } else if (expr.startsWith('Prefab.')) {
             // Group by widget ID in PrefabScoped registry
             if (widgetId) {
@@ -322,16 +307,6 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
             } else {
                 window['PrefabScoped'].set(identifier, watchInfo);
             }
-            
-            console.log('🧩 PREFAB-SCOPED expression added to registries:', {
-                expr,
-                identifier,
-                widgetId: widgetId || 'no widget',
-                propertyName: widgetId ? propertyName : 'N/A',
-                mainRegistrySize: registry.size,
-                totalWatchers: getTotalWatcherCount(),
-                prefabScopedSize: window['PrefabScoped'].size
-            });
         } else if (expr.startsWith('Partial.')) {
             // Group by widget ID in PartialScoped registry
             if (widgetId) {
@@ -343,16 +318,6 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
             } else {
                 window['PartialScoped'].set(identifier, watchInfo);
             }
-            
-            console.log('📋 PARTIAL-SCOPED expression added to registries:', {
-                expr,
-                identifier,
-                widgetId: widgetId || 'no widget',
-                propertyName: widgetId ? propertyName : 'N/A',
-                mainRegistrySize: registry.size,
-                totalWatchers: getTotalWatcherCount(),
-                partialScopedSize: window['PartialScoped'].size
-            });
         } else if (expr.startsWith('App.')) {
             // Group by widget ID in AppScoped registry
             if (widgetId) {
@@ -364,16 +329,6 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
             } else {
                 window['AppScoped'].set(identifier, watchInfo);
             }
-            
-            console.log('📱 APP-SCOPED expression added to registries:', {
-                expr,
-                identifier,
-                widgetId: widgetId || 'no widget',
-                propertyName: widgetId ? propertyName : 'N/A',
-                mainRegistrySize: registry.size,
-                totalWatchers: getTotalWatcherCount(),
-                appScopedSize: window['AppScoped'].size
-            });
         } else {
             // Check if simple identifier resolves to a scoped variable
             const scopeType = $scope ? getScopeType($scope) : null;
@@ -395,18 +350,6 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
                         } else {
                             scopedRegistry.set(identifier, watchInfo);
                         }
-                        
-                        console.log(`🔍 ${scopeType.toUpperCase()}-SCOPED variable (resolved from simple identifier) added to registries:`, {
-                            originalExpr: expr,
-                            resolvedExpr: scopedExpr,
-                            identifier,
-                            widgetId: widgetId || 'no widget',
-                            propertyName: widgetId ? propertyName : 'N/A',
-                            scopeType: scopeType,
-                            mainRegistrySize: registry.size,
-                            totalWatchers: getTotalWatcherCount(),
-                            scopedRegistrySize: scopedRegistry.size
-                        });
                     }
                 } catch (e) {
                     // Not a scoped variable, ignore
