@@ -159,6 +159,31 @@ const getUpdatedWatcInfo = (expr, acceptsArray, listener) => {
 };
 
 /**
+ * Determines if an expression is static (doesn't need to be watched)
+ * Static expressions are evaluated once and don't change during runtime
+ * @param expr - The expression to check
+ * @returns true if the expression is static, false otherwise
+ */
+const isStaticExpression = (expr: any): boolean => {
+    if (typeof expr !== 'string') {
+        return false;
+    }
+    
+    const trimmedExpr = expr.trim();
+    
+    // appLocale expressions are always static (localization strings don't change at runtime)
+    // Examples: appLocale.someKey, Page.appLocale.someKey, Prefab.appLocale.someKey, etc.
+    if (trimmedExpr.includes('appLocale.') || trimmedExpr.includes('appLocale')) {
+        return true;
+    }
+    
+    // Add other static expression patterns here in the future if needed
+    // For example: literal values, constants, etc.
+    
+    return false;
+};
+
+/**
  * Gets the scope type (Page, Prefab, Partial, or App) from the scope object
  */
 const getScopeType = ($scope: any): 'Page' | 'Prefab' | 'Partial' | 'App' | null => {
@@ -204,18 +229,27 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
         listener = watchInfo.listener;
     }
     
-    // Check if expression is static (e.g., appLocale expressions) - these should not be watched
-    if (typeof expr === 'string') {
-        const trimmedExpr = expr.trim();
-        // appLocale expressions are always static and should not be added to the watch registry
-        if (trimmedExpr.includes('appLocale')) {
-            console.log('🚫 STATIC expression (appLocale) - NOT added to watch registry:', {
-                expr: trimmedExpr,
-                identifier
-            });
-            // Return a no-op unsubscribe function for static expressions
-            return () => {};
+    // Check if expression is static - these should not be watched, but listener should be called once
+    if (isStaticExpression(expr)) {
+        console.log('🚫 STATIC expression - NOT added to watch registry, but calling listener once:', {
+            expr: typeof expr === 'string' ? expr.trim() : expr,
+            identifier
+        });
+        
+        // For static expressions, evaluate once and call the listener with the initial value
+        try {
+            const fn = $parseExpr(expr);
+            const staticValue = fn($scope, $locals);
+            // Call listener once with the static value
+            listener(staticValue, FIRST_TIME_WATCH);
+        } catch (e) {
+            console.warn(`Error evaluating static expression '${expr}':`, e);
+            // Call listener with undefined if evaluation fails
+            listener(undefined, FIRST_TIME_WATCH);
         }
+        
+        // Return a no-op unsubscribe function for static expressions
+        return () => {};
     }
     
     const fn = $parseExpr(expr);
