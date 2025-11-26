@@ -148,6 +148,8 @@ export {
     unMuteWatchers,
     $watch,
     $unwatch,
+    $unwatchAll,
+    $unwatchAllByScope,
     setNgZone,
     setAppRef,
     isChangeFromWatch,

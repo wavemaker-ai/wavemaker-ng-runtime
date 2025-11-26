@@ -7,6 +7,7 @@ import { LayoutDirective, SpaPageDirective } from '@wm/components/page';
 import {Subject, Subscription} from 'rxjs';
 
 import {
+    $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
     addClass,
@@ -330,6 +331,13 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     }
 
     ngOnDestroy(): void {
+        // MEMORY LEAK FIX: Unwatch all Page-scoped watchers for THIS specific page when page is destroyed
+        if (this.pageName) {
+            const removedCount = $unwatchAllByScope('Page', this.pageName);
+            if (removedCount > 0) {
+                console.log(`🧹 Cleaned up ${removedCount} Page-scoped watcher(s) for page ${this.pageName}`);
+            }
+        }
         this.savePageSnapShot();
         this.destroy$.complete();
     }

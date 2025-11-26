@@ -6,7 +6,8 @@ import {clone, flatten, isArray, isEqual, isObject} from "lodash-es";
 
 const registry = new Map<string, any>();
 
-// Separate registries for scoped expressions
+// Separate registries for scoped expressions - these reference the same watchInfo objects as the main registry
+// Grouped by widget ID: widget-id3 => { "iconclass": {}, "message": {}, ... }
 if (typeof window !== 'undefined') {
     if (!window['PageScoped']) {
         window['PageScoped'] = new Map<string, any>();
@@ -17,7 +18,69 @@ if (typeof window !== 'undefined') {
     if (!window['PartialScoped']) {
         window['PartialScoped'] = new Map<string, any>();
     }
+    if (!window['AppScoped']) {
+        window['AppScoped'] = new Map<string, any>();
+    }
 }
+
+/**
+ * Extracts widget ID from identifier (e.g., "widget-id23_eventsource" -> "widget-id23")
+ */
+const getWidgetId = (identifier: string): string | null => {
+    if (!identifier || typeof identifier !== 'string') {
+        return null;
+    }
+    
+    // Pattern: widget-id23_eventsource -> widget-id23
+    const match = identifier.match(/^(widget-[^_]+)/);
+    if (match) {
+        return match[1];
+    }
+    
+    // Also check for other patterns
+    const altMatch = identifier.match(/^(widget-\w+)/);
+    if (altMatch) {
+        return altMatch[1];
+    }
+    
+    return null;
+};
+
+/**
+ * Extracts property name from identifier (e.g., "widget-id23_eventsource" -> "eventsource")
+ */
+const getPropertyName = (identifier: string): string => {
+    if (!identifier || typeof identifier !== 'string') {
+        return identifier;
+    }
+    
+    // Pattern: widget-id23_eventsource -> eventsource
+    const match = identifier.match(/^widget-[^_]+_(.+)$/);
+    if (match) {
+        return match[1];
+    }
+    
+    // If no widget ID pattern, return the identifier as-is
+    return identifier;
+};
+
+/**
+ * Gets the total count of watchers in the registry
+ * Accounts for both grouped structure (widget-id => { property: watchInfo, ... }) and direct watchInfo
+ */
+const getTotalWatcherCount = (): number => {
+    let count = 0;
+    registry.forEach((value) => {
+        if (value && typeof value === 'object' && !value.fn) {
+            // It's a grouped structure - count properties
+            count += Object.keys(value).length;
+        } else {
+            // Direct watchInfo
+            count += 1;
+        }
+    });
+    return count;
+};
 
 const watchIdGenerator = new IDGenerator('watch-id-');
 
@@ -65,183 +128,6 @@ const arrayConsumer = (listenerFn, restExpr, newVal, oldVal) => {
     }
 };
 
-/**
- * Gets the scope type (Page, Prefab, or Partial) from the scope object
- */
-const getScopeType = ($scope: any): 'Page' | 'Prefab' | 'Partial' | null => {
-    if (!$scope) {
-        return null;
-    }
-    
-    // Check for pageName property (Page scope)
-    if ($scope.pageName) {
-        return 'Page';
-    }
-    
-    // Check for prefabName property (Prefab scope)
-    if ($scope.prefabName) {
-        return 'Prefab';
-    }
-    
-    // Check for partialName property (Partial scope)
-    if ($scope.partialName) {
-        return 'Partial';
-    }
-    
-    return null;
-};
-
-/**
- * Detects if an expression is static (doesn't change during runtime)
- * Static expressions can be evaluated once and don't need to be watched
- */
-const isStaticExpression = (expr: string, $scope?: any, $locals?: any): boolean => {
-    if (typeof expr !== 'string') {
-        return false;
-    }
-    
-    const trimmedExpr = expr.trim();
-    
-    // appLocale expressions are static (localization strings)
-    // This includes: appLocale.*, Page.appLocale.*, Prefab.appLocale.*, Partial.appLocale.*
-    if (trimmedExpr.includes('appLocale')) {
-        // Check if it's appLocale at the start
-        if (trimmedExpr.startsWith('appLocale') && 
-            (trimmedExpr.length === 9 || trimmedExpr[9] === '.' || trimmedExpr[9] === '[')) {
-            return true;
-        }
-        // Check if it's Page.appLocale.*, Prefab.appLocale.*, or Partial.appLocale.*
-        if (trimmedExpr.startsWith('Page.appLocale.') || 
-            trimmedExpr.startsWith('Prefab.appLocale.') || 
-            trimmedExpr.startsWith('Partial.appLocale.')) {
-            return true;
-        }
-    }
-    
-    // Literal values are static
-    // Check for string literals (single or double quotes)
-    if ((trimmedExpr.startsWith('"') && trimmedExpr.endsWith('"')) ||
-        (trimmedExpr.startsWith("'") && trimmedExpr.endsWith("'"))) {
-        return true;
-    }
-    
-    // Check for boolean literals
-    if (trimmedExpr === 'true' || trimmedExpr === 'false') {
-        return true;
-    }
-    
-    // Check for null/undefined
-    if (trimmedExpr === 'null' || trimmedExpr === 'undefined') {
-        return true;
-    }
-
-    const staticExpressionNames = [
-        'row.getProperty(\'investment\')',
-        'row.getProperty(\'factsheetLink\')',
-        'row.getProperty(\'isRebalanceEligible\')'
-    ];
-    
-    // Check if expression is in staticExpressionNames - these are always static
-    if (staticExpressionNames.includes(trimmedExpr)) {
-        return true;
-    }
-    
-    // Check if expression contains Variables., Actions., Widgets., row., or any dot (.) - these are dynamic and should be watched
-    if (trimmedExpr.includes('Variables.') || trimmedExpr.includes('Actions.') || trimmedExpr.includes('Widgets.') || 
-        trimmedExpr.includes('row.') || trimmedExpr.includes('.')) {
-        // Exception: appLocale expressions are static even with dots
-        if (trimmedExpr.includes('appLocale')) {
-            return true;
-        }
-        // console.log('isStaticExpression: Expression contains Variables/Actions/Widgets/row. or dot, returning false (not static)', {
-        //     trimmedExpr
-        // });
-        return false;
-    }
-    
-    // Get scope type if available (after staticExpressionNames check)
-    const scopeType = $scope !== undefined ? getScopeType($scope) : null;
-    
-    // Check for Page/Prefab/Partial scoped expressions (e.g., Page.stvdata, Prefab.smpdata)
-    // BUT exclude appLocale expressions which are static (e.g., Prefab.appLocale.*)
-    // These should always return false (not static) - they need to be watched dynamically
-    if (trimmedExpr.startsWith('Page.') || trimmedExpr.startsWith('Prefab.') || trimmedExpr.startsWith('Partial.')) {
-        // Exception: appLocale expressions are static even when scoped
-        if (trimmedExpr.includes('.appLocale.')) {
-            return true;
-        }
-        console.log('isStaticExpression: Scoped expression detected, returning false (not static)', {
-            trimmedExpr,
-            scopeType,
-            hasScope: !!$scope,
-            scopeKeys: $scope ? Object.keys($scope).slice(0, 10) : []
-        });
-        return false;
-    }
-    
-    // Simple identifier without special characters
-    // Check if it might be a scoped variable (e.g., welcomeMessage -> Page.welcomeMessage)
-    // Only check simple identifiers (single word, no dots, brackets, etc.)
-    if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmedExpr)) {
-        // If we have scope information, check if this identifier resolves to a scoped variable
-        if ($scope !== undefined && scopeType) {
-            const scopedExpr = `${scopeType}.${trimmedExpr}`;
-            try {
-                const scopedFn = $parseExpr(scopedExpr);
-                const scopedValue = scopedFn($scope, $locals);
-                // If the scoped expression evaluates successfully, it's a scoped variable
-                // and should return false (not static) - these need to be watched dynamically
-                console.log('Simple identifier is a scoped variable, returning false (not static):', {
-                    trimmedExpr,
-                    scopedExpr,
-                    scopeType,
-                    scopedValue: scopedValue
-                });
-                return false;
-            } catch (scopedE) {
-                // If scoped expression doesn't exist, check if the simple identifier itself exists in scope
-                // This handles cases where the variable might be directly on the scope (not as Page.xxx)
-                try {
-                    const fn = $parseExpr(trimmedExpr);
-                    const value = fn($scope, $locals);
-                    // If it evaluates, it's a variable that can change, so it's not static
-                    console.log('Simple identifier exists in scope as a variable, returning false (not static):', {
-                        trimmedExpr,
-                        scopeType,
-                        value: value
-                    });
-                    return false;
-                } catch (e) {
-                    // If neither scoped nor direct evaluation works, treat as static (backward compatibility)
-                    console.log('Simple identifier does not resolve to any variable, treating as static:', {
-                        trimmedExpr,
-                        scopeType,
-                        scopedExpr,
-                        scopedError: scopedE.message,
-                        directError: e.message
-                    });
-                    return true;
-                }
-            }
-        }
-        // If no scope information, we can't determine if it's scoped, so treat as static (backward compatibility)
-        // But log it for debugging
-        console.log('Simple identifier - no scope information available, treating as static:', {
-            trimmedExpr
-        });
-        return true;
-    }
-    
-    // Everything else is dynamic - including:
-    // - Component properties (isOpen, content, etc.)
-    // - Expressions with dots, brackets, operators, etc.
-    // - row.getProperty() calls (data can change)
-    // - Variables, Actions, Widgets references
-    // - Any expressions with operators, functions, etc.
-    
-    return false; // Default to dynamic
-};
-
 const getUpdatedWatcInfo = (expr, acceptsArray, listener) => {
     // listener doesn't accept array
     // replace all `[$i]` with `[0]` and return the expression
@@ -272,215 +158,430 @@ const getUpdatedWatcInfo = (expr, acceptsArray, listener) => {
     };
 };
 
+/**
+ * Gets the scope type (Page, Prefab, Partial, or App) from the scope object
+ */
+const getScopeType = ($scope: any): 'Page' | 'Prefab' | 'Partial' | 'App' | null => {
+    if (!$scope) {
+        return null;
+    }
+    
+    // Check for pageName property (Page scope)
+    if ($scope.pageName) {
+        return 'Page';
+    }
+    
+    // Check for prefabName property (Prefab scope)
+    if ($scope.prefabName) {
+        return 'Prefab';
+    }
+    
+    // Check for partialName property (Partial scope)
+    if ($scope.partialName) {
+        return 'Partial';
+    }
+    
+    // Check for App scope - typically is the App instance itself or has App-specific properties
+    // App scope is usually the root scope that doesn't have pageName, prefabName, or partialName
+    // but has App-specific properties like Variables, Actions, appLocale, etc.
+    if ($scope.Variables !== undefined && $scope.Actions !== undefined && 
+        !$scope.pageName && !$scope.prefabName && !$scope.partialName) {
+        return 'App';
+    }
+    
+    // Also check if it's explicitly the App instance
+    if ($scope.constructor && $scope.constructor.name === 'AppRef') {
+        return 'App';
+    }
+    
+    return null;
+};
+
 export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGenerator.nextUid(), doNotClone = false, config:any={}, isMuted?: () => boolean) => {
-    // Debug logging for scoped expressions (Page.*, Prefab.*, Partial.*)
-    if (typeof expr === 'string' && (expr.startsWith('Page.') || expr.startsWith('Prefab.') || expr.startsWith('Partial.'))) {
-        const isStatic = isStaticExpression(expr, $scope, $locals);
-        console.log('$watch called for scoped expression:', {
-            expr,
-            isStatic,
-            willBeAddedToRegistry: !isStatic,
-            scopeType: $scope ? getScopeType($scope) : 'no scope'
-        });
-    }
-    
-    // OPTIMIZATION: Evaluate static expressions once and skip registry
-    // Static expressions (appLocale, static properties) don't change during runtime
-    if (typeof expr === 'string' && isStaticExpression(expr, $scope, $locals)) {
-        // Check if it's an appLocale expression - these should never be added to registry
-        const trimmedExpr = expr.trim();
-        const isAppLocale = trimmedExpr.includes('appLocale') || 
-                           trimmedExpr.startsWith('Page.appLocale.') || 
-                           trimmedExpr.startsWith('Prefab.appLocale.') || 
-                           trimmedExpr.startsWith('Partial.appLocale.');
-        
-        // Evaluate once immediately
-        const fn = $parseExpr(expr);
-        try {
-            const value = fn($scope, $locals);
-            // Call listener to set the value (triggers initial update)
-            listener(value, FIRST_TIME_WATCH);
-            // Return no-op unwatch function (nothing to unwatch, not added to registry)
-            if (typeof expr === 'string' && (expr.startsWith('Page.') || expr.startsWith('Prefab.') || expr.startsWith('Partial.')) && !isAppLocale) {
-                console.warn('Scoped expression was treated as static and NOT added to registry! This should not happen.', {
-                    expr,
-                    scopeType: $scope ? getScopeType($scope) : 'no scope'
-                });
-            }
-            return () => {};
-        } catch (e) {
-            console.warn(`error in evaluating static expression: '${expr}'`, e);
-            // If it's an appLocale expression, don't add to registry even if evaluation fails
-            if (isAppLocale) {
-                console.log('appLocale expression evaluation failed, but not adding to registry (appLocale is always static)', {
-                    expr
-                });
-                return () => {};
-            }
-            // For other static expressions, if evaluation fails, fall through to normal watch registration
-            // This ensures the app doesn't break if expression evaluation fails
-        }
-    }
-    
-    // Normal flow for dynamic expressions (non-static)
     if (expr.indexOf('[$i]') !== -1) {
         let watchInfo = getUpdatedWatcInfo(expr, config && (config.arrayType || config.isList), listener);
         expr = watchInfo.expr;
         listener = watchInfo.listener;
     }
     
-    // OPTIMIZATION: Apply throttling for low-priority watchers (after array handling)
-    let wrappedListener = listener;
-    if (config && config.throttle && config.throttle > 0) {
-        const throttleMs = config.throttle;
-        let lastCall = 0;
-        let pendingValue: any = null;
-        let pendingOldValue: any = null;
-        let timeoutId: any = null;
-        
-        wrappedListener = (nv, ov) => {
-            const now = Date.now();
-            pendingValue = nv;
-            pendingOldValue = ov;
-            
-            if (now - lastCall >= throttleMs) {
-                lastCall = now;
-                listener(nv, ov);
-                pendingValue = null;
-                pendingOldValue = null;
-                if (timeoutId) {
-                    window['__zone_symbol__clearTimeout'](timeoutId);
-                    timeoutId = null;
-                }
-            } else if (!timeoutId) {
-                // Schedule delayed call if not already scheduled
-                const remaining = throttleMs - (now - lastCall);
-                timeoutId = window['__zone_symbol__setTimeout'](() => {
-                    if (pendingValue !== null) {
-                        lastCall = Date.now();
-                        listener(pendingValue, pendingOldValue);
-                        pendingValue = null;
-                        pendingOldValue = null;
-                    }
-                    timeoutId = null;
-                }, remaining);
-            }
-        };
+    // Check if expression is static (e.g., appLocale expressions) - these should not be watched
+    if (typeof expr === 'string') {
+        const trimmedExpr = expr.trim();
+        // appLocale expressions are always static and should not be added to the watch registry
+        if (trimmedExpr.includes('appLocale')) {
+            console.log('🚫 STATIC expression (appLocale) - NOT added to watch registry:', {
+                expr: trimmedExpr,
+                identifier
+            });
+            // Return a no-op unsubscribe function for static expressions
+            return () => {};
+        }
     }
+    
     const fn = $parseExpr(expr);
 
-    // Debug logging for scoped expressions being added to registry
-    if (typeof expr === 'string' && (expr.startsWith('Page.') || expr.startsWith('Prefab.') || expr.startsWith('Partial.'))) {
-        console.log('Adding scoped expression to registry:', {
-            expr,
-            identifier,
-            hasFn: !!fn,
-            fnType: typeof fn,
-            scopeType: $scope ? getScopeType($scope) : 'no scope',
-            isStatic: isStaticExpression(expr, $scope, $locals)
-        });
+    // Extract scope information for cleanup
+    const scopeType = $scope ? getScopeType($scope) : null;
+    const scopeName = scopeType === 'Prefab' ? $scope?.prefabName : 
+                     scopeType === 'Partial' ? $scope?.partialName :
+                     scopeType === 'Page' ? $scope?.pageName : null;
+    
+    const watchInfo = {
+        fn: fn.bind(null, $scope, $locals),
+        listener,
+        expr,
+        last: FIRST_TIME_WATCH,
+        doNotClone,
+        isMuted: isMuted,
+        scopeType: scopeType,
+        scopeName: scopeName
+    };
+
+    // Group by widget ID in the main registry
+    const widgetId = getWidgetId(identifier);
+    const propertyName = getPropertyName(identifier);
+    
+    if (widgetId) {
+        // Group by widget ID: widget-id3 => { "iconclass": {}, "message": {}, ... }
+        if (!registry.has(widgetId)) {
+            registry.set(widgetId, {});
+        }
+        const widgetGroup = registry.get(widgetId);
+        widgetGroup[propertyName] = watchInfo;
+    } else {
+        // If no widget ID, store directly with the identifier (backward compatibility)
+        registry.set(identifier, watchInfo);
     }
 
-    try {
-        const boundFn = fn.bind(null, $scope, $locals);
-        const watchInfo = {
-            fn: boundFn,
-            listener: wrappedListener,
-            expr,
-            last: FIRST_TIME_WATCH,
-            doNotClone,
-            isMuted: isMuted
-        };
+    // Also add to appropriate scoped registry if it's a scoped expression
+    if (typeof expr === 'string' && typeof window !== 'undefined') {
         
-        registry.set(identifier, watchInfo);
-        
-        // Also add to appropriate scoped registry if it's a scoped expression
-        if (typeof expr === 'string' && typeof window !== 'undefined') {
-            const scopeType = $scope ? getScopeType($scope) : null;
-            
-            if (expr.startsWith('Page.')) {
+        if (expr.startsWith('Page.')) {
+            // Group by widget ID in PageScoped registry
+            if (widgetId) {
+                if (!window['PageScoped'].has(widgetId)) {
+                    window['PageScoped'].set(widgetId, {});
+                }
+                const widgetGroup = window['PageScoped'].get(widgetId);
+                widgetGroup[propertyName] = watchInfo;
+            } else {
                 window['PageScoped'].set(identifier, watchInfo);
-                console.log('📄 PAGE-SCOPED expression added to registry:', {
-                    expr,
-                    identifier,
-                    scopeType: scopeType || 'unknown',
-                    registrySize: registry.size,
-                    pageScopedSize: window['PageScoped'].size
-                });
-            } else if (expr.startsWith('Prefab.')) {
+            }
+            
+            console.log('📄 PAGE-SCOPED expression added to registries:', {
+                expr,
+                identifier,
+                widgetId: widgetId || 'no widget',
+                propertyName: widgetId ? propertyName : 'N/A',
+                mainRegistrySize: registry.size,
+                totalWatchers: getTotalWatcherCount(),
+                pageScopedSize: window['PageScoped'].size
+            });
+        } else if (expr.startsWith('Prefab.')) {
+            // Group by widget ID in PrefabScoped registry
+            if (widgetId) {
+                if (!window['PrefabScoped'].has(widgetId)) {
+                    window['PrefabScoped'].set(widgetId, {});
+                }
+                const widgetGroup = window['PrefabScoped'].get(widgetId);
+                widgetGroup[propertyName] = watchInfo;
+            } else {
                 window['PrefabScoped'].set(identifier, watchInfo);
-                console.log('🧩 PREFAB-SCOPED expression added to registry:', {
-                    expr,
-                    identifier,
-                    scopeType: scopeType || 'unknown',
-                    registrySize: registry.size,
-                    prefabScopedSize: window['PrefabScoped'].size
-                });
-            } else if (expr.startsWith('Partial.')) {
+            }
+            
+            console.log('🧩 PREFAB-SCOPED expression added to registries:', {
+                expr,
+                identifier,
+                widgetId: widgetId || 'no widget',
+                propertyName: widgetId ? propertyName : 'N/A',
+                mainRegistrySize: registry.size,
+                totalWatchers: getTotalWatcherCount(),
+                prefabScopedSize: window['PrefabScoped'].size
+            });
+        } else if (expr.startsWith('Partial.')) {
+            // Group by widget ID in PartialScoped registry
+            if (widgetId) {
+                if (!window['PartialScoped'].has(widgetId)) {
+                    window['PartialScoped'].set(widgetId, {});
+                }
+                const widgetGroup = window['PartialScoped'].get(widgetId);
+                widgetGroup[propertyName] = watchInfo;
+            } else {
                 window['PartialScoped'].set(identifier, watchInfo);
-                console.log('📋 PARTIAL-SCOPED expression added to registry:', {
-                    expr,
-                    identifier,
-                    scopeType: scopeType || 'unknown',
-                    registrySize: registry.size,
-                    partialScopedSize: window['PartialScoped'].size
-                });
-            } else if (scopeType) {
-                // Check if simple identifier (single word, no dots/brackets) resolves to a scoped variable
-                // Only check actual simple identifiers, not complex expressions
-                if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(expr)) {
-                    const scopedExpr = `${scopeType}.${expr}`;
-                    try {
-                        const scopedFn = $parseExpr(scopedExpr);
-                        const scopedValue = scopedFn($scope, $locals);
-                        // If it resolves, it's a scoped variable - add to appropriate scoped registry
-                        const scopedRegistry = window[`${scopeType}Scoped`];
-                        if (scopedRegistry) {
+            }
+            
+            console.log('📋 PARTIAL-SCOPED expression added to registries:', {
+                expr,
+                identifier,
+                widgetId: widgetId || 'no widget',
+                propertyName: widgetId ? propertyName : 'N/A',
+                mainRegistrySize: registry.size,
+                totalWatchers: getTotalWatcherCount(),
+                partialScopedSize: window['PartialScoped'].size
+            });
+        } else if (expr.startsWith('App.')) {
+            // Group by widget ID in AppScoped registry
+            if (widgetId) {
+                if (!window['AppScoped'].has(widgetId)) {
+                    window['AppScoped'].set(widgetId, {});
+                }
+                const widgetGroup = window['AppScoped'].get(widgetId);
+                widgetGroup[propertyName] = watchInfo;
+            } else {
+                window['AppScoped'].set(identifier, watchInfo);
+            }
+            
+            console.log('📱 APP-SCOPED expression added to registries:', {
+                expr,
+                identifier,
+                widgetId: widgetId || 'no widget',
+                propertyName: widgetId ? propertyName : 'N/A',
+                mainRegistrySize: registry.size,
+                totalWatchers: getTotalWatcherCount(),
+                appScopedSize: window['AppScoped'].size
+            });
+        } else {
+            // Check if simple identifier resolves to a scoped variable
+            const scopeType = $scope ? getScopeType($scope) : null;
+            if (scopeType && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(expr)) {
+                const scopedExpr = `${scopeType}.${expr}`;
+                try {
+                    const scopedFn = $parseExpr(scopedExpr);
+                    const scopedValue = scopedFn($scope, $locals);
+                    // If it resolves, it's a scoped variable - add to appropriate scoped registry
+                    const scopedRegistry = window[`${scopeType}Scoped`];
+                    if (scopedRegistry) {
+                        // Group by widget ID in scoped registry
+                        if (widgetId) {
+                            if (!scopedRegistry.has(widgetId)) {
+                                scopedRegistry.set(widgetId, {});
+                            }
+                            const widgetGroup = scopedRegistry.get(widgetId);
+                            widgetGroup[propertyName] = watchInfo;
+                        } else {
                             scopedRegistry.set(identifier, watchInfo);
                         }
-                        console.log(`🔍 ${scopeType.toUpperCase()}-SCOPED variable (resolved from simple identifier) added to registry:`, {
+                        
+                        console.log(`🔍 ${scopeType.toUpperCase()}-SCOPED variable (resolved from simple identifier) added to registries:`, {
                             originalExpr: expr,
                             resolvedExpr: scopedExpr,
                             identifier,
+                            widgetId: widgetId || 'no widget',
+                            propertyName: widgetId ? propertyName : 'N/A',
                             scopeType: scopeType,
-                            registrySize: registry.size,
-                            scopedRegistrySize: scopedRegistry ? scopedRegistry.size : 0
+                            mainRegistrySize: registry.size,
+                            totalWatchers: getTotalWatcherCount(),
+                            scopedRegistrySize: scopedRegistry.size
                         });
-                    } catch (e) {
-                        // Not a scoped variable, ignore
                     }
+                } catch (e) {
+                    // Not a scoped variable, ignore
                 }
             }
         }
-    } catch (e) {
-        console.error(`Error adding expression '${expr}' to registry:`, e);
-        throw e;
     }
 
     return () => $unwatch(identifier);
 };
 
 export const $unwatch = identifier => {
-    // MEMORY LEAK FIX: Clear watchInfo contents before deleting from registry
-    const watchInfo = registry.get(identifier);
-    if (watchInfo) {
-        watchInfo.last = null;        // Clear large cloned objects
-        watchInfo.fn = null;          // Release $scope/$locals references
-        watchInfo.listener = null;    // Clear callback
-        watchInfo.isMuted = null;     // Clear isMuted function
-        
-        // Also remove from scoped registries if present
-        if (typeof window !== 'undefined' && watchInfo.expr && typeof watchInfo.expr === 'string') {
-            if (watchInfo.expr.startsWith('Page.')) {
-                window['PageScoped']?.delete(identifier);
-            } else if (watchInfo.expr.startsWith('Prefab.')) {
-                window['PrefabScoped']?.delete(identifier);
-            } else if (watchInfo.expr.startsWith('Partial.')) {
-                window['PartialScoped']?.delete(identifier);
+    const widgetId = getWidgetId(identifier);
+    const propertyName = getPropertyName(identifier);
+    
+    let watchInfo;
+    
+    // Get watchInfo from grouped structure
+    if (widgetId) {
+        const widgetGroup = registry.get(widgetId);
+        if (widgetGroup && typeof widgetGroup === 'object' && !widgetGroup.fn) {
+            // It's a grouped structure
+            watchInfo = widgetGroup[propertyName];
+            if (watchInfo) {
+                delete widgetGroup[propertyName];
+                // Clean up empty widget groups
+                if (Object.keys(widgetGroup).length === 0) {
+                    registry.delete(widgetId);
+                }
+            }
+        } else {
+            // Fallback: try direct lookup
+            watchInfo = registry.get(identifier);
+            if (watchInfo) {
+                registry.delete(identifier);
             }
         }
+    } else {
+        watchInfo = registry.get(identifier);
+    if (watchInfo) {
+            registry.delete(identifier);
+        }
     }
-    return registry.delete(identifier);
+    
+    // Also remove from scoped registries if present
+    if (watchInfo && typeof window !== 'undefined' && watchInfo.expr && typeof watchInfo.expr === 'string') {
+        if (watchInfo.expr.startsWith('Page.')) {
+            if (widgetId) {
+                const widgetGroup = window['PageScoped']?.get(widgetId);
+                if (widgetGroup && typeof widgetGroup === 'object') {
+                    delete widgetGroup[propertyName];
+                    if (Object.keys(widgetGroup).length === 0) {
+                        window['PageScoped']?.delete(widgetId);
+                    }
+                }
+            } else {
+                window['PageScoped']?.delete(identifier);
+            }
+        } else if (watchInfo.expr.startsWith('Prefab.')) {
+            if (widgetId) {
+                const widgetGroup = window['PrefabScoped']?.get(widgetId);
+                if (widgetGroup && typeof widgetGroup === 'object') {
+                    delete widgetGroup[propertyName];
+                    if (Object.keys(widgetGroup).length === 0) {
+                        window['PrefabScoped']?.delete(widgetId);
+                    }
+                }
+            } else {
+                window['PrefabScoped']?.delete(identifier);
+            }
+        } else if (watchInfo.expr.startsWith('Partial.')) {
+            if (widgetId) {
+                const widgetGroup = window['PartialScoped']?.get(widgetId);
+                if (widgetGroup && typeof widgetGroup === 'object') {
+                    delete widgetGroup[propertyName];
+                    if (Object.keys(widgetGroup).length === 0) {
+                        window['PartialScoped']?.delete(widgetId);
+                    }
+                }
+            } else {
+                window['PartialScoped']?.delete(identifier);
+            }
+        } else if (watchInfo.expr.startsWith('App.')) {
+            if (widgetId) {
+                const widgetGroup = window['AppScoped']?.get(widgetId);
+                if (widgetGroup && typeof widgetGroup === 'object') {
+                    delete widgetGroup[propertyName];
+                    if (Object.keys(widgetGroup).length === 0) {
+                        window['AppScoped']?.delete(widgetId);
+                    }
+                }
+            } else {
+                window['AppScoped']?.delete(identifier);
+            }
+        } else {
+            // Check if it's in any scoped registry
+            const scopeTypes = ['Page', 'Prefab', 'Partial', 'App'];
+            scopeTypes.forEach(scopeType => {
+                const scopedRegistry = window[`${scopeType}Scoped`];
+                if (widgetId) {
+                    const widgetGroup = scopedRegistry?.get(widgetId);
+                    if (widgetGroup && typeof widgetGroup === 'object') {
+                        delete widgetGroup[propertyName];
+                        if (Object.keys(widgetGroup).length === 0) {
+                            scopedRegistry?.delete(widgetId);
+                        }
+                    }
+                } else {
+                    scopedRegistry?.delete(identifier);
+                }
+            });
+        }
+    }
+    
+    return !!watchInfo;
+};
+
+/**
+ * Unwatch all watchers for a specific widget ID
+ * This is useful for cleaning up all watchers when a component is destroyed
+ * @param widgetId - The widget ID (e.g., "widget-id23")
+ * @returns The number of watchers that were removed
+ */
+export const $unwatchAll = (widgetId: string): number => {
+    if (!widgetId || typeof widgetId !== 'string') {
+        return 0;
+    }
+    
+    let removedCount = 0;
+    
+    // Get the widget group from main registry
+    const widgetGroup = registry.get(widgetId);
+    if (widgetGroup && typeof widgetGroup === 'object' && !widgetGroup.fn) {
+        // It's a grouped structure - unwatch all properties
+        const propertyNames = Object.keys(widgetGroup);
+        propertyNames.forEach(propertyName => {
+            const identifier = `${widgetId}_${propertyName}`;
+            if ($unwatch(identifier)) {
+                removedCount++;
+            }
+        });
+    } else {
+        // Fallback: try to find all identifiers that start with this widget ID
+        const identifiersToRemove: string[] = [];
+        registry.forEach((value, key) => {
+            if (key.startsWith(widgetId + '_')) {
+                identifiersToRemove.push(key);
+            }
+        });
+        identifiersToRemove.forEach(identifier => {
+            if ($unwatch(identifier)) {
+                removedCount++;
+            }
+        });
+    }
+    
+    return removedCount;
+};
+
+/**
+ * Unwatch all watchers for a specific scope (Page, Prefab, Partial, or App)
+ * This is useful for cleaning up all watchers when a page/prefab/partial/app is destroyed
+ * @param scopeType - The scope type ('Page', 'Prefab', 'Partial', or 'App')
+ * @param scopeName - Optional scope name (e.g., page name, prefab name) - if provided, only unwatches watchers for that specific scope
+ * @returns The number of watchers that were removed
+ */
+export const $unwatchAllByScope = (scopeType: 'Page' | 'Prefab' | 'Partial' | 'App', scopeName?: string): number => {
+    if (!scopeType || typeof window === 'undefined') {
+        return 0;
+    }
+    
+    let removedCount = 0;
+    const scopedRegistry = window[`${scopeType}Scoped`] as Map<string, any>;
+    
+    if (!scopedRegistry) {
+        return 0;
+    }
+    
+    // Get all widget groups from the scoped registry
+    const identifiersToRemove: string[] = [];
+    
+    scopedRegistry.forEach((widgetGroup, widgetId) => {
+        if (widgetGroup && typeof widgetGroup === 'object') {
+            // It's a grouped structure - check each watchInfo
+            Object.keys(widgetGroup).forEach(propertyName => {
+                const watchInfo = widgetGroup[propertyName];
+                // If scopeName is provided, only remove watchers that match that scope name
+                if (!scopeName || (watchInfo && watchInfo.scopeName === scopeName)) {
+                    const identifier = `${widgetId}_${propertyName}`;
+                    identifiersToRemove.push(identifier);
+                }
+            });
+        } else {
+            // Direct identifier - check if it matches the scope name
+            const watchInfo = widgetGroup;
+            if (!scopeName || (watchInfo && watchInfo.scopeName === scopeName)) {
+                identifiersToRemove.push(widgetId);
+            }
+        }
+    });
+    
+    // Unwatch all collected identifiers
+    identifiersToRemove.forEach(identifier => {
+        if ($unwatch(identifier)) {
+            removedCount++;
+        }
+    });
+    
+    return removedCount;
 };
 
 let changedByWatch = false;
@@ -489,58 +590,29 @@ const $RAF = window.requestAnimationFrame;
 
 let ngZone;
 
-const shouldProcessWatcher = (watchInfo: any): boolean => {
-    if (!watchInfo) {
-        return false;
-    }
-    if (typeof watchInfo.fn !== 'function' || typeof watchInfo.listener !== 'function') {
-        return false;
-    }
-    if (!watchInfo.isMuted) {
-        return true;
-    }
-    if (typeof watchInfo.isMuted === 'function') {
-        try {
-            return !watchInfo.isMuted();
-        } catch (e) {
-            console.warn('Error while evaluating watcher mute state:', e);
-            return true;
-        }
-    }
-    return false;
-};
-
 const triggerWatchers = (ignoreMuted?: boolean) => {
 
     if (muted && !ignoreMuted) {
         return;
     }
 
-    const limit = 3;
+    const limit = 5;
     let pass = 1;
     let changeDetected;
 
     do {
         changeDetected = false;
-        
-        // OPTIMIZATION: Filter out muted watchers before iteration
-        // This avoids calling isMuted() repeatedly and skips expression evaluation for muted watchers
-        const activeWatchers: Array<[string, any]> = [];
-        registry.forEach((watchInfo, identifier) => {
-            if (shouldProcessWatcher(watchInfo)) {
-                activeWatchers.push([identifier, watchInfo]);
-            }
-        });
-        
-        // Only iterate through non-muted watchers
-        activeWatchers.forEach(([identifier, watchInfo]) => {
-            // Guard against watchers being cleaned up (listener/fn set to null by $unwatch)
-            // This can happen if $unwatch is called while triggerWatchers is running
-            // Check watchInfo exists and has required properties
-            if (!shouldProcessWatcher(watchInfo)) {
-                return; // Skip this watcher - it's being cleaned up or invalid
-            }
-            
+        registry.forEach((value, key) => {
+            // Handle grouped structure (widget-id => { property: watchInfo, ... })
+            if (value && typeof value === 'object' && !value.fn) {
+                // It's a grouped structure - iterate through properties
+                Object.values(value).forEach((watchInfo: any) => {
+                    if (!watchInfo || typeof watchInfo !== 'object' || !watchInfo.fn) {
+                        return;
+                    }
+                    if(watchInfo.isMuted && watchInfo.isMuted()) {
+                        return;
+                    }
             const fn = watchInfo.fn;
             const listener = watchInfo.listener;
             const ov = watchInfo.last;
@@ -550,7 +622,7 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
                 nv = fn();
             } catch (e) {
                 console.warn(`error in executing expression: '${watchInfo.expr}'`);
-                return; // Skip listener call if expression evaluation failed
+                        return;
             }
 
             if (!isEqual(nv, ov)) {
@@ -562,21 +634,43 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
                 if (isObject(nv) && !watchInfo.doNotClone && nv.__cloneable__ !== false) {
                     watchInfo.last = clone(nv);
                 }
-                
-                // Final check before calling listener - ensure it's still valid
-                // Re-check watchInfo.listener in case it was cleared during execution
-                const currentListener = watchInfo.listener;
-                if (typeof currentListener === 'function') {
-                    try {
-                        currentListener(nv, ov);
-                    } catch (e) {
-                        console.warn(`Error in watcher listener for expression '${watchInfo.expr || identifier}':`, e);
+                        listener(nv, ov);
+                        resetChangeFromWatch();
                     }
-                } else {
-                    // Listener was cleared during execution - log for debugging
-                    console.warn(`Watcher listener was cleared during execution for identifier: ${identifier}`);
+                });
+            } else {
+                // Direct watchInfo (backward compatibility for non-widget identifiers)
+                const watchInfo = value;
+                if (!watchInfo || typeof watchInfo !== 'object' || !watchInfo.fn) {
+                    return;
                 }
-                resetChangeFromWatch();
+                if(watchInfo.isMuted && watchInfo.isMuted()) {
+                    return;
+                }
+                const fn = watchInfo.fn;
+                const listener = watchInfo.listener;
+                const ov = watchInfo.last;
+                let nv;
+
+                try {
+                    nv = fn();
+                    } catch (e) {
+                    console.warn(`error in executing expression: '${watchInfo.expr}'`);
+                    return;
+                }
+
+                if (!isEqual(nv, ov)) {
+                    changeDetected = true;
+                    changedByWatch = true;
+                    watchInfo.last = nv;
+
+                    // @ts-ignore
+                    if (isObject(nv) && !watchInfo.doNotClone && nv.__cloneable__ !== false) {
+                        watchInfo.last = clone(nv);
+                    }
+                    listener(nv, ov);
+                    resetChangeFromWatch();
+                }
             }
         });
         pass++;
@@ -603,8 +697,8 @@ let skipWatchers;
 
 const debouncedTriggerWatchers = debounce(() => {
     skipWatchers = true;
-    ngZone.runOutsideAngular(() => triggerWatchers());
-}, 300);
+    ngZone.run(() => triggerWatchers());
+}, 100);
 
 export const $invokeWatchers = (force?: boolean, ignoreMuted?: boolean) => {
     if (force) {

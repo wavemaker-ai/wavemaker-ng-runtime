@@ -19,6 +19,7 @@ import {
     $invokeWatchers,
     $parseEvent,
     $unwatch,
+    $unwatchAll,
     $watch,
     addClass,
     App,
@@ -894,6 +895,15 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         this.propertyChange.complete();
         this.destroy.complete();
         this.isAttached = false;
+        
+        // MEMORY LEAK FIX: Unwatch all watchers for this widget
+        // This ensures all watchers registered for this component are cleaned up
+        if (this.widgetId) {
+            const removedCount = $unwatchAll(this.widgetId);
+            if (removedCount > 0) {
+                console.log(`🧹 Cleaned up ${removedCount} watcher(s) for widget ${this.widgetId}`);
+            }
+        }
         
         // MEMORY LEAK FIX: Clear context to release references to parent scope data
         // The context object holds references to repeater items, wizard steps, etc.
