@@ -1605,33 +1605,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 // Ignore errors during destroy
             }
         }
-
-        // MEMORY LEAK FIX: Clear gridOptions to release all function closures and data
-        // gridOptions holds many closures that capture 'this' and prevent GC
-        if (this.gridOptions) {
-            // Clear data array
-            if (this.gridOptions.data) {
-                this.gridOptions.data = [];
-            }
-            // Clear column definitions
-            if (this.gridOptions.colDefs) {
-                this.gridOptions.colDefs = [];
-            }
-            // Clear row actions
-            if (this.gridOptions.rowActions) {
-                this.gridOptions.rowActions = [];
-            }
-            // Clear header config
-            if (this.gridOptions.headerConfig) {
-                this.gridOptions.headerConfig = [];
-            }
-            // Nullify all function references to break closures
-            Object.keys(this.gridOptions).forEach(key => {
-                if (typeof this.gridOptions[key] === 'function') {
-                    this.gridOptions[key] = null;
-                }
-            });
-        }
         
         // MEMORY LEAK FIX: Clear other data structures
         this.columns = {};
