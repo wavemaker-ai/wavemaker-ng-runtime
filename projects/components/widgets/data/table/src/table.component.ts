@@ -1513,6 +1513,116 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (this.navigatorMaxResultWatch) {
             this.navigatorMaxResultWatch.unsubscribe();
         }
+        
+        // MEMORY LEAK FIX: Clear all ViewContainerRef embedded views
+        // These hold references to row data, custom expressions, and inline widgets
+        if (this.customExprViewRef) {
+            this.customExprViewRef.clear();
+        }
+        if (this.rowActionsViewRef) {
+            this.rowActionsViewRef.clear();
+        }
+        if (this.filterViewRef) {
+            this.filterViewRef.clear();
+        }
+        if (this.inlineEditViewRef) {
+            this.inlineEditViewRef.clear();
+        }
+        if (this.inlineEditNewViewRef) {
+            this.inlineEditNewViewRef.clear();
+        }
+        if (this.rowDetailViewRef) {
+            this.rowDetailViewRef.clear();
+        }
+        if (this.rowExpansionActionViewRef) {
+            this.rowExpansionActionViewRef.clear();
+        }
+        if (this.dynamicTableRef) {
+            this.dynamicTableRef.clear();
+        }
+        
+        // MEMORY LEAK FIX: Clear compiled template caches
+        this.rowActionsCompiledTl = {};
+        this.rowFilterCompliedTl = {};
+        this.inlineCompliedTl = {};
+        this.inlineNewCompliedTl = {};
+        this.customExprCompiledTl = {};
+        this.customExprCompiledSummaryTl = {};
+        this.rowDefInstances = {};
+        this.rowDefMap = {};
+        this.rowExpansionActionTl = {};
+        
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+        
+        // MEMORY LEAK FIX: Clear data arrays
+        this._gridData = [];
+        this.items = [];
+        this.selectedItems = [];
+        this.fieldDefs = [];
+        this.fullFieldDefs = [];
+        this.gridData = [];
+        this.__fullData = null;
+        
+        // MEMORY LEAK FIX: Destroy jQuery datatable widget before clearing gridOptions
+        if (this.datagridElement && this.datagridElement.datatable) {
+            try {
+                this.datagridElement.datatable('destroy');
+            } catch (e) {
+                // Ignore errors during destroy
+            }
+        }
+        
+        // MEMORY LEAK FIX: Clear other data structures
+        this.columns = {};
+        this.formfields = {};
+        this.rowFilter = {};
+        this.actions = [];
+        this._actions = { header: [], footer: [] };
+        this.exportOptions = [];
+        this.headerConfig = [];
+        this.rowActions = [];
+        
+        // MEMORY LEAK FIX: Clear all @ContentChildren QueryLists holding template references
+        // These QueryLists hold TemplateRef instances that create circular references to the parent LView
+        if (this.rowActionTmpl) {
+            this.rowActionTmpl.reset([]);
+        }
+        if (this.filterTmpl) {
+            this.filterTmpl.reset([]);
+        }
+        if (this.inlineWidgetTmpl) {
+            this.inlineWidgetTmpl.reset([]);
+        }
+        if (this.inlineWidgetNewTmpl) {
+            this.inlineWidgetNewTmpl.reset([]);
+        }
+        if (this.customExprTmpl) {
+            this.customExprTmpl.reset([]);
+        }
+        if (this.rowExpansionActionTmpl) {
+            this.rowExpansionActionTmpl.reset([]);
+        }
+        
+        // MEMORY LEAK FIX: Clear @ContentChild template reference
+        this.rowExpansionTmpl = null;
+        
+        // MEMORY LEAK FIX: Complete and clear subjects
+        if (this.selectedItemChange) {
+            this.selectedItemChange.complete();
+            this.selectedItemChange = null;
+        }
+        
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.dataNavigator = null;
+        this._tableElement = null;
+        
+       // console.log("table component destroyed");
         super.ngOnDestroy();
     }
 
