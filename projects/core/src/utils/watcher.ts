@@ -146,9 +146,9 @@ const isStaticExpression = (expr: any): boolean => {
     const trimmedExpr = expr.trim();
 
     // Expressions that always evaluate to localization strings
-    if (trimmedExpr.includes('appLocale')) {
-        return true;
-    }
+    // if (trimmedExpr.includes('appLocale')) {
+    //     return true;
+    // }
 
     // Hard-coded static expression names
     if (STATIC_EXPRESSION_NAMES.includes(trimmedExpr)) {
