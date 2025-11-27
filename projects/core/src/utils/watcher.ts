@@ -117,7 +117,7 @@ const getUpdatedWatchInfo = (expr: string, acceptsArray: boolean, listener: any)
 
     const lastIndex = expr.lastIndexOf(ARRAY_INDEX_PLACEHOLDER);
     const baseExpr = expr.substring(0, lastIndex).replace(ARRAY_INDEX_PLACEHOLDER, ARRAY_INDEX_ZERO);
-    const restExpr = expr.substring(lastIndex + ARRAY_INDEX_PLACEHOLDER.length);
+    const restExpr = expr.substring(lastIndex + 5);
 
     const arrayConsumerFn = restExpr
         ? arrayConsumer.bind(undefined, listener, restExpr)
