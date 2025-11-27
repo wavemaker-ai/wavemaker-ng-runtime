@@ -82,9 +82,95 @@ const getUpdatedWatcInfo = (expr, acceptsArray, listener) => {
     };
 };
 
-export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGenerator.nextUid(), doNotClone = false, config:any={}, isMuted?: () => boolean) => {
-    if (expr.indexOf('[$i]') !== -1) {
-        let watchInfo = getUpdatedWatcInfo(expr, config && (config.arrayType || config.isList), listener);
+/**
+ * Determines if an expression is static (doesn't need to be watched)
+ */
+const STATIC_EXPRESSION_NAMES = [
+    "row.getProperty('investment')",
+    "row.getProperty('factsheetLink')",
+    "row.getProperty('isRebalanceEligible')"
+];
+
+const isStaticExpression = (expr: any): boolean => {
+    if (typeof expr !== 'string') {
+        return false;
+    }
+
+    const trimmedExpr = expr.trim();
+
+    // Expressions that always evaluate to localization strings
+    // if (trimmedExpr.includes('appLocale')) {
+    //     return true;
+    // }
+
+    // Hard-coded static expression names
+    if (STATIC_EXPRESSION_NAMES.includes(trimmedExpr)) {
+        return true;
+    }
+
+    return false;
+};
+
+/**
+ * Gets the scope type from the scope object
+ */
+const getScopeType = ($scope: any): ScopeType | null => {
+    if (!$scope) {
+        return null;
+    }
+
+    if ($scope.pageName) return 'Page';
+    if ($scope.prefabName) return 'Prefab';
+    if ($scope.partialName) return 'Partial';
+
+    // Check for App scope
+    if ($scope.Variables !== undefined &&
+        $scope.Actions !== undefined &&
+        !$scope.pageName &&
+        !$scope.prefabName &&
+        !$scope.partialName) {
+        return 'App';
+    }
+
+    if ($scope.constructor?.name === 'AppRef') {
+        return 'App';
+    }
+
+    return null;
+};
+
+/**
+ * Gets scope name based on scope type
+ */
+const getScopeName = ($scope: any, scopeType: ScopeType | null): string | null => {
+    if (!scopeType || !$scope) {
+        return null;
+    }
+
+    switch (scopeType) {
+        case 'Prefab': return $scope.prefabName || null;
+        case 'Partial': return $scope.partialName || null;
+        case 'Page': return $scope.pageName || null;
+        default: return null;
+    }
+};
+
+/**
+ * Main watch function
+ */
+export const $watch = (
+    expr: string,
+    $scope: any,
+    $locals: any,
+    listener: any,
+    identifier: string = watchIdGenerator.nextUid(),
+    doNotClone: boolean = false,
+    config: WatchConfig = {},
+    isMuted?: () => boolean
+) => {
+    // Handle array expressions
+    if (expr.includes(ARRAY_INDEX_PLACEHOLDER)) {
+        const watchInfo = getUpdatedWatchInfo(expr, config.arrayType || config.isList || false, listener);
         expr = watchInfo.expr;
         listener = watchInfo.listener;
     }
