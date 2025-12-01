@@ -66,7 +66,6 @@ export {
     isImageFile,
     isAudioFile,
     isVideoFile,
-    isValidImageUrl,
     isValidWebURL,
     getResourceURL,
     triggerFn,

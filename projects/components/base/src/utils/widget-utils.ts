@@ -9,7 +9,6 @@ import {
     FormWidgetType,
     getClonedObject,
     initCaps,
-    isValidImageUrl,
     isValidWebURL,
     prettifyLabel,
     stringStartsWith
@@ -209,7 +208,7 @@ export const getImageUrl = (urlString, shouldEncode?, defaultUrl?) => {
             urlString =   ( defaultUrl || 'resources/images/imagelists/default-image.png' );
         }
     }
-    if (urlString && !_WM_APP_PROJECT.isPreview && !isValidImageUrl(urlString) && !urlString.startsWith(_WM_APP_PROJECT.cdnUrl)) {
+    if (urlString && !_WM_APP_PROJECT.isPreview && !isValidWebURL(urlString) && !urlString.startsWith(_WM_APP_PROJECT.cdnUrl)) {
         urlString = (_WM_APP_PROJECT.cdnUrl || '') + urlString;
     }
 
