@@ -8,6 +8,7 @@ import {
     HostListener,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     ViewChild
@@ -60,7 +61,7 @@ export const unStringify = (val, defaultVal?) => {
         provideAsWidgetRef(CheckboxComponent)
     ]
 })
-export class CheckboxComponent extends BaseFormCustomComponent implements OnInit, AfterViewInit {
+export class CheckboxComponent extends BaseFormCustomComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public proxyModel: boolean;
@@ -157,5 +158,14 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
     ngAfterViewInit() {
         super.ngAfterViewInit();
         styler(this.nativeElement.querySelector('label'), this);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.ngModel = null;
+        this.checkboxEl = null;
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }

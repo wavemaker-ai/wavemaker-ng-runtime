@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 
 import { Observable, Subject } from 'rxjs';
 
@@ -8,7 +8,7 @@ import { getAccessToken, performAuthorization, removeAccessToken } from './oAuth
 import {find, remove} from "lodash-es";
 
 @Injectable()
-export class OAuthService {
+export class OAuthService implements OnDestroy {
     constructor(private httpService: AbstractHttpService) {}
 
     providers = new Subject();
@@ -41,5 +41,16 @@ export class OAuthService {
 
     removeAccessToken(provider) {
         removeAccessToken(provider);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Complete Subject to release subscriptions
+        if (this.providers) {
+            this.providers.complete();
+            this.providers = null;
+        }
+
+        // MEMORY LEAK FIX: Clear providers config array
+        this.providersConfig = [];
     }
 }
