@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Compiler, Injectable, Injector, KeyValueDiffers, Pipe} from '@angular/core';
+import { ChangeDetectorRef, Compiler, Injectable, Injector, KeyValueDiffers, Pipe } from '@angular/core';
 import {
     AsyncPipe,
     CurrencyPipe,
@@ -34,8 +34,8 @@ import {
     ToNumberPipe,
     TrustAsPipe
 } from '@wm/components/base';
-import {AbstractI18nService, App, CustomPipeManager, getSessionStorageItem} from '@wm/core';
-import {DomSanitizer} from "@angular/platform-browser";
+import { AbstractI18nService, App, CustomPipeManager, getSessionStorageItem } from '@wm/core';
+import { DomSanitizer } from "@angular/platform-browser";
 
 @Injectable({
     providedIn: 'root'
@@ -119,13 +119,13 @@ export class PipeProvider {
         throw Error(`The pipe '${name}' could not be found`);
     }
 
-    constructor(private compiler: Compiler, private injector: Injector, private domSanitizer:DomSanitizer, private i18service: AbstractI18nService) {
+    constructor(private compiler: Compiler, private injector: Injector, private domSanitizer: DomSanitizer, private i18service: AbstractI18nService) {
         this._pipeMeta = new Map();
         this.setPipeData();
         this._pipeData.forEach(v => {
             this._pipeMeta.set(v.name, v);
         });
-        this.formatsByLocale = this.i18service? this.i18service.getwidgetLocale() : {};
+        this.formatsByLocale = this.i18service ? this.i18service.getwidgetLocale() : {};
     }
 
     meta(name) {
