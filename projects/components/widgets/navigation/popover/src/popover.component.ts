@@ -55,7 +55,7 @@ let activePopover: PopoverComponent;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, PopoverModule, AnchorComponent],
+  imports: [CommonModule, PopoverModule, AnchorComponent, ImagePipe],
     selector: 'wm-popover',
     templateUrl: './popover.component.html',
     providers: [
