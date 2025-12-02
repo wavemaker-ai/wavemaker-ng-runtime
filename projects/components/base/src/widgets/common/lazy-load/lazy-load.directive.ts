@@ -52,6 +52,8 @@ export class LazyLoadDirective implements OnDestroy {
     }
 
     ngOnDestroy() {
-        this.unSubscribeFn();
+        if (this.unSubscribeFn && typeof this.unSubscribeFn === 'function') {
+            this.unSubscribeFn();
+        }
     }
 }
