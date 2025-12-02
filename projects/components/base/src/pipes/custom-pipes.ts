@@ -81,8 +81,8 @@ export class ToDatePipe extends WmPipe implements PipeTransform {
     constructor(
         private datePipe: DatePipe,
         private i18nService: AbstractI18nService,
-        protected customPipeManager: CustomPipeManager,
-        private app: App
+        private app: App,
+        protected customPipeManager: CustomPipeManager
     ) {
         super('toDate', customPipeManager);
     }
