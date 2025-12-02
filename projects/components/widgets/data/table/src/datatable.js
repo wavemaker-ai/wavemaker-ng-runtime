@@ -583,6 +583,8 @@ $.widget('wm.datatable', {
         var self = this, preparedData,$tbody,pageStartIndex = self.getPageStartIndex(),
             startRowIndex = self.options.startRowIndex,
             isScrollorOnDemand = self.options.isNavTypeScrollOrOndemand();
+            var $activeRow = self.gridElement.find('tr.row-editing:not(.always-new-row)').first();
+            var index = $activeRow.index();
             if(isScrollorOnDemand) {
                 $tbody = this.gridElement;
                 if(this.renderTableOnViewLess) {
@@ -638,6 +640,16 @@ $.widget('wm.datatable', {
             this.options.setIsDataUpdatedByUser(false);
             this.options.clearActionRowIndex();
         }
+        if(this.options.editmode===this.CONSTANTS.QUICK_EDIT){
+            if (index>=0) {
+                const $newActiveRow = self.gridElement.find('tr').eq(index);
+                if ($newActiveRow && $newActiveRow.length) {
+                    $newActiveRow.addClass('active');
+                    $newActiveRow.trigger('click', [undefined, {action: 'edit', skipFocus:false}]);
+                    self.setActiveRow($newActiveRow);
+                    self.focusActiveRow();
+                }
+            }}
         return $tbody;
     },
 
@@ -2923,6 +2935,9 @@ $.widget('wm.datatable', {
             $htm.on('focus', 'tr.app-datagrid-row', function (e) {
                 var $row = $(e.currentTarget);
                 if (!$row.hasClass('row-editing')) {
+                    if(e.target===e.currentTarget && (e.which===0||!e.which)) {
+                        return;
+                    }
                     self.toggleEditRow(e, { $row: $row, action: 'edit'});
                 }
             });

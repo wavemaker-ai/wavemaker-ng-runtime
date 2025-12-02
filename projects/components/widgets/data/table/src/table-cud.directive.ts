@@ -224,7 +224,7 @@ export class TableCUDDirective {
                 this.table.initiateSelectItem('current', response, undefined, false, options.callBack);
                 this.updateVariable(response, options.callBack);
             } else if (!this.table.datasource.execute(DataSource.Operation.IS_API_AWARE)) {
-                this.table.initiateSelectItem('current', response, undefined, false, options.callBack);
+                this.table.initiateSelectItem('current', response, undefined,this.table.datasource.category === 'wm.Variable', options.callBack);
             }
             triggerFn(options.success, response);
             this.table.invokeEventCallback('rowupdate', {$event: options.event, $data: response, row: response});

@@ -347,10 +347,7 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
     ngOnDestroy(): void {
         // MEMORY LEAK FIX: Unwatch all Page-scoped watchers for THIS specific page when page is destroyed
         if (this.pageName) {
-            const removedCount = $unwatchAllByScope('Page', this.pageName);
-            if (removedCount > 0) {
-                console.log(`🧹 Cleaned up ${removedCount} Page-scoped watcher(s) for page ${this.pageName}`);
-            }
+            $unwatchAllByScope('Page', this.pageName);
         }
         //this.captureApplicationThumbnail();
         this.savePageSnapShot();

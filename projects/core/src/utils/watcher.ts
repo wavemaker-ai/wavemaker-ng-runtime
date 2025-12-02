@@ -117,7 +117,7 @@ const getUpdatedWatchInfo = (expr: string, acceptsArray: boolean, listener: any)
 
     const lastIndex = expr.lastIndexOf(ARRAY_INDEX_PLACEHOLDER);
     const baseExpr = expr.substring(0, lastIndex).replace(ARRAY_INDEX_PLACEHOLDER, ARRAY_INDEX_ZERO);
-    const restExpr = expr.substring(lastIndex + ARRAY_INDEX_PLACEHOLDER.length);
+    const restExpr = expr.substring(lastIndex + 5);
 
     const arrayConsumerFn = restExpr
         ? arrayConsumer.bind(undefined, listener, restExpr)
@@ -146,9 +146,9 @@ const isStaticExpression = (expr: any): boolean => {
     const trimmedExpr = expr.trim();
 
     // Expressions that always evaluate to localization strings
-    if (trimmedExpr.includes('appLocale')) {
-        return true;
-    }
+    // if (trimmedExpr.includes('appLocale')) {
+    //     return true;
+    // }
 
     // Hard-coded static expression names
     if (STATIC_EXPRESSION_NAMES.includes(trimmedExpr)) {
@@ -503,4 +503,4 @@ export const $appDigest = (() => {
 })();
 
 // Export registry for debugging
-// (window as any).watchRegistry = registry;
+(window as any).watchRegistry = registry;
