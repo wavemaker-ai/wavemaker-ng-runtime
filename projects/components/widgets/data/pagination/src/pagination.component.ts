@@ -805,6 +805,10 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         }
         this.navigatePage('first', $event, true);
         this.calculatePagingValues();
+        if(this.nativeElement.closest('popover-container, .popover')){
+            $event.stopPropagation();
+            this.bsDropdown.hide()
+        }
     }
     ngAfterViewInit() {
         const paginationElem =  this.nativeElement as HTMLElement;
