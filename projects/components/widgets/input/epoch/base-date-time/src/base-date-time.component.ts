@@ -84,6 +84,11 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
     public pm: string;
     private dateOnShowSubscription: Subscription;
     private cancelLocaleChangeSubscription;
+    private hours;
+    private minutes;
+    private seconds;
+    private hourInputHandler;
+    private minuteInputHandler;
     public get timeZone() { return this.inj.get(AbstractI18nService).getTimezone(this); }
 
     formatsByLocale = {'timezone': ''};
@@ -159,6 +164,14 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
 
     resetDisplayInput() {
         $(this.nativeElement).find('.display-input').val('');
+    }
+    public onPickerClosed() {
+        if (this.hours && this.hourInputHandler) {
+            this.hours.removeEventListener('input', this.hourInputHandler);
+        }
+        if (this.minutes && this.minuteInputHandler) {
+            this.minutes.removeEventListener('input', this.minuteInputHandler);
+        }
     }
 
     public validate(c: AbstractControl) {
@@ -784,6 +797,24 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                 }
             });
         });
+        const body = document.body;
+        this.seconds = body.querySelector('bs-dropdown-container .dropdown-menu [aria-label="seconds"]') as HTMLInputElement|| null;
+        this.hours = body.querySelector('bs-dropdown-container .dropdown-menu [aria-label="hours"]') as HTMLInputElement || null;
+        this.minutes = body.querySelector('bs-dropdown-container .dropdown-menu [aria-label="minutes"]') as HTMLInputElement || null;
+        if (this.hours) {
+            this.hourInputHandler = (e: any) => {
+                if (e?.target?.value?.length == 2) {
+                    this.minutes?.focus();
+                }
+            };this.hours.addEventListener('input', this.hourInputHandler);
+        }
+        if (this.minutes) {
+            this.minuteInputHandler = (e: any) => {
+                if (e?.target?.value?.length == 2) {
+                    this.seconds?.focus();
+                }
+            };this.minutes.addEventListener('input', this.minuteInputHandler);
+        }
         this.removeKeyupListener = () => {
             inputFields.first().off('keyup');
         };

@@ -370,6 +370,7 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
     }
 
     public hideTimepickerDropdown() {
+        (this as any).onPickerClosed();
         this.invokeOnTouched();
         this.status.isopen = false;
         if (this.deregisterEventListener) {

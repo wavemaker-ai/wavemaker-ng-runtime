@@ -216,6 +216,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
             const dropdownElement = $(bodyElement).find('>bs-dropdown-container .dropdown-menu').get(0);
             this.deregisterTimepickeEventListener = addEventListenerOnElement(bodyElement, dropdownElement, this.nativeElement, 'click', this.isDropDownDisplayEnabledOnInput(this.showdropdownon), () => {
                 this.toggleTimePicker(false);
+                (this as any).onPickerClosed();
             }, EVENT_LIFE.ONCE, true);
         }, 350);
     }
