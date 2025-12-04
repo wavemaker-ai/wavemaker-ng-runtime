@@ -33,7 +33,7 @@
         }
       </li>
     }
-    <div class="status" [hidden]="_loadingItems || !(datacompletemsg && dataProvider.isLastPage)">
+    <div class="status" [hidden]="_loadingItems || !(datacompletemsg && dataProvider?.isLastPage)">
       <span [textContent]="datacompletemsg"></span>
     </div>
     <div class="status" [hidden]="!_loadingItems">
