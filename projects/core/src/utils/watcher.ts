@@ -11,8 +11,7 @@ const ARRAY_INDEX_ZERO = '[0]';
 const DEBOUNCE_WAIT = 100;
 const MAX_WATCH_CYCLES = 5;
 
-// New registry structure: Map<widgetId, Map<propName, watchInfo>>
-const registry = new Map<string, Map<string, any>>();
+const registry = new Map<string, any>();
 const watchIdGenerator = new IDGenerator('watch-id-');
 
 export const FIRST_TIME_WATCH = Object.freeze({});
@@ -50,7 +49,6 @@ let appRef: any;
  *  - UI stabilization delay (1–2 seconds)
  *  - Cooldown to prevent repeated scheduling
  ********************************************************************/
-
 const CLEANUP_TRIGGER_DELTA = 300;   // watcher change threshold
 const CLEANUP_DELAY = 1500;          // delay before running cleanup
 const CLEANUP_COOLDOWN = 4000;       // prevent re-scheduling for 4s
@@ -66,29 +64,22 @@ function getWatcherCount(): number {
 }
 
 export const cleanupStaleWatchers = (): number => {
-    console.log(".........Cleaning up stale watchers...registry.size....", registry.size);
+    // console.log(".........Cleaning up stale watchers...registry.size....", registry.size);
     let removed = 0;
 
     registry.forEach((bucket, widgetId) => {
-        bucket.forEach((watchInfo, propName) => {
-            if (propName === "__sharedContext__") return;
-            // 1. If watcher belongs to DOM element no longer present
-            if (widgetId !== "__global__") {
-                if (!document.querySelector(`[widget-id="${widgetId}"]`)) {
-                    if (watchInfo.destroyFn) {
+        if (!document.querySelector(`[widget-id="${widgetId}"]`)) {
+            for (const key in bucket) {
+                if (bucket.hasOwnProperty(key) && key !== "scopeType" && key !== "scopeName" && typeof bucket[key] !== "function") {
+                    let watchInfo = bucket[key];
+                    if (watchInfo && watchInfo.destroyFn) {
                         watchInfo.destroyFn();
                     }
-                    removed++;
-                    return;
                 }
             }
-        });
-        if (bucket.size === 0 && widgetId !== "__global__") {
+            removed++;
             registry.delete(widgetId);
-        }
-        // If only shared remains → safe cleanup
-        if (bucket.size === 1 && bucket.has("__sharedContext__")) {
-            registry.delete(widgetId);
+            return;
         }
     });
     return removed;
@@ -169,30 +160,6 @@ const getPropertyName = (identifier: string): string => {
     const match = identifier.match(WIDGET_PROPERTY_REGEX);
     return match ? match[1] : identifier;
 };
-
-/**
- * Helper to extract widgetId and propName for new registry structure
- */
-function extractIds(identifier: string): { widgetId: string; propName: string } {
-    const idx = identifier.lastIndexOf("_");
-    // No underscore → global watcher
-    if (idx === -1) {
-        return {
-            widgetId: "__global__",    // special bucket
-            propName: identifier       // use full id as key
-        };
-    }
-    const widgetId = identifier.substring(0, idx);
-    const propName = identifier.substring(idx + 1);
-    // widgetId exists but propName empty → also global
-    if (!widgetId || !propName) {
-        return {
-            widgetId: "__global__",
-            propName: identifier
-        };
-    }
-    return { widgetId, propName };
-}
 
 /**
  * Array consumer wrapper for array-based expressions
@@ -349,28 +316,9 @@ export const $watch = (
     const scopeType = getScopeType($scope);
     const scopeName = getScopeName($scope, scopeType);
 
-    const { widgetId, propName } = extractIds(identifier);
-
-    if (!registry.has(widgetId)) {
-        registry.set(widgetId, new Map());
-    }
-
-    const bucket = registry.get(widgetId)!;
-    
-    // Store shared context for this widget
-    bucket.set("__sharedContext__", {
-        $scope,
-        $locals
-    });
-
     const destroyFn = () => $unwatch(identifier);
-    const origFn = fn;
-
     const watchInfo: WatchInfo = {
-        fn: function () {
-            const shared = bucket.get("__sharedContext__");
-            return origFn.call(expr, shared.$scope, shared.$locals);
-        },
+        fn: fn.bind(null, $scope, $locals),
         listener,
         expr,
         last: FIRST_TIME_WATCH,
@@ -381,7 +329,19 @@ export const $watch = (
         destroyFn
     };
 
-    bucket.set(propName, watchInfo);
+    // Store in registry
+    const widgetId = getWidgetId(identifier);
+
+    if (widgetId) {
+        const propertyName = getPropertyName(identifier);
+        if (!registry.has(widgetId)) {
+            registry.set(widgetId, {});
+        }
+        const widgetGroup = registry.get(widgetId);
+        widgetGroup[propertyName] = watchInfo;
+    } else {
+        registry.set(identifier, watchInfo);
+    }
 
     return destroyFn;
 };
@@ -390,22 +350,33 @@ export const $watch = (
  * Unwatches a single identifier
  */
 export const $unwatch = (identifier: string): boolean => {
-    const { widgetId, propName } = extractIds(identifier);
+    const widgetId = getWidgetId(identifier);
 
-    const bucket = registry.get(widgetId);
-    if (!bucket) return false;
+    if (widgetId) {
+        const propertyName = getPropertyName(identifier);
+        const widgetGroup = registry.get(widgetId);
 
-    const deleted = bucket.delete(propName);
-
-    if (bucket.size === 0 && widgetId !== "__global__") {
-        registry.delete(widgetId);
+        //@ts-ignore
+        if (widgetGroup && typeof widgetGroup === 'object' && !widgetGroup.fn) {
+            const watchInfo = widgetGroup[propertyName];
+            if (watchInfo) {
+                delete widgetGroup[propertyName];
+                // Clean up empty widget groups
+                if (Object.keys(widgetGroup).length === 0) {
+                    registry.delete(widgetId);
+                }
+                return true;
+            }
+        }
     }
-    // If only shared remains, remove the entire widget bucket
-    if (bucket.size === 1 && bucket.has("__sharedContext__")) {
-        registry.delete(widgetId);
+
+    // Fallback to direct lookup
+    if (registry.has(identifier)) {
+        registry.delete(identifier);
+        return true;
     }
 
-    return deleted;
+    return false;
 };
 
 /**
@@ -416,18 +387,31 @@ export const $unwatchAll = (widgetId: string): number => {
         return 0;
     }
 
-    const bucket = registry.get(widgetId);
-    if (!bucket) return 0;
+    const widgetGroup = registry.get(widgetId);
 
-    let count = 0;
-    bucket.forEach((_, propName) => {
-        if (propName !== "__sharedContext__") {
-            count++;
+    if (widgetGroup && typeof widgetGroup === 'object' && !widgetGroup.fn) {
+        const count = Object.keys(widgetGroup).length;
+        registry.delete(widgetId);
+        return count;
+    }
+
+    // Fallback: find all identifiers starting with this widget ID
+    let removedCount = 0;
+    const identifiersToRemove: string[] = [];
+
+    registry.forEach((_, key) => {
+        if (key.startsWith(widgetId + '_')) {
+            identifiersToRemove.push(key);
         }
     });
 
-    registry.delete(widgetId);
-    return count;
+    identifiersToRemove.forEach(identifier => {
+        if ($unwatch(identifier)) {
+            removedCount++;
+        }
+    });
+
+    return removedCount;
 };
 
 /**
@@ -442,15 +426,23 @@ export const $unwatchAllByScope = (scopeType: ScopeType, scopeName?: string): nu
     let removedCount = 0;
     const identifiersToRemove: string[] = [];
 
-    registry.forEach((bucket, widgetId) => {
-        bucket.forEach((watchInfo, propName) => {
-            if (propName === "__sharedContext__") return;
-            
+    registry.forEach((value, key) => {
+        // Handle grouped structure (widget groups)
+        if (value && typeof value === 'object' && !value.fn) {
+            Object.entries(value).forEach(([propertyName, watchInfo]: [string, any]) => {
+                if (watchInfo?.scopeType === scopeType &&
+                    (!scopeName || watchInfo.scopeName === scopeName)) {
+                    identifiersToRemove.push(`${key}_${propertyName}`);
+                }
+            });
+        } else {
+            // Direct watchInfo
+            const watchInfo = value as WatchInfo;
             if (watchInfo?.scopeType === scopeType &&
                 (!scopeName || watchInfo.scopeName === scopeName)) {
-                identifiersToRemove.push(`${widgetId}_${propName}`);
+                identifiersToRemove.push(key);
             }
-        });
+        }
     });
 
     // Unwatch all collected identifiers
@@ -509,26 +501,31 @@ const triggerWatchers = (ignoreMuted: boolean = false): void => {
     do {
         changeDetected = false;
 
-        registry.forEach((bucket, widgetId) => {
-            bucket.forEach((watchInfo, propName) => {
-                if (propName === "__sharedContext__") {
-                    return;
-                }
-                if (processWatchInfo(watchInfo)) {
+        registry.forEach((value) => {
+            // Handle grouped structure
+            if (value && typeof value === 'object' && !value.fn) {
+                Object.values(value).forEach((watchInfo: any) => {
+                    if (processWatchInfo(watchInfo)) {
+                        changeDetected = true;
+                    }
+                });
+            } else {
+                // Direct watchInfo
+                if (processWatchInfo(value as WatchInfo)) {
                     changeDetected = true;
                 }
-            });
+            }
         });
 
         pass++;
     } while (changeDetected && pass < MAX_WATCH_CYCLES);
 
+    // Schedule cleanup after watchers are triggered
+    scheduleThresholdCleanup();
+
     if (changeDetected && pass === MAX_WATCH_CYCLES) {
         console.warn(`Watch cycles exceeded limit of ${MAX_WATCH_CYCLES}`);
     }
-
-    // Schedule cleanup after watchers are triggered
-    scheduleThresholdCleanup();
 };
 
 // Angular zone integration
