@@ -51,6 +51,12 @@ export class HtmlDirective extends StylableComponent implements OnInit {
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
+        // Guard against property changes after component destruction
+        // This can happen when property changes are queued asynchronously
+        if (this.isDestroyed) {
+            return;
+        }
+
         if (key === 'content') {
             // Check for trustPipe safe values
             let bindContent = this.nativeElement.getAttribute('content.bind');
@@ -58,7 +64,13 @@ export class HtmlDirective extends StylableComponent implements OnInit {
             if (typeof nv === 'object' && safeValue) {
                 setProperty(this.nativeElement, 'innerHTML', nv[Object.keys(nv)[0]]);
             }  else {
-                setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(nv, SecurityContext.HTML));
+                // Guard against sanitizePipe being null/undefined
+                if (this.sanitizePipe) {
+                    setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(nv, SecurityContext.HTML));
+                } else {
+                    // Fallback to textContent if sanitizePipe is not available
+                    setProperty(this.nativeElement, 'textContent', nv);
+                }
             }
         } else {
             super.onPropertyChange(key, nv, ov);

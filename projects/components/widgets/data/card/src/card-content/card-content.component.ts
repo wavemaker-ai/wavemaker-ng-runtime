@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 
 import { APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 import { registerProps } from './card-content.props';
@@ -17,7 +17,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(CardContentComponent)
     ]
 })
-export class CardContentComponent extends StylableComponent implements AfterViewInit {
+export class CardContentComponent extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ViewChild('cardContentContainer') private cardContentContainerElRef: ElementRef;
@@ -29,5 +29,12 @@ export class CardContentComponent extends StylableComponent implements AfterView
     ngAfterViewInit() {
         super.ngAfterViewInit();
         styler(this.cardContentContainerElRef.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.cardContentContainerElRef = null;
+
+        super.ngOnDestroy();
     }
 }

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IMaskModule } from 'angular-imask';
-import {Component, ElementRef, Inject, Injector, OnInit, Optional, ViewChild} from '@angular/core';
+import {Component, ElementRef, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
 import {IWidgetConfig, provideAs, provideAsWidgetRef} from '@wm/components/base';
@@ -25,7 +25,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(InputTextComponent)
     ]
 })
-export class InputTextComponent extends BaseInput implements OnInit{
+export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     public required: boolean;
@@ -124,5 +124,15 @@ export class InputTextComponent extends BaseInput implements OnInit{
     ngOnInit() {
         super.ngOnInit();
         this.isFocused = !!this.datavalue;
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear all ViewChild references
+        this.inputEl = null;
+        this.ngModel = null;
+        this.imask = null;
+
+        // Call parent ngOnDestroy (BaseInput → BaseFormCustomComponent → StylableComponent → BaseComponent)
+        super.ngOnDestroy();
     }
 }

@@ -1,4 +1,4 @@
-import {AfterViewInit, ContentChildren, Directive, Inject, Injector, Optional} from '@angular/core';
+import {AfterViewInit, ContentChildren, Directive, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 
 import {addForIdAttributes, switchClass} from '@wm/core';
 
@@ -28,7 +28,7 @@ const CAPTION_POSITION = {
         provideAsWidgetRef(CompositeDirective)
     ]
 })
-export class CompositeDirective extends StylableComponent implements AfterViewInit {
+export class CompositeDirective extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     // this is the reference to the component refs inside the form-group
@@ -64,7 +64,9 @@ export class CompositeDirective extends StylableComponent implements AfterViewIn
     protected assignRequiredToSubComponents() {
         if (this.required && this.componentRefs) {
             setTimeout(() => {
-                this.componentRefs.forEach(componentRef => componentRef.widget.required = true);
+                if (this.componentRefs) {
+                    this.componentRefs.forEach(componentRef => componentRef.widget.required = true);
+                }
             }, 50);
         }
     }
@@ -74,5 +76,14 @@ export class CompositeDirective extends StylableComponent implements AfterViewIn
         addForIdAttributes(this.nativeElement);
 
         this.assignRequiredToSubComponents();
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ContentChildren QueryList reference
+        if (this.componentRefs) {
+            this.componentRefs = null;
+        }
+
+        super.ngOnDestroy();
     }
 }

@@ -35,7 +35,7 @@ export class TrailingZeroDecimalPipe implements PipeTransform {
 }
 
 @Pipe({
-    standalone: true,
+  standalone: true,
     name: 'toDate'
 })
 export class ToDatePipe extends WmPipe implements PipeTransform {
@@ -78,7 +78,12 @@ export class ToDatePipe extends WmPipe implements PipeTransform {
         return this.returnFn('', arguments,this.app.Variables);
     }
 
-    constructor(private datePipe: DatePipe, private i18nService: AbstractI18nService, private app: App, protected customPipeManager: CustomPipeManager) {
+    constructor(
+        private datePipe: DatePipe,
+        private i18nService: AbstractI18nService,
+        private app: App,
+        protected customPipeManager: CustomPipeManager
+    ) {
         super('toDate', customPipeManager);
     }
 }

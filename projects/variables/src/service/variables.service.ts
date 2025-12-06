@@ -167,7 +167,13 @@ export class VariablesService {
                this.processBinding(varInstance, scope, 'dataBinding', this.getBindSourceTarget(varInstance));
                varInstance.httpService = this.httpService;
                varInstance.dateFormatter = new Formatter();
-               varInstance.subscribe('afterInvoke', () => $invokeWatchers(true));
+               // MEMORY LEAK FIX: Store subscription unsubscribe function (cleanup handled by registerDestroyListener)
+               const afterInvokeUnsubscribe = varInstance.subscribe('afterInvoke', () => $invokeWatchers(true));
+               // Store on variable for potential manual cleanup if needed
+               if (!varInstance._eventSubscriptions) {
+                   varInstance._eventSubscriptions = [];
+               }
+               varInstance._eventSubscriptions.push(afterInvokeUnsubscribe);
                if (varInstance.category === 'wm.LiveVariable' && varInstance.operation === 'read') {
                    processFilterExpBindNode(varInstance._context, varInstance.filterExpressions, varInstance);
                }

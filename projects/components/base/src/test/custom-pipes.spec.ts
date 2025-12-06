@@ -186,6 +186,7 @@ describe('ToDate pipe', () => {
         jest.spyOn(customPipeManager, 'getCustomPipe').mockReturnValue(customPipe);
 
         // Re-instantiate the pipe to trigger the constructor logic
+        app = TestBed.inject(App);
         pipe = TestBed.runInInjectionContext(() =>
             new ToDatePipe(datePipe, i18nService, app, customPipeManager)
         );

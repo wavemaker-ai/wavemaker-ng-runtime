@@ -1,6 +1,6 @@
 import { FormsModule } from '@angular/forms';
 import { ColorPickerService, ColorPickerDirective } from 'ngx-color-picker';
-import { Component, ElementRef, Inject, Injector, Optional, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild } from '@angular/core';
 import { CommonModule } from "@angular/common";
 import { NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 
@@ -28,7 +28,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         ColorPickerService
     ]
 })
-export class ColorPickerComponent extends BaseFormCustomComponent {
+export class ColorPickerComponent extends BaseFormCustomComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     public required: boolean;
@@ -101,5 +101,15 @@ export class ColorPickerComponent extends BaseFormCustomComponent {
             this.outsideclick = (nv === AUTOCLOSE_TYPE.OUTSIDECLICK || nv === AUTOCLOSE_TYPE.ALWAYS) ? true : false;
         }
         super.onPropertyChange(key, nv, ov);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear all ViewChild references
+        this.ngModel = null;
+        this.inputEl = null;
+        this.cpDirective = null;
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }
