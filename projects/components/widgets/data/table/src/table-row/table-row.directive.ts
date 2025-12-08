@@ -1,4 +1,4 @@
-import {Directive, Inject, Injector, OnInit, Optional, SkipSelf} from '@angular/core';
+import {Directive, Inject, Injector, OnDestroy, OnInit, Optional, SkipSelf} from '@angular/core';
 
 import { BaseComponent, provideAsWidgetRef } from '@wm/components/base';
 
@@ -14,7 +14,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-table-row', hostClass: ''};
         provideAsWidgetRef(TableRowDirective)
     ]
 })
-export class TableRowDirective extends BaseComponent implements OnInit {
+export class TableRowDirective extends BaseComponent implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     config;
@@ -58,5 +58,14 @@ export class TableRowDirective extends BaseComponent implements OnInit {
         if (key === 'content' && this.config) {
             this.config.content = this.content;
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear table and config references
+        this.table = null;
+        this.config = null;
+
+        // Call parent ngOnDestroy (BaseComponent has cleanup)
+        super.ngOnDestroy();
     }
 }

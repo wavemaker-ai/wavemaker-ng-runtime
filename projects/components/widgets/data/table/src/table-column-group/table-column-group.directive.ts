@@ -1,4 +1,4 @@
-import {Directive, Inject, Injector, OnInit, Optional, SkipSelf} from '@angular/core';
+import {Directive, Inject, Injector, OnDestroy, OnInit, Optional, SkipSelf} from '@angular/core';
 
 import { BaseComponent,  provideAsWidgetRef, setHeaderConfigForTable} from '@wm/components/base';
 import { registerProps } from './table-column-group.props';
@@ -13,7 +13,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-table-column-group', hostClass: ''};
         provideAsWidgetRef(TableColumnGroupDirective)
     ]
 })
-export class TableColumnGroupDirective extends BaseComponent implements OnInit {
+export class TableColumnGroupDirective extends BaseComponent implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     accessroles;
@@ -63,5 +63,15 @@ export class TableColumnGroupDirective extends BaseComponent implements OnInit {
         const colIndex = parseInt(this.getAttr('index'), 10);
         const fieldName = this.group && this.group.name;
         setHeaderConfigForTable(this.table.headerConfig, this.config, fieldName, fieldName ? colIndex : headerIndex);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear table, group, and config references
+        this.table = null;
+        this.group = null;
+        this.config = null;
+
+        // Call parent ngOnDestroy (BaseComponent has cleanup)
+        super.ngOnDestroy();
     }
 }
