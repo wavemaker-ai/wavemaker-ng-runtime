@@ -8,6 +8,7 @@ import { AbstractDialogService, findRootContainer, generateGUId, isMobile } from
 
 import { BaseComponent, IDialog, IWidgetConfig, WidgetConfig } from '@wm/components/base';
 
+
 const invokeOpenedCallback = (ref) => {
     if (ref) {
         setTimeout(() => {
@@ -63,7 +64,6 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
     public sheet: string | boolean;
     public sheetPosition: string;
     private dialogOriginFocusStack: HTMLElement[] = [];
-    private closeCallBackFn: Function;
 
     protected constructor(
         inj: Injector,
@@ -76,9 +76,35 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
         this.bsModal = inj.get(BsModalService);
         const router = inj.get(Router);
 
-        // In ngx-bootstrap v20+, modal events are handled differently
-        // We'll handle the events directly on the modal reference when it's created
         const subscriptions: Subscription[] = [
+            this.bsModal.onShown.subscribe(({ id }) => {
+                const ref = this.dialogService.getLastOpenedDialog();
+                if (ref === this && !this.dialogId) {
+                    // Always get the reference of last pushed dialog in the array for calling onOpen callback
+                    invokeOpenedCallback(ref);
+                    this.dialogId = id;
+                }
+            }),
+            this.bsModal.onShow.subscribe(() => { }),
+            this.bsModal.onHidden.subscribe((closeReason) => {
+                let ref = this.dialogService.getDialogRefFromClosedDialogs();
+                if (this.dialogId && closeReason?.id === this.dialogId) {
+                    ref = this;
+                } else if (closeReason === 'esc' || closeReason === 'backdrop-click') {
+                    ref = this.dialogService.getLastOpenedDialog();
+                }
+                if (ref === this) {
+                    this.dialogId = null;
+                    // remove the dialog reference from opened dialogs and closed dialogs
+                    this.dialogService.removeFromOpenedDialogs(ref);
+                    this.dialogService.removeFromClosedDialogs(ref);
+                    invokeClosedCallback(ref);
+                    if (ref.closeCallBackFn) {
+                        ref.closeCallBackFn();
+                    }
+                }
+            }),
+            this.bsModal.onHide.subscribe(() => { }),
             router.events.subscribe(e => {
                 if (e instanceof NavigationEnd) {
                     this.close();
@@ -116,19 +142,6 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
         this.modalOptions.ariaLabelledBy = this.titleId;
         this.dialogOriginFocusStack.push(document.activeElement as HTMLElement);
         this.dialogRef = this.bsModal.show(this.getTemplateRef(), this.modalOptions);
-
-        // In ngx-bootstrap v20+, modal events are handled differently
-        // We need to trigger the callbacks manually since the global event emitters are removed
-        if (this.dialogRef) {
-            this.dialogId = this.dialogRef.id?.toString();
-
-            // Since onShown/onHidden are no longer available, we'll use setTimeout to ensure 
-            // the modal is fully rendered before invoking the callback
-            setTimeout(() => {
-                invokeOpenedCallback(this);
-            }, 0);
-        }
-
         // Fix for [WMS-23948]: Focus moving out of active Dialog widget
         if (this.dialogService.getOpenedDialogs().length === 1 && (isMobile())) {
             const parentSelector = $('body > app-root')[0];
@@ -148,16 +161,6 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
             const lastDialogOrigin = this.dialogOriginFocusStack.pop();
             this.dialogService.addToClosedDialogs(this);
             this.dialogRef.hide();
-
-            // In ngx-bootstrap v20+, we need to manually handle the hidden callback
-            this.dialogId = null;
-            this.dialogService.removeFromOpenedDialogs(this);
-            this.dialogService.removeFromClosedDialogs(this);
-            invokeClosedCallback(this);
-            if (this.closeCallBackFn) {
-                this.closeCallBackFn();
-            }
-
             // Return focus to the originating element upon dialog closure
             lastDialogOrigin?.focus();
         }

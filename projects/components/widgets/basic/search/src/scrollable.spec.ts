@@ -5,6 +5,7 @@ import {ScrollableDirective} from './scrollable.directive';
 import {SearchComponent} from './search.component';
 
 @Component({
+    standalone: false,
     template: '<div scrollableHandler></div>'
 })
 class TestComponent { }

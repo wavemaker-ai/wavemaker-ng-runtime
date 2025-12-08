@@ -13,6 +13,7 @@ jest.mock('@wm/core', () => ({
 }));
 
 @Component({
+    standalone: false,
     template: `<div wmListItem [item]="testItem"></div>`
 })
 class TestComponent {
@@ -51,6 +52,13 @@ describe('ListItemDirective', () => {
         directiveElement = fixture.debugElement.query(By.directive(ListItemDirective));
         directive = directiveElement.injector.get(ListItemDirective);
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        if (fixture) {
+            fixture.destroy();
+            fixture = null;
+        }
     });
 
     it('should create an instance', () => {
@@ -196,7 +204,9 @@ describe('ListItemDirective', () => {
                 { widget: { name: 'widget2', value: 'value2' } }
             ];
             directive.nativeElement = {
-                querySelectorAll: jest.fn().mockReturnValue(mockWidgets)
+                querySelectorAll: jest.fn().mockReturnValue(mockWidgets),
+                querySelector: jest.fn().mockReturnValue(null),
+                removeEventListener: jest.fn()
             } as any;
 
             // Mock the existing _currentItemWidgets

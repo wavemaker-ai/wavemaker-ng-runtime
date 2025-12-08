@@ -34,6 +34,7 @@ class MockAbstractDialogService {
 const markup = `<div wmDialog></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class DialogWrapperComponent {
@@ -41,6 +42,7 @@ class DialogWrapperComponent {
 }
 
 @Component({
+    standalone: false,
     selector: 'wm-form',
     template: '<form></form>'
 })
@@ -55,6 +57,7 @@ class MockFormComponent {
 }
 
 @Component({
+    standalone: false,
     selector: 'wm-button',
     template: '<button></button>'
 })
@@ -69,6 +72,7 @@ class MockButtonComponent {
 }
 
 @Component({
+    standalone: false,
     selector: 'wm-message',
     template: '<div></div>'
 })

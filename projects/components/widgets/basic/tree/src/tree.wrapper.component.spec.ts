@@ -6,7 +6,7 @@ import { compileTestComponent, mockApp } from '../../../../base/src/test/util/co
 import { AbstractI18nService, App } from '@wm/core';
 import { MockAbstractI18nService } from '../../../../base/src/test/util/date-test-util';
 import '@ztree/ztree_v3/js/jquery.ztree.all.js';
-import "libraries/scripts/tree-keyboard-navigation/keyboard-navigation.js";
+import "./keyboard-navigation.js";
 
 const markup = `<ul wmTree name="tree1" class="testClass" height="800" width="200" tabindex="1" show="true"
                 collapse.event="tree1Collapse($event, widget, $item, $path)"
@@ -18,6 +18,7 @@ const markup = `<ul wmTree name="tree1" class="testClass" height="800" width="20
                 padding="3px 4px 5px 6px"></ul>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class TreeWrapperComponent {

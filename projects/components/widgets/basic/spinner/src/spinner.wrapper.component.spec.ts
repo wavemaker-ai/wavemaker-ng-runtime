@@ -10,6 +10,7 @@ import { mockApp } from "projects/components/base/src/test/util/component-test-u
 const markup = `<div wmSpinner #wm_spinner1="wmSpinner" [attr.aria-label]="wm_spinner1.arialabel || 'Loading...'" hint="Loading..." name="spinner1">`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class SpinnerWrapperComponent {

@@ -18,6 +18,7 @@ jest.mock('@wm/core', () => ({
 const markup = `<div wmFileUpload name="testfileupload" select.event="onSelect($event, widget, selectedFiles)" error.event="onError($event, widget, files)" role="input"></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 
