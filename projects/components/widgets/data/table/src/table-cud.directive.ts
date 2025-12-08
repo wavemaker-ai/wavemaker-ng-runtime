@@ -1,4 +1,4 @@
-import {Directive, Inject, Self} from '@angular/core';
+import { Directive, Inject, OnDestroy, Self } from '@angular/core';
 
 import {
     $appDigest,
@@ -26,7 +26,7 @@ const OPERATION = {
   standalone: true,
     selector: '[wmTableCUD]'
 })
-export class TableCUDDirective {
+export class TableCUDDirective implements OnDestroy {
 
     constructor(
         @Self() @Inject(TableComponent) private table,
@@ -488,5 +488,12 @@ export class TableCUDDirective {
         if ($row.length) {
             this.table.callDataGridMethod('cancelEdit', $row);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear all references
+        this.table = null;
+        this.dialogService = null;
+        this.app = null;
     }
 }

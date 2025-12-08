@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 
 import {debounceTime} from 'rxjs/operators';
+import {Subscription} from 'rxjs';
 
 import {$appDigest, AbstractDialogService, App, getClonedObject, isDefined, triggerFn} from '@wm/core';
 import {provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
@@ -41,7 +42,7 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
 
     private dialogId;
     private $queue = [];
-    private selectedItemChangeSubscription;
+    private selectedItemChangeSubscription: Subscription;
 
     private tableOptions: any = {
         'multiselect': false,
@@ -76,9 +77,9 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
                 if (typeof this.table.datagridElement.datatable === 'function' && this.table.datagridElement.datatable('instance')) {
                     this.table.datagridElement.datatable('option', this.tableOptions);
 
-                    this.selectedItemChangeSubscription = this.table.selectedItemChange$
-                        .pipe(debounceTime(250))
-                        .subscribe(this.onSelectedItemChange.bind(this));
+            this.selectedItemChangeSubscription = this.table.selectedItemChange$
+                .pipe(debounceTime(250))
+                .subscribe(this.onSelectedItemChange.bind(this));
 
                     if (!this.isLayoutDialog && !this.form) {
                         this.table.datagridElement.datatable('option', {
@@ -274,10 +275,18 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
     }
 
     ngOnDestroy() {
-        // Unsubscribe from selectedItemChange subscription to prevent memory leak
+        // MEMORY LEAK FIX: Unsubscribe from selectedItemChange$
         if (this.selectedItemChangeSubscription) {
             this.selectedItemChangeSubscription.unsubscribe();
+            this.selectedItemChangeSubscription = null;
         }
+
+        // MEMORY LEAK FIX: Clear ContentChild reference
+        this.table = null;
+
+        // MEMORY LEAK FIX: Clear queue array
+        this.$queue = [];
+
         super.ngOnDestroy();
     }
 }

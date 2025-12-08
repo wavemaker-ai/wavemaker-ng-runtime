@@ -9,7 +9,6 @@ import {
     Input,
     OnDestroy,
     OnInit,
-    Optional,
     ViewContainerRef
 } from '@angular/core';
 
@@ -127,38 +126,47 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
         }
     }
 
+    private boundEditHandler: (event: Event) => void;
+    private boundDeleteHandler: (event: Event) => void;
+    private boundMouseEnterHandler: (event: Event) => void;
+    private boundMouseLeaveHandler: (event: Event) => void;
+
     private setUpCUDHandlers() {
         const $editItem = this.nativeElement.querySelector('.edit-list-item');
         const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
 
         if ($editItem) {
-            // Triggered on click of edit action
-            this.editClickHandler = evt => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundEditHandler = (evt: Event) => {
                 this.listComponent.update();
             };
-            $editItem.addEventListener('click', this.editClickHandler);
+            // Triggered on click of edit action
+            $editItem.addEventListener('click', this.boundEditHandler);
         }
 
         if ($deleteItem) {
-            // Triggered on click of delete action
-            this.deleteClickHandler = evt => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundDeleteHandler = (evt: Event) => {
                 this.listComponent.delete();
             };
-            $deleteItem.addEventListener('click', this.deleteClickHandler);
+            // Triggered on click of delete action
+            $deleteItem.addEventListener('click', this.boundDeleteHandler);
         }
     }
     ngOnInit() {
         if (this.listComponent.mouseEnterCB) {
-            this.mouseEnterHandler = ($event) => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundMouseEnterHandler = ($event: Event) => {
                 this.listComponent.invokeEventCallback('mouseenter', {widget: this, $event});
             };
-            this.nativeElement.addEventListener('mouseenter', this.mouseEnterHandler);
+            this.nativeElement.addEventListener('mouseenter', this.boundMouseEnterHandler);
         }
         if (this.listComponent.mouseLeaveCB) {
-            this.mouseLeaveHandler = ($event) => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundMouseLeaveHandler = ($event: Event) => {
                 this.listComponent.invokeEventCallback('mouseleave', {widget: this, $event});
             };
-            this.nativeElement.addEventListener('mouseleave', this.mouseLeaveHandler);
+            this.nativeElement.addEventListener('mouseleave', this.boundMouseLeaveHandler);
         }
         // adding item attribute on every list item
         $(this.nativeElement).attr('listitemindex', this.$index);
@@ -177,24 +185,80 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        // Remove event listeners to prevent memory leaks
-        const $editItem = this.nativeElement.querySelector('.edit-list-item');
-        const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
+        // MEMORY LEAK FIX: Remove event listeners
+        if (this.boundMouseEnterHandler && this.nativeElement) {
+            try {
+                this.nativeElement.removeEventListener('mouseenter', this.boundMouseEnterHandler);
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
+            this.boundMouseEnterHandler = null;
+        }
+        if (this.boundMouseLeaveHandler && this.nativeElement) {
+            try {
+                this.nativeElement.removeEventListener('mouseleave', this.boundMouseLeaveHandler);
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
+            this.boundMouseLeaveHandler = null;
+        }
 
-        if ($editItem && this.editClickHandler) {
-            $editItem.removeEventListener('click', this.editClickHandler);
-        }
-        if ($deleteItem && this.deleteClickHandler) {
-            $deleteItem.removeEventListener('click', this.deleteClickHandler);
-        }
-        if (this.mouseEnterHandler) {
-            this.nativeElement.removeEventListener('mouseenter', this.mouseEnterHandler);
-        }
-        if (this.mouseLeaveHandler) {
-            this.nativeElement.removeEventListener('mouseleave', this.mouseLeaveHandler);
+        if (this.nativeElement) {
+            const $editItem = this.nativeElement.querySelector('.edit-list-item');
+            if ($editItem && this.boundEditHandler) {
+                try {
+                    $editItem.removeEventListener('click', this.boundEditHandler);
+                } catch (e) {
+                    // Silently handle cleanup errors
+                }
+                this.boundEditHandler = null;
+            }
+
+            const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
+            if ($deleteItem && this.boundDeleteHandler) {
+                try {
+                    $deleteItem.removeEventListener('click', this.boundDeleteHandler);
+                } catch (e) {
+                    // Silently handle cleanup errors
+                }
+                this.boundDeleteHandler = null;
+            }
         }
 
-        // Complete the destroy subject
-        this.destroy.complete();
+        // MEMORY LEAK FIX: Clear currentItemWidgets cache
+        // The _currentItemWidgets object accumulates references to all child widgets
+        // which prevents them from being garbage collected
+        if (this._currentItemWidgets) {
+            Object.keys(this._currentItemWidgets).forEach(key => {
+                delete this._currentItemWidgets[key];
+            });
+            this._currentItemWidgets = null;
+        }
+
+        // MEMORY LEAK FIX: Clear context to release references
+        if (this.context) {
+            Object.keys(this.context).forEach(key => {
+                delete this.context[key];
+            });
+            this.context = null;
+        }
+
+        // MEMORY LEAK FIX: Clear ViewContainerRef reference
+        if (this.viewContainerRef) {
+            this.viewContainerRef = null;
+        }
+
+        // MEMORY LEAK FIX: Complete the destroy subject
+        if (this.destroy) {
+            try {
+                if (!this.destroy.closed) {
+                    this.destroy.next(null);
+                    this.destroy.complete();
+                }
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
+            this.destroy = null;
+        }
     }
 }

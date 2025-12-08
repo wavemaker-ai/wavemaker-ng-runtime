@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {DataSource, isIos, removeAttr, setAttr, isSafari} from '@wm/core';
 import {provideAs, provideAsWidgetRef, styler, TextContentDirective} from '@wm/components/base';
@@ -21,7 +21,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-select', hostClass: 'app-select-wrapper'}
         provideAsWidgetRef(SelectComponent)
     ]
 })
-export class SelectComponent extends DatasetAwareFormComponent implements AfterViewInit {
+export class SelectComponent extends DatasetAwareFormComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public readonly: boolean;
@@ -171,5 +171,13 @@ export class SelectComponent extends DatasetAwareFormComponent implements AfterV
                 this.selectEl.nativeElement.value = '';
             }
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.selectEl = null;
+
+        // Call parent ngOnDestroy (DatasetAwareFormComponent has cleanup)
+        super.ngOnDestroy();
     }
 }

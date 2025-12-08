@@ -99,5 +99,11 @@ export class PrefabDirective extends StylableComponent implements OnDestroy {
 
     ngOnDestroy() {
         this.invokeEventCallback('destroy', { widget: this });
+        
+        // MEMORY LEAK FIX: Clear references
+        this.propsReady = null;
+        
+        // MEMORY LEAK FIX: Call super.ngOnDestroy() for proper cleanup
+        super.ngOnDestroy();
     }
 }

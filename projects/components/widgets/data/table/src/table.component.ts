@@ -1080,8 +1080,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.setDataGridOption('colDefs', getClonedObject(this.fieldDefs));
             }
             // If data and colDefs are present, call on before data render event
+            // Note: Errors in beforedatarender should not prevent table rendering
             if (!this.isdynamictable && !isEmpty(newValue) && gridOptions.colDefs.length) {
-                this.invokeEventCallback('beforedatarender', {$data: this._gridData, $columns: this.columns, data: this._gridData, columns: this.columns});
+                try {
+                    this.invokeEventCallback('beforedatarender', {$data: this._gridData, $columns: this.columns, data: this._gridData, columns: this.columns});
+                } catch (error) {
+                    // Log error but continue with rendering - beforedatarender errors should not block table rendering
+                    console.warn('Error in beforedatarender event callback, continuing with table rendering:', error);
+                }
             }
             this.setDataGridOption('data', getClonedObject(this._gridData));
         }
@@ -1420,6 +1426,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         return this.actualPageSize || 5;
     }
     watchVariableDataSet(newVal) {
+        // Guard against component destruction
+        if (this.isDestroyed) {
+            return;
+        }
+        
         let result;
         // Check for Variable filters if applied
         if (this.gridOptions.isNavTypeScrollOrOndemand()) {
@@ -1480,6 +1491,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
         /*Return if data is invalid.*/
         if (!this.isDataValid()) {
+            // If data is invalid and variableInflight is still true, clear loading state
+            // This prevents tables from getting stuck in loading when data is invalid
+            if (this.variableInflight) {
+                this.variableInflight = false;
+                this.setGridData([]);
+            }
             return;
         }
 
@@ -1509,7 +1526,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         // @ts-ignore
         if (!isObject(newVal) || newVal === '' || (newVal && newVal.dataValue === '')) {
             if (!this.variableInflight) {
-                // If variable has finished loading and resultSet is empty, ender empty data
+                // If variable has finished loading and resultSet is empty, render empty data
+                this.setGridData([]);
+            } else {
+                // If variableInflight is still true but we have invalid/empty data, clear loading state
+                // This handles cases where data never arrives or is invalid
+                this.variableInflight = false;
                 this.setGridData([]);
             }
             return;
@@ -1520,21 +1542,129 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     }
 
     ngOnDestroy() {
+        // MEMORY LEAK FIX: Remove document click listener
         document.removeEventListener('click', this.documentClickBind);
+        
+        // MEMORY LEAK FIX: Unsubscribe from navigator watches
         if (this.navigatorResultWatch) {
             this.navigatorResultWatch.unsubscribe();
+            this.navigatorResultWatch = null;
         }
         if (this.navigatorMaxResultWatch) {
             this.navigatorMaxResultWatch.unsubscribe();
+            this.navigatorMaxResultWatch = null;
         }
-        // Unsubscribe from selectedItemChange subscription to prevent memory leak
-        if (this.selectedItemChangeSubscription) {
-            this.selectedItemChangeSubscription.unsubscribe();
+        
+        // MEMORY LEAK FIX: Clear all ViewContainerRef embedded views
+        // These hold references to row data, custom expressions, and inline widgets
+        if (this.customExprViewRef) {
+            this.customExprViewRef.clear();
         }
-        // Complete the Subject to release all subscriptions
+        if (this.rowActionsViewRef) {
+            this.rowActionsViewRef.clear();
+        }
+        if (this.filterViewRef) {
+            this.filterViewRef.clear();
+        }
+        if (this.inlineEditViewRef) {
+            this.inlineEditViewRef.clear();
+        }
+        if (this.inlineEditNewViewRef) {
+            this.inlineEditNewViewRef.clear();
+        }
+        if (this.rowDetailViewRef) {
+            this.rowDetailViewRef.clear();
+        }
+        if (this.rowExpansionActionViewRef) {
+            this.rowExpansionActionViewRef.clear();
+        }
+        if (this.dynamicTableRef) {
+            this.dynamicTableRef.clear();
+        }
+        
+        // MEMORY LEAK FIX: Clear compiled template caches
+        this.rowActionsCompiledTl = {};
+        this.rowFilterCompliedTl = {};
+        this.inlineCompliedTl = {};
+        this.inlineNewCompliedTl = {};
+        this.customExprCompiledTl = {};
+        this.customExprCompiledSummaryTl = {};
+        this.rowDefInstances = {};
+        this.rowDefMap = {};
+        this.rowExpansionActionTl = {};
+        
+        // MEMORY LEAK FIX: Destroy jQuery datatable widget FIRST before clearing data
+        // The datatable widget's destroy method may access options.data during cleanup
+        if (this.datagridElement && this.datagridElement.datatable) {
+            try {
+                this.datagridElement.datatable('destroy');
+            } catch (e) {
+                // Ignore errors during destroy
+            }
+        }
+        
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+        
+        // MEMORY LEAK FIX: Clear data arrays (AFTER destroying datatable)
+        this._gridData = [];
+        this.items = [];
+        this.selectedItems = [];
+        this.fieldDefs = [];
+        this.fullFieldDefs = [];
+        this.gridData = [];
+        this.__fullData = null;
+        
+        // MEMORY LEAK FIX: Clear other data structures
+        this.columns = {};
+        this.formfields = {};
+        this.rowFilter = {};
+        this.actions = [];
+        this._actions = { header: [], footer: [] };
+        this.exportOptions = [];
+        this.headerConfig = [];
+        this.rowActions = [];
+        
+        // MEMORY LEAK FIX: Clear all @ContentChildren QueryLists holding template references
+        // These QueryLists hold TemplateRef instances that create circular references to the parent LView
+        if (this.rowActionTmpl) {
+            this.rowActionTmpl.reset([]);
+        }
+        if (this.filterTmpl) {
+            this.filterTmpl.reset([]);
+        }
+        if (this.inlineWidgetTmpl) {
+            this.inlineWidgetTmpl.reset([]);
+        }
+        if (this.inlineWidgetNewTmpl) {
+            this.inlineWidgetNewTmpl.reset([]);
+        }
+        if (this.customExprTmpl) {
+            this.customExprTmpl.reset([]);
+        }
+        if (this.rowExpansionActionTmpl) {
+            this.rowExpansionActionTmpl.reset([]);
+        }
+        
+        // MEMORY LEAK FIX: Clear @ContentChild template reference
+        this.rowExpansionTmpl = null;
+        
+        // MEMORY LEAK FIX: Complete and clear subjects
         if (this.selectedItemChange) {
             this.selectedItemChange.complete();
+            this.selectedItemChange = null;
         }
+        
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.dataNavigator = null;
+        this._tableElement = null;
+        
+       // console.log("table component destroyed");
         super.ngOnDestroy();
     }
 
@@ -1612,6 +1742,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             if (!key.endsWith('_filter') && ((key.endsWith('_new') && newRow) || (!key.endsWith('_new') && !newRow))) {
                 ctrls[key].setValue('');
                 this.resetFormControl(ctrls[key]);
+                // MEMORY LEAK FIX: Clear validators to release references
+                ctrls[key].clearValidators();
+                ctrls[key].clearAsyncValidators();
             }
         });
     }
@@ -1949,7 +2082,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.columns[col.field] = col;
         });
 
-        this.invokeEventCallback('beforedatarender', {$data: data, $columns: this.columns, data: data, columns: this.columns});
+        // Note: Errors in beforedatarender should not prevent table rendering
+        try {
+            this.invokeEventCallback('beforedatarender', {$data: data, $columns: this.columns, data: data, columns: this.columns});
+        } catch (error) {
+            // Log error but continue with rendering - beforedatarender errors should not block table rendering
+            console.warn('Error in beforedatarender event callback, continuing with table rendering:', error);
+        }
 
         defaultFieldDefs = [];
         // Apply the changes made by the user
@@ -1995,23 +2134,31 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
+        // Guard against property changes after component destruction
+        if (this.isDestroyed) {
+            return;
+        }
+        
         let enableNewRow, widgetState;
         switch (key) {
             case 'datasource':
                 // Fix for [WMS-23653] when startUpdate is false (request on page load property is unchecked),
                 // then set status msg as "No data found"
-                if (this.allowpagesizechange) {
+                if (this.allowpagesizechange && this.datasource) {
                     this.datasource.maxResults = this.pagesize || this.datasource.maxResults
                 }
-                if (nv.startUpdate === false) {
+                if (nv && nv.startUpdate === false) {
                     this.variableInflight = false;
                     this.callDataGridMethod('setStatus', 'nodata', this.nodatamessage);
                 }
-                if (get(this.datasource, 'category') !== 'wm.Variable'){
+                if (this.datasource && get(this.datasource, 'category') !== 'wm.Variable'){
                     this.headerselectall=false;
                     this.setDataGridOption("headerselectall", false);
                 }
-                this.watchVariableDataSet(this.dataset);
+                // Process dataset when datasource is set, especially if dataset was previously skipped
+                if (this.datasource && this.dataset !== undefined) {
+                    this.watchVariableDataSet(this.dataset);
+                }
                 this.onDataSourceChange();
                 break;
             case 'dataset':
@@ -2019,6 +2166,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     this.gridOptions.setIsNextPageData(false);
                 }
                 if (this.binddatasource && !this.datasource) {
+                    // If datasource is not set yet, clear loading state and show no data
+                    // This prevents tables from being stuck in loading state
+                    if (this.variableInflight) {
+                        this.variableInflight = false;
+                        this.callDataGridMethod('setStatus', 'nodata', this.nodatamessage);
+                    }
                     return;
                 }
                 // if table is inside list then table dataset will be set as "item.XXX" and there is no datasource.

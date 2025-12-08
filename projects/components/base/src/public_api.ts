@@ -55,6 +55,7 @@ export {
     hasLinkToCurrentPage,
     getOrderByExpr,
     isDataSetWidget,
+    getCurrentWidgets,
     getImageUrl,
     getBackGroundImageUrl,
     provideAs,

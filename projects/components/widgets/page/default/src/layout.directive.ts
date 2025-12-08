@@ -1,4 +1,4 @@
-import {AfterViewInit, Directive, Inject, Injector, Optional} from '@angular/core';
+import {AfterViewInit, Directive, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 
 import {EventNotifier} from '@wm/core';
 import { updateDeviceView, provideAsWidgetRef, StylableComponent } from '@wm/components/base';
@@ -16,7 +16,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-layout', hostClass: DEFAULT_CLS};
     ],
     exportAs: 'wmLayout'
 })
-export class LayoutDirective extends StylableComponent implements AfterViewInit {
+export class LayoutDirective extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     private _eventNotifier = new EventNotifier(false);
@@ -40,5 +40,15 @@ export class LayoutDirective extends StylableComponent implements AfterViewInit 
         setTimeout(() => {
             updateDeviceView(this.nativeElement, this.getAppInstance().isTabletApplicationType);
         }, 1);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Destroy EventNotifier to release subscribers
+        if (this._eventNotifier) {
+            this._eventNotifier.destroy();
+            this._eventNotifier = null;
+        }
+
+        super.ngOnDestroy();
     }
 }

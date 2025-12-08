@@ -1,7 +1,7 @@
 import {Subject} from 'rxjs';
 import {take} from 'rxjs/operators';
 
-import {getPreviewProperties} from "./wm-project-properties";
+import {getPreviewProperties} from './wm-project-properties';
 import {$appDigest, $watch} from './watcher';
 import {DataType} from '../enums/enums';
 import {DataSource} from '../types/types';
@@ -9,21 +9,42 @@ import {setAttr} from './dom';
 import {$parseEvent} from './expression-parser';
 import {
     attempt,
-    camelCase, cloneDeep, every,
-    filter, forEach, get, identity,
-    includes, indexOf, intersection, isArray, isDate,
-    isEqual, isEqualWith, isError,
+    camelCase,
+    cloneDeep,
+    every,
+    filter,
+    forEach,
+    get,
+    identity,
+    includes,
+    indexOf,
+    intersection,
+    isArray,
+    isDate,
+    isEqual,
+    isEqualWith,
+    isError,
     isFunction,
     isNull,
-    isNumber, isString,
-    isUndefined, keys, map, noop as _noop, omit, replace as _replace,
+    isNumber,
+    isString,
+    isUndefined,
+    keys,
+    map,
+    noop as _noop,
+    omit,
+    replace as _replace,
     split,
-    startsWith, toLower, toUpper, trim
+    startsWith,
+    toLower,
+    toUpper,
+    trim
 } from "lodash-es";
 
 import X2JS from 'x2js';
-declare const $;
 import * as momentLib from 'moment-timezone/moment-timezone';
+
+declare const $;
 const moment = momentLib.default || window['moment'];
 declare const document;
 declare const resolveLocalFileSystemURL;
@@ -50,6 +71,7 @@ const REGEX = {
     MIN_PAGE_RESOURCE_PATH: /.*(page.min.html)$/,
     VALID_EMAIL: /^[a-zA-Z][\w.+]+@[a-zA-Z_]+?\.[a-zA-Z.]{1,4}[a-zA-Z]$/,
     VALID_WEB_URL: /^(http[s]?:\/\/)(www\.){0,1}[a-zA-Z0-9=:?\/\.\-]+(\.[a-zA-Z]{2,5}[\.]{0,1})?/,
+    VALID_IMAGE_URL: /^(https?|blob|data|file|ftp):/i,
     VALID_WEBSOCKET_URL: /^(ws[s]?:\/\/)(www\.){0,1}[a-zA-Z0-9=:?\/\.\-]+(\.[a-zA-Z]{2,5}[\.]{0,1})?/,
     VALID_RELATIVE_URL: /^(?!www\.|(?:http|ftp)s?:\/\/|[A-Za-z]:\\|\/\/).*/,
     REPLACE_PATTERN: /\$\{([^\}]+)\}/g,
@@ -75,7 +97,7 @@ export const getNavClass = (suffix: string) : string => {
     const APP_NAV_CLASS_PREFIX = 'app-nav-';
     return APP_NAV_CLASS_PREFIX + suffix;
 }
-  
+
 export const getSheetPositionClass = (suffix: string): string => {
     const SHEET_POSITION_CLASS_PREFIX = 'sheet-position-';
     return SHEET_POSITION_CLASS_PREFIX + suffix;
@@ -335,6 +357,10 @@ export const isVideoFile = (fileName) => {
 export const isValidWebURL = (url: string): boolean => {
     return (REGEX.VALID_WEB_URL).test(url);
 };
+
+export const isValidImageUrl = (url: string): boolean => {
+    return (REGEX.VALID_IMAGE_URL).test(url?.trim());
+}
 
 /*This function returns the url to the resource after checking the validity of url*/
 export const getResourceURL = (urlString) => {
@@ -806,7 +832,7 @@ export const isEqualWithFields = (obj1, obj2, compareBy) => {
     // compareBy can be 'id' or 'id1, id2' or 'id1, id2:id3'
     // Split the compareby comma separated values
     let _compareBy = isArray(compareBy) ? compareBy : split(compareBy, ',');
-    
+
     //@ts-ignore
     _compareBy = map(_compareBy, trim);
 

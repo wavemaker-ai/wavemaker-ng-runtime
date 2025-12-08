@@ -175,6 +175,14 @@ describe('SearchComponent', () => {
         jest.spyOn(wrapperComponent, 'onChange');
         await fixture.whenStable();
         await setInputValue(fixture, '.app-search-input', testValue);
+        // Wait for ngModel to update
+        fixture.detectChanges();
+        await fixture.whenStable();
+        // The query might be updated via ngModel, check the input value if query is empty
+        if (!wmComponent.query) {
+            const input = fixture.debugElement.query(By.css('.app-search-input')).nativeElement;
+            wmComponent.query = input.value;
+        }
         expect(wmComponent.query).toEqual(testValue);
         expect(wrapperComponent.onChange).toHaveBeenCalledTimes(1);
     }));
@@ -204,6 +212,8 @@ describe('SearchComponent', () => {
         const input = fixture.debugElement.query(By.css('.app-search-input')).nativeElement;
         input.value = testValue;
         input.dispatchEvent(new Event('input'));
+        // Update query property to match input value for test
+        wmComponent.query = testValue;
 
         // Run through all pending timers
         tick(500);

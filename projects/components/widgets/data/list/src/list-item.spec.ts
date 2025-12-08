@@ -199,10 +199,14 @@ describe('ListItemDirective', () => {
     describe('currentItemWidgets', () => {
         it('should return correct currentItemWidgets', () => {
             // Mock the nativeElement and its querySelectorAll method
+            // querySelectorAll returns a NodeList, so we need to create a mock that behaves like one
             const mockWidgets = [
                 { widget: { name: 'widget1', value: 'value1' } },
                 { widget: { name: 'widget2', value: 'value2' } }
-            ];
+            ]; 
+            // Store original nativeElement to restore it after the test
+            const originalNativeElement = directive.nativeElement;
+            
             directive.nativeElement = {
                 querySelectorAll: jest.fn().mockReturnValue(mockWidgets),
                 querySelector: jest.fn().mockReturnValue(null),
@@ -220,6 +224,10 @@ describe('ListItemDirective', () => {
                 widget1: { name: 'widget1', value: 'value1' },
                 widget2: { name: 'widget2', value: 'value2' }
             });
+            
+            // Clean up: restore original nativeElement and clear _currentItemWidgets to prevent cleanup errors
+            directive.nativeElement = originalNativeElement;
+            (directive as any)._currentItemWidgets = {};
         });
     });
 });

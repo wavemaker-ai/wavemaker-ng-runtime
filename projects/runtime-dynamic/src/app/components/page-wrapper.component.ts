@@ -99,10 +99,17 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewContainerRef to destroy dynamically created components
         this.vcRef.clear();
+        
+        // MEMORY LEAK FIX: Unsubscribe from route params subscription
         if (this.subscription) {
             this.subscription.unsubscribe();
+            this.subscription = null;
         }
+
+        // MEMORY LEAK FIX: Clear instance reference
+        this.instance = null;
     }
 
     ngOnAttach() {

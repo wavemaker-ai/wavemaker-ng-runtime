@@ -507,7 +507,22 @@ $.widget('wm.datatable', {
 
     /* function to get start index of the current active page */
     getPageStartIndex: function() {
-        var currentPage = this.options.getCurrentPage(), pagesize = this.options.getPageSize();
+        // Guard against undefined getCurrentPage or getPageSize functions
+        var getCurrentPageFn = this.options.getCurrentPage;
+        var getPageSizeFn = this.options.getPageSize;
+        var currentPage, pagesize;
+        if (!getCurrentPageFn || typeof getCurrentPageFn !== 'function') {
+            // Default to page 1 if getCurrentPage is not available
+            currentPage = 1;
+        } else {
+            currentPage = getCurrentPageFn();
+        }
+        if (!getPageSizeFn || typeof getPageSizeFn !== 'function') {
+            // Default to 10 if getPageSize is not available
+            pagesize = 10;
+        } else {
+            pagesize = getPageSizeFn();
+        }
         var isPrevPageUpdated = this.options.actionRowPage < currentPage;
         var pageIndex = isPrevPageUpdated ? this.options.actionRowPage : currentPage;
         return ((pageIndex - 1) * pagesize);
@@ -1054,7 +1069,9 @@ $.widget('wm.datatable', {
                 'value': '',
                 'event': null
             },
-            compiledCellTemplates: {}
+            compiledCellTemplates: {},
+            // MEMORY LEAK FIX: Store bound function for proper event listener cleanup
+            boundRowClickHandlerOnCapture: null
         });
         // TODO: Variable loading status is getting updated before dataset update. This is resulting in loader going off before data is rendered.
         // Need to update code with suitable fix. For now 250ms is added as workaround
@@ -1276,7 +1293,9 @@ $.widget('wm.datatable', {
             this.element.find('.loading-data-msg').hide();
             this.element.find('.on-demand-load-btn').text(this.options.ondemandmessage);
             this.element.find('.on-demand-load-btn').show();
-        } else if((this.options.getCurrentPage() == this.options.getPageCount()) && this.options.showviewlessbutton) {
+        } else if(this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                   this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
+                   (this.options.getCurrentPage() == this.options.getPageCount()) && this.options.showviewlessbutton) {
                 this.element.find('.on-demand-load-btn').show().text(this.options.viewlessmessage);
                 this.element.find('.loading-data-msg').hide();
                 if(infScroll) {
@@ -2090,10 +2109,11 @@ $.widget('wm.datatable', {
         });
 
         $editableElements = $row.find('td.cell-editing');
-        $editableElements.on('click', function (e) {
+        // PERFORMANCE FIX: Use event delegation on row instead of individual cell listeners
+        $row.on('click.cellEdit', 'td.cell-editing', function (e) {
             e.stopPropagation();
         });
-        $editableElements.on('keydown', function (e) {
+        $row.on('keydown.cellEdit', 'td.cell-editing', function (e) {
             //To prevent up and down arrows, navigating to other rows in edit mode
             if ((e.which === 38 || e.which === 40) && (e.currentTarget && !e.currentTarget.closest('.always-new-row'))) {
                 e.stopPropagation();
@@ -2379,6 +2399,8 @@ $.widget('wm.datatable', {
 
         this.disableActions(false);
         $row.removeClass('row-editing');
+        // PERFORMANCE FIX: Remove namespaced event listeners from row
+        $row.off('.cellEdit');
         $editableElements.off('click');
         $editableElements.each(function () {
             var $el = $(this),
@@ -2427,6 +2449,8 @@ $.widget('wm.datatable', {
             $saveButton = $row.find('.save-edit-row-button'),
             self = this;
         $row.removeClass('row-editing');
+        // PERFORMANCE FIX: Remove namespaced event listeners from row
+        $row.off('.cellEdit');
         $editableElements.off('click');
         this.disableActions(false);
         this._setGridEditMode(false);
@@ -2874,9 +2898,16 @@ $.widget('wm.datatable', {
             self = this;
 
         if (this.options.enableRowSelection) {
-            $htm[0].removeEventListener('click', this.rowClickHandlerOnCapture.bind(this));
+            // MEMORY LEAK FIX: Remove old listener if exists before adding new one
+            if (this.boundRowClickHandlerOnCapture && $htm[0]) {
+                $htm[0].removeEventListener('click', this.boundRowClickHandlerOnCapture, true);
+            }
             $htm.off();
-            $htm[0].addEventListener('click', this.rowClickHandlerOnCapture.bind(this));
+            
+            // MEMORY LEAK FIX: Store bound function reference for proper removal
+            this.boundRowClickHandlerOnCapture = this.rowClickHandlerOnCapture.bind(this);
+            $htm[0].addEventListener('click', this.boundRowClickHandlerOnCapture, true);
+            
             // add js click handler for capture phase in order to first listen on grid and
             // assign selectedItems so that any child actions can have access to the selectedItems.
             $htm.on('click', this.rowSelectionHandler.bind(this));
@@ -3513,7 +3544,11 @@ $.widget('wm.datatable', {
             this.dataStatusContainer.hide();
         } else {
             // [WMS-23839] always show load more btn if show view less btn is true
-            if (this.options.isNavTypeScrollOrOndemand() && (state === 'nodata' || ((this.options.getCurrentPage() == this.options.getPageCount())  && !this.options.showviewlessbutton))) {
+            if (this.options.isNavTypeScrollOrOndemand() && 
+                (state === 'nodata' || 
+                 (this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                  this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
+                  (this.options.getCurrentPage() == this.options.getPageCount()) && !this.options.showviewlessbutton))) {
                 this.element.find('.on-demand-datagrid a').hide();
             }
             this.dataStatusContainer.show();
@@ -3523,7 +3558,9 @@ $.widget('wm.datatable', {
                 if (state === 'nodata') {
                     this.dataStatusContainer.css('height', 'auto');
                     this.dataStatus.contentHeight = 0;
-                }  else if (this.options.isNavTypeScrollOrOndemand() && this.options.getCurrentPage() > 1){
+                }  else if (this.options.isNavTypeScrollOrOndemand() && 
+                           this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                           this.options.getCurrentPage() > 1){
                     // showing the loading icon only for the first page
                     // from second page there is another loader which is being shown instead of LoadMore btn
                     this.dataStatusContainer.hide();
@@ -3533,7 +3570,9 @@ $.widget('wm.datatable', {
                     this.dataStatusContainer.css('height', this.dataStatus.height > this.dataStatus.contentHeight ? 'auto' : this.dataStatus.contentHeight);
                 }
             }
-            if (!isScrollOrOndemand || (isScrollOrOndemand && this.options.getCurrentPage() === 1)) {
+            if (!isScrollOrOndemand || (isScrollOrOndemand && 
+                this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                this.options.getCurrentPage() === 1)) {
                 this.gridContainer.addClass("show-msg");
             }
         } else {
@@ -3652,6 +3691,34 @@ $.widget('wm.datatable', {
     },
 
     _destroy: function () {
+        // MEMORY LEAK FIX: Remove native event listener using stored bound function
+        if (this.gridElement && this.gridElement[0] && this.boundRowClickHandlerOnCapture) {
+            this.gridElement[0].removeEventListener('click', this.boundRowClickHandlerOnCapture, true);
+            this.boundRowClickHandlerOnCapture = null;
+        }
+        
+        // MEMORY LEAK FIX: Remove all jQuery event handlers
+        if (this.gridHeaderElement) {
+            this.gridHeaderElement.off();
+        }
+        if (this.gridElement) {
+            this.gridElement.off();
+        }
+        if (this.gridSearch) {
+            this.gridSearch.off();
+        }
+        if (this.tableContainer) {
+            this.tableContainer.off();
+        }
+        if (this.gridContainer) {
+            this.gridContainer.off();
+        }
+        
+        // MEMORY LEAK FIX: Clear all internal structures
+        this.preparedData = [];
+        this.preparedHeaderData = [];
+        this.compiledCellTemplates = {};
+        
         this.element.text('');
         window.clearTimeout(this.refreshGridTimeout);
     }

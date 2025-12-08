@@ -1,4 +1,4 @@
-import { Directive, Inject, Self } from '@angular/core';
+import { Directive, Inject, OnDestroy, Self } from '@angular/core';
 
 import { AbstractDialogService, App, DataSource, triggerFn } from '@wm/core';
 import { Live_Operations, performDataOperation } from '@wm/components/base';
@@ -8,7 +8,7 @@ import { ListComponent } from '@wm/components/data/list';
   standalone: true,
     selector: '[wmLiveActions]'
 })
-export class LiveActionsDirective {
+export class LiveActionsDirective implements OnDestroy {
 
     constructor(
         @Self() @Inject(ListComponent) private subscribedWidget,
@@ -169,5 +169,12 @@ export class LiveActionsDirective {
         options.error = error;
 
         this.performOperation(operation, options);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear references
+        this.subscribedWidget = null;
+        this.app = null;
+        this.dialogService = null;
     }
 }

@@ -32,6 +32,10 @@ export class ComponentRefProviderService extends ComponentRefProvider {
                 return Promise.resolve(partialRef);
             }
         }
+        // Guard against undefined value
+        if (!value) {
+            return Promise.resolve(null);
+        }
         if (!value.componentFactory) {
             value.componentFactory = this.componentFactoryResolver.resolveComponentFactory(value.ref);
         }

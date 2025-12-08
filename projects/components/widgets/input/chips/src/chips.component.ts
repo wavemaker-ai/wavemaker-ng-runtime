@@ -1,5 +1,5 @@
 import {CommonModule} from '@angular/common';
-import {AfterViewInit, Attribute, Component, Inject, Injector, OnInit, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild} from '@angular/core';
 import {NG_VALUE_ACCESSOR} from '@angular/forms';
 
 import {$appDigest, $unwatch, $watch, debounce, isAppleProduct, isDefined, toBoolean} from '@wm/core';
@@ -51,7 +51,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(ChipsComponent)
     ]
 })
-export class ChipsComponent extends DatasetAwareFormComponent implements OnInit, AfterViewInit {
+export class ChipsComponent extends DatasetAwareFormComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
     public allowonlyselect: boolean;
     public enablereorder: boolean;
@@ -71,7 +71,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
     private _datasource: any;
     private _unsubscribeDv = false;
     private searchkey: string;
-    private _debounceUpdateQueryModel: any;
+    private _debounceUpdateQueryModel: any = null;
     private limit: number;
     private _classExpr: any;
     private minchars: number;
@@ -85,7 +85,9 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
     set datasource(nv) {
         this._datasource = nv;
         this.searchComponent.datasource = nv;
-        this._debounceUpdateQueryModel(this.datavalue || this.toBeProcessedDatavalue);
+        if (this._debounceUpdateQueryModel) {
+            this._debounceUpdateQueryModel(this.datavalue || this.toBeProcessedDatavalue);
+        }
     }
 
     constructor(
@@ -124,7 +126,9 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
             // clearing the last results when dataset is reassigned
             (this.searchComponent as any)._lastResult = undefined;
             this.nextItemIndex = this.datasetItems.length;
-            this._debounceUpdateQueryModel(this.datavalue || this.toBeProcessedDatavalue);
+            if (this._debounceUpdateQueryModel) {
+                this._debounceUpdateQueryModel(this.datavalue || this.toBeProcessedDatavalue);
+            }
         });
         this.registerDestroyListener(() => datasetSubscription.unsubscribe());
 
@@ -134,7 +138,9 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
                 this.chipsList = [];
                 // if the datafield is ALLFILEDS do not fetch the records
                 // update the query model with the values we have
-                this._debounceUpdateQueryModel(val);
+                if (this._debounceUpdateQueryModel) {
+                    this._debounceUpdateQueryModel(val);
+                }
             }
         });
         this.registerDestroyListener(() => datavalueSubscription.unsubscribe());
@@ -744,5 +750,34 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
             });
         }
         super.onPropertyChange(key, nv, ov);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear chips list array
+        this.chipsList = [];
+
+        // MEMORY LEAK FIX: Nullify debounced function closure
+        this._debounceUpdateQueryModel = null;
+
+        // MEMORY LEAK FIX: Clear search component reference
+        this.searchComponent = null;
+
+        // MEMORY LEAK FIX: Destroy jQuery sortable if enabled
+        if (this.enablereorder && this.$element) {
+            try {
+                this.$element.sortable('destroy');
+            } catch (e) {
+                // Ignore errors during destroy
+            }
+        }
+
+        // MEMORY LEAK FIX: Clear transform function reference
+        this.getTransformedData = null;
+
+        // MEMORY LEAK FIX: Clear class expression
+        this._classExpr = null;
+
+        // Call parent ngOnDestroy (DatasetAwareFormComponent has cleanup)
+        super.ngOnDestroy();
     }
 }

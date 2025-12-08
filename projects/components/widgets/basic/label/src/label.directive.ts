@@ -1,4 +1,4 @@
-import {Directive, Inject, Injector, Optional, SecurityContext} from '@angular/core';
+import {Directive, Inject, Injector, OnDestroy, Optional, SecurityContext} from '@angular/core';
 
 import {setProperty, toggleClass} from '@wm/core';
 import {
@@ -28,7 +28,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ],
     exportAs: 'wmLabel'
 })
-export class LabelDirective extends StylableComponent {
+export class LabelDirective extends StylableComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     constructor(inj: Injector, private sanitizePipe:SanitizePipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
@@ -38,7 +38,11 @@ export class LabelDirective extends StylableComponent {
     }
 
     onPropertyChange(key, nv, ov?) {
-
+        // Guard against property changes after component destruction
+        // This can happen when property changes are queued asynchronously
+        if (this.isDestroyed) {
+            return;
+        }
         if (key === 'caption') {
             // Check for trustPipe safe values
             let bindContent = this.nativeElement.getAttribute('caption.bind');
@@ -54,7 +58,13 @@ export class LabelDirective extends StylableComponent {
             } else if (isObject(nv) && safeValue) {
                 setProperty(this.nativeElement, 'innerHTML', nv[Object.keys(nv)[0]]);
             }  else {
-                setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(insertZWSP(nv), SecurityContext.HTML));
+                // Guard against sanitizePipe being null/undefined (e.g., after ngOnDestroy)
+                if (this.sanitizePipe) {
+                    setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(insertZWSP(nv), SecurityContext.HTML));
+                } else {
+                    // Fallback to textContent if sanitizePipe is not available
+                    setProperty(this.nativeElement, 'textContent', insertZWSP(nv));
+                }
             }
 
         } else if (key === 'required') {
@@ -62,5 +72,15 @@ export class LabelDirective extends StylableComponent {
         } else {
             super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    ngOnDestroy() {
+        // Call parent ngOnDestroy first (sets isDestroyed = true)
+        // This ensures onPropertyChange checks fail fast if called asynchronously
+        super.ngOnDestroy();
+
+        // MEMORY LEAK FIX: Clear sanitizePipe reference after destruction flag is set
+        // This retains references to the entire DI tree
+        this.sanitizePipe = null;
     }
 }

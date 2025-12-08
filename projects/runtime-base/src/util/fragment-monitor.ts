@@ -1,6 +1,6 @@
 import { noop } from '@wm/core';
 
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { Directive } from "@angular/core";
 
 @Directive()
@@ -11,16 +11,41 @@ export abstract class FragmentMonitor {
     isPageComponent: boolean = true;
 
     fragmentsLoaded$ = new Subject();
+    private viewInitSubscription: Subscription; // MEMORY LEAK FIX: Store subscription reference
 
     constructor() {}
 
     init() {
         // console.log(`inside fragmentMonitor: Page-${(this as any).pageName}, Partial-${(this as any).partialName}`);
 
-        this.viewInit$.subscribe(noop, noop, () => {
+        // MEMORY LEAK FIX: Store subscription reference for cleanup
+        this.viewInitSubscription = this.viewInit$.subscribe(noop, noop, () => {
             this.isViewInitialized = true;
             this.isReady();
         });
+    }
+
+    /**
+     * MEMORY LEAK FIX: Clean up FragmentMonitor resources
+     * Should be called from implementing class's ngOnDestroy
+     */
+    protected cleanupFragmentMonitor() {
+        // MEMORY LEAK FIX: Unsubscribe from viewInit$ subscription
+        if (this.viewInitSubscription) {
+            this.viewInitSubscription.unsubscribe();
+            this.viewInitSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions (if not already completed)
+        if (this.viewInit$ && !this.viewInit$.closed) {
+            this.viewInit$.complete();
+        }
+        this.viewInit$ = null;
+
+        if (this.fragmentsLoaded$ && !this.fragmentsLoaded$.closed) {
+            this.fragmentsLoaded$.complete();
+        }
+        this.fragmentsLoaded$ = null;
     }
 
     registerFragment() {

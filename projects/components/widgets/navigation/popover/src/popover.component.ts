@@ -1,5 +1,5 @@
-import {CommonModule} from '@angular/common';
-import {AnchorComponent} from '@wm/components/basic/anchor';
+import { CommonModule } from '@angular/common';
+import { AnchorComponent } from '@wm/components/basic/anchor';
 import {
     AfterViewInit,
     ChangeDetectorRef,
@@ -28,12 +28,12 @@ import {
 import {
     AUTOCLOSE_TYPE,
     getContainerTargetClass,
+    ImagePipe,
     IWidgetConfig,
     provideAsWidgetRef,
     StylableComponent,
     styler
 } from '@wm/components/base';
-
 import {registerProps} from './popover.props';
 
 declare const $;
@@ -54,7 +54,7 @@ let activePopover: PopoverComponent;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, AnchorComponent, PopoverModule],
+  imports: [CommonModule, PopoverModule, AnchorComponent, ImagePipe],
     selector: 'wm-popover',
     templateUrl: './popover.component.html',
     providers: [
@@ -95,6 +95,14 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     public arialabel: string;
     public caption: string;
     public badgevalue: string;
+    
+    // Anchor display properties
+    public iconurl: string;
+    public iconwidth: string;
+    public iconheight: string;
+    public iconmargin: string;
+    public iconclass: string;
+    public iconposition: string;
     private documentClickHandler: (e: MouseEvent) => void;
     private isClosingProgrammatically = false;
     private static activePopovers: PopoverComponent[] = [];
@@ -209,7 +217,9 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.isOpen) {
             this.isClosingProgrammatically = true;
             this.isOpen = false;
-            this.bsPopoverDirective.hide();
+            if (this.bsPopoverDirective) {
+                this.bsPopoverDirective.hide();
+            }
             const index = PopoverComponent.activePopovers.indexOf(this);
             if (index > -1) {
                 PopoverComponent.activePopovers.splice(index, 1);
@@ -332,7 +342,9 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             this.setupDocumentClickHandler();
         }
         setTimeout(() => {
-            this.anchorRef.nativeElement.removeAttribute('aria-describedby');
+            if (this.anchorRef?.nativeElement) {
+                this.anchorRef.nativeElement.removeAttribute('aria-describedby');
+            }
         });
         const deRegister = this.eventManager.addEventListener(popoverContainer, 'keydown.esc', () => {
             this.isOpen = false;
@@ -524,6 +536,13 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             this.anchorRef.nativeElement.onmouseleave = null;
         }
 
+        // MEMORY LEAK FIX: Clear all ViewChild and ContentChild references
+        // These retain the entire component tree including parent contexts (colDef, etc.)
+        this.bsPopoverDirective = null;
+        this.anchorRef = null;
+        this.popoverTemplate = null;
+        this.partialRef = null;
+        
         // Call parent cleanup
         super.ngOnDestroy();
     }

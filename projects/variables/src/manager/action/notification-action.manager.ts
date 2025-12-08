@@ -35,11 +35,26 @@ export class NotificationActionManager extends BaseActionManager {
         }
 
         // callbacks
+        // MEMORY LEAK FIX: Store subscriptions for cleanup (though toaster is short-lived, we track for safety)
         if (variable.onClick) {
-            toaster.onTap.subscribe( this.onToasterClick.bind(this, variable) );
+            const onClickSubscription = toaster.onTap.subscribe( this.onToasterClick.bind(this, variable) );
+            // Store subscription on toaster for cleanup (toaster handles its own lifecycle)
+            if (toaster && !toaster._subscriptions) {
+                toaster._subscriptions = [];
+            }
+            if (toaster && toaster._subscriptions) {
+                toaster._subscriptions.push(onClickSubscription);
+            }
         }
         if (variable.onHide) {
-            toaster.onHidden.subscribe( this.onToasterHide.bind(this, variable) );
+            const onHideSubscription = toaster.onHidden.subscribe( this.onToasterHide.bind(this, variable) );
+            // Store subscription on toaster for cleanup (toaster handles its own lifecycle)
+            if (toaster && !toaster._subscriptions) {
+                toaster._subscriptions = [];
+            }
+            if (toaster && toaster._subscriptions) {
+                toaster._subscriptions.push(onHideSubscription);
+            }
         }
     }
 
