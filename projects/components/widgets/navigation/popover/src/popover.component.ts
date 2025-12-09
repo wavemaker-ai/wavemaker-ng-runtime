@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { AnchorComponent } from '@wm/components/basic/anchor';
 import {
     AfterViewInit,
     ChangeDetectorRef,
@@ -28,12 +27,13 @@ import {
 import {
     AUTOCLOSE_TYPE,
     getContainerTargetClass,
-    ImagePipe,
     IWidgetConfig,
     provideAsWidgetRef,
     StylableComponent,
     styler
 } from '@wm/components/base';
+import { AnchorComponent } from '@wm/components/basic/anchor';
+
 import {registerProps} from './popover.props';
 
 declare const $;
@@ -54,7 +54,7 @@ let activePopover: PopoverComponent;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, PopoverModule, AnchorComponent, ImagePipe],
+  imports: [CommonModule, PopoverModule, AnchorComponent],
     selector: 'wm-popover',
     templateUrl: './popover.component.html',
     providers: [

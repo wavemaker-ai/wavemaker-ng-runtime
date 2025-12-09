@@ -228,6 +228,10 @@ describe('ListItemDirective', () => {
             // Clean up: restore original nativeElement and clear _currentItemWidgets to prevent cleanup errors
             directive.nativeElement = originalNativeElement;
             (directive as any)._currentItemWidgets = {};
+            
+            // Clean up: restore original nativeElement and clear _currentItemWidgets to prevent cleanup errors
+            directive.nativeElement = originalNativeElement;
+            (directive as any)._currentItemWidgets = {};
         });
     });
 });

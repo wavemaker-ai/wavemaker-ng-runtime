@@ -5,8 +5,10 @@ import { isAndroid, isIos, Viewport, ScriptLoaderService, registerFnByExpr } fro
 import { LayoutDirective, SpaPageDirective } from '@wm/components/page';
 
 import {Subject} from 'rxjs';
+import {Subject} from 'rxjs';
 
 import {
+    $unwatchAllByScope,
     $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
@@ -332,9 +334,6 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
         // MEMORY LEAK FIX: Unwatch all Page-scoped watchers for THIS specific page when page is destroyed
         if (this.pageName) {
             $unwatchAllByScope('Page', this.pageName);
-            // if (removedCount > 0) {
-            //     console.log(`🧹 Cleaned up ${removedCount} Page-scoped watcher(s) for page ${this.pageName}`);
-            // }
         }
         this.savePageSnapShot();
 
