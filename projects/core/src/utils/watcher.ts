@@ -59,7 +59,16 @@ let lastScheduledTime = 0;
 
 function getWatcherCount(): number {
     let count = 0;
-    registry.forEach(bucket => count += bucket.size);
+    registry.forEach((value) => {
+        // Check if it's a grouped structure (widget groups) or a direct watchInfo
+        if (value && typeof value === 'object' && !value.fn) {
+            // It's a widget group - count the properties (excluding metadata)
+            count += Object.keys(value).filter(k => k !== 'scopeType' && k !== 'scopeName').length;
+        } else {
+            // It's a direct watchInfo
+            count += 1;
+        }
+    });
     return count;
 }
 
