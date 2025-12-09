@@ -12,7 +12,6 @@ import {ActivatedRoute, Router} from '@angular/router';
 
 import {
     $unwatchAllByScope,
-    $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
     App,

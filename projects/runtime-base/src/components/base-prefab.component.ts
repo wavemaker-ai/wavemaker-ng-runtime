@@ -4,7 +4,6 @@ import { Subject } from 'rxjs';
 import {
     $watch,
     $unwatchAllByScope,
-    $unwatchAllByScope,
     AbstractI18nService,
     App,
     isIE,

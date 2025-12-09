@@ -5,10 +5,8 @@ import { isAndroid, isIos, Viewport, ScriptLoaderService, registerFnByExpr } fro
 import { LayoutDirective, SpaPageDirective } from '@wm/components/page';
 
 import {Subject} from 'rxjs';
-import {Subject} from 'rxjs';
 
 import {
-    $unwatchAllByScope,
     $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
