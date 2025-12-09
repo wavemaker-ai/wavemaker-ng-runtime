@@ -73,6 +73,9 @@ export class PartialContainerDirective implements OnDestroy {
 
         componentInstance.registerPropertyChangeListener((key: string, nv: any, ov?: any) => {
             if (key === 'content') {
+                if('isInlineContent' in componentInstance) {
+                    componentInstance.isInlineContent = !(nv && nv !== '');
+                }
                 if (componentInstance.$lazyLoad) {
                     componentInstance.$lazyLoad = () => {
                         this.renderPartial(nv);

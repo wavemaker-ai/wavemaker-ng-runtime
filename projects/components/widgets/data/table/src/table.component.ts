@@ -1580,6 +1580,16 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.rowDefMap = {};
         this.rowExpansionActionTl = {};
         
+        // MEMORY LEAK FIX: Destroy jQuery datatable widget FIRST before clearing data
+        // The datatable widget's destroy method may access options.data during cleanup
+        if (this.datagridElement && this.datagridElement.datatable) {
+            try {
+                this.datagridElement.datatable('destroy');
+            } catch (e) {
+                // Ignore errors during destroy
+            }
+        }
+        
         // MEMORY LEAK FIX: Clear dynamic context
         if (this._dynamicContext) {
             Object.keys(this._dynamicContext).forEach(key => {
@@ -1588,7 +1598,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this._dynamicContext = null;
         }
         
-        // MEMORY LEAK FIX: Clear data arrays
+        // MEMORY LEAK FIX: Clear data arrays (AFTER destroying datatable)
         this._gridData = [];
         this.items = [];
         this.selectedItems = [];
@@ -1596,15 +1606,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.fullFieldDefs = [];
         this.gridData = [];
         this.__fullData = null;
-        
-        // MEMORY LEAK FIX: Destroy jQuery datatable widget before clearing gridOptions
-        if (this.datagridElement && this.datagridElement.datatable) {
-            try {
-                this.datagridElement.datatable('destroy');
-            } catch (e) {
-                // Ignore errors during destroy
-            }
-        }
         
         // MEMORY LEAK FIX: Clear other data structures
         this.columns = {};
