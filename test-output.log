@@ -1,4 +1,0 @@
-
-> @wavemaker/angular-app@1.0.0-dev test-prod
-> jest --no-cache --no-color --ci --silent 2>&1 | sed 's/\x1b\[[0-9;]*m//g' > karma-test-report.txt
-
