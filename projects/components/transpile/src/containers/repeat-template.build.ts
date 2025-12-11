@@ -11,7 +11,11 @@ register('wm-repeat-template', (): IBuildTaskDef => {
         pre: (attrs, shared, parentAccordion, parentTab, parentWizard) => {
             const widgetRef = (parentAccordion && parentAccordion.get('accordion_ref')) || (parentTab && parentTab.get('tabs_ref')) || (parentWizard && parentWizard.get('wizard_ref'));
             if (widgetRef) {
-                return `@if(${widgetRef}.fieldDefs && !${widgetRef}.fieldDefs.length){<div>{{${widgetRef}.nodatamessage}}</div>}
+                return `
+                @if(${widgetRef}.variableInflight && ${widgetRef}.app.Variables?.showSkeletonLoader?.dataSet?.dataValue || false){ 
+                    <wm-skeleton-loader widget-type="accordion"></wm-skeleton-loader>
+                }
+                @if(${widgetRef}.fieldDefs && !${widgetRef}.fieldDefs.length){<div>{{${widgetRef}.nodatamessage}}</div>}
                 @for (item of ${widgetRef}.fieldDefs; track item; let i = $index) {
                     <${dynamicTemplateTagName} wmRepeatTemplate #repeatItemRef="repeatItemRef" ${getAttrMarkup(attrs)}>
                         <ng-container [ngTemplateOutlet]="widgetRef${counter}"

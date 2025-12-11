@@ -21,11 +21,17 @@
 </ul>
 @if (type !== 'dynamic') {
   <div class="tab-content" [ngClass]="{'tab-stacked': vertical, 'tab-justified': justified}">
+    @if (variableInflight && app.Variables?.showSkeletonLoader?.dataSet.dataValue || false) {
+      <wm-skeleton-loader widget-type="tabs" config='{"itemCount": 4}'></wm-skeleton-loader>
+    }
     <ng-content ngProjectAs="div[wmTabPane]"></ng-content>
   </div>
 }
 @if (type === 'dynamic') {
   <div class="tab-content" [ngClass]="{'tab-stacked': vertical, 'tab-justified': justified}">
+    @if (variableInflight && app.Variables?.showSkeletonLoader?.dataSet.dataValue || false) {
+      <wm-skeleton-loader widget-type="tabs" config='{"itemCount": 4}'></wm-skeleton-loader>
+    }
     @if (fieldDefs && !fieldDefs.length) {
       <div>{{nodatamessage}}</div>
     }
