@@ -5,11 +5,12 @@ import {
     forwardRef,
     Inject,
     Injector,
+    NgZone,
     OnDestroy,
     Optional,
     QueryList
 } from '@angular/core';
-import {DynamicComponentRefProvider, isDefined, noop, StatePersistence} from '@wm/core';
+import {App, DataSource, DynamicComponentRefProvider, isDataSourceEqual, isDefined, noop, StatePersistence} from '@wm/core';
 import {
     APPLY_STYLES_TYPE,
     createArrayFrom,
@@ -55,6 +56,9 @@ export class AccordionDirective extends StylableComponent implements AfterConten
     public fieldDefs;
     private panesChangesSubscription: any;
     private dynamicComponentRefs: any[] = [];
+    private ngZone: NgZone;
+    private app: App;
+    private datasource: any;
 
     @ContentChildren(forwardRef(() => AccordionPaneComponent)) panes: QueryList<AccordionPaneComponent>;
     variableInflight: boolean = false;

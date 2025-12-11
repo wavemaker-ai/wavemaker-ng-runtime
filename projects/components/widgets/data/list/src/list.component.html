@@ -113,7 +113,7 @@
   <div class="no-data-msg" [textContent]="nodatamessage"></div>
 }
 
-@if (variableInflight && !pulltorefresh &&  && !this.app.Variables?.showSkeletonLoader.dataSet.dataValue) {
+@if (variableInflight && !pulltorefresh && !app?.Variables?.showSkeletonLoader?.dataSet?.dataValue || false) {
   <div class="loading-data-msg">
     <span>
       <i class="app-icon panel-icon fa-spin" aria-hidden="true" [ngClass]="loadingicon"></i>

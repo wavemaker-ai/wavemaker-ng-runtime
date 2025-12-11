@@ -17,6 +17,7 @@ import {
     HostBinding,
     Inject,
     Injector,
+    NgZone,
     OnDestroy,
     OnInit,
     Optional,
@@ -29,6 +30,7 @@ import {
     appendNode,
     DataSource,
     DynamicComponentRefProvider,
+    isDataSourceEqual,
     isDefined,
     noop,
     removeClass,
@@ -84,6 +86,9 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
     public autoActivation:boolean;
     private panesChangesSubscription: any;
     private dynamicComponentRefs: any[] = [];
+    private ngZone: NgZone;
+    private app: App;
+    private datasource: any;
 
     @HostBinding('attr.icon-position') iconposition: string = '';
 
