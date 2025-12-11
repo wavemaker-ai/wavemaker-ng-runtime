@@ -42,6 +42,9 @@ export const getFormWidgetTemplate = (widgetType: string, innerTmpl: string, att
         case FormWidgetType.CURRENCY:
             tmpl = `<div wmCurrency ${attrs.get('required')==='true' ? 'required=true' : ''} ${updateOnTmpl} ${innerTmpl} ${showTmpl}></div>`;
             break;
+        case FormWidgetType.CUSTOMWIDGET:
+            tmpl = `<div wmWidgetContainer customWidgetContainer ${attrs.get('required')==='true' ? 'required=true' : ''} ${updateOnTmpl} ${innerTmpl} ${showTmpl}></div>`;
+            break;
         case FormWidgetType.DATE:
             tmpl = `<div wmDate ${attrs.get('required')==='true' ? 'required=true' : ''} dataentrymode="${attrs.get('dataentrymode')}" ${innerTmpl} ${showTmpl}></div>`;
             break;
@@ -98,10 +101,14 @@ export const getFormWidgetTemplate = (widgetType: string, innerTmpl: string, att
                             <input focus-target class="file-upload" type="file" name="${uploadProps.name}" ${eventTmpl} ${showTmpl}/>
                         </form>`;
             } else {
-                tmpl = `<a class="form-control-static" href="{{${counter}.href}}" target="_blank" *ngIf="${counter}.filetype === 'image' && ${counter}.href">
-                        <img style="height:2em" class="wi wi-file" [src]="${counter}.href"/></a>
-                        <a class="form-control-static" target="_blank" href="{{${counter}.href}}" *ngIf="${counter}.filetype !== 'image' && ${counter}.href">
-                        <i class="wi wi-file"></i></a>
+                tmpl = `@if (${counter}.filetype === 'image' && ${counter}.href) {
+                            <a class="form-control-static" href="{{${counter}.href}}" target="_blank">
+                            <img style="height:2em" class="wi wi-file" [src]="${counter}.href"/></a>
+                        }
+                        @if (${counter}.filetype !== 'image' && ${counter}.href) {
+                            <a class="form-control-static" target="_blank" href="{{${counter}.href}}">
+                            <i class="wi wi-file"></i></a>
+                        }
                         <input ${innerTmpl} class="app-blob-upload" [ngClass]="{'file-readonly': ${counter}.readonly}" ${eventTmpl}
                         [required]="${counter}.required" type="file" name="${attrs.get('key') || attrs.get('name')}_formWidget" [readonly]="${counter}.readonly"
                         [class.hidden]="!${pCounter}.isUpdateMode" [accept]="${counter}.permitted" ${showTmpl}>`;
@@ -125,12 +132,14 @@ export const getRequiredFormWidget = (widgetType): string => {
             return 'wm-colorpicker';
         case FormWidgetType.CURRENCY:
             return 'wm-currency';
+        case FormWidgetType.CUSTOMWIDGET:
+            return 'wm-custom-widget';
         case FormWidgetType.DATE:
             return 'wm-date';
         case FormWidgetType.DATETIME:
+        case FormWidgetType.TIMESTAMP:
             return 'wm-datetime';
         case FormWidgetType.TIME:
-        case FormWidgetType.TIMESTAMP:
             return 'wm-time';
         case FormWidgetType.RATING:
             return 'wm-rating';
@@ -138,6 +147,26 @@ export const getRequiredFormWidget = (widgetType): string => {
             return 'wm-richtexteditor';
         case FormWidgetType.SLIDER:
             return 'wm-slider';
+
+        case FormWidgetType.CHECKBOXSET:
+            return 'wm-checkboxset';
+        case FormWidgetType.NUMBER:
+            return 'wm-number';
+        case FormWidgetType.PASSWORD:
+            return 'wm-text';
+        case FormWidgetType.RADIOSET:
+            return 'wm-radioset';
+        case FormWidgetType.SWITCH:
+            return 'wm-switch';
+        case FormWidgetType.SELECT:
+            return 'wm-select';
+        case FormWidgetType.TEXTAREA:
+            return 'wm-textarea';
+        case FormWidgetType.CHECKBOX:
+        case FormWidgetType.TOGGLE:
+            return 'wm-checkbox';
+        case FormWidgetType.UPLOAD:
+            return 'wm-fileupload';
         default:
             return 'wm-text';
     }
@@ -261,7 +290,9 @@ const rowActionAttrs = new Map(
         ['hyperlink.bind', 'hyperlink.bind'],
         ['target', 'target'],
         ['conditionalclass.bind', 'conditionalclass.bind'],
-        ['conditionalstyle.bind', 'conditionalstyle.bind']
+        ['conditionalstyle.bind', 'conditionalstyle.bind'],
+        ['expandtitle.bind', 'expandtitle.bind'],
+        ['collapsetitle.bind', 'collapsetitle.bind']
     ]
 );
 

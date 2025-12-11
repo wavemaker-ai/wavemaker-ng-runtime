@@ -1,3 +1,5 @@
+import { CommonModule } from '@angular/common';
+import { TextContentDirective, TrustAsPipe } from "@wm/components/base";
 import {
     AfterContentInit,
     Component,
@@ -5,21 +7,25 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     ViewChild
 } from '@angular/core';
 
-import {$appDigest, noop, removeAttr, setCSS, toggleClass} from '@wm/core';
+import { $appDigest, noop, removeAttr, setCSS, toggleClass } from '@wm/core';
+import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, RedrawableDirective, styler } from '@wm/components/base';
-import { MenuAdapterComponent } from '@wm/components/navigation/menu';
+import { MenuAdapterComponent, MenuComponent } from '@wm/components/navigation/menu';
 import { registerProps } from './panel.props';
-import {omit} from "lodash-es";
+import { omit } from "lodash-es";
 
 const DEFAULT_CLS = 'app-panel panel';
 const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAULT_CLS };
 
 @Component({
+    standalone: true,
+    imports: [BsDropdownModule, CommonModule, TextContentDirective, TrustAsPipe, MenuComponent],
     selector: '[wmPanel]',
     templateUrl: './panel.component.html',
     providers: [
@@ -28,7 +34,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAUL
     exportAs: 'wmPanel'
 })
 
-export class PanelComponent extends MenuAdapterComponent implements OnInit, AfterContentInit {
+export class PanelComponent extends MenuAdapterComponent implements OnInit, AfterContentInit, OnDestroy {
     static initializeProps = registerProps();
 
     public $lazyLoad = noop;
@@ -48,9 +54,9 @@ export class PanelComponent extends MenuAdapterComponent implements OnInit, Afte
     private fullScreenTitle: string;
     private expandCollapseTitle: string;
 
-    @ViewChild('panelHeading',{static: false}) private panelHeader: ElementRef;
-    @ViewChild('panelContent',{static: true}) private panelContent: ElementRef;
-    @ViewChild('panelBody',{static: true}) private panelBody: ElementRef;
+    @ViewChild('panelHeading', { static: false }) private panelHeader: ElementRef;
+    @ViewChild('panelContent', { static: true }) private panelContent: ElementRef;
+    @ViewChild('panelBody', { static: true }) private panelBody: ElementRef;
     @ContentChildren(RedrawableDirective, { descendants: true }) reDrawableComponents;
 
     private hasFooter: boolean;
@@ -175,5 +181,22 @@ export class PanelComponent extends MenuAdapterComponent implements OnInit, Afte
         super.ngAfterContentInit();
         this.hasFooter = !!this.nativeElement.querySelector('[wmPanelFooter]');
         styler(this.panelBody.nativeElement as HTMLElement, this, APPLY_STYLES_TYPE.INNER_SHELL);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.panelHeader = null;
+        this.panelContent = null;
+        this.panelBody = null;
+
+        // MEMORY LEAK FIX: Clear ContentChildren QueryList reference
+        if (this.reDrawableComponents) {
+            this.reDrawableComponents = null;
+        }
+
+        // MEMORY LEAK FIX: Clear lazy load function reference
+        this.$lazyLoad = null;
+
+        super.ngOnDestroy();
     }
 }

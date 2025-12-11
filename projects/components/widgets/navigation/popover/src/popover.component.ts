@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import {
     AfterViewInit,
     ChangeDetectorRef,
@@ -6,13 +7,14 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     TemplateRef,
     ViewChild
 } from '@angular/core';
 
-import {PopoverDirective} from 'ngx-bootstrap/popover';
+import {PopoverDirective, PopoverModule} from 'ngx-bootstrap/popover';
 
 import {
     addClass,
@@ -25,11 +27,13 @@ import {
 import {
     AUTOCLOSE_TYPE,
     getContainerTargetClass,
+    ImagePipe,
     IWidgetConfig,
     provideAsWidgetRef,
     StylableComponent,
     styler
 } from '@wm/components/base';
+import { AnchorComponent } from '@wm/components/basic/anchor';
 
 import {registerProps} from './popover.props';
 
@@ -50,6 +54,8 @@ const eventsMap = {
 let activePopover: PopoverComponent;
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, PopoverModule, AnchorComponent, ImagePipe],
     selector: 'wm-popover',
     templateUrl: './popover.component.html',
     providers: [
@@ -57,7 +63,7 @@ let activePopover: PopoverComponent;
     ]
 })
 
-export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit {
+export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public event: string;
@@ -90,9 +96,21 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     public arialabel: string;
     public caption: string;
     public badgevalue: string;
+    
+    // Anchor display properties
+    public iconurl: string;
+    public iconwidth: string;
+    public iconheight: string;
+    public iconmargin: string;
+    public iconclass: string;
+    public iconposition: string;
     private documentClickHandler: (e: MouseEvent) => void;
     private isClosingProgrammatically = false;
     private static activePopovers: PopoverComponent[] = [];
+    private isHandlingClick = false;
+    private preventFocusShift: boolean = false;
+    private partialLoadedSubscription: any;
+    private arrowPositionSubscription: any;
 
     @ViewChild(PopoverDirective) private bsPopoverDirective;
     @ViewChild('anchor', { static: true }) anchorRef: ElementRef;
@@ -108,49 +126,56 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.documentClickHandler) {
             document.removeEventListener('click', this.documentClickHandler, true);
         }
-    
+
         this.documentClickHandler = (event: MouseEvent) => {
             if (!this.isOpen) return;
-    
-            const target = event.target as HTMLElement;
-    
-            // Check if the clicked element or any of its parents is part of the datepicker, dropdown, or typeahead containers
-            const isInsideSpecialContainer = !!(
-                target.closest('.bs-datepicker-container') || 
-                target.closest(".dropdown-menu")
-            );
-    
-            if (isInsideSpecialContainer) {
-                // If the click was inside one of these containers, we do not close the popover
-                return;
-            }
-    
-            const clickedPopoverIndex = PopoverComponent.activePopovers.findIndex(popover => {
-                const popoverContainer = document.querySelector(`.${popover.popoverContainerCls}`);
-                return popoverContainer?.contains(target);
-            });
 
-            if (this.anchorRef.nativeElement.contains(target)) {
-                event.preventDefault();
-                event.stopPropagation();
-                this.isOpen ? this.close() : this.open()
-                return;
-            }
-    
-            if (clickedPopoverIndex === -1) {
-                // Click is outside all popovers
-                if (this.outsideclick) {
-                    this.closeAllPopovers();
+            const target = event.target as HTMLElement;
+
+            // Set flag to prevent open() from running during click handling
+            this.isHandlingClick = true;
+
+            try {
+                // Check for special containers as before
+                const isInsideSpecialContainer = !!(
+                    target.closest('.bs-datepicker-container') ||
+                    target.closest(".dropdown-menu")
+                );
+
+                if (isInsideSpecialContainer) {
+                    return;
                 }
-            } else {
-                // Click is inside a popover
-                this.closeInnerPopovers(clickedPopoverIndex);
+
+                const clickedPopoverIndex = PopoverComponent.activePopovers.findIndex(popover => {
+                    const popoverContainer = document.querySelector(`.${popover.popoverContainerCls}`);
+                    return popoverContainer?.contains(target);
+                });
+
+                // For anchor clicks, just close and prevent further handling
+                if (this.anchorRef?.nativeElement?.contains(target)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.isOpen ? this.close() : this.open()
+                    return;
+                }
+
+                if (clickedPopoverIndex === -1) {
+                    if (this.outsideclick) {
+                        this.closeAllPopovers();
+                    }
+                } else {
+                    this.closeInnerPopovers(clickedPopoverIndex);
+                }
+            } finally {
+                // Always reset the flag when click handling is done
+                setTimeout(() => {
+                    this.isHandlingClick = false;
+                }, 0);
             }
         };
-    
+
         document.addEventListener('click', this.documentClickHandler, true);
     }
-    
 
     private closeAllPopovers() {
         PopoverComponent.activePopovers.forEach(popover => {
@@ -174,8 +199,13 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     private isChildPopover(): boolean {
         return !!$(this.nativeElement).closest('.popover').length;
     }
-    // This mehtod is used to show/open the popover. This refers to the same method showPopover.
-    public open() {
+    /**
+     * Opens the popover, similar to the showPopover method.
+     * @param preventFocusShift Optional parameter (default: false). When false, focus shifts to the popover upon opening. If set to true, focus remains on the triggering element.
+     */
+    public open(preventFocusShift?:boolean) {
+        this.preventFocusShift = preventFocusShift ?? false;
+        if (this.isHandlingClick) return;
         this.showPopover();
         if (!PopoverComponent.activePopovers.includes(this)) {
             PopoverComponent.activePopovers.push(this);
@@ -188,7 +218,9 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.isOpen) {
             this.isClosingProgrammatically = true;
             this.isOpen = false;
-            this.bsPopoverDirective.hide();
+            if (this.bsPopoverDirective) {
+                this.bsPopoverDirective.hide();
+            }
             const index = PopoverComponent.activePopovers.indexOf(this);
             if (index > -1) {
                 PopoverComponent.activePopovers.splice(index, 1);
@@ -214,7 +246,13 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     }
 
     private adjustPopoverArrowPosition(popoverElem, popoverLeftShift) {
-        this.bsPopoverDirective._popover._ngZone.onStable.subscribe(() => {
+        // Clean up any existing subscription before creating a new one
+        if (this.arrowPositionSubscription) {
+            this.arrowPositionSubscription.unsubscribe();
+            this.arrowPositionSubscription = null;
+        }
+        
+        this.arrowPositionSubscription = this.bsPopoverDirective._popover._ngZone.onStable.subscribe(() => {
             popoverElem.find('.popover-arrow').css('left', popoverLeftShift + 'px');
         });
     }
@@ -263,7 +301,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         }
         // Fix for [WMS-25125]: Not closing the existing opened popovers when the autoclose property is DISABLED
         if (!this.isChildPopover()) {
-            if (activePopover && activePopover !== this && 
+            if (activePopover && activePopover !== this &&
                 activePopover.autoclose !== AUTOCLOSE_TYPE.DISABLED) {
                 activePopover.isClosingProgrammatically = true;
                 activePopover.close();
@@ -278,7 +316,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         const popoverContainer  = document.querySelector(`.${this.popoverContainerCls}`) as HTMLElement;
         if (popoverContainer) {
             popoverContainer.setAttribute('data-popover-id', this.widgetId);
-            
+
             // Add click event listener to stop propagation
             popoverContainer.addEventListener('click', (event: Event) => {
                 event.stopPropagation();
@@ -305,7 +343,9 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             this.setupDocumentClickHandler();
         }
         setTimeout(() => {
-            this.anchorRef.nativeElement.removeAttribute('aria-describedby');
+            if (this.anchorRef?.nativeElement) {
+                this.anchorRef.nativeElement.removeAttribute('aria-describedby');
+            }
         });
         const deRegister = this.eventManager.addEventListener(popoverContainer, 'keydown.esc', () => {
             this.isOpen = false;
@@ -335,8 +375,16 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.autoclose === AUTOCLOSE_TYPE.ALWAYS) {
             popoverContainer.onclick = () => this.close();
         }
+        // Fix for [WMS-27656]: Added 'preventFocusShift' parameter (default: false).
+        // By default, focus moves to the popover when it appears.
+        // If 'preventFocusShift' is set to true, focus remains on the triggering element.
+        if (this.preventFocusShift) {
+            const activeElement = document.activeElement as HTMLElement; // Capture current focused element
+            setTimeout(() => activeElement?.focus(), 0);
+        } else {
+            setTimeout(() => popoverStartBtn.focus(), 50);
+        }
 
-        setTimeout(() => popoverStartBtn.focus(), 50);
         // Adjusting popover position if the popover placement is top or bottom
         setTimeout( () => {
             if (!this.adaptiveposition ) {
@@ -349,7 +397,18 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
 
     triggerPopoverEvents() {
         if (this.contentsource === 'partial') {
-            const cancelSubscription = this.app.subscribe('partialLoaded', (data) => {
+            this.partialLoadedSubscription = this.app.subscribe('partialLoaded', () => {
+                // Always clean up subscription first
+                if (this.partialLoadedSubscription) {
+                    this.partialLoadedSubscription();
+                    this.partialLoadedSubscription = null;
+                }
+                
+                // Check if component is still alive and partialRef exists
+                if (!this.partialRef || !this.partialRef.nativeElement) {
+                    return;
+                }
+                
                 const parEle = this.partialRef.nativeElement;
                 let partialScope;
 
@@ -361,7 +420,6 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
                     this.invokeEventCallback('load');
                     this.invokeEventCallback('show', {$event: {type: 'show'}});
                 }
-                cancelSubscription();
             });
         } else {
             this.Widgets   = this.viewParent.Widgets;
@@ -433,13 +491,56 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         this.bsPopoverDirective.hide();
     }
 
-    OnDestroy() {
+    ngOnDestroy() {
+        // Unsubscribe from partialLoaded event
+        if (this.partialLoadedSubscription) {
+            this.partialLoadedSubscription();
+            this.partialLoadedSubscription = null;
+        }
+        
+        // Unsubscribe from arrow position adjustment
+        if (this.arrowPositionSubscription) {
+            this.arrowPositionSubscription.unsubscribe();
+            this.arrowPositionSubscription = null;
+        }
+        
+        // Close popover if open
+        if (this.isOpen && this.bsPopoverDirective) {
+            this.bsPopoverDirective.hide();
+        }
+        
+        // Clear timeout
+        if (this.closePopoverTimeout) {
+            clearTimeout(this.closePopoverTimeout);
+            this.closePopoverTimeout = null;
+        }
+        
+        // Remove document click handler
         if (this.documentClickHandler) {
             document.removeEventListener('click', this.documentClickHandler, true);
+            this.documentClickHandler = null;
         }
+        
+        // Remove from active popovers array
         const index = PopoverComponent.activePopovers.indexOf(this);
         if (index > -1) {
             PopoverComponent.activePopovers.splice(index, 1);
         }
+        
+        // Clear anchor event handlers
+        if (this.anchorRef?.nativeElement) {
+            this.anchorRef.nativeElement.onmouseenter = null;
+            this.anchorRef.nativeElement.onmouseleave = null;
+        }
+
+        // MEMORY LEAK FIX: Clear all ViewChild and ContentChild references
+        // These retain the entire component tree including parent contexts (colDef, etc.)
+        this.bsPopoverDirective = null;
+        this.anchorRef = null;
+        this.popoverTemplate = null;
+        this.partialRef = null;
+        
+        // Call parent cleanup
+        super.ngOnDestroy();
     }
 }

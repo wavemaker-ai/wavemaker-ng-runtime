@@ -1,21 +1,20 @@
-import { PrefabManagerService } from './services/prefab-manager.service';
-import { AppRef } from './services/app.service';
-import { DynamicComponentRefProviderService } from './services/dynamic-component-ref-provider.service';
-
 export * from './types/types';
 export * from './services/app.manager.service';
 export * from './services/prefab-manager.service';
 export * from './components/base-page.component';
 export * from './components/base-partial.component';
+export * from './components/base-custom-widget.component';
 export * from './components/base-prefab.component';
 export * from './components/base-layout.component';
+export * from './overrides/wm_dom_renderer';
+export * from './overrides/wm_shared_styles_host';
 export * from './components/base-spa-page.component'
 export {
     InitializeApp,
     setAngularLocale,
     REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
-    RuntimeBaseModule,
-    WM_MODULES_FOR_ROOT
+    WM_MODULES_FOR_ROOT,
+    RuntimeBaseModule
 } from './runtime-base.module';
 export * from './util/utils';
 export * from './guards/auth.guard';
@@ -24,6 +23,7 @@ export * from './guards/page-not-found.guard';
 export * from './components/app-component/app.component';
 export * from './components/empty-component/empty-page.component';
 export * from './components/prefab-preview.component';
+export * from './resolves/app-before-load.resolve';
 export * from './resolves/app-js.resolve';
 export * from './resolves/app-extension.resolve';
 export * from './resolves/app-variables.resolve';
@@ -49,7 +49,7 @@ export * from './services/http-interceptor.services';
 export * from './services/i18n.service';
 export * from './services/navigation.service';
 export * from './services/pipe-provider.service';
-export * from './services/pipe.service'
+export * from './services/pipe.service';
 export {
     PrefabManagerService
 } from './services/prefab-manager.service';

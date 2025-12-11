@@ -1,8 +1,12 @@
-import "jest-preset-angular/setup-jest";
+
+// This file is automatically loaded when running `jest` commands
+import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
 import { ToastrModule } from 'ngx-toastr';
 import { TestBed } from '@angular/core/testing';
 import _ from 'lodash-es';
 import 'jest-canvas-mock';
+
+setupZoneTestEnv();
 
 // Mock global objects if necessary
 global.jQuery = require("jquery");
@@ -67,7 +71,6 @@ import "jquery-ui/ui/widgets/draggable.js";
 import "jquery-ui/ui/widgets/droppable.js";
 import "libraries/scripts/jquery.ui.touch-punch/jquery.ui.touch-punch.min.js";
 import "moment-timezone/builds/moment-timezone.min.js";
-import "hammerjs/hammer.min.js";
 import "iscroll/build/iscroll.js";
 import "tabbable/dist/index.umd.min.js";
 import "@wavemaker/focus-trap/dist/focus-trap.umd.min.js";
@@ -81,16 +84,11 @@ beforeEach(() => {
       ToastrModule.forRoot(),
     ],
   })
-  Object.defineProperties(window, {
-    location: {
-      writable: true,
-      value: {
-        reload: jest.fn(),
-      },
-    },
-  });
 });
 
+// Mock window.location for tests
+// We'll use a simpler approach that doesn't try to redefine read-only properties
+// The tests will handle their own window.location mocking as needed
 // jest.setup.js
 Object.defineProperty(global.HTMLMediaElement.prototype, 'load', {
     configurable: true,
@@ -119,3 +117,5 @@ Object.defineProperty(global.HTMLMediaElement.prototype, 'addTextTrack', {
     writable: true,
     value: jest.fn(),
 });
+
+

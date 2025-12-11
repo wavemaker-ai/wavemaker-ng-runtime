@@ -2,12 +2,14 @@ import {forwardRef} from '@angular/core';
 
 import {
     $parseExpr,
+    _WM_APP_PROJECT,
     checkIsCustomPipeExpression,
     deHyphenate,
     encodeUrl,
     FormWidgetType,
     getClonedObject,
     initCaps,
+    isValidImageUrl,
     isValidWebURL,
     prettifyLabel,
     stringStartsWith
@@ -201,7 +203,14 @@ export const getImageUrl = (urlString, shouldEncode?, defaultUrl?) => {
 
     // If no value is provided for picturesource assign pictureplaceholder or default-image
     if (!urlString) {
-        urlString = defaultUrl || 'resources/images/imagelists/default-image.png';
+        if (isValidWebURL(defaultUrl)) {
+            urlString = defaultUrl;
+        } else {
+            urlString =   ( defaultUrl || 'resources/images/imagelists/default-image.png' );
+        }
+    }
+    if (urlString && !_WM_APP_PROJECT.isPreview && !isValidImageUrl(urlString) && !urlString.startsWith(_WM_APP_PROJECT.cdnUrl) && !urlString.startsWith('services')) {
+        urlString = (_WM_APP_PROJECT.cdnUrl || '') + urlString;
     }
 
     urlString = shouldEncode ? encodeUrl(urlString) : urlString;
@@ -541,4 +550,12 @@ export const getKeyboardFocusableElements = (element: HTMLElement) => {
         return (!el.hasAttribute('disabled') && !el.hasAttribute('hidden')
             && (!el.hasAttribute('tabindex') || (el.hasAttribute('tabindex') && !el.getAttribute("tabindex").startsWith('-'))));
     });
+}
+
+export const getCurrentWidgets = (element, widgets) => {
+    const componentElements = Array.from(element.querySelectorAll('[widget-id]'));
+    return Object.assign(widgets, componentElements.reduce((result, comp: any,) => {
+        result[comp.widget.name] = comp.widget;
+        return result;
+    }, {}));
 }

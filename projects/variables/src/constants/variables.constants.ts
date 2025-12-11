@@ -1,6 +1,5 @@
 import {$rootScope as rootScope} from '@wavemaker/variables';
 export const CONSTANTS = {
-    hasCordova: window['cordova'] !== undefined,
     isStudioMode: false,
     isRunMode: true,
     XSRF_COOKIE_NAME: 'wm_xsrf_token',
@@ -19,7 +18,6 @@ export const VARIABLE_CONSTANTS = {
         TIMER: 'wm.TimerVariable',
         LOGIN: 'wm.LoginVariable',
         LOGOUT: 'wm.LogoutVariable',
-        DEVICE: 'wm.DeviceVariable'
     },
     EVENTS: ['onBefore',
         'onBeforeUpdate',
@@ -148,6 +146,16 @@ export const WS_CONSTANTS = {
         MULTIPART_FORMDATA: 'multipart/form-data',
         OCTET_STREAM: 'application/octet-stream'
     }
+};
+
+export const MODE_CONSTANTS = {
+    LIGHT: 'light',
+    DEFAULT: 'default',
+    COLOR: 'color',
+    FONT: 'font',
+    SPACE: 'space',
+    RADIUS: 'radius',
+    MODE_KEY: 'app-mode'
 };
 
 export const DB_CONSTANTS = {

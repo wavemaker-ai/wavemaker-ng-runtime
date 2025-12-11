@@ -5,23 +5,27 @@ import {
     Inject,
     Injector,
     OnInit,
+    OnDestroy,
     Optional,
-    Self, SkipSelf,
+    Self,
     TemplateRef,
     ViewChild
 } from '@angular/core';
 
 import {toBoolean} from '@wm/core';
 import { Context, provideAsDialogRef, provideAsWidgetRef } from '@wm/components/base';
-import { BaseDialog } from '@wm/components/dialogs';
+import { BaseDialog, DialogBodyDirective, DialogHeaderComponent } from '@wm/components/dialogs';
 
 import { registerProps } from './dialog.props';
+import { NgTemplateOutlet } from '@angular/common';
 
 const DIALOG_CLS = 'app-dialog modal-dialog';
 
 const WIDGET_INFO = {widgetType: 'wm-dialog'};
 
 @Component({
+    standalone: true,
+    imports: [DialogBodyDirective, DialogHeaderComponent, NgTemplateOutlet],
     selector: 'div[wmDialog]',
     templateUrl: './dialog.component.html',
     providers: [
@@ -30,7 +34,7 @@ const WIDGET_INFO = {widgetType: 'wm-dialog'};
         {provide: Context, useFactory: () => { return {} }, multi: true}
     ]
 })
-export class DialogComponent extends BaseDialog implements OnInit {
+export class DialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
     isDialogComponent: boolean = true;
 
@@ -43,6 +47,8 @@ export class DialogComponent extends BaseDialog implements OnInit {
         @Attribute('class') dialogClass: string,
         @Attribute('modal') modal: string | boolean,
         @Attribute('closable') closable: string | boolean,
+        @Attribute('sheet') sheet: string | boolean,
+        @Attribute('sheetposition') sheetPosition: string,
         @Self() @Inject(Context) contexts: Array<any>,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
@@ -66,11 +72,15 @@ export class DialogComponent extends BaseDialog implements OnInit {
             {
                 class: `${DIALOG_CLS} ${dialogClass || ''}`,
                 backdrop,
-                keyboard: toBoolean(closable) ? true : !toBoolean(modal)
-
+                keyboard: toBoolean(closable) ? true : !toBoolean(modal),
+                ignoreBackdropClick: toBoolean(modal)
             },
             explicitContext
         );
+
+        // adding props to render dialog as sheet
+        this.sheet = sheet;
+        this.sheetPosition = sheetPosition;
     }
 
     protected getTemplateRef(): TemplateRef<any> {
@@ -80,5 +90,26 @@ export class DialogComponent extends BaseDialog implements OnInit {
     ngOnInit() {
         super.ngOnInit();
         this.register(this.viewParent);
+    }
+
+    protected onPropertyChange(key: string, nv: any, ov?: any): void {
+        if(key === 'sheet') {
+            this.sheet = nv;
+        }
+        if(key === 'sheetposition') {
+            this.sheetPosition = nv;
+        }
+        if(key === 'title') {
+            this.nativeElement.setAttribute('title', nv);
+        }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild and ContentChild references
+        this.dialogTemplate = null;
+        this.dialogBody = null;
+        this.dialogFooter = null;
+
+        super.ngOnDestroy();
     }
 }

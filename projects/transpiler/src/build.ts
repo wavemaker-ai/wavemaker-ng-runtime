@@ -1,12 +1,5 @@
-import {
-    HtmlParser,
-    Element,
-    Text,
-    Comment,
-    getHtmlTagDefinition, ParseSourceSpan
-} from '@angular/compiler';
-import { WIDGET_IMPORTS } from './imports';
-import { isMobileApp } from '@wm/core';
+import {Comment, Element, getHtmlTagDefinition, HtmlParser, ParseSourceSpan, Text} from '@angular/compiler';
+import {WIDGET_IMPORTS} from './imports';
 import {find, isEqual, isFunction, remove, sortBy, uniqWith} from "lodash-es";
 
 const CSS_REGEX = {
@@ -89,10 +82,6 @@ const processAttr = attr => {
     let overridden = OVERRIDES[attr.name];
     const value = attr.valueSpan ? attr.value : undefined;
 
-    // do not append showInDevice attribute for mobile application.
-    if (attr.name === 'showindevice' && isMobileApp()) {
-        overridden = '';
-    }
     if (overridden) {
         /**
          * wrap value for accessroles with ''.
@@ -196,20 +185,6 @@ export const getAttrMarkup = (attrs: Map<string, string>) => {
                 v = v + `" *lazyLoad="${wrapWithApos(v)}`;
             }
             attrMarkup += `="${v}"`;
-
-            if (k === 'showindevice' && v !== 'all') {
-                const condition = [];
-                if (v.includes('xs')) {
-                    condition.push('Viewport.isMobileType');
-                }
-                if (v.includes('sm')) {
-                    condition.push('(Viewport.isTabletType && Viewport.orientation.isPortrait)');
-                }
-                if (v.includes('md')) {
-                    condition.push('(Viewport.isTabletType && Viewport.orientation.isLandscape)');
-                }
-                attrMarkup += ` *ngIf="${condition.join(' || ')}"`;
-            }
         }
     });
 
@@ -370,10 +345,13 @@ export const processNode = (node, importCollector: (i: ImportDef[]) => void, pro
                 child.attrs.forEach(function(attr){
                     if (attr.name === 'showindevice') {
                         showInDeviceAttr = attr;
+                        importCollector(WIDGET_IMPORTS.get("showindevice"))
                     } else if (attr.name === 'accessroles') {
                         accessRolesAttr = attr;
+                        importCollector(WIDGET_IMPORTS.get('accessroles'));
                     } else if (attr.name === 'deferload') {
                         deferLoadAttr = attr;
+                        importCollector(WIDGET_IMPORTS.get('lazyload'));
                     } else if (attr.name === 'show') {
                         showAttr = attr;
                     }
@@ -549,6 +527,8 @@ export const scopeComponentStyles = (componentName, componentType, styles = '') 
                         s = `${prefix} app-prefab-${componentName} ${s}`;
                     } else if (componentType === 2 || componentType === 'PARTIAL') {
                         s = `${prefix} app-partial-${componentName} ${s}`;
+                    } else if(componentType === 3 || componentType === 'WIDGET'){
+                        s = `${prefix} app-custom-${componentName} ${s}`;
                     }
                     return s;
                 }).join(',');

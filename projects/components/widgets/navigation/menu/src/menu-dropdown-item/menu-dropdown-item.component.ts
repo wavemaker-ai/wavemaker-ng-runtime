@@ -1,18 +1,20 @@
-import { Component, ElementRef, HostListener, Input, OnDestroy, OnInit, Optional } from '@angular/core';
+import { MenuDropdownComponent } from '../menu-dropdown/menu-dropdown.component';
+import { NavigationControlDirective } from '../nav/navigation-control.directive';
+import { Component, ElementRef, forwardRef, HostListener, inject, Input, OnDestroy, OnInit, Optional } from '@angular/core';
 
 import { addClass, triggerItemAction, UserDefinedExecutionContext, App, toggleClass } from '@wm/core';
-import { hasLinkToCurrentPage } from '@wm/components/base';
+import { hasLinkToCurrentPage, TextContentDirective } from '@wm/components/base';
 import { NavComponent } from '../nav/nav.component';
 
 import { KEYBOARD_MOVEMENTS, MENU_POSITION, MenuComponent } from '../menu.component';
-import {clone, includes} from "lodash-es";
+import { clone, includes } from "lodash-es";
 
 declare const $;
 
 const menuAlignClass = {
-    'pull-right' : 'fa-caret-left',
-    'dropinline-menu' : 'fa-caret-down',
-    'pull-left' : 'fa-caret-right'
+    'pull-right': 'fa-caret-left',
+    'dropinline-menu': 'fa-caret-down',
+    'pull-left': 'fa-caret-right'
 };
 
 const MENU_LAYOUT_TYPE = {
@@ -21,6 +23,8 @@ const MENU_LAYOUT_TYPE = {
 };
 
 @Component({
+    standalone: true,
+    imports: [TextContentDirective, forwardRef(() => MenuDropdownComponent), NavigationControlDirective],
     selector: 'li[wmMenuDropdownItem]',
     templateUrl: './menu-dropdown-item.component.html',
 })
@@ -34,10 +38,9 @@ export class MenuDropdownItemComponent implements OnInit, OnDestroy {
 
     private readonly nativeElement;
     private highlightActiveLinkSubscription: () => void;
-
+    public menuRef =  inject(MenuComponent);
     constructor(
         private app: App,
-        public menuRef: MenuComponent,
         private userDefinedExecutionContext: UserDefinedExecutionContext,
         @Optional() private parentNav: NavComponent,
         elRef: ElementRef,
@@ -163,7 +166,7 @@ export class MenuDropdownItemComponent implements OnInit, OnDestroy {
         }
 
         $event.preventDefault();
-        const args = {$event, $item: item};
+        const args = { $event, $item: item };
         this.menuRef.onMenuItemSelect(args);
         const selectedItem = clone(item);
         selectedItem.target = selectedItem.target || this.menuRef.linktarget;
@@ -172,7 +175,7 @@ export class MenuDropdownItemComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if(this.highlightActiveLinkSubscription) {
+        if (this.highlightActiveLinkSubscription) {
             this.highlightActiveLinkSubscription();
         }
     }

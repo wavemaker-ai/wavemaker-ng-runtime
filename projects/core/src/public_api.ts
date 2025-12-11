@@ -1,7 +1,6 @@
 /*
  * Public API Surface of core
  */
-
 export * from './utils/build-utils';
 export * from './constants/currency-constants';
 export {
@@ -50,7 +49,6 @@ export {
     isLargeTabletLandscape,
     isLargeTabletPortrait,
     isMobile,
-    isMobileApp,
     getAndroidVersion,
     isKitkatDevice,
     encodeUrl,
@@ -68,6 +66,7 @@ export {
     isImageFile,
     isAudioFile,
     isVideoFile,
+    isValidImageUrl,
     isValidWebURL,
     getResourceURL,
     triggerFn,
@@ -103,7 +102,6 @@ export {
     getSessionStorageItem,
     noop,
     convertToBlob,
-    hasCordova,
     AppConstants,
     openLink,
     fetchContent,
@@ -139,7 +137,9 @@ export {
     appendScriptToHead,
     getAppSetting,
     setListClass,
-    findParent
+    findParent,
+    getNavClass,
+    getSheetPositionClass
 } from './utils/utils';
 export {
     FIRST_TIME_WATCH,
@@ -149,6 +149,8 @@ export {
     unMuteWatchers,
     $watch,
     $unwatch,
+    $unwatchAll,
+    $unwatchAllByScope,
     setNgZone,
     setAppRef,
     isChangeFromWatch,
@@ -168,6 +170,5 @@ export * from './services/user-custom-pipe-manager.service';
 export * from './services/custom-icons-loader.service';
 export { StatePersistence } from './services/state-persistence.service';
 export { PaginationService } from './services/pagination.service';
-export * from './core.module';
 export * from './utils/wm-project-properties';
 export * from './utils/lru-cache';

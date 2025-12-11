@@ -10,7 +10,6 @@ import {
     getSessionStorageItem,
     getWmProjectProperties,
     isMobile,
-    isMobileApp,
     loadScripts,
     replace,
     setCSS,
@@ -20,7 +19,9 @@ import {
 import { CONSTANTS } from '@wm/variables';
 import {find, forEach, get, includes, intersection, isObject, map, toLower} from "lodash-es";
 
-declare const moment;
+import * as momentLib from 'moment-timezone/moment-timezone';
+const moment = momentLib.default || window['moment'];
+declare const _WM_APP_PROPERTIES;
 
 const APP_LOCALE_ROOT_PATH = 'resources/i18n';
 const RTL_LANGUAGE_CODES = ['ar', 'ar-001', 'ar-ae', 'ar-bh', 'ar-dz', 'ar-eg', 'ar-iq', 'ar-jo', 'ar-kw', 'ar-lb', 'ar-ly',
@@ -115,7 +116,8 @@ export class I18nServiceImpl extends AbstractI18nService {
     }
 
     protected loadAppLocaleBundle() {
-        this.loadResource(`${APP_LOCALE_ROOT_PATH}/${this.selectedLocale}.json`)
+        const basePath = _WM_APP_PROJECT.isPreview || _WM_APP_PROPERTIES?.languageBundleSources === 'DYNAMIC' ? '' :  _WM_APP_PROJECT.cdnUrl
+        this.loadResource( basePath + `${APP_LOCALE_ROOT_PATH}/${this.selectedLocale}.json`)
             .then(bundle => {
                 this.extendMessages(bundle.messages);
                 this.extendPrefabMessages(bundle);
@@ -126,24 +128,31 @@ export class I18nServiceImpl extends AbstractI18nService {
     }
 
     protected loadMomentLocaleBundle(momentLocale) {
-        const _cdnUrl = _WM_APP_PROJECT.cdnUrl || _WM_APP_PROJECT.ngDest;
         if (this.selectedLocale === this.defaultSupportedLocale) {
             moment.locale(this.defaultSupportedLocale);
             return;
         }
-        const path = _cdnUrl + `locales/moment/${momentLocale}.js`;
-        loadScripts([path], true).then(()=>{
-            moment.locale(this.selectedLocale);
+        if (_WM_APP_PROJECT.isPreview) {
+            const path = `${_WM_APP_PROJECT.cdnUrl}locales/moment/${momentLocale}.js`;
+            loadScripts([path], true).then(()=>{
+                this.loadScriptForMoment(momentLocale);
+            })
+        }
+        else{
+            this.loadScriptForMoment(momentLocale);
+        }
+    }
 
+    protected loadScriptForMoment(momentLocale){
+            moment.locale(this.selectedLocale);
             // For ngx bootstrap locale, get the config from script and apply locale
             // moment.localeData(momentLocale) will return moment locale instance. _config inside will have actual config
-            let _config = moment.localeData(momentLocale);
+            let _config: any = moment.localeData(momentLocale);
             _config = _config && _config._config;
             defineLocale(this.selectedLocale, _config);
             this.bsLocaleService.use(this.getSelectedLocale() || this.defaultSupportedLocale);
             this.bundleLoaded.moment = true;
             this.notifyLocaleChanged();
-        })
     }
 
     protected loadAngularLocaleBundle(angLocale) {
@@ -162,52 +171,11 @@ export class I18nServiceImpl extends AbstractI18nService {
         });
     }
 
-    protected loadCalendarLocaleBundle(calendarLocale, force = false) {
-        const _cdnUrl = _WM_APP_PROJECT.cdnUrl || _WM_APP_PROJECT.ngDest;
-        let path: string;
-        if (calendarLocale) {
-            path = _cdnUrl + `locales/fullcalendar/${calendarLocale}.js`;
-        } else {
-            return Promise.resolve();
-        }
-
-        // return in case of mobile app or if selected locale is default supported locale.
-        if (!force && (isMobile() || isMobileApp() || this.selectedLocale === this.defaultSupportedLocale)) {
-            this.bundleLoaded.fullCalendar = true;
-            return;
-        }
-
-        // Call the script. In script, moment defines the loaded locale
-        return loadScripts([path], true);
-    }
-
-    protected loadMomentTimeZoneBundle(locale, compInstance?) {
-        return new Promise<void>(resolve => {
+    protected loadMomentTimeZoneBundle(): Promise<any> {
             const _cdnUrl = _WM_APP_PROJECT.cdnUrl || _WM_APP_PROJECT.ngDest;
+            window['moment'] = moment; //moment-timezone-with-data.js need moment as require('moment') to be available in window
             const path = _cdnUrl + `locales/moment-timezone/moment-timezone-with-data.js`;
-            loadScripts([path], true).then(()=>{
-                /**
-                 * If locale is provided in the form of offset and not timezone name, deduce the name.
-                 * If locale is provided as GMT+9, name will be deduced as Asia/Tokyo
-                 */
-
-                let localeObj = locale;
-                locale = localeObj['timezone'];
-                const localeIndex = locale.indexOf('+');
-                if (localeIndex > -1) {
-                    if (localeIndex > 0) {
-                        locale = locale.substr(localeIndex);
-                    }
-                    localeObj['timezone'] = find(moment.tz.names(), (timezoneName) => {
-                        return locale === moment.tz(timezoneName).format('Z');
-                    });
-                }
-                moment.tz.setDefault(locale);
-                const localeData =  compInstance && compInstance.formatsByLocale ? compInstance.formatsByLocale : this.formatsByLocale;
-                Object.assign(localeData, localeObj);
-                resolve();
-            }, resolve);
-        });
+            return loadScripts([path], true)
     }
 
     protected loadLocaleBundles(libLocale) {
@@ -218,10 +186,8 @@ export class I18nServiceImpl extends AbstractI18nService {
             this.bundleLoaded.moment = true;
         }
         if (libLocale.fullCalendar && window['FullCalendar']) {
-            this.loadCalendarLocaleBundle(libLocale.fullCalendar)?.then(() => {
                 this.bundleLoaded.fullCalendar = true;
                 this.notifyLocaleChanged();
-            });
         } else {
             this.bundleLoaded.fullCalendar = true;
         }
@@ -232,7 +198,34 @@ export class I18nServiceImpl extends AbstractI18nService {
     }
 
     public setTimezone(locale, compInstance?) {
-        this.loadMomentTimeZoneBundle(locale, compInstance);
+        new Promise<void>(resolve => {
+        this.loadMomentTimeZoneBundle().then(()=>{
+            /**
+             * If locale is provided in the form of offset and not timezone name, deduce the name.
+             * If locale is provided as GMT+9, name will be deduced as Asia/Tokyo
+             */
+
+            let localeObj = locale;
+            locale = localeObj['timezone'];
+            const localeIndex = locale.indexOf('+');
+            if (localeIndex > -1) {
+                if (localeIndex > 0) {
+                    locale = locale.substr(localeIndex);
+                }
+                localeObj['timezone'] = find((moment as any).tz.names(), (timezoneName) => {
+                    return locale === (moment as any).tz(timezoneName).format('Z');
+                });
+            }
+            (moment as any).tz.setDefault(locale);
+            const localeData =  compInstance && compInstance.formatsByLocale ? compInstance.formatsByLocale : this.formatsByLocale;
+            Object.assign(localeData, localeObj);
+            resolve();
+        },resolve);
+        });
+    }
+    
+    public setTimezoneEarly(): Promise<any> {
+       return this.loadMomentTimeZoneBundle()
     }
 
     public getTimezone(compInstance?) {
@@ -311,21 +304,7 @@ export class I18nServiceImpl extends AbstractI18nService {
         let _selectedDefaultLang = preferBrowserLang ? undefined : _defaultLanguage;
 
         let _appSupportedLang;
-        /**
-         * for cordova, check for language ignoring the locale
-         * As the navigator.languages always returns the language with locale (en-us)
-         * The supportedLanguages from BE doesn't include locale (en) which leads to mismatch
-         */
-        if (CONSTANTS.hasCordova) {
-            let supportedLang = [];
-            forEach(_acceptLang, function (lang) {
-                let matchedLang = find(_supportedLang, (val) => lang === val) || find(_supportedLang, (val) => lang.startsWith(val));
-                if (matchedLang) {
-                    supportedLang.push(matchedLang);
-                }
-             })
-            _appSupportedLang = supportedLang[0];
-        }
+
         // check for the session storage to load any pre-requested locale
         const _defaultLang = getSessionStorageItem('selectedLocale') || _selectedDefaultLang || _appSupportedLang || intersection(_acceptLang, _supportedLang)[0] || this.defaultSupportedLocale;
         // if the supportedLocale is not available set it to defaultLocale
@@ -348,28 +327,22 @@ export class I18nServiceImpl extends AbstractI18nService {
     // This function returns the accepted languages list
     public getAcceptedLanguages() {
         let languages;
-        if (CONSTANTS.hasCordova) {
-            languages = navigator.languages || [navigator.language];
-        } else {
-            languages = decodeURIComponent(getWmProjectProperties().preferredLanguage || '');
-            /**
-             * Accept-Language Header will contain set of supported locale, so try splitting the string to proper locale set
-             * Ex: en,en-US;q=0.9,de;q=0.6,ar;q=0.2,hi
-             *
-             * Split the above into [en,en-us,de,ar,hi]
-             * @type {Array}
-             */
-            languages = languages.split(',').map(function(locale) {
-                return locale.split(';')[0];
-            });
-        }
+
+        languages = decodeURIComponent(getWmProjectProperties().preferredLanguage || '');
+        /**
+         * Accept-Language Header will contain set of supported locale, so try splitting the string to proper locale set
+         * Ex: en,en-US;q=0.9,de;q=0.6,ar;q=0.2,hi
+         *
+         * Split the above into [en,en-us,de,ar,hi]
+         * @type {Array}
+         */
+        languages = languages.split(',').map(function(locale) {
+            return locale.split(';')[0];
+        });
         return map(languages, toLower);
     }
 
     public initCalendarLocale(): Promise<any> {
-        if (this.selectedLocale !== 'en') {
-            return this.loadCalendarLocaleBundle(this.selectedLocale, true);
-        }
         return Promise.resolve();
     }
 

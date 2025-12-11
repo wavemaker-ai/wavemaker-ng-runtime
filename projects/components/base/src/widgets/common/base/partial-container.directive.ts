@@ -1,4 +1,4 @@
-import { Attribute, ComponentFactoryResolver, Directive, ElementRef, Inject, Injector, Self, ViewContainerRef } from '@angular/core';
+import { Attribute, ComponentFactoryResolver, Directive, ElementRef, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
 
 import { debounceTime, filter } from 'rxjs/operators';
 
@@ -8,9 +8,10 @@ import { WidgetRef } from "../../framework/types";
 import {debounce} from "lodash-es";
 
 @Directive({
+  standalone: true,
     selector: '[partialContainer]'
 })
-export class PartialContainerDirective {
+export class PartialContainerDirective implements OnDestroy {
 
     private contentInitialized = false;
     private $target;
@@ -72,6 +73,9 @@ export class PartialContainerDirective {
 
         componentInstance.registerPropertyChangeListener((key: string, nv: any, ov?: any) => {
             if (key === 'content') {
+                if('isInlineContent' in componentInstance) {
+                    componentInstance.isInlineContent = !(nv && nv !== '');
+                }
                 if (componentInstance.$lazyLoad) {
                     componentInstance.$lazyLoad = () => {
                         this.renderPartial(nv);
@@ -91,5 +95,29 @@ export class PartialContainerDirective {
             .subscribe(() => this.renderPartial(componentInstance.content));
         // reload the partial content on partial param change
         componentInstance.registerDestroyListener(() => subscription.unsubscribe());
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewContainerRef to destroy dynamically created components
+        if (this.vcRef) {
+            this.vcRef.clear();
+        }
+
+        // MEMORY LEAK FIX: Nullify debounced function to break closure
+        // The debounced function captures 'this' and has internal timeouts
+        if (this.renderPartial && (this.renderPartial as any).cancel) {
+            (this.renderPartial as any).cancel();
+        }
+        this.renderPartial = null;
+
+        // MEMORY LEAK FIX: Clear DOM reference
+        this.$target = null;
+
+        // MEMORY LEAK FIX: Clear component instance reference
+        // Note: We don't null componentInstance as it's injected and managed by Angular
+        // but we clear our internal references
+
+        // Reset content flag
+        this.contentInitialized = false;
     }
 }

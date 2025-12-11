@@ -1,7 +1,6 @@
 import {Subject} from 'rxjs';
 
-import {getWmProjectProperties} from './wm-project-properties';
-
+import {getPreviewProperties} from './wm-project-properties';
 import {$appDigest, $watch} from './watcher';
 import {DataType} from '../enums/enums';
 import {DataSource} from '../types/types';
@@ -9,27 +8,48 @@ import {setAttr} from './dom';
 import {$parseEvent} from './expression-parser';
 import {
     attempt,
-    camelCase, cloneDeep, every,
-    filter, forEach, get, identity,
-    includes, indexOf, intersection, isArray, isDate,
-    isEqual, isEqualWith, isError,
+    camelCase,
+    cloneDeep,
+    every,
+    filter,
+    forEach,
+    get,
+    identity,
+    includes,
+    indexOf,
+    intersection,
+    isArray,
+    isDate,
+    isEqual,
+    isEqualWith,
+    isError,
     isFunction,
     isNull,
-    isNumber, isString,
-    isUndefined, keys, map, noop as _noop, omit, replace as _replace,
+    isNumber,
+    isString,
+    isUndefined,
+    keys,
+    map,
+    noop as _noop,
+    omit,
+    replace as _replace,
     split,
-    startsWith, toLower, toUpper, trim
+    startsWith,
+    toLower,
+    toUpper,
+    trim
 } from "lodash-es";
 
-declare const X2JS;
+import X2JS from 'x2js';
+import * as momentLib from 'moment-timezone/moment-timezone';
+
 declare const $;
-declare const moment;
+const moment = momentLib.default || window['moment'];
 declare const document;
 declare const resolveLocalFileSystemURL;
 declare const WM_CUSTOM_FORMATTERS;
 declare const MSCSSMatrix;
 declare const _WM_APP_PROPERTIES;
-declare const cordova;
 
 const userAgent = window.navigator.userAgent;
 const REGEX = {
@@ -50,6 +70,7 @@ const REGEX = {
     MIN_PAGE_RESOURCE_PATH: /.*(page.min.html)$/,
     VALID_EMAIL: /^[a-zA-Z][\w.+]+@[a-zA-Z_]+?\.[a-zA-Z.]{1,4}[a-zA-Z]$/,
     VALID_WEB_URL: /^(http[s]?:\/\/)(www\.){0,1}[a-zA-Z0-9=:?\/\.\-]+(\.[a-zA-Z]{2,5}[\.]{0,1})?/,
+    VALID_IMAGE_URL: /^(https?|blob|data|file|ftp):/i,
     VALID_WEBSOCKET_URL: /^(ws[s]?:\/\/)(www\.){0,1}[a-zA-Z0-9=:?\/\.\-]+(\.[a-zA-Z]{2,5}[\.]{0,1})?/,
     VALID_RELATIVE_URL: /^(?!www\.|(?:http|ftp)s?:\/\/|[A-Za-z]:\\|\/\/).*/,
     REPLACE_PATTERN: /\$\{([^\}]+)\}/g,
@@ -70,6 +91,16 @@ const REGEX = {
 const NUMBER_TYPES = ['int', DataType.INTEGER, DataType.FLOAT, DataType.DOUBLE, DataType.LONG, DataType.SHORT, DataType.BYTE, DataType.BIG_INTEGER, DataType.BIG_DECIMAL];
 const now: Date = new Date();
 const CURRENT_DATE = 'CURRENT_DATE';
+
+export const getNavClass = (suffix: string) : string => {
+    const APP_NAV_CLASS_PREFIX = 'app-nav-';
+    return APP_NAV_CLASS_PREFIX + suffix;
+}
+
+export const getSheetPositionClass = (suffix: string): string => {
+    const SHEET_POSITION_CLASS_PREFIX = 'sheet-position-';
+    return SHEET_POSITION_CLASS_PREFIX + suffix;
+}
 
 export const enum EVENT_LIFE { ONCE, WINDOW }
 
@@ -122,7 +153,6 @@ export const isTablet = () => {
     return scope && scope.viewParent.Viewport.isTabletType;
 };
 
-export const isMobileApp = () => getWmProjectProperties().platformType === 'MOBILE' && getWmProjectProperties().type === 'APPLICATION';
 
 export const getAndroidVersion = () => {
     const match = (window.navigator.userAgent.toLowerCase()).match(/android\s([0-9\.]*)/);
@@ -327,6 +357,10 @@ export const isValidWebURL = (url: string): boolean => {
     return (REGEX.VALID_WEB_URL).test(url);
 };
 
+export const isValidImageUrl = (url: string): boolean => {
+    return (REGEX.VALID_IMAGE_URL).test(url?.trim());
+}
+
 /*This function returns the url to the resource after checking the validity of url*/
 export const getResourceURL = (urlString) => {
     if (isValidWebURL(urlString)) {
@@ -367,8 +401,7 @@ export const getFormattedDate = (datePipe, dateObj, format, timeZone?, isTimeSta
     if (format === 'UTC') {
         return new Date(dateObj).toISOString();
     }
-
-    if (timeZone && timeZone !== moment.defaultZone?.name) {
+    if (timeZone && timeZone !== (moment as any).defaultZone?.name) {
         const momentFormat = format.replaceAll('y', 'Y').replaceAll('d', 'D').replace('a', 'A');
         if (isIntervalDateTime ) { // dates which are of type time widget (value is hh:mm:ss) but returned as date string from time comp
             return moment(dateObj).format(momentFormat);
@@ -521,7 +554,8 @@ export const getValidJSON = (content) => {
 };
 
 export const xmlToJson = (xmlString) => {
-    const x2jsObj = new X2JS({ 'emptyNodeForm': 'content', 'attributePrefix': '', 'enableToStringFunc': false });
+    //TODO: import x2js dynamically
+    const x2jsObj = new X2JS({ 'emptyNodeForm': 'object', 'attributePrefix': '', 'enableToStringFunc': false });
     let json = x2jsObj.xml2js(xmlString);
     if (json) {
         json = get(json, Object.keys(json)[0]);
@@ -636,19 +670,11 @@ export const isEmptyObject = (obj: any): boolean => {
 export const scrollToElement = (element) => {
     const $element = $(element);
     const formPosition = $element.offset().top;
-    const $scrollParent = $element.closest('[wmsmoothscroll="true"]');
-    if (isMobileApp() && $scrollParent.length) {
-        const iScroll = get($scrollParent[0], 'iscroll');
-        let to = -(formPosition - iScroll.y);
-        to = (iScroll.maxScrollY > to) ? iScroll.maxScrollY : to;
-        iScroll.scrollTo(0, to);
-    } else {
-        window.scroll({
-            top: formPosition,
-            left: 0,
-            behavior: 'smooth'
-        });
-    }
+    window.scroll({
+        top: formPosition,
+        left: 0,
+        behavior: 'smooth'
+    });
 }
 
 // Function will return whether the given element is in viewport or not
@@ -720,7 +746,7 @@ const momentPattern = (pattern) => {
 /*  This function returns date object. If val is undefined it returns invalid date */
 export const getValidDateObject = (val, options?) => {
    const defaultMeridian = ['AM', 'PM'];
-   const momentMeridian = moment()._locale.meridiem();
+   const momentMeridian = (moment() as any)._locale.meridiem();
     // Updating localized meridians with default meridians when moment meridian is not defined
     if (options && options.meridians && includes(defaultMeridian, momentMeridian)) {
         forEach(options.meridians, (meridian, index) => {
@@ -733,13 +759,13 @@ export const getValidDateObject = (val, options?) => {
     const pattern = isNativePicker ? (get(options, 'pattern') || 'YYYY/MM/DD HH:mm:ss') : (momentPattern(get(options, 'pattern')) || '');
     // Handling localization
     if (options && options.pattern && options.pattern !== 'timestamp') {
-        if (!isNaN((new Date(val)).getTime())) {
+        if (!isNaN(moment(val, pattern).valueOf())) { // Fix for [WMS-27658]: Date() doesn't support some formats like 'dd/MM/yyyy'  so using moment() to format the value
             // check whether val is a valid date or not
             if (isIos()) {
                 // For iOS, explicitly setting the format to consider even the seconds.
                 val = moment(val).format('YYYY/MM/DD HH:mm:ss');
             }
-            val = moment(new Date(val), pattern);
+            val = moment(val, pattern);
         } else {
             val = moment(val, pattern);
         }
@@ -806,6 +832,7 @@ export const isEqualWithFields = (obj1, obj2, compareBy) => {
     // Split the compareby comma separated values
     let _compareBy = isArray(compareBy) ? compareBy : split(compareBy, ',');
 
+    //@ts-ignore
     _compareBy = map(_compareBy, trim);
 
     return isEqualWith(obj1, obj2, function (o1, o2) {
@@ -870,9 +897,9 @@ const isScriptLoaded = src => !!getNode(`script[src="${src}"], script[data-src="
 
 export const getMomentLocaleObject = (timeZone, dateObj?) => {
     if (dateObj) {
-        return new Date(new Date(moment(dateObj).tz(timeZone).format()).toLocaleString("en-US", {timeZone: timeZone}));
+        return new Date(new Date((moment(dateObj) as any).tz(timeZone).format()).toLocaleString("en-US", {timeZone: timeZone}));
     } else {
-        return new Date(new Date(moment().tz(timeZone).format()).toLocaleString("en-US", {timeZone: timeZone}));
+        return new Date(new Date((moment() as any).tz(timeZone).format()).toLocaleString("en-US", {timeZone: timeZone}));
     }
 }
 
@@ -985,20 +1012,13 @@ export const convertToBlob = (filepath): Promise<any> => {
     });
 };
 
-export const hasCordova = () => {
-    return !!window['cordova'];
-};
 
 export const AppConstants = {
     INT_MAX_VALUE: 2147483647
 };
 
 export const openLink = (link: string, target: string = '_self') => {
-    if (hasCordova() && startsWith(link, '#')) {
-        location.hash = link;
-    } else {
         window.open(link, target);
-    }
 };
 
 /* util function to load the content from a url */
@@ -1555,17 +1575,6 @@ export const VALIDATOR = {
 };
 
 export const transformFileURI = (url) => {
-    if (isString(url) && hasCordova() && url.startsWith('file://')) {
-        if (isIos()) {
-            return url.replace('file://', '/_app_file_');
-        } else if (isAndroid() && location.href.startsWith('http')) {
-            if (url.startsWith(cordova.file.applicationDirectory)) {
-                return url.replace(cordova.file.applicationDirectory + 'www', '');
-            } else if (url.startsWith('file://')) {
-                return url.replace('file://', '/_app_file_');
-            }
-        }
-    }
     return url;
 };
 
@@ -1637,6 +1646,10 @@ export const findViewParent = (lView: any) => {
     } else {
         return findViewParent(parentlView);
     }*/
+}
+
+export const getFontConfig = () => {
+    return _WM_APP_PROPERTIES.fontConfig || getPreviewProperties();
 }
 
 /*export const getParent = (parent: any) => {

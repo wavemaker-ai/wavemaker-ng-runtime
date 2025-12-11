@@ -10,8 +10,7 @@
  * </li>
  */
 
-import {Directive, ElementRef, Inject, Injector, Input, Optional, ViewContainerRef} from '@angular/core';
-import { NgForOfContext } from '@angular/common';
+import {Directive, ElementRef, Inject, Injector, Input, OnDestroy, OnInit, Optional, ViewContainerRef} from '@angular/core';
 
 import {App} from '@wm/core';
 
@@ -22,13 +21,14 @@ import { StylableComponent } from '../base/stylable.component';
 const WIDGET_CONFIG = {widgetType: 'wm-item-template'};
 
 @Directive({
+  standalone: true,
     selector: '[wmItemTemplate]',
     exportAs: 'itemTemplateRef',
     providers: [
         provideAsWidgetRef(ItemTemplateDirective)
     ]
 })
-export class ItemTemplateDirective extends StylableComponent {
+export class ItemTemplateDirective extends StylableComponent implements OnInit, OnDestroy {
     static initializeProps = registerProps();
     public context;
     public content;
@@ -54,5 +54,36 @@ export class ItemTemplateDirective extends StylableComponent {
     ngOnInit() {
         super.ngOnInit();
         this.partialParams.item = this.userComponentParams.dataObject;
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear context to release references to ngFor context
+        // The context holds references to the parent LView and loop variables
+        if (this.context) {
+            Object.keys(this.context).forEach(key => {
+                delete this.context[key];
+            });
+            this.context = null;
+        }
+
+        // MEMORY LEAK FIX: Clear partial params
+        if (this.partialParams) {
+            Object.keys(this.partialParams).forEach(key => {
+                delete this.partialParams[key];
+            });
+            this.partialParams = null;
+        }
+
+        // MEMORY LEAK FIX: Clear user component params reference
+        this.userComponentParams = null;
+
+        // MEMORY LEAK FIX: Clear content reference
+        this.content = null;
+
+        // MEMORY LEAK FIX: Clear ViewContainerRef reference
+        this.viewContainerRef = null;
+
+        // Call parent ngOnDestroy (StylableComponent → BaseComponent)
+        super.ngOnDestroy();
     }
 }

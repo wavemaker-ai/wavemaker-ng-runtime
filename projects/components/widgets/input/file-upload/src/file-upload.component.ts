@@ -1,9 +1,10 @@
+import { CommonModule } from '@angular/common';
 import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional} from '@angular/core';
 
 import { Subject, Subscription } from 'rxjs';
 
 import { App, DataSource, getWmProjectProperties, isAudioFile, isImageFile, isVideoFile, AbstractDialogService, IDGenerator } from '@wm/core';
-import {provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
+import {FileIconClassPipe, FileSizePipe, provideAsWidgetRef, StateClassPipe, StylableComponent, styler } from '@wm/components/base';
 
 import {registerProps} from './file-upload.props';
 import {forEach, includes, isEmpty, toLower} from "lodash-es";
@@ -17,6 +18,8 @@ const WIDGET_CONFIG = {
 };
 
 @Component({
+    standalone: true,
+    imports: [CommonModule, FileIconClassPipe, StateClassPipe, FileSizePipe],
     selector: '[wmFileUpload]',
     templateUrl: './file-upload.component.html',
     providers: [
@@ -55,7 +58,6 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
     FILESIZE_MB = 1048576;
     widgetProps;
     _isMobileType;
-    _isCordova;
     // parentPrefabScope = element.closest('.app-prefab').isolateScope(),
     CONSTANT_FILE_SERVICE = 'FileService';
     uploadData = {
@@ -75,6 +77,10 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
     private uploadProgressSubscription: Subscription;
     private deleteProgressSubscription: Subscription;
     private idGenerator = new IDGenerator('file-');
+    // MEMORY LEAK FIX: Store bound functions for proper cleanup
+    private boundDragOverCb: (e: Event) => void;
+    private boundDropCb: () => void;
+    private boundDisableDropZone: () => void;
     /*_hasOnSuccessEvt = WM.isDefined(attrs.onSuccess);
      _hasOnErrorEvt = WM.isDefined(attrs.onError);*/
 
@@ -209,13 +215,15 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
         this.$element.find('.file-input')[0].value = null;
         $event.stopPropagation();
 
+        // MEMORY LEAK FIX: Use stored bound function reference
         // when the filepicker is not there on the window, remove the dropzone highlight
-        window.addEventListener('focus', this.disableDropZone.bind(this));
+        window.addEventListener('focus', this.boundDisableDropZone);
     }
 
     disableDropZone() {
         this.highlightDropArea = false;
-        window.removeEventListener('focus', this.disableDropZone);
+        // MEMORY LEAK FIX: Remove using stored bound function reference
+        window.removeEventListener('focus', this.boundDisableDropZone);
     }
 
     /*this function to clear the specified file. if argument is not provided, it clears the complete list  */
@@ -432,12 +440,18 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
 
     ngOnInit() {
         super.ngOnInit();
+        
+        // MEMORY LEAK FIX: Store bound function references for proper removal
+        this.boundDragOverCb = this.dragOverCb.bind(this);
+        this.boundDropCb = this.dropCb.bind(this);
+        this.boundDisableDropZone = this.disableDropZone.bind(this);
+        
         // adding, dragover and drop on the document as when file is dragged on to the page highlight the dropzones and remove highlight on file drop
-        document.addEventListener('dragover', this.dragOverCb.bind(this));
-        document.addEventListener('drop', this.dropCb.bind(this));
+        document.addEventListener('dragover', this.boundDragOverCb);
+        document.addEventListener('drop', this.boundDropCb);
 
         // adding mouseleave evnt to remove highlight when file is dropped outside the window
-        document.addEventListener('mouseleave', this.dropCb.bind(this));
+        document.addEventListener('mouseleave', this.boundDropCb);
     }
 
     ngAfterViewInit() {
@@ -445,9 +459,21 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
     }
 
     ngOnDestroy() {
-        document.removeEventListener('dragover', this.dragOverCb);
-        document.removeEventListener('drop', this.dropCb);
-        document.removeEventListener('mouseleave', this.dropCb);
+        // MEMORY LEAK FIX: Remove using stored bound function references
+        if (this.boundDragOverCb) {
+            document.removeEventListener('dragover', this.boundDragOverCb);
+            this.boundDragOverCb = null;
+        }
+        if (this.boundDropCb) {
+            document.removeEventListener('drop', this.boundDropCb);
+            document.removeEventListener('mouseleave', this.boundDropCb);
+            this.boundDropCb = null;
+        }
+        if (this.boundDisableDropZone) {
+            window.removeEventListener('focus', this.boundDisableDropZone);
+            this.boundDisableDropZone = null;
+        }
+        
         super.ngOnDestroy();
 
         const subscriptions = [this.uploadProgressSubscription, this.deleteProgressSubscription];

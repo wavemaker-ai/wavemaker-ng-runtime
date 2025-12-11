@@ -4,22 +4,26 @@ import {
     Inject,
     Injector,
     OnInit,
+    OnDestroy,
     Optional,
-    SkipSelf,
     TemplateRef,
     ViewChild
 } from '@angular/core';
 
 import {toBoolean} from '@wm/core';
 import { provideAsDialogRef, provideAsWidgetRef } from '@wm/components/base';
-import { BaseDialog } from '@wm/components/dialogs';
+import { BaseDialog, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent } from '@wm/components/dialogs';
 
 import { registerProps } from './iframe-dialog.props';
+import { IframeComponent } from '@wm/components/basic/iframe';
+import { ButtonComponent } from '@wm/components/input/button';
 
 const DIALOG_CLS = 'app-dialog modal-dialog app-iframe-dialog';
 const WIDGET_INFO = {widgetType: 'wm-iframedialog'};
 
 @Component({
+    standalone: true,
+    imports: [IframeComponent, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
     selector: 'div[wmIframeDialog]',
     templateUrl: './iframe-dialog.component.html',
     providers: [
@@ -27,7 +31,7 @@ const WIDGET_INFO = {widgetType: 'wm-iframedialog'};
         provideAsDialogRef(IframeDialogComponent)
     ]
 })
-export class IframeDialogComponent extends BaseDialog implements OnInit {
+export class IframeDialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ViewChild('dialogTemplate' , { static: true }) dialogTemplate: TemplateRef<any>;
@@ -78,5 +82,12 @@ export class IframeDialogComponent extends BaseDialog implements OnInit {
     ngOnInit() {
         super.ngOnInit();
         this.register(this.viewParent);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.dialogTemplate = null;
+
+        super.ngOnDestroy();
     }
 }

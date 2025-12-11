@@ -7,7 +7,7 @@
         "sourceMap": true,
         "declaration": false,
         "target": "es2022",
-        "module": "es2020",
+        "module": "es2022",
         "moduleResolution": "node",
         "esModuleInterop": true,
         "emitDecoratorMetadata": true,
@@ -16,7 +16,7 @@
             "node_modules/@types"
         ],
         "lib": [
-            "es2018",
+            "es2022",
             "dom"
         ],
         "paths": {
@@ -32,38 +32,29 @@
             "@wm/build-task": [
                 "libraries/build-task/"
             ],
-            "@wm/mobile-build-task": [
-                "libraries/mobile-build-task"
-            ],
             "@wm/core": [
                 "libraries/core"
             ],
             "@wavemaker/variables": [
                 "node_modules/@wavemaker/variables/"
             ],
+            "@wavemaker/custom-widgets-m3": [
+                "node_modules/@wavemaker/custom-widgets-m3/"
+            ],
             "@wm/components/base": [
                 "libraries/components/base"
             ],
-            "@wm/components/basic": [
-                "libraries/components/basic/default"
+            "@wm/components/basic/*": [
+                "libraries/components/basic/*"
             ],
-            "@wm/components/input": [
-                "libraries/components/input/default"
+            "@wm/components/input/*": [
+                "libraries/components/input/*"
             ],
             "@wm/components/page": [
                 "libraries/components/page/default"
             ],
-            "@wm/mobile/components/basic": [
-                "libraries/mobile/components/basic/default"
-            ],
-            "@wm/mobile/components/page": [
-                "libraries/mobile/components/page/default"
-            ],
             "@wm/components/dialogs": [
                 "libraries/components/dialogs/default"
-            ],
-            "@wm/mobile/components/*": [
-                "libraries/mobile/components/*"
             ],
             "@wm/components/*": [
                 "libraries/components/*"
@@ -86,29 +77,11 @@
             "@wm/variables": [
                 "libraries/variables"
             ],
-            "@wm/mobile/core": [
-                "libraries/mobile/core"
-            ],
-            "@wm/mobile/components": [
-                "libraries/mobile/components"
-            ],
-            "@wm/mobile/offline": [
-                "libraries/mobile/offline"
-            ],
-            "@wm/mobile/variables": [
-                "libraries/mobile/variables"
-            ],
             "@wm/runtime/base": [
                 "libraries/runtime/base"
             ],
             "@wm/runtime/dynamic": [
                 "libraries/runtime/dynamic"
-            ],
-            "@wm/mobile/runtime": [
-                "libraries/mobile/runtime"
-            ],
-            "@wm/mobile/runtime/dynamic": [
-                "libraries/mobile/runtime-dynamic"
             ]
         },
         "useDefineForClassFields": false

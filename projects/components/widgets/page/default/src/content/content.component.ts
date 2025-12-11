@@ -8,6 +8,7 @@ const DEFAULT_CLS = 'app-content clearfix';
 const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-content', hostClass: DEFAULT_CLS};
 
 @Component({
+    standalone: true,
     selector: '[wmContent]',
     templateUrl: './content.component.html',
     providers: [

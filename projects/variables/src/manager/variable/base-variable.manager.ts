@@ -49,9 +49,22 @@ export abstract class BaseVariableManager {
                     // send the notification manually to hide any context spinners on page.
                     // [TODO]: any spinners on widget listening on this variable will also go off. Need to see an approach to sovle that.
                     this.notifyInflight(variable, false, err);
-                    err._401Subscriber.asObservable().subscribe(
-                        response => resolve(response),
-                        e => reject(e));
+                    // MEMORY LEAK FIX: Store subscription for cleanup (though it's a one-time promise resolver)
+                    const error401Subscription = err._401Subscriber.asObservable().subscribe(
+                        response => {
+                            resolve(response);
+                            // Unsubscribe after resolution
+                            if (error401Subscription && !error401Subscription.closed) {
+                                error401Subscription.unsubscribe();
+                            }
+                        },
+                        e => {
+                            reject(e);
+                            // Unsubscribe after rejection
+                            if (error401Subscription && !error401Subscription.closed) {
+                                error401Subscription.unsubscribe();
+                            }
+                        });
                 } else {
                     reject(err);
                 }

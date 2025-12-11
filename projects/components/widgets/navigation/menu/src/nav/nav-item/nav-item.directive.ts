@@ -1,8 +1,8 @@
-import {ContentChild, Directive, HostListener, Injector, AfterViewInit, Optional, Inject} from '@angular/core';
+import {ContentChild, Directive, HostListener, Injector, AfterViewInit, OnDestroy, Optional, Inject} from '@angular/core';
 
 import {addClass, removeClass} from '@wm/core';
 import { APPLY_STYLES_TYPE, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
-import { AnchorComponent } from '@wm/components/basic';
+import { AnchorComponent } from '@wm/components/basic/anchor';
 
 import { registerProps } from './nav-item.props';
 
@@ -12,13 +12,14 @@ const DEFAULT_CLS = 'app-nav-item';
 const WIDGET_CONFIG = {widgetType: 'wm-nav-item', hostClass: DEFAULT_CLS};
 
 @Directive({
+  standalone: true,
     selector: '[wmNavItem]',
     exportAs: 'navItemRef',
     providers: [
         provideAsWidgetRef(NavItemDirective)
     ]
 })
-export class NavItemDirective extends StylableComponent implements AfterViewInit{
+export class NavItemDirective extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
     @ContentChild(AnchorComponent) innerLink;
 
@@ -46,5 +47,12 @@ export class NavItemDirective extends StylableComponent implements AfterViewInit
     public ngOnDetach() {
         removeClass(this.nativeElement, 'active', true);
         super.ngOnDetach();
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ContentChild reference
+        this.innerLink = null;
+
+        super.ngOnDestroy();
     }
 }

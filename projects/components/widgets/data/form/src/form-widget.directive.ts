@@ -1,4 +1,4 @@
-import { Attribute, Directive, Inject, OnInit, Self, Optional } from '@angular/core';
+import { Attribute, Directive, Inject, OnDestroy, OnInit, Self, Optional } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 
 import { WidgetRef } from '@wm/components/base';
@@ -7,9 +7,10 @@ import { TableComponent } from '@wm/components/data/table';
 import { FormComponent } from './form.component';
 
 @Directive({
+  standalone: true,
     selector: '[wmFormWidget]'
 })
-export class FormWidgetDirective implements OnInit {
+export class FormWidgetDirective implements OnInit, OnDestroy {
 
     ngform: FormGroup;
     fb;
@@ -58,5 +59,13 @@ export class FormWidgetDirective implements OnInit {
             this.addControl(fieldName);
             this.parent.registerFormWidget(this.componentInstance);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear all references
+        this.ngform = null;
+        this.fb = null;
+        this.parent = null;
+        this.componentInstance = null;
     }
 }

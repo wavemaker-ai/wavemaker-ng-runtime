@@ -1,6 +1,5 @@
-import { Live_Operations } from './utils/data-utils';
+import {Live_Operations} from './utils/data-utils';
 
-export * from './components.module';
 export {
     Live_Operations,
     ALLFIELDS,
@@ -56,6 +55,7 @@ export {
     hasLinkToCurrentPage,
     getOrderByExpr,
     isDataSetWidget,
+    getCurrentWidgets,
     getImageUrl,
     getBackGroundImageUrl,
     provideAs,
@@ -84,6 +84,7 @@ export {
     NavNode
 } from './widgets/common/base/dataset-aware-nav.component';
 export * from './widgets/common/base/partial-container.directive';
+export * from './widgets/common/base/custom-widget-container.directive';
 export * from './widgets/common/base/base-field-validations';
 export * from './widgets/common/item-template/item-template.directive';
 export * from './widgets/common/repeat-template/repeat-template.directive';
@@ -125,7 +126,8 @@ export {
     FileIconClassPipe,
     StateClassPipe,
     FileExtensionFromMimePipe,
-    TrailingZeroDecimalPipe
+    TrailingZeroDecimalPipe,
+    TemplateReplacePipe
 } from './pipes/custom-pipes';
 export * from './pipes/trust-as.pipe';
 export * from './pipes/sanitize.pipe';
@@ -133,6 +135,5 @@ export * from './pipes/image.pipe';
 export * from './widgets/common/container/container.directive';
 export * from './widgets/common/lazy-load/lazy-load.directive';
 export * from './widgets/common/partial-param/partial-param.directive';
-export * from './widgets/common/smooth-scroll/smooth-scroll.directive';
 export * from './widgets/common/base/text-content.directive';
 export * from './directives/show-in-device.directive';

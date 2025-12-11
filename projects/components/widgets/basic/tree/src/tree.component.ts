@@ -10,6 +10,7 @@ const WIDGET_INFO = {widgetType: 'wm-tree', hostClass: 'app-tree'};
 const defaultTreeIconClass = 'plus-minus';
 
 @Component({
+    standalone: true,
     selector: 'ul[wmTree]',
     templateUrl: './tree.component.html',
     providers: [

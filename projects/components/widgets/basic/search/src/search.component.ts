@@ -1,3 +1,6 @@
+import { CommonModule } from '@angular/common';
+import { FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ScrollableDirective } from './scrollable.directive';
 import {
     AfterViewChecked,
     AfterViewInit,
@@ -6,20 +9,25 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     QueryList,
     ViewChild,
     ViewChildren
 } from '@angular/core';
-import {NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 
-import {from, Observable, of} from 'rxjs';
-import {filter, mergeMap} from 'rxjs/operators';
+import { from, Observable, of } from 'rxjs';
+import { filter, mergeMap } from 'rxjs/operators';
 
-import {TypeaheadContainerComponent, TypeaheadDirective, TypeaheadMatch} from 'ngx-bootstrap/typeahead';
+import {
+    TypeaheadContainerComponent,
+    TypeaheadDirective,
+    TypeaheadMatch,
+    TypeaheadModule
+} from 'ngx-bootstrap/typeahead';
 
-import {addClass, adjustContainerPosition, App, DataSource, isDefined, isMobile, toBoolean} from '@wm/core';
+import { addClass, adjustContainerPosition, App, DataSource, isDefined, isMobile, toBoolean } from '@wm/core';
 import {
     ALLFIELDS,
     convertDataToObject,
@@ -27,15 +35,18 @@ import {
     extractDataAsArray,
     getContainerTargetClass,
     getUniqObjsByDataField,
+    ItemTemplateDirective,
+    PartialContainerDirective,
+    PartialParamHandlerDirective,
     provideAs,
     provideAsWidgetRef,
     styler,
+    TextContentDirective,
     transformFormData
 } from '@wm/components/base';
-import {DatasetAwareFormComponent} from '@wm/components/input';
-
-import {registerProps} from './search.props';
-import {DataProvider, IDataProvider, IDataProviderConfig} from './data-provider/data-provider';
+import { DatasetAwareFormComponent } from '@wm/components/input/dataset-aware-form';
+import { registerProps } from './search.props';
+import { DataProvider, IDataProvider, IDataProviderConfig } from './data-provider/data-provider';
 import {
     debounce,
     find,
@@ -55,6 +66,8 @@ import {
 const WIDGET_CONFIG = { widgetType: 'wm-search', hostClass: 'input-group' };
 
 @Component({
+    standalone: true,
+    imports: [CommonModule, FormsModule, ScrollableDirective, TypeaheadModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective],
     selector: '[wmSearch]',
     templateUrl: './search.component.html',
     providers: [
@@ -63,7 +76,7 @@ const WIDGET_CONFIG = { widgetType: 'wm-search', hostClass: 'input-group' };
         provideAsWidgetRef(SearchComponent)
     ]
 })
-export class SearchComponent extends DatasetAwareFormComponent implements OnInit, AfterViewInit, AfterViewChecked {
+export class SearchComponent extends DatasetAwareFormComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
     static initializeProps = registerProps();
     public casesensitive: boolean;
     public searchkey: string;
@@ -94,6 +107,9 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     public binddisplaylabel: string;
     public typeaheadContainer: TypeaheadContainerComponent;
     public containerTarget: string;
+    public clearsearchiconclass: string;
+    public backsearchiconclass: string;
+    public searchiconclass: string;
 
     @ViewChild(TypeaheadDirective) typeahead: TypeaheadDirective;
     @ViewChild('ulElement') ulElement: ElementRef;
@@ -228,7 +244,9 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     private clearSearch($event, loadOnClear) {
         this.query = '';
         this.onInputChange($event);
-        this.dataProvider.isLastPage = false;
+        if (this.dataProvider) {
+            this.dataProvider.isLastPage = false;
+        }
         this.listenQuery = false;
         if (loadOnClear) {
             this.listenQuery = true;
@@ -369,7 +387,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     }
 
     private loadMoreData(incrementPage?: boolean) {
-        if (this.dataProvider.isLastPage) {
+        if (!this.dataProvider || this.dataProvider.isLastPage) {
             return;
         }
         // Increase the page number and trigger force query update
@@ -510,7 +528,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
             dropdownEl.css({ position: 'relative', top: 0, height: screenHeight + 'px' });
             this.showClosebtn = this.query && this.query !== '';
 
-            if (!isUndefined(this.dataProvider.isLastPage) && !this.dataProvider.isLastPage) {
+            if (this.dataProvider && !isUndefined(this.dataProvider.isLastPage) && !this.dataProvider.isLastPage) {
                 this.triggerSearch();
             }
         }
@@ -525,7 +543,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
         const index = matches.indexOf(this.typeaheadContainer.active);
 
         // on keydown, if scroll is at the bottom and next page records are available, fetch next page items.
-        if (!this._loadingItems && !this.dataProvider.isLastPage && index + 1 > matches.length - 1) {
+        if (!this._loadingItems && this.dataProvider && !this.dataProvider.isLastPage && index + 1 > matches.length - 1) {
             // index is saved in order to select the lastSelected item in the dropdown after fetching next page items.
             this.lastSelectedIndex = index;
             this.loadMoreData(true);
@@ -541,7 +559,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     }
 
     private triggerSearch() {
-        if (this.dataProvider.isLastPage || !this.$element.hasClass('full-screen')) {
+        if (!this.dataProvider || this.dataProvider.isLastPage || !this.$element.hasClass('full-screen')) {
             return;
         }
         const typeAheadDropDown = this.dropdownEl;
@@ -650,7 +668,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     public notifySubscriber() {
         const parentEl = $(this.nativeElement).closest('.app-composite-widget.caption-floating');
         if (parentEl.length > 0) {
-            this.app.notify('captionPositionAnimate', {displayVal: true, nativeEl: parentEl});
+            this.app.notify('captionPositionAnimate', { displayVal: true, nativeEl: parentEl });
         }
     }
 
@@ -695,11 +713,11 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
                 // response from dataProvider returns always data object.
                 response = response.data || response;
                 // for service variable, updating the dataset only if it is not defined or empty
-                if ((!isDefined(this.dataset) || !this.dataset.length) && this.dataProvider.updateDataset) {
+                if (this.dataProvider && (!isDefined(this.dataset) || !this.dataset.length) && this.dataProvider.updateDataset) {
                     this.dataset = response;
                 }
 
-                if (this.dataProvider.hasMoreData) {
+                if (this.dataProvider && this.dataProvider.hasMoreData) {
                     this.formattedDataset = this.formattedDataset.concat(response);
                 } else {
                     this.formattedDataset = response;
@@ -711,14 +729,14 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
                 }
 
                 // In mobile, trigger the search by default until the results have height upto page height. Other results can be fetched by scrolling
-                    if (this._isOpen && this.isMobileAutoComplete() && !isUndefined(this.dataProvider.isLastPage) && !this.dataProvider.isLastPage) {
+                if (this.dataProvider && this._isOpen && this.isMobileAutoComplete() && !isUndefined(this.dataProvider.isLastPage) && !this.dataProvider.isLastPage) {
                     this.triggerSearch();
                 }
 
                 const transformedData = this.getTransformedData(this.formattedDataset, nextItemIndex);
 
                 // result contains the datafield values.
-                    this.result = map(transformedData, 'value');
+                this.result = map(transformedData, 'value');
                 return transformedData;
             }, (error) => {
                 this._loadingItems = false;
@@ -783,7 +801,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
             clientHeight = $scrollEl.clientHeight;
 
         // If scroll is at the bottom and no request is in progress and next page records are available, fetch next page items.
-        if (!this._loadingItems && !this.dataProvider.isLastPage && ($scrollEl.scrollTop + clientHeight >= totalHeight)) {
+        if (!this._loadingItems && this.dataProvider && !this.dataProvider.isLastPage && ($scrollEl.scrollTop + clientHeight >= totalHeight)) {
             this.loadMoreData(true);
         }
     }
@@ -824,10 +842,10 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     private eventData($event, item) {
         if ($event) {
             $event['data'] = {
-                item  : item.dataObject,
-                model : item.value,
-                label : item.label,
-                query : this.query
+                item: item.dataObject,
+                model: item.value,
+                label: item.label,
+                query: this.query
             };
         }
 
@@ -872,7 +890,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
         // Backward compatability from 10.3.1 to 10.3.2
         // 10.3.1 we had displaylabel as modal value
         // From 10.3.2 onwords we will be having displayexpresion as modal value
-        if (this.type === 'autocomplete' && key === 'displaylabel' && this.displaylabel && (!this.displayexpression || (this.displayexpression && !this.datasource)))  {
+        if (this.type === 'autocomplete' && key === 'displaylabel' && this.displaylabel && (!this.displayexpression || (this.displayexpression && !this.datasource))) {
             this.displayexpression = this.displaylabel;
             this.displaylabel = undefined;
         }
@@ -895,5 +913,27 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
         }
 
         super.onPropertyChange(key, nv, ov);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear QueryList reference
+        this.liElements = null;
+
+        // MEMORY LEAK FIX: Clear data provider
+        if (this.dataProvider) {
+            this.dataProvider = null;
+        }
+
+        // MEMORY LEAK FIX: Clear typeahead reference
+        if (this.typeahead) {
+            this.typeahead = null;
+        }
+
+        // MEMORY LEAK FIX: Clear query model
+        this.queryModel = null;
+        this.query = '';
+
+        // Call parent ngOnDestroy (DatasetAwareFormComponent has cleanup)
+        super.ngOnDestroy();
     }
 }

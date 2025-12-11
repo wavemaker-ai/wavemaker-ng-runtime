@@ -6,19 +6,18 @@ import {
     NgZone,
     OnDestroy,
     OnInit,
-    ViewContainerRef,
-    HostListener
-} from '@angular/core';
+    ViewContainerRef} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { Subscription } from 'rxjs';
 
-import { AbstractSpinnerService, App, noop} from '@wm/core';
+import { AbstractSpinnerService, App} from '@wm/core';
 import { MetadataService } from '@wm/variables';
 import { SecurityService } from '@wm/security';
 import { AppManagerService, BasePageComponent, ComponentRefProvider, ComponentType } from '@wm/runtime/base';
 
 @Component({
+    standalone: true, 
     selector: 'app-page-outlet',
     template: '<div></div>'
 })
@@ -97,10 +96,17 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewContainerRef to destroy dynamically created components
         this.vcRef.clear();
+        
+        // MEMORY LEAK FIX: Unsubscribe from route params subscription
         if (this.subscription) {
             this.subscription.unsubscribe();
+            this.subscription = null;
         }
+
+        // MEMORY LEAK FIX: Clear instance reference
+        this.instance = null;
     }
 
     ngOnAttach() {

@@ -1,3 +1,22 @@
+import {CommonModule} from '@angular/common';
+import {
+    APPLY_STYLES_TYPE,
+    configureDnD,
+    DEBOUNCE_TIMES,
+    extractDataSourceName,
+    getOrderedDataset,
+    groupData,
+    handleHeaderClick,
+    NAVIGATION_TYPE,
+    provideAsWidgetRef,
+    StylableComponent,
+    styler,
+    TextContentDirective,
+    ToDatePipe,
+    toggleAllHeaders,
+    unsupportedStatePersistenceTypes,
+    WidgetRef
+} from "@wm/components/base";
 import {
     AfterViewInit,
     Attribute,
@@ -5,7 +24,8 @@ import {
     Component,
     ContentChild,
     ContentChildren,
-    ElementRef, Inject,
+    ElementRef,
+    Inject,
     Injector,
     NgZone,
     OnDestroy,
@@ -25,38 +45,20 @@ import {
     App,
     AppDefaults,
     DataSource,
+    generateGUId,
     getClonedObject,
     isDataSourceEqual,
     isDefined,
     isMobile,
-    isMobileApp,
     isObject,
     noop,
-    switchClass,
-    StatePersistence,
     PaginationService,
     setListClass,
-    generateGUId
+    StatePersistence,
+    switchClass
 } from '@wm/core';
-import {
-    APPLY_STYLES_TYPE,
-    configureDnD,
-    DEBOUNCE_TIMES,
-    getOrderedDataset,
-    groupData,
-    handleHeaderClick,
-    NAVIGATION_TYPE,
-    unsupportedStatePersistenceTypes,
-    provideAsWidgetRef,
-    StylableComponent,
-    styler,
-    ToDatePipe,
-    toggleAllHeaders,
-    WidgetRef,
-    extractDataSourceName
-} from '@wm/components/base';
 import {PaginationComponent} from '@wm/components/data/pagination';
-import {ButtonComponent} from '@wm/components/input';
+import {ButtonComponent} from '@wm/components/input/button';
 
 import {registerProps} from './list.props';
 import {ListItemDirective} from './list-item.directive';
@@ -65,7 +67,8 @@ import {
     clone,
     cloneDeep,
     forEach,
-    get, has,
+    get,
+    has,
     includes,
     isArray,
     isEmpty,
@@ -73,7 +76,14 @@ import {
     isNumber,
     isString,
     isUndefined,
-    last, max, min, pullAllWith, pullAt, remove, some, toNumber
+    last,
+    max,
+    min,
+    pullAllWith,
+    pullAt,
+    remove,
+    some,
+    toNumber
 } from "lodash-es";
 
 declare const $;
@@ -82,6 +92,8 @@ const DEFAULT_CLS = 'app-livelist app-panel';
 const WIDGET_CONFIG = {widgetType: 'wm-list', hostClass: DEFAULT_CLS};
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, TextContentDirective, PaginationComponent, ListItemDirective],
     selector: 'div[wmList]',
     templateUrl: './list.component.html',
     providers: [
@@ -143,6 +155,11 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     public statehandler: any;
     public currentIndex: number;
     public titleId: string;
+    public allowpagesizechange: boolean = false;
+    public pagesizeoptions: string;
+    private prevPagesizeoptions: string;
+    public updatedPageSize;
+    public actualPageSize;
     _isDependent;
     private itemsPerRowClass: string;
     private firstSelectedItem: ListItemDirective;
@@ -176,6 +193,8 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private ariaText: String;
     private _pageLoad;
     private _selectedItemsExist;
+    private listItemsChangesSubscription: any;
+    private boundClickHandler: (event: Event) => void;
 
     private touching;
     private touched;
@@ -320,6 +339,9 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             return this.fieldDefs.findIndex((obj) => isEqual(obj, item));
         }
     }
+     public getUpdatedPageSize() {
+         return this.updatedPageSize;
+     }
 
     create() {
         if (this._isDependent) {
@@ -505,6 +527,9 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             }
         }
     }
+    getActualPageSize()  {
+        return this.actualPageSize || 20;
+    }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
         if (key === 'dataset') {
@@ -513,6 +538,9 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             }
             this.onDataSetChange(nv);
         } else if (key === 'datasource') {
+            if(this.allowpagesizechange){
+                this.datasource.maxResults = this.pagesize || this.datasource.maxResults
+            }
             if (this.dataset) {
                 this.onDataSetChange(this.dataset);
             }
@@ -540,11 +568,8 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 setTimeout(() => this.dataNavigator.navigationClass = nv);
             }
         } else if (key === 'pagesize') {
-            this.dataNavigator.options = {
-                maxResults: nv
-            };
-            this.dataNavigator.widget.maxResults = nv;
-            this.dataNavigator.maxResults = nv;
+            this.actualPageSize = nv; // maintain default page size to calculate pagesize options
+            this.setDefaultPageSize(nv)
         } else if (key === 'enablereorder') {
             if (nv && this.$ulEle) {
                 this.$ulEle.attr('aria-describedby', this.titleId);
@@ -554,9 +579,71 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 this.$ulEle.removeAttr('aria-describedby');
                 this.$ulEle.sortable('disable');
             }
-        } else {
+        } else if (key === 'allowpagesizechange') {
+            this.allowpagesizechange = nv;
+        } else if(key === 'pagesizeoptions') {
+                this.prevPagesizeoptions = this.sanitizeCommaSeparatedIntegers(ov);
+                this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
+                if(this.allowpagesizechange) this.setDefaultPageSize(nv)
+        }else {
             super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    setDefaultPageSize(nv: any){
+     if (this.allowpagesizechange) {
+        const widgetState = this.statePersistence.getWidgetState(this);
+        if (get(widgetState, 'pagesize')) {
+            nv = get(widgetState, 'pagesize');
+            this.pagesize = nv; // updating the default pagesize to user selected pagesize
+        } else if (this.pagesizeoptions) {
+            nv = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b)[0]
+            this.pagesize = nv;
+        }
+         if(this.isPageSizeOptionsChanged()) {
+             this.dataNavigator.defaultPageSizeOptions = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) || [];
+             this.dataNavigator.pageSizeOptions = [...this.dataNavigator.defaultPageSizeOptions];
+         }
+    }
+        this.updatedPageSize = nv;
+        this.dataNavigator.updatedPageSize = nv;
+
+        this.dataNavigator.options = {
+            maxResults: nv
+        };
+        this.dataNavigator.widget.maxResults = nv;
+        this.dataNavigator.maxResults = nv;
+        if(this.datasource){
+            this.datasource.maxResults = this.pagesize || this.datasource.maxResults;
+        }
+    }
+
+    isPageSizeOptionsChanged() {
+        return !isEqual(this.prevPagesizeoptions, this.pagesizeoptions);
+    }
+
+    selectPageSize(pagesize: number) {
+        if(!this.allowpagesizechange && !pagesize) return;
+
+        if(pagesize < this.dataNavigator.pageSizeOptions[0] || pagesize > this.dataNavigator.pageSizeOptions[this.dataNavigator.pageSizeOptions.length - 1]
+            || !this.dataNavigator.pageSizeOptions.includes(Number(pagesize))) {
+            pagesize = this.dataNavigator.pageSizeOptions[0];
+        }
+        this.dataNavigator.onPageSizeChange(undefined, pagesize);
+    }
+
+    sanitizeCommaSeparatedIntegers(input: string): string {
+        if (!input) return "";
+        const uniqueNumbers = Array.from(
+            new Set(
+                input
+                    .split(",")
+                    .map(v => v.trim())
+                    .filter(v => /^-?\d+$/.test(v))
+                    .map(v => Math.abs(parseInt(v, 10)))
+            )
+        );
+        return uniqueNumbers.join(",");
     }
 
     public onItemClick(evt: any, $listItem: ListItemDirective) {
@@ -697,16 +784,94 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 $ul.removeAttribute('aria-describedby');
             }
         }
-        if (isMobileApp() && $ul.querySelector('.app-list-item-action-panel')) {
-            this._listAnimator = new ListAnimator(this);
-        }
     }
 
     ngOnDestroy() {
         if (this._listAnimator && this._listAnimator.$btnSubscription) {
             this._listAnimator.$btnSubscription.unsubscribe();
+            this._listAnimator = null;
         }
-        this._listenerDestroyers.forEach(d => d && d());
+        
+        // MEMORY LEAK FIX: Unsubscribe from all app subscriptions
+        if (this._listenerDestroyers) {
+            this._listenerDestroyers.forEach(d => d && d());
+            this._listenerDestroyers = [];
+        }
+
+        // MEMORY LEAK FIX: Unsubscribe from navigator watches
+        if (this.navigatorResultWatch) {
+            this.navigatorResultWatch.unsubscribe();
+            this.navigatorResultWatch = null;
+        }
+        if (this.navigatorMaxResultWatch) {
+            this.navigatorMaxResultWatch.unsubscribe();
+            this.navigatorMaxResultWatch = null;
+        }
+
+        // MEMORY LEAK FIX: Unsubscribe from listItems changes
+        if (this.listItemsChangesSubscription) {
+            this.listItemsChangesSubscription.unsubscribe();
+            this.listItemsChangesSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Remove native event listener
+        const ulElement = this.nativeElement?.querySelector('ul.app-livelist-container');
+        if (ulElement && this.boundClickHandler) {
+            try {
+                ulElement.removeEventListener('click', this.boundClickHandler, true);
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
+            this.boundClickHandler = null;
+        }
+
+        // MEMORY LEAK FIX: Destroy jQuery sortable widget
+        if (this.$ulEle && this.$ulEle.sortable) {
+            try {
+                this.$ulEle.sortable('destroy');
+            } catch (e) {
+                // Ignore errors during destroy
+            }
+            this.$ulEle = null;
+        }
+
+        // MEMORY LEAK FIX: Clear QueryList references
+        if (this.listItems) {
+            this.listItems = null;
+        }
+        if (this.btnComponents) {
+            this.btnComponents = null;
+        }
+
+        // MEMORY LEAK FIX: Clear ViewChild and ContentChild references
+        this.dataNavigator = null;
+        this.listTemplate = null;
+        this.listLeftActionTemplate = null;
+        this.listRightActionTemplate = null;
+
+        // MEMORY LEAK FIX: Clear all data arrays and objects
+        this.fieldDefs = [];
+        this._items = [];
+        this.groupedData = null;
+        if (Array.isArray(this.selectedItemWidgets)) {
+            this.selectedItemWidgets = [];
+        } else {
+            this.selectedItemWidgets = {};
+        }
+
+        // MEMORY LEAK FIX: Remove add item event listener
+        const $addItem = document.getElementsByClassName("add-list-item")[0];
+        if ($addItem && this.boundAddItemHandler) {
+            $addItem.removeEventListener('click', this.boundAddItemHandler);
+            this.boundAddItemHandler = null;
+        }
+
+        // MEMORY LEAK FIX: Nullify closures and references
+        this.debouncedFetchNextDatasetOnScroll = null;
+        this.firstSelectedItem = null;
+        this.lastSelectedItem = null;
+        this.reorderProps = null;
+
         super.ngOnDestroy();
     }
 
@@ -954,8 +1119,14 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         if (get(this.datasource, 'category') === 'wm.Variable' && this.getConfiguredState() !== 'none' && this._pageLoad) {
             const widgetState = this.statePersistence.getWidgetState(this);
             this._pageLoad = false;
-            if (get(widgetState, 'pagination')) {
-                this.dataNavigator.pageChanged({page: widgetState.pagination}, true);
+            if (this.allowpagesizechange) { // maintain updated page size in the statePersistence
+                if (get(widgetState, 'pagination') || get(widgetState, 'pagesize')) {
+                    this.dataNavigator.pageChanged({page: widgetState.pagination || 1, pagesize: widgetState.pagesize}, true);
+                }
+            } else {
+                if (get(widgetState, 'pagination')) {
+                    this.dataNavigator.pageChanged({page: widgetState.pagination}, true);
+                }
             }
             if (get(widgetState, 'selectedItem')) {
                 this._selectedItemsExist = true;
@@ -1147,39 +1318,38 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
 
         if (this.fieldDefs.length && this.infScroll) {
             const smoothScrollEl = this.$element.closest('[wmsmoothscroll]');
-            // if smoothscroll is set to false, then native scroll has to be applied
-            // otherwise smoothscroll events will be binded.
-            if (isMobileApp() && smoothScrollEl.length && smoothScrollEl.attr('wmsmoothscroll') === 'true') {
-                this.paginationService.bindIScrollEvt(this, DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
-            } else {
-                // In case of mobile app when modal exists, and list items height is greater than the modal content provide ccontainer a scrollable height
-                const modalBody = this.$element.closest('.modal-body');
-                const listHt = this.$element.find('ul').height();
-                const modalHt = window.innerHeight - 140;
-                if (isMobile() && modalBody.length && listHt > modalHt) {
-                    this.$element.css('height', modalHt + 'px');
-                }
-                this.paginationService.bindScrollEvt(this, '> ul', DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
+            // In case of mobile app when modal exists, and list items height is greater than the modal content provide ccontainer a scrollable height
+            const modalBody = this.$element.closest('.modal-body');
+            const listHt = this.$element.find('ul').height();
+            const modalHt = window.innerHeight - 140;
+            if (isMobile() && modalBody.length && listHt > modalHt) {
+                this.$element.css('height', modalHt + 'px');
             }
+            this.paginationService.bindScrollEvt(this, '> ul', DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
+
         }
 
         this.isDataChanged = false;
     }
 
     private setupHandlers() {
-        this.listItems.changes.subscribe(listItems => {
+        this.listItemsChangesSubscription = this.listItems.changes.subscribe(listItems => {
             this.onListRender(listItems);
             this.cdRef.detectChanges();
         });
         // handle click event in capturing phase.
-        this.nativeElement.querySelector('ul.app-livelist-container').addEventListener('click', ($event) => {
+        this.boundClickHandler = ($event) => {
             let target = $($event.target).closest('.app-list-item');
             // Recursively find the current list item
             while (target.get(0) && (target.closest('ul.app-livelist-container').get(0) !== $event.currentTarget)) {
                 target = target.parent().closest('.app-list-item');
             }
             this.triggerListItemSelection(target, $event);
-        }, true);
+        };
+        const ulElement = this.nativeElement.querySelector('ul.app-livelist-container');
+        if (ulElement) {
+            ulElement.addEventListener('click', this.boundClickHandler, true);
+        }
     }
 
     // Triggers on drag start while reordering.
@@ -1247,7 +1417,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             appendTo = 'body';
         }
 
-        const options = isMobileApp() ? {} : {
+        const options = {
             appendTo: appendTo,
         };
 
@@ -1258,46 +1428,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
 
         this.$ulEle.droppable({'accept': '.app-list-item'});
 
-        if (isMobileApp()) {
-            this.$ulEle.sortable('disable');
-            this.$ulEle.on('touchstart', function (event) {
-                let self = this;
-                if (!self.touching) {
-                    if (self.touched) {
-                        clearTimeout(self.touched);
-                    }
-                    setTimeout(() => {
-                        //Prevent context menu on mobile (IOS/ANDROID)
-                        if (event.cancelable) {
-                            event.preventDefault();
-                        }
-                    }, 50);
-                    self.touched = setTimeout(() => {
-                        $(event.currentTarget).addClass('no-selection');
-                        //Enable draggable
-                        $(event.currentTarget).sortable('enable');
 
-                        //Set internal flag
-                        self.touching = true;
-
-                        //trigger touchstart again to enable draggable through touch punch
-                        $(self).trigger(event);
-
-                        //Choose preferred duration for taphold
-                    }, 350);
-                }
-            }).on('touchend', function (event) {
-                this.touching = false;
-                $(event.currentTarget).removeClass('no-selection');
-
-                //Disable draggable to enable default behaviour
-                $(event.currentTarget).sortable('disable');
-
-                clearTimeout(this.touched);
-            }).on('touchmove', function () {
-                clearTimeout(this.touched);
-            });
-        }
 
     }
 
@@ -1352,13 +1483,17 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         }));
     }
 
+    private boundAddItemHandler: (event: Event) => void;
+
     private setUpCUDHandlers() {
         const $addItem = document.getElementsByClassName("add-list-item")[0];
         if ($addItem) {
-            // Triggered on click of add action
-            $addItem.addEventListener('click', evt => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundAddItemHandler = (evt: Event) => {
                 this.create();
-            });
+            };
+            // Triggered on click of add action
+            $addItem.addEventListener('click', this.boundAddItemHandler);
         }
     }
 }

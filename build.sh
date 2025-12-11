@@ -48,7 +48,6 @@ fi
 
 mkdir -p ./dist/tmp/libs/core-js
 mkdir -p ./dist/bundles/wmapp/scripts
-mkdir -p ./dist/bundles/wmmobile/scripts
 
 execCommand() {
     local task=$1
@@ -156,9 +155,33 @@ bundleWeb() {
         ./libraries/security/bundles/index.umd.js \
         ./libraries/components/base/bundles/index.umd.js \
         ./libraries/build-task/bundles/index.umd.js \
-        ./libraries/components/input/default/bundles/index.umd.js \
-        ./libraries/components/basic/default/bundles/index.umd.js \
-        ./libraries/components/basic/progress/bundles/index.umd.js \
+        ./libraries/components/input/base-form/bundles/index.umd.js \
+        ./libraries/components/input/button/bundles/index.umd.js \
+        ./libraries/components/input/base-form-custom/bundles/index.umd.js \
+        ./libraries/components/input/dataset-aware-form/bundles/index.umd.js \
+        ./libraries/components/input/text/bundles/index.umd.js \
+        ./libraries/components/input/caption-position/bundles/index.umd.js \
+        ./libraries/components/input/button-group/bundles/index.umd.js \
+        ./libraries/components/input/checkbox/bundles/index.umd.js \
+        ./libraries/components/input/checkboxset/bundles/index.umd.js \
+        ./libraries/components/input/composite/bundles/index.umd.js \
+        ./libraries/components/input/radioset/bundles/index.umd.js \
+        ./libraries/components/input/select/bundles/index.umd.js \
+        ./libraries/components/input/switch/bundles/index.umd.js \
+        ./libraries/components/input/number/bundles/index.umd.js \
+        ./libraries/components/input/textarea/bundles/index.umd.js \
+        ./libraries/components/basic/anchor/bundles/index.umd.js \
+        ./libraries/components/basic/audio/bundles/index.umd.js \
+        ./libraries/components/basic/html/bundles/index.umd.js \
+        ./libraries/components/basic/icon/bundles/index.umd.js \
+        ./libraries/components/basic/iframe/bundles/index.umd.js \
+        ./libraries/components/basic/label/bundles/index.umd.js \
+        ./libraries/components/basic/picture/bundles/index.umd.js \
+        ./libraries/components/basic/spinner/bundles/index.umd.js \
+        ./libraries/components/basic/video/bundles/index.umd.js \
+        ./libraries/components/basic/progress/progress-utils/bundles/index.umd.js \
+        ./libraries/components/basic/progress/progress-bar/bundles/index.umd.js \
+        ./libraries/components/basic/progress/progress-circle/bundles/index.umd.js \
         ./libraries/components/basic/rich-text-editor/bundles/index.umd.js \
         ./libraries/components/basic/search/bundles/index.umd.js \
         ./libraries/components/basic/tree/bundles/index.umd.js \
@@ -166,7 +189,12 @@ bundleWeb() {
         ./libraries/components/input/chips/bundles/index.umd.js \
         ./libraries/components/input/color-picker/bundles/index.umd.js \
         ./libraries/components/input/currency/bundles/index.umd.js \
-        ./libraries/components/input/epoch/bundles/index.umd.js \
+        ./libraries/components/input/epoch/picker/bundles/index.umd.js \
+        ./libraries/components/input/epoch/date-time-picker/bundles/index.umd.js \
+        ./libraries/components/input/epoch/base-date-time/bundles/index.umd.js \
+        ./libraries/components/input/epoch/date/bundles/index.umd.js \
+        ./libraries/components/input/epoch/date-time/bundles/index.umd.js \
+        ./libraries/components/input/epoch/time/bundles/index.umd.js \
         ./libraries/components/input/file-upload/bundles/index.umd.js \
         ./libraries/components/input/rating/bundles/index.umd.js \
         ./libraries/components/input/slider/bundles/index.umd.js \
@@ -205,9 +233,8 @@ bundleWeb() {
         ./libraries/components/advanced/carousel/bundles/index.umd.js \
         ./libraries/components/advanced/marquee/bundles/index.umd.js \
         ./libraries/components/advanced/login/bundles/index.umd.js \
+        ./libraries/components/advanced/custom/bundles/index.umd.js \
         ./libraries/variables/bundles/index.umd.js \
-        ./libraries/mobile/placeholder/runtime/bundles/index.umd.js \
-        ./libraries/mobile/placeholder/runtime-dynamic/bundles/index.umd.js \
         ./libraries/runtime/base/bundles/index.umd.js \
         ./libraries/runtime/dynamic/bundles/index.umd.js \
         -o ./dist/bundles/wmapp/scripts/wm-loader.js -b
@@ -222,96 +249,6 @@ bundleWeb() {
     fi
 }
 
-bundleMobile() {
-    echo "uglify: mobile"
-    ${TERSER} \
-        ./libraries/core/bundles/index.umd.js \
-        ./libraries/swipey/bundles/index.umd.js \
-        ./libraries/transpiler/bundles/index.umd.js \
-        ./libraries/http/bundles/index.umd.js \
-        ./libraries/oAuth/bundles/index.umd.js \
-        ./libraries/security/bundles/index.umd.js \
-        ./libraries/components/base/bundles/index.umd.js \
-        ./libraries/build-task/bundles/index.umd.js \
-        ./libraries/components/input/default/bundles/index.umd.js \
-        ./libraries/components/basic/default/bundles/index.umd.js \
-        ./libraries/components/basic/progress//bundles/index.umd.js \
-        ./libraries/components/basic/rich-text-editor/bundles/index.umd.js \
-        ./libraries/components/basic/search/bundles/index.umd.js \
-        ./libraries/components/basic/tree/bundles/index.umd.js \
-        ./libraries/components/input/calendar/bundles/index.umd.js \
-        ./libraries/components/input/chips/bundles/index.umd.js \
-        ./libraries/components/input/color-picker/bundles/index.umd.js \
-        ./libraries/components/input/currency/bundles/index.umd.js \
-        ./libraries/components/input/epoch/bundles/index.umd.js \
-        ./libraries/components/input/file-upload/bundles/index.umd.js \
-        ./libraries/components/input/rating/bundles/index.umd.js \
-        ./libraries/components/input/slider/bundles/index.umd.js \
-        ./libraries/components/chart/bundles/index.umd.js \
-        ./libraries/components/navigation/menu/bundles/index.umd.js \
-        ./libraries/components/navigation/navbar/bundles/index.umd.js \
-        ./libraries/components/navigation/breadcrumb/bundles/index.umd.js \
-        ./libraries/components/navigation/popover/bundles/index.umd.js \
-        ./libraries/components/dialogs/default/bundles/index.umd.js \
-        ./libraries/components/dialogs/alert-dialog/bundles/index.umd.js \
-        ./libraries/components/dialogs/confirm-dialog/bundles/index.umd.js \
-        ./libraries/components/dialogs/design-dialog/bundles/index.umd.js \
-        ./libraries/components/page/default/bundles/index.umd.js \
-        ./libraries/components/page/footer/bundles/index.umd.js \
-        ./libraries/components/page/header/bundles/index.umd.js \
-        ./libraries/components/page/left-panel/bundles/index.umd.js \
-        ./libraries/components/page/right-panel/bundles/index.umd.js \
-        ./libraries/components/page/top-nav/bundles/index.umd.js \
-        ./libraries/components/prefab/bundles/index.umd.js \
-        ./libraries/components/data/pagination/bundles/index.umd.js \
-        ./libraries/components/data/card/bundles/index.umd.js \
-        ./libraries/components/data/list/bundles/index.umd.js \
-        ./libraries/components/data/table/bundles/index.umd.js \
-        ./libraries/components/data/live-table/bundles/index.umd.js \
-        ./libraries/components/data/form/bundles/index.umd.js \
-        ./libraries/components/dialogs/iframe-dialog/bundles/index.umd.js \
-        ./libraries/components/dialogs/login-dialog/bundles/index.umd.js \
-        ./libraries/components/dialogs/partial-dialog/bundles/index.umd.js \
-        ./libraries/components/containers/accordion/bundles/index.umd.js \
-        ./libraries/components/containers/layout-grid/bundles/index.umd.js \
-        ./libraries/components/containers/linear-layout/bundles/index.umd.js \
-        ./libraries/components/containers/panel/bundles/index.umd.js \
-        ./libraries/components/containers/tabs/bundles/index.umd.js \
-        ./libraries/components/containers/tile/bundles/index.umd.js \
-        ./libraries/components/containers/wizard/bundles/index.umd.js \
-        ./libraries/components/advanced/carousel/bundles/index.umd.js \
-        ./libraries/components/advanced/marquee/bundles/index.umd.js \
-        ./libraries/components/advanced/login/bundles/index.umd.js \
-        ./libraries/mobile/core/bundles/index.umd.js \
-        ./libraries/mobile/components/basic/default/bundles/index.umd.js \
-        ./libraries/mobile/components/basic/search/bundles/index.umd.js \
-        ./libraries/mobile/components/containers/segmented-control/bundles/index.umd.js \
-        ./libraries/mobile/components/device/barcode-scanner/bundles/index.umd.js \
-        ./libraries/mobile/components/device/camera/bundles/index.umd.js \
-        ./libraries/mobile/components/input/file-upload/bundles/index.umd.js \
-        ./libraries/mobile/components/page/default/bundles/index.umd.js \
-        ./libraries/mobile/components/page/left-panel/bundles/index.umd.js \
-        ./libraries/mobile/components/page/mobile-navbar/bundles/index.umd.js \
-        ./libraries/mobile/components/page/tab-bar/bundles/index.umd.js \
-        ./libraries/mobile/components/data/media-list/bundles/index.umd.js \
-        ./libraries/variables/bundles/index.umd.js \
-        ./libraries/mobile/offline/bundles/index.umd.js \
-        ./libraries/mobile/variables/bundles/index.umd.js \
-        ./libraries/mobile/runtime/bundles/index.umd.js \
-        ./libraries/mobile/runtime-dynamic/bundles/index.umd.js \
-        ./libraries/runtime/base/bundles/index.umd.js \
-        ./libraries/runtime/dynamic/bundles/index.umd.js \
-        -o ./dist/bundles/wmmobile/scripts/wm-mobileloader.js -b
-
-    ./node_modules/.bin/terser ./dist/bundles/wmmobile/scripts/wm-mobileloader.js \
-        -c -o ./dist/bundles/wmmobile/scripts/wm-mobileloader.min.js -m   -b beautify=false,ascii_only=true
-
-    if [[ "$?" -eq "0" ]]; then
-        echo "uglify: mobile - success"
-    else
-        echo -e "uglify: mobile - failure"
-    fi
-}
 
 buildApp() {
     ngPackagrBuild core projects/core '@wm/core'
@@ -322,10 +259,33 @@ buildApp() {
     ngPackagrBuild security projects/security '@wm/security'
     ngPackagrBuild variables projects/variables '@wm/variables'
     ngPackagrBuild components-base projects/components/base '@wm/components/base'
-
-    ngPackagrBuild components-input projects/components/widgets/input/default '@wm/components/input'
-    ngPackagrBuild components-basic projects/components/widgets/basic/default '@wm/components/basic'
-    ngPackagrBuild components-basic-progress projects/components/widgets/basic/progress '@wm/components/basic/progress'
+    ngPackagrBuild components-input-button projects/components/widgets/input/button '@wm/components/input/button'
+    ngPackagrBuild components-input-base-form projects/components/widgets/input/base-form '@wm/components/input/base-form'
+    ngPackagrBuild components-input-base-form-custom projects/components/widgets/input/base-form-custom '@wm/components/input/base-form-custom'
+    ngPackagrBuild components-input-dataset-aware-form projects/components/widgets/input/dataset-aware-form '@wm/components/input/dataset-aware-form'
+    ngPackagrBuild components-input-text projects/components/widgets/input/text '@wm/components/input/text'
+    ngPackagrBuild components-input-buttongroup projects/components/widgets/input/button-group '@wm/components/input/button-group'
+    ngPackagrBuild components-input-caption-position projects/components/widgets/input/caption-position '@wm/components/input/caption-position'
+    ngPackagrBuild components-input-checkbox projects/components/widgets/input/checkbox '@wm/components/input/checkbox'
+    ngPackagrBuild components-input-checkboxset projects/components/widgets/input/checkboxset '@wm/components/input/checkboxset'
+    ngPackagrBuild components-input-composite projects/components/widgets/input/composite '@wm/components/input/composite'
+    ngPackagrBuild components-input-number projects/components/widgets/input/number '@wm/components/input/number'
+    ngPackagrBuild components-input-radioset projects/components/widgets/input/radioset '@wm/components/input/radioset'
+    ngPackagrBuild components-input-select projects/components/widgets/input/select '@wm/components/input/select'
+    ngPackagrBuild components-input-textarea projects/components/widgets/input/textarea '@wm/components/input/textarea'
+    ngPackagrBuild components-input-switch projects/components/widgets/input/switch '@wm/components/input/switch'
+    ngPackagrBuild components-basic-anchor projects/components/widgets/basic/anchor '@wm/components/basic/anchor'
+    ngPackagrBuild components-basic-audio projects/components/widgets/basic/audio '@wm/components/basic/audio'
+    ngPackagrBuild components-basic-html projects/components/widgets/basic/html '@wm/components/basic/html'
+    ngPackagrBuild components-basic-icon projects/components/widgets/basic/icon '@wm/components/basic/icon'
+    ngPackagrBuild components-basic-iframe projects/components/widgets/basic/iframe '@wm/components/basic/iframe'
+    ngPackagrBuild components-basic-label projects/components/widgets/basic/label '@wm/components/basic/label'
+    ngPackagrBuild components-basic-picture projects/components/widgets/basic/picture '@wm/components/basic/picture'
+    ngPackagrBuild components-basic-spinner projects/components/widgets/basic/spinner '@wm/components/basic/spinner'
+    ngPackagrBuild components-basic-video projects/components/widgets/basic/video '@wm/components/basic/video'
+    ngPackagrBuild components-basic-progress-progress-utils projects/components/widgets/basic/progress/progress-utils '@wm/components/basic/progress/progress-utils'
+    ngPackagrBuild components-basic-progress-progress-bar projects/components/widgets/basic/progress/progress-bar '@wm/components/basic/progress/progress-bar'
+    ngPackagrBuild components-basic-progress-progress-circle projects/components/widgets/basic/progress/progress-circle '@wm/components/basic/progress/progress-circle'
     ngPackagrBuild components-basic-richtexteditor projects/components/widgets/basic/rich-text-editor '@wm/components/basic/rich-text-editor'
     ngPackagrBuild components-basic-search projects/components/widgets/basic/search '@wm/components/basic/search'
     ngPackagrBuild components-basic-tree projects/components/widgets/basic/tree '@wm/components/basic/tree'
@@ -334,7 +294,12 @@ buildApp() {
     ngPackagrBuild components-input-chips projects/components/widgets/input/chips '@wm/components/input/chips'
     ngPackagrBuild components-input-colorpicker projects/components/widgets/input/color-picker '@wm/components/input/color-picker'
     ngPackagrBuild components-input-currency projects/components/widgets/input/currency '@wm/components/input/currency'
-    ngPackagrBuild components-input-epoch projects/components/widgets/input/epoch '@wm/components/input/epoch'
+    ngPackagrBuild components-input-epoch-picker projects/components/widgets/input/epoch/picker '@wm/components/input/epoch/picker'
+    ngPackagrBuild components-input-epoch-date-time-picker projects/components/widgets/input/epoch/date-time-picker '@wm/components/input/epoch/date-time-picker'
+    ngPackagrBuild components-input-epoch-base-date-time projects/components/widgets/input/epoch/base-date-time '@wm/components/input/epoch/base-date-time'
+    ngPackagrBuild components-input-epoch-date projects/components/widgets/input/epoch/date '@wm/components/input/epoch/date'
+    ngPackagrBuild components-input-epoch-date-time projects/components/widgets/input/epoch/date-time '@wm/components/input/epoch/date-time'
+    ngPackagrBuild components-input-epoch-time projects/components/widgets/input/epoch/time '@wm/components/input/epoch/time'
     ngPackagrBuild components-input-fileupload projects/components/widgets/input/file-upload '@wm/components/input/file-upload'
     ngPackagrBuild components-input-rating projects/components/widgets/input/rating '@wm/components/input/rating'
     ngPackagrBuild components-input-slider projects/components/widgets/input/slider '@wm/components/input/slider'
@@ -382,32 +347,7 @@ buildApp() {
     ngPackagrBuild components-advanced-carousel projects/components/widgets/advanced/carousel '@wm/components/advanced/carousel'
     ngPackagrBuild components-advanced-marquee projects/components/widgets/advanced/marquee '@wm/components/advanced/marquee'
     ngPackagrBuild components-advanced-login projects/components/widgets/advanced/login '@wm/components/advanced/login'
-
-    ngPackagrBuild mobile-core projects/mobile/core '@wm/mobile/core'
-    ngPackagrBuild mobile-offline projects/mobile/offline '@wm/mobile/offline'
-
-    ngPackagrBuild mobile-components-basic projects/mobile/components/basic/default '@wm/mobile/components/basic'
-    ngPackagrBuild mobile-components-basic-search projects/mobile/components/basic/search '@wm/mobile/components/basic/search'
-
-    ngPackagrBuild mobile-components-containers-segmented projects/mobile/components/containers/segmented-control '@wm/mobile/components/containers/segmented-control'
-
-    ngPackagrBuild mobile-components-device-barcodescanner projects/mobile/components/device/barcode-scanner '@wm/mobile/components/device/barcode-scanner'
-    ngPackagrBuild mobile-components-device-camera projects/mobile/components/device/camera '@wm/mobile/components/device/camera'
-
-    ngPackagrBuild mobile-components-input-fileupload projects/mobile/components/input/file-upload '@wm/mobile/components/input/file-upload'
-
-    ngPackagrBuild mobile-components-page projects/mobile/components/page/default '@wm/mobile/components/page'
-    ngPackagrBuild mobile-components-page-leftpanel projects/mobile/components/page/left-panel '@wm/mobile/components/page/left-panel'
-    ngPackagrBuild mobile-components-page-mobilenavbar projects/mobile/components/page/mobile-navbar '@wm/mobile/components/page/mobile-navbar'
-    ngPackagrBuild mobile-components-page-tabbar projects/mobile/components/page/tab-bar '@wm/mobile/components/page/tab-bar'
-
-    ngPackagrBuild mobile-components-data-medialist projects/mobile/components/data/media-list '@wm/mobile/components/data/media-list'
-
-    ngPackagrBuild mobile-variables projects/mobile/variables '@wm/mobile/variables'
-    ngPackagrBuild mobile-runtime projects/mobile/runtime '@wm/mobile/runtime'
-    ngPackagrBuild mobile-runtime-dynamic projects/mobile/runtime-dynamic '@wm/mobile/runtime/dynamic'
-    ngPackagrBuild mobile-placeholder-runtime projects/mobile/placeholder/runtime '@wm/mobile/placeholder/runtime'
-    ngPackagrBuild mobile-placeholder-runtimedynamic projects/mobile/placeholder/runtime-dynamic '@wm/mobile/placeholder/runtime/dynamic'
+    ngPackagrBuild components-advanced-custom projects/components/widgets/advanced/custom '@wm/components/advanced/custom'
 
     buildNeeded components-transpilation projects/components/transpile
     if [[ $? -ne 0 ]]; then
@@ -424,7 +364,6 @@ buildApp() {
     if [[ "${sourceModified}" == true ]]; then
         buildWMComponentUmdLibs
         bundleWeb
-        bundleMobile
     fi
 }
 
@@ -445,7 +384,6 @@ copyDist() {
         fi
         if [[ "${locale}" == true ]]; then
             cp -r ./dist/bundles/wmapp/locales/* ../wavemaker-studio-editor/src/main/webapp/wmapp/locales/
-            cp -r ./dist/bundles/wmmobile/locales/* ../wavemaker-studio-editor/src/main/webapp/wmmobile/locales/
         fi
     fi
 }
@@ -454,23 +392,15 @@ copyLocale() {
     if [[ "${locale}" == true ]]; then
 
         local appDest=./dist/bundles/wmapp/locales
-        local mobileDest=./dist/bundles/wmmobile/locales
 
         local angularSrc=./node_modules/@angular/common/locales
-        local fullCalendarSrc=./node_modules/fullcalendar/locales
         local momentSrc=./node_modules/moment/locale
         local timezoneSrc=./node_modules/moment-timezone/builds/moment-timezone-with-data.js
 
         mkdir -p ${appDest}/angular
         mkdir -p ${appDest}/angular/global
-        mkdir -p ${mobileDest}/angular
-        mkdir -p ${mobileDest}/angular/global
-        mkdir -p ${appDest}/fullcalendar
-        mkdir -p ${mobileDest}/fullcalendar
         mkdir -p ${appDest}/moment
-        mkdir -p ${mobileDest}/moment
         mkdir -p ${appDest}/moment-timezone
-        mkdir -p ${mobileDest}/moment-timezone
 
         for file in ${angularSrc}/*.js; do
             local destFileName=`echo $(basename ${file}) | tr 'A-Z' 'a-z'`;
@@ -481,17 +411,9 @@ copyLocale() {
             cp ${file} ${appDest}/angular/global/${destFileName}
         done
 
-        cp  ${appDest}/angular/*.js  ${mobileDest}/angular/
-        cp  ${appDest}/angular/global/*.js  ${mobileDest}/angular/global/
-
-        cp ${fullCalendarSrc}/*.js ${appDest}/fullcalendar/
-        cp ${fullCalendarSrc}/*.js ${mobileDest}/fullcalendar/
-
         cp ${momentSrc}/*.js ${appDest}/moment/
-        cp ${momentSrc}/*.js ${mobileDest}/moment/
 
         cp ${timezoneSrc} ${appDest}/moment-timezone/
-        cp ${timezoneSrc} ${mobileDest}/moment-timezone/
     fi
 }
 
@@ -550,12 +472,17 @@ buildWMComponentUmdLibs() {
 }
 
 bundleWebLibs() {
+    bundleJS
+    cpRuntimeFoundationCss
+}
+
+bundleJS() {
     echo "uglify: web-libs"
     ${TERSER} \
         ./dist/tmp/libs/tslib/tslib.umd.js \
         ./dist/tmp/libs/core-js/core-js.umd.js \
         ./node_modules/zone.js/bundles/zone.umd.js \
-        ./node_modules/rxjs/bundles/rxjs.umd.js \
+        ./node_modules/rxjs/dist/bundles/rxjs.umd.js \
         ./node_modules/@angular/compiler/bundles/compiler.umd.js \
         ./node_modules/@angular/core/bundles/core-signals.umd.js \
         ./node_modules/@angular/core/bundles/core.umd.js \
@@ -580,7 +507,12 @@ bundleWebLibs() {
         ./node_modules/he/he.js \
         ./node_modules/@wavemaker/nvd3/build/nv.d3.min.js \
         ./node_modules/jquery/dist/jquery.min.js \
-        ./node_modules/fullcalendar/main.min.js \
+        ./node_modules/@fullcalendar/core/index.global.min.js \
+        ./node_modules/@fullcalendar/daygrid/index.global.min.js \
+        ./node_modules/@fullcalendar/interaction/index.global.min.js \
+        ./node_modules/@fullcalendar/timegrid/index.global.min.js \
+        ./node_modules/@fullcalendar/core/locales-all.global.min.js \
+        ./node_modules/@fullcalendar/list/index.global.min.js \
         ./node_modules/jssha/dist/sha256.js \
         ./node_modules/summernote/dist/summernote-lite.js \
         ./node_modules/jquery-ui/ui/disable-selection.js \
@@ -594,13 +526,12 @@ bundleWebLibs() {
         ./node_modules/jquery-ui/ui/widgets/sortable.js \
         ./node_modules/jquery-ui/ui/widgets/draggable.js \
         ./node_modules/jquery-ui/ui/widgets/droppable.js \
-        ./node_modules/hammerjs/hammer.min.js \
         ./node_modules/iscroll/build/iscroll.js \
-        ./node_modules/js-cookie/src/js.cookie.js \
         ./projects/components/widgets/data/table/src/datatable.js \
         ./projects/swipey/src/swipey.jquery.plugin.js \
         ./projects/jquery.ui.touch-punch/jquery.ui.touch-punch.min.js \
         ../wavemaker-ui-variables/dist/umd/index.js \
+        ../custom-widgets-m3/dist/umd/index.js \
         ./node_modules/imask/dist/imask.min.js \
         ./node_modules/angular-imask/bundles/angular-imask.umd.js \
         ./node_modules/@metrichor/jmespath/dist/jmespath.umd.js \
@@ -622,78 +553,21 @@ bundleWebLibs() {
     fi
 }
 
-bundleMobileLibs() {
-    echo "uglify: mobile-libs"
-    ${TERSER} \
-        ./dist/tmp/libs/tslib/tslib.umd.js \
-        ./dist/tmp/libs/core-js/core-js.umd.js \
-        ./node_modules/zone.js/bundles/zone.umd.js \
-        ./node_modules/rxjs/bundles/rxjs.umd.js \
-        ./node_modules/@angular/compiler/bundles/compiler.umd.js \
-        ./node_modules/@angular/core/bundles/core-signals.umd.js \
-        ./node_modules/@angular/core/bundles/core.umd.js \
-        ./node_modules/@angular/common/bundles/common.umd.js \
-        ./node_modules/@angular/animations/bundles/animations.umd.js \
-        ./node_modules/@angular/animations/bundles/animations-browser.umd.js \
-        ./node_modules/@angular/platform-browser/bundles/platform-browser.umd.js \
-        ./node_modules/@angular/platform-browser-dynamic/bundles/platform-browser-dynamic.umd.js \
-        ./node_modules/@angular/platform-browser/bundles/platform-browser-animations.umd.js \
-        ./node_modules/@angular/common/bundles/common-http.umd.js \
-        ./node_modules/@angular/router/bundles/router.umd.js \
-        ./node_modules/@angular/forms/bundles/forms.umd.js \
-        ./dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.umd.js \
-        ./node_modules/ngx-toastr/bundles/ngx-toastr.umd.js \
-        ./dist/tmp/libs/angular-websocket/angular-websocket.umd.js \
-        ./dist/tmp/libs/ng-circle-progress/ng-circle-progress.umd.js \
-        ./node_modules/ngx-color-picker/bundles/ngx-color-picker.umd.js \
-        ./node_modules/lodash/lodash.js \
-        ./node_modules/moment/moment.js \
-        ./node_modules/moment-timezone/moment-timezone.js \
-        ./node_modules/x2js/x2js.js \
-        ./node_modules/d3/dist/d3.min.js \
-        ./node_modules/he/he.js \
-        ./node_modules/@wavemaker/nvd3/build/nv.d3.min.js \
-        ./node_modules/jquery/dist/jquery.min.js \
-        ./node_modules/fullcalendar/main.min.js \
-        ./node_modules/jssha/dist/sha256.js \
-        ./node_modules/summernote/dist/summernote-lite.js \
-        ./node_modules/jquery-ui/ui/disable-selection.js \
-        ./node_modules/jquery-ui/ui/version.js \
-        ./node_modules/jquery-ui/ui/widget.js \
-        ./node_modules/jquery-ui/ui/scroll-parent.js \
-        ./node_modules/jquery-ui/ui/plugin.js \
-        ./node_modules/jquery-ui/ui/data.js \
-        ./node_modules/jquery-ui/ui/widgets/mouse.js \
-        ./node_modules/jquery-ui/ui/widgets/resizable.js \
-        ./node_modules/jquery-ui/ui/widgets/sortable.js \
-        ./node_modules/jquery-ui/ui/widgets/draggable.js \
-        ./node_modules/jquery-ui/ui/widgets/droppable.js \
-        ./node_modules/hammerjs/hammer.min.js \
-        ./projects/components/widgets/data/table/src/datatable.js \
-        ./dist/tmp/libs/awesome-cordova/awesome-cordova-core.umd.js \
-        ./dist/tmp/libs/awesome-cordova/awesome-cordova-plugins.umd.js \
-        ./node_modules/iscroll/build/iscroll.js \
-        ./node_modules/js-cookie/src/js.cookie.js \
-        ./projects/swipey/src/swipey.jquery.plugin.js \
-        ./projects/jquery.ui.touch-punch/jquery.ui.touch-punch.min.js \
-        ./node_modules/imask/dist/imask.min.js \
-        ../wavemaker-ui-variables/dist/umd/index.js \
-        ./node_modules/@metrichor/jmespath/dist/jmespath.umd.js \
-        ./node_modules/angular-imask/bundles/angular-imask.umd.js \
-        ./node_modules/tabbable/dist/index.umd.js   \
-        ./node_modules/@wavemaker/focus-trap/dist/focus-trap.umd.js \
-        ./node_modules/@ztree/ztree_v3/js/jquery.ztree.all.js \
-        ./projects/components/widgets/basic/tree/src/keyboard-navigation.js \
-        -o ./dist/bundles/wmmobile/scripts/wm-libs.js -b
+cpRuntimeFoundationCss() {
+    echo "Copying foundation folder to bundle directory"
 
-    ./node_modules/.bin/terser ./dist/bundles/wmmobile/scripts/wm-libs.js \
-        -c -o ./dist/bundles/wmmobile/scripts/wm-libs.min.js -m   -b beautify=false,ascii_only=true
+    # Create destination directory if it doesn't exist
+    mkdir -p ./dist/bundles/wmapp/styles/foundation
 
+    # The foundation folder will be built through build-foundation-css target in studio front end build.xml
+    # Copy the entire foundation folder including CSS and fonts
+    cp -r ../wavemaker-foundation-css/dist/styles/foundation/* ./dist/bundles/wmapp/styles/foundation/
 
     if [[ "$?" -eq "0" ]]; then
-        echo "uglify: mobile-libs - success"
+        echo "Foundation folder copied successfully"
     else
-        echo -e "uglify: mobile-libs - failure"
+        echo "Failed to copy foundation folder"
+        exit 1
     fi
 }
 
@@ -707,23 +581,13 @@ buildWebLibs() {
     bundleWebLibs
 }
 
-buildIonicNative() {
-    execCommand "rollup" "awesome-cordova" "${ROLLUP} -c ./projects/mobile/awesome-cordova/rollup.awesome-cordova.config.mjs"
-}
-
-buildMobileLibs() {
-    buildIonicNative
-
-    bundleMobileLibs
-}
-
 buildLibs() {
     hasLibChanges
 
     if [[ "$?" -eq "0" ]]; then
         npm install
+        npm update
         buildWebLibs
-        buildMobileLibs
 
         if [[ "$?" -eq "0" ]]; then
             touch ./dist/LIB_${SUCCESS_FILE}
@@ -733,7 +597,6 @@ buildLibs() {
 
         if [[ "$?" -eq "0" ]]; then
         bundleWebLibs
-        bundleMobileLibs
         if [[ "$?" -eq "0" ]]; then
             touch ./dist/LIB_${SUCCESS_FILE}
         fi

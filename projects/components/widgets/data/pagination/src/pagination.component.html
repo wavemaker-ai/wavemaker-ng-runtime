@@ -1,5 +1,37 @@
 
-<ul class="pagination advanced {{navigationClass}}" *ngIf="navcontrols === 'Classic'">
+@if (navcontrols === 'Classic') {
+<ul class="pagination advanced {{navigationClass}}">
+    @if (allowpagesizechange &&  pageSizeOptions?.[0]<rowSummary?.totalRecords) {
+        <li class="items-per-page">
+          <label [title]="appLocale.LABEL_ITEMS_PER_PAGE" class="app-label">{{appLocale.LABEL_ITEMS_PER_PAGE}} :</label>
+
+            <div class="btn-group" dropdown  container="body" (isOpenChange)="onOpenChange($event)">
+                <button id="button-basic" dropdownToggle type="button" class="btn app-button dropdown-toggle"
+                        aria-controls="dropdown-basic">
+                    {{maxResults}} <span class="caret"></span>
+                </button>
+                <ul id="dropdown-basic" *dropdownMenu class="dropdown-menu pagesize-options"
+                    role="menu" aria-labelledby="button-basic">
+                    @for (option of pageSizeOptions; track option; let i = $index) {
+                            <li role="menuitem" [ngClass]="{ 'active': option == maxResults }">
+                                <a class="dropdown-item" (click)="onPageSizeChange($event, option)" (keydown)="onDropdownKeydown($event, i)"
+                                   [attr.tabindex]="i === focusedIndex ? 0 : -1">{{option}}</a>
+                            </li>
+                            }
+                </ul>
+            </div>
+        </li>
+        @if (rowSummary?.totalRecords) {
+        <li class="item-range">
+        <div>
+            <span>{{rowSummary.startIndex}} - {{rowSummary.endIndex}}</span>
+            <span>of</span>
+            <span>{{rowSummary.totalRecords}}</span>
+            </div>
+        </li>
+        }
+    }
+    @if (!(dataSize<=maxResults)) {
     <li [ngClass]="{'disabled':isDisableFirst}">
         <a [title]="appLocale.LABEL_FIRST" name="first" href="javascript:void(0);"
            [attr.aria-disabled]="isDisableFirst"
@@ -8,6 +40,8 @@
             <span class="sr-only">Go to first page {{ isDisableFirst ? ' , Disabled' : ''}}</span>
         </a>
     </li>
+    }
+    @if (!(dataSize<=maxResults)) {
     <li [ngClass]="{'disabled':isDisablePrevious}">
         <a [title]="appLocale.LABEL_PREVIOUS" name="prev" href="javascript:void(0);"
             [attr.aria-disabled]="isDisablePrevious"
@@ -16,6 +50,8 @@
             <span class="sr-only">Go to previous page {{ isDisablePrevious ? ', Disabled' : ''}}</span>
         </a>
     </li>
+    }
+    @if (!(dataSize<=maxResults)) {
     <li class="pagecount disabled">
         <a href="javascript:void(0);" aria-label="Change Page Number">
             <input [(ngModel)]="dn.currentPage" [attr.aria-label]="'Showing Page ' + dn.currentPage + ' of ' + pageCount" [disabled]="isDisableCurrent"
@@ -24,9 +60,13 @@
                   (keydown)="onKeyDown($event)" (change)="onModelChange($event)" class="form-control"/>
         </a>
     </li>
+    }
+    @if (!(dataSize<=maxResults)) {
     <li class="disabled">
         <a [hidden]="isDisableCount"> / {{pageCount}}</a>
     </li>
+    }
+    @if (!(dataSize<=maxResults)) {
     <li [ngClass]="{'disabled':isDisableNext}">
         <a [title]="appLocale.LABEL_NEXT" name="next" href="javascript:void(0);"
            [attr.aria-disabled]="isDisableNext"
@@ -35,62 +75,140 @@
             <span class="sr-only">Go to next page {{ isDisableNext ? ' , Disabled' : ''}}</span>
         </a>
     </li>
+    }
+    @if (!(dataSize<=maxResults)) {
     <li [ngClass]="{'disabled':isDisableLast}">
-        <a [title]="appLocale.LABEL_LAST" name="last" href="javascript:void(0);"
-           [attr.aria-disabled]="isDisableLast"
-           (click)="navigatePage('last', $event)">
-            <span aria-hidden="true"><i class="wi wi-last-page"></i></span>
-            <span class="sr-only">Go to last page {{ isDisableLast ? ' , Disabled' : ''}}</span>
-        </a>
+      <a [title]="appLocale.LABEL_LAST" name="last" href="javascript:void(0);"
+        [attr.aria-disabled]="isDisableLast"
+        (click)="navigatePage('last', $event)">
+        <span aria-hidden="true"><i class="wi wi-last-page"></i></span>
+        <span class="sr-only">Go to last page {{ isDisableLast ? ' , Disabled' : ''}}</span>
+      </a>
     </li>
-    <li *ngIf="showrecordcount" class="totalcount disabled">
+    }
+    @if (showrecordcount) {
+      <li class="totalcount disabled">
         <a href="javascript:void(0);" tabindex="-1" aria-disabled="true">{{appLocale.LABEL_TOTAL_RECORDS}}: {{dataSize}}</a>
-    </li>
+      </li>
+    }
 </ul>
-<ul class="pager {{navigationClass}}" *ngIf="navcontrols === 'Pager'">
+}
+@if (navcontrols === 'Pager') {
+  <ul class="pager {{navigationClass}}">
+        @if (allowpagesizechange &&  pageSizeOptions?.[0]<rowSummary?.totalRecords) {
+        <li class="items-per-page">
+          <label [title]="appLocale.LABEL_ITEMS_PER_PAGE" class="app-label">{{appLocale.LABEL_ITEMS_PER_PAGE}} :</label>
+
+            <div class="btn-group" dropdown container="body" (isOpenChange)="onOpenChange($event)">
+                <button id="button-basic" dropdownToggle type="button" class="btn app-button dropdown-toggle"
+                        aria-controls="dropdown-basic">
+                    {{maxResults}} <span class="caret"></span>
+                </button>
+                <ul id="dropdown-basic" *dropdownMenu class="dropdown-menu pagesize-options"
+                    role="menu" aria-labelledby="button-basic">
+                    @for (option of pageSizeOptions; track option; let i = $index) {
+                        <li role="menuitem" [ngClass]="{ 'active': option == maxResults }">
+                            <a class="dropdown-item" (click)="onPageSizeChange($event, option)" (keydown)="onDropdownKeydown($event, i)"
+                         [attr.tabindex]="i === focusedIndex ? 0 : -1">{{option}}</a>
+                        </li>
+                        }
+                </ul>
+            </div>
+        </li>
+        @if (rowSummary?.totalRecords) {
+        <li class="item-range">
+            <div>
+                <span>{{rowSummary.startIndex}} - {{rowSummary.endIndex}}</span>
+                <span>of</span>
+                <span>{{rowSummary.totalRecords}}</span>
+            </div>
+        </li>
+        }
+    }
+@if (!(dataSize<=maxResults)) {
     <li class="previous" [ngClass]="{'disabled':isDisablePrevious}">
-        <a href="javascript:void(0);" (click)="navigatePage('prev', $event)"
-           [attr.aria-disabled]="isDisablePrevious">
-            <span aria-hidden="true"><i class="wi wi-chevron-left"></i></span>
-            {{appLocale.LABEL_PREVIOUS}}
-            <span class="sr-only">{{ isDisablePrevious ? ' , Disabled' : ''}}</span>
-        </a>
+      <a href="javascript:void(0);" (click)="navigatePage('prev', $event)"
+        [attr.aria-disabled]="isDisablePrevious">
+        <span aria-hidden="true"><i class="wi wi-chevron-left"></i></span>
+        {{appLocale.LABEL_PREVIOUS}}
+        <span class="sr-only">{{ isDisablePrevious ? ' , Disabled' : ''}}</span>
+      </a>
     </li>
     <li class="next" [ngClass]="{'disabled':isDisableNext}">
-        <a href="javascript:void(0);" (click)="navigatePage('next', $event)"
-           [attr.aria-disabled]="isDisableNext">
-            <span aria-hidden="true"><i class="wi wi-chevron-right"></i></span>
-            {{appLocale.LABEL_NEXT}}
-            <span class="sr-only">{{ isDisableNext ? ' , Disabled' : ''}}</span>
-        </a>
+      <a href="javascript:void(0);" (click)="navigatePage('next', $event)"
+        [attr.aria-disabled]="isDisableNext">
+        <span aria-hidden="true"><i class="wi wi-chevron-right"></i></span>
+        {{appLocale.LABEL_NEXT}}
+        <span class="sr-only">{{ isDisableNext ? ' , Disabled' : ''}}</span>
+      </a>
     </li>
-</ul>
+  }
+  </ul>
+}
 
-<pagination class="pagination basic" [ngClass]="navigationClass" *ngIf="navcontrols === 'Basic'" role="navigation"
-            [itemsPerPage]="maxResults" [totalItems]="dataSize"
-            (pageChanged)="pageChanged($event)" [ngModelOptions]="{standalone:true}" [ngModel]="dn.currentPage"
-            [attr.aria-label]="'Showing Page ' + dn.currentPage + ' of ' + pageCount + ' pages'"
-            [boundaryLinks]="boundarylinks" [maxSize]="maxsize"
-            [directionLinks]="directionlinks"
-            firstText="Firtst" lastText="Last"
-            [customPreviousTemplate]="prevTemplate"
-            [customNextTemplate]="nextTemplate"
-            [customPageTemplate]="pageTemplate"></pagination>
+@if (navcontrols === 'Basic') {
+    @if (allowpagesizechange &&  pageSizeOptions?.[0]<rowSummary?.totalRecords) {
+      <div class="items-per-page">
+        <label [title]="appLocale.LABEL_ITEMS_PER_PAGE" class="app-label">{{appLocale.LABEL_ITEMS_PER_PAGE }} :</label>
 
-<ul *ngIf="navcontrols === 'Basic' && showrecordcount" class="pagination">
+        <div class="btn-group" dropdown container="body"  (isOpenChange)="onOpenChange($event)">
+            <button id="button-basic" dropdownToggle type="button" class="btn app-button dropdown-toggle"
+                    aria-controls="dropdown-basic">
+                {{maxResults}} <span class="caret"></span>
+            </button>
+            <ul id="dropdown-basic" *dropdownMenu class="dropdown-menu pagesize-options"
+                role="menu" aria-labelledby="button-basic">
+                @for (option of pageSizeOptions; track option; let i = $index) {
+                    <li role="menuitem" [ngClass]="{ 'active': option == maxResults }">
+                        <a class="dropdown-item" (click)="onPageSizeChange($event, option)" (keydown)="onDropdownKeydown($event, i)"
+                         [attr.tabindex]="i === focusedIndex ? 0 : -1">{{option}}</a>
+                    </li>
+                    }
+            </ul>
+        </div>
+      </div>
+        @if (rowSummary?.totalRecords) {
+        <div class="item-range">
+        <div>
+            <span>{{rowSummary.startIndex}} - {{rowSummary.endIndex}}</span>
+            <span>of</span>
+            <span>{{rowSummary.totalRecords}}</span>
+        </div>
+        </div>
+        }
+    }
+    @if (!(dataSize<=maxResults)) {
+      <pagination class="pagination basic" [ngClass]="navigationClass" role="navigation"
+        [itemsPerPage]="maxResults" [totalItems]="dataSize"
+        (pageChanged)="pageChanged($event)" [ngModelOptions]="{standalone:true}" [ngModel]="dn.currentPage"
+        [attr.aria-label]="'Showing Page ' + dn.currentPage + ' of ' + pageCount + ' pages'"
+        [boundaryLinks]="boundarylinks" [maxSize]="maxsize"
+        [directionLinks]="directionlinks"
+        firstText="Firtst" lastText="Last"
+        [customPreviousTemplate]="prevTemplate"
+        [customNextTemplate]="nextTemplate"
+        [customPageTemplate]="pageTemplate"></pagination>
+    }
+}
+
+@if (navcontrols === 'Basic' && showrecordcount) {
+  <ul class="pagination">
     <li class="totalcount disabled basiccount">
-        <a href="javascript:void(0);" tabindex="-1" aria-disabled="true">{{appLocale.LABEL_TOTAL_RECORDS}}: {{dataSize}}</a>
+      <a href="javascript:void(0);" tabindex="-1" aria-disabled="true">{{appLocale.LABEL_TOTAL_RECORDS}}: {{dataSize}}</a>
     </li>
-</ul>
+  </ul>
+}
 
 <ng-template #pageTemplate let-page>
-    <span class="sr-only" [attr.data-isacitvepage]="page.active">{{'Page '}}</span>
-    {{page.number}}
-    <span class="sr-only" *ngIf="page.active"> {{', Showing page ' + page.number + ' of ' + pageCount}}</span>
+  <span class="sr-only" [attr.data-isacitvepage]="page.active">{{'Page '}}</span>
+  {{page.number}}
+  @if (page.active) {
+    <span class="sr-only"> {{', Showing page ' + page.number + ' of ' + pageCount}}</span>
+  }
 </ng-template>
 <ng-template #prevTemplate let-disabled="disabled">
-    <span class="sr-only" [attr.data-isdisabled]="disabled">Go to Previous page {{disabled ? ', Disabled' : ''}}</span>
+  <span class="sr-only" [attr.data-isdisabled]="disabled">Go to Previous page {{disabled ? ', Disabled' : ''}}</span>
 </ng-template>
 <ng-template #nextTemplate let-disabled="disabled">
-    <span class="sr-only" [attr.data-isdisabled]="disabled">Go to Next page {{disabled ? ', Disabled' : ''}}</span>
+  <span class="sr-only" [attr.data-isdisabled]="disabled">Go to Next page {{disabled ? ', Disabled' : ''}}</span>
 </ng-template>

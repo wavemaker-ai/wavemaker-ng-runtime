@@ -1,22 +1,28 @@
-import { AfterContentInit, AfterViewInit, Directive, ElementRef, Injector } from '@angular/core';
+import { AfterContentInit, AfterViewInit, Directive, ElementRef, inject, Injector, OnDestroy } from '@angular/core';
 
 import { SearchComponent } from './search.component';
 
 declare const $;
 
 @Directive({
-    selector: '[scrollable]'
+  standalone: true,
+    selector: '[scrollableHandler]'
 })
-export class ScrollableDirective implements AfterContentInit, AfterViewInit {
+export class ScrollableDirective implements AfterContentInit, AfterViewInit, OnDestroy {
     private elementRef: ElementRef;
-
-    constructor(inj: Injector, private searchRef: SearchComponent) {
+    private searchRef = inject( SearchComponent );
+    private boundNotifyParent: (evt: Event) => void; // MEMORY LEAK FIX: Store bound function
+    
+    constructor(inj: Injector) {
         this.elementRef = inj.get(ElementRef);
     }
 
     ngAfterContentInit() {
+        // MEMORY LEAK FIX: Store bound function reference for proper removal
+        this.boundNotifyParent = this.notifyParent.bind(this);
+        
         // add the scroll event listener on the ul element.
-        this.elementRef.nativeElement.addEventListener('scroll', this.notifyParent.bind(this));
+        this.elementRef.nativeElement.addEventListener('scroll', this.boundNotifyParent);
         this.searchRef.dropdownEl = $(this.elementRef.nativeElement);
         (this.searchRef as any).onDropdownOpen();
     }
@@ -31,5 +37,13 @@ export class ScrollableDirective implements AfterContentInit, AfterViewInit {
 
     private notifyParent(evt: Event) {
         this.searchRef.onScroll(this.elementRef.nativeElement, evt);
+    }
+    
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Remove scroll event listener using stored bound function reference
+        if (this.elementRef && this.elementRef.nativeElement && this.boundNotifyParent) {
+            this.elementRef.nativeElement.removeEventListener('scroll', this.boundNotifyParent);
+            this.boundNotifyParent = null;
+        }
     }
 }

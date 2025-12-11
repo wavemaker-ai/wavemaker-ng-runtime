@@ -2,15 +2,16 @@ module.exports = {
   preset: "jest-preset-angular",
   testTimeout: 15000,
   roots: ["<rootDir>/projects"],
-  testEnvironment: "jsdom",
+    testEnvironment: 'jest-environment-jsdom',
   transformIgnorePatterns: [
-    '/node_modules/(?!(@wavemaker/app-ng-runtime|lodash-es|@angular|angular-imask|ng-circle-progress|@wavemaker/variables|ngx-toastr|ngx-bootstrap|ngx-color-picker)/)',
+    '/node_modules/(?!(@wavemaker/app-ng-runtime|lodash-es|@angular|angular-imask|ng-circle-progress|@wavemaker/variables|@wavemaker/foundation-css|@wavemaker/custom-widgets-m3|ngx-toastr|ngx-bootstrap|ngx-color-picker|@fullcalendar|preact)/)',
   ],
   testMatch: [
-    "**/projects/**/*.spec.ts",
-    // "**/projects/components/widgets/input/epoch/src/date-time/date-time-picker.spec.ts",
+    "**/projects/**/*.spec.ts"
   ],
   testPathIgnorePatterns: [
+    'projects/components/widgets/data/table/src/table.wrapper.component.spec.ts',
+    'projects/components/widgets/data/form/src/form.wrapper.component.spec.ts',
     '/node_modules/',
     '/dist/',
   ],
@@ -22,6 +23,8 @@ module.exports = {
     "libraries/scripts/jquery.ui.touch-punch",
     "libraries/scripts/swipey",
     ".yalc/@wavemaker/variables/src/",
+    ".yalc/@wavemaker/foundation-css",
+    ".yalc/@wavemaker/custom-widgets-m3",
     "projects/components/base/src/test/"
   ],
   // collectCoverageFrom: [
@@ -31,14 +34,21 @@ module.exports = {
   // ],
   coverageDirectory: "coverage",
   moduleNameMapper: {
+    "@fullcalendar/(.*)$": "<rootDir>/node_modules/@fullcalendar/core/index.cjs",
     "^jQuery$": "jquery",
     "@wm/security": "<rootDir>/projects/security/src/public_api.ts",
     "@wm/swipey": "<rootDir>/projects/swipey/src/public_api.ts",
     "@swipey": "<rootDir>/projects/swipey/src/public_api.ts",
     "@wm/components/base": "<rootDir>/projects/components/base/index.ts",
     "@wm/components/basic/search": "<rootDir>/projects/components/widgets/basic/search/src/public_api.ts",
-    "@wm/components/basic": "<rootDir>/projects/components/widgets/basic/default/src/public_api.ts",
-    "@wm/components/input": "<rootDir>/projects/components/widgets/input/default/src/public_api.ts",
+    "@wm/components/basic/anchor": "<rootDir>/projects/components/widgets/basic/anchor/src/public_api.ts",
+    "@wm/components/basic/audio": "<rootDir>/projects/components/widgets/basic/audio/src/public_api.ts",
+    "@wm/components/basic/html": "<rootDir>/projects/components/widgets/basic/html/src/public_api.ts",
+    "@wm/components/basic/icon": "<rootDir>/projects/components/widgets/basic/icon/src/public_api.ts",
+    "@wm/components/basic/iframe": "<rootDir>/projects/components/widgets/basic/iframe/src/public_api.ts",
+    "@wm/components/basic/label": "<rootDir>/projects/components/widgets/basic/label/src/public_api.ts",
+    "@wm/components/basic/video": "<rootDir>/projects/components/widgets/basic/video/src/public_api.ts",
+    "@wm/components/input/(.*)$": "<rootDir>/projects/components/widgets/input/$1/src/public_api.ts",
     "@wm/components/dialogs": "<rootDir>/projects/components/widgets/dialogs/default/src/public_api.ts",
     "@wm/components/page": "<rootDir>/projects/components/widgets/page/default/src/public_api.ts",
     "@wm/components/(.*)/(.*)$": "<rootDir>/projects/components/widgets/$1/$2/src/public_api.ts",

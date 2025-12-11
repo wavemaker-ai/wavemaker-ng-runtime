@@ -4,23 +4,26 @@ import {
     Inject,
     Injector,
     OnInit,
+    OnDestroy,
     Optional,
-    SkipSelf,
     TemplateRef,
     ViewChild
 } from '@angular/core';
 
 import { toBoolean } from '@wm/core';
-import { IWidgetConfig, provideAsDialogRef, provideAsWidgetRef } from '@wm/components/base';
-import { BaseDialog } from '@wm/components/dialogs';
+import { IWidgetConfig, provideAsDialogRef, provideAsWidgetRef, TextContentDirective } from '@wm/components/base';
+import { BaseDialog, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent } from '@wm/components/dialogs';
 
 import { registerProps } from './alert-dialog.props';
+import { ButtonComponent } from "@wm/components/input/button";
 
 const DIALOG_CLS = 'app-dialog modal-dialog app-alert-dialog';
 
-const WIDGET_INFO: IWidgetConfig = {widgetType: 'wm-alertdialog'};
+const WIDGET_INFO: IWidgetConfig = { widgetType: 'wm-alertdialog' };
 
 @Component({
+    standalone: true,
+    imports: [TextContentDirective, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
     selector: 'div[wmAlertDialog]',
     templateUrl: './alert-dialog.component.html',
     providers: [
@@ -28,10 +31,10 @@ const WIDGET_INFO: IWidgetConfig = {widgetType: 'wm-alertdialog'};
         provideAsDialogRef(AlertDialogComponent)
     ]
 })
-export class AlertDialogComponent extends BaseDialog implements OnInit {
+export class AlertDialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
-    @ViewChild('dialogTemplate',{ static: true }) dialogTemplate: TemplateRef<any>;
+    @ViewChild('dialogTemplate', { static: true }) dialogTemplate: TemplateRef<any>;
 
     constructor(
         inj: Injector,
@@ -73,11 +76,18 @@ export class AlertDialogComponent extends BaseDialog implements OnInit {
      * @param {Event} $event
      */
     onOk($event: Event) {
-        this.invokeEventCallback('ok', {$event});
+        this.invokeEventCallback('ok', { $event });
     }
 
     ngOnInit() {
         super.ngOnInit();
         this.register(this.viewParent);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.dialogTemplate = null;
+
+        super.ngOnDestroy();
     }
 }

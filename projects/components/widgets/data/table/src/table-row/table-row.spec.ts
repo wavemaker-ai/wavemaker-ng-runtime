@@ -22,7 +22,8 @@ describe('TableRowDirective', () => {
         } as unknown as jest.Mocked<TableComponent>;
 
         TestBed.configureTestingModule({
-            declarations: [TestComponent, TableRowDirective],
+            imports: [TableRowDirective],
+            declarations: [TestComponent],
             providers: [
                 { provide: TableComponent, useValue: tableMock },
                 { provide: 'EXPLICIT_CONTEXT', useValue: {} },
@@ -57,7 +58,7 @@ describe('TableRowDirective', () => {
         expect(directive.config).toEqual({
             closeothers: true,
             content: 'Test Content',
-            columnwidth: '30px',
+            columnwidth: '50px',
             expandicon: 'plus',
             collapseicon: 'minus',
             height: '50px',

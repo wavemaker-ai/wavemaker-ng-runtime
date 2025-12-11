@@ -1,6 +1,6 @@
-import {Attribute, Element, ParseSourceSpan, Text} from '@angular/compiler';
+import {Element, ParseSourceSpan, Text} from '@angular/compiler';
 
-import {IDGenerator, isMobileApp} from '@wm/core';
+import {IDGenerator} from '@wm/core';
 import {getAttrMarkup, IBuildTaskDef, register} from '@wm/transpiler';
 import {forEach} from "lodash-es";
 
@@ -13,11 +13,6 @@ const findChild = (node: Element, childName: string): Element => {
 
 const createElement = name => {
     return new Element(name, [], [], noSpan, noSpan, noSpan);
-};
-
-const addAtrribute = (node: Element, name: string, value: string) => {
-    const attr = new Attribute(name, value, noSpan, noSpan, noSpan, undefined, undefined);
-    node.attrs.push(attr);
 };
 
 const getElementNode = (name, node) => {
@@ -50,16 +45,13 @@ register('wm-page', (): IBuildTaskDef => {
             }
             if (pageContentNode) {
                 const conditionalNode = createElement('ng-container');
-                addAtrribute(conditionalNode, '*ngIf', 'compilePageContent');
+                const ifOpenText = new Text('@if (compilePageContent) {', null, undefined, undefined);
+                conditionalNode.children.push(ifOpenText);
                 conditionalNode.children = conditionalNode.children.concat(pageContentNode.children);
                 conditionalNode.children.push(new Text('{{onPageContentReady()}}', null, undefined, undefined));
+                const ifCloseText = new Text('}', null, undefined, undefined);
+                conditionalNode.children.push(ifCloseText);
                 pageContentNode.children = [conditionalNode];
-                if (isMobileApp()) {
-                    const loader = createElement('div');
-                    addAtrribute(loader, 'wmPageContentLoader', '');
-                    addAtrribute(loader, '*ngIf', '!showPageContent');
-                    pageContentNode.children.push(loader);
-                }
             }
         },
         pre: (attrs) => {

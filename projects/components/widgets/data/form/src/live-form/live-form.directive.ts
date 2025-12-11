@@ -1,4 +1,4 @@
-import { Directive, Inject, Optional, Self, Attribute, HostListener } from '@angular/core';
+import { Directive, Inject, Optional, Self, Attribute, HostListener, OnDestroy } from '@angular/core';
 
 import { $appDigest, AbstractDialogService, DataSource, DataType, debounce, getClonedObject, getFiles, getValidDateObject, isDateTimeType, isDefined, isEmptyObject } from '@wm/core';
 import { ALLFIELDS, applyFilterOnField, fetchRelatedFieldData, getDistinctValuesForField, isDataSetWidget, Live_Operations, parseValueByType, performDataOperation, ToDatePipe } from '@wm/components/base';
@@ -18,9 +18,10 @@ const getValidTime = val => {
 };
 
 @Directive({
+  standalone: true,
     selector: '[wmLiveForm]'
 })
-export class LiveFormDirective {
+export class LiveFormDirective implements OnDestroy {
     static  initializeProps = registerLiveFormProps();
     private _triggeredByUser: boolean;
     private _debouncedSavePrevDataValues = debounce(() => {
@@ -143,10 +144,6 @@ export class LiveFormDirective {
         }
         primaryKeys = this.form.datasource.execute(DataSource.Operation.GET_PRIMARY_KEY) || [];
         primaryKey  = dataObj[primaryKeys[0]];
-        // TODO: Handle mobile case
-        // if (CONSTANTS.hasCordova && CONSTANTS.isRunMode) {
-        //     href += $rootScope.project.deployedUrl;
-        // }
         href += this.form.datasource.execute(DataSource.Operation.GET_BLOB_URL, {
             primaryValue: primaryKey,
             columnName: key
@@ -502,5 +499,16 @@ export class LiveFormDirective {
         });
 
 
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Cancel debounced function
+        if (this._debouncedSavePrevDataValues && (this._debouncedSavePrevDataValues as any).cancel) {
+            (this._debouncedSavePrevDataValues as any).cancel();
+            this._debouncedSavePrevDataValues = null;
+        }
+
+        // MEMORY LEAK FIX: Clear form reference
+        this.form = null;
     }
 }

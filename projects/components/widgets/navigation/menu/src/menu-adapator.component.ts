@@ -1,14 +1,12 @@
-import {AfterViewInit, QueryList, ViewChildren, Directive, Optional, Inject} from '@angular/core';
-
-import { StylableComponent } from '@wm/components/base';
+import { AfterViewInit, QueryList, ViewChildren, Directive, Optional, Inject, OnDestroy } from '@angular/core';
 import { MenuComponent } from './menu.component';
-import {BaseContainerComponent} from '@wm/components/base';
-import {includes} from "lodash-es";
+import { BaseContainerComponent } from '@wm/components/base';
+import { includes } from "lodash-es";
 
 const menuProps = ['itemlabel', 'itemicon', 'itemlink', 'itemaction', 'itemchildren', 'userrole'];
 
 @Directive()
-export class MenuAdapterComponent extends BaseContainerComponent implements AfterViewInit {
+export class MenuAdapterComponent extends BaseContainerComponent implements AfterViewInit, OnDestroy {
 
     private itemlabel;
     private menuRef;
@@ -22,6 +20,7 @@ export class MenuAdapterComponent extends BaseContainerComponent implements Afte
     private binduserrole;
 
     @ViewChildren(MenuComponent) private menuRefQL: QueryList<MenuComponent>;
+    private menuRefQLSubscription: any;
 
     constructor(
         inj,
@@ -49,9 +48,37 @@ export class MenuAdapterComponent extends BaseContainerComponent implements Afte
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
-        const subscriber = this.menuRefQL.changes.subscribe((menuRefQL: QueryList<MenuComponent>) => {
+        if(this.menuRefQL['first'])
+        {this.setMenuProperty();}
+        this.menuRefQLSubscription = this.menuRefQL.changes.subscribe((menuRefQL: QueryList<MenuComponent>) => {
             if (menuRefQL.first) {
-                this.menuRef = menuRefQL.first;
+                this.setMenuProperty();
+                if (this.menuRefQLSubscription) {
+                    this.menuRefQLSubscription.unsubscribe();
+                    this.menuRefQLSubscription = null;
+                }
+            }
+        });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from QueryList changes
+        if (this.menuRefQLSubscription) {
+            this.menuRefQLSubscription.unsubscribe();
+            this.menuRefQLSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Clear QueryList reference
+        this.menuRefQL = null;
+        this.menuRef = null;
+
+        super.ngOnDestroy();
+    }
+
+    protected setMenuProperty(){
+        if(this.menuRefQL['first']) {
+            if (this.menuRefQL.first) {
+                this.menuRef = this.menuRefQL.first;
                 menuProps.forEach((prop) => {
                     const bindProp = `bind${prop}`;
                     if (this[bindProp]) {
@@ -59,8 +86,8 @@ export class MenuAdapterComponent extends BaseContainerComponent implements Afte
                     }
                     this.menuRef[prop] = this[prop];
                 });
-                subscriber.unsubscribe();
             }
-        });
+        }
     }
+
 }

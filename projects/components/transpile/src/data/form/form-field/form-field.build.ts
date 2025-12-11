@@ -4,8 +4,7 @@ import {
     generateGUId,
     getFormWidgetTemplate,
     getRequiredFormWidget,
-    IDGenerator,
-    isMobileApp
+    IDGenerator
 } from '@wm/core';
 
 import {ALLFIELDS, isDataSetWidget} from '../../../utils/utils';
@@ -64,13 +63,21 @@ const setDefaultPlaceholder = (attrs, widgetType, index) => {
 };
 
 const getWidgetTemplate = (attrs, options) => {
+    let customAttrs = ``;
+    if(options.widgetType === "custom-widget") {
+        for (let [key, value] of attrs) {
+            if(key.startsWith('prop-'))
+                customAttrs += key + '="' + value + '" ';
+        }
+    }
     const name = attrs.get('name');
+    const customWidgetName = attrs.get('widgetname');
     const fieldName = (attrs.get('key') || name || '').trim();
     const formControl = options.isMaxWidget ? `formControlName="${fieldName}_max"` : (options.isInList ? `[formControlName]="${options.counter}._fieldName"` : `formControlName="${fieldName}"`);
     const tmplRef = options.isMaxWidget ? `#formWidgetMax` : `#formWidget`;
     const widgetName = name ? (options.isMaxWidget ? `name="${name}_formWidgetMax"` : `name="${name}_formWidget"`) : '';
     const conditionalClass = `[ngClass]="${attrs.get('ngclass')}"`;
-    const defaultTmpl = `[class.hidden]="!${options.pCounter}.isUpdateMode && ${options.counter}.viewmodewidget !== 'default'" ${formControl} ${options.eventsTmpl} ${conditionalClass} ${tmplRef} ${widgetName}`;
+    const defaultTmpl = `[class.hidden]="!${options.pCounter}.isUpdateMode && ${options.counter}.viewmodewidget !== 'default'" ${formControl} ${options.eventsTmpl} ${conditionalClass} ${tmplRef} ${widgetName} ${customWidgetName ? `widgetname=${customWidgetName} ${customAttrs}`:''}` ;
     return getFormWidgetTemplate(options.widgetType, defaultTmpl, attrs, {counter: options.counter, pCounter: options.pCounter});
 };
 
@@ -80,7 +87,7 @@ const getTemplate = (attrs, widgetType, eventsTmpl, counter, pCounter, isInList)
     if (!isRange) {
         return getWidgetTemplate(attrs, {widgetType, eventsTmpl, counter, pCounter, isInList});
     }
-    const layoutClass = isMobileApp() ? 'col-xs-6' : 'col-sm-6';
+    const layoutClass = 'col-sm-6';
     return `<div class="${layoutClass}">${getWidgetTemplate(attrs, {widgetType, eventsTmpl, counter, pCounter})}</div>
                 <div class="${layoutClass}">${getWidgetTemplate(attrs, {widgetType, eventsTmpl, counter, pCounter, isMaxWidget: true})}</div>`;
 };
@@ -124,11 +131,12 @@ const registerFormField = (isFormField): IBuildTaskDef => {
             const widgetType = attrs.get('widget') || FormWidgetType.TEXT;
             const dataRole = isFormField ? 'form-field' : 'filter-field';
             const formFieldErrorMsgId = 'wmform-field-error-' + generateGUId();
-            const validationMsg = isFormField ? `<p *ngIf="${counter}._control?.invalid && ${counter}._control?.touched && ${pCounter}.isUpdateMode"
-                                   class="help-block text-danger" aria-hidden="false" role="alert"
-                                   aria-live="assertive" [attr.aria-label]="${counter}.validationmessage" id="${formFieldErrorMsgId}"><span aria-hidden="true" [textContent]="${counter}.validationmessage"></span></p>` : '';
+            const validationMsg = `@if (${counter}._control?.invalid && ${counter}._control?.touched && ${pCounter}.isUpdateMode) {
+                                                  <p class="help-block text-danger" aria-hidden="false" role="alert" aria-live="assertive" [attr.aria-label]="${counter}.validationmessage" id="${formFieldErrorMsgId}">
+                                                    <span aria-hidden="true" [textContent]="${counter}.validationmessage"></span>
+                                                  </p>}`;
             const eventsTmpl = widgetType === FormWidgetType.UPLOAD ? '' : getEventsTemplate(attrs);
-            const controlLayout = isMobileApp() ? 'col-xs-12' : 'col-sm-12';
+            const controlLayout = 'col-sm-12';
             const isInList = pCounter === (parentList && parentList.get('parent_form_reference'));
             attrs.set('__validationId', formFieldErrorMsgId);
             attrs.set('__widgetType', widgetType);
@@ -151,9 +159,8 @@ const registerFormField = (isFormField): IBuildTaskDef => {
                                  <span class="form-control-static app-label"
                                        [hidden]="${pCounter}.isUpdateMode || ${counter}.viewmodewidget === 'default' || ${counter}.widgettype === 'upload'" [innerHTML]="${getCaptionByWidget(attrs, widgetType, counter)}"></span>
                                 ${getTemplate(attrs, widgetType, eventsTmpl, counter, pCounter, isInList)}
-                                <span aria-hidden="true" *ngIf="${counter}.showPendingSpinner" class="form-field-spinner fa fa-circle-o-notch fa-spin form-control-feedback"></span>
-                                <p *ngIf="!(${counter}._control?.invalid && ${counter}._control?.touched) && ${pCounter}.isUpdateMode"
-                                   class="help-block" aria-hidden="true" role="alert" aria-live="polite" [textContent]="${counter}.hint"></p>
+                                @if(${counter}.showPendingSpinner){ <span aria-hidden="true" class="form-field-spinner fa fa-circle-o-notch fa-spin form-control-feedback"></span>}
+                                @if(!(${counter}._control?.invalid && ${counter}._control?.touched) && ${pCounter}.isUpdateMode){ <p class="help-block" aria-hidden="true" role="alert" aria-live="polite" [textContent]="${counter}.hint"></p> }
                                 ${validationMsg}
                             </div>
                         </div>`;
@@ -165,9 +172,16 @@ const registerFormField = (isFormField): IBuildTaskDef => {
             return provider;
         },
         imports: (attrs: Map<String, String>): string[] => {
-            const requiredWidget = getRequiredFormWidget(attrs.get('__widgetType') || attrs.get('type'));
+            const widgetType = attrs.get('__widgetType') || attrs.get('type');
+            const requiredWidget = getRequiredFormWidget(widgetType);
             attrs.delete('__widgetType');
-            return [requiredWidget, 'wm-form'];
+
+            let pipeImports = [];
+            if (widgetType && [FormWidgetType.DATE, FormWidgetType.DATETIME, FormWidgetType.TIME, FormWidgetType.TIMESTAMP].includes(widgetType as any)) {
+                pipeImports.push('toDate');
+            }
+
+            return [requiredWidget, 'wm-form', ...pipeImports];
         }
     };
 };

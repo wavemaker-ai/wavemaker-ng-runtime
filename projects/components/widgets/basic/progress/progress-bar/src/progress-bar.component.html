@@ -1,0 +1,7 @@
+@for (bar of data; track bar) {
+  <div class="multi-bar progress-bar {{bar.cls}}" [style.width]="bar.progressBarWidth"
+    role="progressbar" [attr.aria-valuenow]="datavalue" [attr.aria-valuemin]="minvalue" [attr.aria-valuemax]="maxvalue"
+    [attr.aria-label]="arialabel || 'Progress bar'" [tabindex]="tabindex">
+    <span class="app-progress-label" [attr.data-caption-placement]="captionplacement">{{bar.displayValue}}</span>
+  </div>
+}

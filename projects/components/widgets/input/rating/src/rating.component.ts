@@ -1,9 +1,11 @@
-import {Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
-import {generateGUId, setCSS, noop} from '@wm/core';
-import { getOrderedDataset, provideAs, provideAsWidgetRef, styler } from '@wm/components/base';
-import { DatasetAwareFormComponent } from '@wm/components/input';
+import {generateGUId, noop} from '@wm/core';
+import { getOrderedDataset, provideAs, provideAsWidgetRef, styler, TextContentDirective } from '@wm/components/base';
+import { DatasetAwareFormComponent } from '@wm/components/input/dataset-aware-form';
 
 import { registerProps } from './rating.props';
 import {find, isEmpty, isUndefined, slice, toString} from "lodash-es";
@@ -15,6 +17,8 @@ const MAX_RATING = 10;
 const DEFAULT_RATING = 5;
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, TextContentDirective, FormsModule],
     selector: '[wmRating]',
     templateUrl: './rating.component.html',
     providers: [
@@ -22,7 +26,7 @@ const DEFAULT_RATING = 5;
         provideAsWidgetRef(RatingComponent)
     ]
 })
-export class RatingComponent extends DatasetAwareFormComponent {
+export class RatingComponent extends DatasetAwareFormComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     public caption: string;
@@ -31,13 +35,15 @@ export class RatingComponent extends DatasetAwareFormComponent {
 
     private _selectedRatingValue;
     public ratingsWidth;
-    private ratingItems;
+    public ratingItems;
     private _id;
 
     public iconsize: string;
     public iconcolor: string;
     public onFocus: any;
     private touchEnabled:boolean;
+    public activeiconclass: string = '';
+    public inactiveiconclass: string = '';
     @ViewChild('ratingInput', /* TODO: add static flag */ { read: ElementRef }) ratingEl: ElementRef;
 
     get selectedRatingValue() {
@@ -176,11 +182,6 @@ export class RatingComponent extends DatasetAwareFormComponent {
             starWidth = 0.925,
             maxValue = parseInt(this.maxvalue || this.datasetItems.length, 10) || DEFAULT_RATING;
 
-        setCSS(
-            this.nativeElement.querySelector('.ratings-container') as HTMLElement,
-            'width',
-            (starWidth * maxValue) + 'em'
-        );
         dataVal = dataVal || this.datavalue;
         if (dataVal === undefined || dataVal === '' || dataVal === null) {
             this.caption = '';
@@ -229,5 +230,18 @@ export class RatingComponent extends DatasetAwareFormComponent {
     onMouseOver($event, rate) {
         this.caption = rate.label;
         !this.touchEnabled && !$event.target.classList.contains('rating-label-hover') && $event.target.classList.add('rating-label-hover');
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.ratingEl = null;
+
+        // MEMORY LEAK FIX: Clear rating items array
+        if (this.ratingItems) {
+            this.ratingItems = [];
+        }
+
+        // Call parent ngOnDestroy (DatasetAwareFormComponent has cleanup)
+        super.ngOnDestroy();
     }
 }

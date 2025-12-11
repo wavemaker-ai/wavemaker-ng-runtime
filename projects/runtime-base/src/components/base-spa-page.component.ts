@@ -4,17 +4,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { isAndroid, isIos, Viewport, ScriptLoaderService, registerFnByExpr } from '@wm/core';
 import { LayoutDirective, SpaPageDirective } from '@wm/components/page';
 
-import {Subject, Subscription} from 'rxjs';
+import {Subject} from 'rxjs';
 
 import {
+    $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
-    addClass,
     App,
-    isMobileApp,
     muteWatchers,
     noop,
-    removeClass,
     unMuteWatchers,
     UtilsService
 } from '@wm/core';
@@ -240,19 +238,11 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
         });
     }
 
-    private restoreLastPageSnapshot() {
-        if (isMobileApp() && BaseSpaPageComponent.lastPageSnapShot && this.$page) {
-            this.$page.parent().prepend(BaseSpaPageComponent.lastPageSnapShot);
-        }
-    }
+    private restoreLastPageSnapshot() {}
 
     private savePageSnapShot() {
         if (BaseSpaPageComponent.lastPageSnapShot) {
             BaseSpaPageComponent.lastPageSnapShot.remove();
-        }
-        if (isMobileApp() && this.$page) {
-            BaseSpaPageComponent.lastPageSnapShot = this.$page.clone();
-            this.$page.parents('app-root').prepend(BaseSpaPageComponent.lastPageSnapShot);
         }
     }
 
@@ -296,14 +286,14 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
      * whether to change route or not based on return value.
      */
     @HostListener('window:beforeunload')
-    canDeactivate() {
+    canDeactivate(nextState?: string){
         let retVal;
         // Calling onBeforePageLeave method present at page level
         retVal = this.onBeforePageLeave();
         // Calling onBeforePageLeave method present at app level only if page level method return true
         // or if there is no page level method
         if (retVal !== false ) {
-            retVal =  (this.App.onBeforePageLeave || noop)(this.App.activePageName, this.App.activePage);
+            retVal =  (this.App.onBeforePageLeave || noop)(this.App.activePageName, this.App.activePage, nextState);
         }
         return retVal === undefined ? true : retVal;
     }
@@ -339,8 +329,45 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     }
 
     ngOnDestroy(): void {
+        // MEMORY LEAK FIX: Unwatch all Page-scoped watchers for THIS specific page when page is destroyed
+        if (this.pageName) {
+            $unwatchAllByScope('Page', this.pageName);
+            // if (removedCount > 0) {
+            //     console.log(`🧹 Cleaned up ${removedCount} Page-scoped watcher(s) for page ${this.pageName}`);
+            // }
+        }
         this.savePageSnapShot();
-        this.destroy$.complete();
+
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
+        if (this.destroy$) {
+            this.destroy$.complete();
+            this.destroy$ = null;
+        }
+        if (this.viewInit$) {
+            this.viewInit$.complete();
+            this.viewInit$ = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references to prevent memory leaks
+        this.Widgets = null;
+        this.Variables = null;
+        this.Actions = null;
+        this.App = null;
+        this.route = null;
+        this.appManager = null;
+        this.navigationService = null;
+        this.router = null;
+        this.pageParams = null;
+        this.i18nService = null;
+        this.appLocale = null;
+        this.layoutDirective = null;
+        this.spaPageDirective = null;
+        this.$page = null;
+        this.scriptLoaderService = null;
+        this.Viewport = null;
+
+        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
+        this.cleanupFragmentMonitor();
     }
 
     onReady() {}

@@ -1,9 +1,10 @@
-import {Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
 import {AbstractI18nService, AppDefaults, CURRENCY_INFO} from '@wm/core';
-import {IWidgetConfig, provideAs, provideAsWidgetRef, TrailingZeroDecimalPipe} from '@wm/components/base';
-import {NumberLocale} from '@wm/components/input';
+import {IWidgetConfig, provideAs, provideAsWidgetRef, TextContentDirective, TrailingZeroDecimalPipe} from '@wm/components/base';
+import { NumberLocale } from '@wm/components/input/text';
 
 import {registerProps} from './currency.props';
 
@@ -15,6 +16,8 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+  standalone: true,
+  imports: [TextContentDirective, FormsModule],
     selector: '[wmCurrency]',
     templateUrl: './currency.component.html',
     providers: [
@@ -23,7 +26,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(CurrencyComponent)
     ]
 })
-export class CurrencyComponent extends NumberLocale {
+export class CurrencyComponent extends NumberLocale implements OnDestroy {
     static initializeProps = registerProps();
 
     currencyCode: string;
@@ -54,5 +57,14 @@ export class CurrencyComponent extends NumberLocale {
         } else {
             super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.ngModel = null;
+        this.inputEl = null;
+
+        // Call parent ngOnDestroy (NumberLocale → StylableComponent → BaseComponent)
+        super.ngOnDestroy();
     }
 }

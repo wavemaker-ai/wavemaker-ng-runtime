@@ -1,4 +1,4 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable, Injector, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -7,22 +7,23 @@ import {
     App,
     getClonedObject,
     getWmProjectProperties,
-    hasCordova,
     triggerFn
 } from '@wm/core';
 import {each, forEach, get, isEmpty, join, set} from "lodash-es";
-
+declare const _WM_APP_PROPERTIES;
 // Todo[Shubham]: Move below constants to a common file
 const XSRF_COOKIE_NAME = 'wm_xsrf_token',
     isApplicationType = true;
 
 @Injectable()
-export class SecurityService {
+export class SecurityService implements OnDestroy {
     config;
     lastLoggedInUser;
     loggedInUser;
     loadPromise: Promise<any>;
     requestQueue: any = {};
+    private queryParamsSubscriptions: Array<{ unsubscribe: () => void }> = []; // MEMORY LEAK FIX: Track subscriptions
+    private appSubscriptions: Array<() => void> = []; // MEMORY LEAK FIX: Track App subscriptions
 
     constructor(
         private injector: Injector,
@@ -42,10 +43,15 @@ export class SecurityService {
 
     load(forceFlag?: boolean) {
         if(this.loadPromise) {return this.loadPromise;}
+       // Check securityEnabled flag in _WM_APP_PROPERTIES
+       if (!_WM_APP_PROPERTIES?.securityEnabled) {
+        return Promise.resolve(null);
+        }
         if (!forceFlag && this.config) {return Promise.resolve(this.config);}
         this.loadPromise = new Promise((resolve, reject) => {
-                this.$http.send({'url': './services/security/info', 'method': 'GET'}).then((response) => {
+                this.$http.send({'url': 'services/security/info', 'method': 'GET'}).then((response) => {
                     this.config = response.body;
+                    _WM_APP_PROPERTIES['securityInfo'] = this.config
                     this.lastLoggedInUser = getClonedObject(this.loggedInUser);
                     this.loggedInUser = this.config.userInfo;
                     resolve(response.body);
@@ -87,6 +93,7 @@ export class SecurityService {
         }
 
         function onSuccess(config) {
+            config = config ? config : {}
             config.homePage = getWmProjectProperties().homePage;
             if (config.userInfo) {
                 // Backend returns landingPage instead of homePage, hence this statement(for consistency)
@@ -129,10 +136,8 @@ export class SecurityService {
             return;
         }
 
-        if (!hasCordova()) {
             // for web project, return config returned from backend API call.
             this.getWebConfig(onSuccess.bind(this), onError.bind(this));
-        }
         /* else {
          /!*
          * for mobile app, first get the mobile config (saved in the apk)
@@ -174,9 +179,13 @@ export class SecurityService {
      */
     getCurrentRouteQueryParam(paramName) {
         let paramVal;
-        this.activatedRoute.queryParams.subscribe(params => {
+        // MEMORY LEAK FIX: Store subscription for cleanup (though this is a synchronous read)
+        // Note: This method is called synchronously, so the subscription completes immediately
+        // but we still store it to be safe
+        const subscription = this.activatedRoute.queryParams.subscribe(params => {
             paramVal = params[paramName];
         });
+        subscription.unsubscribe(); // Immediate unsubscribe since we only need first value
         return paramVal;
     }
 
@@ -280,11 +289,15 @@ export class SecurityService {
      */
     getRedirectedRouteQueryParams() {
         let queryParams = {};
-        this.activatedRoute.queryParams.subscribe((paramVal) => {
+        // MEMORY LEAK FIX: Store subscription for cleanup (though this is a synchronous read)
+        // Note: This method is called synchronously, so the subscription completes immediately
+        // but we still store it to be safe
+        const subscription = this.activatedRoute.queryParams.subscribe((paramVal) => {
             forEach(paramVal, (val, key) => {
                 queryParams[key] = val;
             });
         });
+        subscription.unsubscribe(); // Immediate unsubscribe since we only need first value
         return queryParams;
     }
 
@@ -317,9 +330,6 @@ export class SecurityService {
 
             // override the default xsrf cookie name and xsrf header names with WaveMaker specific values
             if (xsrfCookieValue) {
-                if (hasCordova()) {
-                    localStorage.setItem(XSRF_COOKIE_NAME, xsrfCookieValue || '');
-                }
             }
             // After the successful login in device, this function triggers the pending onLoginCallbacks.
             this.injector.get(App).notify('userLoggedIn', {});
@@ -355,9 +365,6 @@ export class SecurityService {
         }).then((response) => {
             set(this.get(), 'authenticated', false);
             set(this.get(), 'userInfo', null);
-            /*if (CONSTANTS.hasCordova) {
-                localStorage.setItem(CONSTANTS.XSRF_COOKIE_NAME, '');
-            }*/
             this.injector.get(App).notify('userLoggedOut', {});
             triggerFn(successCallback, response);
         }, failureCallback);
@@ -379,9 +386,6 @@ export class SecurityService {
      * @returns xsrf cookie value
      */
     isXsrfEnabled() {
-        if (hasCordova()) {
-            return localStorage.getItem(XSRF_COOKIE_NAME);
-        }
         return this.getCookieByName(XSRF_COOKIE_NAME);
     }
 
@@ -399,10 +403,17 @@ export class SecurityService {
                     if (config.authenticated) {
                         resolve();
                     } else {
+                        // MEMORY LEAK FIX: Store unsubscribe function for cleanup
                         const unsubscribe = this.injector.get(App).subscribe('userLoggedIn', () => {
                             resolve();
                             unsubscribe();
+                            // Remove from tracking array
+                            const index = this.appSubscriptions.indexOf(unsubscribe);
+                            if (index > -1) {
+                                this.appSubscriptions.splice(index, 1);
+                            }
                         });
+                        this.appSubscriptions.push(unsubscribe);
                     }
                 } else {
                     resolve();
@@ -433,5 +444,30 @@ export class SecurityService {
      */
     authInBrowser(): Promise<any> {
         return Promise.reject('This authInBrowser should not be called');
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from all query params subscriptions
+        this.queryParamsSubscriptions.forEach(sub => {
+            if (sub && sub.unsubscribe) {
+                sub.unsubscribe();
+            }
+        });
+        this.queryParamsSubscriptions = [];
+
+        // MEMORY LEAK FIX: Unsubscribe from all App subscriptions
+        this.appSubscriptions.forEach(unsubscribe => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        });
+        this.appSubscriptions = [];
+
+        // MEMORY LEAK FIX: Clear references
+        this.config = null;
+        this.lastLoggedInUser = null;
+        this.loggedInUser = null;
+        this.requestQueue = null;
+        this.loadPromise = null;
     }
 }

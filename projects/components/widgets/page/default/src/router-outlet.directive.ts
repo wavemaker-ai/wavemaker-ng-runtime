@@ -1,6 +1,6 @@
-import {Directive, Inject, Injector, Optional} from '@angular/core';
+import { Directive, Inject, Injector, Optional } from '@angular/core';
 
-import {switchClass} from '@wm/core';
+import { App, switchClass } from '@wm/core';
 
 import { IWidgetConfig, provideAsWidgetRef, StylableComponent } from '@wm/components/base';
 import { registerProps } from './router-outlet.props';
@@ -12,6 +12,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Directive({
+    standalone: true,
     selector: '[wmRouterOutlet]',
     providers: [
         provideAsWidgetRef(RouterOutletDirective)
@@ -19,12 +20,18 @@ const WIDGET_CONFIG: IWidgetConfig = {
 })
 export class RouterOutletDirective extends StylableComponent {
     static initializeProps = registerProps();
-    constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    isPrism: boolean;
+    constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, public app: App) {
         super(inj, WIDGET_CONFIG, explicitContext);
+        this.isPrism = this.app.isPrism;
+           // Add w-100 class only for Prism appsmvn -v
+        if (this.isPrism) {
+            this.nativeElement.classList.add('w-100');
+        }
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
-        if (key === 'columnwidth') {
+        if (key === 'columnwidth' && !this.isPrism) {
             switchClass(this.nativeElement, `col-md-${nv} col-sm-${nv}`, `col-md-${ov} col-sm-${ov}`);
         } else {
             super.onPropertyChange(key, nv, ov);

@@ -1,14 +1,19 @@
-import {Attribute, ChangeDetectorRef, Component, Inject, Injector, OnInit, Optional} from '@angular/core';
-import {Router} from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { AnchorComponent } from '@wm/components/basic/anchor';
+import { MenuComponent } from '../menu.component';
+import { NavItemDirective } from './nav-item/nav-item.directive';
+import { Attribute, ChangeDetectorRef, Component, forwardRef, Inject, Injector, OnDestroy, OnInit, Optional } from '@angular/core';
+import { Router } from '@angular/router';
 
-import {addClass, App, triggerItemAction, UserDefinedExecutionContext} from '@wm/core';
-import {APPLY_STYLES_TYPE, DatasetAwareNavComponent, provideAsWidgetRef, styler} from '@wm/components/base';
+import { addClass, App, triggerItemAction, UserDefinedExecutionContext } from '@wm/core';
+import { APPLY_STYLES_TYPE, DatasetAwareNavComponent, provideAsWidgetRef, styler } from '@wm/components/base';
 
-import {registerProps} from './nav.props';
-import {find, forEach, isEmpty, omit} from "lodash-es";
+import { registerProps } from './nav.props';
+import { find, forEach, isEmpty, omit } from "lodash-es";
+import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 
 const DEFAULT_CLS = 'nav app-nav';
-const WIDGET_CONFIG = {widgetType: 'wm-nav', hostClass: DEFAULT_CLS};
+const WIDGET_CONFIG = { widgetType: 'wm-nav', hostClass: DEFAULT_CLS };
 
 const NavClassMap = {
     pills: 'nav-pills',
@@ -17,13 +22,15 @@ const NavClassMap = {
 };
 
 @Component({
+    standalone: true,
+    imports: [CommonModule, BsDropdownModule, AnchorComponent, forwardRef(() => MenuComponent), NavItemDirective, ],
     selector: '[wmNav]',
     templateUrl: './nav.component.html',
     providers: [
         provideAsWidgetRef(NavComponent)
     ]
 })
-export class NavComponent extends DatasetAwareNavComponent implements OnInit {
+export class NavComponent extends DatasetAwareNavComponent implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     public selecteditem;
@@ -62,12 +69,12 @@ export class NavComponent extends DatasetAwareNavComponent implements OnInit {
                         if (item.isactive) {
                             itemFound = true;
                             this.selecteditem = isMenuWidget ? omit(item, ['children', 'value']) : item.value;
-                            this.invokeEventCallback('select', {$event: {}, $item: item.value});
+                            this.invokeEventCallback('select', { $event: {}, $item: item.value });
                             // Trigger the action associated with active item
                             triggerItemAction(this, item);
                             // _selected is used to add active class for nav item. If we have children inside nav widget then it is not required.
                             if (!isMenuWidget) {
-                               item._selected = true;
+                                item._selected = true;
                             }
                             return false;
                         }
@@ -103,7 +110,7 @@ export class NavComponent extends DatasetAwareNavComponent implements OnInit {
 
         this.selecteditem = item.value;
 
-        this.invokeEventCallback('select', {$event, $item: item.value});
+        this.invokeEventCallback('select', { $event, $item: item.value });
         // Trigger the action associated with active item
         triggerItemAction(this, item);
     }
@@ -122,6 +129,19 @@ export class NavComponent extends DatasetAwareNavComponent implements OnInit {
      */
     onMenuItemSelect($event, widget, $item) {
         this.selecteditem = omit($item, ['children', 'value']);
-        this.invokeEventCallback('select', {$event, $item: this.selecteditem});
+        this.invokeEventCallback('select', { $event, $item: this.selecteditem });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Cleanup
+        // Note: Subscription is already cleaned up via registerDestroyListener in constructor
+        // but adding explicit OnDestroy to ensure proper cleanup lifecycle
+        
+        // Clear references
+        this.selecteditem = null;
+        this.pageScope = null;
+        this.itemActionFn = null;
+
+        super.ngOnDestroy();
     }
 }

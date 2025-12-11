@@ -1,10 +1,12 @@
 import {Inject, Pipe, PipeTransform} from '@angular/core';
 import {DatePipe, DecimalPipe} from '@angular/common';
-import {AbstractI18nService, CURRENCY_INFO, CustomPipeManager, hasOffsetStr, isDefined} from '@wm/core';
+import {AbstractI18nService, App, CURRENCY_INFO, CustomPipeManager, hasOffsetStr, isDefined, replace} from '@wm/core';
 import {WmPipe} from "./wm-pipe";
 import {filter, includes, isDate, isFunction, isObject, isUndefined, startsWith} from "lodash-es";
 
-declare const moment;
+import * as momentLib from 'moment-timezone/moment-timezone';
+
+const moment = momentLib.default || window['moment'];
 
 const getEpochValue = data => {
     let epoch;
@@ -18,6 +20,7 @@ const getEpochValue = data => {
 };
 
 @Pipe({
+    standalone: true,
     name: 'trailingZeroDecimalPipe'
 })
 export class TrailingZeroDecimalPipe implements PipeTransform {
@@ -32,16 +35,17 @@ export class TrailingZeroDecimalPipe implements PipeTransform {
 }
 
 @Pipe({
+  standalone: true,
     name: 'toDate'
 })
 export class ToDatePipe extends WmPipe implements PipeTransform {
     // This method calls the custom formatter fn after applying the exisitng date pattern
-    returnFn(data, args) {
+    returnFn(data, args, variables) {
         if (this.isCustomPipe) {
             if (args) {
                 args[0] = data;
             }
-            return this.customFormatter(data, args);
+            return this.customFormatter(data, args, variables);
         }
         return data;
     }
@@ -49,37 +53,43 @@ export class ToDatePipe extends WmPipe implements PipeTransform {
         let timestamp;
         // 'null' is to be treated as a special case, If user wants to enter null value, empty string will be passed to the backend
         if (data === 'null' || data === '') {
-            return this.returnFn('', arguments);
+            return this.returnFn('', arguments, this.app.Variables);
         }
         if (!isDefined(data)) {
-            return this.returnFn('',arguments);
+            return this.returnFn('',arguments, this.app.Variables);
         }
         timestamp = getEpochValue(data);
         if (timestamp) {
             if (format === 'timestamp') {
-                return this.returnFn(timestamp, arguments);
+                return this.returnFn(timestamp, arguments, this.app.Variables);
             }
             if (format === 'UTC') {
-                return this.returnFn(new Date(timestamp).toISOString(), arguments);
+                return this.returnFn(new Date(timestamp).toISOString(), arguments, this.app.Variables);
             }
             let formattedVal;
             const timeZone = this.i18nService ? this.i18nService.getTimezone(compInstance) : timezone;
             if (timeZone && (data === timestamp || hasOffsetStr(data))) {
-                formattedVal = moment(timestamp).tz(timeZone).format(format.replaceAll('y', 'Y').replaceAll('d', 'D').replace('a', 'A'));
+                formattedVal = (moment(timestamp) as any).tz(timeZone).format(format.replaceAll('y', 'Y').replaceAll('d', 'D').replace('a', 'A'));
             } else {
                 formattedVal = this.datePipe.transform(timestamp, format);
             }
-            return this.returnFn(formattedVal, arguments);
+            return this.returnFn(formattedVal, arguments, this.app.Variables);
         }
-        return this.returnFn('', arguments);
+        return this.returnFn('', arguments,this.app.Variables);
     }
 
-    constructor(private datePipe: DatePipe, private i18nService: AbstractI18nService, protected customPipeManager: CustomPipeManager) {
+    constructor(
+        private datePipe: DatePipe,
+        private i18nService: AbstractI18nService,
+        private app: App,
+        protected customPipeManager: CustomPipeManager
+    ) {
         super('toDate', customPipeManager);
     }
 }
 
 @Pipe({
+    standalone: true,
     name: 'toNumber'
 })
 export class ToNumberPipe implements PipeTransform {
@@ -98,6 +108,7 @@ export class ToNumberPipe implements PipeTransform {
 }
 
 @Pipe({
+    standalone: true,
     name: 'toCurrency'
 })
 export class ToCurrencyPipe implements PipeTransform {
@@ -116,6 +127,7 @@ export class ToCurrencyPipe implements PipeTransform {
 }
 
 @Pipe({
+    standalone: true,
     name: 'prefix'
 })
 export class PrefixPipe implements PipeTransform {
@@ -125,6 +137,7 @@ export class PrefixPipe implements PipeTransform {
 }
 
 @Pipe({
+    standalone: true,
     name: 'suffix'
 })
 export class SuffixPipe implements PipeTransform {
@@ -138,10 +151,11 @@ export class SuffixPipe implements PipeTransform {
  * Custom pipe: It is work as interceptor between the user custom pipe function and angular pipe
  */
 @Pipe({
+    standalone: true,
     name: 'custom'
 })
 export class CustomPipe implements PipeTransform {
-    constructor(private custmeUserPipe: CustomPipeManager) {
+    constructor(private app: App, private custmeUserPipe: CustomPipeManager) {
 
     }
     transform(data, pipename) {
@@ -157,7 +171,7 @@ export class CustomPipe implements PipeTransform {
         }
 
         try{
-            return pipeRef.formatter(data, ...argumentArr);
+            return pipeRef.formatter(data, ...argumentArr, this.app.Variables);
         } catch(error){
             console.error('Pipe name: '+pipename, error);
             return data;
@@ -166,6 +180,7 @@ export class CustomPipe implements PipeTransform {
 }
 
 @Pipe({
+    standalone: true,
     name: 'timeFromNow'
 })
 export class TimeFromNowPipe implements PipeTransform {
@@ -180,11 +195,13 @@ export class TimeFromNowPipe implements PipeTransform {
 }
 
 @Pipe({
+    standalone: true,
     name: 'numberToString'
 })
 export class NumberToStringPipe extends ToNumberPipe implements PipeTransform { }
 
 @Pipe({
+    standalone: true,
     name: 'stringToNumber'
 })
 export class StringToNumberPipe implements PipeTransform {
@@ -194,6 +211,7 @@ export class StringToNumberPipe implements PipeTransform {
 }
 
 @Pipe({
+    standalone: true,
     name: 'filter'
 })
 export class FilterPipe implements PipeTransform {
@@ -213,6 +231,7 @@ export class FilterPipe implements PipeTransform {
 }
 
 @Pipe({
+    standalone: true,
     name: 'filesize'
 })
 export class FileSizePipe implements PipeTransform {
@@ -240,6 +259,7 @@ export class FileSizePipe implements PipeTransform {
 }
 
 @Pipe({
+    standalone: true,
     name: 'fileIconClass'
 })
 export class FileIconClassPipe implements PipeTransform {
@@ -278,6 +298,7 @@ export class FileIconClassPipe implements PipeTransform {
 }
 
 @Pipe({
+    standalone: true,
     name: 'stateClass'
 })
 export class StateClassPipe implements PipeTransform {
@@ -291,6 +312,17 @@ export class StateClassPipe implements PipeTransform {
 }
 
 @Pipe({
+    standalone: true,
+    name: 'templateReplace'
+})
+export class TemplateReplacePipe implements PipeTransform {
+    transform(data:any, replaceObj:any) {
+        return replace(data, replaceObj);
+    }
+}
+
+@Pipe({
+    standalone: true,
     name: 'fileExtensionFromMime'
 })
 export class FileExtensionFromMimePipe implements PipeTransform {

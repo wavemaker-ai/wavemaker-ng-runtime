@@ -175,7 +175,13 @@ export class WebSocketVariableManager extends BaseVariableManager {
     }
 
     private freeSocket(variable) {
-        this.scope_var_socket_map.set(variable, undefined);
+        // MEMORY LEAK FIX: Properly clean up socket reference
+        const socket = this.scope_var_socket_map.get(variable);
+        if (socket) {
+            // Clear socket reference from variable
+            variable._socket = null;
+        }
+        this.scope_var_socket_map.delete(variable);
     }
 
     /**
@@ -219,7 +225,7 @@ export class WebSocketVariableManager extends BaseVariableManager {
             return _socket;
         }
 
-        if (!CONSTANTS.hasCordova && isInsecureContentRequest(url)) {
+        if (isInsecureContentRequest(url)) {
             triggerFn(this._onSocketError.bind(this, variable));
             return;
         }
@@ -259,7 +265,11 @@ export class WebSocketVariableManager extends BaseVariableManager {
         if (shouldClose === false) {
             return;
         }
-        socket.close();
+        if (socket) {
+            socket.close();
+            // MEMORY LEAK FIX: Clean up socket reference after closing
+            this.freeSocket(variable);
+        }
     }
 
     /**

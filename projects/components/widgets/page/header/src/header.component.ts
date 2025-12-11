@@ -10,6 +10,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    standalone: true,
     selector: '[wmHeader]',
     templateUrl: './header.component.html',
     providers: [
@@ -19,6 +20,8 @@ const WIDGET_CONFIG: IWidgetConfig = {
 })
 export class HeaderComponent extends StylableComponent {
     static initializeProps = registerProps();
+
+    protected isInlineContent: boolean = true;
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
 

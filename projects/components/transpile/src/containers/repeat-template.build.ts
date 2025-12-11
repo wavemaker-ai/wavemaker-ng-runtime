@@ -7,19 +7,18 @@ let counter = 1;
 // For dynamic accordion panes/tab panes
 register('wm-repeat-template', (): IBuildTaskDef => {
     return {
-        requires: ['wm-accordion', 'wm-tabs'],
-        pre: (attrs, shared, parentAccordion, parentTab) => {
-            const widgetRef = (parentAccordion && parentAccordion.get('accordion_ref')) || (parentTab && parentTab.get('tabs_ref'));
+        requires: ['wm-accordion', 'wm-tabs', 'wm-wizard'],
+        pre: (attrs, shared, parentAccordion, parentTab, parentWizard) => {
+            const widgetRef = (parentAccordion && parentAccordion.get('accordion_ref')) || (parentTab && parentTab.get('tabs_ref')) || (parentWizard && parentWizard.get('wizard_ref'));
             if (widgetRef) {
-                return `<div *ngIf="${widgetRef}.variableInflight && ${widgetRef}.app.Variables?.showSkeletonLoader?.dataSet.dataValue || false"> 
-                        <wm-skeleton-loader widget-type="accordion"></wm-skeleton-loader>
-                        </div>
-                    <div *ngIf="${widgetRef}.fieldDefs && !${widgetRef}.fieldDefs.length && !${widgetRef}.app.Variables?.showSkeletonLoader.dataSet.dataValue">{{${widgetRef}.nodatamessage}}</div>
-                    <${dynamicTemplateTagName} wmRepeatTemplate #repeatItemRef="repeatItemRef" ${getAttrMarkup(attrs)} *ngFor="let item of ${widgetRef}.fieldDefs; let i = index;">
+                return `@if(${widgetRef}.fieldDefs && !${widgetRef}.fieldDefs.length){<div>{{${widgetRef}.nodatamessage}}</div>}
+                @for (item of ${widgetRef}.fieldDefs; track item; let i = $index) {
+                    <${dynamicTemplateTagName} wmRepeatTemplate #repeatItemRef="repeatItemRef" ${getAttrMarkup(attrs)}>
                         <ng-container [ngTemplateOutlet]="widgetRef${counter}"
                             [ngTemplateOutletContext]="{item:item, index:i}"
                             [ngTemplateOutletInjector]="${widgetRef}.createCustomInjector('dynamic_pane_' + repeatItemRef.trackId, {item:item, index:i})"></ng-container>
                     </${dynamicTemplateTagName}>
+                }
                     <ng-template #widgetRef${counter++} let-item="item" let-index="index">`;
             }
         },

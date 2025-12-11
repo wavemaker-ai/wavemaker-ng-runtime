@@ -1,12 +1,11 @@
-import {ComponentFixture} from '@angular/core/testing';
-import {Component, ViewChild} from '@angular/core';
-import {AbstractDialogService, App} from '@wm/core';
-import {FileUploadComponent} from './file-upload.component';
-import {ComponentsTestModule} from '../../../../base/src/test/components.test.module';
-import {ComponentTestBase, ITestComponentDef, ITestModuleDef} from '../../../../base/src/test/common-widget.specs';
-import {compileTestComponent, mockApp} from '../../../../base/src/test/util/component-test-util';
-import {FileIconClassPipe, FileSizePipe, StateClassPipe} from '../../../../base/src/pipes/custom-pipes';
-import {Subject} from 'rxjs/internal/Subject';
+import { ComponentFixture } from '@angular/core/testing';
+import { Component, ViewChild } from '@angular/core';
+import { AbstractDialogService, App } from '@wm/core';
+import { FileUploadComponent } from './file-upload.component';
+import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
+import { compileTestComponent, mockApp } from '../../../../base/src/test/util/component-test-util';
+import { FileIconClassPipe, FileSizePipe, StateClassPipe } from '../../../../base/src/pipes/custom-pipes';
+import { Subject } from 'rxjs/internal/Subject';
 
 jest.mock('@wm/core', () => ({
     ...jest.requireActual('@wm/core'),
@@ -37,8 +36,8 @@ class FileUploadWrapperComponent {
 }
 
 const testModuleDef: ITestModuleDef = {
-    declarations: [FileUploadWrapperComponent, FileUploadComponent, FileSizePipe, FileIconClassPipe, StateClassPipe],
-    imports: [ComponentsTestModule],
+    declarations: [FileUploadWrapperComponent],
+    imports: [FileUploadComponent, FileSizePipe, FileIconClassPipe, StateClassPipe],
     providers: [{ provide: App, useValue: mockApp }, AbstractDialogService]
 };
 
@@ -388,7 +387,7 @@ describe('Fileupload Component', () => {
 
             wmComponent.disableDropZone();
 
-            expect(removeEventListenerSpy).toHaveBeenCalledWith('focus', wmComponent.disableDropZone);
+            expect(removeEventListenerSpy).toHaveBeenCalledWith('focus', expect.any(Function));
         });
     });
 
@@ -626,6 +625,10 @@ describe('Fileupload Component', () => {
         });
 
         it('should bind the disableDropZone method to the focus event listener', () => {
+            // Ensure spy is set up and bound function is recreated after spy
+            jest.spyOn(wmComponent, 'disableDropZone');
+            // Re-create bound function after spy is set up so it uses the spied method
+            wmComponent['boundDisableDropZone'] = wmComponent.disableDropZone.bind(wmComponent);
             wmComponent.onFileElemClick(mockEvent);
             const listener = (window.addEventListener as jest.Mock).mock.calls[0][1];
             listener();

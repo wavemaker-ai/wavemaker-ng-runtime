@@ -27,7 +27,8 @@ describe('ListItemDirective', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [TestComponent, ListItemDirective],
+            declarations: [TestComponent,],
+            imports: [ListItemDirective],
             providers: [
                 {
                     provide: ListComponent, useValue: {
@@ -143,7 +144,7 @@ describe('ListItemDirective', () => {
         expect((directive as any).destroy$.subscribe).toHaveBeenCalledWith(mockWatchResult);
 
         // Simulate destruction of the component
-        directive.destroy.next();
+        directive.destroy.next(null);
         directive.destroy.complete();
     });
 
@@ -158,7 +159,7 @@ describe('ListItemDirective', () => {
     describe('getters', () => {
         beforeEach(() => {
             directive.context = {
-                index: 2,
+                $index: 2,
                 even: false,
                 odd: true,
                 first: false,
@@ -190,12 +191,17 @@ describe('ListItemDirective', () => {
     describe('currentItemWidgets', () => {
         it('should return correct currentItemWidgets', () => {
             // Mock the nativeElement and its querySelectorAll method
-            const mockWidgets = [
-                { widget: { name: 'widget1', value: 'value1' } },
-                { widget: { name: 'widget2', value: 'value2' } }
-            ];
+            // querySelectorAll returns a NodeList, so we need to create a mock that behaves like one
+            const mockWidget1 = { widget: { name: 'widget1', value: 'value1' } };
+            const mockWidget2 = { widget: { name: 'widget2', value: 'value2' } };
+            const mockNodeList = [mockWidget1, mockWidget2];
+            // Arrays already have a length property, so we don't need to redefine it
+            
+            // Store original nativeElement to restore it after the test
+            const originalNativeElement = directive.nativeElement;
+            
             directive.nativeElement = {
-                querySelectorAll: jest.fn().mockReturnValue(mockWidgets)
+                querySelectorAll: jest.fn().mockReturnValue(mockNodeList)
             } as any;
 
             // Mock the existing _currentItemWidgets
@@ -209,6 +215,10 @@ describe('ListItemDirective', () => {
                 widget1: { name: 'widget1', value: 'value1' },
                 widget2: { name: 'widget2', value: 'value2' }
             });
+            
+            // Clean up: restore original nativeElement and clear _currentItemWidgets to prevent cleanup errors
+            directive.nativeElement = originalNativeElement;
+            (directive as any)._currentItemWidgets = {};
         });
     });
 });

@@ -28,6 +28,7 @@ const navigationClassMap = {
 };
 
 @Directive({
+  standalone: true,
     selector: '[wmCarousel]',
     exportAs: 'wmCarousel'
 })
@@ -38,6 +39,7 @@ export class CarouselDirective extends StylableComponent implements AfterContent
     private navigationClass;
     private fieldDefs;
     private interval;
+    private slidesChangesSubscription;
 
     public animationinterval;
     public animation;
@@ -82,7 +84,8 @@ export class CarouselDirective extends StylableComponent implements AfterContent
     }
 
     private setupHandlers() {
-        this.slides.changes.subscribe( slides => {
+        // MEMORY LEAK FIX: Store subscription reference for cleanup
+        this.slidesChangesSubscription = this.slides.changes.subscribe( slides => {
             this.triggerAnimation(slides);
         });
         this.slides.setDirty();
@@ -102,6 +105,24 @@ export class CarouselDirective extends StylableComponent implements AfterContent
 
     ngOnDestroy() {
         this.stopAnimation();
+
+        // MEMORY LEAK FIX: Unsubscribe from slides changes
+        if (this.slidesChangesSubscription) {
+            this.slidesChangesSubscription.unsubscribe();
+            this.slidesChangesSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Clear QueryList reference
+        if (this.slides) {
+            this.slides = null;
+        }
+
+        // MEMORY LEAK FIX: Clear animator reference
+        this.animator = null;
+
+        // MEMORY LEAK FIX: Clear field definitions
+        this.fieldDefs = null;
+
         super.ngOnDestroy();
     }
 

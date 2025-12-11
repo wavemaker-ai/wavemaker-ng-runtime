@@ -1,11 +1,23 @@
+import {CommonModule} from '@angular/common';
+import {
+    APPLY_STYLES_TYPE,
+    createArrayFrom,
+    IWidgetConfig,
+    provideAsWidgetRef,
+    StylableComponent,
+    styler,
+    TextContentDirective
+} from "@wm/components/base";
 import {
     AfterContentInit,
     AfterViewInit,
     Attribute,
     Component,
-    ContentChildren, Inject,
+    ContentChildren,
+    HostBinding,
+    Inject,
     Injector,
-    NgZone,
+    OnDestroy,
     OnInit,
     Optional,
     QueryList
@@ -17,24 +29,16 @@ import {
     appendNode,
     DataSource,
     DynamicComponentRefProvider,
-    isDataSourceEqual,
+    isDefined,
     noop,
     removeClass,
     StatePersistence
 } from '@wm/core';
-import {
-    APPLY_STYLES_TYPE,
-    IWidgetConfig,
-    provideAsWidgetRef,
-    styler,
-    StylableComponent,
-    createArrayFrom
-} from '@wm/components/base';
 
-import { TabsAnimator } from './tabs.animator';
-import { registerProps } from './tabs.props';
-import { TabPaneComponent } from './tab-pane/tab-pane.component';
-import { find, findIndex, forEach, get, indexOf, isArray, isEmpty } from "lodash-es";
+import {TabsAnimator} from './tabs.animator';
+import {registerProps} from './tabs.props';
+import {TabPaneComponent} from './tab-pane/tab-pane.component';
+import {find, findIndex, forEach, get, indexOf, isArray, isEmpty} from "lodash-es";
 
 declare const $;
 
@@ -45,6 +49,8 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    standalone: true,
+    imports: [CommonModule, TextContentDirective],
     selector: 'div[wmTabs]',
     templateUrl: './tabs.component.html',
     exportAs: 'wmTabs',
@@ -52,7 +58,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(TabsComponent)
     ]
 })
-export class TabsComponent extends StylableComponent implements AfterContentInit, OnInit, AfterViewInit {
+export class TabsComponent extends StylableComponent implements AfterContentInit, OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public defaultpaneindex: number;
@@ -75,10 +81,12 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
     public fieldDefs;
     public type;
     public nodatamessage;
-    public app: App;
-    private datasource;
-    private ngZone: NgZone;
-    config = { itemCount: 4 }
+    public autoActivation:boolean;
+    private panesChangesSubscription: any;
+    private dynamicComponentRefs: any[] = [];
+
+    @HostBinding('attr.icon-position') iconposition: string = '';
+
     @ContentChildren(TabPaneComponent) panes: QueryList<TabPaneComponent>;
 
     constructor(
@@ -202,7 +210,13 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
                 this._dynamicContext[this.getAttr('wmTab')] = this;
             }
 
-            this.dynamicComponentProvider.addComponent(this.getNativeElement().querySelector('.tab-content'), markup, this._dynamicContext, { inj: this.inj });
+            // MEMORY LEAK FIX: Store component reference for cleanup
+            this.dynamicComponentProvider.addComponent(this.getNativeElement().querySelector('.tab-content'), markup, this._dynamicContext, {inj: this.inj})
+                .then(componentRef => {
+                    if (componentRef) {
+                        this.dynamicComponentRefs.push(componentRef);
+                    }
+                });
 
         });
         return paneNamesList;
@@ -400,6 +414,45 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
         setTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0));
     }
 
+    public getWidgets(widgteName: string, index?: number) {
+        let $target;
+        const retVal = [];
+
+        if (!widgteName) {
+            return;
+        }
+
+        if (!isDefined(index)) {
+            forEach(this.panes.toArray(), (el) => {
+                $target = get(el.currentTabWidgets, widgteName);
+                if ($target) {
+                    retVal.push($target);
+                }
+            });
+
+            return retVal;
+        }
+        index = +index || 0;
+
+        $target = get(this.panes.toArray(), index);
+
+        if ($target) {
+            return [get($target.currentTabWidgets, widgteName)];
+        }
+    }
+
+    get currentTabPaneIndex() {
+        return this.getActiveTabIndex();
+    }
+
+    get isFirstTabPane(): boolean {
+        return this.panes.first.widgetId === this.activeTab.widgetId;
+    }
+
+    get isLastTabPane(): boolean {
+        return this.panes.last.widgetId === this.activeTab.widgetId;
+    }
+
     onPropertyChange(key: string, nv: any, ov) {
 
         if (key === 'defaultpaneindex') {
@@ -423,6 +476,8 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
             } else {
                 setTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0), 20);
             }
+        } else if (key === 'autotabactivation'){
+            this.autoActivation = nv;
         } else {
             super.onPropertyChange(key, nv, ov);
         }
@@ -447,28 +502,43 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
         });
     }
     onkeydown(event) {
+        let newPane;
         switch (event.key) {
             case 'ArrowLeft':
             case 'ArrowUp':
-                this.prev(null, true);
-                event.preventDefault();
+                newPane = this.autoActivation ? (this.prev(null, true), null) : this.getSelectableTabBeforeIndex(this.getSelectedPaneIndex());
                 break;
 
             case 'ArrowRight':
             case 'ArrowDown':
-                this.next(null, true);
+                newPane = this.autoActivation ? (this.next(null, true), null) : this.getSelectableTabAfterIndex(this.getSelectedPaneIndex());
+                break;
+
+            case 'Enter': {
+                const pane = this.getSelectableTabAfterIndex(this.getSelectedPaneIndex()-1);
+                if (pane) {
+                    const enterEvent = new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', bubbles: true, cancelable: true});
+                    pane.nativeElement.dispatchEvent(enterEvent);
+                    pane.select(enterEvent, true);
+                }
                 event.preventDefault();
-                break;
+                return ;
+            }
             default:
-                break;
+                return;
         }
+        if (newPane) {
+            this.nativeElement.querySelector('li.select')?.classList.remove('select');
+            this.nativeElement.querySelector(`li[data-paneid="${newPane.widgetId}"]`)?.classList.add('select');
+        }
+        event.preventDefault();
     }
 
     ngAfterContentInit() {
         this.promiseResolverFn();
         super.ngAfterContentInit();
         this.setTabsPosition();
-        this.panes.changes.subscribe(slides => {
+        this.panesChangesSubscription = this.panes.changes.subscribe( slides => {
             if (this.panes.length) {
                 this.selectDefaultPaneByIndex(this.defaultpaneindex || 0);
             }
@@ -478,5 +548,54 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
     ngAfterViewInit() {
         super.ngAfterViewInit();
         this.registerTabsScroll();
+    }
+
+    getSelectedPaneIndex() {
+        const index = this.panes.toArray().findIndex(pane =>
+            this.nativeElement.querySelector(`li[data-paneid="${pane.widgetId}"]`)?.classList.contains("select"));
+        return index >= 0 ? index : this.getActiveTabIndex();
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from panes changes
+        if (this.panesChangesSubscription) {
+            this.panesChangesSubscription.unsubscribe();
+            this.panesChangesSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Destroy all dynamically created component instances
+        if (this.dynamicComponentRefs && this.dynamicComponentRefs.length) {
+            this.dynamicComponentRefs.forEach(componentRef => {
+                if (componentRef && componentRef.destroy) {
+                    componentRef.destroy();
+                }
+            });
+            this.dynamicComponentRefs = [];
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic tabs array
+        if (this.dynamicTabs) {
+            this.dynamicTabs = [];
+        }
+
+        // MEMORY LEAK FIX: Destroy tabs animator
+        if (this.tabsAnimator) {
+            // TabsAnimator may have internal subscriptions or timers
+            this.tabsAnimator = null;
+        }
+
+        // MEMORY LEAK FIX: Clear field definitions and references
+        this.fieldDefs = null;
+        this.activeTab = null;
+
+        super.ngOnDestroy();
     }
 }

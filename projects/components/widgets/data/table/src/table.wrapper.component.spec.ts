@@ -5,11 +5,7 @@ import { FormBuilder } from "@angular/forms";
 import { App, AppDefaults, DynamicComponentRefProvider, AbstractI18nService, Viewport, DataSource, extendProto } from "@wm/core";
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { WmComponentsModule } from '@wm/components/base';
-import { BasicModule } from '@wm/components/basic';
-import { InputModule } from '@wm/components/input';
-import { MenuModule } from '@wm/components/navigation/menu';
-import { ListModule } from '@wm/components/data/list';
+import { WidgetRef } from '@wm/components/base';
 import { IMaskModule } from 'angular-imask';
 import { TableComponent } from './table.component';
 import { TableCUDDirective } from './table-cud.directive';
@@ -32,6 +28,10 @@ import { PaginationComponent } from '@wm/components/data/pagination';
 import "./datatable.js"
 import { DateComponent } from "../../../input/epoch/src/date/date.component";
 import { TimeComponent } from "../../../input/epoch/src/time/time.component";
+import { ButtonComponent, InputNumberComponent, InputTextComponent } from "@wm/components/input";
+import { ListComponent } from "@wm/components/data/list";
+import { MenuComponent } from "@wm/components/navigation/menu";
+import { FormWidgetDirective } from "@wm/components/data/form";
 
 jest.mock('@wm/core', () => ({
     ...jest.requireActual('@wm/core'),
@@ -374,15 +374,16 @@ class TableWrapperComponent {
 
 let imports = [
     BrowserAnimationsModule,
-    BasicModule,
+    ButtonComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    InputModule,
-    ListModule,
-    MenuModule,
+    InputTextComponent,
+    InputNumberComponent,
+    ListComponent,
+    FormWidgetDirective,
+    MenuComponent,
     IMaskModule,
-    WmComponentsModule.forRoot(),
     BsDatepickerModule.forRoot(),
     TimepickerModule.forRoot(),
     BsDropdownModule.forRoot()
@@ -403,6 +404,14 @@ let declarations = [
     TimeComponent
 ]
 
+const mockWidgetRef = {
+    widget: {
+        // Add properties needed by your component
+        name: 'TestTable',
+        beforedatarender: jest.fn()  // Jest equivalent of jasmine.createSpy
+    }
+};
+
 let providers = [
     { provide: App, useValue: mockApp },
     { provide: Viewport, useValue: mockViewport },
@@ -411,12 +420,13 @@ let providers = [
     { provide: DynamicComponentRefProvider, useValue: mockApp },
     { provide: DatePipe, useClass: DatePipe },
     { provide: DecimalPipe, useClass: DecimalPipe },
-    { provide: AbstractI18nService, useClass: MockAbstractI18nService }
+    { provide: AbstractI18nService, useClass: MockAbstractI18nService },
+    { provide: WidgetRef, useValue: mockWidgetRef }
 ]
 
 const testModuleDef: ITestModuleDef = {
-    imports: imports,
-    declarations: [...declarations, TableWrapperComponent],
+    imports: [...declarations, ...imports],
+    declarations: [TableWrapperComponent],
     providers: providers,
     teardown: { destroyAfterEach: false }
 };
@@ -752,8 +762,8 @@ describe("DataTable", () => {
                 }
 
                 const inlineTestModuleDef: ITestModuleDef = {
-                    imports: imports,
-                    declarations: [...declarations, InlineTableWrapperComponent],
+                    imports: [...declarations, ...imports],
+                    declarations: [InlineTableWrapperComponent],
                     providers: providers,
                     teardown: { destroyAfterEach: false }
                 };
@@ -2364,8 +2374,8 @@ describe("DataTable", () => {
                 }
 
                 const quickeditTestModuleDef: ITestModuleDef = {
-                    imports: imports,
-                    declarations: [...declarations, QuickEditTableWrapperComponent],
+                    imports: [...declarations, ...imports],
+                    declarations: [QuickEditTableWrapperComponent],
                     providers: providers,
                     teardown: { destroyAfterEach: false }
                 };
@@ -2743,8 +2753,8 @@ describe("DataTable", () => {
                 }
 
                 const summaryRowTestModuleDef: ITestModuleDef = {
-                    imports: imports,
-                    declarations: [...declarations, SummaryRowWrapperComponent],
+                    imports: [...declarations, ...imports],
+                    declarations: [SummaryRowWrapperComponent],
                     providers: providers,
                     teardown: { destroyAfterEach: false }
                 };

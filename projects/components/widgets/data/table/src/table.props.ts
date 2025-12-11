@@ -1,4 +1,4 @@
-import { PROP_ANY, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register } from '@wm/components/base';
+import {PROP_ANY, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register} from '@wm/components/base';
 
 export const registerProps = () => {
     register(
@@ -24,6 +24,7 @@ export const registerProps = () => {
                 ['exportdatasize', {value: 100, ...PROP_NUMBER}],
                 ['filtermode', PROP_STRING],
                 ['filteronkeypress', {value: false, ...PROP_BOOLEAN}],
+                ['caseinsensitive', {value: false, ...PROP_BOOLEAN}],
                 ['filternullrecords', {value: true, ...PROP_BOOLEAN}],
                 ['forceellipses', {value: true, ...PROP_BOOLEAN}],
                 ['formposition', PROP_STRING],
@@ -34,10 +35,14 @@ export const registerProps = () => {
                 ['isdynamictable', PROP_BOOLEAN], // internal property to determine dynamic table
                 ['isrowexpansionenabled', PROP_BOOLEAN],
                 ['isrowselectable', {value: false, ...PROP_BOOLEAN}],
+                ['allowpagesizechange', {value: false, ...PROP_BOOLEAN}],
+                ['pagesizeoptions', {value : '5,10,20,50,100', ...PROP_STRING}],
                 ['loadingdatamsg', {value: 'Loading...', ...PROP_STRING}],
                 ['loadingicon', {value: 'fa fa-circle-o-notch fa-spin', ...PROP_STRING}],
                 ['maxsize', {value: 5, ...PROP_NUMBER}],
                 ['multiselect', PROP_BOOLEAN],
+                ['multiselecttitle', PROP_ANY],
+                ['multiselectarialabel', PROP_ANY],
                 ['name', PROP_STRING],
                 ['navigation', {value: 'Basic', ...PROP_STRING}],
                 ['navigationalign', {value: 'left', ...PROP_STRING}],
@@ -47,6 +52,9 @@ export const registerProps = () => {
                 ['viewlessmessage', {value: 'View Less', ...PROP_STRING}],
                 ['pagesize', PROP_NUMBER],
                 ['radioselect', PROP_BOOLEAN],
+                ['headerselectall',{value: false, ...PROP_BOOLEAN}],
+                ['radioselecttitle', PROP_ANY],
+                ['radioselectarialabel', PROP_ANY],
                 ['rowclass', PROP_STRING],
                 ['rowngclass', PROP_STRING],
                 ['searchlabel', {value: 'Search', ...PROP_STRING}],

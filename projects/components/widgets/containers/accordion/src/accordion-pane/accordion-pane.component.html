@@ -11,7 +11,8 @@
                 <div class="description" [innerHTML]="subheading"></div>
             </div>
             <div class="panel-actions pull-right">
-                <span class="label label-{{badgetype}}">{{ badgevalue }}</span>
+                <!-- added class as badge, app-label since it needs this classes to trigger the badge tokens -->
+                <span class="badge app-label label-{{badgetype}}">{{ badgevalue }}</span>
                 <span class="app-icon panel-action wi"
                       title="{{appLocale.LABEL_COLLAPSE}}/{{appLocale.LABEL_EXPAND}}">
                 <i [ngClass]="isActive ? 'wi-minus' : 'wi-plus'"></i>
@@ -21,7 +22,7 @@
     </h3>
 </div>
 <div [ngClass]="isActive ? 'collapse in' : 'collapse'" class="panel-collapse collapse">
-    <div class="panel-body" [wmSmoothscroll]="smoothscroll" partial-container-target>
+    <div class="panel-body"  partial-container-target>
         <ng-content></ng-content>
     </div>
 </div>

@@ -6,6 +6,7 @@ import {
     HostListener,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     Self
@@ -54,6 +55,7 @@ const FILE_TYPES = {
 };
 
 @Directive({
+  standalone: true,
     selector: '[wmFormField]',
     exportAs: 'wmFormField',
     providers: [
@@ -62,7 +64,7 @@ const FILE_TYPES = {
         {provide: Context, useFactory: () => { return {} }, multi: true}
     ]
 })
-export class FormFieldDirective extends StylableComponent implements OnInit, AfterContentInit {
+export class FormFieldDirective extends StylableComponent implements OnInit, AfterContentInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ContentChild('formWidget', {static: true}) formWidget;
@@ -536,6 +538,7 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
             // In view mode, set widget state to readonly always
             readOnly = true;
         }
+        readOnly = readOnly || this.form.readonly;
         this.setFormWidget('readonly', readOnly);
     }
 
@@ -546,7 +549,7 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
     }
 
     reset() {
-      if(this._control) 
+      if(this._control)
         this._control.reset();
     }
 
@@ -605,19 +608,15 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
         super.ngOnInit();
     }
 
-    ngAfterContentInit() {
-        super.ngAfterContentInit();
+    prepareFormWidget() {
+        this._initPropsRes();
 
-        if (this.formWidget) {
-            this._initPropsRes();
-
-            // setting displayExpressions on the formwidget explicitly as expr was evaluated to "".
-            this.setFormWidget('binddisplaylabel', this.binddisplaylabel);
-            this.setFormWidget('binddisplayexpression', this.binddisplayexpression);
-            this.setFormWidget('binddisplayimagesrc', this.binddisplayimagesrc);
-            this.setFormWidget('bindChipclass', this.bindChipclass);
-            this.setFormWidget('binddataset', this.binddataset);
-        }
+        // setting displayExpressions on the formwidget explicitly as expr was evaluated to "".
+        this.setFormWidget('binddisplaylabel', this.binddisplaylabel);
+        this.setFormWidget('binddisplayexpression', this.binddisplayexpression);
+        this.setFormWidget('binddisplayimagesrc', this.binddisplayimagesrc);
+        this.setFormWidget('bindChipclass', this.bindChipclass);
+        this.setFormWidget('binddataset', this.binddataset);
 
         this.registerReadyStateListener(() => {
             this.key = this._fieldName || this.target || this.binding;
@@ -671,5 +670,52 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
 
             this.setReadOnlyState();
         });
+    }
+
+    ngAfterContentInit() {
+        super.ngAfterContentInit();
+        if(this.widgetSubType === "wm-form-field-custom-widget" && this.formWidget.nativeElement)
+            this.formWidget = this.formWidget.nativeElement.widget;
+        if (this.formWidget) {
+            if(this.widgetSubType === "wm-form-field-custom-widget") {
+                this.formWidget.configSubject.asObservable().subscribe(() => {
+                    this.prepareFormWidget();
+                });
+            } else {
+                this.prepareFormWidget();
+            }
+        }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Destroy BaseFieldValidations instance
+        if (this.fieldValidations) {
+            try {
+                this.fieldValidations.destroy();
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
+            this.fieldValidations = null;
+        }
+
+        // MEMORY LEAK FIX: Clear notifyForFields array
+        if (this.notifyForFields) {
+            this.notifyForFields = [];
+        }
+
+        // MEMORY LEAK FIX: Nullify debounced function closure
+        this._debounceSetUpValidators = null;
+
+        // MEMORY LEAK FIX: Clear form widget references
+        this.formWidget = null;
+        this.formWidgetMax = null;
+
+        // MEMORY LEAK FIX: Clear field definition config
+        if (this.fieldDefConfig) {
+            this.fieldDefConfig = {};
+        }
+
+        // Call parent ngOnDestroy (StylableComponent extends BaseComponent which has cleanup)
+        super.ngOnDestroy();
     }
 }

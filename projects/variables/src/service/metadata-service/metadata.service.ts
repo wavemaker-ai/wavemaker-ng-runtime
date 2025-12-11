@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 
-import { AbstractHttpService, hasCordova } from '@wm/core';
+import {_WM_APP_PROJECT, AbstractHttpService} from '@wm/core';
+declare const _WM_APP_PROPERTIES;
 
 @Injectable()
 export class MetadataService {
@@ -16,11 +17,11 @@ export class MetadataService {
 
     load(prefabName?: string): Promise<any> {
         let url;
-        if (hasCordova()) {
-            url = 'metadata/' + (prefabName ? `prefabs/${prefabName}/` : 'app/') + 'service-definitions.json';
-        } else {
-            url = './services/' + (prefabName ? `prefabs/${prefabName}/` : '') + 'servicedefs';
-        }
+            let serviceDefFileName = prefabName ? prefabName + '-prefab-servicedefs.json'  : 'app-servicedefs.json'
+            const deployedUrl = _WM_APP_PROJECT.cdnUrl + 'servicedefs/' + serviceDefFileName;
+
+            const previewUrl = './services/' + (prefabName ? `prefabs/${prefabName}/` : '') + 'servicedefs';
+            url = _WM_APP_PROJECT.isPreview || _WM_APP_PROPERTIES?.serviceDefSources === 'DYNAMIC' ? previewUrl : deployedUrl;
         return new Promise((resolve, reject) => {
             this.$http.send({'url' : url, 'method': 'GET'}).then((response) => {
                 this.metadataMap = this.metadataMap || new Map();

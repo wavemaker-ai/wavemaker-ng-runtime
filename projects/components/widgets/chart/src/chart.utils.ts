@@ -3,7 +3,8 @@ import {forEach, includes, invert, isArray, isFinite, isString, isUndefined, spl
 
 declare const $;
 
-declare const moment;
+import * as momentLib  from 'moment';
+const moment = momentLib.default || window['moment'];
 declare const d3, nv;
 
 export const chartTypes = ['Column', 'Line', 'Area', 'Cumulative Line', 'Bar', 'Pie', 'Donut', 'Bubble'],
@@ -552,9 +553,9 @@ export const isShowLegend = value => {
  */
 export const customiseTooltip = (chart, propertyValueMap, widgetContext, label?) => {
     d3.selectAll('.nvtooltip').style('opacity', 0);
-    chart.tooltip.contentGenerator((key, propertyValueMap) => {
+    chart.tooltip.contentGenerator((key, propValueMap) => {
         let xValue = key.data.x, yValue;
-        yValue = getNumberFormatedData(propertyValueMap.ynumberformat, key.data.y);
+        yValue = getNumberFormatedData(propValueMap?.ynumberformat || widgetContext?.ynumberformat || propertyValueMap?.ynumberformat, key.data.y);
         if (isPieType(widgetContext.type)) {
             label = key.data.x;
             xValue = '';
@@ -747,9 +748,9 @@ export const initChart = (widgetContext, xDomainValues, yDomainValues, propertyV
             .axisLabel(yaxislabel)
             .axisLabelDistance(propertyValueMap.yaxislabeldistance)
             .staggerLabels(propertyValueMap.staggerlabels)
-            .tickFormat(d => getNumberFormatedData(propertyValueMap.ynumberformat, d));
+            .tickFormat(d => getNumberFormatedData(propertyValueMap?.ynumberformat, d));
         if (isBarChart(widgetContext.type)) {
-            chart.valueFormat(d => getNumberFormatedData(propertyValueMap.ynumberformat, d));
+            chart.valueFormat(d => getNumberFormatedData(propertyValueMap?.ynumberformat, d));
         }
     }
 

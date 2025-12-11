@@ -1,5 +1,3 @@
-import { isMobileApp } from '@wm/core';
-
 import { PROP_ANY, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register} from '@wm/components/base';
 
 export const registerProps = () => {
@@ -15,11 +13,10 @@ export const registerProps = () => {
             ['show', {value: true, ...PROP_BOOLEAN}],
             ['statehandler', {value: 'none', ...PROP_STRING}],
             ['transition', PROP_STRING],
-            ['type', PROP_STRING]
+            ['type', PROP_STRING],
+            ['iconposition', PROP_STRING],
+            ['autotabactivation', {value: true, ...PROP_BOOLEAN}]
         ]
     );
-    if (isMobileApp()) {
-        props.set('transition', {value: 'slide', ...PROP_STRING});
-    }
     register('wm-tabs', props);
 };

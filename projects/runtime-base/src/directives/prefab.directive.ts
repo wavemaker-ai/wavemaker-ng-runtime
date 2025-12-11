@@ -4,6 +4,7 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     Self,
     ViewContainerRef
 } from '@angular/core';
@@ -15,10 +16,11 @@ import { ComponentRefProvider, ComponentType } from '../types/types';
 import { App } from '@wm/core';
 
 @Directive({
+  standalone: true,
     selector: '[wmPrefab][prefabname]',
     exportAs: "wmPrefab"
 })
-export class PrefabDirective {
+export class PrefabDirective implements OnDestroy {
     showLoader: boolean = true;
     public app: any;
     constructor(
@@ -40,8 +42,16 @@ export class PrefabDirective {
                     const instanceRef = this.vcRef.createComponent(componentFactory, 0, injector);
                     this.elRef.nativeElement.appendChild(instanceRef.location.nativeElement);
                 }
-            }).finally(() => {
-                this.showLoader = false;
             });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewContainerRef to destroy dynamically created components
+        if (this.vcRef) {
+            this.vcRef.clear();
+        }
+
+        // MEMORY LEAK FIX: Clear ElementRef reference
+        this.elRef = null;
     }
 }

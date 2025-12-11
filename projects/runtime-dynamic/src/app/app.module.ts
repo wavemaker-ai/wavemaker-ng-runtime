@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { RouteReuseStrategy, RouterModule } from '@angular/router';
 import { HttpClientModule, HttpClientXsrfModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
 import { TypeaheadModule } from 'ngx-bootstrap/typeahead';
 import { TimepickerModule as ngxTimepickerModule } from 'ngx-bootstrap/timepicker';
 import { ProgressbarModule } from 'ngx-bootstrap/progressbar';
@@ -19,73 +18,135 @@ import { NgCircleProgressModule } from 'ng-circle-progress';
 import { ToastNoAnimationModule } from 'ngx-toastr';
 import { CarouselModule as ngxCarouselModule, } from 'ngx-bootstrap/carousel';
 
-import {App, getWmProjectProperties, PartialRefProvider} from '@wm/core';
+import { App, getWmProjectProperties, PartialRefProvider, CustomWidgetRefProvider, AbstractHttpService } from '@wm/core';
 // Basic widgets
 
-import { BasicModule } from '@wm/components/basic';
-import { ProgressModule } from '@wm/components/basic/progress';
-import { RichTextEditorModule } from '@wm/components/basic/rich-text-editor';
-import { SearchModule } from '@wm/components/basic/search';
-import { TreeModule } from '@wm/components/basic/tree';
+import { AnchorComponent } from '@wm/components/basic/anchor';
+import { AudioComponent } from '@wm/components/basic/audio';
+import { HtmlDirective } from '@wm/components/basic/html';
+import { IconComponent } from '@wm/components/basic/icon';
+import { IframeComponent } from '@wm/components/basic/iframe';
+import { LabelDirective } from '@wm/components/basic/label';
+import { PictureDirective } from '@wm/components/basic/picture';
+import { SpinnerComponent } from '@wm/components/basic/spinner';
+import { VideoComponent } from '@wm/components/basic/video';
+
+import { ProgressBarComponent } from '@wm/components/basic/progress/progress-bar';
+import { ProgressCircleComponent } from '@wm/components/basic/progress/progress-circle';
+import { RichTextEditorComponent } from '@wm/components/basic/rich-text-editor';
+import { SearchComponent, ScrollableDirective } from '@wm/components/basic/search';
+import { TreeComponent } from '@wm/components/basic/tree';
 
 // input
-import { InputModule } from '@wm/components/input';
-import { CalendarModule } from '@wm/components/input/calendar';
-import { ChipsModule } from '@wm/components/input/chips';
-import { ColorPickerModule } from '@wm/components/input/color-picker';
-import { CurrencyModule } from '@wm/components/input/currency';
-import { EpochModule } from '@wm/components/input/epoch';
-import { FileUploadModule } from '@wm/components/input/file-upload';
-import { RatingModule } from '@wm/components/input/rating';
-import { SliderModule } from '@wm/components/input/slider';
+import { ButtonComponent } from "@wm/components/input/button";
+import { ButtonGroupDirective } from "@wm/components/input/button-group";
+import { CaptionPositionDirective } from "@wm/components/input/caption-position";
+import { CheckboxComponent } from "@wm/components/input/checkbox";
+import { CheckboxsetComponent } from "@wm/components/input/checkboxset";
+import { CompositeDirective } from "@wm/components/input/composite";
+import { NumberComponent } from "@wm/components/input/number";
+import { RadiosetComponent } from "@wm/components/input/radioset";
+import { SelectComponent } from "@wm/components/input/select";
+import { SwitchComponent } from "@wm/components/input/switch";
+import { InputCalendarComponent } from "@wm/components/input/text";
+import { InputColorComponent } from "@wm/components/input/text";
+import { InputEmailComponent } from "@wm/components/input/text";
+import { InputNumberComponent } from "@wm/components/input/text";
+import { InputTextComponent } from "@wm/components/input/text";
+import { TextareaComponent } from "@wm/components/input/textarea";
 
-import { MobileRuntimeDynamicModule, MOBILE_COMPONENT_MODULES_FOR_ROOT } from '@wm/mobile/runtime/dynamic';
+import { CalendarComponent } from '@wm/components/input/calendar';
+import { ChipsComponent } from '@wm/components/input/chips';
+import { ColorPickerComponent } from '@wm/components/input/color-picker';
+import { CurrencyComponent } from '@wm/components/input/currency';
 
+import { DateComponent } from '@wm/components/input/epoch/date';
+import { DatetimeComponent } from '@wm/components/input/epoch/date-time';
+import { TimeComponent } from '@wm/components/input/epoch/time';
+import { DateTimePickerComponent } from '@wm/components/input/epoch/date-time-picker';
+import { TimePickerComponent } from '@wm/components/input/epoch/date-time-picker';
+import { PickerComponent } from '@wm/components/input/epoch/picker';
+import { PickerGroupComponent } from '@wm/components/input/epoch/picker';
+
+import { FileUploadComponent } from '@wm/components/input/file-upload';
+import { RatingComponent } from '@wm/components/input/rating';
+import { SliderComponent } from '@wm/components/input/slider';
 // Data
-import { CardModule } from '@wm/components/data/card';
-import { FormModule } from '@wm/components/data/form';
-import { ListModule } from '@wm/components/data/list';
-import { LiveTableModule } from '@wm/components/data/live-table';
-import { PaginationModule } from '@wm/components/data/pagination';
-import { TableModule } from '@wm/components/data/table';
+import {
+    CardComponent,
+    CardActionsDirective,
+    CardContentComponent,
+    CardFooterDirective
+} from '@wm/components/data/card';
+import {
+    FormComponent,
+    FormWidgetDirective,
+    FormActionDirective,
+    FormFieldDirective,
+    LiveActionsDirective,
+    DependsonDirective,
+    LiveFilterDirective,
+    LiveFormDirective
+} from '@wm/components/data/form';
+import { ListComponent, ListItemDirective } from '@wm/components/data/list';
+import { LiveTableComponent } from '@wm/components/data/live-table';
+import { PaginationComponent } from '@wm/components/data/pagination';
+import {
+    TableComponent,
+    TableCUDDirective,
+    TableFilterSortDirective,
+    TableActionDirective,
+    TableColumnDirective,
+    TableColumnGroupDirective,
+    TableRowDirective,
+    TableRowActionDirective
+} from '@wm/components/data/table';
 
 // Chart
-import { ChartModule } from '@wm/components/chart';
+import { ChartComponent } from '@wm/components/chart';
 
 // Containers
-import { AccordionModule } from '@wm/components/containers/accordion';
-import { LinearLayoutModule } from '@wm/components/containers/linear-layout';
-import { LayoutGridModule } from '@wm/components/containers/layout-grid';
-import { PanelModule } from '@wm/components/containers/panel';
-import { TabsModule } from '@wm/components/containers/tabs';
-import { TileModule } from '@wm/components/containers/tile';
-import { WizardModule } from '@wm/components/containers/wizard';
+import { AccordionPaneComponent, AccordionDirective } from '@wm/components/containers/accordion';
+import { LinearLayoutDirective, LinearLayoutItemDirective } from '@wm/components/containers/linear-layout';
+import { LayoutgridDirective, LayoutGridRowDirective, LayoutGridColumnDirective } from '@wm/components/containers/layout-grid';
+import { PanelComponent } from '@wm/components/containers/panel';
+import { TabPaneComponent, TabsComponent } from '@wm/components/containers/tabs';
+import { TileDirective } from '@wm/components/containers/tile';
+import { WizardActionDirective, WizardStepComponent, WizardComponent } from '@wm/components/containers/wizard';
 
 // Dialogs
-import { AlertDialogModule } from '@wm/components/dialogs/alert-dialog';
-import { IframeDialogModule } from '@wm/components/dialogs/iframe-dialog';
-import { LoginDialogModule } from '@wm/components/dialogs/login-dialog';
-import { PartialDialogModule } from '@wm/components/dialogs/partial-dialog';
+import { AlertDialogComponent } from '@wm/components/dialogs/alert-dialog';
+import { IframeDialogComponent } from '@wm/components/dialogs/iframe-dialog';
+import { LoginDialogDirective } from '@wm/components/dialogs/login-dialog';
+import { PartialDialogComponent } from '@wm/components/dialogs/partial-dialog';
 
 // Navigation
-import { BreadcrumbModule } from '@wm/components/navigation/breadcrumb';
-import { MenuModule } from '@wm/components/navigation/menu';
-import { NavbarModule } from '@wm/components/navigation/navbar';
-import { PopoverModule } from '@wm/components/navigation/popover';
+import { BreadcrumbComponent } from '@wm/components/navigation/breadcrumb';
+import { MenuComponent, MenuDropdownComponent, MenuDropdownItemComponent, NavigationControlDirective, NavComponent, NavItemDirective } from '@wm/components/navigation/menu';
+import { NavbarComponent } from '@wm/components/navigation/navbar';
+import { PopoverComponent } from '@wm/components/navigation/popover';
 
 // Advanced
-import { CarouselModule } from '@wm/components/advanced/carousel';
-import { LoginModule } from '@wm/components/advanced/login';
-import { MarqueeModule } from '@wm/components/advanced/marquee';
+import { CarouselDirective, CarouselTemplateDirective } from '@wm/components/advanced/carousel';
+import { LoginComponent } from '@wm/components/advanced/login';
+import { MarqueeDirective } from '@wm/components/advanced/marquee';
+import { CustomWidgetDirective, CustomWidgetContainerDirective } from '@wm/components/advanced/custom';
 
-import { PageModule } from '@wm/components/page';
-import { FooterModule } from '@wm/components/page/footer';
-import { HeaderModule } from '@wm/components/page/header';
-import { LeftPanelModule } from '@wm/components/page/left-panel';
-import { RightPanelModule } from '@wm/components/page/right-panel';
-import { TopNavModule } from '@wm/components/page/top-nav';
+import {
+    PageDirective,
+    LayoutDirective,
+    ContentComponent,
+    PageContentComponent,
+    SpaPageDirective,
+    RouterOutletDirective
+} from '@wm/components/page';
+import { FooterDirective } from '@wm/components/page/footer';
+import { HeaderComponent } from '@wm/components/page/header';
+import { LeftPanelDirective } from '@wm/components/page/left-panel';
+import { RightPanelDirective } from '@wm/components/page/right-panel';
+import { TopNavDirective } from '@wm/components/page/top-nav';
 
-import { PrefabModule } from '@wm/components/prefab';
+import { PrefabDirective, PrefabContainerDirective } from '@wm/components/prefab';
 
 import {
     AppComponent,
@@ -95,6 +156,7 @@ import {
     PrefabConfigProvider,
     WmRouteReuseStrategy,
     WM_MODULES_FOR_ROOT,
+    CustomwidgetConfigProvider,
     REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
     AppExtensionProvider
 } from '@wm/runtime/base';
@@ -105,20 +167,22 @@ import { AppJSProviderService } from './services/app-js-provider.service';
 import { AppVariablesProviderService } from './services/app-variables-provider.service';
 import { AppExtensionProviderService } from './services/app-extension.service';
 import { ComponentRefProviderService } from './services/component-ref-provider.service';
+import { CustomwidgetConfigProviderService } from './services/customwidget-config-provider.service';
 import { PrefabConfigProviderService } from './services/prefab-config-provider.service';
 import { AppResourceManagerService } from './services/app-resource-manager.service';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { HttpServiceImpl } from '@wm/http';
 
 export const routerModule = RouterModule.forRoot(routes, { useHash: true, scrollPositionRestoration: 'top' });
 export const toastrModule = ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true });
 
 // In angular 15, xsrf headerName should not be null. Angular 15 is not using default header value like it used to send in calls
 // for angular 12 if the headerName is null . The user has to take care of not sending null values. Then ng 15 uses default value for headerName
-let xsrfHeaderName = getWmProjectProperties().xsrf_header_name;
-let xsrfOptions = {
+const xsrfHeaderName = getWmProjectProperties().xsrf_header_name;
+const xsrfOptions = {
     cookieName: 'wm_xsrf_token'
 }
-if(xsrfHeaderName) {
+if (xsrfHeaderName) {
     xsrfOptions['headerName'] = xsrfHeaderName;
 }
 export const httpClientXsrfModule = HttpClientXsrfModule.withOptions(xsrfOptions);
@@ -149,73 +213,124 @@ const componentsModule = [
     TooltipModule,
 
     // Basic widgets
-    BasicModule,
-    ProgressModule,
-    RichTextEditorModule,
-    SearchModule,
-    TreeModule,
+    AnchorComponent,
+    AudioComponent,
+    HtmlDirective,
+    IconComponent,
+    IframeComponent,
+    LabelDirective,
+    PictureDirective,
+    SpinnerComponent,
+    VideoComponent,
+    ProgressBarComponent, ProgressCircleComponent,
+    RichTextEditorComponent,
+    SearchComponent, ScrollableDirective,
+    TreeComponent,
 
     // Input
-    CalendarModule,
-    ChipsModule,
-    ColorPickerModule,
-    CurrencyModule,
-    EpochModule,
-    FileUploadModule,
-    InputModule,
-    RatingModule,
-    SliderModule,
+    CalendarComponent,
+    ChipsComponent,
+    ColorPickerComponent,
+    CurrencyComponent,
+    DateComponent,
+    DatetimeComponent,
+    TimeComponent,
+    DateTimePickerComponent,
+    TimePickerComponent,
+    PickerComponent,
+    PickerGroupComponent,
+    FileUploadComponent,
+    ButtonComponent,
+    ButtonGroupDirective,
+    CaptionPositionDirective,
+    CheckboxComponent,
+    CheckboxsetComponent,
+    CompositeDirective,
+    NumberComponent,
+    RadiosetComponent,
+    SelectComponent,
+    SwitchComponent,
+    InputCalendarComponent,
+    InputColorComponent,
+    InputEmailComponent,
+    InputNumberComponent,
+    InputTextComponent,
+    TextareaComponent,
+    RatingComponent,
+    SliderComponent,
 
     // Data
-    CardModule,
-    FormModule,
-    ListModule,
-    LiveTableModule,
-    PaginationModule,
-    TableModule,
+    CardComponent,
+    CardActionsDirective,
+    CardContentComponent,
+    CardFooterDirective,
+    FormComponent,
+    FormWidgetDirective,
+    FormActionDirective,
+    FormFieldDirective,
+    LiveActionsDirective,
+    DependsonDirective,
+    LiveFilterDirective,
+    LiveFormDirective,
+    ListComponent, ListItemDirective,
+    LiveTableComponent,
+    PaginationComponent,
+    TableComponent,
+    TableCUDDirective,
+    TableFilterSortDirective,
+    TableActionDirective,
+    TableColumnDirective,
+    TableColumnGroupDirective,
+    TableRowDirective,
+    TableRowActionDirective,
 
     // chart
-    ChartModule,
+    ChartComponent,
 
     // container modules
-    AccordionModule,
-    LinearLayoutModule,
-    LayoutGridModule,
-    PanelModule,
-    TabsModule,
-    TileModule,
-    WizardModule,
+    AccordionPaneComponent, AccordionDirective,
+    LinearLayoutDirective, LinearLayoutItemDirective,
+    LayoutgridDirective, LayoutGridRowDirective, LayoutGridColumnDirective,
+    PanelComponent,
+    TabPaneComponent, TabsComponent,
+    TileDirective,
+    WizardActionDirective, WizardStepComponent, WizardComponent,
 
     // dialogs
-    AlertDialogModule,
-    IframeDialogModule,
-    LoginDialogModule,
-    PartialDialogModule,
+    AlertDialogComponent,
+    IframeDialogComponent,
+    LoginDialogDirective,
+    PartialDialogComponent,
 
     // navigation
-    BreadcrumbModule,
-    MenuModule,
-    NavbarModule,
-    PopoverModule,
+    BreadcrumbComponent,
+    MenuComponent, MenuDropdownComponent, MenuDropdownItemComponent, NavigationControlDirective, NavComponent, NavItemDirective,
+    NavbarComponent,
+    PopoverComponent,
 
     // Advanced
-    CarouselModule,
-    LoginModule,
-    MarqueeModule,
+    CarouselDirective, CarouselTemplateDirective,
+    LoginComponent,
+    MarqueeDirective,
+    CustomWidgetDirective, CustomWidgetContainerDirective,
 
-    PageModule,
-    FooterModule,
-    HeaderModule,
-    LeftPanelModule,
-    RightPanelModule,
-    TopNavModule,
+    PageDirective,
+    LayoutDirective,
+    ContentComponent,
+    PageContentComponent,
+    SpaPageDirective,
+    RouterOutletDirective,
+    FooterDirective,
+    HeaderComponent,
+    LeftPanelDirective,
+    RightPanelDirective,
+    TopNavDirective,
 
-    PrefabModule
+    PrefabDirective, PrefabContainerDirective
 ];
 
-REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(...componentsModule);
-REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(...MOBILE_COMPONENT_MODULES_FOR_ROOT);
-REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule, ReactiveFormsModule);
+REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(...componentsModule as any);
+REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule as any, ReactiveFormsModule as any);
 
 @NgModule({
     declarations: [
@@ -243,27 +358,24 @@ REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule, ReactiveFormsModule);
         routerModule,
         toastrModule,
         httpClientXsrfModule,
-
-        MobileRuntimeDynamicModule,
         WM_MODULES_FOR_ROOT
     ],
     providers: [
         AppResourceManagerService,
         { provide: AppJSProvider, useClass: AppJSProviderService },
         { provide: AppVariablesProvider, useClass: AppVariablesProviderService },
-        { provide: AppExtensionProvider,useClass:AppExtensionProviderService},
+        { provide: AppExtensionProvider, useClass: AppExtensionProviderService },
         { provide: ComponentRefProvider, useClass: ComponentRefProviderService },
         { provide: PartialRefProvider, useClass: ComponentRefProviderService },
+        { provide: CustomWidgetRefProvider, useClass: ComponentRefProviderService },
+        { provide: CustomwidgetConfigProvider, useClass: CustomwidgetConfigProviderService },
         { provide: PrefabConfigProvider, useClass: PrefabConfigProviderService },
-        { provide: RouteReuseStrategy, useClass: WmRouteReuseStrategy }
+        { provide: RouteReuseStrategy, useClass: WmRouteReuseStrategy },
+        { provide: AbstractHttpService, useClass: HttpServiceImpl }
     ],
     bootstrap: [AppComponent]
 })
 export class AppModule {
     constructor(private app: App, private inj: Injector, private componentRefProvider: ComponentRefProvider) {
-        if (window['cordova']) {
-            // clear the cached urls on logout, to load the Login Page and not the Main Page as app reload(window.location.reload) is not invoked in mobile
-            this.app.subscribe('userLoggedOut', this.componentRefProvider.clearComponentFactoryRefCache.bind(this.componentRefProvider));
-        }
     }
 }

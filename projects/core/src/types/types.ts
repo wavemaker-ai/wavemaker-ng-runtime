@@ -1,7 +1,8 @@
 export enum ComponentType {
     PAGE,
     PREFAB,
-    PARTIAL
+    PARTIAL,
+    WIDGET
 }
 
 export class IDataSource {
@@ -72,6 +73,7 @@ export abstract class App {
     isPrefabType: boolean;
     isApplicationType: boolean;
     setwidgetLocale: Function;
+    setMode: Function;
     isTabletApplicationType: boolean;
     isTemplateBundleType: boolean;
     changeLocale: Function;
@@ -80,6 +82,7 @@ export abstract class App {
     reload: Function;
     on401: Function;
     notifyApp: Function;
+    importModule: Function;
     getDependency: Function;
     networkStatus: any;
     notify: (eventName: string, data?: any) => void;
@@ -89,6 +92,8 @@ export abstract class App {
     subscribe: (eventName, callback: (data: any) => void) => () => void;
     dynamicComponentContainerRef: any;
     clearPageCache: (pageName?: string) => void;
+    isPrism: boolean;
+    hasOwnObjectProperty: (obj: any, prop: string) => boolean;
 
     activePageName: string;
     activePage: any;
@@ -155,6 +160,7 @@ export abstract class AbstractI18nService {
     protected abstract loadMomentLocaleBundle(localeLang);
     protected abstract loadLocaleBundles(localeLang);
     public abstract setTimezone(locale, compInstance?);
+    public abstract setTimezoneEarly(): Promise<any>;
     public abstract getFormatsByLocale();
     public abstract getTimezone(compInstance?);
     public abstract getPrefabLocaleBundle(prefabName: string): any;
@@ -221,4 +227,8 @@ export abstract class DynamicComponentRefProvider {
 
 export abstract class PartialRefProvider {
     abstract getComponentFactoryRef(partialName: string, componentType: ComponentType, options?: any): Promise<any>;
+}
+
+export abstract class CustomWidgetRefProvider {
+    abstract getComponentFactoryRef(customWidgetName: string, componentType: ComponentType, options?: any): Promise<any>;
 }

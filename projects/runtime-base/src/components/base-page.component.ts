@@ -11,13 +11,13 @@ import {
 import {ActivatedRoute, Router} from '@angular/router';
 
 import {
+    $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
     App,
     getWmProjectProperties,
     isAndroid,
     isIos,
-    isMobileApp,
     muteWatchers,
     noop,
     registerFnByExpr,
@@ -254,19 +254,11 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         });
     }
 
-    private restoreLastPageSnapshot() {
-        if (isMobileApp() && BasePageComponent.lastPageSnapShot && this.$page) {
-            this.$page.parent().prepend(BasePageComponent.lastPageSnapShot);
-        }
-    }
+    private restoreLastPageSnapshot() {}
 
     private savePageSnapShot() {
         if (BasePageComponent.lastPageSnapShot) {
             BasePageComponent.lastPageSnapShot.remove();
-        }
-        if (isMobileApp() && this.$page) {
-            BasePageComponent.lastPageSnapShot = this.$page.clone();
-            this.$page.parents('app-root').prepend(BasePageComponent.lastPageSnapShot);
         }
     }
 
@@ -310,14 +302,14 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
      * whether to change route or not based on return value.
      */
     @HostListener('window:beforeunload')
-    canDeactivate() {
+    canDeactivate(nextState?: string){
         let retVal;
         // Calling onBeforePageLeave method present at page level
         retVal = this.onBeforePageLeave();
         // Calling onBeforePageLeave method present at app level only if page level method return true
         // or if there is no page level method
         if (retVal !== false ) {
-            retVal =  (this.App.onBeforePageLeave || noop)(this.App.activePageName, this.App.activePage);
+            retVal =  (this.App.onBeforePageLeave || noop)(this.App.activePageName, this.App.activePage, nextState);
         }
         return retVal === undefined ? true : retVal;
     }
@@ -353,9 +345,45 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
     }
 
     ngOnDestroy(): void {
+        // MEMORY LEAK FIX: Unwatch all Page-scoped watchers for THIS specific page when page is destroyed
+        if (this.pageName) {
+            const removedCount = $unwatchAllByScope('Page', this.pageName);
+            if (removedCount > 0) {
+                console.log(`🧹 Cleaned up ${removedCount} Page-scoped watcher(s) for page ${this.pageName}`);
+            }
+        }
         //this.captureApplicationThumbnail();
         this.savePageSnapShot();
-        this.destroy$.complete();
+
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
+        if (this.destroy$) {
+            this.destroy$.complete();
+            this.destroy$ = null;
+        }
+        if (this.viewInit$) {
+            this.viewInit$.complete();
+            this.viewInit$ = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references to prevent memory leaks
+        this.Widgets = null;
+        this.Variables = null;
+        this.Actions = null;
+        this.App = null;
+        this.route = null;
+        this.appManager = null;
+        this.navigationService = null;
+        this.router = null;
+        this.pageParams = null;
+        this.i18nService = null;
+        this.appLocale = null;
+        this.pageDirective = null;
+        this.$page = null;
+        this.scriptLoaderService = null;
+        this.Viewport = null;
+
+        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
+        this.cleanupFragmentMonitor();
     }
 
     captureApplicationThumbnail() {
