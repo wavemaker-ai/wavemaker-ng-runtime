@@ -1526,6 +1526,19 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (newVal) {
             this.populateGridData(newVal);
         }
+        // when select widget options are loaded in search filter then initializing it
+        const widgetState = this.statePersistence.getWidgetState(this);
+        if (get(widgetState, 'search')) {
+            if (isArray(widgetState.search)) {
+                forEach(widgetState.search, (filterObj) => {
+                    const widget=$(this.rowFilterCompliedTl[filterObj.field])?.find('[widget-id]')?.prop("tagName")?.toLowerCase();
+                    if(widget==='wm-select' && filterObj.value){
+                        const select = $(this.rowFilterCompliedTl[filterObj.field]).find("select");
+                        select?.find("option")?.filter((_, o) => o.textContent.trim() === filterObj.value)?.prop("selected", true)
+                    }
+                });
+            }
+        }
     }
 
     ngOnDestroy() {
