@@ -9,7 +9,8 @@
   </h3>
 </div>
 }
-@if (variableInflight && app.Variables?.showSkeletonLoader?.dataSet.dataValue || false) {
+<!-- Show skeleton when: loading OR no chart data yet (and not showing no-data message) -->
+@if (app.Variables?.showSkeletonLoader?.dataSet.dataValue && (variableInflight || (!chartData?.length && !showNoDataMsg))) {
 <wm-skeleton-loader [config]='{"chartType": type}' widget-type="chart"></wm-skeleton-loader>
 }
 <div class="app-chart-inner" [ngClass]="{'loading':isLoadInProgress, 'panel-body': title}">

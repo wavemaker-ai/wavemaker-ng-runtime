@@ -3533,7 +3533,10 @@ $.widget('wm.datatable', {
             state = this.dataStatus.state,
             isScrollOrOndemand = this.options.isNavTypeScrollOrOndemand();
         this.dataStatusContainer.find('.message').text(this.dataStatus.message);
-        if (state === 'loading') {
+        // Keep skeleton/loader visible when loading OR when data hasn't arrived yet (prevents layout shift gap)
+        var showLoader = state === 'loading' || 
+            (this.options.showSkeletonLoader && !this.options.data?.length && state !== 'nodata' && state !== 'error');
+        if (showLoader) {
             loadingIndicator.removeClass('hidden');
             this.element.find('.app-grid-header').hide();
         } else {

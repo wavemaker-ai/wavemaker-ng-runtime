@@ -185,7 +185,7 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
     private bubblesize: any;
     public showNoDataMsg: any;
     private sampleData: any[];
-    private chartData: any[] = [];
+    chartData: any[] = [];
     private _processedData: any[] = [];
     private _subsciptions: any = [];
 

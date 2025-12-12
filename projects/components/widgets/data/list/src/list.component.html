@@ -43,27 +43,27 @@
   }
 </div>
 
-@if (variableInflight && !pulltorefresh && this.app?.Variables?.showSkeletonLoader?.dataSet?.dataValue) {
+<!-- Show skeleton when: loading with skeleton enabled, OR no content yet with skeleton enabled -->
+@if (this.app?.Variables?.showSkeletonLoader?.dataSet?.dataValue && !pulltorefresh && (variableInflight || (!fieldDefs?.length && !noDataFound))) {
   <wm-skeleton-loader 
     [attr.widget-type]="this.$attrs.get('class') === 'list-card' ? 'card' : 'list'" 
     [config]='{"cardClass": itemsPerRowClass}'></wm-skeleton-loader>
 }
 
-<ul [attr.tabindex]="tabindex" class="app-livelist-container clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}} {{listclass}}" role="list"
+<ul [attr.tabindex]="tabindex" 
+  class="app-livelist-container clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}} {{listclass}}" 
+  role="list"
   (keydown.enter)="handleKeyDown($event, 'select')"
-
   (keydown.space)="handleKeyDown($event, 'space')"
-
   (keydown.arrowup)="handleKeyDown($event, 'focusPrev')"
   (keydown.arrowdown)="handleKeyDown($event, 'focusNext')"
   (keydown.arrowleft)="handleKeyDown($event, 'focusPrev')"
   (keydown.arrowright)="handleKeyDown($event, 'focusNext')"
-
   (keydown.shift.arrowup)="handleKeyDown($event, 'selectPrev')"
   (keydown.shift.arrowdown)="handleKeyDown($event, 'selectNext')"
   (keydown.shift.arrowleft)="handleKeyDown($event, 'selectPrev')"
   (keydown.shift.arrowright)="handleKeyDown($event, 'selectNext')"
-  [hidden]="(noDataFound && !variableInflight) || (variableInflight && !pulltorefresh && this.app?.Variables?.showSkeletonLoader?.dataSet?.dataValue)"
+  [hidden]="(noDataFound && !variableInflight) || (this.app?.Variables?.showSkeletonLoader?.dataSet?.dataValue && !pulltorefresh && (variableInflight || (!fieldDefs?.length && !noDataFound)))"
   >
     @if (!groupby) {
       @for (item of fieldDefs; track item) {
