@@ -43,7 +43,13 @@
   }
 </div>
 
-<ul [attr.tabindex]="tabindex"  class="app-livelist-container clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}} {{listclass}}" role="list"
+@if (variableInflight && !pulltorefresh && this.app?.Variables?.showSkeletonLoader?.dataSet?.dataValue) {
+  <wm-skeleton-loader 
+    [attr.widget-type]="this.$attrs.get('class') === 'list-card' ? 'card' : 'list'" 
+    [config]='{"cardClass": itemsPerRowClass}'></wm-skeleton-loader>
+}
+
+<ul [attr.tabindex]="tabindex" class="app-livelist-container clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}} {{listclass}}" role="list"
   (keydown.enter)="handleKeyDown($event, 'select')"
 
   (keydown.space)="handleKeyDown($event, 'space')"
@@ -57,63 +63,60 @@
   (keydown.shift.arrowdown)="handleKeyDown($event, 'selectNext')"
   (keydown.shift.arrowleft)="handleKeyDown($event, 'selectPrev')"
   (keydown.shift.arrowright)="handleKeyDown($event, 'selectNext')"
-  [hidden]="noDataFound && !variableInflight"
+  [hidden]="(noDataFound && !variableInflight) || (variableInflight && !pulltorefresh && this.app?.Variables?.showSkeletonLoader?.dataSet?.dataValue)"
   >
-  @if (!groupby) {
-    @for (item of fieldDefs; track item) {
-      <li class="app-list-item {{direction === 'horizontal' ? '' : itemsPerRowClass}}" [ngClass]="listItemRef.itemClass"
-        [wmListItem]="item"
-        #listItemRef="listItemRef"
-        [attr.tabindex]="tabindex"
-        role="listitem">
-        <ng-container [ngTemplateOutlet]="listTemplate"
-          [ngTemplateOutletInjector]="createCustomInjector('falt_' + listItemRef.trackId, {item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"
-        [ngTemplateOutletContext]="{item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets}"></ng-container>
-      </li>
-    }
-  } @else {
-    @for (groupObj of groupedData; track groupObj; let groupIndex = $index) {
-      <li class="app-list-item-group clearfix">
-        <ul [attr.tabindex]="tabindex" class="list-group item-group" [ngClass]="listclass">
-          <li class="app-list-item-header list-item list-group-header" (click)="handleHeaderClick($event)" [ngClass]="{'collapsible-content': collapsible}">
-            <h4>{{groupObj.key}}
-              <div class="header-action">
-                @if (collapsible) {
-                  <i class="app-icon wi action wi-chevron-up"></i>
+    @if (!groupby) {
+      @for (item of fieldDefs; track item) {
+        <li class="app-list-item {{direction === 'horizontal' ? '' : itemsPerRowClass}}" [ngClass]="listItemRef.itemClass"
+          [wmListItem]="item"
+          #listItemRef="listItemRef"
+          [attr.tabindex]="tabindex"
+          role="listitem">
+          <ng-container [ngTemplateOutlet]="listTemplate"
+            [ngTemplateOutletInjector]="createCustomInjector('falt_' + listItemRef.trackId, {item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"
+          [ngTemplateOutletContext]="{item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets}"></ng-container>
+        </li>
+      }
+    } @else {
+      @for (groupObj of groupedData; track groupObj; let groupIndex = $index) {
+        <li class="app-list-item-group clearfix">
+          <ul [attr.tabindex]="tabindex" class="list-group item-group" [ngClass]="listclass">
+            <li class="app-list-item-header list-item list-group-header" (click)="handleHeaderClick($event)" [ngClass]="{'collapsible-content': collapsible}">
+              <h4>{{groupObj.key}}
+                <div class="header-action">
+                  @if (collapsible) {
+                    <i class="app-icon wi action wi-chevron-up"></i>
+                  }
+                  @if (showcount) {
+                    <span class="label label-default">{{groupObj.data.length}}</span>
+                  }
+                </div>
+              </h4>
+            </li>
+            <li class="list-group-container">
+              <ul class="list-group clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}}">
+                @for (item of groupObj.data; track trackByFn($index, item)) {
+                  <li [attr.tabindex]="tabindex"
+                    class="app-list-item group-list-item {{itemsPerRowClass}}"
+                    [ngClass]="listItemRef.itemClass"
+                    [wmListItem]="item" #listItemRef="listItemRef">
+                    <ng-container [ngTemplateOutlet]="listTemplate"
+                      [ngTemplateOutletInjector]="createCustomInjector('group_' + listItemRef.trackId, {item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"
+                    [ngTemplateOutletContext]="{item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets}"></ng-container>
+                  </li>
                 }
-                @if (showcount) {
-                  <span class="label label-default">{{groupObj.data.length}}</span>
-                }
-              </div>
-            </h4>
-          </li>
-          <li class="list-group-container">
-            <ul class="list-group clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}}">
-              @for (item of groupObj.data; track trackByFn($index, item)) {
-                <li [attr.tabindex]="tabindex"
-                  class="app-list-item group-list-item {{itemsPerRowClass}}"
-                  [ngClass]="listItemRef.itemClass"
-                  [wmListItem]="item" #listItemRef="listItemRef">
-                  <ng-container [ngTemplateOutlet]="listTemplate"
-                    [ngTemplateOutletInjector]="createCustomInjector('group_' + listItemRef.trackId, {item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"
-                  [ngTemplateOutletContext]="{item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets}"></ng-container>
-                </li>
-              }
-            </ul>
-          </li>
-        </ul>
-      </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      }
     }
-  }
   <ng-container [ngTemplateOutlet]="listLeftActionTemplate"></ng-container>
   <ng-container [ngTemplateOutlet]="listRightActionTemplate"></ng-container>
 </ul>
 
 @if (noDataFound && !variableInflight) {
   <div class="no-data-msg" [textContent]="nodatamessage"></div>
-}
-@if (variableInflight && !pulltorefresh && this.app?.Variables?.showSkeletonLoader?.dataSet?.dataValue || false) {
-  <wm-skeleton-loader [attr.widget-type]="this.$attrs.get('class') === 'list-card' ? 'card' : 'list'" [config]='{"cardClass": itemsPerRowClass}'></wm-skeleton-loader>
 }
 
 @if (navigation === 'Inline' && !noDataFound) {
