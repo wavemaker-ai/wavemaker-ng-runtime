@@ -1,5 +1,5 @@
 @for (item of nodes; track item; let last = $last; let index = $index) {
-  <li [ngClass]="{active: last}" class="{{item.class}}">
+  <li [class.active]="last" class="{{item.class}}">
     <i class="{{item.icon}}"></i>
     @if (!last) {
       <a [title]="item.label" href="javascript:void(0)" [wmNavigationControl]="item.link" [disableMenuContext]="disableMenuContext || !!item.action" (click)="onItemClick($event, item)" [textContent]="item.label"></a>
