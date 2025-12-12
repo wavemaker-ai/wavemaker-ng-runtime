@@ -47,7 +47,7 @@
 @if (this.app?.Variables?.showSkeletonLoader?.dataSet?.dataValue && !pulltorefresh && (variableInflight || (!fieldDefs?.length && !noDataFound))) {
   <wm-skeleton-loader 
     [attr.widget-type]="this.$attrs.get('class') === 'list-card' ? 'card' : 'list'" 
-    [config]='{"cardClass": itemsPerRowClass}'></wm-skeleton-loader>
+    [config]='{"cardClass": itemsPerRowClass, "itemCount": fieldDefs?.length || 5}'></wm-skeleton-loader>
 }
 
 <ul [attr.tabindex]="tabindex" 
