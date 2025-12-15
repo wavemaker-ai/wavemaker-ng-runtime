@@ -23,7 +23,7 @@
   <div class="tab-content" [ngClass]="{'tab-stacked': vertical, 'tab-justified': justified}">
     <!-- Static tabs: show skeleton when loading OR no panes yet -->
     @if (app.Variables?.showSkeletonLoader?.dataSet.dataValue && (variableInflight || !panes?.length)) {
-      <wm-skeleton-loader widget-type="tabs" config='{"itemCount": 4}'></wm-skeleton-loader>
+      <wm-skeleton-loader widget-type="tabs" [config]='{"itemCount": panes?.length || 3}'></wm-skeleton-loader>
     }
     <ng-content ngProjectAs="div[wmTabPane]"></ng-content>
   </div>
@@ -32,7 +32,7 @@
   <div class="tab-content" [ngClass]="{'tab-stacked': vertical, 'tab-justified': justified}">
     <!-- Dynamic tabs: show skeleton when loading OR no fieldDefs yet (and not showing no-data) -->
     @if (app.Variables?.showSkeletonLoader?.dataSet.dataValue && (variableInflight || (!fieldDefs?.length && nodatamessage))) {
-      <wm-skeleton-loader widget-type="tabs" config='{"itemCount": 4}'></wm-skeleton-loader>
+      <wm-skeleton-loader widget-type="tabs" [config]='{"itemCount": fieldDefs?.length || 3}'></wm-skeleton-loader>
     }
     @if (fieldDefs && !fieldDefs.length && !variableInflight) {
       <div>{{nodatamessage}}</div>

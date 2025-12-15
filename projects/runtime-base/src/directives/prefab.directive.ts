@@ -41,6 +41,8 @@ export class PrefabDirective implements OnDestroy {
                 if (componentFactory) {
                     const instanceRef = this.vcRef.createComponent(componentFactory, 0, injector);
                     this.elRef.nativeElement.appendChild(instanceRef.location.nativeElement);
+                    // Hide skeleton loader after prefab content is loaded
+                    this.showLoader = false;
                 }
             });
     }

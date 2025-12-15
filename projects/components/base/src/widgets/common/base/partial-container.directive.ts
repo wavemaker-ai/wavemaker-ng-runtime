@@ -25,6 +25,17 @@ export class PartialContainerDirective implements OnDestroy {
         this.vcRef.clear();
         // when the container-target is inside the component template, it can be queried after viewInit of the component.
         $invokeWatchers(true);
+        
+        // Get target element early so we can show skeleton while loading
+        if (!this.$target) {
+            this.$target = this.elRef.nativeElement.querySelector('[partial-container-target]') || this.elRef.nativeElement;
+        }
+        
+        // Show skeleton loader while fetching the partial (only if skeleton loader is enabled)
+        if (this.app.Variables?.['showSkeletonLoader']?.dataSet?.dataValue) {
+            this.$target.innerHTML = '<wm-skeleton-loader widget-type="prefab"></wm-skeleton-loader>';
+        }
+        
         // for partials with popovers and page dialogs which are inside a prefab, prefab name needs to be computed and appended
         const prefab = $(this.elRef.nativeElement).closest('.app-prefab');
         let prefabName;
@@ -40,9 +51,6 @@ export class PartialContainerDirective implements OnDestroy {
             if (instanceRef && instanceRef['instance'] && prefabName) {
                 // @ts-ignore
                 instanceRef['instance'].prefabName = prefabName;
-            }
-            if (!this.$target) {
-                this.$target = this.elRef.nativeElement.querySelector('[partial-container-target]') || this.elRef.nativeElement;
             }
 
             this.$target.innerHTML = '';

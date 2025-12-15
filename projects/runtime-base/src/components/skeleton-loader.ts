@@ -398,12 +398,26 @@ class StyleGenerator {
     getPrefabStyles(): string {
         // DEFAULT_CLS = 'app-prefab' from prefab.directive.ts
         return `     
-            /* Prefab skeleton - shimmer placeholder only */
+            /* Prefab skeleton - with centered spinner */
             .prefab-loader .skeleton-main {
-                height: 250px;
+                height: 100%;
                 background: #fff;
                 border-radius: ${this.c.borderRadius};
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .prefab-loader .skeleton-spinner {
+                width: 40px;
+                height: 40px;
+                border: 3px solid black;
+                border-top-color: ${this.c.shimmerColor};
+                border-radius: 50%;
+                animation: prefabSpin 0.8s linear infinite;
+            }
+            @keyframes prefabSpin {
+                to { transform: rotate(360deg); }
             }
         `;
     }
@@ -761,7 +775,12 @@ class ContentGenerator {
     private buildPrefab(container: HTMLElement): void {
         // DEFAULT_CLS = 'app-prefab' from prefab.directive.ts
         const prefab = DOMHelper.el('app-prefab');
-        prefab.appendChild(DOMHelper.skelEl('skeleton-main'));
+        const main = DOMHelper.skelEl('skeleton-main');
+        // Add spinner inside the main skeleton area
+        const spinner = document.createElement('div');
+        spinner.className = 'skeleton-spinner';
+        main.appendChild(spinner);
+        prefab.appendChild(main);
         container.appendChild(prefab);
     }
 
