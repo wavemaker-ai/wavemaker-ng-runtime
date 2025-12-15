@@ -397,27 +397,30 @@ class StyleGenerator {
 
     getPrefabStyles(): string {
         // DEFAULT_CLS = 'app-prefab' from prefab.directive.ts
-        return `     
-            /* Prefab skeleton - with centered spinner */
-            .prefab-loader .skeleton-main {
-                height: 100%;
-                background: #fff;
+        return `
+            /* Prefab skeleton - with shimmer effect */
+            .prefab-loader .skeleton-prefab-content {
+                padding: 16px;
+                background: ${this.c.backgroundColor};
                 border-radius: ${this.c.borderRadius};
                 box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                display: flex;
-                align-items: center;
-                justify-content: center;
             }
-            .prefab-loader .skeleton-spinner {
-                width: 40px;
+            .prefab-loader .skeleton-prefab-header {
+                height: 20px;
+                width: 60%;
+                margin-bottom: 12px;
+                border-radius: 4px;
+            }
+            .prefab-loader .skeleton-prefab-body {
                 height: 40px;
-                border: 3px solid black;
-                border-top-color: ${this.c.shimmerColor};
-                border-radius: 50%;
-                animation: prefabSpin 0.8s linear infinite;
+                width: 100%;
+                margin-bottom: 12px;
+                border-radius: 4px;
             }
-            @keyframes prefabSpin {
-                to { transform: rotate(360deg); }
+            .prefab-loader .skeleton-prefab-footer {
+                height: 16px;
+                width: 40%;
+                border-radius: 4px;
             }
         `;
     }
@@ -775,11 +778,13 @@ class ContentGenerator {
     private buildPrefab(container: HTMLElement): void {
         // DEFAULT_CLS = 'app-prefab' from prefab.directive.ts
         const prefab = DOMHelper.el('app-prefab');
-        const main = DOMHelper.skelEl('skeleton-main');
-        // Add spinner inside the main skeleton area
-        const spinner = document.createElement('div');
-        spinner.className = 'skeleton-spinner';
-        main.appendChild(spinner);
+        const main = DOMHelper.el('skeleton-prefab-content');
+        
+        // Add shimmer placeholder blocks
+        main.appendChild(DOMHelper.skelEl('skeleton-prefab-header'));
+        main.appendChild(DOMHelper.skelEl('skeleton-prefab-body'));
+        main.appendChild(DOMHelper.skelEl('skeleton-prefab-footer'));
+        
         prefab.appendChild(main);
         container.appendChild(prefab);
     }

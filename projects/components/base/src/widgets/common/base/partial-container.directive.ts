@@ -32,7 +32,7 @@ export class PartialContainerDirective implements OnDestroy {
         }
         
         // Show skeleton loader while fetching the partial (only if skeleton loader is enabled)
-        if (this.app.Variables?.['showSkeletonLoader']?.dataSet?.dataValue) {
+        if (this.app.Variables?.['showSkeletonLoader']?.dataSet?.dataValue && nv !== 'common' && nv !== 'header' && nv !== 'footer' && nv !== 'leftnav') {
             this.$target.innerHTML = '<wm-skeleton-loader widget-type="prefab"></wm-skeleton-loader>';
         }
         
