@@ -291,6 +291,7 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
         if (this.prefabName) {
             $unwatchAllByScope('Prefab', this.prefabName);
         }
+
         // MEMORY LEAK FIX: Complete Subjects to release subscriptions
         if (this.destroy$) {
             this.destroy$.complete();

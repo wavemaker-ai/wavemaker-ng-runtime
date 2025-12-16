@@ -254,6 +254,7 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
         if (this.partialName) {
             $unwatchAllByScope('Partial', this.partialName);
         }
+
         // MEMORY LEAK FIX: Complete Subjects to release subscriptions
         if (this.destroy$) {
             this.destroy$.complete();

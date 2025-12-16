@@ -27,7 +27,6 @@ import {
 import {
     AUTOCLOSE_TYPE,
     getContainerTargetClass,
-    ImagePipe,
     IWidgetConfig,
     provideAsWidgetRef,
     StylableComponent,
@@ -55,7 +54,7 @@ let activePopover: PopoverComponent;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, PopoverModule, AnchorComponent, ImagePipe],
+  imports: [CommonModule, PopoverModule, AnchorComponent],
     selector: 'wm-popover',
     templateUrl: './popover.component.html',
     providers: [
