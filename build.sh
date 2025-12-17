@@ -431,7 +431,7 @@ buildNgxBootstrap() {
     
     # Patch ngx-bootstrap PositioningService for Angular 20 compatibility
     echo "Patching PositioningService for Angular 20..."
-    node patch-positioning.mjs
+    node ngx-bootsrap-patch.mjs
     
     arr=(./node_modules/ngx-bootstrap/collapse/bundles/ngx-bootstrap-collapse.umd.js \
     ./node_modules/ngx-bootstrap/chronos/bundles/ngx-bootstrap-chronos.umd.js \

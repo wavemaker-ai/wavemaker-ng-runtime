@@ -12,11 +12,14 @@ import {
     createComponent,
     inject
 } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { extendProto, isDefined } from '@wm/core';
 import { transpile } from '@wm/transpiler';
 import { initComponentsBuildTask } from '@wm/build-task';
 import { AppManagerService } from './app.manager.service';
+import { REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS } from '../runtime-base.module';
 
 initComponentsBuildTask();
 
@@ -58,6 +61,11 @@ const createDynamicComponent = (selector: string, template: string, css = ''): T
         encapsulation: ViewEncapsulation.None,
         selector,
         standalone: true,
+        // Angular 17+ / 20: standalone dynamic components MUST import the standalone directives/components
+        // used inside the runtime-transpiled markup. Without this, tags like <wm-input> and attribute
+        // directives like [wmFormField] will be treated as unknown (and silently ignored due to schemas),
+        // causing "directive not initialized" symptoms in dynamic wizard/tabs/accordion paths.
+        imports: [CommonModule, FormsModule, ReactiveFormsModule, ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS],
         schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
     })(DynamicComponent);
 };
