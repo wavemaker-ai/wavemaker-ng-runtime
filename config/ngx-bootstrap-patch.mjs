@@ -137,6 +137,29 @@ const PATCHES = {
             );
             return { code: result.code, wasPatched: result.changed };
         }
+    },
+
+    typeahead: {
+        matcher: (id) => matchesModule(id, 'typeahead'),
+        apply: (code) => {
+            let current = code;
+            let anyChanged = false;
+
+            // Patch 1: Remove problematic styles (overflow-y:auto, height:100px)
+            // These cause visibility issues with view encapsulation
+            if (current.includes(':host.dropdown-menu,.dropdown-menu{overflow-y:auto;height:100px}')) {
+                const result = applyReplacement(
+                    current,
+                    /:host\.dropdown-menu,\.dropdown-menu\{overflow-y:auto;height:100px\}/g,
+                    '',
+                    'Patched Typeahead: Remove overflow-y and height styles'
+                );
+                current = result.code;
+                anyChanged = result.changed || anyChanged;
+            }
+
+            return { code: current, wasPatched: anyChanged };
+        }
     }
 };
 
@@ -167,7 +190,8 @@ const FILES_TO_PATCH = [
     { path: 'positioning/fesm2022/ngx-bootstrap-positioning.mjs', patchKey: 'positioning' },
     { path: 'component-loader/fesm2022/ngx-bootstrap-component-loader.mjs', patchKey: 'componentLoader' },
     { path: 'dropdown/fesm2022/ngx-bootstrap-dropdown.mjs', patchKey: 'dropdown' },
-    { path: 'modal/fesm2022/ngx-bootstrap-modal.mjs', patchKey: 'modal' }
+    { path: 'modal/fesm2022/ngx-bootstrap-modal.mjs', patchKey: 'modal' },
+    { path: 'typeahead/fesm2022/ngx-bootstrap-typeahead.mjs', patchKey: 'typeahead' }
 ];
 
 /**
