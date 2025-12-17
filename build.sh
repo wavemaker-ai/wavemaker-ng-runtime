@@ -427,39 +427,8 @@ buildTsLib() {
 }
 
 buildNgxBootstrap() {
-    execCommand "rollup" "ngx-bootstrap-libs" "${ROLLUP} -c ./config/rollup.ngxBootstrap.config.mjs"
-    
-    # Patch ngx-bootstrap PositioningService for Angular 20 compatibility
-    echo "Patching PositioningService for Angular 20..."
-    node ngx-bootsrap-patch.mjs
-    
-    arr=(./node_modules/ngx-bootstrap/collapse/bundles/ngx-bootstrap-collapse.umd.js \
-    ./node_modules/ngx-bootstrap/chronos/bundles/ngx-bootstrap-chronos.umd.js \
-    ./node_modules/ngx-bootstrap/utils/bundles/ngx-bootstrap-utils.umd.js \
-    ./node_modules/ngx-bootstrap/positioning/bundles/ngx-bootstrap-positioning.umd.js \
-    ./node_modules/ngx-bootstrap/component-loader/bundles/ngx-bootstrap-component-loader.umd.js \
-    ./node_modules/ngx-bootstrap/dropdown/bundles/ngx-bootstrap-dropdown.umd.js \
-    ./node_modules/ngx-bootstrap/locale/bundles/ngx-bootstrap-locale.umd.js \
-    ./node_modules/ngx-bootstrap/buttons/bundles/ngx-bootstrap-buttons.umd.js \
-    ./node_modules/ngx-bootstrap/carousel/bundles/ngx-bootstrap-carousel.umd.js \
-    ./node_modules/ngx-bootstrap/mini-ngrx/bundles/ngx-bootstrap-mini-ngrx.umd.js \
-    ./node_modules/ngx-bootstrap/focus-trap/bundles/ngx-bootstrap-focus-trap.umd.js \
-    ./node_modules/ngx-bootstrap/modal/bundles/ngx-bootstrap-modal.umd.js \
-    ./node_modules/ngx-bootstrap/pagination/bundles/ngx-bootstrap-pagination.umd.js \
-    ./node_modules/ngx-bootstrap/popover/bundles/ngx-bootstrap-popover.umd.js \
-    ./node_modules/ngx-bootstrap/progressbar/bundles/ngx-bootstrap-progressbar.umd.js \
-    ./node_modules/ngx-bootstrap/rating/bundles/ngx-bootstrap-rating.umd.js \
-    ./node_modules/ngx-bootstrap/sortable/bundles/ngx-bootstrap-sortable.umd.js \
-    ./node_modules/ngx-bootstrap/tabs/bundles/ngx-bootstrap-tabs.umd.js \
-    ./node_modules/ngx-bootstrap/timepicker/bundles/ngx-bootstrap-timepicker.umd.js \
-    ./node_modules/ngx-bootstrap/tooltip/bundles/ngx-bootstrap-tooltip.umd.js \
-    ./node_modules/ngx-bootstrap/typeahead/bundles/ngx-bootstrap-typeahead.umd.js \
-    ./node_modules/ngx-bootstrap/datepicker/bundles/ngx-bootstrap-datepicker.umd.js \
-    ./node_modules/ngx-bootstrap/accordion/bundles/ngx-bootstrap-accordion.umd.js)
-    # Create the directory to place the concatinated ngx-bootstrap UMD files
-    exec $(mkdir -p "./dist/tmp/libs/ngx-bootstrap")
-    # Concatinated the all bootstrap umd files
-    exec $(cat ${arr[*]} > ./dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.umd.js)
+    mkdir -p ./dist/tmp/libs/ngx-bootstrap
+    execCommand "rollup" "ngx-bootstrap" "${ROLLUP} -c ./config/rollup.ngxBootstrap.config.mjs"
 }
 
 buildUmdFiles() {
@@ -488,6 +457,7 @@ bundleWebLibs() {
 
 bundleJS() {
     echo "uglify: web-libs"
+    
     ${TERSER} \
         ./dist/tmp/libs/tslib/tslib.umd.js \
         ./dist/tmp/libs/core-js/core-js.umd.js \
@@ -508,6 +478,7 @@ bundleJS() {
         ./node_modules/@angular/common/bundles/common-http.umd.js \
         ./node_modules/@angular/router/bundles/router.umd.js \
         ./node_modules/@angular/forms/bundles/forms.umd.js \
+        ./dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.bundle.js \
         ./node_modules/ngx-toastr/bundles/ngx-toastr.umd.js \
         ./dist/tmp/libs/angular-websocket/angular-websocket.umd.js \
         ./dist/tmp/libs/ng-circle-progress/ng-circle-progress.umd.js \
@@ -548,16 +519,14 @@ bundleJS() {
         ./node_modules/imask/dist/imask.min.js \
         ./node_modules/angular-imask/bundles/angular-imask.umd.js \
         ./node_modules/@metrichor/jmespath/dist/jmespath.umd.js \
-        ./dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.umd.js \
-        ./node_modules/tabbable/dist/index.umd.js   \
+        ./node_modules/tabbable/dist/index.umd.js \
         ./node_modules/@wavemaker/focus-trap/dist/focus-trap.umd.js \
         ./node_modules/@ztree/ztree_v3/js/jquery.ztree.all.js \
         ./projects/components/widgets/basic/tree/src/keyboard-navigation.js \
         -o ./dist/bundles/wmapp/scripts/wm-libs.js -b
 
          ./node_modules/.bin/terser ./dist/bundles/wmapp/scripts/wm-libs.js \
-        -c -o ./dist/bundles/wmapp/scripts/wm-libs.min.js -m   -b beautify=false,ascii_only=true
-
+        -c -o ./dist/bundles/wmapp/scripts/wm-libs.min.js -m -b beautify=false,ascii_only=true
 
     if [[ "$?" -eq "0" ]]; then
         echo "uglify: web-libs - success"

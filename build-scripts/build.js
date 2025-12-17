@@ -7,13 +7,23 @@ if (processArgs.findIndex(arg => arg.startsWith('--max-old-space-size')) !== -1)
     console.log("Setting node options: ", process.env.NODE_OPTIONS);
 }
 
+// Patch ngx-bootstrap ESM files in node_modules before Angular build
+const patchScript = path.resolve(process.cwd(), 'build-scripts', 'ngx-bootstrap-patch.mjs');
+console.log("\x1b[36m", "Patching ngx-bootstrap ESM files...\x1b[0m");
+const patchProcess = spawnSync('node', [patchScript], { stdio: 'inherit' });
+
+if (patchProcess.status !== 0) {
+    console.error('Error patching ngx-bootstrap:', patchProcess.error || patchProcess.stderr);
+    process.exit(1);
+}
+
 const args = processArgs.slice(2);
 const ngBuildArgs = ['build', ...args];
 console.log("\x1b[33m", "Angular build params: ", ngBuildArgs);
 
 //Trigger angular build with the passed params
 const ngPath = path.resolve(process.cwd(), 'node_modules', '.bin', "ng");
-const ngBuildProcess = spawnSync(ngPath, ngBuildArgs, {stdio: 'inherit', shell: true});
+const ngBuildProcess = spawnSync(ngPath, ngBuildArgs, { stdio: 'inherit', shell: true });
 
 if (ngBuildProcess.status === 0) {
     console.log('ng build completed successfully!');
