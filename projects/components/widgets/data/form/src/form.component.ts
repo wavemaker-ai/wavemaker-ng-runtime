@@ -576,6 +576,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 const $invalidForm = eleForm.ngForm;
                 let $invalidEle  = eleForm.$ele;
                 $invalidEle = $invalidEle.parent().find('[focus-target]');
+                const $target = eleForm?.$ele?.parent()?.find('input[type=checkbox], input[type=radio], input[type=file]')?.first();
                 if ($invalidEle.length) {
                     // on save click in page layout liveform, focus of autocomplete widget opens full-screen search.
                     if (!$invalidEle.hasClass('app-search-input')) {
@@ -587,6 +588,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                     }
                     $appDigest();
                     return true;
+                } else if ($target && $target.length) {
+                    $target.focus();
                 }
                 return true;
             }
@@ -1343,6 +1346,37 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 this.parentForm.ngform.removeControl(this.name);
             }
         }
+
+        // MEMORY LEAK FIX: Clear ViewContainerRef for dynamically generated form fields
+        if (this.dynamicFormRef) {
+            this.dynamicFormRef.clear();
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic context object
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+
+        // MEMORY LEAK FIX: Clear all data arrays and objects
+        this.formFields = [];
+        this.formWidgets = {};
+        this.filterWidgets = {};
+        this.buttonArray = [];
+        this.validationMessages = [];
+        this.formdata = {};
+        this.dataoutput = {};
+        this.formfields = {};
+        this.prevDataValues = null;
+        this.prevDataObject = null;
+        this.prevformFields = null;
+
+        // MEMORY LEAK FIX: Nullify debounced function closures
+        this._debouncedUpdateFieldSource = null;
+        this._debouncedSubmitForm = null;
+
         super.ngOnDestroy();
     }
 }

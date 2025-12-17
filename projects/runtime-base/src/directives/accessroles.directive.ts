@@ -1,4 +1,4 @@
-import {Directive, Inject, Injector, Input, Optional, TemplateRef, ViewContainerRef} from '@angular/core';
+import {Directive, Inject, Injector, Input, OnDestroy, Optional, TemplateRef, ViewContainerRef} from '@angular/core';
 
 import {SecurityService} from '@wm/security';
 import {extend, get, includes, split, trim} from "lodash-es";
@@ -13,12 +13,12 @@ enum USER_ROLE {
   standalone: true,
     selector: '[accessroles]'
 })
-export class AccessrolesDirective {
+export class AccessrolesDirective implements OnDestroy {
 
     private processed = false;
     private readonly isUserAuthenticated;
     private readonly userRoles;
-    private readonly context = {};
+    private context: any = {}; // Changed from readonly to allow cleanup
     private securityEnabled: boolean;
 
     constructor(
@@ -106,6 +106,16 @@ export class AccessrolesDirective {
             this.viewContainerRef.createEmbeddedView(this.templateRef, this.context);
         } else {
             this.viewContainerRef.clear();
+        }
+    }
+    
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear context to release references to parent scope data
+        if (this.context) {
+            Object.keys(this.context).forEach(key => {
+                delete this.context[key];
+            });
+            this.context = null;
         }
     }
 }

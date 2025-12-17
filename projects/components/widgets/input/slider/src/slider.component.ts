@@ -7,7 +7,7 @@ import {
     TextContentDirective
 } from "@wm/components/base";
 import {FormsModule, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
-import {Component, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {BaseFormCustomComponent} from '@wm/components/input/base-form-custom';
 
 import {registerProps} from './slider.props';
@@ -30,7 +30,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(SliderComponent)
     ]
 })
-export class SliderComponent extends BaseFormCustomComponent {
+export class SliderComponent extends BaseFormCustomComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     public minvalue: number;
@@ -100,5 +100,18 @@ export class SliderComponent extends BaseFormCustomComponent {
         if(this.showmarkers) {
             setTimeout(() => {this.renderMarkers();}, 40);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.ngModel = null;
+
+        // MEMORY LEAK FIX: Clear marker items array
+        if (this.markerItems) {
+            this.markerItems = [];
+        }
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }

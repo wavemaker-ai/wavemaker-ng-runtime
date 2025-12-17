@@ -91,7 +91,8 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
      * @returns {any|string}
      */
     get displayValue(): any {
-        return getFormattedDate(this.datePipe, this.proxyModel, this.dateInputFormat, this.timeZone, (this as any).key, this.isCurrentDate, this) || '';
+        const display= getFormattedDate(this.datePipe, this.proxyModel, this.dateInputFormat, this.timeZone, (this as any).key, this.isCurrentDate, this) || '';
+        return this.safeReplaceMeridians(display);
     }
 
     get nativeDisplayValue() {
@@ -164,6 +165,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
         this.dateContainerCls = `app-date-${this.widgetId}`;
         this._dateOptions.containerClass = `app-date ${this.dateContainerCls}`;
         this._dateOptions.showWeekNumbers = false;
+        this._dateOptions.customTodayClass='current-date';
         this.datepattern = this.appDefaults.dateTimeFormat || getDisplayDateTimeFormat(FormWidgetType.DATETIME);
         this.updateFormat('datepattern');
     }
@@ -273,9 +275,9 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
         this.focusTrap.activate();
 
         this.bsDateValue ? this.activeDate = this.bsDateValue : this.activeDate = new Date();
-        if (!this.bsDateValue) {
-            this.hightlightToday(this.activeDate);
-        }
+        // if (!this.bsDateValue) {
+        //     this.hightlightToday(this.activeDate);
+        // }
         this.addDatepickerKeyboardEvents(this, true);
         adjustContainerPosition($('bs-datepicker-container'), this.nativeElement, this.bsDatePickerDirective._datepicker);
     }
@@ -287,7 +289,8 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
 
         if (type === 'date') {
             this.invalidDateTimeFormat = false;
-            if (getFormattedDate(this.datePipe, newVal, this.dateInputFormat, this.timeZone, (this as any).key, this.isCurrentDate, this) === this.displayValue) {
+            const formatted = getFormattedDate(this.datePipe, newVal, this.dateInputFormat, this.timeZone, (this as any).key, this.isCurrentDate, this);
+            if (this.safeReplaceMeridians(formatted) === this.displayValue) {
                 $(this.nativeElement).find('.display-input').val(this.displayValue);
             }
         }
@@ -323,7 +326,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
             }
             if(this.datavalue=== this.getPrevDataValue()){
                 const time=getFormattedDate(this.datePipe, this.datavalue, this.datepattern, this.timeZone, null, null, this) || ''
-                $(this.nativeElement).find('.display-input').val(time);}
+                $(this.nativeElement).find('.display-input').val(time?.replace(this.meridians[0], this.am)?.replace(this.meridians[1], this.pm)) ;}
         }else {
             this.proxyModel = newVal;
         }
@@ -334,7 +337,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
         const timePickerFields = $('.bs-timepicker-field');
         if (this.timeZone && (this as any).key === 'datetimestamp' && timePickerFields.length) {
             const formattedDate = getFormattedDate(this.datePipe, newVal, this.getTimePattern(), this.timeZone, (this as any).key, null, this);
-            this.updateTimepickerFields(formattedDate, timePickerFields);
+            this.updateTimepickerFields(this.safeReplaceMeridians(formattedDate), timePickerFields);
         }
     }
 
@@ -445,7 +448,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
             return;
         }
         let newVal = $event.target.value.trim();
-        newVal = newVal ? getNativeDateObject(newVal, { pattern: this.loadNativeDateInput ? this.outputformat : this.datepattern, meridians: this.meridians, isNativePicker: this.loadNativeDateInput }) : undefined;
+        newVal = newVal ? getNativeDateObject(newVal?.replace(this.am, this.meridians[0])?.replace(this.pm, this.meridians[1]), { pattern: this.loadNativeDateInput ? this.outputformat : this.datepattern, meridians: this.meridians, isNativePicker: this.loadNativeDateInput }) : undefined;
         // datetime pattern validation
         // if invalid pattern is entered, device is showing an error.
         if (!this.formatValidation(newVal, $event.target.value, isNativePicker)) {
@@ -471,13 +474,14 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
                 newVal = newVal ? getNativeDateObject(newVal, { pattern: this.loadNativeDateInput ? this.outputformat : this.datepattern, meridians: this.meridians }) : undefined;
                 event.preventDefault();
                 const formattedDate = getFormattedDate(this.datePipe, newVal, this.dateInputFormat, this.timeZone, (this as any).key, this.isCurrentDate, this);
+                const formattedDateWithMeridians = this.safeReplaceMeridians(formattedDate);
                 const inputVal = event.target.value.trim();
                 if (inputVal && this.datepattern === 'timestamp') {
                     if (!isNaN(inputVal) && parseInt(inputVal) !== formattedDate) {
                         this.invalidDateTimeFormat = true;
                         this.invokeOnChange(this.datavalue, event, false);
                     }
-                } else if (inputVal && inputVal !== formattedDate) {
+                } else if (inputVal && inputVal !== formattedDateWithMeridians) {
                     this.invalidDateTimeFormat = true;
                     this.invokeOnChange(this.datavalue, event, false);
                 } else {
@@ -498,7 +502,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
 
     private isValid(event) {
         if (!event) {
-            const enteredDate = $(this.nativeElement).find('input').val();
+            const enteredDate = $(this.nativeElement).find('input').val()?.replace(this.am, this.meridians[0])?.replace(this.pm, this.meridians[1]);
             const newVal = getNativeDateObject(enteredDate, { pattern: this.loadNativeDateInput ? this.outputformat : this.datepattern, meridians: this.meridians, isNativePicker: this.loadNativeDateInput });
             if (!this.formatValidation(newVal, enteredDate)) {
                 return;

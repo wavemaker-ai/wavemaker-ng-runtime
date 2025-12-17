@@ -1,4 +1,4 @@
-import { ImportDef } from './build';
+import {ImportDef} from './build';
 
 // Angular Core Modules
 const NG_FORM_MODULE: ImportDef[] = [{ from: '@angular/forms', name: 'FormsModule', as: 'ngFormsModule' }];
@@ -134,7 +134,7 @@ const TABLE_ACTION_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/table'
 const TABLE_COLUMN_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/table', name: 'TableColumnDirective' }];
 const TABLE_COLUMN_GROUP_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/table', name: 'TableColumnGroupDirective' }];
 const TABLE_ROW_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/table', name: 'TableRowDirective' }, ...CONTAINER_DIRECTIVE, ...PARTIAL_CONTAINER];
-const TABLE_ROW_ACTION_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/table', name: 'TableRowActionDirective' }, ...BUTTON_COMPONENT];
+const TABLE_ROW_ACTION_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/table', name: 'TableRowActionDirective' }, ...BUTTON_COMPONENT, ...ANCHOR_COMPONENT];
 const TABLE_COMPONENT: ImportDef[] = [
     ...NG_FORM_MODULE,
     ...NG_REACTIVE_FORM_MODULE,
@@ -195,7 +195,9 @@ const PREFAB_CONTAINER_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/prefab'
 const PREFAB_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/prefab', name: 'PrefabDirective' }];
 const RICH_TEXT_EDITOR_COMPONENT: ImportDef[] = [{ from: '@wm/components/basic/rich-text-editor', name: 'RichTextEditorComponent' }];
 const TREE_COMPONENT: ImportDef[] = [{ from: '@wm/components/basic/tree', name: 'TreeComponent' }];
-
+const ACCESSROLES_DIRECTIVE = [{from: '@wm/runtime/base', name: 'AccessrolesDirective'}];
+const SHOW_IN_DEVICE_DIRECTIVE: ImportDef[] = [{from: '@wm/components/base', name: 'ShowInDeviceDirective'}];
+const LAZY_LOAD_DIRECTIVE: ImportDef[] = [{from: '@wm/components/base', name: 'LazyLoadDirective'}];
 // Pipes
 const TO_DATE_PIPE: ImportDef[] = [{ from: '@wm/components/base', name: 'ToDatePipe' }];
 const TO_CURRENCY_PIPE: ImportDef[] = [{ from: '@wm/components/base', name: 'ToCurrencyPipe' }];
@@ -306,6 +308,9 @@ export const WIDGET_IMPORTS: Map<string, ImportDef[]> = new Map([
     ['wm-wizardstep', WIZARD_COMPONENT],
     ['wm-repeat-template', REPEAT_TEMPLATE_DIRECTIVE],
     ['wm-composite', COMPOSITE_DIRECTIVE],
+    ['accessroles', ACCESSROLES_DIRECTIVE],
+    ['showindevice', SHOW_IN_DEVICE_DIRECTIVE],
+    ['lazyload', LAZY_LOAD_DIRECTIVE],
 
     ['toDate', TO_DATE_PIPE],
     ['toCurrency', TO_CURRENCY_PIPE],

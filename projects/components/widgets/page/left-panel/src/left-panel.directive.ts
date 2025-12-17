@@ -1,4 +1,4 @@
-import {Attribute, Directive, Inject, Injector, Optional} from '@angular/core';
+import {Attribute, Directive, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 
 import {App, addClass, removeClass, switchClass, toggleClass, isMobile, getNavClass } from '@wm/core';
@@ -27,7 +27,7 @@ export enum AnimationType {
     ],
     exportAs: 'wmLeftPanel'
 })
-export class LeftPanelDirective extends StylableComponent {
+export class LeftPanelDirective extends StylableComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     public animation: AnimationType;
@@ -224,5 +224,26 @@ export class LeftPanelDirective extends StylableComponent {
                 removeClass(this.$page[0], `left-panel-container-${device}-${12 - oldVal}`);
             }
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clean up collapse action listener
+        if (this._destroyCollapseActionListener) {
+            this._destroyCollapseActionListener();
+            this._destroyCollapseActionListener = null;
+        }
+
+        // MEMORY LEAK FIX: Clear left panel animator reference
+        if (this._leftPanelAnimator) {
+            this._leftPanelAnimator = null;
+        }
+
+        // MEMORY LEAK FIX: Clear jQuery references
+        this.$ele = null;
+        this.$page = null;
+
+        // Note: Router subscription is already cleaned up via registerDestroyListener
+
+        super.ngOnDestroy();
     }
 }

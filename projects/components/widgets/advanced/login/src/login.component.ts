@@ -6,6 +6,7 @@ import {
     Inject,
     Injector,
     Optional,
+    OnDestroy,
     QueryList,
     ViewChild
 } from '@angular/core';
@@ -28,7 +29,7 @@ const WIDGET_INFO = {widgetType: 'wm-login', hostClass: 'app-login'};
         provideAsWidgetRef(LoginComponent)
     ]
 })
-export class LoginComponent extends StylableComponent implements AfterViewInit {
+export class LoginComponent extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
     loginBtnCmp: ButtonComponent;
 
@@ -39,6 +40,8 @@ export class LoginComponent extends StylableComponent implements AfterViewInit {
     loginMessage: { type?: string; caption?: any; show?: boolean; };
     errormessage: any;
     eventsource;
+    private boundLoginButtonClick: (event: Event) => void;
+    private boundFormSubmit: (e: Event) => void;
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_INFO, explicitContext);
@@ -72,20 +75,24 @@ export class LoginComponent extends StylableComponent implements AfterViewInit {
     }
 
     initLoginButtonActions() {
-        this.loginBtnCmp.getNativeElement().addEventListener('click', event => {
-
+        // MEMORY LEAK FIX: Store bound function reference
+        this.boundLoginButtonClick = (event) => {
             // if no event is attached to the onSubmit of login widget or loginButton inside it, invoke default login action
             if (!this.nativeElement.hasAttribute('submit.event') && !this.loginBtnCmp.getNativeElement().hasAttribute('click.event') && !this.loginBtnCmp.getNativeElement().hasAttribute('tap.event')) {
                 this.doLogin();
             }
-        });
+        };
+
+        this.loginBtnCmp.getNativeElement().addEventListener('click', this.boundLoginButtonClick);
     }
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
 
+        // MEMORY LEAK FIX: Store bound function reference
+        this.boundFormSubmit = (e) => e.preventDefault();
         // suppresses the default form submission (in browsers like Firefox)
-        this.formCmp.getNativeElement().addEventListener('submit', e => e.preventDefault());
+        this.formCmp.getNativeElement().addEventListener('submit', this.boundFormSubmit);
 
         // get login button component
         this.buttonComponents.forEach(cmp => {
@@ -97,5 +104,26 @@ export class LoginComponent extends StylableComponent implements AfterViewInit {
                 this.initLoginButtonActions();
             }
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Remove event listeners using stored bound function references
+        if (this.loginBtnCmp && this.boundLoginButtonClick) {
+            this.loginBtnCmp.getNativeElement().removeEventListener('click', this.boundLoginButtonClick);
+            this.boundLoginButtonClick = null;
+        }
+
+        if (this.formCmp && this.boundFormSubmit) {
+            this.formCmp.getNativeElement().removeEventListener('submit', this.boundFormSubmit);
+            this.boundFormSubmit = null;
+        }
+
+        // MEMORY LEAK FIX: Clear QueryList and ViewChild references
+        this.buttonComponents = null;
+        this.messageCmp = null;
+        this.formCmp = null;
+        this.loginBtnCmp = null;
+
+        super.ngOnDestroy();
     }
 }

@@ -375,7 +375,40 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
     }
 
     ngOnDestroy(): void {
-        this.destroy$.complete();
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
+        if (this.destroy$) {
+            this.destroy$.complete();
+            this.destroy$ = null;
+        }
+        if (this.viewInit$) {
+            this.viewInit$.complete();
+            this.viewInit$ = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references to prevent memory leaks
+        this.Widgets = null;
+        this.BaseWidget = null;
+        this.Variables = null;
+        this.Actions = null;
+        this.App = null;
+        this.containerWidget = null;
+        this.i18nService = null;
+        this.appLocale = null;
+        this.pageDirective = null;
+        this.Prefab = null;
+        this.scriptLoaderService = null;
+        this.customwidgetConfigProvider = null;
+        this.Viewport = null;
+        this.route = null;
+        this.appManager = null;
+        this.navigationService = null;
+        this.router = null;
+        this.props = null;
+        this.events = null;
+        this.viewParent = null;
+
+        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
+        this.cleanupFragmentMonitor();
     }
 
     ngOnAttach(refreshData) {

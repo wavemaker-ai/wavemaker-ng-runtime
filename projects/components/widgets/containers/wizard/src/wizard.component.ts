@@ -18,6 +18,7 @@ import {
     ContentChildren,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     QueryList,
@@ -25,7 +26,7 @@ import {
     TemplateRef
 } from '@angular/core';
 
-import {DynamicComponentRefProvider, noop} from '@wm/core';
+import {DynamicComponentRefProvider, isDefined, noop} from '@wm/core';
 
 import {registerProps} from './wizard.props';
 
@@ -49,7 +50,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ],
     exportAs: 'wmWizard'
 })
-export class WizardComponent extends StylableComponent implements OnInit, AfterContentInit, AfterViewInit, AfterViewChecked {
+export class WizardComponent extends StylableComponent implements OnInit, AfterContentInit, AfterViewInit, AfterViewChecked, OnDestroy {
     static initializeProps = registerProps();
 
     @ContentChildren(WizardStepComponent) steps: QueryList<WizardStepComponent>;
@@ -81,6 +82,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     public defaultstepindex;
     private _isFirstLoad: boolean = true;
     public autoActivation:boolean;
+    private stepsSubscription: any; // MEMORY LEAK FIX: Store subscription for cleanup
 
     get hasPrevStep(): boolean {
         return !this._isFirstStep(this.currentStep);
@@ -365,12 +367,16 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     private handleNext(value: boolean | Promise<boolean>, currentStep, currentStepIndex) {
         if (this.isPromise(value)) {
             (value as Promise<boolean>).then(response => {
+                this.currentStep.nextCBInProgress = false;
                 if (response === false) {
                     return;
                 }
                 this.extendNextFn(currentStep, currentStepIndex);
-            }, err => err);
+            }, err => {
+                this.currentStep.nextCBInProgress = false;
+            })
         } else {
+            this.currentStep.nextCBInProgress = false;
             if (value === false) {
                 return;
             }
@@ -379,14 +385,20 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     }
 
     public next(eventName: string = 'next') {
+        if (this.currentStep.nextCBInProgress) {
+            return;
+        }
+
         const currentStep = this.currentStep;
         const currentStepIndex = this.getCurrentStepIndex();
 
         // abort if onSkip method returns false
         if (eventName === 'skip') {
+            this.currentStep.nextCBInProgress = true;
             const response =  currentStep.invokeSkipCB(currentStepIndex);
             this.handleNext(response, currentStep, currentStepIndex);
         } else if (this.currentStep.isValid && eventName === 'next') {
+            this.currentStep.nextCBInProgress = true;
             const response  =  currentStep.invokeNextCB(currentStepIndex);
             this.handleNext(response, currentStep, currentStepIndex);
         } else if (this.enablenext && !this.currentStep.isValid){
@@ -431,19 +443,28 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     }
     // Method to navigate to previous step
     public prev() {
+        if (this.currentStep.prevCBInProgress) {
+            return;
+        }
+
         const currentStep = this.currentStep;
         const currentStepIndex = this.getCurrentStepIndex();
 
+        this.currentStep.prevCBInProgress = true;
         // abort if onPrev method returns false.
         const response = currentStep.invokePrevCB(currentStepIndex);
         if (this.isPromise(response)) {
             (response as Promise<boolean>).then( response => {
+                this.currentStep.prevCBInProgress = false;
                 if (response === false) {
                     return;
                 }
                 this.extendPrevFn(currentStep, currentStepIndex);
-            }, err => err);
+            }, err => {
+                this.currentStep.prevCBInProgress = false;
+            });
         } else {
+            this.currentStep.prevCBInProgress = false;
             if (response === false) {
                 return;
             }
@@ -619,7 +640,9 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         this.wizContext.disableNext = () => !this.enableNext;
         this.wizContext.disablePrevious = () => !this.enablePrev;
         this.wizContext.disableDone = () => !this.enableDone;
-        this.steps.changes.subscribe( slides => {
+
+        // MEMORY LEAK FIX: Store subscription for cleanup
+        this.stepsSubscription = this.steps.changes.subscribe( () => {
             if (this.steps.length > 1 && this.type === 'dynamic' && this._isFirstLoad) {
                 this.setDefaultStep(this.getStepRefByIndex(this.defaultstepindex));
                 this._isFirstLoad = false;
@@ -656,7 +679,35 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
                         return step;
                      }
                 }
-            }
+    }
+
+    public getWidgets(widgteName: string, index?: number) {
+        let $target;
+        const retVal = [];
+
+        if (!widgteName) {
+            return;
+        }
+
+        if (!isDefined(index)) {
+            forEach(this.steps.toArray(), (el) => {
+                $target = get(el.currentWizardWidgets, widgteName);
+                if ($target) {
+                    retVal.push($target);
+                }
+            });
+
+            return retVal;
+        }
+        index = +index || 0;
+
+        $target = get(this.steps.toArray(), index);
+
+        if ($target) {
+            return [get($target.currentWizardWidgets, widgteName)];
+        }
+    }
+
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
@@ -742,5 +793,42 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         const index = this.steps.toArray().findIndex(step =>
             this.nativeElement.querySelector(`li[data-stepid="${step.widgetId}"]`)?.classList.contains("current"));
         return index >= 0 ? index : this.getActiveStepIndex();
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from steps changes
+        if (this.stepsSubscription) {
+            this.stepsSubscription.unsubscribe();
+            this.stepsSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Remove jQuery event handlers
+        $(document).off("mouseup");
+
+        // MEMORY LEAK FIX: Clear wizard context to release references to step data
+        if (this.wizContext) {
+            Object.keys(this.wizContext).forEach(key => {
+                delete this.wizContext[key];
+            });
+            this.wizContext = null;
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic wizard array
+        if (this.dynamicWizard) {
+            this.dynamicWizard = [];
+        }
+
+        // MEMORY LEAK FIX: Clear current step reference
+        this.currentStep = null;
+
+        super.ngOnDestroy();
     }
 }

@@ -1,4 +1,4 @@
-import { Directive, Inject, Self } from '@angular/core';
+import { Directive, Inject, OnDestroy, Self } from '@angular/core';
 
 import { $invokeWatchers, $appDigest, AbstractDialogService, App, DataSource, extractCurrentItemExpr, triggerFn } from '@wm/core';
 import { refreshDataSource } from '@wm/components/base';
@@ -18,7 +18,7 @@ const OPERATION = {
   standalone: true,
     selector: '[wmTableCUD]'
 })
-export class TableCUDDirective {
+export class TableCUDDirective implements OnDestroy {
 
     constructor(
         @Self() @Inject(TableComponent) private table,
@@ -224,7 +224,7 @@ export class TableCUDDirective {
                 this.table.initiateSelectItem('current', response, undefined, false, options.callBack);
                 this.updateVariable(response, options.callBack);
             } else if (!this.table.datasource.execute(DataSource.Operation.IS_API_AWARE)) {
-                this.table.initiateSelectItem('current', response, undefined, false, options.callBack);
+                this.table.initiateSelectItem('current', response, undefined,this.table.datasource.category === 'wm.Variable', options.callBack);
             }
             triggerFn(options.success, response);
             this.table.invokeEventCallback('rowupdate', {$event: options.event, $data: response, row: response});
@@ -480,5 +480,12 @@ export class TableCUDDirective {
         if ($row.length) {
             this.table.callDataGridMethod('cancelEdit', $row);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear all references
+        this.table = null;
+        this.dialogService = null;
+        this.app = null;
     }
 }

@@ -1,5 +1,15 @@
-import { AfterContentInit, ContentChildren, Directive, forwardRef, Inject, Injector, Optional, QueryList } from '@angular/core';
-import { DynamicComponentRefProvider, noop, StatePersistence } from '@wm/core';
+import {
+    AfterContentInit,
+    ContentChildren,
+    Directive,
+    forwardRef,
+    Inject,
+    Injector,
+    OnDestroy,
+    Optional,
+    QueryList
+} from '@angular/core';
+import {DynamicComponentRefProvider, isDefined, noop, StatePersistence} from '@wm/core';
 import {
     APPLY_STYLES_TYPE,
     createArrayFrom,
@@ -9,9 +19,9 @@ import {
     styler
 } from '@wm/components/base';
 
-import { registerProps } from './accordion.props';
-import { AccordionPaneComponent } from './accordion-pane/accordion-pane.component';
-import { find, forEach, get, indexOf, isArray, isNumber } from "lodash-es";
+import {registerProps} from './accordion.props';
+import {AccordionPaneComponent} from './accordion-pane/accordion-pane.component';
+import {find, forEach, get, indexOf, isArray, isNumber} from "lodash-es";
 
 const DEFAULT_CLS = 'app-accordion panel-group';
 const WIDGET_CONFIG: IWidgetConfig = {
@@ -27,7 +37,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(AccordionDirective)
     ]
 })
-export class AccordionDirective extends StylableComponent implements AfterContentInit {
+export class AccordionDirective extends StylableComponent implements AfterContentInit, OnDestroy {
     static initializeProps = registerProps();
 
     public defaultpaneindex: number;
@@ -43,6 +53,8 @@ export class AccordionDirective extends StylableComponent implements AfterConten
     private dynamicPaneIndex;
     private dynamicPanes;
     public fieldDefs;
+    private panesChangesSubscription: any;
+    private dynamicComponentRefs: any[] = [];
 
     @ContentChildren(forwardRef(() => AccordionPaneComponent)) panes: QueryList<AccordionPaneComponent>;
 
@@ -162,7 +174,13 @@ export class AccordionDirective extends StylableComponent implements AfterConten
                 this._dynamicContext[this.getAttr('wmAccordian')] = this;
             }
 
-            this.dynamicComponentProvider.addComponent(this.getNativeElement(), markup, this._dynamicContext, { inj: this.inj });
+            // MEMORY LEAK FIX: Store component reference for cleanup
+            this.dynamicComponentProvider.addComponent(this.getNativeElement(), markup, this._dynamicContext, { inj: this.inj })
+                .then(componentRef => {
+                    if (componentRef) {
+                        this.dynamicComponentRefs.push(componentRef);
+                    }
+                });
         });
         return paneNamesList;
     }
@@ -216,6 +234,45 @@ export class AccordionDirective extends StylableComponent implements AfterConten
         this.fieldDefs = createArrayFrom(newVal);
     }
 
+    public getWidgets(widgteName: string, index?: number) {
+        let $target;
+        const retVal = [];
+
+        if (!widgteName) {
+            return;
+        }
+
+        if (!isDefined(index)) {
+            forEach(this.panes.toArray(), (el) => {
+                $target = get(el.currentAccordionWidgets, widgteName);
+                if ($target) {
+                    retVal.push($target);
+                }
+            });
+
+            return retVal;
+        }
+        index = +index || 0;
+
+        $target = get(this.panes.toArray(), index);
+
+        if ($target) {
+            return [get($target.currentAccordionWidgets, widgteName)];
+        }
+    }
+
+    get currentAccordionPaneIndex() {
+        return this.activePaneIndex;
+    }
+
+    get isFirstAccordionPane(): boolean {
+        return this.panes.first.widgetId === this.activePane.widgetId;
+    }
+
+    get isLastAccordionPane(): boolean {
+        return this.panes.last.widgetId === this.activePane.widgetId;
+    }
+
     onPropertyChange(key: string, nv: any, ov?: any) {
         if (key === 'defaultpaneindex') {
             this.defaultpaneindex = nv;
@@ -250,10 +307,47 @@ export class AccordionDirective extends StylableComponent implements AfterConten
     ngAfterContentInit() {
         super.ngAfterContentInit();
         this.promiseResolverFn();
-        this.panes.changes.subscribe(slides => {
+        this.panesChangesSubscription = this.panes.changes.subscribe(slides => {
             if (this.panes.length) {
                 this.expandPane(this.defaultpaneindex);
             }
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from panes changes
+        if (this.panesChangesSubscription) {
+            this.panesChangesSubscription.unsubscribe();
+            this.panesChangesSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Destroy all dynamically created component instances
+        if (this.dynamicComponentRefs && this.dynamicComponentRefs.length) {
+            this.dynamicComponentRefs.forEach(componentRef => {
+                if (componentRef && componentRef.destroy) {
+                    componentRef.destroy();
+                }
+            });
+            this.dynamicComponentRefs = [];
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic panes array
+        if (this.dynamicPanes) {
+            this.dynamicPanes = [];
+        }
+
+        // MEMORY LEAK FIX: Clear field definitions
+        this.fieldDefs = null;
+        this.activePane = null;
+
+        super.ngOnDestroy();
     }
 }
