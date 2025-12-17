@@ -1,11 +1,12 @@
-import { ApplicationRef, enableProdMode } from '@angular/core';
-import { bootstrapApplication } from '@angular/platform-browser';
-import { environment } from './environments/environment';
+import {ApplicationRef, enableProdMode} from '@angular/core';
+import {bootstrapApplication} from '@angular/platform-browser';
+import {environment} from './environments/environment';
 import initWmProjectProperties from './app/wm-project-properties';
-import { WMAppProperties } from './app/wmProperties';
+import {WMAppProperties} from './app/wmProperties';
 import * as fontConfig from './font.config';
-import { appConfig } from './app/app.config';
-import { AppComponent } from '@wm/runtime/base';
+import {appConfig} from './app/app.config';
+import {AppComponent} from '@wm/runtime/base';
+import {MetadataService} from "@wm/variables";
 
 // Format Accept-Language header
 const formatAcceptHeader = (languages: string[]): string => {
@@ -53,8 +54,13 @@ const boundDOMContentLoadedHandler = () => {
   new Promise<Event | void>(resolve => {
     resolve();
   }).then(() => bootstrapApplication(AppComponent, appConfig))
-    .then((appRef: ApplicationRef) => {
-      // MEMORY LEAK FIX: Store unload handler reference
+    .then(async (appRef: ApplicationRef) => {
+        const injector = appRef.injector;
+        const metadata = injector.get(MetadataService);
+
+        metadata.setEnvironment(environment);
+        await metadata.load();
+        // MEMORY LEAK FIX: Store unload handler reference
       const boundUnloadHandler = () => {
         appRef.components.map(c => c?.destroy());
         // MEMORY LEAK FIX: Remove unload listener after cleanup (though unload is typically final)

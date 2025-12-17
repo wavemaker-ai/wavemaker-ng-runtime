@@ -1,6 +1,6 @@
 import {Directive, HostBinding, Inject, Injector, OnInit, Optional} from '@angular/core';
 
-import {setAttr, setCSS, switchClass} from '@wm/core';
+import {_WM_APP_PROJECT, setCSS, switchClass} from '@wm/core';
 import {
     DISPLAY_TYPE,
     ImagePipe,
@@ -44,6 +44,7 @@ export class PictureDirective extends StylableComponent implements OnInit {
     }
 
     setImgSource() {
+        this.picturesource = this.picturesource?.includes('services/') && _WM_APP_PROJECT.apiUrl.length > 2 ? _WM_APP_PROJECT.apiUrl + this.picturesource : this.picturesource;
         this.imgSource = this.imagePipe.transform(this.picturesource, this.encodeurl, this.pictureplaceholder);
     }
 
