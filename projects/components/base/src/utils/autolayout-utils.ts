@@ -5,6 +5,10 @@ export class AutoLayoutUtils {
     alignment: string = 'top-left';
     gap: string;
     columngap: string;
+    clipContent: string;
+    position: string;
+    overflowtype: string;
+    zIndex: string;
 
     protected nativeElement!: HTMLElement;
     protected $element!: any;
@@ -162,6 +166,22 @@ export class AutoLayoutUtils {
                     this.applySpacing(key, nv);
                 });
                 break;
+            case 'position':
+                this.position = nv;
+                this.handlePosition();
+                break;
+            case 'clipcontent':
+                this.clipContent = nv;
+                this.handleClipBehaviour();
+                break;
+            case 'overflowtype': 
+                this.overflowtype = nv;
+                this.handleClipBehaviour();
+                break;
+            case 'z-index':
+                this.zIndex = nv;
+                this.handlePosition();
+                break;
         }
     }
 
@@ -205,6 +225,59 @@ export class AutoLayoutUtils {
             if (key === 'height') {
                 this.$element.css('height', 'fit-content');
             }
+        }
+    }
+
+    // Determine whether the container should clip its content and configure scrolling behaviour accordingly.
+    private handleClipBehaviour() {
+
+        const overflow = this.overflowtype?.toLowerCase();
+        if(overflow === "vertical") {
+            this.$element.css({
+                'overflow-x': 'hidden',
+                'overflow-y': 'scroll'
+            });
+        } else if (overflow === "horizontal") {
+            this.$element.css({
+                'overflow-x': 'scroll',
+                'overflow-y': 'hidden'
+            });
+        } else if (overflow === "both directions") {
+            this.$element.css({
+                'overflow': 'scroll'
+            });
+        } else if (overflow === "no scrolling") {
+            if(this.clipContent) {
+                this.$element.css({
+                    'overflow': 'hidden'
+                });
+            } else {
+                this.$element.css({
+                    'overflow': ''
+                });
+            }
+        }
+
+    }
+
+    // Toggle and apply positional behaviour and expose the z-index control when position is not relative.
+    private handlePosition() {
+        if (this.position === 'sticky') {
+            // Apply sticky styles
+            this.$element.css({
+                'position': 'sticky',
+                'top': '0',    // Sticks to top when scrolling vertically
+                'left': '0',   // Sticks to left when scrolling horizontally
+                'z-index': this.zIndex
+            });
+        } else {
+            // Reset to default (static/relative behavior)
+            this.$element.css({
+                'position': '',
+                'top': '',
+                'left': '',
+                'z-index': ''
+            });
         }
     }
 

@@ -16,7 +16,11 @@ export const registerProps = () => {
                 ['alignment', PROP_STRING],
                 ['gap', PROP_STRING],
                 ['wrap', PROP_BOOLEAN],
-                ['columngap', PROP_STRING]
+                ['columngap', PROP_STRING],
+                ['clipcontent', PROP_STRING],
+                ['position', PROP_STRING],
+                ['overflowtype', PROP_STRING],
+                ['z-index', PROP_STRING],
             ]
         )
     );
