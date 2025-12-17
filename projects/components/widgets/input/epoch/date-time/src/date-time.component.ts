@@ -165,6 +165,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
         this.dateContainerCls = `app-date-${this.widgetId}`;
         this._dateOptions.containerClass = `app-date ${this.dateContainerCls}`;
         this._dateOptions.showWeekNumbers = false;
+        this._dateOptions.customTodayClass='current-date';
         this.datepattern = this.appDefaults.dateTimeFormat || getDisplayDateTimeFormat(FormWidgetType.DATETIME);
         this.updateFormat('datepattern');
     }
@@ -274,9 +275,9 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
         this.focusTrap.activate();
 
         this.bsDateValue ? this.activeDate = this.bsDateValue : this.activeDate = new Date();
-        if (!this.bsDateValue) {
-            this.hightlightToday(this.activeDate);
-        }
+        // if (!this.bsDateValue) {
+        //     this.hightlightToday(this.activeDate);
+        // }
         this.addDatepickerKeyboardEvents(this, true);
         adjustContainerPosition($('bs-datepicker-container'), this.nativeElement, this.bsDatePickerDirective._datepicker);
     }

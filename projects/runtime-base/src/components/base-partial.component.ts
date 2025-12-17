@@ -269,7 +269,6 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
             this.fragmentsLoaded$.complete();
             this.fragmentsLoaded$ = null;
         }
-
         // MEMORY LEAK FIX: Clear references to prevent memory leaks
         this.Widgets = null;
         this.Variables = null;

@@ -28,6 +28,8 @@ export abstract class NumberLocale extends BaseInput implements Validator {
     public updateon: string;
     public step: number;
     public trailingzero: boolean;
+    public regexPattern: string;
+    public invalidPattern: boolean = false;
     private validateType: string;
     public inputmode: string;
     public decimalplaces: number;
@@ -255,6 +257,11 @@ export abstract class NumberLocale extends BaseInput implements Validator {
         } else {
             this.displayValue = input.value = this.transformNumber(this.proxyModel);
         }
+
+        if(this.trailingzero) {
+            const regexObj = new RegExp(this.regexPattern);
+            this.invalidPattern = !regexObj.test(this.displayValue);
+        }
         // in safari browser, setSelectionRange will focus the input by default, which may invoke the focus event on widget.
         // Hence preventing the setSelectionRange when default value is set i.e. widget is not focused.
         if (this.updateon === 'default' && !this.isDefaultQuery) {
@@ -464,6 +471,13 @@ export abstract class NumberLocale extends BaseInput implements Validator {
                 },
             };
         }
+        if(this.invalidPattern) {
+            return {
+                pattern: {
+                    valid: false
+                }
+            };
+        }
         this.validateType = '';
         /* WMS-18269 | Extending the existing validation for 'required' */
         if (this['show'] && this['required']) {
@@ -569,6 +583,8 @@ export abstract class NumberLocale extends BaseInput implements Validator {
             } else {
                 this.onInputChange(nv);
             }
+        } else if(key === 'regexp') {
+            this.regexPattern = nv;
         } else {
             super.onPropertyChange(key, nv, ov);
         }

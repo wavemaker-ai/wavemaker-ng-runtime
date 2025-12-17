@@ -390,7 +390,6 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
             this.fragmentsLoaded$.complete();
             this.fragmentsLoaded$ = null;
         }
-
         // MEMORY LEAK FIX: Clear references to prevent memory leaks
         this.Widgets = null;
         this.BaseWidget = null;

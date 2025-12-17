@@ -111,6 +111,17 @@ export class DynamicComponentRefProviderService {
         }
     }
 
+    /**
+     * Creates the component dynamically and add it to the DOM
+     * @param target: HTML element where we need to append the created component
+     * @param markup: Template of the component
+     * @param context: Scope of the component
+     * @param options: We have options like
+                       selector: selector of the component
+                       transpile: flag for transpiling HTML. By default it is true
+                       nocache: flag for render it from cache or not. By default it is true
+     * @returns ComponentRef - the created component reference for cleanup
+     */
     public async addComponent(
         target: HTMLElement,
         markup: string,
