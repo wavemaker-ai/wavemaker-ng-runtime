@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 
 import {_WM_APP_PROJECT, AbstractHttpService} from '@wm/core';
+
 declare const _WM_APP_PROPERTIES;
 
 @Injectable()
@@ -8,6 +9,7 @@ export class MetadataService {
     metadataMap: Map<string, any>;
     providerMap: Map<string, any>;
     CONTEXT_APP = 'app';
+    env = {};
 
     constructor(private $http: AbstractHttpService) {}
 
@@ -27,12 +29,31 @@ export class MetadataService {
                 this.metadataMap = this.metadataMap || new Map();
                 this.providerMap = this.providerMap || new Map();
                 response.body = response.body || {};
-                this.metadataMap.set(prefabName || this.CONTEXT_APP, response.body.serviceDefs);
+                const serviceDefs = response.body.serviceDefs || {};
+                this.updateDirectPaths(serviceDefs);
+                this.metadataMap.set(prefabName || this.CONTEXT_APP, serviceDefs);
                 if (response.body.securityDefinitions) {
                     this.providerMap.set(prefabName || this.CONTEXT_APP, response.body.securityDefinitions.oauthProvider);
                 }
-                resolve(response.body.serviceDefs);
+                resolve(serviceDefs);
             }, reject);
+        });
+    }
+
+    setEnvironment(env: any) {
+        this.env = env;
+    }
+
+     updateDirectPaths(serviceDefs: any) {
+        if (!serviceDefs || !this.env) return;
+        Object.keys(serviceDefs).forEach((key) => {
+            const def = serviceDefs[key];
+            const info = def?.wmServiceOperationInfo;
+            if (info && info.directPath) {
+                info.directPath = info.directPath.replace(/\$\{([^}]+)\}/g, (_, envKey) => {
+                    return this.env[envKey] ?? '';
+                });
+            }
         });
     }
 

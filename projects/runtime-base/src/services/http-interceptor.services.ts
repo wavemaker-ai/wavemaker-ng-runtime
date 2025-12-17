@@ -1,11 +1,11 @@
-import { Injectable } from '@angular/core';
-import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
 
-import { Observable, Subject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import {Observable, Subject} from 'rxjs';
+import {tap} from 'rxjs/operators';
 
-import { httpService, appManager } from '@wm/variables';
-import { WmHttpRequest, WmHttpResponse } from '@wm/http';
+import {appManager, httpService} from '@wm/variables';
+import {WmHttpRequest, WmHttpResponse} from '@wm/http';
 import {extend} from "lodash-es";
 import {_WM_APP_PROJECT} from "@wm/core";
 
@@ -37,7 +37,7 @@ export class HttpCallInterceptor implements HttpInterceptor {
         let modifiedResp;
         let isRelativeAPIUrl = false;
         if(!this.isAbsoluteUrl(request.url)) {
-            isRelativeAPIUrl = request.url.indexOf("services/") !== -1 || request.url.indexOf("j_spring_security_check") !== -1 || request.url.indexOf("j_spring_security_logout") !== -1 || request.url.indexOf("oAuthCallback.html") !== -1 || request.url.startsWith("resources/") || request.url.startsWith("prefabs/");
+            isRelativeAPIUrl = request.url.indexOf("services/") !== -1 || request.url.indexOf("j_spring_security_check") !== -1 || request.url.indexOf("j_spring_security_logout") !== -1 || request.url.indexOf("oAuthCallback.html") !== -1 || request.url.startsWith("resources/") || request.url.indexOf("prefabs/") == -1 ;
         }
         if(isRelativeAPIUrl) {
             let apiUrl= _WM_APP_PROJECT.apiUrl + request.url;
