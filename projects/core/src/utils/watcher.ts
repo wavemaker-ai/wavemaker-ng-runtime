@@ -26,6 +26,7 @@ interface WatchInfo {
     isMuted?: () => boolean;
     scopeType: ScopeType | null;
     scopeName: string | null;
+    destroyFn?: () => void;
 }
 
 type ScopeType = 'Page' | 'Prefab' | 'Partial' | 'App';
@@ -42,6 +43,90 @@ let skipWatchers = false;
 let ngZone: any;
 let appRef: any;
 
+/********************************************************************
+ * CLEANUP SCHEDULER WITH:
+ *  - Significant watcher delta trigger (+/-)
+ *  - UI stabilization delay (1–2 seconds)
+ *  - Cooldown to prevent repeated scheduling
+ ********************************************************************/
+const CLEANUP_TRIGGER_DELTA = 300;   // watcher change threshold
+const CLEANUP_DELAY = 1500;          // delay before running cleanup
+const CLEANUP_COOLDOWN = 4000;       // prevent re-scheduling for 4s
+
+let lastWatcherCount = 0;
+let scheduledCleanup: any = null;
+let lastScheduledTime = 0;
+
+function getWatcherCount(): number {
+    let count = 0;
+    registry.forEach((value) => {
+        // Check if it's a grouped structure (widget groups) or a direct watchInfo
+        if (value && typeof value === 'object' && !value.fn) {
+            // It's a widget group - count the properties (excluding metadata)
+            count += Object.keys(value).filter(k => k !== 'scopeType' && k !== 'scopeName').length;
+        } else {
+            // It's a direct watchInfo
+            count += 1;
+        }
+    });
+    return count;
+}
+
+export const cleanupStaleWatchers = (): number => {
+    // console.log(".........Cleaning up stale watchers...registry.size....", registry.size);
+    let removed = 0;
+
+    registry.forEach((bucket, widgetId) => {
+        if (!document.querySelector(`[widget-id="${widgetId}"]`)) {
+            for (const key in bucket) {
+                if (bucket.hasOwnProperty(key) && key !== "scopeType" && key !== "scopeName" && typeof bucket[key] !== "function") {
+                    let watchInfo = bucket[key];
+                    if (watchInfo && watchInfo.destroyFn) {
+                        watchInfo.destroyFn();
+                    }
+                }
+            }
+            removed++;
+            registry.delete(widgetId);
+            return;
+        }
+    });
+    return removed;
+};
+
+export const scheduleThresholdCleanup = (): void => {
+    const now = performance.now();
+    let lastTriggerPeriod = now - lastScheduledTime;
+    // If a cleanup was scheduled recently, skip scheduling
+    if (lastTriggerPeriod < CLEANUP_COOLDOWN) {
+        return;
+    }
+
+    const current = getWatcherCount();
+    const delta = Math.abs(current - lastWatcherCount);  // significant + or -
+
+    // If change not large enough, skip scheduling
+    if (delta <= CLEANUP_TRIGGER_DELTA) {
+        lastWatcherCount = current;
+        return;
+    }
+
+    // Prevent re-scheduling: set timestamp early
+    lastScheduledTime = now;
+
+    // Clear previous scheduled cleanup (if any)
+    if (scheduledCleanup) {
+        clearTimeout(scheduledCleanup);
+    }
+
+    // Schedule cleanup after UI stabilizes (delay prevents aggressive cleanup)
+    scheduledCleanup = setTimeout(() => {
+        cleanupStaleWatchers();
+        scheduledCleanup = null;
+    }, CLEANUP_DELAY);
+
+    lastWatcherCount = current;
+};
 // Utility functions
 export const isFirstTimeChange = (v: any): boolean => v === FIRST_TIME_WATCH;
 
@@ -239,6 +324,7 @@ export const $watch = (
     const scopeType = getScopeType($scope);
     const scopeName = getScopeName($scope, scopeType);
 
+    const destroyFn = () => $unwatch(identifier);
     const watchInfo: WatchInfo = {
         fn: fn.bind(null, $scope, $locals),
         listener,
@@ -247,7 +333,8 @@ export const $watch = (
         doNotClone,
         isMuted,
         scopeType,
-        scopeName
+        scopeName,
+        destroyFn
     };
 
     // Store in registry
@@ -264,7 +351,7 @@ export const $watch = (
         registry.set(identifier, watchInfo);
     }
 
-    return () => $unwatch(identifier);
+    return destroyFn;
 };
 
 /**
@@ -277,6 +364,7 @@ export const $unwatch = (identifier: string): boolean => {
         const propertyName = getPropertyName(identifier);
         const widgetGroup = registry.get(widgetId);
 
+        //@ts-ignore
         if (widgetGroup && typeof widgetGroup === 'object' && !widgetGroup.fn) {
             const watchInfo = widgetGroup[propertyName];
             if (watchInfo) {
@@ -440,6 +528,8 @@ const triggerWatchers = (ignoreMuted: boolean = false): void => {
         pass++;
     } while (changeDetected && pass < MAX_WATCH_CYCLES);
 
+    // Schedule cleanup after watchers are triggered
+    scheduleThresholdCleanup();
     if (changeDetected && pass === MAX_WATCH_CYCLES) {
         console.warn(`Watch cycles exceeded limit of ${MAX_WATCH_CYCLES}`);
     }

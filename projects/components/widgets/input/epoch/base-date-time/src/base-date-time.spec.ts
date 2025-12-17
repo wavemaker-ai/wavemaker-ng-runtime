@@ -414,7 +414,7 @@ describe('BaseDateTimeComponent', () => {
         it('should call _onChange for required', () => {
             const spy = jest.spyOn(component as any, '_onChange');
             component.onPropertyChange('required', true);
-            expect(spy).toHaveBeenCalledWith(component.datavalue);
+            expect(spy).toHaveBeenCalledWith((component as any).datavalue);
         });
 
         it('should update datepattern and call updateFormat', () => {
@@ -433,7 +433,7 @@ describe('BaseDateTimeComponent', () => {
             (component as any).minDateMaxDateValidationOnInput = jest.fn();
             component.onPropertyChange('mindate', mockDate);
             expect(component._dateOptions.minDate).toEqual(mockDate);
-            expect((component as any).minDateMaxDateValidationOnInput).toHaveBeenCalledWith(component.datavalue);
+            expect((component as any).minDateMaxDateValidationOnInput).toHaveBeenCalledWith((component as any).datavalue);
         });
 
         it('should update maxdate and call minDateMaxDateValidationOnInput', () => {
@@ -441,7 +441,7 @@ describe('BaseDateTimeComponent', () => {
             (component as any).minDateMaxDateValidationOnInput = jest.fn();
             component.onPropertyChange('maxdate', mockDate);
             expect(component._dateOptions.maxDate).toEqual(mockDate);
-            expect((component as any).minDateMaxDateValidationOnInput).toHaveBeenCalledWith(component.datavalue);
+            expect((component as any).minDateMaxDateValidationOnInput).toHaveBeenCalledWith((component as any).datavalue);
         });
 
         it('should update selectfromothermonth in _dateOptions', () => {
@@ -490,7 +490,7 @@ describe('BaseDateTimeComponent', () => {
             (component as any).minDateMaxDateValidationOnInput = jest.fn();
             component.onPropertyChange('mindate', mockDate);
             expect(component._dateOptions.minDate).toEqual(mockDate);
-            expect((component as any).minDateMaxDateValidationOnInput).toHaveBeenCalledWith(component.datavalue);
+            expect((component as any).minDateMaxDateValidationOnInput).toHaveBeenCalledWith((component as any).datavalue);
         });
     });
 
@@ -797,7 +797,7 @@ describe('BaseDateTimeComponent', () => {
             (component as any).updateTimeValue = jest.fn();
             (component as any).timeFormatValidation = jest.fn();
             (component as any).focus = jest.fn();
-            component.invokeOnChange = jest.fn();
+            (component as any).invokeOnChange = jest.fn();
             (component as any).elementScope = {
                 hideTimepickerDropdown: jest.fn(),
                 setIsTimeOpen: jest.fn(),

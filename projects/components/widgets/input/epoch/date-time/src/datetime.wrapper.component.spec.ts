@@ -222,7 +222,7 @@ describe("DatetimeComponent", () => {
     }));
 
     it('should show the date pattern as yyyy-MM-ddTHH:mm:ss format', fakeAsync(() => {
-        wmComponent.datepattern = 'yyyy-MM-ddTHH:mm:ss';
+        (wmComponent as any).datepattern = 'yyyy-MM-ddTHH:mm:ss';
         fixture.detectChanges();
         tick();  // Allow time for changes to be applied
         datepatternTest(fixture, '.app-datetime', '.app-textbox');
@@ -230,7 +230,7 @@ describe("DatetimeComponent", () => {
     }));
 
     xit('should be disabled mode', waitForAsync(() => {
-        wmComponent.getWidget().disabled = true;
+        (wmComponent as any).getWidget().disabled = true;
         fixture.detectChanges();
 
         fixture.whenStable().then(() => {
@@ -240,7 +240,7 @@ describe("DatetimeComponent", () => {
     }));
 
     xit('should be disabled mode (picker button)', waitForAsync(() => {
-        wmComponent.getWidget().disabled = true;
+        (wmComponent as any).getWidget().disabled = true;
         fixture.detectChanges();
         hasAttributeCheck(fixture, '.btn-time', 'disabled');
         hasAttributeCheck(fixture, '.btn-date', 'disabled');
@@ -277,7 +277,7 @@ describe("DatetimeComponent", () => {
     }));
 
     xit('should respect the mindate validation', waitForAsync(() => {
-        wmComponent.getWidget().datavalue = getFormatedDate('2019-11-01');
+        (wmComponent as any).getWidget().datavalue = getFormatedDate('2019-11-01');
 
         checkElementClass(fixture, '.app-datetime', 'ng-invalid');
 
@@ -285,8 +285,8 @@ describe("DatetimeComponent", () => {
 
 
     xit('should ignore the  excluded days', waitForAsync(() => {
-        wmComponent.getWidget().excludedays = '1,6';
-        wmComponent.getWidget().datavalue = getFormatedDate('2019-12-30');
+        (wmComponent as any).getWidget().excludedays = '1,6';
+        (wmComponent as any).getWidget().datavalue = getFormatedDate('2019-12-30');
         checkElementClass(fixture, '.app-datetime', 'ng-invalid');
 
     }));
@@ -303,7 +303,7 @@ describe("DatetimeComponent", () => {
 
     // TypeError: Cannot read properties of undefined (reading 'querySelectorAll')
     xit('should toggle the AM/PM', waitForAsync(() => {
-        wmComponent.getWidget().datepattern = 'MMM d, yyyy h:mm:ss a';
+        (wmComponent as any).getWidget().datepattern = 'MMM d, yyyy h:mm:ss a';
 
         fixture.whenStable().then(() => {
             onClickCheckTaglengthOnBody(fixture, '.btn-time', null, null);
@@ -334,7 +334,7 @@ describe("DatetimeComponent", () => {
     }));
 
     it('should be able to set the mindate and disable the below mindate on calendar', fakeAsync(() => {
-        wmComponent.mindate = '2019-11-02';
+        (wmComponent as any).mindate = '2019-11-02';
         wmComponent.datavalue = '2019-11-02';
         fixture.detectChanges();
         tick();
@@ -343,11 +343,11 @@ describe("DatetimeComponent", () => {
         tick(350);
         fixture.detectChanges();
         // Check if the mindate is set correctly
-        expect(wmComponent.mindate).toBe('2019-11-02');
+        expect((wmComponent as any).mindate).toBe('2019-11-02');
     }));
 
     it('should respect the maxdate validation', fakeAsync(() => {
-        wmComponent.maxdate = '2020-01-03';
+        (wmComponent as any).maxdate = '2020-01-03';
         wmComponent.datavalue = '2020-01-04';
         fixture.detectChanges();
         tick();
@@ -359,11 +359,11 @@ describe("DatetimeComponent", () => {
     }));
 
     it('should disable the excluded days on the calendar panel', fakeAsync(() => {
-        wmComponent.excludedays = '1,6';
+        (wmComponent as any).excludedays = '1,6';
         fixture.detectChanges();
         tick();
         // Check if the excludedays property is set correctly
-        expect(wmComponent.excludedays).toBe('1,6');
+        expect((wmComponent as any).excludedays).toBe('1,6');
     }));
 
     // it('should disable the excluded date on the calendar panel', fakeAsync(() => {
@@ -424,13 +424,13 @@ describe(('Datetime Component with Localization'), () => {
 
     it('should update the datavalue without error when we type "de" format datetime in inputbox with "12H" format ', fakeAsync(() => {
         const datepattern = 'yyyy, dd MMMM hh:mm:ss a';
-        wmComponent.getWidget().datepattern = datepattern;
+        (wmComponent as any).getWidget().datepattern = datepattern;
         localizedValueOnInputTest(fixture, '2020, 21 Februar 03:15:00 AM', wmComponent, datepattern);
     }));
 
     it('should update the datavalue without error when we type "de" format datetime in inputbox with "24H" format', fakeAsync(() => {
         const datetime = '2020, 21 Februar 15:15:00', datepattern = 'yyyy, dd MMMM HH:mm:ss';
-        wmComponent.getWidget().datepattern = datepattern;
+        (wmComponent as any).getWidget().datepattern = datepattern;
         localizedValueOnInputTest(fixture, '2020, 21 Februar 15:15:00', wmComponent, datepattern);
     }));
 
@@ -450,7 +450,7 @@ describe(('Datetime Component with Localization'), () => {
         let originalJQuery;
 
         beforeEach(() => {
-            wmComponent.invokeOnTouched = jest.fn();
+            (wmComponent as any).invokeOnTouched = jest.fn();
             wmComponent.toggleTimePicker = jest.fn();
             (wmComponent as any).deregisterTimepickeEventListener = jest.fn();
 
@@ -468,7 +468,7 @@ describe(('Datetime Component with Localization'), () => {
 
         it('should call invokeOnTouched', () => {
             (wmComponent as any).hideTimepickerDropdown();
-            expect(wmComponent.invokeOnTouched).toHaveBeenCalled();
+            expect((wmComponent as any).invokeOnTouched).toHaveBeenCalled();
         });
         it('should call app.notify if parentEl exists', () => {
             (wmComponent as any).hideTimepickerDropdown();
@@ -560,16 +560,16 @@ describe(('Datetime Component with Localization'), () => {
 
     describe('toggleTimePicker', () => {
         beforeEach(() => {
-            wmComponent.loadNativeDateInput = false;
-            wmComponent.onDateTimeInputFocus = jest.fn();
-            wmComponent.invokeEventCallback = jest.fn();
+            (wmComponent as any).loadNativeDateInput = false;
+            (wmComponent as any).onDateTimeInputFocus = jest.fn();
+            (wmComponent as any).invokeEventCallback = jest.fn();
             (wmComponent as any).addTimepickerClickListener = jest.fn();
         });
 
         it('should call onDateTimeInputFocus if loadNativeDateInput is true', () => {
-            wmComponent.loadNativeDateInput = true;
+            (wmComponent as any).loadNativeDateInput = true;
             wmComponent.toggleTimePicker(true);
-            expect(wmComponent.onDateTimeInputFocus).toHaveBeenCalled();
+            expect((wmComponent as any).onDateTimeInputFocus).toHaveBeenCalled();
             expect(wmComponent.isTimeOpen).not.toBe(true);
         });
 
@@ -581,7 +581,7 @@ describe(('Datetime Component with Localization'), () => {
         it('should invoke click event callback if event type is click', () => {
             const mockEvent = { type: 'click' };
             wmComponent.toggleTimePicker(true, mockEvent);
-            expect(wmComponent.invokeEventCallback).toHaveBeenCalledWith('click', { $event: mockEvent });
+            expect((wmComponent as any).invokeEventCallback).toHaveBeenCalledWith('click', { $event: mockEvent });
         });
 
         it('should call addTimepickerClickListener', () => {
@@ -656,10 +656,10 @@ describe(('Datetime Component with Localization'), () => {
 
         beforeEach(() => {
             (wmComponent as any).focusTrap = { deactivate: jest.fn() };
-            wmComponent.invokeOnTouched = jest.fn();
+            (wmComponent as any).invokeOnTouched = jest.fn();
             wmComponent.bsDatePickerDirective = { hide: jest.fn() };
             wmComponent.toggleTimePicker = jest.fn();
-            wmComponent.blurDateInput = jest.fn();
+            (wmComponent as any).blurDateInput = jest.fn();
             (wmComponent as any).deregisterDatepickerEventListener = jest.fn();
 
             originalJQuery = (global as any).$;
@@ -684,7 +684,7 @@ describe(('Datetime Component with Localization'), () => {
 
         it('should call invokeOnTouched', () => {
             wmComponent.hideDatepickerDropdown();
-            expect(wmComponent.invokeOnTouched).toHaveBeenCalled();
+            expect((wmComponent as any).invokeOnTouched).toHaveBeenCalled();
         });
 
         it('should hide bsDatePickerDirective', () => {
@@ -722,7 +722,7 @@ describe(('Datetime Component with Localization'), () => {
 
         it('should call blurDateInput', () => {
             wmComponent.hideDatepickerDropdown();
-            expect(wmComponent.blurDateInput).toHaveBeenCalledWith(false);
+            expect((wmComponent as any).blurDateInput).toHaveBeenCalledWith(false);
         });
     });
 
@@ -741,8 +741,8 @@ describe(('Datetime Component with Localization'), () => {
         });
 
         it('should call getNativeDateObject with correct parameters', () => {
-            wmComponent.loadNativeDateInput = true;
-            wmComponent.outputformat = 'yyyy-MM-dd';
+            (wmComponent as any).loadNativeDateInput = true;
+            (wmComponent as any).outputformat = 'yyyy-MM-dd';
             wmComponent.onDateChange({ target: { value: '2023-01-01' } });
             expect(getNativeDateObject).toHaveBeenCalledWith('2023-01-01', expect.objectContaining({
                 pattern: 'yyyy-MM-dd',
@@ -772,7 +772,7 @@ describe(('Datetime Component with Localization'), () => {
     describe('onDisplayKeydown', () => {
         beforeEach(() => {
             (wmComponent as any).isDropDownDisplayEnabledOnInput = jest.fn().mockReturnValue(true);
-            wmComponent.invokeOnChange = jest.fn();
+            (wmComponent as any).invokeOnChange = jest.fn();
             wmComponent.toggleDpDropdown = jest.fn();
             wmComponent.hideDatepickerDropdown = jest.fn();
             (wmComponent as any).hideTimepickerDropdown = jest.fn();
@@ -797,7 +797,7 @@ describe(('Datetime Component with Localization'), () => {
             const event = { preventDefault: jest.fn(), stopPropagation: jest.fn(), target: { value: '2023-01-02' }, key: 'Enter' };
             wmComponent.onDisplayKeydown(event);
             expect((wmComponent as any).invalidDateTimeFormat).toBeTruthy();
-            expect(wmComponent.invokeOnChange).toHaveBeenCalled();
+            expect((wmComponent as any).invokeOnChange).toHaveBeenCalled();
         });
 
         it('should set bsDatePickerDirective.bsValue if input matches formatted date', () => {
@@ -821,8 +821,8 @@ describe(('Datetime Component with Localization'), () => {
         let originalJQuery;
 
         beforeEach(() => {
-            wmComponent.invokeOnTouched = jest.fn();
-            wmComponent.invokeEventCallback = jest.fn();
+            (wmComponent as any).invokeOnTouched = jest.fn();
+            (wmComponent as any).invokeEventCallback = jest.fn();
 
             originalJQuery = (global as any).$;
             (global as any).$ = jest.fn().mockReturnValue({
@@ -837,8 +837,8 @@ describe(('Datetime Component with Localization'), () => {
         it('should call invokeOnTouched and invokeEventCallback if relatedTarget does not have current-date class', () => {
             const event = { relatedTarget: {} };
             wmComponent.onInputBlur(event);
-            expect(wmComponent.invokeOnTouched).toHaveBeenCalled();
-            expect(wmComponent.invokeEventCallback).toHaveBeenCalledWith('blur', { $event: event });
+            expect((wmComponent as any).invokeOnTouched).toHaveBeenCalled();
+            expect((wmComponent as any).invokeEventCallback).toHaveBeenCalledWith('blur', { $event: event });
         });
 
         it('should not call invokeOnTouched and invokeEventCallback if relatedTarget has current-date class', () => {
@@ -847,8 +847,8 @@ describe(('Datetime Component with Localization'), () => {
             });
             const event = { relatedTarget: {} };
             wmComponent.onInputBlur(event);
-            expect(wmComponent.invokeOnTouched).not.toHaveBeenCalled();
-            expect(wmComponent.invokeEventCallback).not.toHaveBeenCalled();
+            expect((wmComponent as any).invokeOnTouched).not.toHaveBeenCalled();
+            expect((wmComponent as any).invokeEventCallback).not.toHaveBeenCalled();
         });
     });
 
@@ -918,17 +918,17 @@ describe(('Datetime Component with Localization'), () => {
 
     describe('getTimePattern', () => {
         it('should return correct time pattern with seconds', () => {
-            wmComponent.datepattern = 'yyyy-MM-dd HH:mm:ss';
+            (wmComponent as any).datepattern = 'yyyy-MM-dd HH:mm:ss';
             expect((wmComponent as any).getTimePattern()).toBe('HH:mm:ss');
         });
 
         it('should return correct time pattern without seconds', () => {
-            wmComponent.datepattern = 'yyyy-MM-dd HH:mm';
+            (wmComponent as any).datepattern = 'yyyy-MM-dd HH:mm';
             expect((wmComponent as any).getTimePattern()).toBe('HH:mm');
         });
 
         it('should include meridian if present', () => {
-            wmComponent.datepattern = 'yyyy-MM-dd hh:mm:ss a';
+            (wmComponent as any).datepattern = 'yyyy-MM-dd hh:mm:ss a';
             const result = (wmComponent as any).getTimePattern();
             expect(result).toMatch(/hh:mm:ss/);
             expect(result).toContain('a');
@@ -976,9 +976,9 @@ describe(('Datetime Component with Localization'), () => {
         let originalJQuery;
 
         beforeEach(() => {
-            wmComponent.loadNativeDateInput = false;
-            wmComponent.onDateTimeInputFocus = jest.fn();
-            wmComponent.invokeEventCallback = jest.fn();
+            (wmComponent as any).loadNativeDateInput = false;
+            (wmComponent as any).onDateTimeInputFocus = jest.fn();
+            (wmComponent as any).invokeEventCallback = jest.fn();
             (wmComponent as any).isDropDownDisplayEnabledOnInput = jest.fn().mockReturnValue(true);
             wmComponent.bsDatePickerDirective = { toggle: jest.fn(), isOpen: true };
             (wmComponent as any).addBodyClickListener = jest.fn();
@@ -994,14 +994,14 @@ describe(('Datetime Component with Localization'), () => {
         });
 
         it('should call onDateTimeInputFocus for native input', () => {
-            wmComponent.loadNativeDateInput = true;
+            (wmComponent as any).loadNativeDateInput = true;
             wmComponent.toggleDpDropdown({ type: 'click' });
-            expect(wmComponent.onDateTimeInputFocus).toHaveBeenCalled();
+            expect((wmComponent as any).onDateTimeInputFocus).toHaveBeenCalled();
         });
 
         it('should invoke click event callback', () => {
             wmComponent.toggleDpDropdown({ type: 'click' });
-            expect(wmComponent.invokeEventCallback).toHaveBeenCalledWith('click', expect.any(Object));
+            expect((wmComponent as any).invokeEventCallback).toHaveBeenCalledWith('click', expect.any(Object));
         });
 
         it('should stop propagation for input click when dropdown is not enabled', () => {
@@ -1062,7 +1062,7 @@ describe(('Datetime Component with ro(Romania) Localization'), () => {
 
     it('should update the datavalue without error when we type "ro" format datetime in inputbox with "12H" format ', fakeAsync(() => {
         const datepattern = 'yyyy, dd MMMM hh:mm:ss a';
-        wmComponent.getWidget().datepattern = datepattern;
+        (wmComponent as any).getWidget().datepattern = datepattern;
         localizedValueOnInputTest(fixture, '2020, 21 februarie 03:15:00 a.m.', wmComponent, datepattern);
     }));
 
