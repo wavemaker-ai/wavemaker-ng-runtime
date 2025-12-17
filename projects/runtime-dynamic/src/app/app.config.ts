@@ -1,6 +1,6 @@
 import { ApplicationConfig, importProvidersFrom, LOCALE_ID, RendererFactory2, APP_INITIALIZER } from "@angular/core";
 import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation } from "@angular/router";
-import { provideHttpClient, withXsrfConfiguration, withInterceptorsFromDi, withFetch } from "@angular/common/http";
+import { provideHttpClient, withXsrfConfiguration, withInterceptorsFromDi, withFetch, HTTP_INTERCEPTORS } from "@angular/common/http";
 import { provideAnimations } from "@angular/platform-browser/animations";
 import { XhrFactory } from "@angular/common";
 import { InjectionToken } from "@angular/core";
@@ -40,7 +40,8 @@ import {
     AppVariablesResolve,
     WMDomRendererFactory2,
     MAX_CACHE_SIZE,
-    MAX_CACHE_AGE
+    MAX_CACHE_AGE,
+    HttpCallInterceptor
 } from "@wm/runtime/base";
 import {
     AbstractDialogService,
@@ -126,6 +127,7 @@ export function setAngularLocale(I18nService) {
 
 export const appConfig: ApplicationConfig = {
     providers: [
+        { provide: HTTP_INTERCEPTORS, useClass: HttpCallInterceptor, multi: true },
         // Provide Angular core services FIRST
         provideRouter(routes, withHashLocation(), withComponentInputBinding()),
         provideAnimations(),
@@ -146,7 +148,6 @@ export const appConfig: ApplicationConfig = {
         { provide: RendererFactory2, useClass: WMDomRendererFactory2 },
         // Provide HttpService EARLY (AppManagerService needs it)
         { provide: AbstractHttpService, useClass: HttpServiceImpl },
-        HttpServiceImpl,  // Also provide directly (some components may inject the class directly)
         // Provide base services (before APP_INITIALIZER that depends on them)
         { provide: App, useClass: AppRef },
         { provide: AbstractToasterService, useClass: ToasterServiceImpl },
