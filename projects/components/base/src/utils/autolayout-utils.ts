@@ -174,14 +174,6 @@ export class AutoLayoutUtils {
                 this.clipContent = nv;
                 this.handleClipBehaviour();
                 break;
-            case 'overflowtype': 
-                this.overflowtype = nv;
-                this.handleClipBehaviour();
-                break;
-            case 'z-index':
-                this.zIndex = nv;
-                this.handlePosition();
-                break;
         }
     }
 
@@ -193,6 +185,16 @@ export class AutoLayoutUtils {
 
         else if (key === 'padding') {
             this.$element.css('padding', nv);
+        }
+
+        else if(key === 'overflow') {
+            this.overflowtype = nv;
+            this.handleClipBehaviour();
+        }
+
+        else if(key === 'zindex') {
+            this.zIndex = nv;
+            this.handlePosition();
         }
     }
 
@@ -232,30 +234,37 @@ export class AutoLayoutUtils {
     private handleClipBehaviour() {
 
         const overflow = this.overflowtype?.toLowerCase();
-        if(overflow === "vertical") {
-            this.$element.css({
-                'overflow-x': 'hidden',
-                'overflow-y': 'scroll'
-            });
-        } else if (overflow === "horizontal") {
-            this.$element.css({
-                'overflow-x': 'scroll',
-                'overflow-y': 'hidden'
-            });
-        } else if (overflow === "both directions") {
-            this.$element.css({
-                'overflow': 'scroll'
-            });
-        } else if (overflow === "no scrolling") {
-            if(this.clipContent) {
+        switch (overflow) {
+            case 'vertical':
                 this.$element.css({
-                    'overflow': 'hidden'
+                    'overflow-x': 'hidden',
+                    'overflow-y': 'scroll'
                 });
-            } else {
+                break;
+
+            case 'horizontal':
                 this.$element.css({
-                    'overflow': ''
+                    'overflow-x': 'scroll',
+                    'overflow-y': 'hidden'
                 });
-            }
+                break;
+
+            case 'both directions':
+                this.$element.css({
+                    'overflow': 'scroll'
+                });
+                break;
+
+            case 'no scrolling':
+                if (this.clipContent) {
+                    this.$element.css({ 'overflow': 'hidden' });
+                } else {
+                    this.$element.css({ 'overflow': '' });
+                }
+                break;
+
+            default:
+                break;
         }
 
     }

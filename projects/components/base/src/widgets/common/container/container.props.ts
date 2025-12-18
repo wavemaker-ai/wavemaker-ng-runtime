@@ -19,8 +19,8 @@ export const registerProps = () => {
                 ['columngap', PROP_STRING],
                 ['clipcontent', PROP_STRING],
                 ['position', PROP_STRING],
-                ['overflowtype', PROP_STRING],
-                ['z-index', PROP_STRING],
+                ['overflow', PROP_STRING],
+                ['zindex', PROP_STRING],
             ]
         )
     );
