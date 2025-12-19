@@ -2,6 +2,7 @@ import {
     ApplicationRef,
     Component,
     ElementRef,
+    EnvironmentInjector,
     Injector,
     NgZone,
     OnDestroy,
@@ -28,6 +29,7 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
 
     constructor(
         private injector: Injector,
+        private envInjector: EnvironmentInjector,
         private route: ActivatedRoute,
         private vcRef: ViewContainerRef,
         private appRef: ApplicationRef,
@@ -52,25 +54,43 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
         $target.innerHTML = '';
     }
 
-    renderPage(pageName) {
+    renderPage(pageName: string): void {
         const $target = this.getTargetNode();
 
         this.appManager.loadAppVariables()
             .then(async () => {
-                const pageComponentClass = await this.componentRefProvider.getComponentFactoryRef(pageName, ComponentType.PAGE);
-                if (pageComponentClass) {
-                    const componentRef = this.vcRef.createComponent(pageComponentClass, {
+                const PageComponentClass = await this.componentRefProvider.getComponentFactoryRef(pageName, ComponentType.PAGE);
+                
+                if (!PageComponentClass) {
+                    console.error(`Failed to load page component: ${pageName}`);
+                    BasePageComponent.clear();
+                    return;
+                }
+
+                try {
+                    // Create component with both environmentInjector (for standalone imports/providers)
+                    // and injector (for element-level dependencies)
+                    const componentRef = this.vcRef.createComponent(PageComponentClass, {
                         index: 0,
+                        environmentInjector: this.envInjector,
                         injector: this.injector
                     });
+                    
                     this.instance = componentRef.instance;
                     $target.appendChild(componentRef.location.nativeElement);
-                } else {
+                    
+                    // Clean up any duplicate component instances
+                    if (this.vcRef.length > 1) {
+                        this.vcRef.remove(1);
+                    }
+                } catch (error) {
+                    console.error(`Error creating page component ${pageName}:`, error);
                     BasePageComponent.clear();
                 }
-                if (this.vcRef.length > 1) {
-                    this.vcRef.remove(1);
-                }
+            })
+            .catch(error => {
+                console.error(`Error loading app variables for page ${pageName}:`, error);
+                BasePageComponent.clear();
             });
     }
 

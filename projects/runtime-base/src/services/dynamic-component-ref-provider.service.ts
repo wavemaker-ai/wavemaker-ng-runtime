@@ -89,22 +89,41 @@ export class DynamicComponentRefProviderService {
         };
     }
 
+    /**
+     * Get dynamically compiled component class from markup
+     * Creates a standalone component from HTML markup at runtime
+     * 
+     * @param selector - Unique selector for the component (e.g., 'app-table-dynamic-123')
+     * @param markup - HTML template markup to compile
+     * @param opts - Options for transpilation, caching, and styling
+     * @returns Promise resolving to compiled component Type
+     * @throws Error if selector is invalid or compilation fails
+     */
     public async getComponentFactoryRef(selector: string, markup: string, opts: DynamicOptions = {}): Promise<Type<unknown>> {
-        if (!isValidSelector(selector)) throw new Error(`Invalid selector: ${selector}`);
+        if (!isValidSelector(selector)) {
+            throw new Error(`Invalid selector: ${selector}`);
+        }
 
         const options = this.normalize(opts);
 
-        // Check cache
+        // Return cached component if available
         if (!options.noCache && cache.has(selector)) {
             return cache.get(selector)!;
         }
 
         try {
-            const processed = options.transpile ? transpile(markup).markup : markup;
-            const component = createDynamicComponent(selector, processed, options.styles);
+            // Transpile markup if needed (converts WaveMaker syntax to Angular)
+            const processedMarkup = options.transpile ? transpile(markup).markup : markup;
+            
+            // Create standalone component class
+            const ComponentClass = createDynamicComponent(selector, processedMarkup, options.styles);
 
-            if (!options.noCache) cache.set(selector, component);
-            return component;
+            // Cache for reuse unless noCache is true
+            if (!options.noCache) {
+                cache.set(selector, ComponentClass);
+            }
+            
+            return ComponentClass;
         } catch (err) {
             this.handleError(err, selector);
             throw err;
@@ -112,15 +131,15 @@ export class DynamicComponentRefProviderService {
     }
 
     /**
-     * Creates the component dynamically and add it to the DOM
-     * @param target: HTML element where we need to append the created component
-     * @param markup: Template of the component
-     * @param context: Scope of the component
-     * @param options: We have options like
-                       selector: selector of the component
-                       transpile: flag for transpiling HTML. By default it is true
-                       nocache: flag for render it from cache or not. By default it is true
-     * @returns ComponentRef - the created component reference for cleanup
+     * Creates a dynamic component and adds it to the DOM
+     * Compiles markup into a standalone component and renders it in the target element
+     * 
+     * @param target - HTML element where the component will be appended
+     * @param markup - HTML template markup to compile
+     * @param context - Context object to extend the component instance with
+     * @param opts - Options for selector, transpilation, caching, and injection
+     * @returns Promise resolving to ComponentRef for cleanup and lifecycle management
+     * @throws Error if target is invalid or component creation fails
      */
     public async addComponent(
         target: HTMLElement,
@@ -128,25 +147,38 @@ export class DynamicComponentRefProviderService {
         context: Record<string, unknown> = {},
         opts: DynamicOptions = {}
     ): Promise<ComponentRef<unknown>> {
-        if (!(target instanceof HTMLElement)) throw new Error('Invalid target element');
+        if (!(target instanceof HTMLElement)) {
+            throw new Error('Invalid target element');
+        }
 
         const options = this.normalize(opts);
 
         try {
-            const componentType = await this.getComponentFactoryRef(options.selector, markup, options);
-            const ref = createComponent(componentType, {
+            // Get compiled component class
+            const ComponentClass = await this.getComponentFactoryRef(options.selector, markup, options);
+            
+            // Create component instance with both environmentInjector (for standalone imports/providers)
+            // and elementInjector (for element-level dependencies)
+            const componentRef = createComponent(ComponentClass, {
                 environmentInjector: this.envInjector,
                 elementInjector: options.inj
             });
 
-            if (Object.keys(context).length) extendProto(ref.instance, context);
+            // Extend component instance with provided context
+            if (Object.keys(context).length) {
+                extendProto(componentRef.instance, context);
+            }
 
-            this.appRef.attachView(ref.hostView);
-            target.appendChild(ref.location.nativeElement);
+            // Attach to Angular's change detection
+            this.appRef.attachView(componentRef.hostView);
+            
+            // Add to DOM
+            target.appendChild(componentRef.location.nativeElement);
 
-            ref.onDestroy(() => this.appRef.detachView(ref.hostView));
+            // Cleanup on destroy
+            componentRef.onDestroy(() => this.appRef.detachView(componentRef.hostView));
 
-            return ref;
+            return componentRef;
         } catch (err) {
             this.handleError(err, options.selector);
             throw err;

@@ -9,6 +9,7 @@ import {
     ContentChild,
     ContentChildren,
     ElementRef,
+    EnvironmentInjector,
     HostListener,
     Inject,
     Injector,
@@ -1121,6 +1122,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     constructor(
         public inj: Injector,
+        private envInjector: EnvironmentInjector,
         public fb: FormBuilder,
         private app: App,
         private dynamicComponentProvider: DynamicComponentRefProvider,
@@ -2042,21 +2044,55 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             tmpl += `<wm-table-column ${attrsTmpl} tableName="${this.name}${(this as any).$attrs.get('table_reference')}">${customTmpl}</wm-table-column>`;
         });
         this.dynamicTableRef.clear();
+        
+        // Setup dynamic context for the table component
         if (!this._dynamicContext) {
             this._dynamicContext = Object.create(this.viewParent);
             this._dynamicContext[this.getAttr('wmTable')] = this;
         }
+        
         this.noOfColumns = columns.length;
-        const componentFactoryRef = await this.dynamicComponentProvider.getComponentFactoryRef(
-            'app-table-dynamic-' + this.widgetId,
-            tmpl,
-            {
-                noCache: true,
-                transpile: true
+        
+        try {
+            // Generate unique component selector for this dynamic table instance
+            const componentSelector = `app-table-dynamic-${this.widgetId}`;
+            
+            // Get the dynamically compiled table component class
+            const DynamicTableComponentClass = await this.dynamicComponentProvider.getComponentFactoryRef(
+                componentSelector,
+                tmpl,
+                {
+                    noCache: true,
+                    transpile: true
+                }
+            );
+            
+            if (!DynamicTableComponentClass) {
+                console.error(`Failed to create dynamic table component: ${componentSelector}`);
+                return;
+            }
+
+            // Create component with both environmentInjector (for standalone imports/providers)
+            // and injector (for element-level dependencies)
+            const componentRef = this.dynamicTableRef.createComponent(DynamicTableComponentClass, {
+                index: 0,
+                environmentInjector: this.envInjector,
+                injector: this.inj
             });
-        const component = this.dynamicTableRef.createComponent(componentFactoryRef, 0, this.inj);
-        extendProto(component.instance, this._dynamicContext);
-        this.$element.find('.dynamic-table-container')[0].appendChild(component.location.nativeElement);
+            
+            // Extend component instance with dynamic context
+            extendProto(componentRef.instance, this._dynamicContext);
+            
+            // Append to DOM
+            const containerElement = this.$element.find('.dynamic-table-container')[0];
+            if (containerElement) {
+                containerElement.appendChild(componentRef.location.nativeElement);
+            } else {
+                console.error('Dynamic table container element not found');
+            }
+        } catch (error) {
+            console.error('Error creating dynamic table component:', error);
+        }
     }
 
     prepareColDefs(data) {

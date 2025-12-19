@@ -1,5 +1,5 @@
-import { Attribute, ComponentFactoryResolver, Directive, ElementRef, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
-import { App, $invokeWatchers, noop, ComponentType, CustomWidgetRefProvider } from '@wm/core';
+import { Attribute, Directive, ElementRef, EnvironmentInjector, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
+import { App, ComponentType, CustomWidgetRefProvider } from '@wm/core';
 import { WidgetRef } from "../../framework/types";
 
 
@@ -16,20 +16,43 @@ export class CustomWidgetContainerDirective implements OnDestroy {
         public vcRef: ViewContainerRef,
         public elRef: ElementRef,
         public inj: Injector,
+        private envInjector: EnvironmentInjector,
         private app: App,
         @Attribute('widgetname') widgetname: string,
         private customWidgetRefProvider: CustomWidgetRefProvider
     ) {
-        const widgetnames = this.componentInstance.widgetname;
-        this.customWidgetRefProvider.getComponentFactoryRef(widgetname, ComponentType.WIDGET).then((componentFactory) => {
-            if (componentFactory) {
-                const instanceRef = this.vcRef.createComponent(componentFactory, {
-                    index: 0,
-                    injector: this.inj
-                });
-                this.elRef.nativeElement.appendChild(instanceRef.location.nativeElement);
+        this.loadCustomWidget(widgetname);
+    }
+
+    private async loadCustomWidget(widgetName: string): Promise<void> {
+        if (!widgetName) {
+            console.error('Custom widget name is required');
+            return;
+        }
+
+        try {
+            const WidgetComponentClass = await this.customWidgetRefProvider.getComponentFactoryRef(
+                widgetName, 
+                ComponentType.WIDGET
+            );
+            
+            if (!WidgetComponentClass) {
+                console.error(`Failed to load custom widget: ${widgetName}`);
+                return;
             }
-        });
+
+            // Create component with both environmentInjector (for standalone imports/providers)
+            // and injector (for element-level dependencies)
+            const componentRef = this.vcRef.createComponent(WidgetComponentClass, {
+                index: 0,
+                environmentInjector: this.envInjector,
+                injector: this.inj
+            });
+            
+            this.elRef.nativeElement.appendChild(componentRef.location.nativeElement);
+        } catch (error) {
+            console.error(`Error creating custom widget ${widgetName}:`, error);
+        }
     }
 
     ngOnDestroy() {

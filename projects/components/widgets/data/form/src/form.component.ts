@@ -7,6 +7,7 @@ import {
     Attribute,
     Component,
     ContentChildren,
+    EnvironmentInjector,
     HostBinding,
     HostListener,
     Inject,
@@ -315,6 +316,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
 
     constructor(
         inj: Injector,
+        private envInjector: EnvironmentInjector,
         private fb: FormBuilder,
         private app: App,
         private dialogService: AbstractDialogService,
@@ -1256,21 +1258,54 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
 
         this.dynamicFormRef.clear();
 
+        // Setup dynamic context for the form component
         if (!this._dynamicContext) {
             this._dynamicContext = Object.create(this.viewParent);
             this._dynamicContext.form = this;
         }
-        const componentFactoryRef = await this.dynamicComponentProvider.getComponentFactoryRef(
-            'app-form-dynamic-' + this.widgetId,
-            fieldTemplate,
-            {
-                noCache: true,
-                transpile: true
+        
+        try {
+            // Generate unique component selector for this dynamic form instance
+            const componentSelector = `app-form-dynamic-${this.widgetId}`;
+            
+            // Get the dynamically compiled form component class
+            const DynamicFormComponentClass = await this.dynamicComponentProvider.getComponentFactoryRef(
+                componentSelector,
+                fieldTemplate,
+                {
+                    noCache: true,
+                    transpile: true
+                }
+            );
+            
+            if (!DynamicFormComponentClass) {
+                console.error(`Failed to create dynamic form component: ${componentSelector}`);
+                return;
+            }
+
+            // Create component with both environmentInjector (for standalone imports/providers)
+            // and injector (for element-level dependencies)
+            const componentRef = this.dynamicFormRef.createComponent(DynamicFormComponentClass, {
+                index: 0,
+                environmentInjector: this.envInjector,
+                injector: this.inj
             });
-        const component = this.dynamicFormRef.createComponent(componentFactoryRef, 0, this.inj);
-        extendProto(component.instance, this._dynamicContext);
-        $gridLayout[0].appendChild(component.location.nativeElement);
-        this.setFormData(this.formdata);
+            
+            // Extend component instance with dynamic context
+            extendProto(componentRef.instance, this._dynamicContext);
+            
+            // Append to DOM
+            if ($gridLayout[0]) {
+                $gridLayout[0].appendChild(componentRef.location.nativeElement);
+            } else {
+                console.error('Form grid layout element not found');
+            }
+            
+            // Set form data after component creation
+            this.setFormData(this.formdata);
+        } catch (error) {
+            console.error('Error creating dynamic form component:', error);
+        }
     }
 
     get mode() {

@@ -189,63 +189,106 @@ export class ComponentRefProviderService extends ComponentRefProvider {
         super();
     }
 
+    /**
+     * Load component fragment (markup, script, styles, variables) from JSON resources
+     * Fetches and processes .min.json files for pages, partials, prefabs, and widgets
+     * 
+     * @param name - Component name
+     * @param type - Component type (PAGE, PARTIAL, PREFAB, WIDGET)
+     * @param options - Additional options (e.g., prefab context)
+     * @returns Promise resolving to processed component definition
+     * @throws Error with user-friendly message if loading fails (404, 403, etc.)
+     * @private
+     */
     private async loadFragment(name: string, type: ComponentType, options?: FragmentOptions): Promise<PageMinJSON> {
         const url = getUrl(name, type, options);
 
+        // Return cached promise if already loading/loaded
         if (fragmentCache.has(url)) {
             return fragmentCache.get(url)!;
         }
 
-        const promise = (async () => {
+        // Create loading promise
+        const loadPromise = (async () => {
             try {
+                // Determine if we need to fetch from server or use bundled custom widgets
                 const shouldFetch = type === ComponentType.WIDGET && !customWidgets[name];
-                const raw = shouldFetch || type !== ComponentType.WIDGET
+                const rawData = shouldFetch || type !== ComponentType.WIDGET
                     ? await this.resourceMngr.get(url, true)
                     : customWidgets[name];
 
+                // Process and return component definition
                 return {
-                    markup: transpile(decode(raw.markup)).markup,
-                    script: decode(raw.script),
-                    styles: scopeComponentStyles(name, type, decode(raw.styles)),
-                    variables: getValidJSON(decode(raw.variables)),
-                    ...(raw.config && { config: getValidJSON(decode(raw.config)) })
+                    markup: transpile(decode(rawData.markup)).markup,
+                    script: decode(rawData.script),
+                    styles: scopeComponentStyles(name, type, decode(rawData.styles)),
+                    variables: getValidJSON(decode(rawData.variables)),
+                    ...(rawData.config && { config: getValidJSON(decode(rawData.config)) })
                 };
             } catch (err: unknown) {
+                // Provide user-friendly error messages
                 const status = (err as { details?: { status?: number } })?.details?.status;
-                const msgs: Record<number, string> = {
+                const errorMessages: Record<number, string> = {
                     404: this.app.appLocale?.MESSAGE_PAGE_NOT_FOUND || 'Page not available',
                     403: this.app.appLocale?.LABEL_ACCESS_DENIED || 'Access Denied'
                 };
-                throw msgs[status!] || 'Unknown error';
+                throw errorMessages[status!] || 'Unknown error loading component';
             }
         })();
 
-        fragmentCache.set(url, promise);
-        return promise;
+        // Cache the promise to prevent duplicate requests
+        fragmentCache.set(url, loadPromise);
+        return loadPromise;
     }
 
-    public async getComponentFactoryRef(name: string, type: ComponentType, options?: FragmentOptions): Promise<Type<unknown> | void> {
+    /**
+     * Get component class by loading and compiling from JSON resources
+     * Loads page/partial/prefab/widget definitions from .min.json files and creates standalone components
+     * 
+     * @param name - Component name (e.g., 'Main', 'Header')
+     * @param type - Component type (PAGE, PARTIAL, PREFAB, WIDGET)
+     * @param options - Additional options (e.g., prefab context for partials)
+     * @returns Promise resolving to component Type or undefined if loading fails
+     */
+    public async getComponentFactoryRef(name: string, type: ComponentType, options?: FragmentOptions): Promise<Type<unknown> | undefined> {
         const cacheKey = options?.prefab ? `${options.prefab}${name}` : name;
         const fullKey = `${type}-${cacheKey}`;
 
-        // Check both caches
-        const map = componentCache.get(type);
-        if (map?.has(cacheKey)) return map.get(cacheKey);
-        if (this.cache.has(fullKey)) return this.cache.get(fullKey);
+        // Check component cache (by type and name)
+        const typeCache = componentCache.get(type);
+        if (typeCache?.has(cacheKey)) {
+            return typeCache.get(cacheKey);
+        }
+        
+        // Check full cache (by full key)
+        if (this.cache.has(fullKey)) {
+            return this.cache.get(fullKey);
+        }
 
         try {
+            // Load component definition from JSON file
             const { markup, script, styles, variables } = await this.loadFragment(name, type, options);
-            const component = createComponent(name, type, markup, styles, script, JSON.stringify(variables));
+            
+            // Create standalone component class from definition
+            const ComponentClass = createComponent(
+                name, 
+                type, 
+                markup, 
+                styles, 
+                script, 
+                JSON.stringify(variables)
+            );
 
-            // Store in both caches
-            this.cache.set(fullKey, component);
-            map?.set(cacheKey, component);
+            // Store in both caches for fast lookup
+            this.cache.set(fullKey, ComponentClass);
+            typeCache?.set(cacheKey, ComponentClass);
 
-            return component;
+            return ComponentClass;
         } catch (err: unknown) {
-            const msg = isString(err) ? err : 'Error loading page, check console';
-            console.error('Component load error:', err);
-            this.appManager.notifyApp(msg, 'error');
+            const errorMsg = isString(err) ? err : 'Error loading component, check console';
+            console.error(`Failed to load ${type} component '${name}':`, err);
+            this.appManager.notifyApp(errorMsg, 'error');
+            return undefined;
         }
     }
 
