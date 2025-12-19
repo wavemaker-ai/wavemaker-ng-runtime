@@ -227,6 +227,8 @@ export class AutoLayoutUtils {
             if (key === 'height') {
                 this.$element.css('height', 'fit-content');
             }
+        } else {
+            this.$element.css('flex-shrink', '0'); // Don't shrink when size is fixed
         }
     }
 
