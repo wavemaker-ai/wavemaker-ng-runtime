@@ -49,7 +49,7 @@ let appRef: any;
  *  - UI stabilization delay (1–2 seconds)
  *  - Cooldown to prevent repeated scheduling
  ********************************************************************/
-const CLEANUP_TRIGGER_DELTA = 300;   // watcher change threshold
+const CLEANUP_TRIGGER_DELTA = 500;   // watcher change threshold
 const CLEANUP_DELAY = 1500;          // delay before running cleanup
 const CLEANUP_COOLDOWN = 4000;       // prevent re-scheduling for 4s
 
