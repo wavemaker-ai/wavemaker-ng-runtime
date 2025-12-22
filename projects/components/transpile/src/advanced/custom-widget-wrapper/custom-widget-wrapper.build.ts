@@ -1,17 +1,8 @@
-import { Attribute, Element, ParseSourceSpan, Text } from '@angular/compiler';
+import { Element, Text } from '@angular/compiler';
 import { getAttrMarkup, IBuildTaskDef, register } from '@wm/transpiler';
 
 const tagName = 'section';
-const noSpan = ({} as ParseSourceSpan);
-const createElement = name => {
-    // Angular 20: Element constructor requires 9 arguments
-    return new Element(name, [], [], [], false, noSpan, noSpan, null, false);
-};
 
-const addAtrribute = (node: Element, name: string, value: string) => {
-    const attr = new Attribute(name, value, noSpan, noSpan, noSpan, undefined, undefined);
-    node.attrs.push(attr);
-};
 register('wm-custom-widget-container', (): IBuildTaskDef => {
     return {
         template: (node: Element)  => {

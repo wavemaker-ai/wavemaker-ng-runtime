@@ -1,14 +1,7 @@
 import { getAttrMarkup, IBuildTaskDef, register } from '@wm/transpiler';
-import { Element, ParseSourceSpan, Text } from "@angular/compiler";
+import { Element, Text } from "@angular/compiler";
 
 const tagName = 'div';
-
-const createElement = name => {
-    // Angular 20: Element constructor requires 9 arguments
-    return new Element(name, [], [], [], false, noSpan, noSpan, null, false);
-};
-
-const noSpan = ({} as ParseSourceSpan);
 
 register('wm-page-content', (): IBuildTaskDef => {
     return {
