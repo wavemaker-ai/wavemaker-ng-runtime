@@ -5,7 +5,7 @@
         <li class="items-per-page">
           <label [title]="appLocale.LABEL_ITEMS_PER_PAGE" class="app-label">{{appLocale.LABEL_ITEMS_PER_PAGE}} :</label>
 
-            <div class="btn-group" dropdown  container="body" (isOpenChange)="onOpenChange($event)">
+            <div class="btn-group" dropdown  container="body" (onShown)="onDropDownShown($event)" (onHidden)="onDropdownHidden()" (isOpenChange)="onOpenChange($event)">
                 <button id="button-basic" dropdownToggle type="button" class="btn app-button dropdown-toggle"
                         aria-controls="dropdown-basic">
                     {{maxResults}} <span class="caret"></span>
@@ -99,7 +99,7 @@
         <li class="items-per-page">
           <label [title]="appLocale.LABEL_ITEMS_PER_PAGE" class="app-label">{{appLocale.LABEL_ITEMS_PER_PAGE}} :</label>
 
-            <div class="btn-group" dropdown container="body" (isOpenChange)="onOpenChange($event)">
+            <div class="btn-group" dropdown container="body" (onShown)="onDropDownShown($event)" (onHidden)="onDropdownHidden()" (isOpenChange)="onOpenChange($event)">
                 <button id="button-basic" dropdownToggle type="button" class="btn app-button dropdown-toggle"
                         aria-controls="dropdown-basic">
                     {{maxResults}} <span class="caret"></span>
@@ -151,7 +151,7 @@
       <div class="items-per-page">
         <label [title]="appLocale.LABEL_ITEMS_PER_PAGE" class="app-label">{{appLocale.LABEL_ITEMS_PER_PAGE }} :</label>
 
-        <div class="btn-group" dropdown container="body"  (isOpenChange)="onOpenChange($event)">
+        <div class="btn-group" dropdown container="body"  (onShown)="onDropDownShown($event)" (onHidden)="onDropdownHidden()" (isOpenChange)="onOpenChange($event)">
             <button id="button-basic" dropdownToggle type="button" class="btn app-button dropdown-toggle"
                     aria-controls="dropdown-basic">
                 {{maxResults}} <span class="caret"></span>

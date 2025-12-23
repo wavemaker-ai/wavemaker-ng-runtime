@@ -13,7 +13,9 @@ import {
     ViewChild
 } from '@angular/core';
 
-import {$appDigest, $watch, AppConstants, DataSource, debounce, isDefined, switchClass, triggerFn} from '@wm/core';
+import {
+    $appDigest, $watch, adjustVerticalPosition, AppConstants, DataSource, debounce, isDefined, switchClass, triggerFn
+} from '@wm/core';
 import {
     DEBOUNCE_TIMES,
     getOrderByExpr,
@@ -59,7 +61,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     @Output() resultEmitter: EventEmitter<any> = new EventEmitter();
     @Output() maxResultsEmitter: EventEmitter<any> = new EventEmitter();
     @ViewChild(BsDropdownDirective) protected bsDropdown;
-
+    private dropdownScrollHandler!: ($event:any) => void;
     datasource;
     maxResults;
     pageSizeOptions;
@@ -826,6 +828,38 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
             this.bsDropdown.hide()
         }
     }
+
+    onDropDownShown($event: any) {
+
+        const container = $event?._element?.nativeElement as HTMLElement;
+        if(!container) return;
+
+        adjustVerticalPosition(
+            $(container),
+            this.nativeElement?.querySelector('.items-per-page div'),
+            this.bsDropdown._dropdown,
+            $(container?.querySelector('ul[id="dropdown-basic"]'))
+        );
+
+        this.dropdownScrollHandler = () => {
+            this.onDropdownScroll();
+        };
+
+        window.addEventListener('scroll', this.dropdownScrollHandler, true);
+    }
+
+    onDropdownScroll() {
+        // on scroll boostrap is applying 3d translation to prevent from that added this dummy function
+      return;
+    }
+
+    onDropdownHidden() {
+        if (this.dropdownScrollHandler) {
+            window.removeEventListener('scroll', this.dropdownScrollHandler, true);
+        }
+        this.dropdownScrollHandler = undefined!;
+    }
+
     ngAfterViewInit() {
         const paginationElem =  this.nativeElement as HTMLElement;
         paginationElem.onclick = (event) => {
@@ -834,6 +868,9 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     }
 
     ngOnDestroy() {
+        if (this.dropdownScrollHandler) {
+            window.removeEventListener('scroll', this.dropdownScrollHandler, true);
+        }
         // MEMORY LEAK FIX: Clear initialization timeout if still pending
         if (this._initTimeoutId) {
             clearTimeout(this._initTimeoutId);
