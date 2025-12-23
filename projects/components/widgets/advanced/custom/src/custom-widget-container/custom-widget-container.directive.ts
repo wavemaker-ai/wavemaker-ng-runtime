@@ -68,8 +68,8 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
         });
 
         this.registerPropertyChangeListener(((key: string, nv: any, ov?: any) => {
-            if (!key.startsWith('prop-')) return;
-            const propName = key.slice(5)
+            if ((!key.startsWith('prop-')) && (!key.startsWith('variant_'))) return;
+            const propName = key.startsWith('prop-') ? key.slice(5) : key
             if (this.props.hasOwnProperty(propName) && this.props[propName] !== nv) {
                 this.props[propName] = nv;
             }
@@ -114,7 +114,7 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
             return;
         }
         if (!registeredPropsSet.has(this.widgetType)) {
-            register(this.widgetType, this.prepareProps(config.properties));
+            register(this.widgetType, this.prepareProps(config));
         }else{
             this.props = Object.assign(this.props, cloneDeep(customWidgetPropsMap[this.widgetType]))
         }
@@ -122,9 +122,9 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
         this.propsReady(resolveFn);
     }
 
-    private prepareProps(props = {}) {
+    private prepareProps(config: any) {
         const propsMap = new Map(customWidgetProps);
-        Object.entries(props).forEach(([k, v]: [string, any]) => {
+        Object.entries(config.properties).forEach(([k, v]: [string, any]) => {
             let type = PROP_TYPE.STRING;
 
             if (v.type === 'boolean') {
@@ -138,6 +138,13 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
             // Do not set the 'bind:*' values
             propsMap.set(`prop-${k}`, { type, value: _.startsWith(v.value, 'bind:') ? undefined : v.value });
             this.props[k] = v.value;
+        });
+
+        Object.entries(config.styles).forEach(([k, v]: [string, any]) => {
+            let type = v.type;
+
+            propsMap.set(`${k}`, { type, value: v.value });
+            this.props[k] = v.value || '';
         });
 
         registeredPropsSet.add(this.widgetType);

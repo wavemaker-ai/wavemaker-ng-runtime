@@ -27,6 +27,7 @@ import {
     Viewport
 } from '@wm/core';
 import {
+    handleErrorVariantClass,
     BaseFieldValidations,
     Context,
     getDefaultViewModeWidget,
@@ -40,6 +41,7 @@ import {ListComponent} from '@wm/components/data/list';
 import {registerProps} from './form-field.props';
 import {FormComponent} from '../form.component';
 import {forEach, get, isArray, isObject, join} from "lodash-es";
+import { fromEvent } from 'rxjs';
 
 declare const $;
 
@@ -229,6 +231,12 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
             this.nativeElement.removeAttribute('__errormsg');
             element?.removeAttribute('aria-invalid');
             element?.removeAttribute('aria-describedby');
+        }
+
+        const control = this.ngform.controls[this._fieldName];
+        if ((control.touched) && this.widgetSubType === 'wm-form-field-custom-widget') {
+            const isInvalid = control.invalid && (control.touched || control.dirty);
+            handleErrorVariantClass(this.nativeElement, isInvalid);
         }
     }
 
@@ -670,7 +678,20 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
             this.form.registerFormFields(this.widget);
 
             addForIdAttributes(this.nativeElement);
+           if (this.widgetSubType === 'wm-form-field-custom-widget') {
+            const element = this.getActiveElement();
+            if (element) {
+                const onFocusSubscription = fromEvent(element, 'focus').subscribe((evt) => {
+                    handleErrorVariantClass(this.nativeElement, this._control?.invalid);
+                });
+                this.registerDestroyListener(() => onFocusSubscription.unsubscribe());
 
+                const onBlurSubscription = fromEvent(element, 'blur').subscribe((evt) => {
+                    handleErrorVariantClass(this.nativeElement, this._control?.invalid);
+                });
+                this.registerDestroyListener(() => onBlurSubscription.unsubscribe());
+            }
+        }
             this.setReadOnlyState();
         });
     }

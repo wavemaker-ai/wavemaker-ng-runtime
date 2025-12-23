@@ -73,7 +73,8 @@ export {
     getContainerTargetClass,
     extractDataSourceName,
     setFocusTrap,
-    getKeyboardFocusableElements
+    getKeyboardFocusableElements,
+    handleErrorVariantClass
 } from './utils/widget-utils';
 export {
     BaseComponent

@@ -52,7 +52,8 @@ import {
     provideAsWidgetRef,
     StylableComponent,
     styler,
-    WidgetRef
+    WidgetRef,
+    handleErrorVariantClass
 } from '@wm/components/base';
 import {PrefabDirective} from '@wm/components/prefab';
 import {ListComponent} from '@wm/components/data/list';
@@ -153,6 +154,10 @@ const setTouchedState = (self, ngForm, fieldName) => {
         const activeElement = getActiveElement(element[0]);
         activeElement?.setAttribute('aria-invalid', ngForm.invalid);
         activeElement?.setAttribute('aria-describedby', element[0].getAttribute('__validationId'));
+        const widgetType = element[0].getAttribute('widgettype');
+        if (widgetType === 'custom-widget' && element[0]) {
+            handleErrorVariantClass(element[0], ngForm.invalid)
+        }
         ngForm.markAsTouched();
     }
 };

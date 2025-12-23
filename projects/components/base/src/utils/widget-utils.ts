@@ -559,3 +559,56 @@ export const getCurrentWidgets = (element, widgets) => {
         return result;
     }, {}));
 }
+
+function transform(key) {
+    return key.replace(/^variant_/, '').replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+}
+
+export const handleErrorVariantClass = (element: any, isInvalid: any) => {
+    const rawVariantInfo = element.getAttribute?.('variant_info');
+    if (!rawVariantInfo) return;
+
+    const variantInfo = fromObjectString(rawVariantInfo);
+    const errorState = variantInfo?.state?.error;
+    const oldState = variantInfo?.state?.enabled;
+
+    
+    if (!errorState) return;
+
+    Object.entries(errorState).forEach(([variantKey, errorValue]: [string, any]) => {
+        const widgetName = transform(variantKey);
+
+        const errorClass = errorValue?.class;
+        const oldStateClass = oldState?.[variantKey]?.class;
+        const targetEl =  element.querySelector(`[name='${widgetName}']`);
+
+        if (!targetEl) return;
+
+        if (isInvalid) {
+            toggleClasses(targetEl, oldStateClass, errorClass);
+        } else {
+            toggleClasses(targetEl, errorClass, oldStateClass);
+        }
+    });
+}
+
+function toggleClasses(el: HTMLElement, removeClasses?: string, addClasses?: string) {
+    removeClasses?.split(' ').filter(c => c.trim()).forEach(c => el.classList.remove(c));
+    addClasses?.split(' ').filter(c => c.trim()).forEach(c => el.classList.add(c));
+}
+
+
+function fromObjectString(str) {
+    if (!str) return {};
+
+    if (typeof str === "object") {
+        return str;
+    }
+    const cleaned = str.trim().replace(/^"|"$/g, "");     // Remove the surrounding quotes if present
+    const jsonLike = cleaned.replace(/'/g, '"');     // Convert single quotes to double quotes
+
+    // Convert JS object format to JSON format:
+    const json = jsonLike.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":');
+
+    return JSON.parse(json);
+}

@@ -66,7 +66,7 @@ const getWidgetTemplate = (attrs, options) => {
     let customAttrs = ``;
     if(options.widgetType === "custom-widget") {
         for (let [key, value] of attrs) {
-            if(key.startsWith('prop-'))
+            if(key.startsWith('prop-') || key.startsWith('variant_'))
                 customAttrs += key + '="' + value + '" ';
         }
     }
