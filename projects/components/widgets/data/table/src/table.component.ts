@@ -2155,10 +2155,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     this.headerselectall=false;
                     this.setDataGridOption("headerselectall", false);
                 }
-                // Process dataset when datasource is set, especially if dataset was previously skipped
-                if (this.datasource && this.dataset !== undefined) {
-                    this.watchVariableDataSet(this.dataset);
-                }
+                
                 this.onDataSourceChange();
                 break;
             case 'dataset':
