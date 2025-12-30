@@ -1403,13 +1403,13 @@ export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) =>
  * @param ele Child element(jquery). For some of the widgets(time, search) containerElem doesn't have height. The inner element(dropdown-menu) has height so passing it as optional.
  */
    export const adjustContainerRightEdges = (containerElem, parentElem, ref, ele?) => {
+    const containerWidth = ele ? parseInt(ele.css('width')) : parseInt(containerElem.css('width'));
+        const viewPortWidth = $(window).width() + window.scrollX;
+        const parentDimesion = parentElem.getBoundingClientRect();
+        const parentRight = parentDimesion.right + window.scrollX;
+        let newLeft;
         const zoneRef = ref._ngZone || ref.ngZone;
         zoneRef.onStable.subscribe(() => {
-            const containerWidth = ele ? parseInt(ele.css('width')) : parseInt(containerElem.css('width'));
-            const viewPortWidth = $(window).width() + window.scrollX;
-            const parentDimesion = parentElem.getBoundingClientRect();
-            const parentRight = parentDimesion.right + window.scrollX;
-            let newLeft;
             const containerEleTransformations = getWebkitTraslationMatrix(containerElem);
 
             if (viewPortWidth - (parentRight + parentDimesion.width) < containerWidth) {
