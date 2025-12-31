@@ -488,6 +488,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
                     this.invalidDateTimeFormat = false;
                     this.isEnterPressedOnDateInput = true;
                     this.bsDatePickerDirective.bsValue = newVal;
+                    
                 }
                 this.toggleDpDropdown(event);
             } else {
