@@ -1603,7 +1603,9 @@ export const getAppSetting = (key, defaultValue) => {
 export const setListClass = (scope) => {
     let temp = '';
     if (scope.itemsperrow) {
-        if (isNaN(parseInt(scope.itemsperrow, 10))) {
+        if(scope.itemsperrow === "auto") {
+            scope.itemsPerRowClass = "";
+        } else if (isNaN(parseInt(scope.itemsperrow, 10))) {
             // handling itemsperrow containing string of classes
             split(scope.itemsperrow, ' ').forEach((cls: string) => {
                 const keys = split(cls, '-');
