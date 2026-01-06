@@ -681,6 +681,12 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 super.onPropertyChange(key, nv, ov);
         }
     }
+    override onStyleChange(key: string, nv: any, ov?: any) {
+        if (key === 'height') {
+            this.$element.css('overflow', 'auto');
+        }
+        super.onStyleChange(key, nv, ov);
+    }
 
     // Event callbacks on success/error
     onResultCb(data, status, event?) {
