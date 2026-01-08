@@ -2871,7 +2871,7 @@ $.widget('wm.datatable', {
         var $cell = $target.closest('td.app-datagrid-cell'),
             $editCells;
 
-        if ($cell.is(':last-child')) {
+        if ($cell.is(':last-child') || $cell.nextAll('td.app-datagrid-cell:visible').length === 0 ) {
             return true;
         }
 
