@@ -107,6 +107,8 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent implements O
         if (key === 'required') {
             this._onChange(this.datavalue);
             return;
+        }else if(key === 'layout'){
+            this.handleLayout(nv)
         }
         if (key === 'itemsperrow') {
             setListClass(this);
@@ -114,6 +116,14 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent implements O
             super.onPropertyChange(key, nv, ov);
         }
     }
+    handleLayout(layout: string) {
+        const direction = layout === 'vertical' ? 'column' : 'row';
+        this.$element.css({
+            display: 'flex',
+            flexDirection: direction
+        });
+    }
+
 
     ngOnDestroy() {
         // MEMORY LEAK FIX: Remove all event listeners

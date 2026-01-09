@@ -95,7 +95,7 @@ export const getFieldLayoutConfig = (captionWidth, captionPosition, os): any => 
 };
 
 export const getDefaultViewModeWidget = widget => {
-    if (includes(['checkbox', 'toggle', 'rating'], widget)) {
+    if (includes(['checkbox', 'toggle', 'iconbutton-toggle', 'rating'], widget)) {
         return VIEW_MODE_OPTIONS.DEFAULT;
     }
     return VIEW_MODE_OPTIONS.LABEL;
@@ -122,7 +122,7 @@ export const parseValueByType = (value, type, widget, trailingzero?) => {
         if (widget === FormWidgetType.NUMBER ) {
             return (isNaN(Number(value))|| value == null) ? null : trailingzero ? value : Number(value);
         }
-        if (widget === FormWidgetType.CHECKBOX || widget === FormWidgetType.TOGGLE) {
+        if (widget === FormWidgetType.CHECKBOX || widget === FormWidgetType.TOGGLE || widget === FormWidgetType.ICONBUTTONTOGGLE) {
             return parseBooleanValue(value);
         }
         return value;
@@ -153,7 +153,7 @@ const fieldTypeWidgetTypeMap = {
     'time'       : ['time', 'text', 'number', 'select', 'checkboxset', 'radioset', 'autocomplete', 'chips'],
     'timestamp'  : ['timestamp', 'text', 'number', 'select', 'checkboxset', 'radioset', 'autocomplete', 'chips'],
     'datetime'   : ['datetime', 'text', 'select', 'checkboxset', 'radioset', 'autocomplete', 'chips'],
-    'boolean'    : ['checkbox', 'radioset', 'toggle', 'select'],
+    'boolean'    : ['checkbox', 'radioset', 'toggle', 'iconbutton-toggle', 'select'],
     'list'       : ['select', 'radioset', 'checkboxset', 'switch', 'autocomplete', 'chips'],
     'clob'       : ['text', 'textarea', 'richtext'],
     'blob'       : ['upload'],
@@ -215,7 +215,7 @@ export const getDefaultValue = (value, type, widget) => {
         if (widget === FormWidgetType.NUMBER || widget === FormWidgetType.SLIDER || widget === FormWidgetType.CURRENCY) {
             return isNaN(Number(value)) ? null : Number(value);
         }
-        if (widget === FormWidgetType.CHECKBOX || widget === FormWidgetType.TOGGLE) {
+        if (widget === FormWidgetType.CHECKBOX || widget === FormWidgetType.TOGGLE || widget === FormWidgetType.ICONBUTTONTOGGLE) {
             return parseBooleanValue(value);
         }
         return value;

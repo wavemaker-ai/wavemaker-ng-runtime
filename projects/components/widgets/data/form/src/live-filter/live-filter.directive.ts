@@ -258,6 +258,7 @@ export class LiveFilterDirective implements OnDestroy {
                         break;
                     case FormWidgetType.CHECKBOX:
                     case FormWidgetType.TOGGLE:
+                    case FormWidgetType.ICONBUTTONTOGGLE:
                         if (isDefined(filterField._value) && filterField._value !== '') {
                             fieldValue = filterField.type === DataType.BOOLEAN ? JSON.parse(filterField._value) : filterField._value;
                         }

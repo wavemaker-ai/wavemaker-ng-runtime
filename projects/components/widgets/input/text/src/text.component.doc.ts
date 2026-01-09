@@ -184,4 +184,9 @@ export class Text {
      * @returns {void} This method does not return anything
      */
     onKeyup($event: KeyboardEvent, widget: any) {}
+
+    onLeadingIconClick($event: MouseEvent, widget: any) {}
+
+    onTrailingIconClick($event: MouseEvent, widget: any) {}
+
 }

@@ -85,12 +85,22 @@ export class RadiosetComponent extends DatasetAwareFormComponent implements OnDe
     onPropertyChange(key, nv, ov?) {
         if (key === 'tabindex') {
             return;
+        }else if(key === 'layout'){
+            this.handleLayout(nv)
         }
         if (key === 'itemsperrow') {
             setListClass(this);
         } else {
             super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    handleLayout(layout: string) {
+        const direction = layout === 'vertical' ? 'column' : 'row';
+        this.$element.css({
+            display: 'flex',
+            flexDirection: direction
+        });
     }
 
     ngOnDestroy() {

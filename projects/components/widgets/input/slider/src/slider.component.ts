@@ -11,7 +11,8 @@ import {Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angu
 import {BaseFormCustomComponent} from '@wm/components/input/base-form-custom';
 
 import {registerProps} from './slider.props';
-import {isDefined} from "@wm/core";
+import {App, isDefined} from "@wm/core";
+import { CommonModule } from "@angular/common";
 
 
 const DEFAULT_CLS = 'app-slider slider';
@@ -22,7 +23,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
     standalone: true,
-    imports: [TextContentDirective, FormsModule],
+    imports: [TextContentDirective, FormsModule, CommonModule],
     selector: '[wmSlider]',
     templateUrl: './slider.component.html',
     providers: [
@@ -45,13 +46,18 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
     public arialabel: string;
     public markerlabeltext: string
     public showmarkers: boolean;
+    public showicons: boolean;
+    public starticon: string;
+    public endicon:string;
+    public isPrism: boolean = false;
 
     @ViewChild(NgModel) ngModel: NgModel;
     public markerItems: any[];
 
-    constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, public app?: App) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
+        this.isPrism = this.app.isPrism;
     }
 
     // change and blur events are added from the template
@@ -61,8 +67,18 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
         }
     }
 
-    public handleChange(newVal: boolean) {
+    public handleChange(newVal?: boolean) {
+        this.updateSliderValue();
         this.invokeOnChange(this.datavalue, {type: 'change'}, this.ngModel.valid);
+    }
+
+    updateSliderValue() {
+        const sliderValue = 100 - ((((Number(this.datavalue) || 0) - (this.minvalue || 0)) / ((this.maxvalue || 100) - (this.minvalue || 0))) * 100);
+        const slider = this.nativeElement.querySelector('.slider-control') as HTMLElement;
+        if (slider) {
+            const safePercent = Math.min(100, Math.max(0, sliderValue));
+            slider.style.setProperty('--end', `${safePercent}%`);
+        }
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
@@ -100,7 +116,59 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
         if(this.showmarkers) {
             setTimeout(() => {this.renderMarkers();}, 40);
         }
+        if(this.datavalue){
+          setTimeout(() => {this.updateSliderValue();});
+        }
     }
+
+    decrementButtonClick(event: Event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (this.disabled) {
+            return;
+        }
+
+        const step = Number(this.step) || 1;
+        const min = Number(this.minvalue) || 0;
+
+        let value = Number(this.datavalue ?? 50);
+        value = value - step;
+        if (value <= min) {
+            return;
+        }
+        if (!isNaN(min)) {
+            value = Math.max(value, min);
+        }
+
+        this.datavalue = value;
+        this.handleChange()
+    }
+
+
+    incrementButtonClick(event: Event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (this.disabled) {
+            return;
+        }
+
+        const step = Number(this.step) || 1;
+        const max = Number(this.maxvalue) || 100;
+
+        let value = Number(this.datavalue ?? 50);
+        value = value + step;
+        if (value >= max)  return;
+
+        if (!isNaN(max)) {
+            value = Math.min(value, max);
+        }
+
+        this.datavalue = value;
+        this.handleChange()
+    }
+
 
     ngOnDestroy() {
         // MEMORY LEAK FIX: Clear ViewChild reference

@@ -18,6 +18,9 @@ export const sliderProps = new Map(
         ['tabindex', {value: 0, ...PROP_NUMBER}],
         ['showmarkers',{value: false, ...PROP_BOOLEAN}],
         ['markerlabeltext',PROP_ANY],
+        ['showicons', PROP_BOOLEAN],
+        ['starticon',{value : 'wi wi-minus', ...PROP_STRING}],
+        ['endicon',{value : 'wi wi-plus', ...PROP_STRING}],
     ]
 );
 
