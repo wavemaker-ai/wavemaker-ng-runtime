@@ -116,7 +116,10 @@ const parseBooleanValue = value => {
 
 export const parseValueByType = (value, type, widget, trailingzero?) => {
     if (widget) {
-        if (widget === FormWidgetType.NUMBER || widget === FormWidgetType.SLIDER || widget === FormWidgetType.CURRENCY) {
+        if (widget === FormWidgetType.SLIDER || widget === FormWidgetType.CURRENCY) {
+            return isNaN(Number(value))? null : trailingzero ? value : Number(value);
+        }
+        if (widget === FormWidgetType.NUMBER ) {
             return (isNaN(Number(value))|| value == null) ? null : trailingzero ? value : Number(value);
         }
         if (widget === FormWidgetType.CHECKBOX || widget === FormWidgetType.TOGGLE) {
