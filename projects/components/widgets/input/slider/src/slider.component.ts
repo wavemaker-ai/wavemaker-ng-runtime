@@ -11,7 +11,7 @@ import {Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angu
 import {BaseFormCustomComponent} from '@wm/components/input/base-form-custom';
 
 import {registerProps} from './slider.props';
-import {App, isDefined} from "@wm/core";
+import {App, isDefined, switchClass} from "@wm/core";
 import { CommonModule } from "@angular/common";
 
 
@@ -20,7 +20,11 @@ const WIDGET_CONFIG: IWidgetConfig = {
     widgetType: 'wm-slider',
     hostClass: DEFAULT_CLS
 };
-
+const RANGE_LABEL_POSITION: {[key: string]: string} = {
+  top: 'range-label-top',
+  side: 'range-label-side',
+  bottom: 'range-label-bottom',
+};
 @Component({
     standalone: true,
     imports: [TextContentDirective, FormsModule, CommonModule],
@@ -82,6 +86,7 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
+    console.log(key)
         if (key === 'tabindex') {
             return;
         }
@@ -89,6 +94,8 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
             if(this.showmarkers) {
                 this.renderMarkers();
             }
+        } else if(key === 'rangelabelposition'){
+             switchClass(this.nativeElement, RANGE_LABEL_POSITION[nv], RANGE_LABEL_POSITION[ov]);
         }
         super.onPropertyChange(key, nv, ov);
     }

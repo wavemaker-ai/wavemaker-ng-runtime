@@ -21,6 +21,7 @@ export const sliderProps = new Map(
         ['showicons', PROP_BOOLEAN],
         ['starticon',{value : 'wi wi-minus', ...PROP_STRING}],
         ['endicon',{value : 'wi wi-plus', ...PROP_STRING}],
+        ['rangelabelposition',{value : 'bottom', ...PROP_STRING}],
     ]
 );
 
