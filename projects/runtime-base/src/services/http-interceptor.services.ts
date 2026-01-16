@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 
-import {from, Observable, Subject, switchMap} from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
 import { httpService, appManager } from '@wm/variables';
@@ -43,53 +43,49 @@ export class HttpCallInterceptor implements HttpInterceptor {
             let apiUrl= _WM_APP_PROJECT.apiUrl + request.url;
             request = request.clone({ url: apiUrl });
         }
-
-        return from(
-            Promise.resolve().then(() => {
-                if (appManager && appManager.appOnBeforeServiceCall) {
-                    const wmReq = this.wmHttpRequest.angularToWmRequest(request);
-                    return appManager.appOnBeforeServiceCall(wmReq);
+        if (appManager && appManager.appOnBeforeServiceCall) {
+            // Convert the angular HttpRequest to wm HttpRequest
+            const req = this.wmHttpRequest.angularToWmRequest(request);
+            // trigger the common onBeforeServiceCall handler present in app.js
+            modifiedReq =  appManager.appOnBeforeServiceCall(req);
+            if (modifiedReq) {
+                // Convert the wm HttpRequest to angular HttpRequest
+                modifiedReq = this.wmHttpRequest.wmToAngularRequest(modifiedReq);
+                request = modifiedReq;
+            }
+        }
+        return next.handle(request).pipe(
+            tap((response: any) => {
+                    if (response && response.type === 4 && appManager &&  appManager.appOnServiceSuccess) {
+                        // Convert the angular HttpResponse to wm HttpResponse
+                        const resp = this.wmHttpResponse.angularToWmResponse(response);
+                        // trigger the common success handler present in app.js
+                        modifiedResp = appManager.appOnServiceSuccess(resp.body, resp);
+                        if (modifiedResp) {
+                            // Convert the wm HttpResponse to angular HttpResponse
+                            modifiedResp = this.wmHttpResponse.wmToAngularResponse(modifiedResp);
+                            extend(response, modifiedResp);
+                        }
+                    }
+                },
+                error => {
+                    error._401Subscriber = this.createSubject();
+                    if (httpService.isPlatformSessionTimeout(error)) {
+                        httpService.handleSessionTimeout(request, error._401Subscriber);
+                    }
+                    if (appManager && appManager.appOnServiceError) {
+                        // Convert the angular HttpResponse to wm HttpResponse
+                        const err = this.wmHttpResponse.angularToWmResponse(error);
+                        // trigger the common error handler present in app.js
+                        modifiedResp = appManager.appOnServiceError(err.message, err);
+                        if (modifiedResp) {
+                            // Convert the wm HttpResponse to angular HttpResponse
+                            modifiedResp = this.wmHttpResponse.wmToAngularResponse(modifiedResp);
+                            extend(error, modifiedResp);
+                        }
+                    }
                 }
-                return null;
-            }))
-            .pipe(
-                switchMap((receivedModifiedReq) => {
-                    if (receivedModifiedReq) {
-                        request = this.wmHttpRequest.wmToAngularRequest(receivedModifiedReq);
-                    }
-                    return next.handle(request);
-                 }),
-                tap((response: any) => {
-                        if (response && response.type === 4 && appManager &&  appManager.appOnServiceSuccess) {
-                            // Convert the angular HttpResponse to wm HttpResponse
-                            const resp = this.wmHttpResponse.angularToWmResponse(response);
-                            // trigger the common success handler present in app.js
-                            modifiedResp = appManager.appOnServiceSuccess(resp.body, resp);
-                            if (modifiedResp) {
-                                // Convert the wm HttpResponse to angular HttpResponse
-                                modifiedResp = this.wmHttpResponse.wmToAngularResponse(modifiedResp);
-                                extend(response, modifiedResp);
-                            }
-                        }
-                    },
-                    error => {
-                        error._401Subscriber = this.createSubject();
-                        if (httpService.isPlatformSessionTimeout(error)) {
-                            httpService.handleSessionTimeout(request, error._401Subscriber);
-                        }
-                        if (appManager && appManager.appOnServiceError) {
-                            // Convert the angular HttpResponse to wm HttpResponse
-                            const err = this.wmHttpResponse.angularToWmResponse(error);
-                            // trigger the common error handler present in app.js
-                            modifiedResp = appManager.appOnServiceError(err.message, err);
-                            if (modifiedResp) {
-                                // Convert the wm HttpResponse to angular HttpResponse
-                                modifiedResp = this.wmHttpResponse.wmToAngularResponse(modifiedResp);
-                                extend(error, modifiedResp);
-                            }
-                        }
-                    }
-                )
+            )
         );
     }
 }
