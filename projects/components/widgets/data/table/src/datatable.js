@@ -2871,7 +2871,7 @@ $.widget('wm.datatable', {
         var $cell = $target.closest('td.app-datagrid-cell'),
             $editCells;
 
-        if ($cell.is(':last-child')) {
+        if ($cell.is(':last-child') || $cell.nextAll('td.app-datagrid-cell:visible').length === 0) {
             return true;
         }
 
@@ -2996,7 +2996,7 @@ $.widget('wm.datatable', {
                 // triggered from the Row Actions
                 if (!isTargetGridAction && !isTargetRowAction) {
                     //Save the row on last column of the data table. Do not save the row if focus is out of input file.
-                    if (!isLastColumn || (isLastColumn && e.relatedTarget === null) || $target.hasClass("file-upload")) {
+                    if (!isLastColumn || (isLastColumn && (e.relatedTarget === null || $(e.target).is('tr.app-datagrid-row'))) || $target.hasClass("file-upload")) {
                         return;
                     }
                 }
