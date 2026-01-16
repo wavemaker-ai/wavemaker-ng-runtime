@@ -29,7 +29,8 @@ export const radiosetProps = new Map(
         ['showindevice', {displayType: 'inline-block', value: 'all', ...PROP_STRING}],
         ['tabindex', {value: 0, ...PROP_NUMBER}],
         ['usekeys', PROP_BOOLEAN],
-        ['hint', PROP_STRING]
+        ['hint', PROP_STRING],
+        ['layout', PROP_STRING]
     ]
 );
 

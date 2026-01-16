@@ -19,7 +19,10 @@ export const checkboxProps = new Map(
         ['shortcutkey', PROP_STRING],
         ['show', {value: true, ...PROP_BOOLEAN}],
         ['tabindex', {value: 0, ...PROP_NUMBER}],
-        ['uncheckedvalue', {value: false, ...PROP_STRING}]
+        ['uncheckedvalue', {value: false, ...PROP_STRING}],
+        ['unselectedicon', PROP_STRING],
+        ['selectedicon', PROP_STRING]
+
     ]
 );
 
@@ -34,6 +37,10 @@ export const registerProps = () => {
     );
     registerFormWidget(
         FormWidgetType.TOGGLE,
+        checkboxProps
+    );
+     registerFormWidget(
+        FormWidgetType.ICONBUTTONTOGGLE,
         checkboxProps
     );
 };

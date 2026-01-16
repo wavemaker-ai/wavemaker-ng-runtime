@@ -27,7 +27,6 @@ import {
 import {
     AUTOCLOSE_TYPE,
     getContainerTargetClass,
-    ImagePipe,
     IWidgetConfig,
     provideAsWidgetRef,
     StylableComponent,
@@ -55,7 +54,7 @@ let activePopover: PopoverComponent;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, PopoverModule, AnchorComponent, ImagePipe],
+  imports: [CommonModule, PopoverModule, AnchorComponent],
     selector: 'wm-popover',
     templateUrl: './popover.component.html',
     providers: [
@@ -111,6 +110,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     private preventFocusShift: boolean = false;
     private partialLoadedSubscription: any;
     private arrowPositionSubscription: any;
+    isPrism: boolean;
 
     @ViewChild(PopoverDirective) private bsPopoverDirective;
     @ViewChild('anchor', { static: true }) anchorRef: ElementRef;
@@ -120,6 +120,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     constructor(inj: Injector, private app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, private cdr: ChangeDetectorRef) {
         super(inj, WIDGET_CONFIG, explicitContext);
         this.popoverContainerCls = `app-popover-${this.widgetId}`;
+        this.isPrism = this.app.isPrism;
     }
 
     private setupDocumentClickHandler() {
@@ -321,6 +322,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             popoverContainer.addEventListener('click', (event: Event) => {
                 event.stopPropagation();
             });
+            if (this.isPrism) this.applyVariantClass(popoverContainer);
         }
         setCSSFromObj(popoverContainer, {
             height: this.popoverheight,
@@ -543,4 +545,15 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         // Call parent cleanup
         super.ngOnDestroy();
     }
+
+    // Applying all variant classes that start with "popover-" from the popover.
+    // Ensures the popover container also receives the variant styling.
+    applyVariantClass(popoverContainer: HTMLElement) {
+        if (!popoverContainer) return;
+
+        const classes = (this.class || '').split(/\s+/);
+        const popoverVariants = classes.filter(c => c.startsWith('popover-'));
+        popoverVariants.forEach(v => popoverContainer.classList.add(v));
+    }
+
 }

@@ -903,9 +903,6 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         // This ensures all watchers registered for this component are cleaned up
         if (this.widgetId) {
             $unwatchAll(this.widgetId);
-            // if (removedCount > 0) {
-            //     console.log(`🧹 Cleaned up ${removedCount} watcher(s) for widget ${this.widgetId}`);
-            // }
         }
         
         // MEMORY LEAK FIX: Clear context to release references to parent scope data

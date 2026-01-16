@@ -257,7 +257,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
         this.focusTimePickerPopover(this);
         this.bindTimePickerKeyboardEvents();
         adjustContainerPosition($('bs-dropdown-container'), this.nativeElement, this.bsDropdown._dropdown, $('bs-dropdown-container .dropdown-menu'));
-        adjustContainerRightEdges($('bs-dropdown-container'), this.nativeElement, this.bsDropdown._dropdown, $('bs-dropdown-container .dropdown-menu'));
+//        adjustContainerRightEdges($('bs-dropdown-container'), this.nativeElement, this.bsDropdown._dropdown, $('bs-dropdown-container .dropdown-menu'));
     }
 
     public onDatePickerOpen() {

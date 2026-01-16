@@ -263,7 +263,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     ngOnDestroy() {
         // MEMORY LEAK FIX: Unwatch all App-scoped watchers when app is destroyed
         $unwatchAllByScope('App');
-        
+
         // MEMORY LEAK FIX: Unsubscribe from navigation end subscription
         if (this.navigationEndSubscription){
             this.navigationEndSubscription.unsubscribe();

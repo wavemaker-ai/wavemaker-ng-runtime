@@ -39,6 +39,7 @@ import {
     removeAttr,
     removeClass,
     scrollToElement,
+    setListClass,
 } from '@wm/core';
 import {
     FilterPipe,
@@ -235,6 +236,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     onMaxDefaultValueChange: Function;
     numberOfFields: number;
     readonly :boolean;
+    itemsPerRowClass: string;
 
     private _debouncedUpdateFieldSource: Function = _debounce(this.updateFieldSource, 350);
     private operationType;
@@ -376,7 +378,10 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             this.formArrayIndex = this.parentFormArray.length - 1;
         }
         this.addInnerNgFormToForm(this.bindingValue);
-    }
+        setTimeout(() => {
+            $(this.nativeElement).find('div[data-role="form-field"], div[data-role="filter-field"]').addClass(this.itemsPerRowClass)
+        }); 
+   }
 
     findOperationType() {}
 
@@ -668,9 +673,19 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                     });
                 }
                 break;
+            case 'itemsperrow':
+                setListClass(this);
+                break;
+
             default:
                 super.onPropertyChange(key, nv, ov);
         }
+    }
+    override onStyleChange(key: string, nv: any, ov?: any) {
+        if (key === 'height') {
+            this.$element.css('overflow', 'auto');
+        }
+        super.onStyleChange(key, nv, ov);
     }
 
     // Event callbacks on success/error
