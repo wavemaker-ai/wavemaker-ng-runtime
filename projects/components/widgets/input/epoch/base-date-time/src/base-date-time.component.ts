@@ -1027,7 +1027,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
     }
 
     onPropertyChange(key, nv, ov?) {
-
+        const isPristine=this.formControl?.pristine;
         if (key === 'tabindex') {
             return;
         }
@@ -1083,7 +1083,9 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         } else {
             super.onPropertyChange(key, nv, ov);
         }
-
+        if((key === 'mindate'||key === 'maxdate'||key === 'excludedates'|| key === 'excludedays') && isPristine) {
+            this.formControl?.control?.markAsPristine()
+        }
     }
 
     ngAfterViewInit() {
