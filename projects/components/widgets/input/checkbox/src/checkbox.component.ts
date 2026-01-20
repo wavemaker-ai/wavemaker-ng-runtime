@@ -108,10 +108,6 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
 
         // if the type of the checkbox is toggle update the related classes on the host node
         toggleClass(this.nativeElement, 'app-toggle', type === 'toggle');
-        if(type === 'button'){
-            this.unselectedicon = this.unselectedicon || 'fa fa-gear'
-            this.selectedicon = this.selectedicon || 'wm-sl-l sl-settings'
-        }
     }
 
     onPropertyChange(key, nv, ov) {
