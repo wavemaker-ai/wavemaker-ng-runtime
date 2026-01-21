@@ -101,6 +101,11 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
         @Attribute('type') public type,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
+        if(type === 'button'){
+            WIDGET_CONFIG.hostClass = 'app-iconbutton-toggle'
+        }else{
+            WIDGET_CONFIG.hostClass = DEFAULT_CLS
+        }
         super(inj, WIDGET_CONFIG, explicitContext);
 
         this._checkedvalue = unStringify(checkedVal, true);
