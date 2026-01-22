@@ -86,7 +86,6 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
-    console.log(key)
         if (key === 'tabindex') {
             return;
         }
@@ -96,6 +95,9 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
             }
         } else if(key === 'rangelabelposition'){
              switchClass(this.nativeElement, RANGE_LABEL_POSITION[nv], RANGE_LABEL_POSITION[ov]);
+        }else if(key === 'datavalue'){
+             this.datavalue = (nv === "" || nv === null) ? (this.datavalue ?? 50) : nv
+             this.updateSliderValue()
         }
         super.onPropertyChange(key, nv, ov);
     }

@@ -905,11 +905,21 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             field.value = '';
             if (field.widgettype === 'upload' || field.type === DataType.BLOB) {
                 this.resetFileUploadWidget(field, true);
+            }else if(field.widgettype === 'slider'){
+                this.resetSliderWidget(field);
             }
             field.nativeElement.querySelector('input')?.removeAttribute('aria-invalid');
         });
         this.constructDataObject();
         this.clearMessage();
+    }
+
+    resetSliderWidget(field){
+        const $formEle = this.$element;
+        const slider =  $formEle.find('[name="' + field.key + '_formWidget"]').closest('.slider-control');
+         if (slider.length) {
+            slider.css('--end', `50%`);
+        }
     }
 
     savePrevformFields() {
