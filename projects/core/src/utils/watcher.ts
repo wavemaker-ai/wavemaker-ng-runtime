@@ -531,7 +531,7 @@ const triggerWatchers = (ignoreMuted: boolean = false): void => {
     // Schedule cleanup after watchers are triggered
     scheduleThresholdCleanup();
     if (changeDetected && pass === MAX_WATCH_CYCLES) {
-        console.warn(`Watch cycles exceeded limit of ${MAX_WATCH_CYCLES}`);
+        // console.warn(`Watch cycles exceeded limit of ${MAX_WATCH_CYCLES}`);
     }
 };
 
