@@ -74,24 +74,26 @@ function getWatcherCount(): number {
 
 export const cleanupStaleWatchers = (): number => {
     // console.log(".........Cleaning up stale watchers...registry.size....", registry.size);
-    let removed = 0;
+    // let removed = 0;
 
-    registry.forEach((bucket, widgetId) => {
-        if (widgetId.startsWith('widget-id') && !document.querySelector(`[widget-id="${widgetId}"]`)) {
-            for (const key in bucket) {
-                if (bucket.hasOwnProperty(key) && key !== "scopeType" && key !== "scopeName" && typeof bucket[key] !== "function") {
-                    let watchInfo = bucket[key];
-                    if (watchInfo && watchInfo.destroyFn) {
-                        watchInfo.destroyFn();
-                    }
-                }
-            }
-            removed++;
-            registry.delete(widgetId);
-            return;
-        }
-    });
-    return removed;
+    // registry.forEach((bucket, widgetId) => {
+    //     if (widgetId.startsWith('widget-id') && !document.querySelector(`[widget-id="${widgetId}"]`)) {
+    //         for (const key in bucket) {
+    //             if (bucket.hasOwnProperty(key) && key !== "scopeType" && key !== "scopeName" && typeof bucket[key] !== "function") {
+    //                 let watchInfo = bucket[key];
+    //                 if (watchInfo && watchInfo.destroyFn) {
+    //                     watchInfo.destroyFn();
+    //                 }
+    //             }
+    //         }
+    //         removed++;
+    //         registry.delete(widgetId);
+    //         return;
+    //     }
+    // });
+    // return removed;
+
+    return 0;
 };
 
 export const scheduleThresholdCleanup = (): void => {
@@ -217,29 +219,119 @@ const getUpdatedWatchInfo = (expr: string, acceptsArray: boolean, listener: any)
 /**
  * Determines if an expression is static (doesn't need to be watched)
  */
-const STATIC_EXPRESSION_NAMES = [
-    "row.getProperty('investment')",
-    "row.getProperty('factsheetLink')",
-    "row.getProperty('isRebalanceEligible')"
-];
 
-const isStaticExpression = (expr: any): boolean => {
+const isStaticExpression = (expr: any, $scope?: any, $locals?: any): boolean => {
     if (typeof expr !== 'string') {
         return false;
     }
 
     const trimmedExpr = expr.trim();
 
-    // Expressions that always evaluate to localization strings
-    // if (trimmedExpr.includes('appLocale')) {
-    //     return true;
-    // }
+    // CRITICAL: Check for function calls FIRST (even if quoted) - these are ALWAYS dynamic
+    // Function calls like skippable(), cancelable(), 'disableDone()', etc. need to be watched dynamically
+    // because they can return different values on each evaluation
+    if (trimmedExpr.includes('(') && trimmedExpr.includes(')')) {
+        return false; // Function calls are dynamic (not static), even if quoted
+    }
 
-    // Hard-coded static expression names
-    if (STATIC_EXPRESSION_NAMES.includes(trimmedExpr)) {
+    // CRITICAL: appLocale expressions are ALWAYS static (localization strings)
+    // Check FIRST before any other logic to ensure they're never treated as dynamic
+    // This includes: appLocale.*, Page.appLocale.*, Prefab.appLocale.*, Partial.appLocale.*, App.appLocale.*
+    // Examples: appLocale.transferAmtBtnInv_InfoEquityWashText2, Prefab.appLocale.tabiLine3MsgLabel, etc.
+    // Check both quoted and unquoted appLocale expressions
+    let exprToCheck = trimmedExpr;
+    if ((trimmedExpr.startsWith('"') && trimmedExpr.endsWith('"')) ||
+        (trimmedExpr.startsWith("'") && trimmedExpr.endsWith("'"))) {
+        exprToCheck = trimmedExpr.slice(1, -1); // Remove quotes for checking
+    }
+    
+    if (exprToCheck.startsWith('appLocale') || 
+        exprToCheck.startsWith('Page.appLocale') || 
+        exprToCheck.startsWith('Prefab.appLocale') || 
+        exprToCheck.startsWith('Partial.appLocale') ||
+        exprToCheck.startsWith('App.appLocale')) {
+        return true; // All appLocale expressions are static (even if quoted)
+    }
+
+    // CRITICAL: Check for quoted strings - plain quoted strings are static
+    // Expressions with dots (.) or function calls inside quotes are dynamic
+    // Examples: 'iconclass' -> static, 'some.property' -> dynamic, 'disableDone()' -> dynamic
+    if ((trimmedExpr.startsWith('"') && trimmedExpr.endsWith('"')) ||
+        (trimmedExpr.startsWith("'") && trimmedExpr.endsWith("'"))) {
+        // If it's a quoted string, check if it contains dots or function calls
+        const content = trimmedExpr.slice(1, -1); // Remove quotes
+        if (content.includes('.') || content.includes('(') || content.includes(')')) {
+            return false; // Quoted expressions with dots or function calls are dynamic
+        }
+        return true; // Plain quoted strings without dots or function calls are static
+    }
+
+    // IMPORTANT: Check for Page/Prefab/Partial/App scoped expressions EARLY
+    // These expressions (e.g., Page.abc, Partial.abc, Prefab.abc, App.abc) are ALWAYS dynamic
+    // regardless of whether abc is a string, function, variable, or any other type
+    // They need to be watched dynamically and should NEVER be treated as static
+    // Exception: appLocale expressions are static even when scoped (handled above)
+    if (trimmedExpr.startsWith('Page.') || trimmedExpr.startsWith('Prefab.') || trimmedExpr.startsWith('Partial.') || trimmedExpr.startsWith('App.')) {
+        // All scoped expressions are dynamic (appLocale already handled above)
+        return false;
+    }
+
+    // Literal values are static
+    if (trimmedExpr === 'true' || trimmedExpr === 'false' || trimmedExpr === 'null' || trimmedExpr === 'undefined') {
         return true;
     }
 
+    // Numeric literals
+    if (!isNaN(Number(trimmedExpr)) && trimmedExpr.trim() !== '') {
+        return true;
+    }
+
+    // Check if expression contains Variables., Actions., Widgets., or row. - these are dynamic and should be watched
+    if (trimmedExpr.includes('Variables.') || trimmedExpr.includes('Actions.') || trimmedExpr.includes('Widgets.') || 
+        trimmedExpr.includes('row.')) {
+        return false;
+    }
+
+    // Get scope type if available
+    const scopeType = $scope !== undefined ? getScopeType($scope) : null;
+
+    // Simple identifier without special characters
+    // Check if it might be a scoped variable (e.g., welcomeMessage -> Page.welcomeMessage)
+    // Only check simple identifiers (single word, no dots, brackets, etc.)
+    if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmedExpr)) {
+        // If we have scope information, check if this identifier resolves to a scoped variable
+        if ($scope !== undefined && scopeType) {
+            const scopedExpr = `${scopeType}.${trimmedExpr}`;
+            try {
+                const scopedFn = $parseExpr(scopedExpr);
+                const scopedValue = scopedFn($scope, $locals);
+                // If the scoped expression evaluates successfully, it's a scoped variable
+                // and should return false (not static) - these need to be watched dynamically
+                return false;
+            } catch (scopedE) {
+                // If scoped expression doesn't exist, check if the simple identifier itself exists in scope
+                // This handles cases where the variable might be directly on the scope (not as Page.xxx)
+                try {
+                    const fn = $parseExpr(trimmedExpr);
+                    const value = fn($scope, $locals);
+                    // If it evaluates, it's a variable that can change, so it's not static
+                    return false;
+                } catch (e) {
+                    // If neither scoped nor direct evaluation works, treat as static (backward compatibility)
+                    return true;
+                }
+            }
+        }
+        // If no scope information, we can't determine if it's scoped, so treat as static (backward compatibility)
+        return true;
+    }
+
+    // Everything else is dynamic - including:
+    // - Component properties (isOpen, content, etc.)
+    // - Expressions with dots, brackets, operators, etc.
+    // - row.getProperty() calls (data can change)
+    // - Variables, Actions, Widgets references
+    // - Any expressions with operators, functions, etc.
     return false;
 };
 
@@ -308,16 +400,99 @@ export const $watch = (
     }
 
     // Handle static expressions
-    if (isStaticExpression(expr)) {
+    if (isStaticExpression(expr, $scope, $locals)) {
+        // Check if it's an appLocale expression - these should never be added to registry
+        const trimmedExpr = typeof expr === 'string' ? expr.trim() : '';
+        const isAppLocale = trimmedExpr.includes('appLocale') || 
+                           trimmedExpr.startsWith('Page.appLocale.') || 
+                           trimmedExpr.startsWith('Prefab.appLocale.') || 
+                           trimmedExpr.startsWith('Partial.appLocale.') ||
+                           trimmedExpr.startsWith('App.appLocale.');
+        
         try {
             const fn = $parseExpr(expr);
             const staticValue = fn($scope, $locals);
             listener(staticValue, FIRST_TIME_WATCH);
         } catch (e) {
             console.warn(`Error evaluating static expression '${expr}':`, e);
-            listener(undefined, FIRST_TIME_WATCH);
+            // If it's an appLocale expression, don't add to registry even if evaluation fails
+            if (isAppLocale) {
+                return () => { }; // No-op unsubscribe
+            }
+            // For other static expressions, if evaluation fails, fall through to normal watch registration
+            // This ensures the app doesn't break if expression evaluation fails
         }
+        
+        // Warn if a scoped expression was treated as static (should not happen)
+        if (typeof expr === 'string' && (expr.startsWith('Page.') || expr.startsWith('Prefab.') || expr.startsWith('Partial.') || expr.startsWith('App.')) && !isAppLocale) {
+            console.warn('Scoped expression was treated as static and NOT added to registry! This should not happen.', {
+                expr,
+                scopeType: getScopeType($scope)
+            });
+        }
+        
         return () => { }; // No-op unsubscribe
+    }
+
+    // CRITICAL: Double-check for static expressions before adding to registry
+    // This is a safety net in case isStaticExpression didn't catch them
+    const trimmedExpr = typeof expr === 'string' ? expr.trim() : '';
+    
+    // IMPORTANT: Check for function calls FIRST (even if quoted) - these are ALWAYS dynamic
+    // Function calls like 'disableDone()' should be watched, not treated as static strings
+    if (trimmedExpr.includes('(') && trimmedExpr.includes(')')) {
+        // Function calls are dynamic - let them proceed to be added to registry
+        // Don't return early here
+    } else {
+        // Check for string literals (quoted strings) - these should NEVER be in the registry
+        // Only check if it's NOT a function call (already handled above)
+        if ((trimmedExpr.startsWith('"') && trimmedExpr.endsWith('"')) ||
+            (trimmedExpr.startsWith("'") && trimmedExpr.endsWith("'"))) {
+            // Check if quoted string contains dots or function calls - these are dynamic
+            const content = trimmedExpr.slice(1, -1); // Remove quotes
+            if (content.includes('.') || content.includes('(') || content.includes(')')) {
+                // Quoted expressions with dots or function calls are dynamic - let them proceed
+                // Don't return early here
+            } else {
+                // Plain string literals should never be in the registry - evaluate once and return
+                try {
+                    const fn = $parseExpr(expr);
+                    const staticValue = fn($scope, $locals);
+                    listener(staticValue, FIRST_TIME_WATCH);
+                } catch (e) {
+                    console.warn(`Error evaluating string literal '${expr}':`, e);
+                }
+                return () => { }; // No-op unsubscribe
+            }
+        }
+    }
+    
+    // Check for appLocale expressions (check both quoted and unquoted)
+    let exprToCheckForAppLocale = trimmedExpr;
+    if ((trimmedExpr.startsWith('"') && trimmedExpr.endsWith('"')) ||
+        (trimmedExpr.startsWith("'") && trimmedExpr.endsWith("'"))) {
+        exprToCheckForAppLocale = trimmedExpr.slice(1, -1); // Remove quotes for checking
+    }
+    
+    if (exprToCheckForAppLocale.includes('appLocale')) {
+        // Check if it's an appLocale expression (any format, quoted or unquoted)
+        const isAppLocaleExpr = exprToCheckForAppLocale.startsWith('appLocale') ||
+            exprToCheckForAppLocale.startsWith('Page.appLocale') ||
+            exprToCheckForAppLocale.startsWith('Prefab.appLocale') ||
+            exprToCheckForAppLocale.startsWith('Partial.appLocale') ||
+            exprToCheckForAppLocale.startsWith('App.appLocale');
+        
+        if (isAppLocaleExpr) {
+            // appLocale expressions should never be in the registry - evaluate once and return
+            try {
+                const fn = $parseExpr(expr);
+                const staticValue = fn($scope, $locals);
+                listener(staticValue, FIRST_TIME_WATCH);
+            } catch (e) {
+                console.warn(`Error evaluating appLocale expression '${expr}':`, e);
+            }
+            return () => { }; // No-op unsubscribe
+        }
     }
 
     const fn = $parseExpr(expr);
@@ -391,35 +566,35 @@ export const $unwatch = (identifier: string): boolean => {
  * Unwatches all watchers for a specific widget ID
  */
 export const $unwatchAll = (widgetId: string): number => {
-    if (!widgetId || typeof widgetId !== 'string') {
-        return 0;
-    }
+    // if (!widgetId || typeof widgetId !== 'string') {
+    //     return 0;
+    // }
 
-    const widgetGroup = registry.get(widgetId);
+    // const widgetGroup = registry.get(widgetId);
 
-    if (widgetGroup && typeof widgetGroup === 'object' && !widgetGroup.fn) {
-        const count = Object.keys(widgetGroup).length;
-        registry.delete(widgetId);
-        return count;
-    }
+    // if (widgetGroup && typeof widgetGroup === 'object' && !widgetGroup.fn) {
+    //     const count = Object.keys(widgetGroup).length;
+    //     registry.delete(widgetId);
+    //     return count;
+    // }
 
-    // Fallback: find all identifiers starting with this widget ID
-    let removedCount = 0;
-    const identifiersToRemove: string[] = [];
+    // // Fallback: find all identifiers starting with this widget ID
+    // let removedCount = 0;
+    // const identifiersToRemove: string[] = [];
 
-    registry.forEach((_, key) => {
-        if (key.startsWith(widgetId + '_')) {
-            identifiersToRemove.push(key);
-        }
-    });
+    // registry.forEach((_, key) => {
+    //     if (key.startsWith(widgetId + '_')) {
+    //         identifiersToRemove.push(key);
+    //     }
+    // });
 
-    identifiersToRemove.forEach(identifier => {
-        if ($unwatch(identifier)) {
-            removedCount++;
-        }
-    });
+    // identifiersToRemove.forEach(identifier => {
+    //     if ($unwatch(identifier)) {
+    //         removedCount++;
+    //     }
+    // });
 
-    return removedCount;
+    return 0;
 };
 
 /**
@@ -427,40 +602,40 @@ export const $unwatchAll = (widgetId: string): number => {
  * Now works directly with the main registry instead of separate scoped registries
  */
 export const $unwatchAllByScope = (scopeType: ScopeType, scopeName?: string): number => {
-    if (!scopeType) {
-        return 0;
-    }
+    // if (!scopeType) {
+    //     return 0;
+    // }
 
-    let removedCount = 0;
-    const identifiersToRemove: string[] = [];
+    // let removedCount = 0;
+    // const identifiersToRemove: string[] = [];
 
-    registry.forEach((value, key) => {
-        // Handle grouped structure (widget groups)
-        if (value && typeof value === 'object' && !value.fn) {
-            Object.entries(value).forEach(([propertyName, watchInfo]: [string, any]) => {
-                if (watchInfo?.scopeType === scopeType &&
-                    (!scopeName || watchInfo.scopeName === scopeName)) {
-                    identifiersToRemove.push(`${key}_${propertyName}`);
-                }
-            });
-        } else {
-            // Direct watchInfo
-            const watchInfo = value as WatchInfo;
-            if (watchInfo?.scopeType === scopeType &&
-                (!scopeName || watchInfo.scopeName === scopeName)) {
-                identifiersToRemove.push(key);
-            }
-        }
-    });
+    // registry.forEach((value, key) => {
+    //     // Handle grouped structure (widget groups)
+    //     if (value && typeof value === 'object' && !value.fn) {
+    //         Object.entries(value).forEach(([propertyName, watchInfo]: [string, any]) => {
+    //             if (watchInfo?.scopeType === scopeType &&
+    //                 (!scopeName || watchInfo.scopeName === scopeName)) {
+    //                 identifiersToRemove.push(`${key}_${propertyName}`);
+    //             }
+    //         });
+    //     } else {
+    //         // Direct watchInfo
+    //         const watchInfo = value as WatchInfo;
+    //         if (watchInfo?.scopeType === scopeType &&
+    //             (!scopeName || watchInfo.scopeName === scopeName)) {
+    //             identifiersToRemove.push(key);
+    //         }
+    //     }
+    // });
 
-    // Unwatch all collected identifiers
-    identifiersToRemove.forEach(identifier => {
-        if ($unwatch(identifier)) {
-            removedCount++;
-        }
-    });
+    // // Unwatch all collected identifiers
+    // identifiersToRemove.forEach(identifier => {
+    //     if ($unwatch(identifier)) {
+    //         removedCount++;
+    //     }
+    // });
 
-    return removedCount;
+    return 0;
 };
 
 /**
