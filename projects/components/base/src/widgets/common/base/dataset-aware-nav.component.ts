@@ -1,4 +1,4 @@
-import {Inject, Injector, Optional} from '@angular/core';
+import {Inject, Injectable, Injector, OnDestroy, Optional} from '@angular/core';
 
 import { Subject } from 'rxjs';
 
@@ -25,7 +25,8 @@ const getValidLink = (link) => {
     }
 };
 
-export class DatasetAwareNavComponent extends StylableComponent {
+@Injectable()
+export abstract class DatasetAwareNavComponent extends StylableComponent implements OnDestroy {
 
     public nodes: Array<NavNode> = [];
     public dataset: any;
@@ -225,6 +226,40 @@ export class DatasetAwareNavComponent extends StylableComponent {
                 break;
         }
         super.onPropertyChange(key, nv, ov);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Cancel debounced function
+        if (this._resetNodes && (this._resetNodes as any).cancel) {
+            (this._resetNodes as any).cancel();
+            this._resetNodes = null;
+        }
+
+        // MEMORY LEAK FIX: Complete Subject to release subscriptions
+        if (this.nodes$) {
+            this.nodes$.complete();
+            this.nodes$ = null;
+        }
+
+        // MEMORY LEAK FIX: Clear nodes array to release references
+        this.nodes = [];
+        this.dataset = null;
+        this._itemFieldMap = null;
+
+        // MEMORY LEAK FIX: Clear bound attribute references
+        this.binditemlabel = null;
+        this.binditemhint = null;
+        this.binditemicon = null;
+        this.binditemaction = null;
+        this.binditembadge = null;
+        this.binditemchildren = null;
+        this.binditemlink = null;
+        this.binditemtarget = null;
+        this.binduserrole = null;
+        this.bindisactive = null;
+        this.binditemid = null;
+
+        super.ngOnDestroy();
     }
 }
 

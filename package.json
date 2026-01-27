@@ -39,7 +39,7 @@
         "@wavemaker/custom-widgets-m3": "file:.yalc/@wavemaker/custom-widgets-m3",
         "@wavemaker/focus-trap": "1.0.1",
         "@wavemaker/foundation-css": "file:.yalc/@wavemaker/foundation-css",
-        "@wavemaker/nvd3": "1.8.15",
+        "@wavemaker/nvd3": "1.8.16",
         "@wavemaker/variables": "file:.yalc/@wavemaker/variables",
         "@ztree/ztree_v3": "3.5.48",
         "acorn": "^8.15.0",
@@ -119,5 +119,10 @@
         "node": "22.18.0",
         "npm": "10.9.3"
     },
+    "overrides": {
+    "ng-packagr": {
+        "@rollup/wasm-node": "4.40.2"
+    }
+},
     "engineStrict": true
 }

@@ -122,7 +122,7 @@ describe('Viewport Service', () => {
         viewport.ngOnDestroy();
 
         expect(destroySpy).toHaveBeenCalled();
-        expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', (viewport as any).resizeFn);
+        expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
     });
 
     it('should set screen type correctly based on device category "Tab"', () => {

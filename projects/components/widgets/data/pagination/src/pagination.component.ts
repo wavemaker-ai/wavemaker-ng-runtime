@@ -6,6 +6,7 @@ import {
     EventEmitter,
     Inject,
     Injector,
+    OnDestroy,
     Optional,
     Output,
     SkipSelf,
@@ -53,7 +54,7 @@ const sizeClasses = {
         provideAsWidgetRef(PaginationComponent)
     ]
 })
-export class PaginationComponent extends StylableComponent implements AfterViewInit {
+export class PaginationComponent extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
     @Output() resultEmitter: EventEmitter<any> = new EventEmitter();
     @Output() maxResultsEmitter: EventEmitter<any> = new EventEmitter();
@@ -103,6 +104,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     pagination;
     logicalOp;
 
+    private _initTimeoutId: any; // Store timeout ID for cleanup
     private _debouncedApplyDataset = debounce(() => this.widget.dataset = this.dataset, DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
     private _debouncedPageChanged = debounce(event => {
         const currentPage = event && event.page;
@@ -140,7 +142,11 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     constructor(inj: Injector, @SkipSelf() @Inject(WidgetRef) public parent, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
-        setTimeout(()=> {
+        this._initTimeoutId = setTimeout(()=> {
+            // Guard against component destruction or parent being null
+            if (this.isDestroyed || !this.parent) {
+                return;
+            }
             this.allowpagesizechange = this.parent.allowpagesizechange;
             if(this.allowpagesizechange)
                 this.defaultPageSizeOptions = this.parent?.pagesizeoptions ? this.parent.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) : [];
@@ -314,7 +320,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     this.disableNavigation();
                     this.checkDataSize(dataSize, this.pagination.numberOfElements, this.pagination.size);
                     startIndex = (currentPage - 1) * this.maxResults;
-                    this.getPageDetails(startIndex + 1, startIndex + this.pagination.numberOfElements, dataSize);
+                    this.getPageDetails(startIndex + 1, startIndex + Number(this.pagination.numberOfElements), dataSize);
                     this.setResult(newVal);
                 } else if (!isString(newVal)) {
                     this.setNonPageableData(newVal);
@@ -422,7 +428,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
             }).then(response => {
                 this.onPageDataReady(event, response && response.data, callback);
                 startIndex = (this.dn.currentPage - 1) * this.maxResults;
-                this.getPageDetails(startIndex + 1 , startIndex + this.pagination?.numberOfElements, this.pagination?.totalElements);
+                this.getPageDetails(startIndex + 1 , startIndex + Number(this.pagination?.numberOfElements), this.pagination?.totalElements);
                 $appDigest();
             }, error => {
                 // If error is undefined, do not show any message as this may be discarded request
@@ -530,6 +536,8 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
 
         switch (index) {
             case 'first':
+                this.datasource.pagination.isNext = false;
+                this.datasource.pagination.isPrev = false;
                 this.goToFirstPage(isRefresh, event, callback);
                 return;
             case 'prev':
@@ -574,7 +582,9 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         }
         if (!binddatasource && dataset && !datasetBoundExpr) {
             this.dataset = dataset;
-            this._debouncedApplyDataset();
+            if (this._debouncedApplyDataset) {
+                this._debouncedApplyDataset();
+            }
             return;
         }
         this.binddataset = binddataset;
@@ -590,7 +600,9 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     nv =>  {
                         if (nv) {
                             this.dataset = nv;
-                            this._debouncedApplyDataset();
+                            if (this._debouncedApplyDataset) {
+                                this._debouncedApplyDataset();
+                            }
                         } else {
                            // WMS-19285: Setting dataset on proxy only to handle propertychange handler call for undefined cases
                             this.widget.dataset = nv;
@@ -609,7 +621,11 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     bindPagingOptions,
                     parent,
                     {},
-                    () => this._debouncedApplyDataset()
+                    () => {
+                        if (this._debouncedApplyDataset) {
+                            this._debouncedApplyDataset();
+                        }
+                    }
                 )
             );
         });
@@ -815,5 +831,50 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         paginationElem.onclick = (event) => {
             event.stopPropagation();
         };
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear initialization timeout if still pending
+        if (this._initTimeoutId) {
+            clearTimeout(this._initTimeoutId);
+            this._initTimeoutId = null;
+        }
+
+        // MEMORY LEAK FIX: Complete EventEmitters
+        if (this.resultEmitter) {
+            this.resultEmitter.complete();
+        }
+        if (this.maxResultsEmitter) {
+            this.maxResultsEmitter.complete();
+        }
+
+        // MEMORY LEAK FIX: Nullify debounced function closures
+        this._debouncedApplyDataset = null;
+        this._debouncedPageChanged = null;
+
+        // MEMORY LEAK FIX: Clear data arrays and objects
+        this.dataset = null;
+        this.__fullData = null;
+        this.result = null;
+        this.filterFields = null;
+        this.sortOptions = null;
+        this.options = null;
+
+        // MEMORY LEAK FIX: Clear page size options array
+        if (this.pageSizeOptions) {
+            this.pageSizeOptions = [];
+        }
+        if (this.defaultPageSizeOptions) {
+            this.defaultPageSizeOptions = [];
+        }
+
+        // MEMORY LEAK FIX: Clear datasource reference
+        this.datasource = null;
+
+        // MEMORY LEAK FIX: Clear parent reference
+        this.parent = null;
+
+        // Call parent ngOnDestroy (sets isDestroyed = true)
+        super.ngOnDestroy();
     }
 }

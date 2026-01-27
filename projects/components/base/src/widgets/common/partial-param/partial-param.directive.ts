@@ -1,4 +1,4 @@
-import { Attribute, Directive, Inject, Self, Input, OnInit } from '@angular/core';
+import { Attribute, Directive, Inject, Self, Input, OnDestroy, OnInit } from '@angular/core';
 
 import { Subject } from 'rxjs';
 
@@ -11,7 +11,7 @@ import {get} from "lodash-es";
   standalone: true,
     selector: '[partialContainer]',
 })
-export class PartialParamHandlerDirective {
+export class PartialParamHandlerDirective implements OnDestroy {
     constructor (@Self() @Inject(WidgetRef) private widgetRef) {
         this.widgetRef.partialParams = {};
         this.widgetRef.pageParams = this.widgetRef.partialParams;
@@ -34,6 +34,24 @@ export class PartialParamHandlerDirective {
             this.widgetRef.params$.next();
         }
 
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Complete the params$ Subject
+        if (this.widgetRef.params$) {
+            this.widgetRef.params$.complete();
+        }
+
+        // MEMORY LEAK FIX: Clear partial params
+        if (this.widgetRef.partialParams) {
+            Object.keys(this.widgetRef.partialParams).forEach(key => {
+                delete this.widgetRef.partialParams[key];
+            });
+            this.widgetRef.partialParams = null;
+        }
+
+        // Clear pageParams reference
+        this.widgetRef.pageParams = null;
     }
 }
 

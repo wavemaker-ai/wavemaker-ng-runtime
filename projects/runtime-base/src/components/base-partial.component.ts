@@ -207,7 +207,7 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
 
     private loadScripts() {
         return new Promise<void>((resolve) => {
-            const scriptsRequired = this.partialDirective.$element.attr('scripts-to-load');
+            const scriptsRequired = this.partialDirective?.$element.attr('scripts-to-load');
             if (scriptsRequired) {
                 this.scriptLoaderService
                     .load(...scriptsRequired.split(','))
@@ -254,7 +254,39 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
         if (this.partialName) {
             $unwatchAllByScope('Partial', this.partialName);
         }
-        this.destroy$.complete();
+
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
+        if (this.destroy$) {
+            this.destroy$.complete();
+            this.destroy$ = null;
+        }
+        if (this.viewInit$) {
+            this.viewInit$.complete();
+            this.viewInit$ = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references to prevent memory leaks
+        this.Widgets = null;
+        this.Variables = null;
+        this.Actions = null;
+        this.App = null;
+        this.containerWidget = null;
+        this.i18nService = null;
+        this.appLocale = null;
+        this.partialDirective = null;
+        this.pageDirective = null;
+        this.Prefab = null;
+        this.scriptLoaderService = null;
+        this.Viewport = null;
+        this.route = null;
+        this.appManager = null;
+        this.navigationService = null;
+        this.router = null;
+        this.pageParams = null;
+        this.viewParent = null;
+
+        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
+        this.cleanupFragmentMonitor();
     }
 
     ngOnAttach(refreshData) {

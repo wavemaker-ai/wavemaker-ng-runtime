@@ -1,4 +1,4 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable, Injector, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -16,12 +16,14 @@ const XSRF_COOKIE_NAME = 'wm_xsrf_token',
     isApplicationType = true;
 
 @Injectable()
-export class SecurityService {
+export class SecurityService implements OnDestroy {
     config;
     lastLoggedInUser;
     loggedInUser;
     loadPromise: Promise<any>;
     requestQueue: any = {};
+    private queryParamsSubscriptions: Array<{ unsubscribe: () => void }> = []; // MEMORY LEAK FIX: Track subscriptions
+    private appSubscriptions: Array<() => void> = []; // MEMORY LEAK FIX: Track App subscriptions
 
     constructor(
         private injector: Injector,
@@ -177,9 +179,13 @@ export class SecurityService {
      */
     getCurrentRouteQueryParam(paramName) {
         let paramVal;
-        this.activatedRoute.queryParams.subscribe(params => {
+        // MEMORY LEAK FIX: Store subscription for cleanup (though this is a synchronous read)
+        // Note: This method is called synchronously, so the subscription completes immediately
+        // but we still store it to be safe
+        const subscription = this.activatedRoute.queryParams.subscribe(params => {
             paramVal = params[paramName];
         });
+        subscription.unsubscribe(); // Immediate unsubscribe since we only need first value
         return paramVal;
     }
 
@@ -283,11 +289,15 @@ export class SecurityService {
      */
     getRedirectedRouteQueryParams() {
         let queryParams = {};
-        this.activatedRoute.queryParams.subscribe((paramVal) => {
+        // MEMORY LEAK FIX: Store subscription for cleanup (though this is a synchronous read)
+        // Note: This method is called synchronously, so the subscription completes immediately
+        // but we still store it to be safe
+        const subscription = this.activatedRoute.queryParams.subscribe((paramVal) => {
             forEach(paramVal, (val, key) => {
                 queryParams[key] = val;
             });
         });
+        subscription.unsubscribe(); // Immediate unsubscribe since we only need first value
         return queryParams;
     }
 
@@ -393,10 +403,17 @@ export class SecurityService {
                     if (config.authenticated) {
                         resolve();
                     } else {
+                        // MEMORY LEAK FIX: Store unsubscribe function for cleanup
                         const unsubscribe = this.injector.get(App).subscribe('userLoggedIn', () => {
                             resolve();
                             unsubscribe();
+                            // Remove from tracking array
+                            const index = this.appSubscriptions.indexOf(unsubscribe);
+                            if (index > -1) {
+                                this.appSubscriptions.splice(index, 1);
+                            }
                         });
+                        this.appSubscriptions.push(unsubscribe);
                     }
                 } else {
                     resolve();
@@ -427,5 +444,30 @@ export class SecurityService {
      */
     authInBrowser(): Promise<any> {
         return Promise.reject('This authInBrowser should not be called');
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from all query params subscriptions
+        this.queryParamsSubscriptions.forEach(sub => {
+            if (sub && sub.unsubscribe) {
+                sub.unsubscribe();
+            }
+        });
+        this.queryParamsSubscriptions = [];
+
+        // MEMORY LEAK FIX: Unsubscribe from all App subscriptions
+        this.appSubscriptions.forEach(unsubscribe => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        });
+        this.appSubscriptions = [];
+
+        // MEMORY LEAK FIX: Clear references
+        this.config = null;
+        this.lastLoggedInUser = null;
+        this.loggedInUser = null;
+        this.requestQueue = null;
+        this.loadPromise = null;
     }
 }

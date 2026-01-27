@@ -68,6 +68,9 @@ export class EventNotifier {
     }
 
     public destroy(): void {
-        this._subject.complete();
-    }
+        this._subject.next(null);  // optional
+        this._subject.complete();  // clears all observers
+        this._isInitialized = false;
+        this._eventsBeforeInit = [];
+    }    
 }

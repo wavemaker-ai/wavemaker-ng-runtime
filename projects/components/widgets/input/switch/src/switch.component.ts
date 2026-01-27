@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {AfterViewInit, Component, Inject, Injector, Optional} from '@angular/core';
+import {AfterViewInit, Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import {$appDigest, debounce, isDefined, setCSS, toBoolean} from '@wm/core';
@@ -25,7 +25,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-switch', hostClass: DEFAULT_CLS};
     ],
     exportAs: 'wmSwitch'
 })
-export class SwitchComponent extends DatasetAwareFormComponent implements AfterViewInit {
+export class SwitchComponent extends DatasetAwareFormComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     options = [];
@@ -36,7 +36,7 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
     private btnwidth;
     public disabled: boolean;
     public required: boolean;
-    private _debounceSetSelectedValue: Function;
+    private _debounceSetSelectedValue: Function | null = null;
     public name: string;
     public hint:any;
 
@@ -59,7 +59,9 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
         this.registerDestroyListener(() => datasetSubscription.unsubscribe());
 
         const datavalueSubscription = this.datavalue$.subscribe(() => {
-            this._debounceSetSelectedValue(true);
+            if (this._debounceSetSelectedValue) {
+                this._debounceSetSelectedValue(true);
+            }
         });
         this.registerDestroyListener(() => datavalueSubscription.unsubscribe());
     }
@@ -96,7 +98,9 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
             setCSS(this.nativeElement.querySelector('.app-switch-overlay') as HTMLElement, 'width', this.btnwidth + '%');
         }
 
-        this._debounceSetSelectedValue(true);
+        if (this._debounceSetSelectedValue) {
+            this._debounceSetSelectedValue(true);
+        }
     }
 
     // This function animates the highlighted span on to the selected value.
@@ -182,5 +186,25 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
             }
             super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Nullify debounced function closure
+        // This closure captures 'this' and prevents garbage collection
+        this._debounceSetSelectedValue = null;
+
+        // MEMORY LEAK FIX: Clear options array
+        this.options = [];
+
+        // MEMORY LEAK FIX: Clear selected item reference
+        this.selectedItem = null;
+
+        // MEMORY LEAK FIX: Clear hint array
+        if (this.hint) {
+            this.hint = [];
+        }
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }

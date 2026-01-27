@@ -7,6 +7,7 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     TemplateRef,
@@ -61,7 +62,7 @@ let activePopover: PopoverComponent;
     ]
 })
 
-export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit {
+export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public event: string;
@@ -107,6 +108,9 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     private static activePopovers: PopoverComponent[] = [];
     private isHandlingClick = false;
     private preventFocusShift: boolean = false;
+    private partialLoadedSubscription: any;
+    private arrowPositionSubscription: any;
+    isPrism: boolean;
 
     @ViewChild(PopoverDirective) private bsPopoverDirective;
     @ViewChild('anchor', { static: true }) anchorRef: ElementRef;
@@ -116,6 +120,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     constructor(inj: Injector, private app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, private cdr: ChangeDetectorRef) {
         super(inj, WIDGET_CONFIG, explicitContext);
         this.popoverContainerCls = `app-popover-${this.widgetId}`;
+        this.isPrism = this.app.isPrism;
     }
 
     private setupDocumentClickHandler() {
@@ -214,7 +219,9 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.isOpen) {
             this.isClosingProgrammatically = true;
             this.isOpen = false;
-            this.bsPopoverDirective.hide();
+            if (this.bsPopoverDirective) {
+                this.bsPopoverDirective.hide();
+            }
             const index = PopoverComponent.activePopovers.indexOf(this);
             if (index > -1) {
                 PopoverComponent.activePopovers.splice(index, 1);
@@ -240,7 +247,13 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     }
 
     private adjustPopoverArrowPosition(popoverElem, popoverLeftShift) {
-        this.bsPopoverDirective._popover._ngZone.onStable.subscribe(() => {
+        // Clean up any existing subscription before creating a new one
+        if (this.arrowPositionSubscription) {
+            this.arrowPositionSubscription.unsubscribe();
+            this.arrowPositionSubscription = null;
+        }
+        
+        this.arrowPositionSubscription = this.bsPopoverDirective._popover._ngZone.onStable.subscribe(() => {
             popoverElem.find('.popover-arrow').css('left', popoverLeftShift + 'px');
         });
     }
@@ -309,6 +322,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             popoverContainer.addEventListener('click', (event: Event) => {
                 event.stopPropagation();
             });
+            if (this.isPrism) this.applyVariantClass(popoverContainer);
         }
         setCSSFromObj(popoverContainer, {
             height: this.popoverheight,
@@ -331,7 +345,9 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             this.setupDocumentClickHandler();
         }
         setTimeout(() => {
-            this.anchorRef.nativeElement.removeAttribute('aria-describedby');
+            if (this.anchorRef?.nativeElement) {
+                this.anchorRef.nativeElement.removeAttribute('aria-describedby');
+            }
         });
         const deRegister = this.eventManager.addEventListener(popoverContainer, 'keydown.esc', () => {
             this.isOpen = false;
@@ -383,7 +399,18 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
 
     triggerPopoverEvents() {
         if (this.contentsource === 'partial') {
-            const cancelSubscription = this.app.subscribe('partialLoaded', (data) => {
+            this.partialLoadedSubscription = this.app.subscribe('partialLoaded', () => {
+                // Always clean up subscription first
+                if (this.partialLoadedSubscription) {
+                    this.partialLoadedSubscription();
+                    this.partialLoadedSubscription = null;
+                }
+                
+                // Check if component is still alive and partialRef exists
+                if (!this.partialRef || !this.partialRef.nativeElement) {
+                    return;
+                }
+                
                 const parEle = this.partialRef.nativeElement;
                 let partialScope;
 
@@ -395,7 +422,6 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
                     this.invokeEventCallback('load');
                     this.invokeEventCallback('show', {$event: {type: 'show'}});
                 }
-                cancelSubscription();
             });
         } else {
             this.Widgets   = this.viewParent.Widgets;
@@ -467,13 +493,67 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         this.bsPopoverDirective.hide();
     }
 
-    OnDestroy() {
+    ngOnDestroy() {
+        // Unsubscribe from partialLoaded event
+        if (this.partialLoadedSubscription) {
+            this.partialLoadedSubscription();
+            this.partialLoadedSubscription = null;
+        }
+        
+        // Unsubscribe from arrow position adjustment
+        if (this.arrowPositionSubscription) {
+            this.arrowPositionSubscription.unsubscribe();
+            this.arrowPositionSubscription = null;
+        }
+        
+        // Close popover if open
+        if (this.isOpen && this.bsPopoverDirective) {
+            this.bsPopoverDirective.hide();
+        }
+        
+        // Clear timeout
+        if (this.closePopoverTimeout) {
+            clearTimeout(this.closePopoverTimeout);
+            this.closePopoverTimeout = null;
+        }
+        
+        // Remove document click handler
         if (this.documentClickHandler) {
             document.removeEventListener('click', this.documentClickHandler, true);
+            this.documentClickHandler = null;
         }
+        
+        // Remove from active popovers array
         const index = PopoverComponent.activePopovers.indexOf(this);
         if (index > -1) {
             PopoverComponent.activePopovers.splice(index, 1);
         }
+        
+        // Clear anchor event handlers
+        if (this.anchorRef?.nativeElement) {
+            this.anchorRef.nativeElement.onmouseenter = null;
+            this.anchorRef.nativeElement.onmouseleave = null;
+        }
+
+        // MEMORY LEAK FIX: Clear all ViewChild and ContentChild references
+        // These retain the entire component tree including parent contexts (colDef, etc.)
+        this.bsPopoverDirective = null;
+        this.anchorRef = null;
+        this.popoverTemplate = null;
+        this.partialRef = null;
+        
+        // Call parent cleanup
+        super.ngOnDestroy();
     }
+
+    // Applying all variant classes that start with "popover-" from the popover.
+    // Ensures the popover container also receives the variant styling.
+    applyVariantClass(popoverContainer: HTMLElement) {
+        if (!popoverContainer) return;
+
+        const classes = (this.class || '').split(/\s+/);
+        const popoverVariants = classes.filter(c => c.startsWith('popover-'));
+        popoverVariants.forEach(v => popoverContainer.classList.add(v));
+    }
+
 }

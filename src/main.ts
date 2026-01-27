@@ -48,14 +48,23 @@ if (environment.production) {
   enableProdMode();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// MEMORY LEAK FIX: Store event listener references for cleanup (though these are one-time bootstrap events)
+const boundDOMContentLoadedHandler = () => {
   new Promise<Event | void>(resolve => {
     resolve();
   }).then(() => bootstrapApplication(AppComponent, appConfig))
     .then((appRef: ApplicationRef) => {
-      window.addEventListener('unload', () => {
+      // MEMORY LEAK FIX: Store unload handler reference
+      const boundUnloadHandler = () => {
         appRef.components.map(c => c?.destroy());
-      });
+        // MEMORY LEAK FIX: Remove unload listener after cleanup (though unload is typically final)
+        window.removeEventListener('unload', boundUnloadHandler);
+      };
+      window.addEventListener('unload', boundUnloadHandler);
     })
     .catch(err => console.error('Error bootstrapping app:', err));
-});
+  // MEMORY LEAK FIX: Remove DOMContentLoaded listener after execution (one-time event)
+  document.removeEventListener('DOMContentLoaded', boundDOMContentLoadedHandler);
+};
+
+document.addEventListener('DOMContentLoaded', boundDOMContentLoadedHandler);

@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, OnDestroy} from '@angular/core';
 import {Router} from '@angular/router';
 import {DatePipe} from '@angular/common';
 
@@ -30,7 +30,7 @@ enum POST_MESSAGES {
 
 
 @Injectable()
-export class AppManagerService {
+export class AppManagerService implements OnDestroy {
     static readonly SERVICE_NAME = 'AppManagerService';
 
     private appVariablesLoaded = false;
@@ -38,6 +38,9 @@ export class AppManagerService {
     private _noRedirect = false;
     private templates: Array<any>;
     private lastLoggedUserId;
+    private appSubscriptions: Array<() => void> = []; // MEMORY LEAK FIX: Track subscriptions
+    private windowMessageListener: (event: MessageEvent) => void; // MEMORY LEAK FIX: Store listener reference
+    private sessionTimeoutUnsubscribe: () => void; // MEMORY LEAK FIX: Store unsubscribe function
 
     constructor(
         private $http: AbstractHttpService,
@@ -52,11 +55,13 @@ export class AppManagerService {
         private $datePipe: DatePipe,
     ) {
         // register method to invoke on session timeout
-        this.$http.registerOnSessionTimeout(this.handle401.bind(this));
+        // MEMORY LEAK FIX: Store unsubscribe function for cleanup
+        this.sessionTimeoutUnsubscribe = this.$http.registerOnSessionTimeout(this.handle401.bind(this));
 
         this.$variables.registerDependency('appManager', this);
 
-        this.$app.subscribe('toggle-variable-state', (data) => {
+        // MEMORY LEAK FIX: Store subscription unsubscribe functions
+        this.appSubscriptions.push(this.$app.subscribe('toggle-variable-state', (data) => {
             const variable = data.variable,
                 active = data.active;
             if (!isEmpty(trim(variable.spinnerContext))) {
@@ -84,8 +89,8 @@ export class AppManagerService {
                     this.$spinner.hide(variable._spinnerId.shift());
                 }
             }
-        });
-        this.$app.subscribe('userLoggedIn', () => {
+        }));
+        this.appSubscriptions.push(this.$app.subscribe('userLoggedIn', () => {
             this.setLandingPage();
             if (this.lastLoggedUserId) {
                 this.$security.getConfig(config => {
@@ -94,11 +99,11 @@ export class AppManagerService {
                     }
                 }, null);
             }
-        });
-        this.$app.subscribe('userLoggedOut', () => this.setLandingPage().then(() => {
-            this.$app.clearPageCache();
         }));
-        this.$app.subscribe('http401', (d = {}) => this.handle401(d.page, d.options));
+        this.appSubscriptions.push(this.$app.subscribe('userLoggedOut', () => this.setLandingPage().then(() => {
+            this.$app.clearPageCache();
+        })));
+        this.appSubscriptions.push(this.$app.subscribe('http401', (d = {}) => this.handle401(d.page, d.options)));
     }
 
     /**
@@ -362,12 +367,13 @@ export class AppManagerService {
     reloadAppData() {
         return this.loadSecurityConfig(true).then(() => {
             return this.loadMetadata().then(() => {
-               return this.updateLoggedInUserVariable().then(() => {
-                return this.beforeAppReady();
-               })
+                return this.updateLoggedInUserVariable().then((config) => {
+                    return Promise.resolve(this.beforeAppReady())
+                        .then(() => Promise.resolve(config));
+                })
             });
         });
-    }
+    } 
 
     noRedirect(value?: boolean) {
         if (isUndefined(value)) {
@@ -554,11 +560,39 @@ export class AppManagerService {
         this.$app.setMode(storedModes);
     
         // Listener for postMessage-based mode changes
-        window.addEventListener('message', (event) => {
+        // MEMORY LEAK FIX: Store bound function reference for cleanup
+        this.windowMessageListener = (event) => {
             const { key, modes, shouldPersist } = event.data || {};
             if (key === 'switch-mode' && modes) {
                 this.$app.setMode(modes, !shouldPersist);
             }
+        };
+        window.addEventListener('message', this.windowMessageListener);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from all app subscriptions
+        this.appSubscriptions.forEach(unsubscribe => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
         });
+        this.appSubscriptions = [];
+
+        // MEMORY LEAK FIX: Unsubscribe from session timeout
+        if (this.sessionTimeoutUnsubscribe) {
+            this.sessionTimeoutUnsubscribe();
+            this.sessionTimeoutUnsubscribe = null;
+        }
+
+        // MEMORY LEAK FIX: Remove window message listener
+        if (this.windowMessageListener) {
+            window.removeEventListener('message', this.windowMessageListener);
+            this.windowMessageListener = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references
+        this.templates = null;
+        this.lastLoggedUserId = null;
     }
 }

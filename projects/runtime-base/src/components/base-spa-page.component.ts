@@ -4,17 +4,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { isAndroid, isIos, Viewport, ScriptLoaderService, registerFnByExpr } from '@wm/core';
 import { LayoutDirective, SpaPageDirective } from '@wm/components/page';
 
-import {Subject, Subscription} from 'rxjs';
+import {Subject} from 'rxjs';
 
 import {
     $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
-    addClass,
     App,
     muteWatchers,
     noop,
-    removeClass,
     unMuteWatchers,
     UtilsService
 } from '@wm/core';
@@ -336,7 +334,37 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
             $unwatchAllByScope('Page', this.pageName);
         }
         this.savePageSnapShot();
-        this.destroy$.complete();
+
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
+        if (this.destroy$) {
+            this.destroy$.complete();
+            this.destroy$ = null;
+        }
+        if (this.viewInit$) {
+            this.viewInit$.complete();
+            this.viewInit$ = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references to prevent memory leaks
+        this.Widgets = null;
+        this.Variables = null;
+        this.Actions = null;
+        this.App = null;
+        this.route = null;
+        this.appManager = null;
+        this.navigationService = null;
+        this.router = null;
+        this.pageParams = null;
+        this.i18nService = null;
+        this.appLocale = null;
+        this.layoutDirective = null;
+        this.spaPageDirective = null;
+        this.$page = null;
+        this.scriptLoaderService = null;
+        this.Viewport = null;
+
+        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
+        this.cleanupFragmentMonitor();
     }
 
     onReady() {}

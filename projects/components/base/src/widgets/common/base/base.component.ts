@@ -18,6 +18,7 @@ import {ReplaySubject, Subject} from 'rxjs';
 import {
     $invokeWatchers,
     $parseEvent,
+    $parseExpr,
     $unwatch,
     $unwatchAll,
     $watch,

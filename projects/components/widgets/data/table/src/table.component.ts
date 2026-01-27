@@ -1526,6 +1526,19 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (newVal) {
             this.populateGridData(newVal);
         }
+        // when select widget options are loaded in search filter then initializing it
+        const widgetState = this.statePersistence.getWidgetState(this);
+        if (get(widgetState, 'search')) {
+            if (isArray(widgetState.search)) {
+                forEach(widgetState.search, (filterObj) => {
+                    const widget=$(this.rowFilterCompliedTl[filterObj.field])?.find('[widget-id]')?.prop("tagName")?.toLowerCase();
+                    if(widget==='wm-select' && filterObj.value){
+                        const select = $(this.rowFilterCompliedTl[filterObj.field]).find("select");
+                        select?.find("option")?.filter((_, o) => o.textContent.trim() === filterObj.value)?.prop("selected", true)
+                    }
+                });
+            }
+        }
     }
 
     ngOnDestroy() {
@@ -1606,31 +1619,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
         }
 
-        // MEMORY LEAK FIX: Clear gridOptions to release all function closures and data
-        // gridOptions holds many closures that capture 'this' and prevent GC
-        if (this.gridOptions) {
-            // Clear data array
-            if (this.gridOptions.data) {
-                this.gridOptions.data = [];
-            }
-            // Clear column definitions
-            if (this.gridOptions.colDefs) {
-                this.gridOptions.colDefs = [];
-            }
-            // Clear row actions
-            if (this.gridOptions.rowActions) {
-                this.gridOptions.rowActions = [];
-            }
-            // Clear header config
-            if (this.gridOptions.headerConfig) {
-                this.gridOptions.headerConfig = [];
-            }
-            // Nullify all function references to break closures
-            Object.keys(this.gridOptions).forEach(key => {
-                if (typeof this.gridOptions[key] === 'function') {
-                    this.gridOptions[key] = null;
-                }
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
             });
+            this._dynamicContext = null;
         }
 
         // MEMORY LEAK FIX: Clear other data structures
