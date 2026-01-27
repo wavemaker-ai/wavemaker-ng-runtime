@@ -11,7 +11,6 @@ import {
 import {ActivatedRoute, Router} from '@angular/router';
 
 import {
-    $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
     App,
@@ -346,9 +345,6 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
 
     ngOnDestroy(): void {
         // MEMORY LEAK FIX: Unwatch all Page-scoped watchers for THIS specific page when page is destroyed
-        if (this.pageName) {
-            $unwatchAllByScope('Page', this.pageName);
-        }
         //this.captureApplicationThumbnail();
         this.savePageSnapShot();
         this.destroy$.complete();

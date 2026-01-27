@@ -27,7 +27,6 @@ import {setTheme} from 'ngx-bootstrap/utils';
 
 import {
     $invokeWatchers,
-    $unwatchAllByScope,
     AbstractDialogService,
     AbstractSpinnerService,
     addClass,
@@ -253,9 +252,6 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        // MEMORY LEAK FIX: Unwatch all App-scoped watchers when app is destroyed
-        $unwatchAllByScope('App');
-        
         if (this.navigationEndSubscription){
             this.navigationEndSubscription.unsubscribe();
         }
