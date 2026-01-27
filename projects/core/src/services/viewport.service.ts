@@ -113,9 +113,11 @@ export class Viewport implements IViewportService, OnDestroy {
                 this.isMobileType = true;
             }
         } else {
-             MINIMUM_MOBILE_WIDTH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--screen-xs')) || 480;
-             MINIMUM_TAB_WIDTH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--screen-sm')) || 768;
-             MINIMUM_LARGE_SCREEN_WIDTH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--screen-lg')) || 1200;
+             // PERFORMANCE FIX: Cache getComputedStyle to avoid multiple forced reflows
+             const computedStyle = getComputedStyle(document.documentElement);
+             MINIMUM_MOBILE_WIDTH = parseInt(computedStyle.getPropertyValue('--screen-xs')) || 480;
+             MINIMUM_TAB_WIDTH = parseInt(computedStyle.getPropertyValue('--screen-sm')) || 768;
+             MINIMUM_LARGE_SCREEN_WIDTH = parseInt(computedStyle.getPropertyValue('--screen-lg')) || 1200;
             if (this.screenWidth >= MINIMUM_LARGE_SCREEN_WIDTH) {
                 this.isTabletType = isAndroid() || isIos() || isAndroidTablet();
                 this.isMobileType = false;

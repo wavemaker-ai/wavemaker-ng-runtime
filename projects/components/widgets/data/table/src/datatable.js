@@ -1094,6 +1094,17 @@ $.widget('wm.datatable', {
     },
     /* Re-renders the whole grid. */
     _refreshGrid: function () {
+        // CRITICAL FIX: Clear all watchers before re-rendering to prevent accumulation
+        // This prevents performance issues that prevent table row editing from working
+        // SAFETY: Only clear watchers if method exists and table is already initialized
+        if (this.options.clearAllWatchers && typeof this.options.clearAllWatchers === 'function') {
+            try {
+                this.options.clearAllWatchers();
+            } catch (e) {
+                // SAFETY: Don't break rendering if watcher cleanup fails
+                console.warn('Error clearing watchers in _refreshGrid:', e);
+            }
+        }
         this._prepareHeaderData();
         this._prepareData();
         this._render();
@@ -1118,6 +1129,16 @@ $.widget('wm.datatable', {
     },
     /* Re-renders the table body. */
     refreshGridData: function () {
+        // CRITICAL FIX: Clear all watchers before re-rendering to prevent accumulation
+        // This prevents performance issues that prevent table row editing from working
+        if (this.options.clearAllWatchers && typeof this.options.clearAllWatchers === 'function') {
+            try {
+                this.options.clearAllWatchers();
+            } catch (e) {
+                // SAFETY: Don't break rendering if watcher cleanup fails
+                console.warn('Error clearing watchers in refreshGridData:', e);
+            }
+        }
         this._prepareData();
         //If the pagination type is not Infinite Scroll or On-demand, remove the tbody and footer
         if (!this.options.isNavTypeScrollOrOndemand()) {
@@ -1218,14 +1239,17 @@ $.widget('wm.datatable', {
         var $btnEl;
         if (!this.options.isLastPage || infScroll) {
             var self = this;
+            // PERFORMANCE FIX: Cache jQuery queries to avoid repeated DOM traversals
+            var $element = this.element;
             var $parenEl = $('<div class="on-demand-datagrid"><a class="app-button btn btn-block on-demand-load-btn"></a></div>');
             $btnEl = $parenEl.find('a');
             $btnEl.append(onDemandMsg);
             // Adding load more button in case of on demand pagination
-            this.element.find('.app-grid-header-inner').append($parenEl);
+            $element.find('.app-grid-header-inner').append($parenEl);
             if(infScroll) {
-                if(this.element.find('.on-demand-load-btn').length) {
-                    this.element.find('.on-demand-load-btn').text(this.options.viewlessmessage);
+                var $onDemandLoadBtn = $element.find('.on-demand-load-btn');
+                if($onDemandLoadBtn.length) {
+                    $onDemandLoadBtn.text(this.options.viewlessmessage);
                 }
             }
 
@@ -1263,8 +1287,10 @@ $.widget('wm.datatable', {
 
     /* Shows loading indicator when clicked on load more button or in case of infinite scroll event is triggered */
     showLoadingIndicator: function (loadingdatamsg, infScroll) {
-        var hasLoadingEl = this.element.find('.loading-data-msg');
-        var $dataGrid = this.element.find('.on-demand-datagrid');
+        // PERFORMANCE FIX: Cache jQuery queries to avoid repeated DOM traversals
+        var $element = this.element;
+        var hasLoadingEl = $element.find('.loading-data-msg');
+        var $dataGrid = $element.find('.on-demand-datagrid');
         if (hasLoadingEl.length && !infScroll) {
             // in case of on demand pagination, show the loading ele which was hidden
             hasLoadingEl.show();
@@ -1281,31 +1307,37 @@ $.widget('wm.datatable', {
                 $dataGrid.append($loadingEl);
             } else {
                 var gridEl = $('<div class="on-demand-datagrid">' + $loadingEl[0].outerHTML + '</div>');
-                this.element.find('.app-grid-header-inner').append(gridEl);
+                $element.find('.app-grid-header-inner').append(gridEl);
             }
         }
     },
 
     /* Hides loading indicator and shows load more button */
     hideLoadingIndicator: function (showLoadBtn, infScroll) {
+        // PERFORMANCE FIX: Cache jQuery queries to avoid repeated DOM traversals
+        var $element = this.element;
+        var $loadingDataMsg = $element.find('.loading-data-msg');
+        var $onDemandLoadBtn = $element.find('.on-demand-load-btn');
+        var $onDemandDatagrid = $element.find('.on-demand-datagrid');
+        
         if (!showLoadBtn && !infScroll) {
             // In case of on demand pagination, when the next page is not disabled hide the individual elements
-            this.element.find('.loading-data-msg').hide();
-            this.element.find('.on-demand-load-btn').text(this.options.ondemandmessage);
-            this.element.find('.on-demand-load-btn').show();
+            $loadingDataMsg.hide();
+            $onDemandLoadBtn.text(this.options.ondemandmessage);
+            $onDemandLoadBtn.show();
         } else if(this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
                    this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
                    (this.options.getCurrentPage() == this.options.getPageCount()) && this.options.showviewlessbutton) {
-                this.element.find('.on-demand-load-btn').show().text(this.options.viewlessmessage);
-                this.element.find('.loading-data-msg').hide();
+                $onDemandLoadBtn.show().text(this.options.viewlessmessage);
+                $loadingDataMsg.hide();
                 if(infScroll) {
-                    if(!this.element.find('.on-demand-load-btn').length) {
+                    if(!$onDemandLoadBtn.length) {
                         this.options.addLoadMoreBtn();
                     }
-                    this.element.find('.loading-data-msg').hide();
+                    $loadingDataMsg.hide();
                 }
         } else {
-                this.element.find('.on-demand-datagrid').hide();
+                $onDemandDatagrid.hide();
         }
     },
 
@@ -1352,12 +1384,14 @@ $.widget('wm.datatable', {
     },
     /*Set the default widths for the colgroup*/
     setColGroupWidths: function () {
-        var self = this,
-            headerCols = this.options.isMobile ? this.tableContainer.find('col') : this.tableContainer.find('col'),
-            bodyCols = this.tableContainer.find('col'),
-            headerCells = this.options.showHeader ? this.gridContainer.find('th.app-datagrid-header-cell') : this.gridElement.find('tr.app-datagrid-row').first().find('td'),
-            colLength = this.preparedHeaderData.length,
-            scrollLeft = this.gridElement.parent().prop('scrollLeft'); //Preserve the scroll left to keep the same scroll after setting width
+        var self = this;
+        // PERFORMANCE FIX: Cache repeated jQuery queries to avoid multiple DOM traversals
+        var $cols = this.tableContainer.find('col');
+        var headerCols = $cols;
+        var bodyCols = $cols;
+        var headerCells = this.options.showHeader ? this.gridContainer.find('th.app-datagrid-header-cell') : this.gridElement.find('tr.app-datagrid-row').first().find('td');
+        var colLength = this.preparedHeaderData.length;
+        var scrollLeft = this.gridElement.parent().prop('scrollLeft'); //Preserve the scroll left to keep the same scroll after setting width
         if (!headerCols.length && !headerCells.length) {
             return;
         }
@@ -1876,12 +1910,18 @@ $.widget('wm.datatable', {
         this.options.closePopover(this.element);
     },
     closeDropdown: function(e){
-        this.element[0].querySelectorAll('.app-menu').forEach(el => {
-            if (el && el.classList.contains('open') && el.getAttribute('autoclose') === 'outsideClick' && e?.originalEvent?.isTrusted &&
-                e.target !== el.querySelector('[dropdowntoggle]')&& e.target.parentElement!== el.querySelector('[dropdowntoggle]')) {
-                el?.widget?.bsDropdown?.hide();
+        // PERFORMANCE FIX: Cache querySelector results to avoid repeated DOM queries
+        var menus = this.element[0].querySelectorAll('.app-menu');
+        var target = e?.target;
+        for (var i = 0; i < menus.length; i++) {
+            var el = menus[i];
+            if (el && el.classList.contains('open') && el.getAttribute('autoclose') === 'outsideClick' && e?.originalEvent?.isTrusted) {
+                var dropdownToggle = el.querySelector('[dropdowntoggle]');
+                if (target !== dropdownToggle && target?.parentElement !== dropdownToggle) {
+                    el?.widget?.bsDropdown?.hide();
+                }
             }
-        });
+        }
     },
     headerClickHandler: function (e) {
         var $th = $(e.target).closest('th.app-datagrid-header-cell'),
@@ -2167,12 +2207,14 @@ $.widget('wm.datatable', {
         }
         //Closing the popovers if clicked on any row for Quick edit
         this.closePopover();
-        var $row = options.$row || $(e.target).closest('tr.app-datagrid-row'),
-            $editButton = $row.find('.edit-row-button'),
-            $cancelButton = $row.find('.cancel-edit-row-button'),
-            $saveButton = $row.find('.save-edit-row-button'),
-            $deleteButton = $row.find('.delete-row-button'),
-            rowData = _.cloneDeep(this.options.data[$row.attr('data-row-id')]) || {},
+        // PERFORMANCE FIX: Cache row query and row ID to avoid repeated DOM queries
+        var $row = options.$row || $(e.target).closest('tr.app-datagrid-row');
+        var rowId = $row.attr('data-row-id');
+        var $editButton = $row.find('.edit-row-button');
+        var $cancelButton = $row.find('.cancel-edit-row-button');
+        var $saveButton = $row.find('.save-edit-row-button');
+        var $deleteButton = $row.find('.delete-row-button');
+        var rowData = _.cloneDeep(this.options.data[rowId]) || {},
             self = this,
             action,
             isNewRow,
@@ -2183,10 +2225,11 @@ $.widget('wm.datatable', {
             alwaysNewRow = $row.hasClass('always-new-row'),
             advancedEdit = self.options.editmode === self.CONSTANTS.QUICK_EDIT,
             editOptions = {},
-            rowindex=$row.attr('data-row-id');
+            rowindex = rowId;
 
         // when a row is edited set actionrow variables
-        this.options.setActionRowIndex($row.attr('data-row-id'));
+        // PERFORMANCE FIX: Use cached rowId instead of querying again
+        this.options.setActionRowIndex(rowId);
         this.options.setLastActionPerformed(this.options.ACTIONS.EDIT);
 
         //On success of update or delete
@@ -2214,7 +2257,9 @@ $.widget('wm.datatable', {
             if (this.options.editmode === this.CONSTANTS.INLINE) {
                 this.options.callLoadInlineWidgetData();
             }
-            if (advancedEdit && self.gridElement.find('tr.app-datagrid-row.row-editing:not(.always-new-row)').length) {
+            // PERFORMANCE FIX: Cache expensive query
+            var $editingRows = advancedEdit ? self.gridElement.find('tr.app-datagrid-row.row-editing:not(.always-new-row)') : $();
+            if (advancedEdit && $editingRows.length) {
                 //In case of advanced edit, save the previous row
                 self.saveRow(function (skipFocus, error) {
                     self.editSuccessHandler(skipFocus, error, e, $row, true);
@@ -2737,18 +2782,23 @@ $.widget('wm.datatable', {
                             }
                             self.options.timeoutCall(function () {
                                 if(quickEdit){
+                                    // PERFORMANCE FIX: Cache querySelector results and use jQuery when already available
                                     var rowId = $editingRow[0]?.getAttribute('data-row-id');
+                                    var $gridElement = self.gridElement;
                                     if($editingRow.hasClass("always-new-row")){
-                                        rowId= self.gridElement[0].querySelector("tr.always-new-row")?.getAttribute('data-row-id')-1;
-                                    }
-                                    var matchingRow = self.gridElement[0].querySelector("tr[data-row-id='" + rowId + "']");
-                                    if($(matchingRow).hasClass('always-new-row')){return;}
-                                    if (matchingRow) {
-                                        if (!self.options.multiselect) {
-                                            $(self.gridElement).find('tr.app-datagrid-row.active').removeClass('active');
+                                        var $alwaysNewRow = $gridElement.find("tr.always-new-row").first();
+                                        if($alwaysNewRow.length) {
+                                            rowId = parseInt($alwaysNewRow.attr('data-row-id')) - 1;
                                         }
-                                        matchingRow.classList.remove('active');
-                                        self.hideRowEditMode($(matchingRow));
+                                    }
+                                    var $matchingRow = $gridElement.find("tr[data-row-id='" + rowId + "']");
+                                    if($matchingRow.hasClass('always-new-row')){return;}
+                                    if ($matchingRow.length) {
+                                        if (!self.options.multiselect) {
+                                            $gridElement.find('tr.app-datagrid-row.active').removeClass('active');
+                                        }
+                                        $matchingRow.removeClass('active');
+                                        self.hideRowEditMode($matchingRow);
                                     }
                                 }
                                 self.focusNewRow();
@@ -2963,16 +3013,53 @@ $.widget('wm.datatable', {
             });
             //On tab out of a row, save the current row and make next row editable
             $htm.on('focusout', 'tr.app-datagrid-row','thead.table-header', function (e) {
+                // PERFORMANCE FIX: Early return if row is not in edit mode to avoid expensive operations
                 var $target = $(e.target),
-                    $row = $target.closest('tr.app-datagrid-row'),
-                    $relatedTarget = $(e.relatedTarget),
-                    isLastColumn = self.isLastColumn($target, $relatedTarget),
-                    isTargetRowAction = $target.closest('span.actions-column').length>0,
-                    isRelatedTargetRowAction = $relatedTarget.closest('span.actions-column').length>0,
-                    isTargetGridAction = $relatedTarget.closest('div.app-datagrid-actions').length>0,
-                    isRelatedTargetGridAction = $relatedTarget.closest('div.app-datagrid-actions').length>0,
-                    invalidTargets = '.row-editing:not(".always-new-row"), .row-action-button, .app-datagrid-cell, .caption, button.btn-time, button.btn-date';
-
+                    $row = $target.closest('tr.app-datagrid-row');
+                
+                // CRITICAL: Only process if row is actually in edit mode
+                if (!$row.hasClass('row-editing')) {
+                    return;
+                }
+                
+                // PERFORMANCE FIX: Cache jQuery queries to avoid repeated DOM traversals
+                var $relatedTarget = $(e.relatedTarget);
+                var relatedTargetEl = e.relatedTarget;
+                var targetEl = e.target;
+                
+                // Early return checks before expensive operations
+                if (!$relatedTarget.length && relatedTargetEl === null) {
+                    return; // No related target, likely clicking outside
+                }
+                
+                // PERFORMANCE FIX: Cache closest queries
+                var $targetActionsColumn = $target.closest('span.actions-column');
+                var $relatedTargetActionsColumn = $relatedTarget.closest('span.actions-column');
+                var $relatedTargetGridActions = $relatedTarget.closest('div.app-datagrid-actions');
+                
+                var isTargetRowAction = $targetActionsColumn.length > 0;
+                var isRelatedTargetRowAction = $relatedTargetActionsColumn.length > 0;
+                var isTargetGridAction = $relatedTargetGridActions.length > 0;
+                var isRelatedTargetGridAction = $relatedTargetGridActions.length > 0;
+                
+                // If class has danger, confirm dialog is opened, so dont save the row
+                if ($row.hasClass("danger")) {
+                    return;
+                }
+                
+                // PERFORMANCE FIX: Cache row ID check
+                var rowId = $row.attr('data-row-id');
+                
+                //If focus is on the same row, return here
+                if ($relatedTarget.is('tr.app-datagrid-row')) {
+                    if ($relatedTarget.attr('data-row-id') === rowId) {
+                        return;
+                    }
+                }
+                
+                // PERFORMANCE FIX: Cache invalidTargets check
+                var invalidTargets = '.row-editing:not(".always-new-row"), .row-action-button, .app-datagrid-cell, .caption, button.btn-time, button.btn-date';
+                
                 //Check if the focus out element is outside the grid or some special elements
                 function isInvalidTarget() {
                     if (!$relatedTarget.closest('.app-grid').length) {
@@ -2980,37 +3067,43 @@ $.widget('wm.datatable', {
                     }
                     return $relatedTarget.is(invalidTargets);
                 }
-
-                //If focus is on the same row, return here
-                if ($relatedTarget.is('tr.app-datagrid-row')) {
-                    if ($relatedTarget.attr('data-row-id') === $row.attr('data-row-id')) {
-                        return;
-                    }
-                }
-                // If class has danger, confirm dialog is opened, so dont save the row.
+                
                 //If focusout is because of input element or row action or current row, dont save the row
-                if (isRelatedTargetRowAction || $row.hasClass("danger") || isRelatedTargetGridAction || (isTargetRowAction && isRelatedTargetRowAction) || (isTargetRowAction && e.relatedTarget ===null) || isInvalidTarget() || $relatedTarget.attr("focus-target") === "") {
+                if (isRelatedTargetRowAction || isRelatedTargetGridAction || 
+                    (isTargetRowAction && (isRelatedTargetRowAction || relatedTargetEl === null)) || 
+                    isInvalidTarget() || 
+                    $relatedTarget.attr("focus-target") === "") {
                     return;
                 }
-                // Save the Row if any button from Grid action is clicked / AddRow action is
-                // triggered from the Row Actions
+                
+                // PERFORMANCE FIX: Only calculate isLastColumn if needed (expensive operation)
+                var isLastColumn = false;
                 if (!isTargetGridAction && !isTargetRowAction) {
+                    isLastColumn = self.isLastColumn($target, $relatedTarget);
                     //Save the row on last column of the data table. Do not save the row if focus is out of input file.
-                    if (!isLastColumn || (isLastColumn && (e.relatedTarget === null|| $(e.target).is('tr.app-datagrid-row'))) || $target.hasClass("file-upload")) {
+                    if (!isLastColumn || (isLastColumn && (relatedTargetEl === null || $target.is('tr.app-datagrid-row'))) || $target.hasClass("file-upload")) {
                         return;
                     }
                 }
-                self.options.timeoutCall(function () {
+                
+                // PERFORMANCE FIX: Debounce save operation to prevent rapid-fire saves
+                // Use a longer delay to batch multiple blur events and prevent CPU spikes
+                if (self._focusoutSaveTimeout) {
+                    clearTimeout(self._focusoutSaveTimeout);
+                }
+                // Store timeout ID directly for proper cleanup
+                self._focusoutSaveTimeout = setTimeout(function () {
+                    self._focusoutSaveTimeout = null;
                     self.toggleEditRow(e, {
                         'action': 'save',
                         'noMsg': true,
                         'success': function (skipFocus, error, isNewRow) {
                             if (!isNewRow) {
-                                self.editSuccessHandler(skipFocus, error, e, $row,false);
+                                self.editSuccessHandler(skipFocus, error, e, $row, false);
                             }
                         }
                     });
-                });
+                }, 150); // Increased delay to batch rapid blur events and reduce CPU usage
             });
         }
 
@@ -3722,6 +3815,14 @@ $.widget('wm.datatable', {
         this.compiledCellTemplates = {};
         
         this.element.text('');
-        window.clearTimeout(this.refreshGridTimeout);
+        // MEMORY LEAK FIX: Clear all timeouts
+        if (this.refreshGridTimeout) {
+            window.clearTimeout(this.refreshGridTimeout);
+            this.refreshGridTimeout = null;
+        }
+        if (this._focusoutSaveTimeout) {
+            clearTimeout(this._focusoutSaveTimeout);
+            this._focusoutSaveTimeout = null;
+        }
     }
 });

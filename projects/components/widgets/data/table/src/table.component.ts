@@ -708,6 +708,39 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.rowDefMap = {};
             this.rowDefInstances = {};
         },
+        // CRITICAL FIX: Clear all watchers before re-rendering to prevent accumulation
+        // This prevents performance issues that prevent table row editing from working
+        clearAllWatchers: () => {
+            // SAFETY CHECK: Only clear watchers if widgetId exists and $unwatch is available
+            if (!this.widgetId || typeof $unwatch !== 'function') {
+                return;
+            }
+            const widgetId = this.widgetId;
+            try {
+                // PERFORMANCE FIX: Only clear watchers that might exist based on current data size
+                // This prevents CPU spikes during page render when clearing millions of non-existent watchers
+                // Use actual data size + buffer to avoid clearing too many or too few
+                const maxRows = Math.min(10000, Math.max(100, (this.gridData?.length || 0) * 2)); // Only clear up to 2x data size
+                const maxCols = Math.min(500, Math.max(10, (this.fieldDefs?.length || 0) + 5)); // Only clear up to column count + buffer
+                
+                // CRITICAL FIX: Unwatch all row and column watchers to prevent memory leaks
+                // This is especially important in wizard steps where tables are re-rendered
+                for (let i = 0; i < maxRows; i++) {
+                    $unwatch(`${widgetId}_rowNgClass_${i}`);
+                    for (let j = 0; j < maxCols; j++) {
+                        $unwatch(`${widgetId}_colNgClass_${i}_${j}`);
+                        $unwatch(`${widgetId}_summaryRow_colNgClass_${i}_${j}`);
+                    }
+                    // Clear collapse/expand title watchers
+                    $unwatch(`${widgetId}_expandtitle_${i}`);
+                    $unwatch(`${widgetId}_collapsetitle_${i}`);
+                }
+            } catch (e) {
+                // SAFETY: Silently handle any errors during watcher cleanup
+                // This should not break table rendering
+                console.warn('Error clearing watchers:', e);
+            }
+        },
         generateCustomExpressions: (rowData, index, summaryRow?) => {
             const row = this.getClonedRowObject(rowData);
             const compileTemplate = (tmpl) => {
@@ -973,7 +1006,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         searchHandler: this.searchSortHandler.bind(this),
         sortHandler: this.searchSortHandler.bind(this),
         timeoutCall: (fn, delay) => {
-            setTimeout(fn, delay);
+            // SAFETY: Ensure fn is a function
+            if (typeof fn !== 'function') {
+                return;
+            }
+            // Use default delay of 0 if not provided to ensure async execution
+            // This prevents blocking and ensures edit mode works properly even with performance issues
+            const actualDelay = delay !== undefined ? delay : 0;
+            setTimeout(fn, actualDelay);
         },
         runInNgZone: fn => {
             this.ngZone.run(fn);
@@ -1365,9 +1405,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 }
             });
         } else {
+            // PERFORMANCE FIX: Cache jQuery queries to avoid repeated DOM traversals
             const $gridElement = this.datagridElement;
-            $gridElement.find('[data-element="dgSearchText"]').val(widgetState.search.value);
-            $gridElement.find('[data-element="dgFilterValue"]').val(widgetState.search.field);
+            const $searchText = $gridElement.find('[data-element="dgSearchText"]');
+            const $filterValue = $gridElement.find('[data-element="dgFilterValue"]');
+            $searchText.val(widgetState.search.value);
+            $filterValue.val(widgetState.search.field);
         }
     }
 
@@ -1531,10 +1574,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (get(widgetState, 'search')) {
             if (isArray(widgetState.search)) {
                 forEach(widgetState.search, (filterObj) => {
-                    const widget=$(this.rowFilterCompliedTl[filterObj.field])?.find('[widget-id]')?.prop("tagName")?.toLowerCase();
+                    // PERFORMANCE FIX: Cache jQuery query to avoid repeated DOM traversals
+                    const $filterField = $(this.rowFilterCompliedTl[filterObj.field]);
+                    const widget = $filterField?.find('[widget-id]')?.prop("tagName")?.toLowerCase();
                     if(widget==='wm-select' && filterObj.value){
-                        const select = $(this.rowFilterCompliedTl[filterObj.field]).find("select");
-                        select?.find("option")?.filter((_, o) => o.textContent.trim() === filterObj.value)?.prop("selected", true)
+                        const $select = $filterField.find("select");
+                        $select?.find("option")?.filter((_, o) => o.textContent.trim() === filterObj.value)?.prop("selected", true)
                     }
                 });
             }

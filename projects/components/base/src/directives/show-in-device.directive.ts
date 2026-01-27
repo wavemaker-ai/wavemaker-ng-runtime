@@ -38,12 +38,13 @@ export class ShowInDeviceDirective implements OnDestroy {
     5. For all, always render the view.
      */
     private onResize($event?) {
-
-        const lgWidth = getComputedStyle(document.documentElement).getPropertyValue('--screen-lg') || '1200px';
-        const mdWidth = getComputedStyle(document.documentElement).getPropertyValue('--screen-md') || '992px';
-        const smWidth = getComputedStyle(document.documentElement).getPropertyValue('--screen-sm') || '768px';
-        const lgTabLandScapeWidth = getComputedStyle(document.documentElement).getPropertyValue('--screen-lg-tab-landscape') || '1366px';
-        const lgTabPortraitWidth = getComputedStyle(document.documentElement).getPropertyValue('--screen-lg-tab-portrait') || '1024px';
+        // PERFORMANCE FIX: Cache getComputedStyle to avoid multiple forced reflows
+        const computedStyle = getComputedStyle(document.documentElement);
+        const lgWidth = computedStyle.getPropertyValue('--screen-lg') || '1200px';
+        const mdWidth = computedStyle.getPropertyValue('--screen-md') || '992px';
+        const smWidth = computedStyle.getPropertyValue('--screen-sm') || '768px';
+        const lgTabLandScapeWidth = computedStyle.getPropertyValue('--screen-lg-tab-landscape') || '1366px';
+        const lgTabPortraitWidth = computedStyle.getPropertyValue('--screen-lg-tab-portrait') || '1024px';
         const lgWidthMin = parseFloat(lgWidth)-1;
         const lgUnit =  lgWidthMin + "px";
         const mdWidthMin = parseFloat(mdWidth)-1;
