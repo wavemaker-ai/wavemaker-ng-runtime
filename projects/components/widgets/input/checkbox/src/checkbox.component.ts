@@ -101,6 +101,11 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
         @Attribute('type') public type,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
+        if(type === 'button'){
+            WIDGET_CONFIG.hostClass = 'app-iconbutton-toggle'
+        }else{
+            WIDGET_CONFIG.hostClass = DEFAULT_CLS
+        }
         super(inj, WIDGET_CONFIG, explicitContext);
 
         this._checkedvalue = unStringify(checkedVal, true);
@@ -108,10 +113,6 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
 
         // if the type of the checkbox is toggle update the related classes on the host node
         toggleClass(this.nativeElement, 'app-toggle', type === 'toggle');
-        if(type === 'button'){
-            this.unselectedicon = this.unselectedicon || 'fa fa-gear'
-            this.selectedicon = this.selectedicon || 'wm-sl-l sl-settings'
-        }
     }
 
     onPropertyChange(key, nv, ov) {
