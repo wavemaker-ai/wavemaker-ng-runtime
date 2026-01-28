@@ -6,8 +6,8 @@
   }
   <div class="slider-control">
     @if(!showmarkers){
-    <span [textContent]="minvalue" class="app-slider-value pull-left"></span>
-    <span [textContent]="maxvalue" class="app-slider-value pull-right"></span>
+    <span [textContent]="minvalue||0" class="app-slider-value pull-left"></span>
+    <span [textContent]="maxvalue||100" class="app-slider-value pull-right"></span>
     }
     <input class="range-input" type="range" aria-orientation="horizontal" focus-target [title]="datavalue"
       [attr.min]="minvalue" [attr.max]="maxvalue" [attr.step]="step" [(ngModel)]="datavalue"
@@ -25,8 +25,8 @@
 
 } @else {
   @if(!showmarkers){
-  <span [textContent]="minvalue" class="app-slider-value pull-left"></span>
-  <span [textContent]="maxvalue" class="app-slider-value pull-right"></span>
+  <span [textContent]="minvalue||0" class="app-slider-value pull-left"></span>
+  <span [textContent]="maxvalue||100" class="app-slider-value pull-right"></span>
 }
 <input class="range-input" aria-orientation="horizontal"
   focus-target
