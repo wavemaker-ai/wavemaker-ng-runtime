@@ -11,7 +11,7 @@
     }
     <input class="range-input" type="range" aria-orientation="horizontal" focus-target [title]="datavalue"
       [attr.min]="minvalue" [attr.max]="maxvalue" [attr.step]="step" [(ngModel)]="datavalue"
-      [ngModelOptions]="{ standalone: true }" [disabled]="disabled" [attr.accesskey]="shortcutkey"
+      [ngModelOptions]="{ standalone: true }" [disabled]="disabled||readonly" [attr.accesskey]="shortcutkey"
       [attr.aria-label]="arialabel" (blur)="invokeOnTouched($event)" (ngModelChange)="handleChange($event)"
       [attr.name]="name" [tabindex]="tabindex" />
     <p class="active-slider"></p>
@@ -36,7 +36,7 @@
   [attr.step]="step"
   [(ngModel)]="datavalue"
   [ngModelOptions]="{standalone: true}"
-  [disabled]="disabled"
+  [disabled]="disabled||readonly"
   [attr.accesskey]="shortcutkey"
   [attr.aria-label]="arialabel"
   (blur)="invokeOnTouched($event)"
