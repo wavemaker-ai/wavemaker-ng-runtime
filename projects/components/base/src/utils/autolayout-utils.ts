@@ -2,7 +2,7 @@ export class AutoLayoutUtils {
 
     direction: 'row' | 'column' = 'row';
     hasWrap = false;
-    alignment: string = 'top-left';
+    alignment: string;
     gap: string;
     columngap: string;
     clipContent: string;
@@ -73,8 +73,7 @@ export class AutoLayoutUtils {
 
     /** Apply spacing for gap + column gap */
     applySpacing(key: string, nv: string) {
-        const base = (this.alignmentMatrix as any)[this.alignment];
-        if (!base) return;
+        const base = (this.alignment && (this.alignmentMatrix as any)[this.alignment]) ? (this.alignmentMatrix as any)[this.alignment] : undefined;
 
         const gapValue = key === 'gap' ? nv : this.gap;
         const colValue = key === 'columngap' ? nv : this.columngap;
@@ -85,37 +84,37 @@ export class AutoLayoutUtils {
         const colVal = (colValue && colValue !== 'auto') ? colValue : null;
         const rowVal = this.hasWrap && gapVal ? gapVal : null;
 
-        let justifyContent = isRow ? base.justifyContent : base.alignItems;
-        let alignItems = isRow ? base.alignItems : base.justifyContent;
+        let justifyContent = isRow ? base?.justifyContent : base?.alignItems;
+        let alignItems = isRow ? base?.alignItems : base?.justifyContent;
 
         // ————— NO WRAP —————
         if (!this.hasWrap) {
             if (gapValue === 'auto') {
                 this.$element.css({
-                    'justify-content': base.justifyContent,
-                    'align-items': base.alignItems
+                    'justify-content': base ? base.justifyContent : 'space-between',
+                    ...(base ? { 'align-items': base.alignItems } : {})
                 });
             } else {
                 this.$element.css({
-                    'justify-content': justifyContent,
-                    'align-items': alignItems,
-                    gap: `${gapVal}px`
+                    ...(base ? { "justify-content": justifyContent, "align-items": alignItems, } : {}),
+                    gap: `${gapVal}px`,
                 });
             }
         }
 
         // ————— WRAP LOGIC —————
+        //Here gapValue is row gap and colValue is column gap
         else {
             if (gapValue === 'auto' && colValue === 'auto') {
                 this.$element.css({
-                    'justify-content': justifyContent,
-                    'align-content': justifyContent
+                    'justify-content': base ? justifyContent : 'space-between',
+                    'align-content': base ? justifyContent : 'space-between'
                 });
             }
             else if (gapValue !== 'auto' && colValue === 'auto') {
                 this.$element.css({
-                    'justify-content': justifyContent,
-                    'align-content': alignItems,
+                    'justify-content': base ? justifyContent : 'space-between',
+                    ...(base ? { 'align-content': alignItems } : {}),
                     'row-gap': `${rowVal}px`
                 });
             }
@@ -130,14 +129,12 @@ export class AutoLayoutUtils {
                     if (colVal === rowVal) {
                         this.$element.css({
                             'gap': `${colVal}px`,
-                            'align-content': alignItems,
-                            'justify-content': justifyContent
+                            ...(base ? { 'align-content': alignItems, 'justify-content': justifyContent } : {})
                         });
                     } else {
                         this.$element.css({
                             'gap': `${rowVal}px ${colVal}px`,
-                            'align-content': alignItems,
-                            'justify-content': justifyContent
+                            ...(base ? { 'align-content': alignItems, 'justify-content': justifyContent } : {})
                         });
                     }
                 }
