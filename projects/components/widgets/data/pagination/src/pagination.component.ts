@@ -538,7 +538,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
 
         switch (index) {
             case 'first':
-               if(this.pagination?.next && this.datasource?.pagination) {
+                if(this.pagination?.next && this.datasource?.pagination) {
                     this.datasource.pagination.isNext = false;
                     this.datasource.pagination.isPrev = false;
                 }
