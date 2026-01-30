@@ -8,6 +8,7 @@ export enum FormWidgetType {
     CUSTOMWIDGET = 'custom-widget',
     DATE = 'date',
     DATETIME = 'datetime',
+    ICONBUTTONTOGGLE = 'iconbutton-toggle',
     NUMBER = 'number',
     PASSWORD = 'password',
     RADIOSET = 'radioset',

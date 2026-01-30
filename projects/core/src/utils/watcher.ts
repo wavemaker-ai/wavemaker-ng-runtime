@@ -77,7 +77,7 @@ export const cleanupStaleWatchers = (): number => {
     let removed = 0;
 
     registry.forEach((bucket, widgetId) => {
-        if (!document.querySelector(`[widget-id="${widgetId}"]`)) {
+        if (widgetId.startsWith('widget-id') && !document.querySelector(`[widget-id="${widgetId}"]`)) {
             for (const key in bucket) {
                 if (bucket.hasOwnProperty(key) && key !== "scopeType" && key !== "scopeName" && typeof bucket[key] !== "function") {
                     let watchInfo = bucket[key];
@@ -531,7 +531,7 @@ const triggerWatchers = (ignoreMuted: boolean = false): void => {
     // Schedule cleanup after watchers are triggered
     scheduleThresholdCleanup();
     if (changeDetected && pass === MAX_WATCH_CYCLES) {
-        console.warn(`Watch cycles exceeded limit of ${MAX_WATCH_CYCLES}`);
+        // console.warn(`Watch cycles exceeded limit of ${MAX_WATCH_CYCLES}`);
     }
 };
 

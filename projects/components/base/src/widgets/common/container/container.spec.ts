@@ -21,10 +21,16 @@ describe('ContainerDirective', () => {
     let injectorMock: Injector;
     let nativeElementMock: any;
     let elementRefMock: ElementRef;
+    let mockAppInstance: any;
 
     beforeEach(() => {
         nativeElementMock = document.createElement('div');
         elementRefMock = { nativeElement: nativeElementMock } as ElementRef;
+
+        mockAppInstance = {
+            ...(mockApp || {}),
+            isPrism: false
+        };
 
         injectorMock = {
             get: jest.fn().mockImplementation((token) => {
@@ -40,7 +46,7 @@ describe('ContainerDirective', () => {
             }
         } as any;
 
-        directive = new ContainerDirective(injectorMock);
+        directive = new ContainerDirective(injectorMock, null, mockAppInstance);
     });
     afterEach(() => {
         jest.clearAllMocks();

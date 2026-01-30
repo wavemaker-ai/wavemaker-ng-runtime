@@ -1071,7 +1071,7 @@ $.widget('wm.datatable', {
             },
             compiledCellTemplates: {},
             // MEMORY LEAK FIX: Store bound function for proper event listener cleanup
-            boundRowClickHandlerOnCapture: null
+            // boundRowClickHandlerOnCapture: null
         });
         // TODO: Variable loading status is getting updated before dataset update. This is resulting in loader going off before data is rendered.
         // Need to update code with suitable fix. For now 250ms is added as workaround
@@ -2871,7 +2871,7 @@ $.widget('wm.datatable', {
         var $cell = $target.closest('td.app-datagrid-cell'),
             $editCells;
 
-        if ($cell.is(':last-child')) {
+        if ($cell.is(':last-child') || $cell.nextAll('td.app-datagrid-cell:visible').length === 0) {
             return true;
         }
 
@@ -2898,16 +2898,18 @@ $.widget('wm.datatable', {
             self = this;
 
         if (this.options.enableRowSelection) {
+            $htm[0].removeEventListener('click', this.rowClickHandlerOnCapture.bind(this));
             // MEMORY LEAK FIX: Remove old listener if exists before adding new one
-            if (this.boundRowClickHandlerOnCapture && $htm[0]) {
-                $htm[0].removeEventListener('click', this.boundRowClickHandlerOnCapture, true);
-            }
+            // if (this.boundRowClickHandlerOnCapture && $htm[0]) {
+            //     $htm[0].removeEventListener('click', this.boundRowClickHandlerOnCapture, true);
+            // }
             $htm.off();
-            
+            $htm[0].addEventListener('click', this.rowClickHandlerOnCapture.bind(this));
+
             // MEMORY LEAK FIX: Store bound function reference for proper removal
-            this.boundRowClickHandlerOnCapture = this.rowClickHandlerOnCapture.bind(this);
-            $htm[0].addEventListener('click', this.boundRowClickHandlerOnCapture, true);
-            
+            // this.boundRowClickHandlerOnCapture = this.rowClickHandlerOnCapture.bind(this);
+            // $htm[0].addEventListener('click', this.boundRowClickHandlerOnCapture, true);
+
             // add js click handler for capture phase in order to first listen on grid and
             // assign selectedItems so that any child actions can have access to the selectedItems.
             $htm.on('click', this.rowSelectionHandler.bind(this));
@@ -2994,7 +2996,7 @@ $.widget('wm.datatable', {
                 // triggered from the Row Actions
                 if (!isTargetGridAction && !isTargetRowAction) {
                     //Save the row on last column of the data table. Do not save the row if focus is out of input file.
-                    if (!isLastColumn || (isLastColumn && e.relatedTarget === null) || $target.hasClass("file-upload")) {
+                    if (!isLastColumn || (isLastColumn && (e.relatedTarget === null || $(e.target).is('tr.app-datagrid-row'))) || $target.hasClass("file-upload")) {
                         return;
                     }
                 }
@@ -3692,10 +3694,10 @@ $.widget('wm.datatable', {
 
     _destroy: function () {
         // MEMORY LEAK FIX: Remove native event listener using stored bound function
-        if (this.gridElement && this.gridElement[0] && this.boundRowClickHandlerOnCapture) {
-            this.gridElement[0].removeEventListener('click', this.boundRowClickHandlerOnCapture, true);
-            this.boundRowClickHandlerOnCapture = null;
-        }
+        // if (this.gridElement && this.gridElement[0] && this.boundRowClickHandlerOnCapture) {
+        //     this.gridElement[0].removeEventListener('click', this.boundRowClickHandlerOnCapture, true);
+        //     this.boundRowClickHandlerOnCapture = null;
+        // }
         
         // MEMORY LEAK FIX: Remove all jQuery event handlers
         if (this.gridHeaderElement) {

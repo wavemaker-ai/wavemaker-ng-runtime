@@ -1,6 +1,12 @@
 import { ApplicationConfig, importProvidersFrom, LOCALE_ID, RendererFactory2, APP_INITIALIZER } from "@angular/core";
 import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation } from "@angular/router";
-import { provideHttpClient, withXsrfConfiguration, withInterceptorsFromDi, withFetch, HTTP_INTERCEPTORS } from "@angular/common/http";
+import {
+    HTTP_INTERCEPTORS,
+    provideHttpClient,
+    withInterceptorsFromDi,
+    withXsrfConfiguration,
+    withFetch
+} from "@angular/common/http";
 import { provideAnimations } from "@angular/platform-browser/animations";
 import { XhrFactory } from "@angular/common";
 import { InjectionToken } from "@angular/core";
@@ -9,41 +15,40 @@ import { HttpServiceImpl } from "@wm/http";
 import { SecurityService } from "@wm/security";
 import { VariablesService, MetadataService } from "@wm/variables";
 import { OAuthService } from "@wm/oAuth";
-
-
 import {
-    AppJSProvider,
-    AppVariablesProvider,
-    ComponentRefProvider,
-    PrefabConfigProvider,
-    AppExtensionProvider,
-    CustomwidgetConfigProvider,
+    AppBeforeLoadResolve,
     AppDefaultsService,
     AppExtensionJSResolve,
+    AppExtensionProvider,
+    AppJSProvider,
     AppJSResolve,
-    AppBeforeLoadResolve,
     AppManagerService,
     AppRef,
+    AppVariablesProvider,
+    AppVariablesResolve,
+    AuthGuard,
+    CanDeactivatePageGuard,
+    ComponentRefProvider,
+    CustomwidgetConfigProvider,
+    DynamicComponentRefProviderService,
+    HttpCallInterceptor,
+    I18nResolve,
     I18nServiceImpl,
     NavigationServiceImpl,
+    PageNotFoundGuard,
+    PipeService,
+    PrefabConfigProvider,
+    PrefabManagerService,
+    RoleGuard,
     SpinnerServiceImpl,
     ToasterServiceImpl,
-    DynamicComponentRefProviderService,
-    PrefabManagerService,
-    CanDeactivatePageGuard,
-    PageNotFoundGuard,
-    I18nResolve,
-    RoleGuard,
-    PipeService,
-    AuthGuard,
     WmRouteReuseStrategy,
-    AppVariablesResolve,
     WMDomRendererFactory2,
     MAX_CACHE_SIZE,
-    MAX_CACHE_AGE,
-    HttpCallInterceptor
+    MAX_CACHE_AGE
 } from "@wm/runtime/base";
 import {
+    _WM_APP_PROJECT,
     AbstractDialogService,
     AbstractHttpService,
     AbstractI18nService,
@@ -54,13 +59,15 @@ import {
     AppDefaults,
     CustomWidgetRefProvider,
     DynamicComponentRefProvider,
+    getWmProjectProperties,
     PartialRefProvider,
     CustomIconsLoaderService,
-    Viewport,
-    _WM_APP_PROJECT,
+    Viewport
 } from "@wm/core";
 import { ToastNoAnimationModule } from "ngx-toastr";
 import { ModalModule } from "ngx-bootstrap/modal";
+import { BsDatepickerModule } from "ngx-bootstrap/datepicker";
+import { NgCircleProgressModule } from "ng-circle-progress";
 import { DatePipe, DecimalPipe, Location } from "@angular/common";
 import { CustomwidgetConfigProviderService } from "./services/customwidget-config-provider.service";
 import { AppJSProviderService } from "./services/app-js-provider.service";
@@ -69,7 +76,16 @@ import { AppExtensionProviderService } from "./services/app-extension.service";
 import { ComponentRefProviderService } from "./services/component-ref-provider.service";
 import { PrefabConfigProviderService } from "./services/prefab-config-provider.service";
 import { AppResourceManagerService } from "./services/app-resource-manager.service";
-import { CustomPipe, DialogServiceImpl, FilterPipe, ImagePipe, SanitizePipe, ToDatePipe, TrailingZeroDecimalPipe, TrustAsPipe } from "@wm/components/base";
+import {
+    CustomPipe,
+    DialogServiceImpl,
+    FilterPipe,
+    ImagePipe,
+    SanitizePipe,
+    ToDatePipe,
+    TrailingZeroDecimalPipe,
+    TrustAsPipe
+} from "@wm/components/base";
 
 
 // XhrFactory implementation for Angular 20
@@ -85,7 +101,16 @@ const XHR_FACTORY_TOKEN = new InjectionToken<XhrFactory>('XhrFactory', {
     factory: () => new BrowserXhrFactory()
 });
 
-export const xsrfHeaderName = "X-WM-XSRF-TOKEN";
+const wmModules = [
+    importProvidersFrom(
+        ModalModule.forRoot(),
+        ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true }),
+        BsDatepickerModule.forRoot(),
+        NgCircleProgressModule.forRoot()
+    )
+];
+
+export const xsrfHeaderName = getWmProjectProperties().xsrf_header_name || "X-WM-XSRF-TOKEN";
 
 export const initializeProjectDetails = () => {
     let cdnUrl = document.querySelector('[name="deployUrl"]') && document.querySelector('[name="deployUrl"]').getAttribute('content');
@@ -199,10 +224,7 @@ export const appConfig: ApplicationConfig = {
         { provide: MAX_CACHE_SIZE, useValue: 10 },
         { provide: MAX_CACHE_AGE, useValue: 30 * 60 },
         // Third-party standalone providers
-        importProvidersFrom(
-            ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true }),
-            ModalModule.forRoot()
-        ),
+        ...wmModules,
         // APP_INITIALIZER for locale and app initialization
         {
             provide: APP_INITIALIZER,

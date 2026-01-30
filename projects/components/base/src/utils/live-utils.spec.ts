@@ -306,7 +306,7 @@ describe('getFieldTypeWidgetTypesMap', () => {
         'time': ['time', 'text', 'number', 'select', 'checkboxset', 'radioset', 'autocomplete', 'chips'],
         'timestamp': ['timestamp', 'text', 'number', 'select', 'checkboxset', 'radioset', 'autocomplete', 'chips'],
         'datetime': ['datetime', 'text', 'select', 'checkboxset', 'radioset', 'autocomplete', 'chips'],
-        'boolean': ['checkbox', 'radioset', 'toggle', 'select'],
+        'boolean': ['checkbox', 'radioset', 'toggle', 'iconbutton-toggle', 'select'],
         'list': ['select', 'radioset', 'checkboxset', 'switch', 'autocomplete', 'chips'],
         'clob': ['text', 'textarea', 'richtext'],
         'blob': ['upload'],

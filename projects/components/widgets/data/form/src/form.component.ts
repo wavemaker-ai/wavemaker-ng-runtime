@@ -683,6 +683,12 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 super.onPropertyChange(key, nv, ov);
         }
     }
+    override onStyleChange(key: string, nv: any, ov?: any) {
+        if (key === 'height') {
+            this.$element.css('overflow', 'auto');
+        }
+        super.onStyleChange(key, nv, ov);
+    }
 
     // Event callbacks on success/error
     onResultCb(data, status, event?) {
@@ -901,11 +907,21 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             field.value = '';
             if (field.widgettype === 'upload' || field.type === DataType.BLOB) {
                 this.resetFileUploadWidget(field, true);
+            }else if(field.widgettype === 'slider'){
+                this.resetSliderWidget(field);
             }
             field.nativeElement.querySelector('input')?.removeAttribute('aria-invalid');
         });
         this.constructDataObject();
         this.clearMessage();
+    }
+
+    resetSliderWidget(field){
+        const $formEle = this.$element;
+        const slider =  $formEle.find('[name="' + field.key + '_formWidget"]').closest('.slider-control');
+         if (slider.length) {
+            slider.css('--end', `50%`);
+        }
     }
 
     savePrevformFields() {

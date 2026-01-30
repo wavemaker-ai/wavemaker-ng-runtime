@@ -1432,7 +1432,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (this.isDestroyed) {
             return;
         }
-        
+
         let result;
         // Check for Variable filters if applied
         if (this.gridOptions.isNavTypeScrollOrOndemand()) {
@@ -1559,7 +1559,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     ngOnDestroy() {
         // MEMORY LEAK FIX: Remove document click listener
         document.removeEventListener('click', this.documentClickBind);
-        
+
         // MEMORY LEAK FIX: Unsubscribe from navigator watches
         if (this.navigatorResultWatch) {
             this.navigatorResultWatch.unsubscribe();
@@ -1569,7 +1569,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.navigatorMaxResultWatch.unsubscribe();
             this.navigatorMaxResultWatch = null;
         }
-        
+
         // MEMORY LEAK FIX: Clear all ViewContainerRef embedded views
         // These hold references to row data, custom expressions, and inline widgets
         if (this.customExprViewRef) {
@@ -1596,7 +1596,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (this.dynamicTableRef) {
             this.dynamicTableRef.clear();
         }
-        
+
         // MEMORY LEAK FIX: Clear compiled template caches
         this.rowActionsCompiledTl = {};
         this.rowFilterCompliedTl = {};
@@ -1607,17 +1607,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.rowDefInstances = {};
         this.rowDefMap = {};
         this.rowExpansionActionTl = {};
-        
-        // MEMORY LEAK FIX: Destroy jQuery datatable widget FIRST before clearing data
-        // The datatable widget's destroy method may access options.data during cleanup
-        if (this.datagridElement && this.datagridElement.datatable) {
-            try {
-                this.datagridElement.datatable('destroy');
-            } catch (e) {
-                // Ignore errors during destroy
-            }
-        }
-        
+
         // MEMORY LEAK FIX: Clear dynamic context
         if (this._dynamicContext) {
             Object.keys(this._dynamicContext).forEach(key => {
@@ -1625,8 +1615,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             });
             this._dynamicContext = null;
         }
-        
-        // MEMORY LEAK FIX: Clear data arrays (AFTER destroying datatable)
+
+        // MEMORY LEAK FIX: Clear data arrays
         this._gridData = [];
         this.items = [];
         this.selectedItems = [];
@@ -1634,7 +1624,24 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.fullFieldDefs = [];
         this.gridData = [];
         this.__fullData = null;
-        
+
+        // MEMORY LEAK FIX: Destroy jQuery datatable widget before clearing gridOptions
+        if (this.datagridElement && this.datagridElement.datatable) {
+            try {
+                this.datagridElement.datatable('destroy');
+            } catch (e) {
+                // Ignore errors during destroy
+            }
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+
         // MEMORY LEAK FIX: Clear other data structures
         this.columns = {};
         this.formfields = {};
@@ -1644,7 +1651,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.exportOptions = [];
         this.headerConfig = [];
         this.rowActions = [];
-        
+
         // MEMORY LEAK FIX: Clear all @ContentChildren QueryLists holding template references
         // These QueryLists hold TemplateRef instances that create circular references to the parent LView
         if (this.rowActionTmpl) {
@@ -1665,20 +1672,20 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (this.rowExpansionActionTmpl) {
             this.rowExpansionActionTmpl.reset([]);
         }
-        
+
         // MEMORY LEAK FIX: Clear @ContentChild template reference
         this.rowExpansionTmpl = null;
-        
+
         // MEMORY LEAK FIX: Complete and clear subjects
         if (this.selectedItemChange) {
             this.selectedItemChange.complete();
             this.selectedItemChange = null;
         }
-        
+
         // MEMORY LEAK FIX: Clear ViewChild references
         this.dataNavigator = null;
         this._tableElement = null;
-        
+
        // console.log("table component destroyed");
         super.ngOnDestroy();
     }
@@ -2187,7 +2194,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (this.isDestroyed) {
             return;
         }
-        
+
         let enableNewRow, widgetState;
         switch (key) {
             case 'datasource':
@@ -2204,10 +2211,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     this.headerselectall=false;
                     this.setDataGridOption("headerselectall", false);
                 }
-                // Process dataset when datasource is set, especially if dataset was previously skipped
-                if (this.datasource && this.dataset !== undefined) {
-                    this.watchVariableDataSet(this.dataset);
-                }
+                this.watchVariableDataSet(this.dataset);
                 this.onDataSourceChange();
                 break;
             case 'dataset':

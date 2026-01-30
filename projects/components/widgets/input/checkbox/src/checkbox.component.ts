@@ -76,6 +76,8 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
     public _caption = '&nbsp';
     private _checkedvalue;
     private _uncheckedvalue;
+    public unselectedicon;
+    public selectedicon;
 
     @ViewChild(NgModel) ngModel: NgModel;
     @ViewChild('checkbox', { static: true, read: ElementRef }) checkboxEl: ElementRef;
@@ -99,6 +101,11 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
         @Attribute('type') public type,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
+        if(type === 'button'){
+            WIDGET_CONFIG.hostClass = 'app-iconbutton-toggle'
+        }else{
+            WIDGET_CONFIG.hostClass = DEFAULT_CLS
+        }
         super(inj, WIDGET_CONFIG, explicitContext);
 
         this._checkedvalue = unStringify(checkedVal, true);
@@ -130,7 +137,7 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
         } else if (key === 'datavalue') {
             this.datavalue = unStringify(nv);
             this._onChange(this.datavalue);
-        } else {
+        }else {
             super.onPropertyChange(key, nv, ov);
         }
     }

@@ -225,16 +225,6 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
             }
         }
 
-        // MEMORY LEAK FIX: Clear currentItemWidgets cache
-        // The _currentItemWidgets object accumulates references to all child widgets
-        // which prevents them from being garbage collected
-        if (this._currentItemWidgets) {
-            Object.keys(this._currentItemWidgets).forEach(key => {
-                delete this._currentItemWidgets[key];
-            });
-            this._currentItemWidgets = null;
-        }
-
         // MEMORY LEAK FIX: Clear context to release references
         if (this.context) {
             Object.keys(this.context).forEach(key => {

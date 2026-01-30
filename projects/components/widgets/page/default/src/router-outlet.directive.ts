@@ -24,10 +24,6 @@ export class RouterOutletDirective extends StylableComponent {
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, public app: App) {
         super(inj, WIDGET_CONFIG, explicitContext);
         this.isPrism = this.app.isPrism;
-           // Add w-100 class only for Prism appsmvn -v
-        if (this.isPrism) {
-            this.nativeElement.classList.add('w-100');
-        }
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {

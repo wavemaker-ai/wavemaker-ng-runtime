@@ -48,6 +48,9 @@ export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
     private lazy: boolean = false;
     public hint: string;
     public arialabel: string;
+    public trailingiconclass: string;
+    public leadingiconclass: string;
+    public supportingtext: string
 
     @ViewChild('input', {static: true}) inputEl: ElementRef;
     @ViewChild(NgModel) ngModel: NgModel;
@@ -124,6 +127,10 @@ export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
     ngOnInit() {
         super.ngOnInit();
         this.isFocused = !!this.datavalue;
+    }
+
+    iconClickEvent($event, type: string){
+        this.invokeEventCallback(type, { $event })
     }
 
     ngOnDestroy() {

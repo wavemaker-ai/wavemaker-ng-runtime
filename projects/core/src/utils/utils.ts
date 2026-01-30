@@ -1613,7 +1613,9 @@ export const getAppSetting = (key, defaultValue) => {
 export const setListClass = (scope) => {
     let temp = '';
     if (scope.itemsperrow) {
-        if (isNaN(parseInt(scope.itemsperrow, 10))) {
+        if(scope.itemsperrow === "auto") {
+            scope.itemsPerRowClass = "";
+        } else if (isNaN(parseInt(scope.itemsperrow, 10))) {
             // handling itemsperrow containing string of classes
             split(scope.itemsperrow, ' ').forEach((cls: string) => {
                 const keys = split(cls, '-');
@@ -1662,6 +1664,33 @@ export const getFontConfig = () => {
     return _WM_APP_PROPERTIES.fontConfig || getPreviewProperties();
 }
 
+export const adjustVerticalPosition = (containerElem, parentElem: HTMLElement, ref, ele?): void => {
+    const zoneRef = ref._ngZone || ref.ngZone;
+
+    zoneRef.onStable.subscribe(() => {
+            const containerHeight = ele
+                ? parseInt(ele.css('height'), 10)
+                : parseInt(containerElem.css('height'), 10);
+
+            const rect = parentElem.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+
+            const spaceBelow = viewportHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            if (spaceBelow < containerHeight && spaceAbove >= containerHeight) {
+                const matrix = getWebkitTraslationMatrix(containerElem);
+
+                matrix.m42 = matrix.m42 - containerHeight - rect.height;
+
+                if (matrix.m42 < 0) {
+                    matrix.m42 = 0;
+                }
+
+                setTranslation3dPosition(containerElem, matrix);
+            }
+        });
+};
 /*export const getParent = (parent: any) => {
     if(parent.hasOwnProperty("isDynamicComponent") || parent.hasOwnProperty("isPageComponent")) {
         return parent
