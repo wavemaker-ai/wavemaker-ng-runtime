@@ -1,5 +1,5 @@
-import { Live_Operations } from './utils/data-utils';
-export * from './components.module';
+import {Live_Operations} from './utils/data-utils';
+
 export {
     Live_Operations,
     ALLFIELDS,
@@ -55,6 +55,7 @@ export {
     hasLinkToCurrentPage,
     getOrderByExpr,
     isDataSetWidget,
+    getCurrentWidgets,
     getImageUrl,
     getBackGroundImageUrl,
     provideAs,
@@ -125,7 +126,8 @@ export {
     FileIconClassPipe,
     StateClassPipe,
     FileExtensionFromMimePipe,
-    TrailingZeroDecimalPipe
+    TrailingZeroDecimalPipe,
+    TemplateReplacePipe
 } from './pipes/custom-pipes';
 export * from './pipes/trust-as.pipe';
 export * from './pipes/sanitize.pipe';

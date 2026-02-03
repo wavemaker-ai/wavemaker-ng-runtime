@@ -1,14 +1,13 @@
-import { WmComponentsModule } from "@wm/components/base";
 import {
     Attribute,
     Component,
     Injector,
     OnInit,
+    OnDestroy,
     TemplateRef,
     ViewChild,
     HostListener,
-    Optional,
-    SkipSelf,
+    Optional, 
     Inject
 } from '@angular/core';
 
@@ -17,14 +16,14 @@ import { provideAsDialogRef, provideAsWidgetRef } from '@wm/components/base';
 import { BaseDialog, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent } from '@wm/components/dialogs';
 
 import { registerProps } from './confirm-dialog.props';
-import { ButtonComponent } from "@wm/components/input";
+import { ButtonComponent } from "@wm/components/input/button";
 
 const DIALOG_CLS = 'app-dialog modal-dialog app-confirm-dialog';
 const WIDGET_INFO = {widgetType: 'wm-confirmdialog'};
 
 @Component({
-  standalone: true,
-  imports: [WmComponentsModule, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
+    standalone: true,
+    imports: [DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
     selector: 'div[wmConfirmDialog]',
     templateUrl: './confirm-dialog.component.html',
     providers: [
@@ -32,7 +31,7 @@ const WIDGET_INFO = {widgetType: 'wm-confirmdialog'};
         provideAsDialogRef(ConfirmDialogComponent)
     ]
 })
-export class ConfirmDialogComponent extends BaseDialog implements OnInit {
+export class ConfirmDialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate: TemplateRef<any>;
 
@@ -94,5 +93,12 @@ export class ConfirmDialogComponent extends BaseDialog implements OnInit {
     ngOnInit() {
         super.ngOnInit();
         this.register(this.viewParent);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.dialogTemplate = null;
+
+        super.ngOnDestroy();
     }
 }

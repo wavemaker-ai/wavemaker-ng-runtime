@@ -1,0 +1,34 @@
+<button class="btn-leading-icon" type="button" name="leadingIcon" *ngIf="leadingiconclass" (click)="iconClickEvent($event, 'leadingiconclick')">
+       <i aria-hidden="true" [ngClass]="leadingiconclass"></i>
+</button>
+<input class="form-control app-textbox"
+       focus-target
+       [type]="type"
+       [attr.name]="name"
+       [attr.aria-label]="arialabel"
+       [(ngModel)]="datavalue"
+       [imask]="mask"
+       [unmask]="true"
+       [ngModelOptions]="ngModelOptions"
+       [readonly]="readonly"
+       [required]="required"
+       [disabled]="disabled"
+       [maxlength]="maxchars"
+       [pattern]="regexp"
+       [attr.tabindex]="tabindex"
+       [attr.placeholder]="placeholder"
+       [attr.accesskey]="shortcutkey"
+       [autofocus]="autofocus"
+       [ngClass]="[leadingiconclass ? 'with-leading-icon' : '', trailingiconclass ? 'with-trailing-icon' : '', conditionalclass || '']"
+       [ngStyle]="conditionalstyle"
+       (ngModelChange)="handleChange($event)"
+       (blur)="handleBlur($event); checkForDisplayFormat($event)"
+       (focus)="checkForDisplayFormat($event)"
+       [autocomplete]="autocomplete ? 'on' : 'off'"
+       (keyup.enter)="flushViewChanges(input.value)"
+       #input>
+<button class="btn-trailing-icon" type="button" name="trailingIcon" *ngIf="trailingiconclass" (click)="iconClickEvent($event, 'trailingiconclick')">
+       <i aria-hidden="true" [ngClass]="trailingiconclass"></i>
+</button>
+<p class="app-label help-block supporting-text" *ngIf="supportingtext" name="supportingText">{{supportingtext}}</p>
+

@@ -1,4 +1,3 @@
-import { WmComponentsModule } from "@wm/components/base";
 import {Component, Inject, Injector, Optional} from '@angular/core';
 
 import { APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
@@ -11,8 +10,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
-  standalone: true,
-  imports: [WmComponentsModule],
+    standalone: true,
     selector: '[wmHeader]',
     templateUrl: './header.component.html',
     providers: [
@@ -22,6 +20,8 @@ const WIDGET_CONFIG: IWidgetConfig = {
 })
 export class HeaderComponent extends StylableComponent {
     static initializeProps = registerProps();
+
+    protected isInlineContent: boolean = true;
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
 

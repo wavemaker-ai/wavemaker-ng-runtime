@@ -1,0 +1,120 @@
+import { CommonModule } from '@angular/common';
+import {Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import { NG_VALUE_ACCESSOR, NG_VALIDATORS } from '@angular/forms';
+
+import {setListClass} from '@wm/core';
+
+import { provideAsWidgetRef, styler, provideAs, TextContentDirective, ItemTemplateDirective, PartialContainerDirective, PartialParamHandlerDirective } from '@wm/components/base';
+import { DatasetAwareFormComponent } from '@wm/components/input/dataset-aware-form';
+import { registerProps } from './radioset.props';
+import { includes} from "lodash-es";
+
+declare const $;
+
+const DEFAULT_CLS = 'app-radioset list-group inline';
+const WIDGET_CONFIG = {widgetType: 'wm-radioset', hostClass: DEFAULT_CLS};
+
+@Component({
+  standalone: true,
+  imports: [CommonModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective],
+    selector: '[wmRadioset]',
+    exportAs: 'wmRadioset',
+    templateUrl: './radioset.component.html',
+    providers: [
+        provideAs(RadiosetComponent, NG_VALUE_ACCESSOR, true),
+        provideAs(RadiosetComponent, NG_VALIDATORS, true),
+        provideAsWidgetRef(RadiosetComponent)
+    ]
+})
+export class RadiosetComponent extends DatasetAwareFormComponent implements OnDestroy {
+    static initializeProps = registerProps();
+
+    public layout = '';
+    public disabled: boolean;
+    public itemsperrow: string;
+    private itemsPerRowClass: string;
+
+    constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+        super(inj, WIDGET_CONFIG, explicitContext);
+        styler(this.nativeElement, this);
+        this.multiple = false;
+    }
+
+    triggerInvokeOnChange(key, $event) {
+        this.modelByKey = key;
+
+        if(this.viewParent.containerWidget && this.viewParent.containerWidget.updateDataValue)
+            this.viewParent.containerWidget.updateDataValue(this.datavalue);
+
+        this.invokeOnTouched();
+        // invoke on datavalue change.
+        this.invokeOnChange(this.datavalue, $event || {}, true);
+    }
+
+    /**
+     * On click of the option, update the datavalue
+     */
+    onRadioLabelClick($event, key) {
+        if (!$($event.target).is('input')) {
+            return;
+        }
+
+        this.triggerInvokeOnChange(key, $event);
+    }
+
+    private eventListeners: Map<HTMLElement, Function> = new Map();
+
+    // change and blur events are added from the template
+    protected handleEvent(node: HTMLElement, eventName: string, callback: Function, locals: any) {
+        if (eventName === 'click') {
+            const handler = (e) => {
+                if (!$(e.target).is('input')) {
+                    return;
+                }
+                locals.$event = e;
+                return callback();
+            };
+            
+            const deregister = this.eventManager.addEventListener(node, eventName, handler);
+            this.eventListeners.set(node, deregister);
+        } else if (!includes(['change'], eventName)) {
+            super.handleEvent(node, eventName, callback, locals);
+        }
+    }
+
+    onPropertyChange(key, nv, ov?) {
+        if (key === 'tabindex') {
+            return;
+        }else if(key === 'layout'){
+            this.handleLayout(nv)
+        }
+        if (key === 'itemsperrow') {
+            setListClass(this);
+        } else {
+            super.onPropertyChange(key, nv, ov);
+        }
+    }
+
+    handleLayout(layout: string) {
+        const direction = layout === 'vertical' ? 'column' : 'row';
+        this.$element.css({
+            display: 'flex',
+            flexDirection: direction
+        });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Remove all event listeners
+        if (this.eventListeners && this.eventListeners.size > 0) {
+            this.eventListeners.forEach((deregister) => {
+                if (deregister && typeof deregister === 'function') {
+                    deregister();
+                }
+            });
+            this.eventListeners.clear();
+            this.eventListeners = null;
+        }
+
+        super.ngOnDestroy();
+    }
+}

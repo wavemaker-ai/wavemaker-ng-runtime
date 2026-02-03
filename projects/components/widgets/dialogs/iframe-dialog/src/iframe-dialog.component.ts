@@ -1,13 +1,11 @@
-import { CommonModule } from '@angular/common';
-import { WmComponentsModule } from "@wm/components/base";
 import {
     Attribute,
     Component,
     Inject,
     Injector,
     OnInit,
+    OnDestroy,
     Optional,
-    SkipSelf,
     TemplateRef,
     ViewChild
 } from '@angular/core';
@@ -17,15 +15,15 @@ import { provideAsDialogRef, provideAsWidgetRef } from '@wm/components/base';
 import { BaseDialog, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent } from '@wm/components/dialogs';
 
 import { registerProps } from './iframe-dialog.props';
-import { IframeComponent } from '@wm/components/basic';
-import { ButtonComponent } from '@wm/components/input';
+import { IframeComponent } from '@wm/components/basic/iframe';
+import { ButtonComponent } from '@wm/components/input/button';
 
 const DIALOG_CLS = 'app-dialog modal-dialog app-iframe-dialog';
 const WIDGET_INFO = {widgetType: 'wm-iframedialog'};
 
 @Component({
-  standalone: true,
-  imports: [CommonModule, WmComponentsModule, IframeComponent, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
+    standalone: true,
+    imports: [IframeComponent, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
     selector: 'div[wmIframeDialog]',
     templateUrl: './iframe-dialog.component.html',
     providers: [
@@ -33,7 +31,7 @@ const WIDGET_INFO = {widgetType: 'wm-iframedialog'};
         provideAsDialogRef(IframeDialogComponent)
     ]
 })
-export class IframeDialogComponent extends BaseDialog implements OnInit {
+export class IframeDialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ViewChild('dialogTemplate' , { static: true }) dialogTemplate: TemplateRef<any>;
@@ -84,5 +82,12 @@ export class IframeDialogComponent extends BaseDialog implements OnInit {
     ngOnInit() {
         super.ngOnInit();
         this.register(this.viewParent);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.dialogTemplate = null;
+
+        super.ngOnDestroy();
     }
 }

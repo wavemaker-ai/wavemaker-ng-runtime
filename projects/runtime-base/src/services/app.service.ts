@@ -1,4 +1,4 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable, Injector, OnDestroy } from '@angular/core';
 import { RouteReuseStrategy } from '@angular/router';
 
 import {
@@ -23,8 +23,9 @@ import { SecurityService } from '@wm/security';
 
 import { WmDefaultRouteReuseStrategy } from '../util/wm-route-reuse-strategy';
 import { PipeService } from "./pipe.service";
-import {each, get, isEmpty, isString} from "lodash-es";
+import { each, get, isEmpty, isObject, isString } from "lodash-es";
 import * as momentLib from 'moment-timezone/moment-timezone';
+import { MODE_CONSTANTS } from '@wm/variables';
 const moment = momentLib.default || window['moment'];
 
 const injectorMap = {
@@ -49,10 +50,10 @@ const enum PROJECT_TYPE {
     TEMPLATE_BUNDLE = 'TEMPLATEBUNDLE'
 }
 
-const noop = (...args) => {};
+const noop = (...args) => { };
 
 // Wraps httpService to behave as angular 1.x $http service.
-const getHttpDependency = function() {
+const getHttpDependency = function () {
     const httpService = this.httpService;
     const fn = function (key, options?) {
         const args = Array.from(arguments).slice(1);
@@ -66,7 +67,7 @@ const getHttpDependency = function() {
 };
 
 @Injectable()
-export class AppRef {
+export class AppRef implements OnDestroy {
     Variables: any = {};
     Actions: any = {};
     onAppVariablesReady = noop;
@@ -74,9 +75,9 @@ export class AppRef {
     onSessionTimeout = noop;
     onPageReady = noop;
     onBeforePageLeave = noop;
-    onBeforeServiceCall =  noop;
-    onServiceSuccess =  noop;
-    onServiceError =  noop;
+    onBeforeServiceCall = noop;
+    onServiceSuccess = noop;
+    onServiceError = noop;
     dynamicComponentContainerRef = {};
 
     projectName: string;
@@ -84,28 +85,20 @@ export class AppRef {
     isApplicationType: boolean;
     isTabletApplicationType: boolean;
     isTemplateBundleType: boolean;
+    isPrism: boolean;
 
     targetPlatform: string;
 
     appLocale: any;
+    modes: any;
 
     changeLocale = this.i18nService.setSelectedLocale.bind(this.i18nService);
     getSelectedLocale = this.i18nService.getSelectedLocale.bind(this.i18nService);
     setTimezone = this.i18nService.setTimezone.bind(this.i18nService);
     setwidgetLocale = this.i18nService.setwidgetLocale.bind(this.i18nService);
-    
-    setAppMode = (mode) => {
-        const htmlEl = document.getElementsByTagName('html')[0];
-        if (mode === 'default') {
-          localStorage.removeItem('app-mode');
-          htmlEl.removeAttribute('app-mode');
-        } else {
-          localStorage.setItem('app-mode', mode);
-          htmlEl.setAttribute('app-mode', mode);
-        }
-    };
 
     private _eventNotifier = new EventNotifier();
+    private sessionTimeoutUnsubscribe: () => void; // MEMORY LEAK FIX: Store unsubscribe function
 
     landingPageName = getWmProjectProperties().homePage;
 
@@ -129,15 +122,18 @@ export class AppRef {
         this.isApplicationType = wmProjectProperties.type === PROJECT_TYPE.APPLICATION;
         this.isTemplateBundleType = wmProjectProperties.type === PROJECT_TYPE.TEMPLATE_BUNDLE;
         this.targetPlatform = wmProjectProperties.platformType;
+        this.isPrism = wmProjectProperties.template === "PRISM";
 
-        this.httpService.registerOnSessionTimeout(this.on401.bind(this));
+
+        // MEMORY LEAK FIX: Store unsubscribe function for cleanup
+        this.sessionTimeoutUnsubscribe = this.httpService.registerOnSessionTimeout(this.on401.bind(this));
 
         this.appLocale = this.i18nService.getAppLocale();
         this.httpService.setLocale(this.appLocale);
     }
 
     public clearPageCache(pageName?: string) {
-        if(this.routeReuseStrategy instanceof WmDefaultRouteReuseStrategy) {
+        if (this.routeReuseStrategy instanceof WmDefaultRouteReuseStrategy) {
             (this.routeReuseStrategy as WmDefaultRouteReuseStrategy).reset(pageName);
         }
     }
@@ -145,10 +141,13 @@ export class AppRef {
     public notify(eventName: string, ...data: Array<any>) {
         this._eventNotifier.notify.apply(this._eventNotifier, arguments);
     }
-    
+
     public importModule(moduleName: string) {
         if (moduleName === 'moment') {
             return moment;
+        }
+        else if (moduleName === 'moment-tz-data') {
+            return this.i18nService.setTimezoneEarly();
         }
     }
 
@@ -221,5 +220,69 @@ export class AppRef {
         each(expressions, (fn, expr) => {
             registerFnByExpr(expr, fn[0], fn[1]);
         });
+    }
+
+    /**
+     * Utility method to check if an object has a property
+     * This is commonly used in expressions to check object properties
+     * @param obj The object to check
+     * @param prop The property name to check
+     * @returns true if the object has the property, false otherwise
+     */
+    hasOwnObjectProperty(obj: any, prop: string): boolean {
+        if (!obj || typeof obj !== 'object') {
+            return false;
+        }
+        return Object.prototype.hasOwnProperty.call(obj, prop);
+    }
+
+    setMode(modes: Record<string, string>, shouldPersist = false) {
+        const htmlEl = document.getElementsByTagName('html')[0];
+        //html element sanity check
+        if (!htmlEl) return;
+
+        //modes object sanity check
+        if (!isObject(modes)) {
+            modes = {}
+        }
+
+        //modes array sanity check
+        const modesArr = Object.entries(modes);
+        if (!modesArr.length) return;
+
+        //loop over modes and set each mode on the html element
+        modesArr.forEach(([modeKey, modeValue]) => {
+            const isDefault = modeValue === MODE_CONSTANTS.LIGHT || modeValue === MODE_CONSTANTS.DEFAULT;
+
+            if (isDefault) {
+                htmlEl.removeAttribute(modeKey);
+            } else {
+                htmlEl.setAttribute(modeKey, modeValue);
+            }
+        });
+
+        //if shoudlPersist is true, set the modes object in the localStorage
+        if (shouldPersist) localStorage.setItem('wm-app-modes', JSON.stringify(modes));
+    };
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Destroy EventNotifier to release subscribers
+        if (this._eventNotifier) {
+            this._eventNotifier.destroy();
+            this._eventNotifier = null;
+        }
+
+        // MEMORY LEAK FIX: Unsubscribe from session timeout
+        if (this.sessionTimeoutUnsubscribe) {
+            this.sessionTimeoutUnsubscribe();
+            this.sessionTimeoutUnsubscribe = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references
+        this.Variables = null;
+        this.Actions = null;
+        this.appLocale = null;
+        this.modes = null;
+        this.dynamicComponentContainerRef = null;
     }
 }

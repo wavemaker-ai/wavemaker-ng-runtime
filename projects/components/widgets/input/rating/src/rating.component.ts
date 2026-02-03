@@ -1,12 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { WmComponentsModule } from "@wm/components/base";
 import { FormsModule } from '@angular/forms';
-import {Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
-import {generateGUId, setCSS, noop} from '@wm/core';
-import { getOrderedDataset, provideAs, provideAsWidgetRef, styler } from '@wm/components/base';
-import { DatasetAwareFormComponent } from '@wm/components/input';
+import {generateGUId, noop} from '@wm/core';
+import { getOrderedDataset, provideAs, provideAsWidgetRef, styler, TextContentDirective } from '@wm/components/base';
+import { DatasetAwareFormComponent } from '@wm/components/input/dataset-aware-form';
 
 import { registerProps } from './rating.props';
 import {find, isEmpty, isUndefined, slice, toString} from "lodash-es";
@@ -19,7 +18,7 @@ const DEFAULT_RATING = 5;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, WmComponentsModule, FormsModule],
+  imports: [CommonModule, TextContentDirective, FormsModule],
     selector: '[wmRating]',
     templateUrl: './rating.component.html',
     providers: [
@@ -27,7 +26,7 @@ const DEFAULT_RATING = 5;
         provideAsWidgetRef(RatingComponent)
     ]
 })
-export class RatingComponent extends DatasetAwareFormComponent {
+export class RatingComponent extends DatasetAwareFormComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     public caption: string;
@@ -231,5 +230,18 @@ export class RatingComponent extends DatasetAwareFormComponent {
     onMouseOver($event, rate) {
         this.caption = rate.label;
         !this.touchEnabled && !$event.target.classList.contains('rating-label-hover') && $event.target.classList.add('rating-label-hover');
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.ratingEl = null;
+
+        // MEMORY LEAK FIX: Clear rating items array
+        if (this.ratingItems) {
+            this.ratingItems = [];
+        }
+
+        // Call parent ngOnDestroy (DatasetAwareFormComponent has cleanup)
+        super.ngOnDestroy();
     }
 }

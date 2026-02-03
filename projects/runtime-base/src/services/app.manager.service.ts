@@ -1,21 +1,23 @@
-import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
-import { DatePipe } from '@angular/common';
+import {Injectable, OnDestroy} from '@angular/core';
+import {Router} from '@angular/router';
+import {DatePipe} from '@angular/common';
 
 import {
+    $appDigest,
     AbstractDialogService,
     AbstractHttpService,
     AbstractI18nService,
     AbstractSpinnerService,
     App,
     fetchContent,
+    getWmProjectProperties,
     isDefined,
-    triggerFn,
-    $appDigest
+    triggerFn
 } from '@wm/core';
-import { SecurityService } from '@wm/security';
-import { CONSTANTS, $rootScope, routerService,  MetadataService, VariablesService } from '@wm/variables';
+import {SecurityService} from '@wm/security';
+import {$rootScope, MetadataService, VariablesService} from '@wm/variables';
 import {extend, forEach, get, isEmpty, isObject, isUndefined, merge, trim} from "lodash-es";
+import { getModesFromLocalStorage } from '../public_api';
 
 enum POST_MESSAGES {
     HIDE_TEMPLATES_SHOW_CASE = 'hide-templates-show-case',
@@ -26,8 +28,9 @@ enum POST_MESSAGES {
     ON_LOAD                  = 'on-load'
 }
 
+
 @Injectable()
-export class AppManagerService {
+export class AppManagerService implements OnDestroy {
     static readonly SERVICE_NAME = 'AppManagerService';
 
     private appVariablesLoaded = false;
@@ -35,6 +38,9 @@ export class AppManagerService {
     private _noRedirect = false;
     private templates: Array<any>;
     private lastLoggedUserId;
+    private appSubscriptions: Array<() => void> = []; // MEMORY LEAK FIX: Track subscriptions
+    private windowMessageListener: (event: MessageEvent) => void; // MEMORY LEAK FIX: Store listener reference
+    private sessionTimeoutUnsubscribe: () => void; // MEMORY LEAK FIX: Store unsubscribe function
 
     constructor(
         private $http: AbstractHttpService,
@@ -49,11 +55,13 @@ export class AppManagerService {
         private $datePipe: DatePipe,
     ) {
         // register method to invoke on session timeout
-        this.$http.registerOnSessionTimeout(this.handle401.bind(this));
+        // MEMORY LEAK FIX: Store unsubscribe function for cleanup
+        this.sessionTimeoutUnsubscribe = this.$http.registerOnSessionTimeout(this.handle401.bind(this));
 
         this.$variables.registerDependency('appManager', this);
 
-        this.$app.subscribe('toggle-variable-state', (data) => {
+        // MEMORY LEAK FIX: Store subscription unsubscribe functions
+        this.appSubscriptions.push(this.$app.subscribe('toggle-variable-state', (data) => {
             const variable = data.variable,
                 active = data.active;
             if (!isEmpty(trim(variable.spinnerContext))) {
@@ -81,8 +89,8 @@ export class AppManagerService {
                     this.$spinner.hide(variable._spinnerId.shift());
                 }
             }
-        });
-        this.$app.subscribe('userLoggedIn', () => {
+        }));
+        this.appSubscriptions.push(this.$app.subscribe('userLoggedIn', () => {
             this.setLandingPage();
             if (this.lastLoggedUserId) {
                 this.$security.getConfig(config => {
@@ -91,11 +99,11 @@ export class AppManagerService {
                     }
                 }, null);
             }
-        });
-        this.$app.subscribe('userLoggedOut', () => this.setLandingPage().then(() => {
-            this.$app.clearPageCache();
         }));
-        this.$app.subscribe('http401', (d = {}) => this.handle401(d.page, d.options));
+        this.appSubscriptions.push(this.$app.subscribe('userLoggedOut', () => this.setLandingPage().then(() => {
+            this.$app.clearPageCache();
+        })));
+        this.appSubscriptions.push(this.$app.subscribe('http401', (d = {}) => this.handle401(d.page, d.options)));
     }
 
     /**
@@ -225,14 +233,12 @@ export class AppManagerService {
     handleSSOLogin(config, options) {
         const SSO_URL = 'services/security/ssologin',
             PREVIEW_WINDOW_NAME = 'WM_PREVIEW_WINDOW';
-        let page,
+        let page = '',
             queryParams;
 
         // do not provide redirectTo page if fetching HOME page resulted 401
         // on app load, by default Home page is loaded
-        page = this.$security.getRedirectPage(config);
 
-            page = page ? '?redirectPage=' + encodeURIComponent(page) : '';
             /*
              * For preview, this.$security.getRedirectedRouteQueryParams() gets the queryparams form the activated route(pagewrappercomponent)
              * For deployed app, canactivate guard resolved to false and gets the queryparams from the canactivate gurard(no active route component)
@@ -240,6 +246,13 @@ export class AppManagerService {
             queryParams = (options && options.queryParams) || this.$security.getRedirectedRouteQueryParams();
             queryParams = this.$security.getQueryString(queryParams);
             queryParams = queryParams ? '?' + queryParams : '';
+
+            const redirectPage = this.$security.getCurrentRoutePage();
+            const homePage = getWmProjectProperties().homePage;
+            if (redirectPage && (redirectPage !== homePage || !!queryParams)) {
+                page = '?redirectPage=' + encodeURIComponent(redirectPage);
+            }
+
             // showing a redirecting message
             document.body.textContent = get(this.getAppLocale(), ['MESSAGE_LOGIN_REDIRECTION']) || 'Redirecting to sso login...';
             // appending redirect to page and page params
@@ -354,10 +367,13 @@ export class AppManagerService {
     reloadAppData() {
         return this.loadSecurityConfig(true).then(() => {
             return this.loadMetadata().then(() => {
-                return this.updateLoggedInUserVariable();
+                return this.updateLoggedInUserVariable().then((config) => {
+                    return Promise.resolve(this.beforeAppReady())
+                        .then(() => Promise.resolve(config));
+                })
             });
         });
-    }
+    } 
 
     noRedirect(value?: boolean) {
         if (isUndefined(value)) {
@@ -453,7 +469,7 @@ export class AppManagerService {
      * Triggers the onBeforeAppReady method defined in app.js of the app
      */
     beforeAppReady() {
-        triggerFn(this.$app.onBeforeAppReady);
+        return triggerFn(this.$app.onBeforeAppReady);
     }
 
     /**
@@ -534,5 +550,49 @@ export class AppManagerService {
         if (this.isTemplateBundleType()) {
             return this.postTemplateBundleInfo();
         }
+    }
+
+    initAppModes(): void {    
+        // get modes from local storage
+        let storedModes = getModesFromLocalStorage();
+        
+        // Apply restored modes
+        this.$app.setMode(storedModes);
+    
+        // Listener for postMessage-based mode changes
+        // MEMORY LEAK FIX: Store bound function reference for cleanup
+        this.windowMessageListener = (event) => {
+            const { key, modes, shouldPersist } = event.data || {};
+            if (key === 'switch-mode' && modes) {
+                this.$app.setMode(modes, !shouldPersist);
+            }
+        };
+        window.addEventListener('message', this.windowMessageListener);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from all app subscriptions
+        this.appSubscriptions.forEach(unsubscribe => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        });
+        this.appSubscriptions = [];
+
+        // MEMORY LEAK FIX: Unsubscribe from session timeout
+        if (this.sessionTimeoutUnsubscribe) {
+            this.sessionTimeoutUnsubscribe();
+            this.sessionTimeoutUnsubscribe = null;
+        }
+
+        // MEMORY LEAK FIX: Remove window message listener
+        if (this.windowMessageListener) {
+            window.removeEventListener('message', this.windowMessageListener);
+            this.windowMessageListener = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references
+        this.templates = null;
+        this.lastLoggedUserId = null;
     }
 }

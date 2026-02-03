@@ -5,12 +5,13 @@ import {
     HostBinding,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     Self
 } from "@angular/core";
 import {
-    BaseComponent,
+    getCurrentWidgets,
     IWidgetConfig,
     provideAsWidgetRef,
     RedrawableDirective,
@@ -44,7 +45,7 @@ const enum STEP_STATUS {
     ],
     exportAs: 'wmWizardStep'
 })
-export class WizardStepComponent extends StylableComponent implements OnInit, AfterViewInit {
+export class WizardStepComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public show: boolean;
@@ -57,9 +58,12 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
     private isdynamic: boolean;
     public $lazyLoad = noop;
     isDone: boolean = false;
+    nextCBInProgress: boolean = false;
+    prevCBInProgress: boolean = false;
 
     private status: STEP_STATUS = STEP_STATUS.DISABLED;
     private wizardComponent: WizardComponent;
+    private _currentWizardWidgets ={}
 
     // reference to the components which needs a redraw(eg, grid, chart) when the height of this component changes
     @ContentChildren(RedrawableDirective, {descendants: true}) reDrawableComponents;
@@ -163,8 +167,10 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
             if (this.reDrawableComponents) {
                 this.reDrawableComponents.forEach(c => c.redraw());
             }
-            const stepIndex = (this as any).wizardComponent.getCurrentStepIndex();
-            this.invokeEventCallback('load', { stepIndex });
+            if ((this as any).wizardComponent) {
+                const stepIndex = (this as any).wizardComponent.getCurrentStepIndex();
+                this.invokeEventCallback('load', { stepIndex });
+            }
         }, 100);
     }
 
@@ -176,6 +182,10 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
         availablePanes.splice((this as any).wizardComponent.getStepIndexByRef(this), 1);
         this.wizardComponent.steps.reset([...availablePanes]);
         this.nativeElement.remove();
+    }
+
+    get currentWizardWidgets() {
+        return getCurrentWidgets(this.nativeElement, this._currentWizardWidgets);
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
@@ -195,5 +205,19 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
         if (this.isdynamic) {
             this.wizardComponent.registerDynamicStep(this);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear redrawable components references
+        if (this.reDrawableComponents) {
+            this.reDrawableComponents.reset([]);
+        }
+
+        // MEMORY LEAK FIX: Clear wizard component reference
+        this.wizardComponent = null;
+
+        // Call parent ngOnDestroy (StylableComponent → BaseComponent)
+        // This will clear the context and unregister the widget
+        super.ngOnDestroy();
     }
 }

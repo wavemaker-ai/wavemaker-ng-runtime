@@ -1,5 +1,3 @@
-import { CommonModule } from '@angular/common';
-import { WmComponentsModule } from "@wm/components/base";
 import {
     Attribute,
     Component,
@@ -7,8 +5,8 @@ import {
     Inject,
     Injector,
     OnInit,
+    OnDestroy,
     Optional,
-    SkipSelf,
     TemplateRef,
     ViewChild
 } from '@angular/core';
@@ -18,14 +16,15 @@ import { provideAsDialogRef, provideAsWidgetRef } from '@wm/components/base';
 import { BaseDialog, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent } from '@wm/components/dialogs';
 
 import { registerProps } from './partial-dialog.props';
-import { ButtonComponent } from '@wm/components/input';
+import { ButtonComponent } from '@wm/components/input/button';
+import { NgTemplateOutlet } from '@angular/common';
 
 const DIALOG_CLS = 'app-dialog modal-dialog app-page-dialog';
 const WIDGET_INFO = { widgetType: 'wm-partialdialog' };
 
 @Component({
     standalone: true,
-    imports: [CommonModule, WmComponentsModule, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
+    imports: [DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent, NgTemplateOutlet],
     selector: 'div[wmPartialDialog]',
     templateUrl: './partial-dialog.component.html',
     providers: [
@@ -33,7 +32,7 @@ const WIDGET_INFO = { widgetType: 'wm-partialdialog' };
         provideAsDialogRef(PartialDialogComponent)
     ]
 })
-export class PartialDialogComponent extends BaseDialog implements OnInit {
+export class PartialDialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate: TemplateRef<any>;
     @ContentChild(TemplateRef) dialogContent: TemplateRef<any>;
@@ -43,6 +42,7 @@ export class PartialDialogComponent extends BaseDialog implements OnInit {
     protected Widgets;
     protected Variables;
     protected Actions;
+    private partialLoadedSubscription: any;
 
     constructor(
         inj: Injector,
@@ -95,8 +95,14 @@ export class PartialDialogComponent extends BaseDialog implements OnInit {
     }
 
     private setPartialLoadListener() {
-        const cancelSubscription = this.app.subscribe('partialLoaded', () => {
-            const parEle = this.partialRef.nativeElement;
+        // Clean up existing subscription if any
+        if (this.partialLoadedSubscription) {
+            this.partialLoadedSubscription();
+            this.partialLoadedSubscription = null;
+        }
+
+        this.partialLoadedSubscription = this.app.subscribe('partialLoaded', () => {
+            const parEle = this.partialRef?.nativeElement;
             let partialScope;
             if (parEle) {
                 partialScope = parEle.widget;
@@ -104,7 +110,12 @@ export class PartialDialogComponent extends BaseDialog implements OnInit {
                 this.Variables = partialScope.Variables;
                 this.Actions = partialScope.Actions;
             }
-            cancelSubscription();
+
+            // Clean up subscription after use
+            if (this.partialLoadedSubscription) {
+                this.partialLoadedSubscription();
+                this.partialLoadedSubscription = null;
+            }
         });
     }
 
@@ -112,5 +123,19 @@ export class PartialDialogComponent extends BaseDialog implements OnInit {
         super.open(initState);
         // WMS-19410 - Set the partial load listener to access widgets, variables and actions of page dialog
         this.setPartialLoadListener();
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from partialLoaded event
+        if (this.partialLoadedSubscription) {
+            this.partialLoadedSubscription();
+            this.partialLoadedSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Clear ContentChild references
+        this.partialRef = null;
+        this.dialogContent = null;
+
+        super.ngOnDestroy();
     }
 }

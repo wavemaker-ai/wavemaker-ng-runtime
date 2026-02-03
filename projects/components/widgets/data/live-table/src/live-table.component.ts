@@ -1,4 +1,3 @@
-import { WmComponentsModule } from "@wm/components/base";
 import {
     AfterContentInit,
     Attribute,
@@ -8,10 +7,12 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     Optional
 } from '@angular/core';
 
 import {debounceTime} from 'rxjs/operators';
+import {Subscription} from 'rxjs';
 
 import {$appDigest, AbstractDialogService, App, getClonedObject, isDefined, triggerFn} from '@wm/core';
 import {provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
@@ -25,15 +26,14 @@ const DEFAULT_CLS = 'app-livegrid';
 const WIDGET_CONFIG = {widgetType: 'wm-livetable', hostClass: DEFAULT_CLS};
 
 @Component({
-  standalone: true,
-  imports: [WmComponentsModule],
+    standalone: true,
     selector: '[wmLiveTable]',
     templateUrl: './live-table.component.html',
     providers: [
         provideAsWidgetRef(LiveTableComponent)
     ]
 })
-export class LiveTableComponent extends StylableComponent implements AfterContentInit {
+export class LiveTableComponent extends StylableComponent implements AfterContentInit, OnDestroy {
     static initializeProps = registerProps();
     @ContentChild(TableComponent) table: TableComponent;
 
@@ -42,6 +42,7 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
 
     private dialogId;
     private $queue = [];
+    private selectedItemChangeSubscription: Subscription;
 
     private tableOptions: any = {
         'multiselect': false,
@@ -72,7 +73,7 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
             this.table._liveTableParent = this;
             this.table.datagridElement.datatable('option', this.tableOptions);
 
-            this.table.selectedItemChange$
+            this.selectedItemChangeSubscription = this.table.selectedItemChange$
                 .pipe(debounceTime(250))
                 .subscribe(this.onSelectedItemChange.bind(this));
 
@@ -108,9 +109,11 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
     }
 
     onDialogOpen(action) {
-        if (action == 'update') {
+        const attrs: Map<string, string> = this?.form?.formFields?.[0]?.$attrs ?? new Map();
+        const hasDefault = ["defaultvalue", "defaultvalue.bind"].some(key => attrs.has(key));
+        if (action == 'update'||!!hasDefault) {
             const firstFormField = $("form [wmformfield]").first();
-            if (firstFormField.find("div[widget='autocomplete']").length != 1) { // prevent focusing first form field if widget is  autocomplete
+            if (firstFormField.find("div[widget='autocomplete']").length != 1 && this?.form?.formFields?.[0]?.widgettype != 'autocomplete') { // prevent focusing first form field if widget is  autocomplete
                 this.focusFirstInput();
             }
         } else {
@@ -259,5 +262,21 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
         setTimeout(() => {
             triggerFn(this.$queue.pop());
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from selectedItemChange$
+        if (this.selectedItemChangeSubscription) {
+            this.selectedItemChangeSubscription.unsubscribe();
+            this.selectedItemChangeSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Clear ContentChild reference
+        this.table = null;
+
+        // MEMORY LEAK FIX: Clear queue array
+        this.$queue = [];
+
+        super.ngOnDestroy();
     }
 }

@@ -1,7 +1,6 @@
-import { CommonModule } from '@angular/common';
-import { WmComponentsModule } from "@wm/components/base";
-import { AnchorComponent } from '@wm/components/basic';
-import { ButtonComponent } from '@wm/components/input';
+import {CommonModule} from '@angular/common';
+import {AnchorComponent} from '@wm/components/basic/anchor';
+import {ButtonComponent} from '@wm/components/input/button';
 import {
     AfterContentInit,
     AfterViewInit,
@@ -9,7 +8,8 @@ import {
     Component,
     ContentChildren,
     HostBinding,
-    HostListener, Inject,
+    HostListener,
+    Inject,
     Injector,
     NgZone,
     OnDestroy,
@@ -39,8 +39,10 @@ import {
     removeAttr,
     removeClass,
     scrollToElement,
+    setListClass,
 } from '@wm/core';
 import {
+    FilterPipe,
     getFieldLayoutConfig,
     Live_Operations,
     MessageComponent,
@@ -59,12 +61,14 @@ import {registerFormProps} from './form.props';
 import {
     debounce as _debounce,
     filter,
-    find, findIndex,
+    find,
+    findIndex,
     forEach,
     get,
     includes,
     isArray,
-    isEmpty, isEqual,
+    isEmpty,
+    isEqual,
     isUndefined,
     keys,
     last,
@@ -155,7 +159,7 @@ const setTouchedState = (self, ngForm, fieldName) => {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, WmComponentsModule, AnchorComponent, ButtonComponent, MessageComponent],
+  imports: [CommonModule, FilterPipe, AnchorComponent, ButtonComponent, MessageComponent],
     selector: 'form[wmForm]',
     templateUrl: './form.component.html',
     providers: [
@@ -231,6 +235,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     filterOnDefault: Function;
     onMaxDefaultValueChange: Function;
     numberOfFields: number;
+    readonly :boolean;
+    itemsPerRowClass: string;
 
     private _debouncedUpdateFieldSource: Function = _debounce(this.updateFieldSource, 350);
     private operationType;
@@ -372,7 +378,10 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             this.formArrayIndex = this.parentFormArray.length - 1;
         }
         this.addInnerNgFormToForm(this.bindingValue);
-    }
+        setTimeout(() => {
+            $(this.nativeElement).find('div[data-role="form-field"], div[data-role="filter-field"]').addClass(this.itemsPerRowClass)
+        }); 
+   }
 
     findOperationType() {}
 
@@ -572,6 +581,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 const $invalidForm = eleForm.ngForm;
                 let $invalidEle  = eleForm.$ele;
                 $invalidEle = $invalidEle.parent().find('[focus-target]');
+                const $target = eleForm?.$ele?.parent()?.find('input[type=checkbox], input[type=radio], input[type=file]')?.first();
                 if ($invalidEle.length) {
                     // on save click in page layout liveform, focus of autocomplete widget opens full-screen search.
                     if (!$invalidEle.hasClass('app-search-input')) {
@@ -583,6 +593,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                     }
                     $appDigest();
                     return true;
+                } else if ($target && $target.length) {
+                    $target.focus();
                 }
                 return true;
             }
@@ -648,9 +660,32 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                     }
                 });
                 break;
+            case 'readonly':
+                this.setReadonlyFields();
+                if (nv) {
+                    this?.buttonArray?.forEach((button) => button.disabled = true);
+                } else if (this.formWidgets) {
+                    Object.values(this.formWidgets).forEach(widget => {
+                        const w = widget as any;
+                        if (w.widgetType === 'wm-form-action' && w.buttonDef) {
+                            w.buttonDef.disabled = w.disabled ?? false;
+                        }
+                    });
+                }
+                break;
+            case 'itemsperrow':
+                setListClass(this);
+                break;
+
             default:
                 super.onPropertyChange(key, nv, ov);
         }
+    }
+    override onStyleChange(key: string, nv: any, ov?: any) {
+        if (key === 'height') {
+            this.$element.css('overflow', 'auto');
+        }
+        super.onStyleChange(key, nv, ov);
     }
 
     // Event callbacks on success/error
@@ -870,11 +905,21 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             field.value = '';
             if (field.widgettype === 'upload' || field.type === DataType.BLOB) {
                 this.resetFileUploadWidget(field, true);
+            }else if(field.widgettype === 'slider'){
+                this.resetSliderWidget(field);
             }
             field.nativeElement.querySelector('input')?.removeAttribute('aria-invalid');
         });
         this.constructDataObject();
         this.clearMessage();
+    }
+
+    resetSliderWidget(field){
+        const $formEle = this.$element;
+        const slider =  $formEle.find('[name="' + field.key + '_formWidget"]').closest('.slider-control');
+         if (slider.length) {
+            slider.css('--end', `50%`);
+        }
     }
 
     savePrevformFields() {
@@ -1326,6 +1371,37 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 this.parentForm.ngform.removeControl(this.name);
             }
         }
+
+        // MEMORY LEAK FIX: Clear ViewContainerRef for dynamically generated form fields
+        if (this.dynamicFormRef) {
+            this.dynamicFormRef.clear();
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic context object
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+
+        // MEMORY LEAK FIX: Clear all data arrays and objects
+        this.formFields = [];
+        this.formWidgets = {};
+        this.filterWidgets = {};
+        this.buttonArray = [];
+        this.validationMessages = [];
+        this.formdata = {};
+        this.dataoutput = {};
+        this.formfields = {};
+        this.prevDataValues = null;
+        this.prevDataObject = null;
+        this.prevformFields = null;
+
+        // MEMORY LEAK FIX: Nullify debounced function closures
+        this._debouncedUpdateFieldSource = null;
+        this._debouncedSubmitForm = null;
+
         super.ngOnDestroy();
     }
 }

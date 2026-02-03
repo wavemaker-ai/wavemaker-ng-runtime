@@ -1,5 +1,14 @@
-import { CommonModule } from '@angular/common';
-import { WmComponentsModule } from "@wm/components/base";
+import {CommonModule} from '@angular/common';
+import {
+    APPLY_STYLES_TYPE,
+    Context,
+    createArrayFrom,
+    IWidgetConfig,
+    provideAsWidgetRef,
+    StylableComponent,
+    styler,
+    TextContentDirective
+} from "@wm/components/base";
 import {
     AfterContentInit,
     AfterViewChecked,
@@ -9,6 +18,7 @@ import {
     ContentChildren,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     QueryList,
@@ -16,20 +26,12 @@ import {
     TemplateRef
 } from '@angular/core';
 
-import {DynamicComponentRefProvider, noop} from '@wm/core';
-import {
-    APPLY_STYLES_TYPE,
-    IWidgetConfig,
-    provideAsWidgetRef,
-    styler,
-    StylableComponent,
-    Context, createArrayFrom
-} from '@wm/components/base';
+import {DynamicComponentRefProvider, isDefined, noop} from '@wm/core';
 
-import { registerProps } from './wizard.props';
+import {registerProps} from './wizard.props';
 
 import {WizardStepComponent} from "./wizard-step/wizard-step.component";
-import {find, forEach, get, indexOf, isArray, isNumber, isString} from "lodash-es";
+import {find, findIndex, forEach, get, indexOf, isArray, isNumber, isString} from "lodash-es";
 
 const DEFAULT_CLS = 'app-wizard panel clearfix';
 const WIDGET_CONFIG: IWidgetConfig = {
@@ -39,7 +41,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, WmComponentsModule],
+  imports: [CommonModule, TextContentDirective],
     selector: 'div[wmWizard]',
     templateUrl: './wizard.component.html',
     providers: [
@@ -48,7 +50,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ],
     exportAs: 'wmWizard'
 })
-export class WizardComponent extends StylableComponent implements OnInit, AfterContentInit, AfterViewInit, AfterViewChecked {
+export class WizardComponent extends StylableComponent implements OnInit, AfterContentInit, AfterViewInit, AfterViewChecked, OnDestroy {
     static initializeProps = registerProps();
 
     @ContentChildren(WizardStepComponent) steps: QueryList<WizardStepComponent>;
@@ -79,6 +81,8 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     public dynamicWizard;
     public defaultstepindex;
     private _isFirstLoad: boolean = true;
+    public autoActivation:boolean;
+    private stepsSubscription: any; // MEMORY LEAK FIX: Store subscription for cleanup
 
     get hasPrevStep(): boolean {
         return !this._isFirstStep(this.currentStep);
@@ -363,12 +367,16 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     private handleNext(value: boolean | Promise<boolean>, currentStep, currentStepIndex) {
         if (this.isPromise(value)) {
             (value as Promise<boolean>).then(response => {
+                this.currentStep.nextCBInProgress = false;
                 if (response === false) {
                     return;
                 }
                 this.extendNextFn(currentStep, currentStepIndex);
-            }, err => err);
+            }, err => {
+                this.currentStep.nextCBInProgress = false;
+            })
         } else {
+            this.currentStep.nextCBInProgress = false;
             if (value === false) {
                 return;
             }
@@ -377,14 +385,20 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     }
 
     public next(eventName: string = 'next') {
+        if (this.currentStep.nextCBInProgress) {
+            return;
+        }
+
         const currentStep = this.currentStep;
         const currentStepIndex = this.getCurrentStepIndex();
 
         // abort if onSkip method returns false
         if (eventName === 'skip') {
+            this.currentStep.nextCBInProgress = true;
             const response =  currentStep.invokeSkipCB(currentStepIndex);
             this.handleNext(response, currentStep, currentStepIndex);
         } else if (this.currentStep.isValid && eventName === 'next') {
+            this.currentStep.nextCBInProgress = true;
             const response  =  currentStep.invokeNextCB(currentStepIndex);
             this.handleNext(response, currentStep, currentStepIndex);
         } else if (this.enablenext && !this.currentStep.isValid){
@@ -397,7 +411,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         }
     }
 
-    private extendNextFn(currentStep, currentStepIndex){
+    private extendNextFn(currentStep, currentStepIndex) {
         const nextStep: WizardStepComponent = this.getNextValidStepFormIndex(currentStepIndex + 1);
         // If there are any steps which has show then only change state of current step else remain same
         if (nextStep) {
@@ -406,25 +420,51 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             currentStep.done = true;
             nextStep.active = true;
             this.currentStep = nextStep;
+            // Remove 'current' class from all wizard steps in header
+            const allStepItems = this.nativeElement.querySelectorAll('li[data-stepid]');
+            allStepItems.forEach((el: Element) => {
+                el.classList.remove('current');
+                const anchor = el.querySelector('a');
+                if (anchor) {
+                    anchor.setAttribute('tabindex', '-1');
+                }
+            });
+            // Add 'current' to next step header item
+            const newStepLi = this.nativeElement.querySelector(`li[data-stepid="${nextStep.widgetId}"]`);
+            const newStepAnchor = newStepLi?.querySelector('a') as HTMLElement;
+            if (newStepLi && newStepAnchor) {
+                newStepLi.classList.add('current');
+                newStepAnchor.setAttribute('tabindex', '0');
+                newStepAnchor.focus();
+            }
             this.updateStepFocus();
         }
         this.addMoreText();
     }
     // Method to navigate to previous step
     public prev() {
+        if (this.currentStep.prevCBInProgress) {
+            return;
+        }
+
         const currentStep = this.currentStep;
         const currentStepIndex = this.getCurrentStepIndex();
 
+        this.currentStep.prevCBInProgress = true;
         // abort if onPrev method returns false.
         const response = currentStep.invokePrevCB(currentStepIndex);
         if (this.isPromise(response)) {
             (response as Promise<boolean>).then( response => {
+                this.currentStep.prevCBInProgress = false;
                 if (response === false) {
                     return;
                 }
                 this.extendPrevFn(currentStep, currentStepIndex);
-            }, err => err);
+            }, err => {
+                this.currentStep.prevCBInProgress = false;
+            });
         } else {
+            this.currentStep.prevCBInProgress = false;
             if (response === false) {
                 return;
             }
@@ -441,6 +481,23 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             currentStep.disabled = true;
             prevStep.active = true;
             this.currentStep = prevStep;
+            //  Remove 'current' class from all steps
+            const allStepItems = this.nativeElement.querySelectorAll('li[data-stepid]');
+            allStepItems.forEach((el: Element) => {
+                el.classList.remove('current');
+                const anchor = el.querySelector('a');
+                if (anchor) {
+                    anchor.setAttribute('tabindex', '-1');
+                }
+            });
+            // Apply 'current' to prev step
+            const prevStepLi = this.nativeElement.querySelector(`li[data-stepid="${prevStep.widgetId}"]`);
+            const prevStepAnchor = prevStepLi?.querySelector('a') as HTMLElement;
+            if (prevStepLi && prevStepAnchor) {
+                prevStepLi.classList.add('current');
+                prevStepAnchor.setAttribute('tabindex', '0');
+                prevStepAnchor.focus();
+            }
             this.updateStepFocus();
         }
         this.addMoreText();
@@ -583,13 +640,74 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         this.wizContext.disableNext = () => !this.enableNext;
         this.wizContext.disablePrevious = () => !this.enablePrev;
         this.wizContext.disableDone = () => !this.enableDone;
-        this.steps.changes.subscribe( slides => {
+
+        // MEMORY LEAK FIX: Store subscription for cleanup
+        this.stepsSubscription = this.steps.changes.subscribe( () => {
             if (this.steps.length > 1 && this.type === 'dynamic' && this._isFirstLoad) {
                 this.setDefaultStep(this.getStepRefByIndex(this.defaultstepindex));
                 this._isFirstLoad = false;
             }
         });
     }
+    private isSelectableStep(stepRef: WizardStepComponent): boolean {
+            return stepRef.show && !stepRef.disabled;
+    }
+    private getSelectableStepBeforeIndex(index: number): WizardStepComponent {
+            for (let i = index - 1; i >= 0; i--) {
+                const step = this.getStepRefByIndex(i);
+                if (this.isSelectableStep(step)) {
+                    return step;
+                }
+            }
+            if (index === 0) {
+                const step = this.getStepRefByIndex(this.steps.length - 1);
+                if (this.isSelectableStep(step)) {
+                    return step;
+                }
+            }
+        }
+    private getSelectableStepAfterIndex(index: number): WizardStepComponent {
+                for (let i = index + 1; i < this.steps.length; i++) {
+                    const step = this.getStepRefByIndex(i);
+                    if (this.isSelectableStep(step)) {
+                        return step;
+                    }
+                }
+                if (index === this.steps.length - 1) {
+                    const step = this.getStepRefByIndex(0);
+                     if (this.isSelectableStep(step)) {
+                        return step;
+                     }
+                }
+    }
+
+    public getWidgets(widgteName: string, index?: number) {
+        let $target;
+        const retVal = [];
+
+        if (!widgteName) {
+            return;
+        }
+
+        if (!isDefined(index)) {
+            forEach(this.steps.toArray(), (el) => {
+                $target = get(el.currentWizardWidgets, widgteName);
+                if ($target) {
+                    retVal.push($target);
+                }
+            });
+
+            return retVal;
+        }
+        index = +index || 0;
+
+        $target = get(this.steps.toArray(), index);
+
+        if ($target) {
+            return [get($target.currentWizardWidgets, widgteName)];
+        }
+    }
+
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
@@ -606,5 +724,111 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     ngAfterViewChecked() {
         this.nativeElement.querySelectorAll('div.app-wizard-actions').forEach(el => el?.classList.add(this.actionsalignment));
         this.nativeElement.querySelectorAll('div.app-wizard-actions-right').forEach(el => el?.classList.remove('app-container'));
+    }
+    public getActiveStepIndex(): number {
+        return findIndex(this.steps.toArray(), {isCurrent: true});
+    }
+    onkeydown(event) {
+        let newStep;
+        switch (event.key) {
+            case 'ArrowLeft':
+            case 'ArrowUp':
+                event.preventDefault();
+                newStep = this.autoActivation ? null : this.getSelectableStepBeforeIndex(this.getSelectedStepIndex());
+                break;
+
+            case 'ArrowRight':
+            case 'ArrowDown':
+                event.preventDefault();
+                newStep = this.autoActivation ? null : this.getSelectableStepAfterIndex(this.getSelectedStepIndex());
+                break;
+            case 'Enter':
+            case ' ':
+            case 'Spacebar':
+                event.preventDefault();
+                setTimeout(() => {
+                    const activeElement  = this.nativeElement.querySelector('li.current');
+                    const stepLi = activeElement.closest('li[data-stepid]');
+                    const isInWizardHeader = activeElement.closest('.app-wizard-heading');
+
+                    if (stepLi && isInWizardHeader) {
+                    const stepId = stepLi.getAttribute('data-stepid');
+                    const stepIndex = this.steps.toArray().findIndex(step => step.widgetId === stepId);
+                    const currentStep = this.steps.toArray()[stepIndex];
+
+                        if (currentStep && currentStep !== this.currentStep) {
+                            this.onWizardHeaderClick(event, currentStep);
+
+                            // Update tabindex for accessibility
+                            const allStepItems = this.nativeElement.querySelectorAll('li[data-stepid]');
+                            allStepItems.forEach((el: Element) => {
+                            (el as HTMLElement).setAttribute('tabindex', '-1');
+                            });
+
+                            const stepAnchor = stepLi.querySelector('a');
+                            if (stepAnchor) {
+                            stepAnchor.setAttribute('tabindex', '0');
+                            stepAnchor.focus();
+                            }
+                        }
+                    }
+                }, 0);
+                break;
+            default:
+                return;
+        }
+       if (newStep) {
+            this.nativeElement.querySelector('li.current')?.classList.remove('current');
+             this.nativeElement.querySelector(`li[data-stepid="${newStep.widgetId}"]`)?.classList.add('current');
+             const stepLi = this.nativeElement.querySelector(".app-wizard-heading li.current a") as HTMLElement;
+             const allStepItems = this.nativeElement.querySelectorAll('li[data-stepid] a');
+             allStepItems.forEach((el: Element) => {
+                (el as HTMLElement).setAttribute('tabindex', '-1');
+             });
+            (stepLi).setAttribute('tabindex', '0');
+            stepLi?.focus();
+        }
+    }
+    getSelectedStepIndex() {
+        const index = this.steps.toArray().findIndex(step =>
+            this.nativeElement.querySelector(`li[data-stepid="${step.widgetId}"]`)?.classList.contains("current"));
+        return index >= 0 ? index : this.getActiveStepIndex();
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from steps changes
+        if (this.stepsSubscription) {
+            this.stepsSubscription.unsubscribe();
+            this.stepsSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Remove jQuery event handlers
+        $(document).off("mouseup");
+
+        // MEMORY LEAK FIX: Clear wizard context to release references to step data
+        if (this.wizContext) {
+            Object.keys(this.wizContext).forEach(key => {
+                delete this.wizContext[key];
+            });
+            this.wizContext = null;
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic wizard array
+        if (this.dynamicWizard) {
+            this.dynamicWizard = [];
+        }
+
+        // MEMORY LEAK FIX: Clear current step reference
+        this.currentStep = null;
+
+        super.ngOnDestroy();
     }
 }

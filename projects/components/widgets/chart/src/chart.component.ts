@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { WmComponentsModule } from "@wm/components/base";
-import { SpinnerComponent } from '@wm/components/basic';
+import { SpinnerComponent } from '@wm/components/basic/spinner';
 import {
     AfterViewInit,
     OnDestroy,
@@ -129,8 +128,8 @@ const angle = d => {
 };
 
 @Component({
-  standalone: true,
-  imports: [CommonModule, WmComponentsModule, SpinnerComponent],
+    standalone: true,
+    imports: [CommonModule, SpinnerComponent],
     selector: 'div[wmChart]',
     templateUrl: './chart.component.html',
     styleUrls: ['../../../../../node_modules/@wavemaker/nvd3/build/nv.d3.min.css'],
@@ -1164,9 +1163,32 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
     ngOnDestroy() {
         // destroy all subscriptions to prevent memory leak.
         this.hideTooltip();
-        this._subsciptions.forEach((subscription)=>{
-            subscription();
-        });
+        
+        // MEMORY LEAK FIX: Unsubscribe from all subscriptions
+        if (this._subsciptions) {
+            this._subsciptions.forEach((subscription)=>{
+                subscription();
+            });
+            this._subsciptions = [];
+        }
+        
+        // MEMORY LEAK FIX: Clear chart instance
+        if (this.chart) {
+            this.chart = null;
+        }
+        
+        // MEMORY LEAK FIX: Remove resize handler if exists
+        if (this._resizeFn) {
+            this._resizeFn = null;
+        }
+        
+        // MEMORY LEAK FIX: Clear array references
+        this.chartData = [];
+        this._processedData = [];
+        this.sampleData = [];
+        this.xDataKeyArr = [];
+        this.nonPrimaryColumns = [];
+        
         super.ngOnDestroy();
     }
     redraw = this._plotChartProxy.bind(this);

@@ -1,24 +1,48 @@
-import { Directive, Inject, Self } from '@angular/core';
+import {Directive, Inject, OnDestroy, Self} from '@angular/core';
 
-import { $appDigest, DataSource, DataType, FormWidgetType, getClonedObject, isDefined, isNumberType, adjustContainerRightEdges } from '@wm/core';
-import { getMatchModeMsgs, getMatchModeTypesMap, isDataSetWidget, refreshDataSource, unsupportedStatePersistenceTypes } from '@wm/components/base';
+import {
+    $appDigest,
+    adjustContainerRightEdges,
+    DataSource,
+    DataType,
+    FormWidgetType,
+    getClonedObject,
+    isDefined,
+    isNumberType
+} from '@wm/core';
+import {
+    getMatchModeMsgs,
+    getMatchModeTypesMap,
+    isDataSetWidget,
+    refreshDataSource,
+    unsupportedStatePersistenceTypes
+} from '@wm/components/base';
 
-import { TableComponent } from './table.component';
+import {TableComponent} from './table.component';
 import {
     endsWith,
     filter,
     find,
     forEach,
-    get, head,
-    includes, isArray, isEmpty,
-    isEqual, isNull, isObject, orderBy, range, split,
-    startsWith, toLower,
+    get,
+    head,
+    includes,
+    isArray,
+    isEmpty,
+    isEqual,
+    isNull,
+    isObject,
+    orderBy,
+    range,
+    split,
+    startsWith,
+    toLower,
     toNumber,
     toString
 } from "lodash-es";
+import * as momentLib from 'moment';
 
 declare const $;
-import * as momentLib  from 'moment';
 const moment = momentLib.default || window['moment'];
 
 const emptyMatchModes = ['null', 'empty', 'nullorempty', 'isnotnull', 'isnotempty'];
@@ -177,7 +201,7 @@ const addToFilterFields = (filterFields, searchObj) => {
   standalone: true,
     selector: '[wmTableFilterSort]'
 })
-export class TableFilterSortDirective {
+export class TableFilterSortDirective implements OnDestroy {
 
     constructor(@Self() @Inject(TableComponent) private table) {
         table._searchSortHandler = this.searchSortHandler.bind(this);
@@ -330,6 +354,12 @@ export class TableFilterSortDirective {
     // Function that checks if a given string is a valid date and returns the timestamp if it is, or NaN if it's not.
     parseDateString(dateString) {
         const timestamp = Date.parse(dateString);
+        // handling case when string starts with string and end with number
+        const trimmed = dateString.trim();
+        const monthRegex = /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/i;
+        if (/^[A-Za-z]+/.test(trimmed) && /\d+$/.test(trimmed)  && !monthRegex.test(trimmed)) {
+            return NaN;
+        }
         if (!isNaN(timestamp)) {
             return timestamp;
         } else { // Since Date.parse() doesn't support all date formats, manually validating the date.
@@ -345,8 +375,8 @@ export class TableFilterSortDirective {
             const fieldValue = get(find(data, sortObj.field), sortObj.field)
             const isValidDateString = typeof fieldValue === 'string' ?  this.parseDateString(fieldValue) : NaN;
             if (!isNaN(isValidDateString)) { // if the field is a date string
-                data = orderBy(data, [(item) => this.parseDateString(item[sortObj.field])], [sortObj.direction]);
-            } else if (this.table.columns[sortObj.field]?.caseinsensitive) {
+                data = orderBy(data, [(item) => this.parseDateString(get(item, sortObj.field))], [sortObj.direction]);
+            } else if (sortObj.sortBy ? this.table.columns[sortObj.sortBy]?.caseinsensitive : this.table.columns[sortObj.field]?.caseinsensitive) {
                 //Fix for [WMS-27505]: Added case-insensitive sorting so that uppercase and lowercase letters are treated the same when sorting.
                     data = orderBy(data, [
                           (item) => {
@@ -356,7 +386,7 @@ export class TableFilterSortDirective {
                           (item) => get(item, sortObj.field) // fallback to original value
                         ],
                         [sortObj.direction, sortObj.direction]
-                      );                      
+                      );
             } else {
                 data = orderBy(data, sortObj.field, sortObj.direction);
             }
@@ -716,5 +746,10 @@ export class TableFilterSortDirective {
             orderBy : sortOptions,
             condition : logicalOp
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear table reference
+        this.table = null;
     }
 }

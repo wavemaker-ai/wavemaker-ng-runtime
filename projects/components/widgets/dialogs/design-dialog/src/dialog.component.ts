@@ -1,5 +1,3 @@
-import { CommonModule } from '@angular/common';
-import { WmComponentsModule } from "@wm/components/base";
 import {
     Attribute,
     Component,
@@ -7,8 +5,9 @@ import {
     Inject,
     Injector,
     OnInit,
+    OnDestroy,
     Optional,
-    Self, SkipSelf,
+    Self,
     TemplateRef,
     ViewChild
 } from '@angular/core';
@@ -18,14 +17,15 @@ import { Context, provideAsDialogRef, provideAsWidgetRef } from '@wm/components/
 import { BaseDialog, DialogBodyDirective, DialogHeaderComponent } from '@wm/components/dialogs';
 
 import { registerProps } from './dialog.props';
+import { NgTemplateOutlet } from '@angular/common';
 
 const DIALOG_CLS = 'app-dialog modal-dialog';
 
 const WIDGET_INFO = {widgetType: 'wm-dialog'};
 
 @Component({
-  standalone: true,
-  imports: [CommonModule, WmComponentsModule, DialogBodyDirective, DialogHeaderComponent],
+    standalone: true,
+    imports: [DialogBodyDirective, DialogHeaderComponent, NgTemplateOutlet],
     selector: 'div[wmDialog]',
     templateUrl: './dialog.component.html',
     providers: [
@@ -34,7 +34,7 @@ const WIDGET_INFO = {widgetType: 'wm-dialog'};
         {provide: Context, useFactory: () => { return {} }, multi: true}
     ]
 })
-export class DialogComponent extends BaseDialog implements OnInit {
+export class DialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
     isDialogComponent: boolean = true;
 
@@ -102,5 +102,14 @@ export class DialogComponent extends BaseDialog implements OnInit {
         if(key === 'title') {
             this.nativeElement.setAttribute('title', nv);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild and ContentChild references
+        this.dialogTemplate = null;
+        this.dialogBody = null;
+        this.dialogFooter = null;
+
+        super.ngOnDestroy();
     }
 }

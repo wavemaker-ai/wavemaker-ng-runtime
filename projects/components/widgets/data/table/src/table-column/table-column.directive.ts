@@ -4,12 +4,13 @@ import {
     Attribute,
     ContentChild,
     ContentChildren,
-    TemplateRef,
     Directive,
+    Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
-    Inject
+    TemplateRef
 } from '@angular/core';
 
 import {
@@ -17,22 +18,37 @@ import {
     AppDefaults,
     DataSource,
     DataType,
-    debounce,
     FormWidgetType,
     getDisplayDateTimeFormat,
     isDateTimeType,
     isDefined
 } from '@wm/core';
-import { applyFilterOnField, BaseFieldValidations, EDIT_MODE, fetchRelatedFieldData, getDataTableFilterWidget, getDefaultValue, getDistinctFieldProperties, getDistinctValues, getDistinctValuesForField, getEditModeWidget, getWatchIdentifier, isDataSetWidget, provideAsWidgetRef, setHeaderConfigForTable, BaseComponent } from '@wm/components/base';
-import { registerProps } from './table-column.props';
-import { TableComponent } from '../table.component';
-import { TableColumnGroupDirective } from '../table-column-group/table-column-group.directive';
-import { debounceTime } from 'rxjs/operators';
+import {
+    applyFilterOnField,
+    BaseComponent,
+    BaseFieldValidations,
+    EDIT_MODE,
+    fetchRelatedFieldData,
+    getDataTableFilterWidget,
+    getDefaultValue,
+    getDistinctFieldProperties,
+    getDistinctValues,
+    getDistinctValuesForField,
+    getEditModeWidget,
+    getWatchIdentifier,
+    isDataSetWidget,
+    provideAsWidgetRef,
+    setHeaderConfigForTable
+} from '@wm/components/base';
+import {registerProps} from './table-column.props';
+import {TableComponent} from '../table.component';
+import {TableColumnGroupDirective} from '../table-column-group/table-column-group.directive';
+import {debounceTime} from 'rxjs/operators';
 import {cloneDeep, forEach, head, includes, last, map, max, mean, min, round, split, sum} from "lodash-es";
 
 const WIDGET_CONFIG = {widgetType: 'wm-table-column', hostClass: ''};
 
-let inlineWidgetProps = ['datafield', 'displayfield', 'placeholder', 'searchkey', 'matchmode', 'displaylabel', 'groupby', 'match', 'dateformat', 'showcount', 'collapsible',
+let inlineWidgetProps = ['datafield', 'displayfield', 'placeholder', 'searchkey','sortby', 'matchmode', 'displaylabel', 'groupby', 'match', 'dateformat', 'showcount', 'collapsible',
                             'checkedvalue', 'uncheckedvalue', 'showdropdownon', 'dataentrymode', 'autoclose', 'dataset', 'outputformat'];
 const validationProps = ['maxchars', 'regexp', 'minvalue', 'maxvalue', 'step', 'required', 'mindate', 'maxdate',
                             'excludedates', 'excludedays', 'mintime', 'maxtime'];
@@ -68,7 +84,7 @@ class FieldDef {
         provideAsWidgetRef(TableColumnDirective)
     ]
 })
-export class TableColumnDirective extends BaseComponent implements OnInit, AfterContentInit, AfterViewInit {
+export class TableColumnDirective extends BaseComponent implements OnInit, AfterContentInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ContentChildren('filterWidget', { descendants: true }) _filterInstances;
@@ -124,6 +140,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
     filterdisplayfield;
     filterdisplaylabel;
     filtersearchkey;
+    sortby;
     filterplaceholder;
     datafield;
     displayfield;
@@ -299,6 +316,10 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     // Remove validators for the inline widget and set form to untouched
     removeValidations() {
+        // Guard against component destruction or table/ngform being null
+        if (this.isDestroyed || !this.table || !this.table.ngform) {
+            return;
+        }
         this.table.ngform.markAsUntouched();
         const control = this.getFormControl();
         if (!control) {
@@ -311,6 +332,10 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     // Apply default|sync|async|prop validators for QuickEdit new row form control
     applyNewRowValidations() {
+        // Guard against component destruction or table/ngform being null
+        if (this.isDestroyed || !this.table || !this.table.ngform) {
+            return;
+        }
         if (!this._checkNewEditableRowControl()) {
             return;
         }
@@ -328,24 +353,39 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     // Remove validators for the QuickEdit new row widget and set form to untouched
     removeNewRowValidations() {
+        // Guard against component destruction or table/ngform being null
+        if (this.isDestroyed || !this.table || !this.table.ngform) {
+            return;
+        }
         this.table.ngform.markAsUntouched();
         if (!this._checkNewEditableRowControl()) {
             return;
         }
         const control = this.getFormControl('_new');
+        if (!control) {
+            return;
+        }
         control.clearValidators();
         control.clearAsyncValidators();
         control.updateValueAndValidity();
     }
 
     addFormControl(suffix?: string) {
+        // Guard against component destruction or table/ngform being null
+        if (this.isDestroyed || !this.table || !this.table.ngform) {
+            return;
+        }
         const ctrlName = suffix ? (this.binding + suffix) : this.binding;
         this.table.ngform.addControl(ctrlName, this.table.fb.control(''));
     }
 
     getFormControl(suffix?: string) {
+        // Guard against component destruction or table/ngform being null
+        if (this.isDestroyed || !this.table || !this.table.ngform) {
+            return null;
+        }
         const ctrlName = suffix ? (this.binding + suffix) : this.binding;
-        return this.table.ngform.controls[ctrlName];
+        return this.table.ngform.controls[ctrlName] || null;
     }
 
     private _checkNewEditableRowControl() {
@@ -430,12 +470,16 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     // On field value change, apply cascading filter and set validation message
     onValueChange(val, widget) {
+        // Guard against component destruction or table being null
+        if (this.isDestroyed || !this.table) {
+            return;
+        }
         if (val !== null) {
             applyFilterOnField(this.table.datasource, this.widget, this.table.fieldDefs, val, {
                 widget: 'edit-widget-type'
             });
         }
-        if (this.table.ngform.touched) {
+        if (this.table.ngform && this.table.ngform.touched) {
             this.activeControlType = widget;
             if (widget === 'inlineInstance') {
                 this.notifyChanges();
@@ -688,6 +732,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
         this.isFilterDataSetBound = !!this.bindfilterdataset;
         this.defaultvalue = getDefaultValue(this.defaultvalue, this.type, this.editWidgetType);
         this.caseinsensitive =  !!this.getAttr('caseinsensitive');
+        this.sortby =  this.sortby||this.getAttr('sortby') || "";
 
         // For date time data types, if date pattern is not specified, set the app format or default format
         if (isDateTimeType(this.type) && this.formatpattern === 'toDate' && !this.datepattern) {
@@ -767,5 +812,87 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             default:
                 this.table.redraw(true);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ContentChildren QueryLists
+        if (this._filterInstances) {
+            try {
+                this._filterInstances.reset([]);
+            } catch (e) {
+                // Silently handle cleanup errors - QueryList might already be destroyed
+            }
+        }
+        if (this._inlineInstances) {
+            try {
+                this._inlineInstances.reset([]);
+            } catch (e) {
+                // Silently handle cleanup errors - QueryList might already be destroyed
+            }
+        }
+        if (this._inlineInstancesNew) {
+            try {
+                this._inlineInstancesNew.reset([]);
+            } catch (e) {
+                // Silently handle cleanup errors - QueryList might already be destroyed
+            }
+        }
+
+        // MEMORY LEAK FIX: Clear all widget instance references
+        this.filterInstance = null;
+        this.inlineInstance = null;
+        this.inlineInstanceNew = null;
+
+        // MEMORY LEAK FIX: Clear template references
+        this.customExprTmpl = null;
+        this.inlineWidthTempRef = null;
+        this.filterTemplateRef = null;
+
+        // MEMORY LEAK FIX: Clear dataset references
+        this._filterDataSet = null;
+        this.dataset = null;
+        this._dataoptions = null;
+        this._datasource = null;
+
+        // MEMORY LEAK FIX: Clear validation objects
+        if (this.fieldValidations) {
+            try {
+                this.fieldValidations.destroy();
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
+            this.fieldValidations = null;
+        }
+        if (this.fieldValidations_new) {
+            try {
+                this.fieldValidations_new.destroy();
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
+            this.fieldValidations_new = null;
+        }
+        this.syncValidators = [];
+        this.asyncValidators = [];
+
+        // MEMORY LEAK FIX: Clear filter control reference
+        this.filterControl = null;
+
+        // MEMORY LEAK FIX: Clear notify fields array
+        if (this.notifyForFields) {
+            this.notifyForFields = [];
+        }
+
+        // MEMORY LEAK FIX: Clear observe fields array
+        if (this.observeOnFields) {
+            this.observeOnFields = [];
+        }
+
+        // MEMORY LEAK FIX: Clear table and group references
+        // Note: These are injected dependencies, but clearing helps GC
+        this.table = null;
+        this.group = null;
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }

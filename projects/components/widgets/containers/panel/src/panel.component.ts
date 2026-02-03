@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { WmComponentsModule } from "@wm/components/base";
+import { TextContentDirective, TrustAsPipe } from "@wm/components/base";
 import {
     AfterContentInit,
     Component,
@@ -7,6 +7,7 @@ import {
     ElementRef,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     ViewChild
@@ -24,7 +25,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAUL
 
 @Component({
     standalone: true,
-    imports: [BsDropdownModule, CommonModule, WmComponentsModule, MenuComponent],
+    imports: [BsDropdownModule, CommonModule, TextContentDirective, TrustAsPipe, MenuComponent],
     selector: '[wmPanel]',
     templateUrl: './panel.component.html',
     providers: [
@@ -33,7 +34,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAUL
     exportAs: 'wmPanel'
 })
 
-export class PanelComponent extends MenuAdapterComponent implements OnInit, AfterContentInit {
+export class PanelComponent extends MenuAdapterComponent implements OnInit, AfterContentInit, OnDestroy {
     static initializeProps = registerProps();
 
     public $lazyLoad = noop;
@@ -180,5 +181,22 @@ export class PanelComponent extends MenuAdapterComponent implements OnInit, Afte
         super.ngAfterContentInit();
         this.hasFooter = !!this.nativeElement.querySelector('[wmPanelFooter]');
         styler(this.panelBody.nativeElement as HTMLElement, this, APPLY_STYLES_TYPE.INNER_SHELL);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.panelHeader = null;
+        this.panelContent = null;
+        this.panelBody = null;
+
+        // MEMORY LEAK FIX: Clear ContentChildren QueryList reference
+        if (this.reDrawableComponents) {
+            this.reDrawableComponents = null;
+        }
+
+        // MEMORY LEAK FIX: Clear lazy load function reference
+        this.$lazyLoad = null;
+
+        super.ngOnDestroy();
     }
 }

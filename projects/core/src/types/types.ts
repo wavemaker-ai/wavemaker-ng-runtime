@@ -73,7 +73,7 @@ export abstract class App {
     isPrefabType: boolean;
     isApplicationType: boolean;
     setwidgetLocale: Function;
-    setAppMode: Function;
+    setMode: Function;
     isTabletApplicationType: boolean;
     isTemplateBundleType: boolean;
     changeLocale: Function;
@@ -92,6 +92,8 @@ export abstract class App {
     subscribe: (eventName, callback: (data: any) => void) => () => void;
     dynamicComponentContainerRef: any;
     clearPageCache: (pageName?: string) => void;
+    isPrism: boolean;
+    hasOwnObjectProperty: (obj: any, prop: string) => boolean;
 
     activePageName: string;
     activePage: any;
@@ -158,6 +160,7 @@ export abstract class AbstractI18nService {
     protected abstract loadMomentLocaleBundle(localeLang);
     protected abstract loadLocaleBundles(localeLang);
     public abstract setTimezone(locale, compInstance?);
+    public abstract setTimezoneEarly(): Promise<any>;
     public abstract getFormatsByLocale();
     public abstract getTimezone(compInstance?);
     public abstract getPrefabLocaleBundle(prefabName: string): any;

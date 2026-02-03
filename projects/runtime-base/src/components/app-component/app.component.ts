@@ -1,7 +1,6 @@
-import { CommonModule } from '@angular/common';
-import { WmComponentsModule } from "@wm/components/base";
-import { AlertDialogComponent } from '@wm/components/dialogs/alert-dialog';
-import { ConfirmDialogComponent } from '@wm/components/dialogs/confirm-dialog';
+import {CommonModule} from '@angular/common';
+import {AlertDialogComponent} from '@wm/components/dialogs/alert-dialog';
+import {ConfirmDialogComponent} from '@wm/components/dialogs/confirm-dialog';
 import {
     AfterViewInit,
     ApplicationRef,
@@ -9,16 +8,26 @@ import {
     DoCheck,
     ElementRef,
     NgZone,
+    OnDestroy,
     ViewChild,
     ViewContainerRef,
     ViewEncapsulation
 } from '@angular/core';
-import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
+import {
+    ActivatedRoute,
+    NavigationCancel,
+    NavigationEnd,
+    NavigationError,
+    NavigationStart,
+    Router,
+    RouterOutlet
+} from '@angular/router';
 
-import { setTheme } from 'ngx-bootstrap/utils';
+import {setTheme} from 'ngx-bootstrap/utils';
 
 import {
     $invokeWatchers,
+    $unwatchAllByScope,
     AbstractDialogService,
     AbstractSpinnerService,
     addClass,
@@ -31,28 +40,38 @@ import {
     setNgZone,
     setPipeProvider
 } from '@wm/core';
-import { OAuthService } from '@wm/oAuth';
-import { AppManagerService } from '../../services/app.manager.service';
-import { PipeProvider } from '../../services/pipe-provider.service';
-import { AppSpinnerComponent } from '../app-spinner.component';
-import { DialogComponent } from '@wm/components/dialogs/design-dialog';
+import {OAuthService} from '@wm/oAuth';
+import {AppManagerService} from '../../services/app.manager.service';
+import {PipeProvider} from '../../services/pipe-provider.service';
+import {AppSpinnerComponent} from '../app-spinner.component';
+import {DialogComponent} from '@wm/components/dialogs/design-dialog';
+import {ContainerDirective, PartialContainerDirective, PartialParamHandlerDirective} from '@wm/components/base';
+import {filter} from "rxjs/operators";
+import {Subscription} from "rxjs";
 
 interface SPINNER {
     show: boolean;
     messages: Array<string>;
     arialabel: string;
 }
-
 @Component({
     standalone: true,
-    imports: [CommonModule, WmComponentsModule, RouterOutlet, AlertDialogComponent, ConfirmDialogComponent, DialogComponent, AppSpinnerComponent],
+    imports: [CommonModule, RouterOutlet, AlertDialogComponent, ConfirmDialogComponent, DialogComponent, AppSpinnerComponent, ContainerDirective, PartialParamHandlerDirective , PartialContainerDirective],
     selector: 'app-root',
     templateUrl: './app.component.html',
     encapsulation: ViewEncapsulation.None
 })
-export class AppComponent implements DoCheck, AfterViewInit {
+export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     public startApp = false;
     public isApplicationType = false;
+    public enableSkipToMainContent = getWmProjectProperties().enableSkipToMainContent === 'true' || getWmProjectProperties().enableSkipToMainContent === true;
+    private retryCount = 0;
+    private navigationEndSubscription!: Subscription;
+    private oAuthProvidersSubscription!: Subscription;
+    private spinnerMessageSubscription!: Subscription;
+    private routerEventsSubscription!: Subscription;
+    private appManagerSubscriptions: Array<() => void> = []; // MEMORY LEAK FIX: Track appManager subscriptions
+    appLocale: any = {};
 
     @ViewChild(RouterOutlet) routerOutlet: RouterOutlet;
 
@@ -68,7 +87,7 @@ export class AppComponent implements DoCheck, AfterViewInit {
         private spinnerService: AbstractSpinnerService,
         ngZone: NgZone,
         private router: Router,
-        private app: App,
+        public app: App,
         private appManager: AppManagerService,
         private customIconsLoaderService: CustomIconsLoaderService
     ) {
@@ -76,15 +95,15 @@ export class AppComponent implements DoCheck, AfterViewInit {
         setNgZone(ngZone);
         setAppRef(_appRef);
 
+        this.appLocale = app.appLocale;
         this.isApplicationType = getWmProjectProperties().type === 'APPLICATION';
         if (this.isApplicationType) {
             this.customIconsLoaderService.load();
         }
 
-        this.appManager.beforeAppReady();
-
         // subscribe to OAuth changes
-        oAuthService.getOAuthProvidersAsObservable().subscribe((providers: any) => {
+        // MEMORY LEAK FIX: Store subscription reference for cleanup
+        this.oAuthProvidersSubscription = oAuthService.getOAuthProvidersAsObservable().subscribe((providers: any) => {
             this.providersConfig = providers;
             if (providers.length) {
                 this.showOAuthDialog();
@@ -94,7 +113,8 @@ export class AppComponent implements DoCheck, AfterViewInit {
         });
 
         // Subscribe to the message source to show/hide app spinner
-        this.spinnerService.getMessageSource().asObservable().subscribe((data: any) => {
+        // MEMORY LEAK FIX: Store subscription reference for cleanup
+        this.spinnerMessageSubscription = this.spinnerService.getMessageSource().asObservable().subscribe((data: any) => {
             // setTimeout is to avoid 'ExpressionChangedAfterItHasBeenCheckedError'
             setTimeout(() => {
                 this.spinner.show = data.show;
@@ -110,7 +130,8 @@ export class AppComponent implements DoCheck, AfterViewInit {
 
         let onPageRendered = noop;
 
-        this.router.events.subscribe(e => {
+        // MEMORY LEAK FIX: Store subscription reference for cleanup
+        this.routerEventsSubscription = this.router.events.subscribe(e => {
             if (e instanceof NavigationStart) {
                 let page = e.url.split('?')[0];
                 page = page.substring(1);
@@ -146,12 +167,13 @@ export class AppComponent implements DoCheck, AfterViewInit {
                 }, 1000);
             }
         });
-        this.appManager.subscribe('pageReady', () => {
+        // MEMORY LEAK FIX: Store subscription unsubscribe functions
+        this.appManagerSubscriptions.push(this.appManager.subscribe('pageReady', () => {
             onPageRendered();
-        });
-        this.appManager.subscribe('pageAttach', () => {
+        }));
+        this.appManagerSubscriptions.push(this.appManager.subscribe('pageAttach', () => {
             onPageRendered();
-        });
+        }));
     }
 
     providersConfig;
@@ -188,8 +210,8 @@ export class AppComponent implements DoCheck, AfterViewInit {
         //override the attach/detach methods
         const oAttach = this.routerOutlet.attach;
         const oDetach = this.routerOutlet.detach;
-        this.routerOutlet.attach = (componentRef: any) => {
-            oAttach.call(this.routerOutlet, componentRef);
+        this.routerOutlet.attach = (componentRef: any, activatedRoute:  ActivatedRoute) => {
+            oAttach.call(this.routerOutlet, componentRef, activatedRoute);
             componentRef.instance.ngOnAttach();
         };
         this.routerOutlet.detach = () => {
@@ -199,12 +221,79 @@ export class AppComponent implements DoCheck, AfterViewInit {
         };
     }
 
+    skipToAppContent(event: Event): void {
+        event.preventDefault();
+        this.retryCount = 0;
+        this.tryFocusContent();
+    }
+
+    private tryFocusContent(): void {
+        const contentEl = document.querySelector('.app-page-content') as HTMLElement;
+
+        if (contentEl) {
+            contentEl.setAttribute('tabindex', '-1'); // Ensure it's focusable
+            contentEl.focus({ preventScroll: false });
+            contentEl.scrollIntoView({ behavior: 'smooth' });
+        } else if (this.retryCount < 10) {
+            this.retryCount++;
+            setTimeout(() => this.tryFocusContent(), 100); // Retry every 100ms
+        }
+    }
+
     ngAfterViewInit() {
         document.documentElement.setAttribute('lang', getWmProjectProperties().defaultLanguage);
-            this.start();
+        this.start();
+
+        if (this.enableSkipToMainContent) {
+           this.navigationEndSubscription = this.router.events
+                .pipe(filter((e) => e instanceof NavigationEnd))
+                .subscribe(() => {
+                    const el = document.getElementById('app-focus-start');
+                    if (el) {
+                        el.focus();
+                    }
+                });
+        }
     }
 
     ngDoCheck() {
         $invokeWatchers();
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unwatch all App-scoped watchers when app is destroyed
+        $unwatchAllByScope('App');
+
+        // MEMORY LEAK FIX: Unsubscribe from navigation end subscription
+        if (this.navigationEndSubscription){
+            this.navigationEndSubscription.unsubscribe();
+            this.navigationEndSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Unsubscribe from OAuth providers subscription
+        if (this.oAuthProvidersSubscription) {
+            this.oAuthProvidersSubscription.unsubscribe();
+            this.oAuthProvidersSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Unsubscribe from spinner message subscription
+        if (this.spinnerMessageSubscription) {
+            this.spinnerMessageSubscription.unsubscribe();
+            this.spinnerMessageSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Unsubscribe from router events subscription
+        if (this.routerEventsSubscription) {
+            this.routerEventsSubscription.unsubscribe();
+            this.routerEventsSubscription = null;
+        }
+
+        // MEMORY LEAK FIX: Unsubscribe from appManager subscriptions
+        this.appManagerSubscriptions.forEach(unsubscribe => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        });
+        this.appManagerSubscriptions = [];
     }
 }

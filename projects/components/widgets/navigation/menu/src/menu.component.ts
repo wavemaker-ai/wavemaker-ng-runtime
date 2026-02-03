@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { WmComponentsModule } from "@wm/components/base";
-import { ButtonComponent } from '@wm/components/input';
+import { ButtonComponent } from '@wm/components/input/button';
 import { MenuDropdownComponent } from './menu-dropdown/menu-dropdown.component';
 import {
     AfterViewInit,
@@ -32,13 +31,14 @@ import {
     DatasetAwareNavComponent,
     hasLinkToCurrentPage,
     provideAsWidgetRef,
-    styler
+    styler,
+    TextContentDirective
 } from '@wm/components/base';
 import {NavComponent} from './nav/nav.component';
 
 import {registerProps} from './menu.props';
 import {clone, forEach, includes, isEmpty} from "lodash-es";
-import { AnchorComponent } from '@wm/components/basic';
+import { AnchorComponent } from '@wm/components/basic/anchor';
 
 export const KEYBOARD_MOVEMENTS = {
     MOVE_UP: 'UP-ARROW',
@@ -85,12 +85,13 @@ const AUTO_OPEN = {
 
 const WIDGET_CONFIG = { widgetType: 'wm-menu', hostClass: 'dropdown app-menu' };
 @Component({
-  standalone: true,
-  imports: [CommonModule, WmComponentsModule, AnchorComponent, ButtonComponent, MenuDropdownComponent, BsDropdownModule],
+    standalone: true,
+    imports: [BsDropdownModule, CommonModule, TextContentDirective, AnchorComponent, ButtonComponent, MenuDropdownComponent],
     selector: '[wmMenu]',
     templateUrl: './menu.component.html',
     providers: [
-        provideAsWidgetRef(MenuComponent)
+        provideAsWidgetRef(MenuComponent),
+
     ]
 })
 export class MenuComponent extends DatasetAwareNavComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -244,6 +245,8 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
     onPropertyChange(key: string, nv: any, ov?: any) {
 
         if (key === 'tabindex') {
+            // Let the base class handle tabindex setting via setAttr
+            super.onPropertyChange(key, nv, ov);
             return;
         }
 
@@ -291,6 +294,11 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
+        // Fix tabindex if it's NaN (ensure it's fixed after view initialization)
+        if (this.widget.tabindex !== undefined && (typeof this.widget.tabindex === 'number' && isNaN(this.widget.tabindex))) {
+            this.widget.tabindex = 0;
+            (this as any).tabindex = 0;
+        }
         styler(this.nativeElement.querySelector('.dropdown-toggle') as HTMLElement, this);
     }
 }

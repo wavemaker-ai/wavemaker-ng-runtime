@@ -1,4 +1,4 @@
-import { PROP_ANY, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register } from '@wm/components/base';
+import {PROP_ANY, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register} from '@wm/components/base';
 
 const propsMap = new Map(
     [
@@ -19,7 +19,8 @@ const propsMap = new Map(
         ['showindevice', {displayType: 'inline-block', value: 'all', ...PROP_STRING}],
         ['subheading', PROP_STRING],
         ['tabindex', {value: 0, ...PROP_NUMBER}],
-        ['title', PROP_STRING]
+        ['title', PROP_STRING],
+        ['itemsperrow', PROP_STRING],
     ]
 );
 
@@ -39,6 +40,7 @@ export const registerFormProps = () => {
     formMap.set('novalidate', PROP_BOOLEAN);
     formMap.set('validationtype', {value: 'default', ...PROP_STRING});
     formMap.set('iconclass', PROP_STRING);
+    formMap.set('readonly',{value: false, ...PROP_BOOLEAN});
 
     register(
         'wm-form',
