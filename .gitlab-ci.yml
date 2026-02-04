@@ -29,7 +29,7 @@ ai-review:
     VCS__PIPELINE__PROJECT_ID: "$CI_PROJECT_ID"
     VCS__PIPELINE__MERGE_REQUEST_ID: "$CI_MERGE_REQUEST_IID"
     VCS__HTTP_CLIENT__API_URL: "$CI_SERVER_URL"
-    VCS__HTTP_CLIENT__API_TOKEN: "glpat-zfilEcq4LJDFVki99gYnuW86MQp1Omp1N3ZkCw.01.121hp7ua0"
+    VCS__HTTP_CLIENT__API_TOKEN: "glpat-HTVTGKLlMD5MQYDrAaiV7G86MQp1OjZrCA.01.0y01gnyjm"
   allow_failure: true  # Optional: don't block pipeline if AI review fails
 
 
