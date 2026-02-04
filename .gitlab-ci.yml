@@ -17,7 +17,7 @@ ai-review:
     - if: '$CI_MERGE_REQUEST_IID'
   before_script: [] 
   script:
-    - echo "printing $CI_SERVER_URL  
+    - echo "$CI_SERVER_URL"
     - ai-review run
   variables:
     # --- LLM configuration ---
