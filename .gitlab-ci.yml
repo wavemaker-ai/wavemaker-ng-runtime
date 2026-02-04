@@ -10,6 +10,8 @@ stages:
         
 ai-review:
   stage: review
+  tags:
+      - npm
   image: nikitafilonov/ai-review:latest
   rules:
     - if: '$CI_MERGE_REQUEST_IID'
