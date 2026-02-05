@@ -376,11 +376,16 @@ const downloadThroughIframe = (requestParams, success, dataBinding,error) => {
         let completed = false;
         iFrameElement.on("load", function () {
             if (completed) return;
-            const body = iFrameElement.contents().find('body');
-            const text = body.text();
+            const text = iFrameElement.contents().find('body').text();
             if (text && text.trim()) {
                 completed = true;
-                triggerFn(error, text.trim());
+                let message;
+                try {
+                    message ={error:JSON.parse(text.trim())} ;
+                } catch (e) {
+                   message=""
+                }
+                triggerFn(error, message);
             }
         });
         iFrameElement.contents().find('body').append(formEl);
