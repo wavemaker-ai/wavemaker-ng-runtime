@@ -17,7 +17,7 @@ ai-review:
     - if: '$CI_MERGE_REQUEST_IID'
   before_script: [] 
   script:
-    - echo "GitLab Token set: ${GITLAB_API_TOKEN:+YES}"
+    - echo "GitLab Token set: ${CI_SERVER_URL}"
     - ai-review run
   variables:
     # --- LLM configuration ---
