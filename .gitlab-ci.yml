@@ -18,7 +18,6 @@ ai-review:
   before_script: [] 
   script:
     - echo "GitLab Token set: ${GITLAB_API_TOKEN:+YES}"
-    - echo "Anthropic Token set: ${ANTHROPIC_API_KEY:+YES}"
     - ai-review run
   variables:
     # --- LLM configuration ---
