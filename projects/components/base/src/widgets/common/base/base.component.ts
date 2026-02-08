@@ -18,6 +18,7 @@ import {ReplaySubject, Subject} from 'rxjs';
 import {
     $invokeWatchers,
     $parseEvent,
+    $parseExpr,
     $unwatch,
     $unwatchAll,
     $watch,
@@ -564,8 +565,9 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
                 const errorMessage = e.message || String(e);
                 console.error(`Error executing event callback "${eventName}" on widget "${widgetName}":`, errorMessage);
                 console.error('Event expression context:', { eventName, widgetName, locals });
-                // Re-throw to maintain original behavior but with better context
-                throw e;
+                // Don't re-throw - allow execution to continue (e.g., navigation should still work)
+                // Return undefined to indicate error was handled
+                return undefined;
             }
         };
         if(child && !child.widget.eventHandlers)
@@ -651,8 +653,9 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
                     const errorMessage = error?.message || String(error);
                     console.error(`Error executing event callback "${eventName}" on widget "${widgetName}":`, errorMessage);
                     console.error('Full error:', error);
-                    // Re-throw to maintain original behavior but with better error context
-                    throw error;
+                    // Don't re-throw - allow execution to continue (e.g., navigation should still work)
+                    // Return undefined to indicate error was handled
+                    return undefined;
                 }
             }
         }
@@ -900,9 +903,6 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         // This ensures all watchers registered for this component are cleaned up
         if (this.widgetId) {
             $unwatchAll(this.widgetId);
-            // if (removedCount > 0) {
-            //     console.log(`🧹 Cleaned up ${removedCount} watcher(s) for widget ${this.widgetId}`);
-            // }
         }
         
         // MEMORY LEAK FIX: Clear context to release references to parent scope data

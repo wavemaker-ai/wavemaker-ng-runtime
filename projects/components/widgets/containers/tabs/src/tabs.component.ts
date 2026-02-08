@@ -1,11 +1,21 @@
-import { CommonModule } from '@angular/common';
-import { TextContentDirective } from "@wm/components/base";
+import {CommonModule} from '@angular/common';
+import {
+    APPLY_STYLES_TYPE,
+    createArrayFrom,
+    IWidgetConfig,
+    provideAsWidgetRef,
+    StylableComponent,
+    styler,
+    TextContentDirective
+} from "@wm/components/base";
 import {
     AfterContentInit,
     AfterViewInit,
     Attribute,
     Component,
-    ContentChildren, HostBinding, Inject,
+    ContentChildren,
+    HostBinding,
+    Inject,
     Injector,
     OnDestroy,
     OnInit,
@@ -17,22 +27,15 @@ import {
     addClass,
     appendNode,
     DynamicComponentRefProvider,
+    isDefined,
     noop,
     removeClass,
     StatePersistence
 } from '@wm/core';
-import {
-    APPLY_STYLES_TYPE,
-    IWidgetConfig,
-    provideAsWidgetRef,
-    styler,
-    StylableComponent,
-    createArrayFrom
-} from '@wm/components/base';
 
-import { TabsAnimator } from './tabs.animator';
-import { registerProps } from './tabs.props';
-import { TabPaneComponent } from './tab-pane/tab-pane.component';
+import {TabsAnimator} from './tabs.animator';
+import {registerProps} from './tabs.props';
+import {TabPaneComponent} from './tab-pane/tab-pane.component';
 import {find, findIndex, forEach, get, indexOf, isArray, isEmpty} from "lodash-es";
 
 declare const $;
@@ -395,6 +398,45 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
     private onDataChange(newVal) {
         this.fieldDefs = createArrayFrom(newVal);
         setTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0));
+    }
+
+    public getWidgets(widgteName: string, index?: number) {
+        let $target;
+        const retVal = [];
+
+        if (!widgteName) {
+            return;
+        }
+
+        if (!isDefined(index)) {
+            forEach(this.panes.toArray(), (el) => {
+                $target = get(el.currentTabWidgets, widgteName);
+                if ($target) {
+                    retVal.push($target);
+                }
+            });
+
+            return retVal;
+        }
+        index = +index || 0;
+
+        $target = get(this.panes.toArray(), index);
+
+        if ($target) {
+            return [get($target.currentTabWidgets, widgteName)];
+        }
+    }
+
+    get currentTabPaneIndex() {
+        return this.getActiveTabIndex();
+    }
+
+    get isFirstTabPane(): boolean {
+        return this.panes.first.widgetId === this.activeTab.widgetId;
+    }
+
+    get isLastTabPane(): boolean {
+        return this.panes.last.widgetId === this.activeTab.widgetId;
     }
 
     onPropertyChange(key: string, nv: any, ov) {

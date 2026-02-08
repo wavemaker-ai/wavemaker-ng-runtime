@@ -10,7 +10,7 @@
          [title]="title"
          [titleid]="titleId"></div>
     <div wmDialogBody>
-        <p class="app-dialog-message text-{{alerttype}}" [textContent]="message"></p>
+        <p class="app-dialog-message text-{{alerttype}}" [class.app-label]="isPrism"  [textContent]="message"></p>
     </div>
     <div wmDialogFooter>
         <button (click)="onOk($event)" [attr.aria-label]="oktext" caption.bind="oktext" class="btn-primary ok-action"

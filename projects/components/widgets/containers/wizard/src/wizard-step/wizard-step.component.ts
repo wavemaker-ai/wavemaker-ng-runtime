@@ -11,7 +11,7 @@ import {
     Self
 } from "@angular/core";
 import {
-    BaseComponent,
+    getCurrentWidgets,
     IWidgetConfig,
     provideAsWidgetRef,
     RedrawableDirective,
@@ -58,9 +58,12 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
     private isdynamic: boolean;
     public $lazyLoad = noop;
     isDone: boolean = false;
+    nextCBInProgress: boolean = false;
+    prevCBInProgress: boolean = false;
 
     private status: STEP_STATUS = STEP_STATUS.DISABLED;
     private wizardComponent: WizardComponent;
+    private _currentWizardWidgets ={}
 
     // reference to the components which needs a redraw(eg, grid, chart) when the height of this component changes
     @ContentChildren(RedrawableDirective, {descendants: true}) reDrawableComponents;
@@ -179,6 +182,10 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
         availablePanes.splice((this as any).wizardComponent.getStepIndexByRef(this), 1);
         this.wizardComponent.steps.reset([...availablePanes]);
         this.nativeElement.remove();
+    }
+
+    get currentWizardWidgets() {
+        return getCurrentWidgets(this.nativeElement, this._currentWizardWidgets);
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {

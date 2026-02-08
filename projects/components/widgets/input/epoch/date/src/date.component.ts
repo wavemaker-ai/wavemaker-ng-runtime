@@ -119,6 +119,7 @@ export class DateComponent extends BaseDateTimeComponent {
         this.dateContainerCls = `app-date-${this.widgetId}`;
         this._dateOptions.containerClass = `app-date ${this.dateContainerCls}`;
         this._dateOptions.showWeekNumbers = false;
+        this._dateOptions.customTodayClass='current-date';
         this._bsDefaultLoadCheck = true;
         this.datepattern = this.appDefaults.dateFormat || getDisplayDateTimeFormat(FormWidgetType.DATE);
         this.updateFormat('datepattern');
@@ -178,9 +179,9 @@ export class DateComponent extends BaseDateTimeComponent {
     onDatePickerOpen() {
         this.isOpen = true;
         this.activeDate = this.bsDataValue ? this.bsDataValue : (this.timeZone ? getMomentLocaleObject(this.timeZone) : new Date());
-        if (!this.bsDataValue) {
-            this.hightlightToday(this.activeDate);
-        }
+        // if (!this.bsDataValue) {
+        //     this.hightlightToday(this.activeDate);
+        // }
         this.updateIMask();
         if (this.bsDatePickerDirective && (this.dateNotInRange||this.invalidDateTimeFormat)) {
             this.bsDatePickerDirective._bsValue = null;

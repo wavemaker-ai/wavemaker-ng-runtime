@@ -1,5 +1,15 @@
-import { AfterContentInit, ContentChildren, Directive, forwardRef, Inject, Injector, OnDestroy, Optional, QueryList } from '@angular/core';
-import { DynamicComponentRefProvider, noop, StatePersistence } from '@wm/core';
+import {
+    AfterContentInit,
+    ContentChildren,
+    Directive,
+    forwardRef,
+    Inject,
+    Injector,
+    OnDestroy,
+    Optional,
+    QueryList
+} from '@angular/core';
+import {DynamicComponentRefProvider, isDefined, noop, StatePersistence} from '@wm/core';
 import {
     APPLY_STYLES_TYPE,
     createArrayFrom,
@@ -9,9 +19,9 @@ import {
     styler
 } from '@wm/components/base';
 
-import { registerProps } from './accordion.props';
-import { AccordionPaneComponent } from './accordion-pane/accordion-pane.component';
-import { find, forEach, get, indexOf, isArray, isNumber } from "lodash-es";
+import {registerProps} from './accordion.props';
+import {AccordionPaneComponent} from './accordion-pane/accordion-pane.component';
+import {find, forEach, get, indexOf, isArray, isNumber} from "lodash-es";
 
 const DEFAULT_CLS = 'app-accordion panel-group';
 const WIDGET_CONFIG: IWidgetConfig = {
@@ -222,6 +232,45 @@ export class AccordionDirective extends StylableComponent implements AfterConten
     }
     private onDataChange(newVal) {
         this.fieldDefs = createArrayFrom(newVal);
+    }
+
+    public getWidgets(widgteName: string, index?: number) {
+        let $target;
+        const retVal = [];
+
+        if (!widgteName) {
+            return;
+        }
+
+        if (!isDefined(index)) {
+            forEach(this.panes.toArray(), (el) => {
+                $target = get(el.currentAccordionWidgets, widgteName);
+                if ($target) {
+                    retVal.push($target);
+                }
+            });
+
+            return retVal;
+        }
+        index = +index || 0;
+
+        $target = get(this.panes.toArray(), index);
+
+        if ($target) {
+            return [get($target.currentAccordionWidgets, widgteName)];
+        }
+    }
+
+    get currentAccordionPaneIndex() {
+        return this.activePaneIndex;
+    }
+
+    get isFirstAccordionPane(): boolean {
+        return this.panes.first.widgetId === this.activePane.widgetId;
+    }
+
+    get isLastAccordionPane(): boolean {
+        return this.panes.last.widgetId === this.activePane.widgetId;
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {

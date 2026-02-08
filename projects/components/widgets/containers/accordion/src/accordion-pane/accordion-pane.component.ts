@@ -1,8 +1,9 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ContentChildren, Inject, Injector, OnDestroy, Optional } from '@angular/core';
-import { noop, removeAttr } from '@wm/core';
+import {CommonModule} from '@angular/common';
+import {AfterViewInit, Component, ContentChildren, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import {noop, removeAttr} from '@wm/core';
 import {
     APPLY_STYLES_TYPE,
+    getCurrentWidgets,
     IWidgetConfig,
     provideAsWidgetRef,
     RedrawableDirective,
@@ -10,8 +11,8 @@ import {
     styler,
 } from '@wm/components/base';
 
-import { registerProps } from './accordion-pane.props';
-import { AccordionDirective } from '../accordion.directive';
+import {registerProps} from './accordion-pane.props';
+import {AccordionDirective} from '../accordion.directive';
 
 const DEFAULT_CLS = 'app-accordion-panel panel';
 const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-accordionpane', hostClass: DEFAULT_CLS };
@@ -40,6 +41,7 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
     private isdynamic: boolean;
     public tabindex;
     public name: string;
+    private _currentAccordionWidgets = {};
 
     // reference to the components which needs a redraw(eg, grid, chart) when the height of this component changes
     @ContentChildren(RedrawableDirective, { descendants: true }) reDrawableComponents;
@@ -118,6 +120,10 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
 
     private notifyParent(isExpand: boolean, evt: Event) {
         this.accordionRef.notifyChange(this, isExpand, evt);
+    }
+
+    get currentAccordionWidgets() {
+        return getCurrentWidgets(this.nativeElement, this._currentAccordionWidgets);
     }
 
     onPropertyChange(key, nv, ov) {
