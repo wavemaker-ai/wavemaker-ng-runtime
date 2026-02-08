@@ -25,7 +25,7 @@ ai-review:
     LLM__META__MAX_TOKENS: "15000"
     LLM__META__TEMPERATURE: "0.3"
     LLM__HTTP_CLIENT__API_URL: "https://api.anthropic.com"
-    LLM__HTTP_CLIENT__API_TOKEN: "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"
+    LLM__HTTP_CLIENT__API_TOKEN: "$ANTHROPIC_API_KEY"
 
     # --- GitLab integration ---
     VCS__PROVIDER: "GITLAB"
