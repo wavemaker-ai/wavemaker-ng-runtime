@@ -16,7 +16,7 @@ ai-review:
     - if: '$CI_MERGE_REQUEST_IID'
   before_script: [] 
   script:
-    - ai-review run .ai-review.yml
+    - ai-review run --config .ai-review.yml
   variables:
     # --- LLM configuration ---
     LLM__PROVIDER: "CLAUDE"
