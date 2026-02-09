@@ -1,0 +1,17 @@
+# .ai-review.yml
+review:
+  include_patterns:
+    - "**/*.ts"
+    - "**/*.tsx"
+    - "**/*.js"
+    - "**/*.jsx"
+  exclude_patterns:
+    - "node_modules/**"
+    - "dist/**"
+     
+llm:
+  provider: "CLAUDE"
+  meta:
+    model: "claude-sonnet-4-5-20250929"
+    max_tokens: 50000
+    temperature: 0.3
