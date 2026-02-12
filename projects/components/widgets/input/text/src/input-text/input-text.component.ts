@@ -75,6 +75,10 @@ export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
                 super.onPropertyChange(key, nv, ov);
         }
     }
+    get computedClasses() {
+        return {'with-leading-icon': this.leadingiconclass, 'with-trailing-icon': this.trailingiconclass,
+            ...(typeof this.conditionalclass === 'string' ? { [this.conditionalclass]: true } : this.conditionalclass || {})};
+    }
 
     get mask() {
         if (this.displayformat && (!this.placeholder || (this.placeholder && this.isFocused))) {

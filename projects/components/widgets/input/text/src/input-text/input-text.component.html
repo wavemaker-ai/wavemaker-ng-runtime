@@ -19,7 +19,7 @@
        [attr.placeholder]="placeholder"
        [attr.accesskey]="shortcutkey"
        [autofocus]="autofocus"
-       [ngClass]="[leadingiconclass ? 'with-leading-icon' : '', trailingiconclass ? 'with-trailing-icon' : '', conditionalclass || '']"
+       [ngClass]="computedClasses"
        [ngStyle]="conditionalstyle"
        (ngModelChange)="handleChange($event)"
        (blur)="handleBlur($event); checkForDisplayFormat($event)"
