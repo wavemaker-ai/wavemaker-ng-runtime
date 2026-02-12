@@ -3,6 +3,7 @@ import { IDGenerator } from './id-generator';
 import { $parseExpr } from './expression-parser';
 import { findValueOf } from './utils';
 import {clone, flatten, isArray, isEqual, isObject} from "lodash-es";
+import {wmEffect} from "@wavemaker/variables";
 
 const registry = new Map<string, any>();
 
@@ -89,6 +90,15 @@ export const $watch = (expr, $scope, $locals, listener, identifier = watchIdGene
         listener = watchInfo.listener;
     }
     const fn = $parseExpr(expr);
+
+    if(config && config.useSignals) {
+        const exprFn = fn.bind(expr, $scope, $locals);
+        return wmEffect(() => {
+            debugger;
+            const value = exprFn();
+            listener(value);
+        });
+    }
 
     registry.set(identifier, {
         fn: fn.bind(expr, $scope, $locals),

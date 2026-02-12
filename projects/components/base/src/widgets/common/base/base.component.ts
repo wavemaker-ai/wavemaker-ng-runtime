@@ -8,7 +8,7 @@ import {
     Injector,
     OnDestroy,
     OnInit,
-    Optional,
+    Optional, signal,
     ViewContainerRef
 } from '@angular/core';
 import {EventManager} from '@angular/platform-browser';
@@ -29,7 +29,8 @@ import {
     setAttr,
     setCSS,
     setCSSFromObj,
-    switchClass
+    switchClass,
+    $parseExpr
 } from '@wm/core';
 
 import {getWidgetPropsByType} from '../../framework/widget-props';
@@ -41,6 +42,7 @@ import {DISPLAY_TYPE, EVENTS_MAP} from '../../framework/constants';
 import {WidgetProxyProvider} from '../../framework/widget-proxy-provider';
 import {getWatchIdentifier} from '../../../utils/widget-utils';
 import {camelCase, extend, forEach, isArray, isObject, join, last, map} from "lodash-es";
+import { wmEffect} from "@wavemaker/variables";
 
 declare const $;
 
@@ -201,6 +203,9 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     public trackId: string;
 
     customWidgetSubType: string;
+
+    protected signals = new Map<string, any>();
+    protected disposers: Function[] = [];
 
     protected constructor(
         protected inj: Injector,
@@ -572,6 +577,25 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
             isMuted     = child ? child.widget.isMuted : this.isMuted,
             widgetProps = child ? child.widget.widgetProps : this.widgetProps,
             widgetId    = child ? child.widget.widgetId : this.widgetId;
+
+        const config: any = widgetProps.get(propName);
+        if (!config?.useSignals) {
+            const fn = $parseExpr(expr);
+
+            if(config && config.useSignals) {
+                const exprFn = fn.bind(expr, viewParent, context);
+                wmEffect(() => {
+                    const value = exprFn();
+                    const sig = this.signals.get(propName);
+                    if(sig) {
+                        sig.set(value);
+                    } else {
+                        const sig = signal(value);
+                        this.signals.set(propName, sig);
+                    }
+                });
+            }
+        } else
         this.registerDestroyListener(
             $watch(
                 expr,

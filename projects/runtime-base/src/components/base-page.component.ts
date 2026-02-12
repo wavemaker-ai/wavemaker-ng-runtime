@@ -36,6 +36,7 @@ import {AppManagerService} from '../services/app.manager.service';
 import {FragmentMonitor} from '../util/fragment-monitor';
 import {CACHE_PAGE} from '../util/wm-route-reuse-strategy';
 import {each, extend} from "lodash-es";
+import {createReactiveVariables} from "@wavemaker/variables";
 
 declare const $;
 declare const html2canvas;
@@ -144,7 +145,7 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         this.Actions = Object.create(this.App.Actions);
 
         // assign all the page variables to the pageInstance
-        Object.entries(variableCollection.Variables).forEach(([name, variable]) => this.Variables[name] = variable);
+        Object.entries(variableCollection.Variables).forEach(([name, variable]) => this.Variables[name] = createReactiveVariables(variable));
         Object.entries(variableCollection.Actions).forEach(([name, action]) => this.Actions[name] = action);
 
 

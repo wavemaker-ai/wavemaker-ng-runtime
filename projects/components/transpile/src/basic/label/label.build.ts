@@ -19,6 +19,7 @@ register('wm-label', (): IBuildTaskDef => {
             }
             const counter = idGen.nextUid();
             return `<${tagName} wmLabel #${counter}="wmLabel" ${getAttrMarkup(attrs)}>`;
+            //return `<${tagName} wmLabel #${counter}="wmLabel" ${getAttrMarkup(attrs)}>{{${counter}.signals.get('caption')()}}`;
         },
         post: () => `</${tagName}>`
     };

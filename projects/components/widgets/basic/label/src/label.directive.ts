@@ -53,7 +53,7 @@ export class LabelDirective extends StylableComponent {
                 setProperty(this.nativeElement, 'textContent', JSON.stringify(nv));
             } else if (isObject(nv) && safeValue) {
                 setProperty(this.nativeElement, 'innerHTML', nv[Object.keys(nv)[0]]);
-            }  else {
+            }  else if (this.sanitizePipe?.transform) {
                 setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(insertZWSP(nv), SecurityContext.HTML));
             }
 

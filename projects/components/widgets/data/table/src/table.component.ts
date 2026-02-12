@@ -41,7 +41,9 @@ import {
     PaginationService,
     StatePersistence,
     triggerFn,
-    Viewport
+    Viewport,
+    muteWatchers,
+    unMuteWatchers,
 } from '@wm/core';
 
 import {Observable, Subject} from 'rxjs';
@@ -631,7 +633,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.prevData = getClonedObject(row);
         },
         afterRowUpdate: (row, e, callBack, options) => {
+            muteWatchers();
             this.updateRecord(extend({}, options, {row, 'prevData': this.prevData, 'event': e, 'callBack': callBack}));
+            setTimeout(() => {
+                unMuteWatchers(); // This automatically calls $invokeWatchers
+            }, 10);
         },
         onBeforeRowUpdate: (row, e, options) => {
             return this.invokeEventCallback('beforerowupdate', {$event: e, $data: row, row, options: options});

@@ -6,7 +6,7 @@ export const registerProps = () => {
         new Map(
             [
                 ['animation', PROP_STRING],
-                ['caption', {value: 'Label', ...PROP_STRING}],
+                ['caption', {value: 'Label', useSignals: true, ...PROP_STRING}],
                 ['class', PROP_STRING],
                 ['conditionalclass', PROP_ANY],
                 ['conditionalstyle', PROP_ANY],
