@@ -1,3 +1,4 @@
+// adding errors to test
 {
     "extends": "../tslint.json",
     "rules": {

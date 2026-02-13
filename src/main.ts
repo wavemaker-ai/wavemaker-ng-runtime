@@ -7,6 +7,7 @@ import * as fontConfig from './font.config';
 import { appConfig } from './app/app.config';
 import { AppComponent } from '@wm/runtime/base';
 
+
 // Format Accept-Language header
 const formatAcceptHeader = (languages: string[]): string => {
   const result: string[] = [];

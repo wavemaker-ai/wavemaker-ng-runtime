@@ -1,0 +1,6 @@
+{
+  "review": {
+    "command": "git diff $CI_MERGE_REQUEST_TARGET_BRANCH_NAME...$CI_COMMIT_SHA",
+    "message": "Review this merge request and provide actionable feedback on correctness, security, performance, and style."
+  }
+}

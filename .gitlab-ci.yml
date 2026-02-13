@@ -1,121 +1,233 @@
 stages:
         - jira_feature_dev
-        - jira_next_release
-        - jira_hotfix_release
-        - jira_preprod_release
-        - jira_verification_merge
+        # - jira_next_release
+        # - jira_hotfix_release
+        # - jira_preprod_release
+        # - jira_verification_merge
         - unit_tests
         - notify
+        # - ai_inline_review
+        # - opencode_review
+#default:
+#  tags:
+#    - docker
 
-before_script:
-  - export NVM_DIR="$HOME/.nvm"
-  - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # Load nvm'
-  - '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # Load nvm bash_completion'  
+ before_script:
+   - export NVM_DIR="$HOME/.nvm"
+   - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # Load nvm'
+   - '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # Load nvm bash_completion'  
 
 variables:
   NODE_OPTIONS: "--max-old-space-size=16384"
+  GITLAB_PAT_API: "glpat-m5Pr8WTobzXRwL16atbqRW86MQp1OjZsCA.01.0y0eij75v"
 
-jira_feature_dev:
-  stage: jira_feature_dev
-  tags:
-      - jira
-  only:
-      - /^feature.*$/
+# ai_inline_review:
+#   stage: ai_inline_review
+#   tags:
+#     - docker
+#   image:
+#     name: ghcr.io/anomalyco/opencode:latest
+#     entrypoint: [""]
+
+#   rules:
+#     - if: $CI_MERGE_REQUEST_IID
+
+#   script:
+#     - apk add curl jq
+
+#     - echo "CI_MERGE_REQUEST_IID=$CI_MERGE_REQUEST_IID"
+
+#     - opencode run --format json --command "" "Review this merge request and suggest fixes" > opencode-opencode.jsonl
+    
+#     - cat opencode-opencode.jsonl
+
+#     # - grep -E '"type":[ ]*"text"' opencode-opencode.jsonl | tail -1 | jq -r '.part.text' > opencode-opencode.out
+      
+#     # - cat opencode-opencode.out
+
+#   after_script:
+#         - echo "Posting OpenCode review to MR"
+#         - echo  $CI_SERVER_FQDN
+
+#         - apk add --no-cache curl jq
+
+#         - |
+#            if [ -z "$CI_MERGE_REQUEST_IID" ]; then
+#               echo "Not an MR pipeline, skipping"
+#               exit 0
+#            fi
+
+#         - |
+#           if [ ! -f opencode-opencode.out ]; then
+#               echo "No OpenCode output found"
+#               exit 0
+#           fi
+
+#           REVIEW_BODY=$(printf "<!-- OPENCODE_REVIEW -->\n\n## 🤖 OpenCode AI Review\n\n<details>\n<summary>Click to expand full review</summary>\n\n%s\n\n</details>" "$(cat opencode-opencode.out)")
+
+#           # # Find existing OpenCode comment
+#           # EXISTING_COMMENT_ID=$(curl --silent \
+#           # --header "PRIVATE-TOKEN: $GITLAB_PAT_API" \
+#           # "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes" \
+#           # | jq -r '.[] | select(.body | contains("OPENCODE_REVIEW")) | .id' \
+#           # | head -n 1)
+
+#           # if [ -n "$EXISTING_COMMENT_ID" ] && [ "$EXISTING_COMMENT_ID" != "null" ]; then
+#           #   echo "Updating existing OpenCode comment..."
+#           #   curl --fail --request PUT \
+#           #     --header "PRIVATE-TOKEN: $GITLAB_PAT_API" \
+#           #     --data-urlencode "body=$REVIEW_BODY" \
+#           #     "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes/$EXISTING_COMMENT_ID"
+#           # else
+#             echo "Creating new OpenCode comment..."
+#             curl --fail --request POST \
+#               --header "PRIVATE-TOKEN: $GITLAB_PAT_API" \
+#               --data-urlencode "body=$REVIEW_BODY" \
+#               "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes"
+#           # fi
+
+
+#debug_pipeline_context:
+#  stage: opencode_review
+#  tags:
+#    - docker
+#  script:
+#    - echo "SOURCE=$CI_PIPELINE_SOURCE"
+#    - echo "MR IID=$CI_MERGE_REQUEST_IID"
+#    - env | grep CI_MERGE || true
+#
+#include:
+#  - component: $CI_SERVER_FQDN/wm-ops/gitlab-opencode/opencode@main
+#    inputs:
+#      stage: opencode_review
+#      config_dir: "$CI_PROJECT_DIR/.opencode"
+#      auth_json: "$CI_PROJECT_DIR/.opencode/auth.json"
+#      message: "Review this merge request for bugs and improvements."
+#      after_script:
+#        - echo "Posting OpenCode review to MR"
+#
+#        - apk add --no-cache curl jq
+#
+#        - |
+#           if [ -z "$CI_MERGE_REQUEST_IID" ]; then
+#              echo "Not an MR pipeline, skipping"
+#              exit 0
+#           fi
+#
+#        - |
+#          if [ ! -f opencode-opencode.out ]; then
+#              echo "No OpenCode output found"
+#              exit 0
+#          fi
+#
+#        - |
+#          curl --fail --request POST \
+#          --header "PRIVATE-TOKEN: $GITLAB_PAT_API" \
+#          --header "Content-Type: application/json" \
+#          --data "$(jq -n --arg body "$(cat opencode-opencode.out)" '{body: $body}')" \
+#          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes"
+#
+
+ jira_feature_dev:
+   stage: jira_feature_dev
+   tags:
+       - jira
+   only:
+       - /^feature.*$/
         
-  script:
-    - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
-    - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 4 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
+   script:
+     - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
+     - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 4 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
  
-jira_next_release:
-  stage: jira_next_release
-  tags:
-      - jira
-  only:
-    - "$NEXT_RELEASE_BRANCH"
+# jira_next_release:
+#   stage: jira_next_release
+#   tags:
+#       - jira
+#   only:
+#     - "$NEXT_RELEASE_BRANCH"
 
-  script:
-    - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
-    - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 5 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
+#   script:
+#     - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
+#     - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 5 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
 
-jira_hotfix_release:
-  stage: jira_hotfix_release
-  tags:
-      - jira
-  only:
-    - "$HOTFIX_BRANCH"
-  script:
-    - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_HOT_FIX_VERSION"
-    - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 5 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_HOT_FIX_VERSION"
+# jira_hotfix_release:
+#   stage: jira_hotfix_release
+#   tags:
+#       - jira
+#   only:
+#     - "$HOTFIX_BRANCH"
+#   script:
+#     - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_HOT_FIX_VERSION"
+#     - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 5 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_HOT_FIX_VERSION"
 
-jira_preprod_release:
-  stage: jira_preprod_release
-  tags:
-      - jira
-  only:
-    - "$PREPOD_BRANCH"
-  script:
-    - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_PREPOD_VERSION"
-    - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 5 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_PREPOD_VERSION"      
+# jira_preprod_release:
+#   stage: jira_preprod_release
+#   tags:
+#       - jira
+#   only:
+#     - "$PREPOD_BRANCH"
+#   script:
+#     - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_PREPOD_VERSION"
+#     - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 5 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_PREPOD_VERSION"      
 
-jira_verification_merge:
-  stage: jira_verification_merge
-  tags:
-    - jira
-  only: [merge_requests]
-  script:
-    - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$NEXT_HOT_FIX_VERSION"
-    - python3 /home/gitlab-runner/jira-ci-scripts/verify_tickets_in_commits.py "$TOKEN" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$CI_PROJECT_ID" "$GITLAB_TOKEN"
+# jira_verification_merge:
+#   stage: jira_verification_merge
+#   tags:
+#     - jira
+#   only: [merge_requests]
+#   script:
+#     - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$NEXT_HOT_FIX_VERSION"
+#     - python3 /home/gitlab-runner/jira-ci-scripts/verify_tickets_in_commits.py "$TOKEN" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$CI_PROJECT_ID" "$GITLAB_TOKEN"
 
-unit_tests:
-  stage: unit_tests
-  tags:
-    - npm
-  only:
-    - merge_requests
-  script:
-    - node --version
-    - npm --version
-    - rm -rf ../wavemaker-ui-variables ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-ui-variables.git ../wavemaker-ui-variables
-    - cd ../wavemaker-ui-variables ; npm install ; npm install --save-dev @types/babel__core @types/babel__generator @types/babel__template @types/babel__traverse @types/graceful-fs @types/istanbul-lib-coverage @types/istanbul-lib-report @types/istanbul-reports @types/stack-utils @types/yargs @types/yargs-parser
-    - npm i yalc -g
-    - npm run build 
-    - rm -rf ../custom-widgets-m3 ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/custom-widgets-m3.git ../custom-widgets-m3
-    - cd ../custom-widgets-m3 ; npm install ;
-    - npm run build 
-    - rm -rf ../wavemaker-foundation-css ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-foundation-css.git ../wavemaker-foundation-css
-    - cd ../wavemaker-foundation-css ; npm install ;
-    - npm run build
-    - cd ../wavemaker-ng-runtime
-    - npm install 
-    - yalc add @wavemaker/variables
-    - yalc add @wavemaker/custom-widgets-m3
-    - yalc add @wavemaker/foundation-css
-    - bash build.sh
-    - bash bundle-runtime-cli.sh
-    - echo "npm_test starting"
-    - npm run test 
-    - echo "npm_test finished $(date +%Y-%m-%d\ %H:%M:%S)"
-    - date
-  retry:
-        max: 2
-        when: stuck_or_timeout_failure
-notify_job:
-  stage: notify
-  tags:
-    - npm
-  only:
-    - merge_requests
-  script:
-    - |
-      MR_URL="https://gitlab.wavemaker.com/${CI_PROJECT_PATH}/merge_requests/${CI_MERGE_REQUEST_IID}"
-      MESSAGE="Unit Test Cases  failed: on branch: $CI_COMMIT_REF_NAME. Merge Request: $MR_URL"
-      echo "User Email is $GITLAB_USER_EMAIL"
-      aws ses send-email \
-          --from devops-notifications@wavemaker.com \
-          --destination "ToAddresses=$GITLAB_USER_EMAIL" \
-          --message "Subject={Data=Unit Test Cases Pipeline Status},Body={Text={Data=$MESSAGE}}"
+ unit_tests:
+   stage: unit_tests
+   only:
+     - merge_requests
+   script:
+     - node --version
+     - npm --version
+     - rm -rf ../wavemaker-ui-variables ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-ui-variables.git ../wavemaker-ui-variables
+     - cd ../wavemaker-ui-variables ; npm install ; npm install --save-dev @types/babel__core @types/babel__generator @types/babel__template @types/babel__traverse @types/graceful-fs @types/istanbul-lib-coverage @types/istanbul-lib-report @types/istanbul-reports @types/stack-utils @types/yargs @types/yargs-parser
+     - npm i yalc -g
+     - npm run build 
+     - rm -rf ../custom-widgets-m3 ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/custom-widgets-m3.git ../custom-widgets-m3
+     - cd ../custom-widgets-m3 ; npm install ;
+     - npm run build 
+     - rmags:
+     - npm -rf ../wavemaker-foundation-css ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-foundation-css.git ../wavemaker-foundation-css
+     - cd ../wavemaker-foundation-css ; npm install ;
+     - npm run build
+     - cd ../wavemaker-ng-runtime
+     - npm install 
+     - yalc add @wavemaker/variables
+     - yalc add @wavemaker/custom-widgets-m3
+     - yalc add @wavemaker/foundation-css
+     - bash build.sh
+     - bash bundle-runtime-cli.sh
+     - echo "npm_test starting"
+     - npm run test 
+     - echo "npm_test finished $(date +%Y-%m-%d\ %H:%M:%S)"
+     - date
+   retry:
+         max: 2
+         when: stuck_or_timeout_failure
+ notify_job:
+   stage: notify
+   tags:
+     - npm
+    only:
+     - merge_requests
+   script:
+     - |
+       MR_URL="https://gitlab.wavemaker.com/${CI_PROJECT_PATH}/merge_requests/${CI_MERGE_REQUEST_IID}"
+       MESSAGE="Unit Test Cases  failed: on branch: $CI_COMMIT_REF_NAME. Merge Request: $MR_URL"
+       echo "User Email is $GITLAB_USER_EMAIL"
+       aws ses send-email \
+           --from devops-notifications@wavemaker.com \
+           --destination "ToAddresses=$GITLAB_USER_EMAIL" \
+           --message "Subject={Data=Unit Test Cases Pipeline Status},Body={Text={Data=$MESSAGE}}"
 
 
-  when: on_failure
-  dependencies:
-    - unit_tests
+   when: on_failure
+   dependencies:
+     - unit_tests
