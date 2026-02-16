@@ -1,5 +1,6 @@
 import {CommonModule} from '@angular/common';
 import {
+    AutoLayout,
     APPLY_STYLES_TYPE,
     configureDnD,
     DEBOUNCE_TIMES,
@@ -91,6 +92,7 @@ declare const $;
 const DEFAULT_CLS = 'app-livelist app-panel';
 const WIDGET_CONFIG = {widgetType: 'wm-list', hostClass: DEFAULT_CLS};
 
+@AutoLayout({ targetSelector: 'ul' })
 @Component({
   standalone: true,
   imports: [CommonModule, TextContentDirective, PaginationComponent, ListItemDirective],
@@ -769,7 +771,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         });
         this.setupHandlers();
         const $ul = this.nativeElement.querySelector('ul.app-livelist-container');
-        styler($ul as HTMLElement, this, APPLY_STYLES_TYPE.SCROLLABLE_CONTAINER);
+        styler($ul as HTMLElement, this, APPLY_STYLES_TYPE.CONTAINER);
         if (this.enablereorder) {
             if ($ul) {
                 $ul.setAttribute('aria-describedby', this.titleId);
@@ -1321,7 +1323,8 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             if (isMobile() && modalBody.length && listHt > modalHt) {
                 this.$element.css('height', modalHt + 'px');
             }
-            this.paginationService.bindScrollEvt(this, '> ul', DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
+            setTimeout(() => this.paginationService.bindScrollEvt(this, '> ul', DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME), 500);
+            // this.paginationService.bindScrollEvt(this, '> ul', DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
 
         }
 
