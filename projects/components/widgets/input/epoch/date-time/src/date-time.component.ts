@@ -125,7 +125,6 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
 
     private dateContainerCls: string;
 
-    // @ts-ignore
     get datavalue(): any {
         if (this.isCurrentDate && !this.proxyModel) {
             return CURRENT_DATE;
@@ -133,10 +132,9 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
         return getFormattedDate(this.datePipe, this.proxyModel, this.outputformat, this.timeZone, null, null, this);
     }
 
-    /**Todo[Shubham]: needs to be redefined
+    /** TODO: needs to be redefined
      * This property sets the default value for the date selection
      */
-    // @ts-ignore
     set datavalue(newVal: any) {
         if (newVal === CURRENT_DATE) {
             this.isCurrentDate = true;

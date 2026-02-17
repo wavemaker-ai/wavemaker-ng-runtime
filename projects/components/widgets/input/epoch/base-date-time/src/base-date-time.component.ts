@@ -777,8 +777,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         inputFields.first().on('keyup', evt => {
             const hourValue = (evt.target as any).value;
             forEach(inputFields, (field, index) => {
-                // @ts-ignore
-                if (evt.target !== field && field.value === '' && hourValue.length) {
+                if (evt.target !== field && (field as HTMLInputElement).value === '' && hourValue.length) {
                     const fieldName = index === 1 ? 'minutes' : 'seconds';
                     this.updateTimeValue($el, hourValue, fieldName);
                 }
@@ -1059,8 +1058,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
             if (this.excludedates) {
                 this.excludedDatesToDisable = this.excludedates;
                 if (isString(this.excludedates)) {
-                    // @ts-ignore
-                    this.excludedDatesToDisable = split(this.excludedates, ',');
+                    this.excludedDatesToDisable = split(this.excludedates, ',') as any;
                 }
                 this.excludedDatesToDisable = this.excludedDatesToDisable.map(d => getDateObj(d));
             }

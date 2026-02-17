@@ -88,9 +88,9 @@ import {
 
 const wmModules = [
     importProvidersFrom(
-        ModalModule.forRoot(),
+        ModalModule,
         ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true }),
-        BsDatepickerModule.forRoot(),
+        BsDatepickerModule,
         NgCircleProgressModule.forRoot()
     )
 ];
@@ -111,9 +111,7 @@ export const initializeProjectDetails = () => {
     _WM_APP_PROJECT.cdnUrl = cdnUrl || 'ng-bundle/';
     _WM_APP_PROJECT.ngDest = 'ng-bundle/';
     try {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        //@ts-ignore
-        __webpack_require__.p = __webpack_public_path__ = cdnUrl;
+        (globalThis as any).__webpack_require__.p = (globalThis as any).__webpack_public_path__ = cdnUrl;
     } catch (e) {
         //for app preview there is no webpack. Don't do anything.
     }

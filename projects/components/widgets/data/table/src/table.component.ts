@@ -2436,6 +2436,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             case 'height':
                 this.callDataGridMethod('setGridDimensions', 'height', nv);
                 break;
+            default:
+                break;
         }
 
         super.onStyleChange(key, nv, ov);

@@ -249,8 +249,7 @@ export class I18nServiceImpl extends AbstractI18nService {
 
         // check if the event is propagated from the select or any such widget
         if (isObject(locale)) {
-            // @ts-ignore
-            locale = locale.datavalue;
+            locale = (locale as any).datavalue;
         }
 
         const libLocale = getWmProjectProperties().supportedLanguages[locale];

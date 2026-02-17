@@ -113,16 +113,11 @@ export class WMDomRendererFactory2 implements RendererFactory2 {
         (<EmulatedEncapsulationDomRenderer2>renderer).applyToHost(element);
         return renderer;
       }
-      // @ts-ignore TODO: Remove as part of FW-2290. TS complains about us dealing with an enum
-      // value that is not known (but previously was the value for ViewEncapsulation.Native)
-      case 1:
+      case (1 as any):
       case ViewEncapsulation.ShadowDom:
         // TODO(FW-2290): remove the `case 1:` fallback logic and the warning in v12.
         if (NG_DEV_MODE &&
-            // @ts-ignore TODO: Remove as part of FW-2290. TS complains about us dealing with an
-            // enum value that is not known (but previously was the value for
-            // ViewEncapsulation.Native)
-            !hasLoggedNativeEncapsulationWarning && type.encapsulation === 1) {
+            !hasLoggedNativeEncapsulationWarning && (type.encapsulation as number) === 1) {
           hasLoggedNativeEncapsulationWarning = true;
           console.warn(
               'ViewEncapsulation.Native is no longer supported. Falling back to ViewEncapsulation.ShadowDom. The fallback will be removed in v12.');

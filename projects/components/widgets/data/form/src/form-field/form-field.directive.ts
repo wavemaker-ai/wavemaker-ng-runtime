@@ -392,6 +392,8 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
             case 'readonly':
                this.setReadOnlyState();
                 break;
+            default:
+                break;
         }
     }
 

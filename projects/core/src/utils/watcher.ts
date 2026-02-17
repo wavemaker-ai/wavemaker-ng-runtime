@@ -364,8 +364,7 @@ export const $unwatch = (identifier: string): boolean => {
         const propertyName = getPropertyName(identifier);
         const widgetGroup = registry.get(widgetId);
 
-        //@ts-ignore
-        if (widgetGroup && typeof widgetGroup === 'object' && !widgetGroup.fn) {
+        if (widgetGroup && typeof widgetGroup === 'object' && !(widgetGroup as any).fn) {
             const watchInfo = widgetGroup[propertyName];
             if (watchInfo) {
                 delete widgetGroup[propertyName];

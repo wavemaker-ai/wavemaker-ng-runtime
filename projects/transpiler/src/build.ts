@@ -387,8 +387,7 @@ export const processNode = (node, importCollector: (i: ImportDef[]) => void, pro
                             deferLoadContainer.attrs.push(showAttr);
                         }
                     }
-                    remove(child.attrs, function (attr) {
-                        // @ts-ignore
+                    remove(child.attrs, function (attr: any) {
                         return attr.name === 'showindevice' || attr.name === 'accessroles' || attr.name === 'deferload'
                     });
                     let childContainer, parentContainer;

@@ -165,6 +165,7 @@ describe('DateComponent', () => {
 
     /************************* Properties starts ****************************************** **/
 
+    // xit: BsDatepicker container does not render properly in JSDOM when triggered via button click.
     xit('should show the calendar panel on click the date button (show date picker on button click)', waitForAsync(() => {
         onClickCheckTaglengthOnBody(fixture, '.btn-time', 'bs-datepicker-container', 1);
     }));
@@ -181,11 +182,13 @@ describe('DateComponent', () => {
     //     hasAttributeCheck(fixture, '.app-dateinput', 'readonly');
     // });
 
+    // xit: Calendar panel does not open in JSDOM — week numbers cannot be verified.
     xit('should show the week numbers on the calendar pan ', waitForAsync(() => {
         onClickCheckClassEleLengthOnBody(fixture, '.btn-time', 'table.weeks', 1);
 
     }));
 
+    // xit: Calendar panel does not open in JSDOM — week numbers cannot be verified.
     xit('should not show the week numbers on the calendar pan ', waitForAsync(() => {
         wmComponent.getWidget().showweeks = false;
 
@@ -212,7 +215,7 @@ describe('DateComponent', () => {
     }));
 
 
-    xit('should set the current date as default value ', waitForAsync(() => {
+    it('should set the current date as default value ', waitForAsync(() => {
         const dateInputControl = getHtmlSelectorElement(fixture, '.app-dateinput');
         expect(dateInputControl.nativeElement.value).toEqual(currentDate);
     }));
@@ -241,7 +244,7 @@ describe('DateComponent', () => {
 
     }));
 
-    xit('should be autofocus the element ', waitForAsync(() => {
+    it('should be autofocus the element ', waitForAsync(() => {
         hasAttributeCheck(fixture, '.app-dateinput', 'autofocus');
 
     }));
@@ -254,13 +257,13 @@ describe('DateComponent', () => {
 
     // });
 
-    xit('should be disabled mode ', waitForAsync(() => {
+    it('should be disabled mode ', waitForAsync(() => {
         wmComponent.getWidget().disabled = true;
         fixture.detectChanges();
         hasAttributeCheck(fixture, '.app-dateinput', 'disabled');
 
     }));
-    xit('should be disabled mode (picker button)', waitForAsync(() => {
+    it('should be disabled mode (picker button)', waitForAsync(() => {
         wmComponent.getWidget().disabled = true;
         fixture.detectChanges();
         hasAttributeCheck(fixture, '.btn-time', 'disabled');
@@ -281,7 +284,7 @@ describe('DateComponent', () => {
 
     /************************* Validations starts****************************************** **/
 
-    xit('should be apply required validation ', waitForAsync(() => {
+    it('should be apply required validation ', waitForAsync(() => {
         hasAttributeCheck(fixture, '.app-dateinput', 'required');
 
     }));
@@ -325,6 +328,7 @@ describe('DateComponent', () => {
         });
     });
 
+    // xit: Excluded date validation does not trigger ng-invalid class in this test setup.
     xit('should ignore the  excluded date', waitForAsync(() => {
         dateWrapperComponent.wmComponent.getWidget().excludedates = '2020-01-01';
         dateWrapperComponent.wmComponent.getWidget().datavalue = '2020-01-01';
@@ -353,6 +357,7 @@ describe('DateComponent', () => {
 
     /************************ Scenarios starts **************************************** */
 
+    // xit: Requires interacting with calendar panel DOM which is not rendered in JSDOM.
     xit('should close the caledar as soon as select the date and should select the date', waitForAsync(() => {
         onClickCheckTaglengthOnBody(fixture, '.btn-time', 'bs-datepicker-container', 1, (el) => {
             const datePickerRows = el[0].querySelectorAll('tbody tr');

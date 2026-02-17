@@ -26,7 +26,7 @@ export class LoginAction extends BaseAction {
     }
 
     cancel() {
-        // TODO[VIBHU]: implement http abort logic
+        // TODO: implement http abort logic
     }
 
     init() {

@@ -246,6 +246,8 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
             case 'delete':
                 this.table.onRecordDelete();
                 break;
+            default:
+                break;
         }
         this.table.updateVariable();
         if (this.isLayoutDialog) {

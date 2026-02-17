@@ -221,7 +221,7 @@ export class AppManagerService implements OnDestroy {
     /**
      * Overriding the app variable supported locale with the wmProperties i18n DataValues
      *
-     * TODO[Vibhu]:
+     * TODO:
      * Can write a simple migration to sync the supportedLocale variable with '_WM_APP_PROPERTIES.supportedLanguages'
      * Hence, this may not be required
      *
@@ -519,8 +519,7 @@ export class AppManagerService implements OnDestroy {
                 return;
             }
 
-            // @ts-ignore
-            const key = msgData.key;
+            const key = (msgData as any).key;
 
             switch (key) {
                 case POST_MESSAGES.HIDE_TEMPLATES_SHOW_CASE:

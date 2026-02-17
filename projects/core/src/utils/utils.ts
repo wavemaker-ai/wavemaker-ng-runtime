@@ -833,8 +833,7 @@ export const isEqualWithFields = (obj1, obj2, compareBy) => {
     // Split the compareby comma separated values
     let _compareBy = isArray(compareBy) ? compareBy : split(compareBy, ',');
 
-    //@ts-ignore
-    _compareBy = map(_compareBy, trim);
+    _compareBy = map(_compareBy, (s: string) => trim(s));
 
     return isEqualWith(obj1, obj2, function (o1, o2) {
         return every(_compareBy, function (cb) {

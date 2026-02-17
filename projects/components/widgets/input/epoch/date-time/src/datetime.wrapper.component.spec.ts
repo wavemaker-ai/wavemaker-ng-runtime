@@ -229,7 +229,7 @@ describe("DatetimeComponent", () => {
         tick();  // Allow time for the whenStable promise to resolve
     }));
 
-    xit('should be disabled mode', waitForAsync(() => {
+    it('should be disabled mode', waitForAsync(() => {
         (wmComponent as any).getWidget().disabled = true;
         fixture.detectChanges();
 
@@ -239,6 +239,10 @@ describe("DatetimeComponent", () => {
         });
     }));
 
+    // xit: Fails due to async assertion leaking from prior datepatternTest through shared fixture
+    // (teardown: { destroyAfterEach: false }). The hasAttributeCheck resolves a stale whenStable promise.
+    // xit: Fails due to async assertion leaking from prior datepatternTest through shared fixture
+    // (teardown: { destroyAfterEach: false }). The hasAttributeCheck resolves a stale whenStable promise.
     xit('should be disabled mode (picker button)', waitForAsync(() => {
         (wmComponent as any).getWidget().disabled = true;
         fixture.detectChanges();
@@ -269,14 +273,14 @@ describe("DatetimeComponent", () => {
 
     /************************* Validation starts ****************************************** **/
 
-    xit('should be required validation ', waitForAsync(() => {
+    it('should be required validation ', waitForAsync(() => {
         fixture.whenStable().then(() => {
             let dateInputControl = getHtmlSelectorElement(fixture, '.app-textbox');
             expect(dateInputControl.nativeElement.hasAttribute('required')).toBe(true);
         });
     }));
 
-    xit('should respect the mindate validation', waitForAsync(() => {
+    it('should respect the mindate validation', waitForAsync(() => {
         (wmComponent as any).getWidget().datavalue = getFormatedDate('2019-11-01');
 
         checkElementClass(fixture, '.app-datetime', 'ng-invalid');
@@ -284,7 +288,7 @@ describe("DatetimeComponent", () => {
     }));
 
 
-    xit('should ignore the  excluded days', waitForAsync(() => {
+    it('should ignore the  excluded days', waitForAsync(() => {
         (wmComponent as any).getWidget().excludedays = '1,6';
         (wmComponent as any).getWidget().datavalue = getFormatedDate('2019-12-30');
         checkElementClass(fixture, '.app-datetime', 'ng-invalid');
@@ -301,8 +305,8 @@ describe("DatetimeComponent", () => {
     /************************ Scenarios starts **************************************** */
 
 
-    // TypeError: Cannot read properties of undefined (reading 'querySelectorAll')
-    xit('should toggle the AM/PM', waitForAsync(() => {
+    // xit: Async leaking from datepatternTest due to shared fixture (teardown: destroyAfterEach: false).
+    it('should toggle the AM/PM', waitForAsync(() => {
         (wmComponent as any).getWidget().datepattern = 'MMM d, yyyy h:mm:ss a';
 
         fixture.whenStable().then(() => {

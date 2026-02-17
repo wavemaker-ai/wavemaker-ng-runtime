@@ -101,7 +101,7 @@ export class NavigationServiceImpl implements AbstractNavigationService {
         }
     }
 
-    /** Todo[Shubham] Need to handle gotoElement in other partials
+    /** TODO: Need to handle gotoElement in other partials
      * Navigates to particular view
      * @param viewName
      * @param options
@@ -126,7 +126,7 @@ export class NavigationServiceImpl implements AbstractNavigationService {
                 if (this.isPartialWithNameExists(pageName)) {
                     this.goToElementView($('[partialcontainer][content="' + pageName + '"]').find('[name="' + viewName + '"]'), viewName, pageName, variable);
                 } else {
-                    // Todo[Shubham]: Make an API call to get all pages and check if the page name
+                    // TODO: Make an API call to get all pages and check if the page name
                     //  is a page and then do this call else show an error as:
                     //  this.app.notifyApp(CONSTANTS.WIDGET_DOESNT_EXIST, 'error');
                     this.goToPage(pageName, {

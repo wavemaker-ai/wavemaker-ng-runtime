@@ -51,13 +51,11 @@ export abstract class NumberLocale extends BaseInput implements Validator {
     }
 
     // Setter for the datavalue.
-    // @ts-ignore
-    set datavalue(value: number) {
+    set datavalue(value: any) {
         this.lastValIsDecimal = false;
 
         // set text value to null if data value is empty.
-        // @ts-ignore
-        if (includes([null, undefined, ''], value)) {
+        if (includes([null, undefined, ''] as any[], value)) {
             const input = this.inputEl.nativeElement;
             const prevDataValue =  (this as any).prevDatavalue;
             this.displayValue = input.value = this.proxyModel = null;

@@ -79,7 +79,7 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
         return getFormattedDate(this.datePipe, this.bsTimeValue, this.outputformat, this.timeZone, null, null, this) || '';
     }
 
-    /**Todo[Shubham]: needs to be redefined
+    /** TODO: needs to be redefined
      * This property sets the default value for the time selection
      */
     // @ts-ignore

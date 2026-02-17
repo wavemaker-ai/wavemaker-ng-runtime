@@ -190,7 +190,7 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
             try {
                 this.nativeElement.removeEventListener('mouseenter', this.boundMouseEnterHandler);
             } catch (e) {
-                // Silently handle cleanup errors
+                console.debug('List item error', e);
             }
             this.boundMouseEnterHandler = null;
         }
@@ -198,7 +198,7 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
             try {
                 this.nativeElement.removeEventListener('mouseleave', this.boundMouseLeaveHandler);
             } catch (e) {
-                // Silently handle cleanup errors
+                console.debug('List item error', e);
             }
             this.boundMouseLeaveHandler = null;
         }
@@ -209,7 +209,7 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
                 try {
                     $editItem.removeEventListener('click', this.boundEditHandler);
                 } catch (e) {
-                    // Silently handle cleanup errors
+                    console.debug('List item error', e);
                 }
                 this.boundEditHandler = null;
             }
@@ -219,7 +219,7 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
                 try {
                     $deleteItem.removeEventListener('click', this.boundDeleteHandler);
                 } catch (e) {
-                    // Silently handle cleanup errors
+                    console.debug('List item error', e);
                 }
                 this.boundDeleteHandler = null;
             }
@@ -246,7 +246,7 @@ export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
                     this.destroy.complete();
                 }
             } catch (e) {
-                // Silently handle cleanup errors
+                console.debug('List item error', e);
             }
             this.destroy = null;
         }

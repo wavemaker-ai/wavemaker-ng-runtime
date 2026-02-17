@@ -818,7 +818,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             try {
                 ulElement.removeEventListener('click', this.boundClickHandler, true);
             } catch (e) {
-                // Silently handle cleanup errors
+                console.debug('List error', e);
             }
             this.boundClickHandler = null;
         }
@@ -828,7 +828,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             try {
                 this.$ulEle.sortable('destroy');
             } catch (e) {
-                // Ignore errors during destroy
+                console.debug('List error', e);
             }
             this.$ulEle = null;
         }
@@ -1002,6 +1002,8 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 break;
             case NAVIGATION_TYPE.ONDEMAND:
                 this.enableOnDemandLoad();
+                break;
+            default:
                 break;
         }
     }

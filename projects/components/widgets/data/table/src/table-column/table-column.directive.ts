@@ -822,21 +822,21 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             try {
                 this._filterInstances.reset([]);
             } catch (e) {
-                // Silently handle cleanup errors - QueryList might already be destroyed
+                console.debug('Column data format error', e);
             }
         }
         if (this._inlineInstances) {
             try {
                 this._inlineInstances.reset([]);
             } catch (e) {
-                // Silently handle cleanup errors - QueryList might already be destroyed
+                console.debug('Column data format error', e);
             }
         }
         if (this._inlineInstancesNew) {
             try {
                 this._inlineInstancesNew.reset([]);
             } catch (e) {
-                // Silently handle cleanup errors - QueryList might already be destroyed
+                console.debug('Column data format error', e);
             }
         }
 
@@ -861,7 +861,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             try {
                 this.fieldValidations.destroy();
             } catch (e) {
-                // Silently handle cleanup errors
+                console.debug('Column data format error', e);
             }
             this.fieldValidations = null;
         }
@@ -869,7 +869,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             try {
                 this.fieldValidations_new.destroy();
             } catch (e) {
-                // Silently handle cleanup errors
+                console.debug('Column data format error', e);
             }
             this.fieldValidations_new = null;
         }

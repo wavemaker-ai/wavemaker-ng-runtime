@@ -45,7 +45,7 @@ const hidePageContainers = (leftNavEle: HTMLElement, searchEle?: HTMLElement) =>
             try {
                 (leftNavEle as any).widget.collapse();
             } catch (e) {
-                //
+                console.warn('deviceview detection failed', e);
             }
         }
         if (searchEle) {

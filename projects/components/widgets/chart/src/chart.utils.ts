@@ -188,6 +188,8 @@ export const getLabelValues = (showlabels, showlabelsoutside, prop) => {
             labelsConfig.showlabels = true;
             labelsConfig.showlabelsoutside = true;
             break;
+        default:
+            break;
     }
     return labelsConfig;
 };
@@ -345,6 +347,8 @@ export const constructSampleData = (dataType, yaxisLength, shape) => {
                 {'x': SAMPLE_DATA.group3, 'y': 3000000},
                 {'x': SAMPLE_DATA.group4, 'y': 4000000}
             ];
+            break;
+        default:
             break;
     }
     return data;
@@ -653,6 +657,8 @@ export const initChart = (widgetContext, xDomainValues, yDomainValues, propertyV
                 .showDistX(propertyValueMap.showxdistance)
                 .showDistY(propertyValueMap.showydistance);
             break;
+        default:
+            break;
     }
 
     if (xDomainValues) {
@@ -786,8 +792,7 @@ export const initChart = (widgetContext, xDomainValues, yDomainValues, propertyV
     return chart;
 };
 
-// @ts-ignore
-export const postPlotChartProcess = (widgetContext, isPreview?) => {
+export const postPlotChartProcess = (widgetContext: any, isPreview?: boolean) => {
     const id = isPreview ? null : widgetContext.$id;
     // If user sets to highlight the data points and increase the thickness of the line
     if (isLineTypeChart(widgetContext.type)) {
@@ -800,6 +805,5 @@ export const postPlotChartProcess = (widgetContext, isPreview?) => {
     // }
 };
 
-// @ts-ignore
-export const getDateList = () => dateList;
+export const getDateList = (): string[] => dateList;
 

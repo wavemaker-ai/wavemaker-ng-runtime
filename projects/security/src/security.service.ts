@@ -11,7 +11,7 @@ import {
 } from '@wm/core';
 import {each, forEach, get, isEmpty, join, set} from "lodash-es";
 declare const _WM_APP_PROPERTIES;
-// Todo[Shubham]: Move below constants to a common file
+// TODO: Move below constants to a common file
 const XSRF_COOKIE_NAME = 'wm_xsrf_token',
     isApplicationType = true;
 

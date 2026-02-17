@@ -164,24 +164,23 @@ describe('PopoverComponent', () => {
 
     /************************* icon properties starts ****************************************** **/
 
-    // TypeError: Cannot read properties of undefined (reading 'match')
+    // xit: PopoverComponent renders icons via AnchorComponent, but the anchor sub-component
+    // does not render icon DOM elements (app-icon / anchor-image-icon) in the JSDOM test
+    // environment when iconclass/iconurl properties are set programmatically after init.
     xit('icon class should be applied', () => {
         wmComponent.iconclass = "wi wi-star-border";
         fixture.detectChanges();
         expect(document.getElementsByClassName('app-icon').length).toBe(1);
     })
 
-    // TypeError: Cannot read properties of undefined (reading 'match')
-
-
-    //TypeError: Cannot read properties of undefined (reading 'match')
+    // xit: Same issue — anchor-image-icon element is not rendered in JSDOM.
     xit('icon url should should show the image', () => {
         wmComponent.iconurl = "https://therightsofnature.org/wp-content/uploads/2018/01/turkey-3048299_1920-1366x550.jpg";
         fixture.detectChanges();
         expect(document.getElementsByClassName('anchor-image-icon').length).toBe(1);
     })
 
-    //TypeError: Cannot read properties of undefined (reading 'match')
+    // xit: app-icon element not rendered in JSDOM — cannot access style properties.
     xit('icon width , height and margin with icon class should be applied', () => {
         wmComponent.iconclass = "wi wi-star-border";
         wmComponent.iconwidth = "60px";
@@ -193,6 +192,7 @@ describe('PopoverComponent', () => {
         expect(document.getElementsByClassName('app-icon')[0]['style']['margin']).toBe('4px');
     })
 
+    // xit: anchor-image-icon element not rendered in JSDOM — cannot access style properties.
     xit('icon width and height with url should be applied', () => {
         wmComponent.iconurl = "https://therightsofnature.org/wp-content/uploads/2018/01/turkey-3048299_1920-1366x550.jpg";
         wmComponent.iconwidth = "60px";
