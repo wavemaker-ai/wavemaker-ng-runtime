@@ -3,6 +3,7 @@ import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashL
 import {
     HTTP_INTERCEPTORS,
     provideHttpClient,
+    withFetch,
     withInterceptorsFromDi,
     withXsrfConfiguration
 } from "@angular/common/http";
@@ -141,6 +142,7 @@ export const appConfig: ApplicationConfig = {
         provideRouter(routes, withHashLocation(), withComponentInputBinding()),
         provideAnimations(),
         provideHttpClient(
+            withFetch(),
             withInterceptorsFromDi(),
             withXsrfConfiguration({
                 cookieName: "wm_xsrf_token",
