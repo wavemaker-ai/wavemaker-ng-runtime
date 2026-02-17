@@ -22,6 +22,7 @@ import {
     noop,
     registerFnByExpr,
     ScriptLoaderService,
+    SignalProxy,
     unMuteWatchers,
     UtilsService,
     Viewport
@@ -106,11 +107,13 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
     }
 
     registerWidgets() {
+        const widgetsProxy = new SignalProxy(Object.create(commonPartialWidgets));
+
         // common partial widgets should be accessible from page
-        this.Widgets = Object.create(commonPartialWidgets);
+        this.Widgets = widgetsProxy.getProxy();
 
         // expose current page widgets on app
-        (this.App as any).Widgets = Object.create(this.Widgets);
+        (this.App as any).Widgets = Object.create(widgetsProxy.getProxy());
     }
 
     initUserScript() {
@@ -145,8 +148,15 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         this.Actions = Object.create(this.App.Actions);
 
         // assign all the page variables to the pageInstance
-        Object.entries(variableCollection.Variables).forEach(([name, variable]) => this.Variables[name] = variable);
+        Object.entries(variableCollection.Variables).forEach(([name, variable]: [string, object]) => {
+            const variableProxy = new SignalProxy(variable);
+            this.Variables[name] = variableProxy.getProxy();
+            }
+        );
         Object.entries(variableCollection.Actions).forEach(([name, action]) => this.Actions[name] = action);
+
+        // const variablesProxy = new SignalProxy(this.Variables);
+        // this.Variables = variablesProxy.getProxy();
 
 
 

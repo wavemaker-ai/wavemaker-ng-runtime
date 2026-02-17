@@ -172,3 +172,5 @@ export { StatePersistence } from './services/state-persistence.service';
 export { PaginationService } from './services/pagination.service';
 export * from './utils/wm-project-properties';
 export * from './utils/lru-cache';
+export * from './signals/signal-proxy';
+export * from './signals/signal-expression-compiler';

@@ -787,7 +787,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             this._listAnimator.$btnSubscription.unsubscribe();
             this._listAnimator = null;
         }
-        
+
         // MEMORY LEAK FIX: Unsubscribe from all app subscriptions
         if (this._listenerDestroyers) {
             this._listenerDestroyers.forEach(d => d && d());
@@ -1029,6 +1029,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         }
         $appDigest();
         this.listItems.setDirty();
+        console.log('fieldDefs', this.fieldDefs);
     }
 
     private onDataChange(newVal) {

@@ -31,6 +31,7 @@ import {
     setAttr,
     setCSS,
     setCSSFromObj,
+    SignalExpressionCompiler,
     switchClass
 } from '@wm/core';
 
@@ -203,6 +204,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     public trackId: string;
 
     customWidgetSubType: string;
+    private signalCompiler = inject(SignalExpressionCompiler);
 
     protected constructor(
         protected inj: Injector,
@@ -600,14 +602,33 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
             isMuted     = child ? child.widget.isMuted : this.isMuted,
             widgetProps = child ? child.widget.widgetProps : this.widgetProps,
             widgetId    = child ? child.widget.widgetId : this.widgetId;
-        
+
         // OPTIMIZATION: Apply throttling for non-critical properties
         const watchConfig: any = widgetProps.get(propName) || {};
         const throttledProps = ['class', 'style', 'ngclass', 'ngstyle'];
         if (throttledProps.includes(propName.toLowerCase())) {
             watchConfig.throttle = 100; // Throttle to 100ms for style/class properties
         }
-        
+
+        if (watchConfig.useSignal) {
+            const cleanup = this.signalCompiler.createBinding(
+                getWatchIdentifier(widgetId, propName),
+                expr,
+                viewParent,
+                context,
+                nv => {
+                    if (propName.startsWith('base-') && widget.updateData) {
+                        widget.updateData(propName, nv);
+                    }
+                    widget[propName] = nv;
+                }
+            );
+
+            // Register cleanup on component destroy
+            this.registerDestroyListener(cleanup);
+            return;
+        }
+
         this.registerDestroyListener(
             $watch(
                 expr,
@@ -898,13 +919,13 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         this.propertyChange.complete();
         this.destroy.complete();
         this.isAttached = false;
-        
+
         // MEMORY LEAK FIX: Unwatch all watchers for this widget
         // This ensures all watchers registered for this component are cleaned up
         if (this.widgetId) {
             $unwatchAll(this.widgetId);
         }
-        
+
         // MEMORY LEAK FIX: Clear context to release references to parent scope data
         // The context object holds references to repeater items, wizard steps, etc.
         // which can retain large amounts of data even after component destruction
