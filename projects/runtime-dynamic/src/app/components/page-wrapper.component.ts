@@ -68,12 +68,21 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
                 }
 
                 try {
-                    // Create component with both environmentInjector (for standalone imports/providers)
-                    // and injector (for element-level dependencies)
+                    // Create a child injector that explicitly provides the route-specific
+                    // ActivatedRoute from PageWrapperComponent. This ensures dynamically
+                    // created page components get the correct ActivatedRoute with proper
+                    // queryParams, rather than a root-level ActivatedRoute.
+                    const childInjector = Injector.create({
+                        providers: [
+                            { provide: ActivatedRoute, useValue: this.route }
+                        ],
+                        parent: this.injector
+                    });
+
                     const componentRef = this.vcRef.createComponent(PageComponentClass, {
                         index: 0,
                         environmentInjector: this.envInjector,
-                        injector: this.injector
+                        injector: childInjector
                     });
                     
                     this.instance = componentRef.instance;

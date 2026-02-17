@@ -4,12 +4,9 @@ import {
     HTTP_INTERCEPTORS,
     provideHttpClient,
     withInterceptorsFromDi,
-    withXsrfConfiguration,
-    withFetch
+    withXsrfConfiguration
 } from "@angular/common/http";
 import { provideAnimations } from "@angular/platform-browser/animations";
-import { XhrFactory } from "@angular/common";
-import { InjectionToken } from "@angular/core";
 import { routes } from "./app.routes";
 import { HttpServiceImpl } from "@wm/http";
 import { SecurityService } from "@wm/security";
@@ -88,19 +85,6 @@ import {
 } from "@wm/components/base";
 
 
-// XhrFactory implementation for Angular 20
-class BrowserXhrFactory extends XhrFactory {
-    build(): XMLHttpRequest {
-        return new XMLHttpRequest();
-    }
-}
-
-// Create the internal injection token that HttpXhrBackend actually uses
-const XHR_FACTORY_TOKEN = new InjectionToken<XhrFactory>('XhrFactory', {
-    providedIn: 'root',
-    factory: () => new BrowserXhrFactory()
-});
-
 const wmModules = [
     importProvidersFrom(
         ModalModule.forRoot(),
@@ -156,17 +140,12 @@ export const appConfig: ApplicationConfig = {
         // Provide Angular core services FIRST
         provideRouter(routes, withHashLocation(), withComponentInputBinding()),
         provideAnimations(),
-        // Provide XhrFactory using both the class token and our custom token
-        { provide: XhrFactory, useClass: BrowserXhrFactory },
-        { provide: XHR_FACTORY_TOKEN, useClass: BrowserXhrFactory },
-        
         provideHttpClient(
+            withInterceptorsFromDi(),
             withXsrfConfiguration({
                 cookieName: "wm_xsrf_token",
                 headerName: xsrfHeaderName
-            }),
-            withInterceptorsFromDi(),
-            withFetch()
+            })
         ),
         
         // Custom renderer overrides (must be early)
