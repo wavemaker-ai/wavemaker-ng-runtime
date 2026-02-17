@@ -8,7 +8,7 @@ if (processArgs.findIndex(arg => arg.startsWith('--max-old-space-size')) !== -1)
 }
 
 // Patch ngx-bootstrap ESM files in node_modules before Angular build
-const patchScript = path.resolve(process.cwd(), 'build-scripts', 'ngx-bootstrap-patch.mjs');
+const patchScript = path.resolve(process.cwd(), 'config', 'ngx-bootstrap-patch.mjs');
 console.log("\x1b[36m", "Patching ngx-bootstrap ESM files...\x1b[0m");
 const patchProcess = spawnSync('node', [patchScript], { stdio: 'inherit' });
 
