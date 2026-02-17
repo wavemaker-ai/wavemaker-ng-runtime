@@ -101,38 +101,24 @@ describe("PanelComponent", () => {
         expect(panelWrapperComponent).toBeTruthy();
     });
 
-    xit("should trigger the panel action item click callback", async () => {
-        // Get the necessary elements
-        dropdownToggleEle = getdropdownToggleEle();
-        let wmMenuEle = getwmMenuEle();
-        let wmMenuComponentInstance: MenuComponent = wmMenuEle.componentInstance;
-        wmMenuComponentInstance.getWidget().dataset = panelWrapperComponent.testData;
+    it("should trigger the panel action item click callback via menuActionItemClick", () => {
+        const mockEvent = new MouseEvent('click');
+        const mockItem = {
+            label: 'Option1',
+            value: 'Option1',
+            children: [],
+        };
 
-        // Click the dropdown toggle element
-        dropdownToggleEle.nativeElement.click();
-
-        // Wait for the fixture to stabilize
-        await fixture.whenStable();
-
-        // Get the menu dropdown element and spy on the callback
-        let menudropdownEle = getMenudropdownEle();
         jest.spyOn(panelWrapperComponent, 'panel1Actionsclick');
+        jest.spyOn(wmComponent, 'invokeEventCallback');
 
-        // Trigger change detection
-        fixture.detectChanges();
-        await fixture.whenStable();
+        (wmComponent as any).menuActionItemClick(mockEvent, mockItem);
 
-        // Get the list item elements and click the first one
-        let liElements = menudropdownEle.query(By.css('li.app-menu-item'));
-        liElements.nativeElement.click();
-
-        // Trigger change detection again and wait for stabilization
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        // Assert that the callback was called
-        expect(panelWrapperComponent.panel1Actionsclick).toHaveBeenCalledTimes(1);
-    }, 10000); // Increase the timeout if necessary
+        expect(wmComponent.invokeEventCallback).toHaveBeenCalledWith('actionsclick', {
+            $event: mockEvent,
+            $item: expect.objectContaining({ label: 'Option1' })
+        });
+    });
 
     it('should expand the panel on click the expand icon', async () => {
         // Get the panel header element

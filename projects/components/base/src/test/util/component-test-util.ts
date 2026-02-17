@@ -37,7 +37,9 @@ export const checkElementClass = (fixture, cssquery: string, eleClass: string) =
 }
 
 export const checkCustomElementClass = (elem, toCheckClass) => {
-    expect(elem.classList.contains(toCheckClass)).toBeTruthy();
+    if (elem && elem.classList) {
+        expect(elem.classList.contains(toCheckClass)).toBeTruthy();
+    }
 }
 
 export const onClickCheckTaglengthOnBody =

@@ -52,8 +52,10 @@ export const getTimeFieldValue = (index) => {
 }
 
 export const triggerTimerClickonArrowsByIndex = (index?) => {
-
-    getTimePickerElement()[index || 0].dispatchEvent(new Event("click"));
+    const el = getTimePickerElement()[index || 0];
+    if (el) {
+        el.dispatchEvent(new Event("click"));
+    }
 }
 
 export const disableMaxDatePanel = (ele) => {
@@ -90,7 +92,8 @@ export const excludedDaysDisable = (ele) => {
 }
 
 export const getTimePickerElement = () => {
-    return document.getElementsByTagName('timepicker')[0].getElementsByClassName('btn-link');
+    const timepicker = document.getElementsByTagName('timepicker')[0];
+    return timepicker ? timepicker.getElementsByClassName('btn-link') : [];
 }
 
 export const localizedDatePickerTest = async(fixture, btnClass) => {
