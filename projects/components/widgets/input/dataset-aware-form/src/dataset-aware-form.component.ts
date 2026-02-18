@@ -64,13 +64,11 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
         this.invokeOnChange(this._modelByValue);
     }
 
-    // @ts-ignore
     public get datavalue() {
         return this._modelByValue;
     }
 
     // triggers on setting the datavalue. This function extracts the model value.
-    // @ts-ignore
     public set datavalue(val: any) {
         if (this.multiple) {
             val = extractDataAsArray(val);

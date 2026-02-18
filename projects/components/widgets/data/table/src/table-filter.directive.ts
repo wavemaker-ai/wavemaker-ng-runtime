@@ -32,6 +32,7 @@ import {
     isEqual,
     isNull,
     isObject,
+    noop,
     orderBy,
     range,
     split,
@@ -85,8 +86,7 @@ const getFilteredData = (data, searchObj, visibleCols = []) => {
                     // Find all the indexes of the key in visiblecols and extract their values from obj
                     const colIndex = filter(range(visibleCols.length), (i) => visibleCols[i].includes(key));
                     forEach(colIndex, (index) => {
-                        // @ts-ignore
-                        const value = get(obj, visibleCols[index]);
+                        const value = get(obj, visibleCols[index as number] as string);
                         if (currentVal.indexOf(value) < 0) {
                             currentVal.push(value);
                         }
@@ -482,7 +482,7 @@ export class TableFilterSortDirective implements OnDestroy {
             $appDigest();
         }, () => {
             this.table.toggleMessage(true, 'error', this.table.nodatamessage);
-        });
+        }).catch(noop);
     }
 
     // This method handles the sort for server side variables
@@ -573,8 +573,7 @@ export class TableFilterSortDirective implements OnDestroy {
         } else {
             // Transform back the filter fields from object to array
             forEach(userFilters, (val, key) => {
-                // @ts-ignore
-                filterFields.push({field: key, matchMode: val.matchMode, type: val.type, value: val.value});
+                filterFields.push({field: key as string, matchMode: (val as any).matchMode, type: (val as any).type, value: (val as any).value});
             });
         }
         if (dataSource && dataSource.execute(DataSource.Operation.SUPPORTS_SERVER_FILTER)) {
@@ -699,7 +698,7 @@ export class TableFilterSortDirective implements OnDestroy {
                     'filterFields'   : filterFields
                 }).then(data => {
                     filterField.filterdataset = data.data;
-                });
+                }).catch(noop);
             }
         });
     }

@@ -83,6 +83,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     private _isFirstLoad: boolean = true;
     public autoActivation:boolean;
     private stepsSubscription: any; // MEMORY LEAK FIX: Store subscription for cleanup
+    private _pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
 
     get hasPrevStep(): boolean {
         return !this._isFirstStep(this.currentStep);
@@ -175,7 +176,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
                 if (!isStepAlreadyExist) {
                     this.steps.reset([...this.steps.toArray(), newStepRef]);
                     if (newStepRef.active) {
-                        setTimeout(() => {
+                        this.scheduleTimeout(() => {
                             newStepRef.select();
                         }, 20);
                     }
@@ -546,7 +547,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         this.invokeEventCallback('cancel', {steps: this.steps.toArray()});
     }
     public addMoreText(){
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
 
 
         var newWindowWidth = $(window).width();
@@ -596,7 +597,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     }
 
     private updateStepFocus() {
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             const currentStepElement = this.nativeElement.querySelector(".app-wizard-heading li.current a") as HTMLElement;
             currentStepElement?.focus();
         });
@@ -716,7 +717,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             this,
             APPLY_STYLES_TYPE.INNER_SHELL
         );
-        setTimeout(() => { if($(window).width()<768) {
+        this.scheduleTimeout(() => { if($(window).width()<768) {
             $(".app-wizard").removeClass("vertical");
         }
         });
@@ -746,7 +747,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             case ' ':
             case 'Spacebar':
                 event.preventDefault();
-                setTimeout(() => {
+                this.scheduleTimeout(() => {
                     const activeElement  = this.nativeElement.querySelector('li.current');
                     const stepLi = activeElement.closest('li[data-stepid]');
                     const isInWizardHeader = activeElement.closest('.app-wizard-heading');
@@ -795,7 +796,18 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         return index >= 0 ? index : this.getActiveStepIndex();
     }
 
+    private scheduleTimeout(fn: () => void, delay?: number): ReturnType<typeof setTimeout> {
+        const id = setTimeout(() => {
+            this._pendingTimeouts = this._pendingTimeouts.filter(t => t !== id);
+            fn();
+        }, delay);
+        this._pendingTimeouts.push(id);
+        return id;
+    }
+
     ngOnDestroy() {
+        this._pendingTimeouts.forEach(id => clearTimeout(id));
+
         // MEMORY LEAK FIX: Unsubscribe from steps changes
         if (this.stepsSubscription) {
             this.stepsSubscription.unsubscribe();

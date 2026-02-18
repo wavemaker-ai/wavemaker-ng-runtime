@@ -113,11 +113,19 @@ export class WMDomRendererFactory2 implements RendererFactory2 {
         (<EmulatedEncapsulationDomRenderer2>renderer).applyToHost(element);
         return renderer;
       }
+<<<<<<< Updated upstream
       case (1 as any):
       case ViewEncapsulation.ShadowDom:
         // TODO(FW-2290): remove the `case 1:` fallback logic and the warning in v12.
         if (NG_DEV_MODE &&
             !hasLoggedNativeEncapsulationWarning && (type.encapsulation as number) === 1) {
+=======
+      case 1 as any:
+      case ViewEncapsulation.ShadowDom:
+        // TODO(FW-2290): remove the `case 1:` fallback logic and the warning in v12.
+        if (NG_DEV_MODE &&
+            !hasLoggedNativeEncapsulationWarning && (type.encapsulation as any) === 1) {
+>>>>>>> Stashed changes
           hasLoggedNativeEncapsulationWarning = true;
           console.warn(
               'ViewEncapsulation.Native is no longer supported. Falling back to ViewEncapsulation.ShadowDom. The fallback will be removed in v12.');

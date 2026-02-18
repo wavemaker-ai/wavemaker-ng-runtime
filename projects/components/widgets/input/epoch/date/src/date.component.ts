@@ -201,14 +201,16 @@ export class DateComponent extends BaseDateTimeComponent {
 
         if (this.timeZone) {
             const todayBtn = document.querySelector(`.${this.dateContainerCls} .bs-datepicker-buttons .btn-today-wrapper button`) as HTMLElement;
-            const setTodayTZHandler = (event) => {
-                const todayTZ = getMomentLocaleObject(this.timeZone);
-                if (new Date(this.bsDataValue).toDateString() !== new Date(todayTZ).toDateString()) {
-                    this.bsDataValue = todayTZ;
-                }
-                todayBtn.removeEventListener('click', setTodayTZHandler);
-            };
-            todayBtn.addEventListener('click', setTodayTZHandler)
+            if (todayBtn) {
+                const setTodayTZHandler = (event) => {
+                    const todayTZ = getMomentLocaleObject(this.timeZone);
+                    if (new Date(this.bsDataValue).toDateString() !== new Date(todayTZ).toDateString()) {
+                        this.bsDataValue = todayTZ;
+                    }
+                    todayBtn.removeEventListener('click', setTodayTZHandler);
+                };
+                todayBtn.addEventListener('click', setTodayTZHandler)
+            }
         }
     }
     onInputBlur($event) {

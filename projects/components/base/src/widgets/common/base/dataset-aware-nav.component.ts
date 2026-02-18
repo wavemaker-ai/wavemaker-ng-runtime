@@ -130,8 +130,7 @@ export abstract class DatasetAwareNavComponent extends StylableComponent impleme
             // older projects have display field & data field property for menu.
             value: this.datafield ? (this.datafield === 'All Fields' ? node : findValueOf(node, this.datafield)) : node
         };
-        // @ts-ignore
-        return omitBy(navNode, isUndefined);
+        return omitBy(navNode, isUndefined) as any;
     }
 
     resetItemFieldMap() {

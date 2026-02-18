@@ -82,6 +82,7 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
     public autoActivation:boolean;
     private panesChangesSubscription: any;
     private dynamicComponentRefs: any[] = [];
+    private _pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
 
     @HostBinding('attr.icon-position') iconposition: string = '';
 
@@ -120,12 +121,14 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
 
         const ul = this.nativeElement.querySelector('ul.nav.nav-tabs');
 
-        // move the tabheader into the viewport
-        const $prevHeaderEle = tabHeader.prev();
-        if ($prevHeaderEle.length) {
-            ul.scrollLeft = $prevHeaderEle[0].offsetLeft;
-        } else {
-            ul.scrollLeft = 0;
+        if (ul) {
+            // move the tabheader into the viewport
+            const $prevHeaderEle = tabHeader.prev();
+            if ($prevHeaderEle.length) {
+                ul.scrollLeft = $prevHeaderEle[0].offsetLeft;
+            } else {
+                ul.scrollLeft = 0;
+            }
         }
     }
 
@@ -144,7 +147,7 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
                 if (!isPaneAlreadyExist) {
                     this.panes.reset([...this.panes.toArray(), newPaneRef]);
                     if (newPaneRef.active) {
-                        setTimeout(() => {
+                        this.scheduleTimeout(() => {
                             newPaneRef.select();
                         }, 20);
                     }
@@ -397,7 +400,7 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
 
     private onDataChange(newVal) {
         this.fieldDefs = createArrayFrom(newVal);
-        setTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0));
+        this.scheduleTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0));
     }
 
     public getWidgets(widgteName: string, index?: number) {
@@ -454,13 +457,13 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
                 });
                 if (!paneToSelect.length) {
                     console.warn('Tab pane name ' + widgetState + ' in State is incorrect. Falling back to the default pane');
-                    setTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0), 20);
+                    this.scheduleTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0), 20);
                 } else {
                     const index = this.getPaneIndexByRef(paneToSelect[0]);
-                    setTimeout(() => this.selectDefaultPaneByIndex(index), 20);
+                    this.scheduleTimeout(() => this.selectDefaultPaneByIndex(index), 20);
                 }
             } else {
-                setTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0), 20);
+                this.scheduleTimeout(() => this.selectDefaultPaneByIndex(this.defaultpaneindex || 0), 20);
             }
         } else if (key === 'autotabactivation'){
             this.autoActivation = nv;
@@ -470,7 +473,7 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
     }
 
     registerTabsScroll() {
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             const $ul = this.$element.find('> ul');
             let $liPosition;
 
@@ -542,7 +545,18 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
         return index >= 0 ? index : this.getActiveTabIndex();
     }
 
+    private scheduleTimeout(fn: () => void, delay?: number): ReturnType<typeof setTimeout> {
+        const id = setTimeout(() => {
+            this._pendingTimeouts = this._pendingTimeouts.filter(t => t !== id);
+            fn();
+        }, delay);
+        this._pendingTimeouts.push(id);
+        return id;
+    }
+
     ngOnDestroy() {
+        this._pendingTimeouts.forEach(id => clearTimeout(id));
+
         // MEMORY LEAK FIX: Unsubscribe from panes changes
         if (this.panesChangesSubscription) {
             this.panesChangesSubscription.unsubscribe();

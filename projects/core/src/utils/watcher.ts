@@ -73,7 +73,6 @@ function getWatcherCount(): number {
 }
 
 export const cleanupStaleWatchers = (): number => {
-    // console.log(".........Cleaning up stale watchers...registry.size....", registry.size);
     let removed = 0;
 
     registry.forEach((bucket, widgetId) => {

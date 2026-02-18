@@ -197,6 +197,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private _selectedItemsExist;
     private listItemsChangesSubscription: any;
     private boundClickHandler: (event: Event) => void;
+    private _pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
 
     private touching;
     private touched;
@@ -563,7 +564,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         } else if (key === 'paginationclass') {
             if (this.dataNavigator) {
                 // Adding setTimeout because in pagination component updateNavSize method is overriding navigationclass
-                setTimeout(() => this.dataNavigator.navigationClass = nv);
+                this.scheduleTimeout(() => this.dataNavigator.navigationClass = nv);
             }
         } else if (key === 'pagesize') {
             this.actualPageSize = nv; // maintain default page size to calculate pagesize options
@@ -733,7 +734,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     ngOnInit() {
         super.ngOnInit();
         this.handleHeaderClick = noop;
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             this.debouncedFetchNextDatasetOnScroll = this.paginationService.debouncedFetchNextDatasetOnScroll(this.dataNavigator, DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME, this);
         }, 0);
         this._items = [];
@@ -784,7 +785,18 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         }
     }
 
+    private scheduleTimeout(fn: () => void, delay?: number): ReturnType<typeof setTimeout> {
+        const id = setTimeout(() => {
+            this._pendingTimeouts = this._pendingTimeouts.filter(t => t !== id);
+            fn();
+        }, delay);
+        this._pendingTimeouts.push(id);
+        return id;
+    }
+
     ngOnDestroy() {
+        this._pendingTimeouts.forEach(id => clearTimeout(id));
+
         if (this._listAnimator && this._listAnimator.$btnSubscription) {
             this._listAnimator.$btnSubscription.unsubscribe();
             this._listAnimator = null;
@@ -1478,7 +1490,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private subscribeToPullToRefresh() {
         this._listenerDestroyers.push(this.app.subscribe('pulltorefresh', () => {
             if (this.datasource && this.datasource.listRecords) {
-                this.datasource.listRecords();
+                this.datasource.listRecords()?.catch(noop);
             }
         }));
     }

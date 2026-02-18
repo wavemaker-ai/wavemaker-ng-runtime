@@ -196,7 +196,11 @@ export const typeaheadModule = TypeaheadModule;
 export const progressbarModule = ProgressbarModule;
 export const carouselModule = ngxCarouselModule;
 export const popoverModule = ngxPopoverModule;
+<<<<<<< Updated upstream
 export const ngCircleProgressModule = NgCircleProgressModule.forRoot({});
+=======
+export const ngCircleProgressModule: ModuleWithProviders<NgCircleProgressModule> = NgCircleProgressModule.forRoot({});
+>>>>>>> Stashed changes
 export const tooltipModule = TooltipModule;
 
 const componentsModule = [

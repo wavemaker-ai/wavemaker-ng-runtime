@@ -111,7 +111,7 @@ export class I18nServiceImpl extends AbstractI18nService {
             .toPromise()
             .catch(() => {
                 console.warn(`error loading locale resource from ${path}`);
-                Promise.resolve({});
+                return Promise.resolve(undefined);
             });
     }
 
@@ -119,9 +119,11 @@ export class I18nServiceImpl extends AbstractI18nService {
         const basePath = _WM_APP_PROJECT.isPreview || _WM_APP_PROPERTIES?.languageBundleSources === 'DYNAMIC' ? '' :  _WM_APP_PROJECT.cdnUrl
         return this.loadResource( basePath + `${APP_LOCALE_ROOT_PATH}/${this.selectedLocale}.json`)
             .then(bundle => {
-                this.extendMessages(bundle.messages);
-                this.extendPrefabMessages(bundle);
-                this.appDefaults.setFormats(bundle.formats);
+                if (bundle && bundle.messages) {
+                    this.extendMessages(bundle.messages);
+                    this.extendPrefabMessages(bundle);
+                    this.appDefaults.setFormats(bundle.formats);
+                }
                 this.bundleLoaded.app = true;
                 this.notifyLocaleChanged();
             });
@@ -136,7 +138,7 @@ export class I18nServiceImpl extends AbstractI18nService {
             const path = `${_WM_APP_PROJECT.cdnUrl}locales/moment/${momentLocale}.js`;
             loadScripts([path], true).then(()=>{
                 this.loadScriptForMoment(momentLocale);
-            })
+            }).catch(() => console.warn('Failed to load locale bundle'))
         }
         else{
             this.loadScriptForMoment(momentLocale);
@@ -191,11 +193,7 @@ export class I18nServiceImpl extends AbstractI18nService {
         } else {
             this.bundleLoaded.fullCalendar = true;
         }
-        const promises = [this.loadAngularLocaleBundle(libLocale.angular)];
-        if (libLocale.angular) {
-            promises.push(this.loadAppLocaleBundle());
-        }
-        return Promise.all(promises);
+        return this.loadAngularLocaleBundle(libLocale.angular).then(() => this.loadAppLocaleBundle());
     }
 
     public setTimezone(locale, compInstance?) {

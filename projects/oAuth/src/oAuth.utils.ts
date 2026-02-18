@@ -25,7 +25,11 @@ export const parseConfig = (serviceParams: any): any => {
         config.method = serviceParams.config.method || config.method;
         config.headers = config.headers || {};
 
+<<<<<<< Updated upstream
         // TODO: change to for...of
+=======
+        // TODO: change to for - of
+>>>>>>> Stashed changes
         for (const key in serviceParams.config.headers) {
             val = serviceParams.config.headers[key];
             config.headers[key] = val;

@@ -250,6 +250,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     private bindingValue;
     private _formIsInList;
     private _triggeredByUser: boolean;
+    private _pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
 
 
     private _debouncedSubmitForm = debounce(($event) => {
@@ -359,7 +360,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     }
 
     ngAfterContentInit() {
-       setTimeout(() => {
+       this.scheduleTimeout(() => {
             this.componentRefs.forEach(componentRef => {
                 if (componentRef.name) {
                     // Register widgets inside form with formWidgets
@@ -380,7 +381,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             this.formArrayIndex = this.parentFormArray.length - 1;
         }
         this.addInnerNgFormToForm(this.bindingValue);
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             $(this.nativeElement).find('div[data-role="form-field"], div[data-role="filter-field"]').addClass(this.itemsPerRowClass)
         }); 
    }
@@ -988,7 +989,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             this.savePrevformFields();
         }
         this.emptyDataModel();
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             this.setDefaultValues();
             this.savePrevDataValues();
             this.constructDataObject();
@@ -1095,7 +1096,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                     }
                     this.invokeEventCallback('submit', getParams());
                     this.onResultCb(response.result, response.status, $event);
-                });
+                }).catch((err) => console.warn('Form submit failed', err));
             } else {
                 this.invokeEventCallback('submit', getParams());
                 this.onResultCb({}, true, $event);
@@ -1389,7 +1390,18 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         fn(this.viewParent, Object.assign(this.context, {$event}));
     }
 
+    private scheduleTimeout(fn: () => void, delay?: number): ReturnType<typeof setTimeout> {
+        const id = setTimeout(() => {
+            this._pendingTimeouts = this._pendingTimeouts.filter(t => t !== id);
+            fn();
+        }, delay);
+        this._pendingTimeouts.push(id);
+        return id;
+    }
+
     ngOnDestroy() {
+        this._pendingTimeouts.forEach(id => clearTimeout(id));
+
         // on form destroy, removing this form from the parentForm too.
         const controls = this.parentForm && get(this.parentForm, 'ngform.controls');
         if (controls) {

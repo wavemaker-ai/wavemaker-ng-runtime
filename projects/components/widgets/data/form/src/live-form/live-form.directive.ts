@@ -496,7 +496,7 @@ export class LiveFormDirective implements OnDestroy {
             // reset the form to pristine state
             this.form.resetFormState();
             this.form.onResultCb(response.result, response.status, event);
-        });
+        }).catch((err) => console.warn('Live form operation failed', err));
 
 
     }

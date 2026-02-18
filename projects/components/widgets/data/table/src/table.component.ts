@@ -179,6 +179,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     private rowDefInstances = {};
     private rowDefMap = {};
     private rowExpansionActionTl: any = {};
+    private _pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
 
     columns = {};
     formfields = {};
@@ -512,9 +513,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                  */
                 if (this.multiselect) {
                     //Fix for [WMS-25110]: Add row to items list only if the row is selected
-                    if (findIndex(this.items, row) === -1 && (rowInfo?._selected === undefined || rowInfo?._selected == true || (this.gridfirstrowselect && rowInfo?.rowId == 0 && !this.showFirstRow))) {
+                    if (findIndex(this.items, row) === -1 && (rowInfo?._selected === undefined || rowInfo?._selected === true || (this.gridfirstrowselect && rowInfo?.rowId === 0 && !this.showFirstRow))) {
                         this.items.push(row);
-                        if (rowInfo?.rowId == 0) {
+                        if (rowInfo?.rowId === 0) {
                             this.showFirstRow = true;
                         }
                     }
@@ -648,7 +649,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         },
         onFormRender: ($row, e, operation, alwaysNewRow) => {
             const widget = alwaysNewRow ? 'inlineInstanceNew' : 'inlineInstance';
-            setTimeout(() => {
+            this.scheduleTimeout(() => {
                 this.formWidgets = {};
                 this.fieldDefs.forEach(col => {
                     if (col[widget]) {
@@ -775,7 +776,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     row,
                     rowDef,
                     containerLoad: (widget) => {
-                        setTimeout(() => {
+                        this.scheduleTimeout(() => {
                             $overlay.hide();
                             $target.show();
                             this.rowDefInstances[rowId] = widget;
@@ -908,7 +909,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             if (this._gridData && this._gridData.length && this.infScroll) {
                 // smoothscroll events will be binded.
                 // Added timeout as the table html is rendered at runtime
-                setTimeout(() => {
+                this.scheduleTimeout(() => {
                     this.paginationService.bindScrollEvt(this, 'tbody', DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
                 }, 0);
             }
@@ -975,7 +976,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         searchHandler: this.searchSortHandler.bind(this),
         sortHandler: this.searchSortHandler.bind(this),
         timeoutCall: (fn, delay) => {
-            setTimeout(fn, delay);
+            this.scheduleTimeout(fn, delay);
         },
         runInNgZone: fn => {
             this.ngZone.run(fn);
@@ -1295,10 +1296,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.applyProps.forEach(args => this.callDataGridMethod(...args));
             } else {
                 // Retry if datatable not loaded yet
-                setTimeout(initTable, 50);
+                this.scheduleTimeout(initTable, 50);
             }
         };
-        setTimeout(initTable, 0);
+        this.scheduleTimeout(initTable, 0);
         // if(this.gridOptions.data.length || this.variableInflight) {
         //     this.callDataGridMethod('setStatus', 'loading', this.loadingdatamsg);
         // } else {
@@ -1327,7 +1328,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 options.options.orderBy = get(widgetState, 'sort.field') + ' ' + get(widgetState, 'sort.direction');
             }
             if (get(widgetState, 'search')) {
-                setTimeout( () => {
+                this.scheduleTimeout(() => {
                     this.searchStateHandler(widgetState);
                 }, 500);
                 options.options.filterFields = this.getFilterFields(widgetState.search);
@@ -1335,7 +1336,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         } else {
             options.options.page = 1;
             if (get(widgetState, 'search')) {
-                setTimeout( () => {
+                this.scheduleTimeout(() => {
                     this.searchStateHandler(widgetState);
                 }, 500);
                 options.options.filterFields = this.getFilterFields(widgetState.search);
@@ -1525,8 +1526,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.checkFiltersApplied(this.getSortExpr());
         }
 
-        // @ts-ignore
-        if (!isObject(newVal) || newVal === '' || (newVal && newVal.dataValue === '')) {
+        if (!isObject(newVal) || (newVal as any) === '' || (newVal && (newVal as any).dataValue === '')) {
             if (!this.variableInflight) {
                 // If variable has finished loading and resultSet is empty, render empty data
                 this.setGridData([]);
@@ -1556,7 +1556,19 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
     }
 
+    private scheduleTimeout(fn: () => void, delay?: number): ReturnType<typeof setTimeout> {
+        const id = setTimeout(() => {
+            this._pendingTimeouts = this._pendingTimeouts.filter(t => t !== id);
+            fn();
+        }, delay);
+        this._pendingTimeouts.push(id);
+        return id;
+    }
+
     ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear all pending timeouts
+        this._pendingTimeouts.forEach(id => clearTimeout(id));
+
         // MEMORY LEAK FIX: Remove document click listener
         document.removeEventListener('click', this.documentClickBind);
 
@@ -1686,7 +1698,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.dataNavigator = null;
         this._tableElement = null;
 
-       // console.log("table component destroyed");
         super.ngOnDestroy();
     }
 
@@ -2620,7 +2631,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (forceRender) {
             this.datagridElement.datatable(this.gridOptions);
         } else {
-            setTimeout(() => {
+            this.scheduleTimeout(() => {
                 this.callDataGridMethod('setColGroupWidths');
                 this.callDataGridMethod('addOrRemoveScroll');
             });

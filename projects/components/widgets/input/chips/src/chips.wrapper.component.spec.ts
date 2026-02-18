@@ -848,6 +848,7 @@ describe('wm-chips: Component Specific Tests', () => {
             expect(wmComponent.$element.append).toHaveBeenCalledWith(mockInputEl);
         });
 
+        // DISABLED: Test suite cannot compile due to pre-existing type error in form-utils.ts (Property toString does not exist on type never)
         xit('should focus search box when autofocus is true', (done) => {
             const mockChipsList = { length: 1 };
             wmComponent.$element.find.mockReturnValue(mockChipsList);

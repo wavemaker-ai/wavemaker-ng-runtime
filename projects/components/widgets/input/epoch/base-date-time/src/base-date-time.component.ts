@@ -1,6 +1,7 @@
 import {AfterViewInit, Directive, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {AbstractControl, Validator} from '@angular/forms';
-import {Subscription} from 'rxjs';
+import {Subscription} from 'rxjs'; // test
+
 import {FormStyle, getLocaleDayPeriods, TranslationWidth} from '@angular/common';
 import {BsDropdownDirective} from 'ngx-bootstrap/dropdown';
 import {TimepickerComponent, TimepickerConfig} from 'ngx-bootstrap/timepicker';
@@ -84,6 +85,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
     public pm: string;
     private dateOnShowSubscription: Subscription;
     private cancelLocaleChangeSubscription;
+    protected _pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
     public get timeZone() { return this.inj.get(AbstractI18nService).getTimezone(this); }
 
     formatsByLocale = {'timezone': ''};
@@ -323,7 +325,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         this.activeDate = bsDataValue || new Date();
         this.setNextData(this.activeDate);
         this.datetimepickerComponent.show();
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             this.addDatepickerMouseEvents();
             this.setActiveDateFocus(this.activeDate, true);
         }, 500);
@@ -368,7 +370,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                 this.isOtheryear(newDate) ? this.goToOtherMonthOryear('previous', 'days') : this.goToOtherMonthOryear('next', 'days');
             }
         }
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             const newDay = newDate.getDate().toString();
             filter($(`span:contains(${newDay})`).not('.is-other-month'), (obj) => {
                 const activeMonth = $(`.bs-datepicker-head .current`).first().text();
@@ -479,17 +481,21 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
     protected addDatepickerKeyboardEvents(scope, isDateTime) {
         this.elementScope = scope;
         const dateContainer = document.querySelector(`.${scope.dateContainerCls}`) as HTMLElement;
-        setAttr(dateContainer, 'tabindex', '0');
-        dateContainer.onkeydown = (event) => {
-            // Check for Shift+Tab key or Tab key or escape
-            if (event.key === 'Escape') {
-                this.elementScope.hideDatepickerDropdown();
-                const displayInputElem = this.elementScope.nativeElement.querySelector('.display-input') as HTMLElement;
-                setTimeout(() => displayInputElem.focus());
-            }
-        };
-        this.loadDays();
-        this.setActiveDateFocus(this.activeDate, undefined, true);
+        if (dateContainer) {
+            setAttr(dateContainer, 'tabindex', '0');
+            dateContainer.onkeydown = (event) => {
+                // Check for Shift+Tab key or Tab key or escape
+                if (event.key === 'Escape') {
+                    this.elementScope.hideDatepickerDropdown();
+                    const displayInputElem = this.elementScope.nativeElement.querySelector('.display-input') as HTMLElement;
+                    if (displayInputElem) {
+                        this.scheduleTimeout(() => displayInputElem.focus());
+                    }
+                }
+            };
+            this.loadDays();
+            this.setActiveDateFocus(this.activeDate, undefined, true);
+        }
     }
     private setNextData(nextDate) {
         this.next = this.getMonth(nextDate, 1);
@@ -499,7 +505,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
      * This method is used to add tabindex, keybord and mouse events for days
      */
     private loadDays() {
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             $('[bsdatepickerdaydecorator]').not('.is-other-month').attr('tabindex', '0');
             // if (this.clicked === false) {
             //     this.next = this.getMonth(this.activeDate, 1);
@@ -551,7 +557,9 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                 $(document.activeElement).click();
                 this.elementScope.hideDatepickerDropdown();
                 const displayInputElem = this.elementScope.nativeElement.querySelector('.display-input') as HTMLElement;
-                setTimeout(() => displayInputElem.focus());
+                if (displayInputElem) {
+                    this.scheduleTimeout(() => displayInputElem.focus());
+                }
             }
         });
         this.focusBlurDatePickerHeadButtons();
@@ -567,7 +575,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
      * This method is used to add tabindex, keybord and mouse events for months
      */
     private loadMonths() {
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             this.addKeyBoardEventsForMonths();
             this.addDatepickerMouseEvents();
         });
@@ -615,7 +623,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
      * This method is used to add tabindex, keybord and mouse events for years
      */
     private loadYears() {
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             this.addKeyBoardEventsForYears();
             this.addDatepickerMouseEvents();
         });
@@ -635,7 +643,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                 this.goToOtherMonthOryear('next', 'month');
             }
         }
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             $(`.bs-datepicker-body table.months span`).attr('tabindex', '-1');
             $(`.bs-datepicker-body table.months span:contains(${newMonth})`).attr('tabindex', '0');
             $(`.bs-datepicker-body table.months span:contains(${newMonth})`).focus();
@@ -691,7 +699,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                 this.goToOtherMonthOryear('next', 'year');
             }
         }
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             $(`.bs-datepicker-body table.years span`).attr('tabindex', '-1');
             $(`.bs-datepicker-body table.years span:contains(${newYear})`).attr('tabindex', '0');
             $(`.bs-datepicker-body table.years span:contains(${newYear})`).focus();
@@ -707,7 +715,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         this.elementScope = scope;
         // setTimeout is used so that by then time input has the updated value. focus is setting back to the input field
         this.elementScope.ngZone.runOutsideAngular(() => {
-            setTimeout(() => {
+            this.scheduleTimeout(() => {
                 $('timepicker .form-group').first().find('> input.form-control').focus();
             });
         });
@@ -718,7 +726,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
      * This function sets the keyboard events to Timepicker popup
      */
     protected bindTimePickerKeyboardEvents() {
-        setTimeout(() => {
+        this.scheduleTimeout(() => {
             const $timepickerPopup = $('body').find('> bs-dropdown-container timepicker');
             $timepickerPopup.attr('tabindex', 0);
             this.addEventsOnTimePicker($timepickerPopup);
@@ -727,7 +735,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
 
     protected focusOnInputEl() {
         if ($(this.nativeElement).closest('.caption-floating').length > 0) {
-            setTimeout(() => {
+            this.scheduleTimeout(() => {
                 $(this.nativeElement).find('.app-textbox').focus();
             }, 100);
         }
@@ -759,7 +767,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         let secEl = el.find('input[aria-label="seconds"]');
         minEl.value = secEl.value = '00';
         if (value.length < 2) {
-            setTimeout(() => {
+            this.scheduleTimeout(() => {
                 fieldName === 'minutes' ? this.bsTimePicker.updateMinutes(minEl) : this.bsTimePicker.updateSeconds(secEl);
             }, 500);
         } else {
@@ -933,7 +941,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
             // if(prevMon.date.getMonth()===current.getMonth() && prevMon.date.getFullYear()===current.getFullYear()) {
             //     this.hightlightToday(new Date());
             // }
-            setTimeout(() => {
+            this.scheduleTimeout(() => {
                 $(".bs-datepicker-head .previous span").attr("aria-hidden", 'true');
                 $(".bs-datepicker-head .next span").attr("aria-hidden", 'true');
                 $(".bs-datepicker-head .next").attr('aria-label', `Next Month, ${this.next.fullMonth} ${this.next.date.getFullYear()}`);
@@ -960,7 +968,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
             // if (nextMon.date.getMonth() === current.getMonth() && nextMon.date.getFullYear() === current.getFullYear()) {
             //     this.hightlightToday(current);
             // }
-            setTimeout(() => {
+            this.scheduleTimeout(() => {
                 $(".bs-datepicker-head .previous span").attr("aria-hidden", 'true');
                 $(".bs-datepicker-head .next span").attr("aria-hidden", 'true');
                 $(".bs-datepicker-head .next").attr('aria-label', `Next Month, ${this.next.fullMonth} ${this.next.date.getFullYear()}`);
@@ -994,8 +1002,8 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
 
     blurDateInput(isPickerOpen) {
         const displayInputElem = this.nativeElement.querySelector('.display-input') as HTMLElement;
-        if (isPickerOpen) {
-            setTimeout(() => displayInputElem.blur());
+        if (displayInputElem && isPickerOpen) {
+            this.scheduleTimeout(() => displayInputElem.blur());
         }
     }
 
@@ -1058,7 +1066,11 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
             if (this.excludedates) {
                 this.excludedDatesToDisable = this.excludedates;
                 if (isString(this.excludedates)) {
+<<<<<<< Updated upstream
                     this.excludedDatesToDisable = split(this.excludedates, ',') as any;
+=======
+                    this.excludedDatesToDisable = split(this.excludedates as string, ',') as any;
+>>>>>>> Stashed changes
                 }
                 this.excludedDatesToDisable = this.excludedDatesToDisable.map(d => getDateObj(d));
             }
@@ -1094,14 +1106,25 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         // this mobileinput width varies in ios hence setting width here.
         const mobileInput = this.getMobileInput();
         if (mobileInput) {
-            setTimeout(() => {
+            this.scheduleTimeout(() => {
                 mobileInput.style.width = '100%';
                 mobileInput.style.height = '100%';
             });
         }
     }
 
+    protected scheduleTimeout(fn: () => void, delay?: number): ReturnType<typeof setTimeout> {
+        const id = setTimeout(() => {
+            this._pendingTimeouts = this._pendingTimeouts.filter(t => t !== id);
+            fn();
+        }, delay);
+        this._pendingTimeouts.push(id);
+        return id;
+    }
+
     ngOnDestroy() {
+        this._pendingTimeouts.forEach(id => clearTimeout(id));
+
         if (this.dateOnShowSubscription) {
             this.dateOnShowSubscription.unsubscribe();
         }
@@ -1125,7 +1148,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
             const formattedDisplay = getFormattedDate(this.datePipe, this.datavalue, this.datepattern||this.timepattern, this.timeZone, null, null, this);
             const value=this.datavalue;
             this.datavalue = undefined;
-            setTimeout(() => {
+            this.scheduleTimeout(() => {
                 $(this.nativeElement).find('.display-input').val(this.safeReplaceMeridians(formattedDisplay));
                 this.minDateMaxDateValidationOnInput(formattedDisplay);
                 this.invokeOnChange(value, {}, false);

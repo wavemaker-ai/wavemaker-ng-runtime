@@ -805,5 +805,9 @@ export const postPlotChartProcess = (widgetContext: any, isPreview?: boolean) =>
     // }
 };
 
+<<<<<<< Updated upstream
 export const getDateList = (): string[] => dateList;
+=======
+export const getDateList = (): any => dateList;
+>>>>>>> Stashed changes
 

@@ -16,7 +16,7 @@ import {
 } from '@wm/core';
 import {SecurityService} from '@wm/security';
 import {$rootScope, MetadataService, VariablesService} from '@wm/variables';
-import {extend, forEach, get, isEmpty, isObject, isUndefined, merge, trim} from "lodash-es";
+import {extend, forEach, get, isEmpty, isObject, isUndefined, merge, noop, trim} from "lodash-es";
 import {getModesFromLocalStorage} from '../public_api';
 
 enum POST_MESSAGES {
@@ -482,7 +482,7 @@ export class AppManagerService implements OnDestroy {
     }
 
     private setLandingPage() {
-        return this.$security.getPageByLoggedInUser().then(p => this.$app.landingPageName = <string> p);
+        return this.$security.getPageByLoggedInUser().then(p => this.$app.landingPageName = <string> p).catch(noop);
     }
 
     /**
@@ -526,8 +526,7 @@ export class AppManagerService implements OnDestroy {
                     // scope.hideShowCase = true;
                     break;
                 case POST_MESSAGES.SELECT_TEMPLATE:
-                    // @ts-ignore
-                    this.showTemplate(msgData.templateIndex);
+                    this.showTemplate((msgData as any).templateIndex);
                     break;
             }
         };

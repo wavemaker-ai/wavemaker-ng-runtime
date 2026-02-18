@@ -71,7 +71,6 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
         return this.bsTimeValue ? this.bsTimeValue.valueOf() : undefined;
     }
 
-    // @ts-ignore
     get datavalue(): any {
         if (this.isCurrentTime && !this.bsTimeValue) {
             return CURRENT_TIME;
@@ -79,10 +78,13 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
         return getFormattedDate(this.datePipe, this.bsTimeValue, this.outputformat, this.timeZone, null, null, this) || '';
     }
 
+<<<<<<< Updated upstream
     /** TODO: needs to be redefined
+=======
+    /**TODO: needs to be redefined
+>>>>>>> Stashed changes
      * This property sets the default value for the time selection
      */
-    // @ts-ignore
     set datavalue(newVal: any) {
         if (newVal) {
             if (newVal === CURRENT_TIME) {
@@ -416,6 +418,8 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
         if (!this.displayInputElem) {
             this.displayInputElem = this.getMobileInput();
         }
-        (this.displayInputElem as any).value = get(this, 'nativeDisplayValue');
+        if (this.displayInputElem) {
+            (this.displayInputElem as any).value = get(this, 'nativeDisplayValue');
+        }
     }
 }

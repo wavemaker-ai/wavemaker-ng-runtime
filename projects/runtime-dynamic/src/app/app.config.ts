@@ -111,9 +111,13 @@ export const initializeProjectDetails = () => {
     _WM_APP_PROJECT.cdnUrl = cdnUrl || 'ng-bundle/';
     _WM_APP_PROJECT.ngDest = 'ng-bundle/';
     try {
+<<<<<<< Updated upstream
         (globalThis as any).__webpack_require__.p = (globalThis as any).__webpack_public_path__ = cdnUrl;
+=======
+        (self as any).__webpack_require__.p = (self as any).__webpack_public_path__ = cdnUrl;
+>>>>>>> Stashed changes
     } catch (e) {
-        //for app preview there is no webpack. Don't do anything.
+        console.debug('Webpack not available in preview mode');
     }
 };
 

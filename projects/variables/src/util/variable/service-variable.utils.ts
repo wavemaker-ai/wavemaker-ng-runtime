@@ -212,7 +212,11 @@ export class ServiceVariableUtils {
                     uname = inputFields['wm_auth_username'];
                     pswd = inputFields['wm_auth_password'];
                     if (uname && pswd) {
+<<<<<<< Updated upstream
                         // TODO: consider base64 encoding alternative.
+=======
+                        // TODO: bas64 encoding alternative.
+>>>>>>> Stashed changes
                         headers[VARIABLE_CONSTANTS.REST_SERVICE.AUTH_HDR_KEY] = VARIABLE_CONSTANTS.REST_SERVICE.PREFIX.AUTH_HDR_VAL.BASIC + ' ' + btoa(uname + ':' + pswd);
                         authDetails = {
                             'type': VARIABLE_CONSTANTS.REST_SERVICE.AUTH_TYPE.BASIC

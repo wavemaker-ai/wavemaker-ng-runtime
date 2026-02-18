@@ -67,8 +67,7 @@ export class LocalDataProvider implements IDataProvider {
                         let a = values(entry).join(' ');
                         if (!casesensitive) {
                             a = toLower(a);
-                            // @ts-ignore
-                            queryText = toLower(queryText);
+                            queryText = toLower(queryText as string);
                         }
                         return this.applyFilter(a, queryText);
                     });
@@ -76,8 +75,7 @@ export class LocalDataProvider implements IDataProvider {
                     filteredData = filter(entries, entry => {
                         if (!casesensitive) {
                             entry = toLower(entry);
-                            // @ts-ignore
-                            queryText = toLower(queryText);
+                            queryText = toLower(queryText as string);
                         }
                         return this.applyFilter(entry, queryText, matchMode);
                     });

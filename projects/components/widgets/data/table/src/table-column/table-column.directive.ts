@@ -44,7 +44,7 @@ import {registerProps} from './table-column.props';
 import {TableComponent} from '../table.component';
 import {TableColumnGroupDirective} from '../table-column-group/table-column-group.directive';
 import {debounceTime} from 'rxjs/operators';
-import {cloneDeep, forEach, head, includes, last, map, max, mean, min, round, split, sum} from "lodash-es";
+import {cloneDeep, forEach, head, includes, last, map, max, mean, min, noop, round, split, sum} from "lodash-es";
 
 const WIDGET_CONFIG = {widgetType: 'wm-table-column', hostClass: ''};
 
@@ -511,7 +511,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
                     getDistinctValues(this.table.datasource, this.widget, 'filterwidget').then((res: any) => {
                         this._filterDataSet = res.data;
                         this.setFilterWidgetDataSet();
-                    });
+                    }).catch(noop);
                 }
             } else {
                 // For other datasources, get the data from datasource bound to table
@@ -642,13 +642,13 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             if (content instanceof Promise) {
                 content.then(res => {
                     this.table.callDataGridMethod('setSummaryRowDef', this.key, res, index, true);
-                });
+                }).catch(noop);
             } else if (content.value && content.value instanceof Promise) {
                 const contentData = content;
                 content.value.then(res => {
                     contentData.value = res;
                     this.table.callDataGridMethod('setSummaryRowDef', this.key, contentData, index, true);
-                });
+                }).catch(noop);
             }
             this.table.callDataGridMethod('setSummaryRowDef', this.key, content, index);
         });
@@ -762,7 +762,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
                 const fieldName = this.group && this.group.name;
                 const index: number = fieldName ? parseInt(this.getAttr('index'), 10) : parseInt(this.getAttr('headerIndex'), 10);
                 // Register column with header config to create group structure
-                if (!this.table.headerConfig.some(value => this.field == value.field)) {
+                if (!this.table.headerConfig.some(value => this.field === value.field)) {
                     setHeaderConfigForTable(this.table.headerConfig, {
                         field: this.field,
                         displayName: this.displayName
@@ -770,7 +770,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
                 }
                 else {
                     this.table.headerConfig.map(value => {
-                        if (this.field == value.field) {
+                        if (this.field === value.field) {
                             value.displayName = this.displayName;
                         }
                     });

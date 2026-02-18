@@ -519,8 +519,7 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
             // If the orderby column is chosen either in groupby or orderby then replace . with $ for that column
             forEach(intersection(columns, orderByColumns), col => {
                 colAlias = getValidAliasName(col);
-                // @ts-ignore
-                sortExpr = replace(sortExpr, col, colAlias);
+                sortExpr = replace(sortExpr as string, col, colAlias);
             });
         }
         if (this.isAggregationEnabled()) {

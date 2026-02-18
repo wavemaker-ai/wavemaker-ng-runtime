@@ -224,7 +224,6 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
 
         let lView = (this.inj as any)._lView;
         this.viewParent = findParent(lView, this.viewParentApp);
-        //console.log("---*************--context--*************---", lView[8]);
         this.context = (this.inj as any)._lView[8];
 
         this.displayType = config.displayType || DISPLAY_TYPE.BLOCK;
@@ -667,7 +666,6 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      * If the attribute is a bound expression, register a watch on the expression
      */
     protected processAttr(attrName: string, attrValue: string, child?: Child) {
-         // console.log("====attrName=====", attrName, "=====typeof attrname=====", typeof attrName, "-----attrValue----", attrValue);
         const {0: propName, 1: type, 2: meta, length} = attrName.split('.');
         if (type === 'bind') {
             // if the show property is bound, set the initial value to false

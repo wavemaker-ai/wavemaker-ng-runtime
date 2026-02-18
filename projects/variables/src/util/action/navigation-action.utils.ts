@@ -1,5 +1,51 @@
 import { navigationService } from '../variable/variables.utils';
-import {clone, isNil, isString} from "lodash-es";
+import {clone, isArray, isNil, isObject, isString, isUndefined} from "lodash-es";
+import {$parseExpr} from "@wm/core";
+
+/**
+ * Evaluates bound page param expressions directly against the variable's context.
+ * This ensures the latest bound values are captured at navigation time,
+ * even if the $watch mechanism hasn't propagated them to variable.dataSet yet.
+ */
+const resolveDataSetBindings = (variable) => {
+    const bindings = variable._binddataSet;
+    if (!bindings || !isArray(bindings)) {
+        return;
+    }
+    bindings.forEach(binding => {
+        if (binding.value && isString(binding.value) && binding.value.startsWith('bind:')) {
+            const expr = binding.value.replace('bind:', '');
+            try {
+                const fn = $parseExpr(expr);
+                if (fn) {
+                    const value = fn(variable._context, {});
+                    if (!isUndefined(value)) {
+                        const key = binding.target.includes('.') ? binding.target.split('.').pop() : binding.target;
+                        variable.dataSet[key] = clone(value);
+                    }
+                }
+            } catch (e) {
+                // silently skip if expression evaluation fails
+            }
+        }
+    });
+};
+
+/**
+ * Merges any page param values resolved into dataBinding.dataSet
+ * (when page param bindings are configured in dataBinding with dataSet.xxx targets)
+ * into the main dataSet used for URL params.
+ */
+const mergeDataBindingPageParams = (variable) => {
+    if (variable.dataBinding && isObject(variable.dataBinding.dataSet)) {
+        Object.keys(variable.dataBinding.dataSet).forEach(key => {
+            const val = variable.dataBinding.dataSet[key];
+            if (!isUndefined(val)) {
+                variable.dataSet[key] = val;
+            }
+        });
+    }
+};
 
 /**
  * Handles variable navigation operations
@@ -7,7 +53,12 @@ import {clone, isNil, isString} from "lodash-es";
  * @param options
  */
 export const navigate = (variable, options) => {
-    variable.dataSet = (options && options.data) || variable.dataSet;
+    if (options && options.data) {
+        variable.dataSet = options.data;
+    } else {
+        resolveDataSetBindings(variable);
+        mergeDataBindingPageParams(variable);
+    }
     let viewName;
     const pageName = variable.dataBinding.pageName || variable.pageName,
         operation = variable.operation,

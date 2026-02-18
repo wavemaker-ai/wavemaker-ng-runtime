@@ -104,8 +104,7 @@ export class NavComponent extends DatasetAwareNavComponent implements OnInit, On
 
         const selectedItem = find(this.nodes, '_selected');
         if (selectedItem) {
-            // @ts-ignore
-            delete selectedItem._selected;
+            delete (selectedItem as any)._selected;
         }
 
         this.selecteditem = item.value;

@@ -86,8 +86,7 @@ export const globalPropertyChangeHandler = (component: BaseComponent, key: strin
                 let prefabName = component.$element.parent().closest('[prefabname][prefabname!="__self__"]').attr('prefabname');
                 //if the component is inside a tabpane or anything, where the content is lazily loaded. in such scenario the prefabName is undefined
                 if(prefabName === undefined) {
-                    // @ts-ignore
-                    prefabName = component.viewParent.prefabName;
+                    prefabName = (component as any).viewParent.prefabName;
                 }
                 ref._parentPrefab_ = prefabName || '';
             }

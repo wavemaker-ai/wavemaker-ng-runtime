@@ -66,8 +66,7 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent implements O
         const inputElements = this.nativeElement.querySelectorAll('input:checked');
         const keys = [];
         forEach(inputElements, ($el) => {
-            // @ts-ignore
-            keys.push($el.value);
+            keys.push(($el as HTMLInputElement).value);
         });
 
         this.triggerInvokeOnChange(keys, $event);

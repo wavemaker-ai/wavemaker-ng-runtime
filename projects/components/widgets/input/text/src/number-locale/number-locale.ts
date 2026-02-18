@@ -51,10 +51,16 @@ export abstract class NumberLocale extends BaseInput implements Validator {
     }
 
     // Setter for the datavalue.
+<<<<<<< Updated upstream
     set datavalue(value: any) {
         this.lastValIsDecimal = false;
 
         // set text value to null if data value is empty.
+=======
+    set datavalue(value: number) {
+        this.lastValIsDecimal = false;
+
+>>>>>>> Stashed changes
         if (includes([null, undefined, ''] as any[], value)) {
             const input = this.inputEl.nativeElement;
             const prevDataValue =  (this as any).prevDatavalue;

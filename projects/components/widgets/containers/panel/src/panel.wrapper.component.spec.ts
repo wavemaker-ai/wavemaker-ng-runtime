@@ -102,6 +102,7 @@ describe("PanelComponent", () => {
         expect(panelWrapperComponent).toBeTruthy();
     });
 
+    // DISABLED: Test suite cannot compile due to pre-existing type errors in form-utils.ts
     xit("should trigger the panel action item click callback", async () => {
         // Get the necessary elements
         dropdownToggleEle = getdropdownToggleEle();

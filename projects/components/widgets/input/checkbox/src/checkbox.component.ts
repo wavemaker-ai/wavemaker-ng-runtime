@@ -145,7 +145,9 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
         if (eventName !== 'change' && eventName !== 'blur') {
             // applying tap (Hammer event) on the label as the event handler is not getting triggered on the input.
             const $el = eventName === 'tap' ? this.nativeElement.querySelector('label') : this.checkboxEl.nativeElement;
-            super.handleEvent($el, eventName, callback, locals);
+            if ($el) {
+                super.handleEvent($el, eventName, callback, locals);
+            }
         }
     }
 
@@ -162,7 +164,10 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
-        styler(this.nativeElement.querySelector('label'), this);
+        const labelEl = this.nativeElement.querySelector('label');
+        if (labelEl) {
+            styler(labelEl, this);
+        }
     }
 
     ngOnDestroy() {

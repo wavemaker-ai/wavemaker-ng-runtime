@@ -16,7 +16,6 @@ export abstract class FragmentMonitor {
     constructor() {}
 
     init() {
-        // console.log(`inside fragmentMonitor: Page-${(this as any).pageName}, Partial-${(this as any).partialName}`);
 
         // MEMORY LEAK FIX: Store subscription reference for cleanup
         this.viewInitSubscription = this.viewInit$.subscribe(noop, noop, () => {

@@ -132,7 +132,11 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
         return getFormattedDate(this.datePipe, this.proxyModel, this.outputformat, this.timeZone, null, null, this);
     }
 
+<<<<<<< Updated upstream
     /** TODO: needs to be redefined
+=======
+    /**TODO: needs to be redefined
+>>>>>>> Stashed changes
      * This property sets the default value for the date selection
      */
     set datavalue(newVal: any) {

@@ -726,11 +726,9 @@ export const setInput = (targetObj: any, key: any, val: any, options: any) => {
 
     // content type check
     if (isObject(options)) {
-        // @ts-ignore
-        switch (options.type) {
+        switch ((options as any).type) {
             case 'file':
-                // @ts-ignore
-                val = getBlob(val, options.contentType);
+                val = getBlob(val, (options as any).contentType);
                 break;
             case 'number':
                 val = isNumber(val) ? val : parseInt(val, 10);

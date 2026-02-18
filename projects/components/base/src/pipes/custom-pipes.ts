@@ -245,7 +245,11 @@ export class FileSizePipe implements PipeTransform {
             'PB'
         ];
 
+<<<<<<< Updated upstream
         /* TODO: consider re-enabling validation for invalid bytes values
+=======
+        /*TODO:
+>>>>>>> Stashed changes
         if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) {
             return isMobile() ? '' : '?';
         }*/

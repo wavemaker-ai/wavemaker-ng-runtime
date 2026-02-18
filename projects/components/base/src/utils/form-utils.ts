@@ -181,7 +181,11 @@ export const transformFormData = (context: any, dataSet: any, myDataField?: stri
     } else if (!(dataSet instanceof Array) && isObject(dataSet)) {
         const i = 0;
         forEach(dataSet, (value, key) => {
+<<<<<<< Updated upstream
             const dataSetItem = {key: trim(key as string), value: key, label: (isDefined(value) && value !== null) ? value.toString() : '',
+=======
+            const dataSetItem = {key: trim(key as string), value: key, label: (isDefined(value) && value !== null) ? (value as any).toString() : '',
+>>>>>>> Stashed changes
                 index: startIndex,
                 dataObject: dataSet
             };
@@ -303,7 +307,11 @@ export const groupData = (compRef: any, data: Array<Object | DataSetItem>, group
         //[Todo-CSP]: can generate expr fn in page based on groupby property on widget
         const groupDataByUserDefinedFn = $parseEvent(groupby);
         groupedLiData = groupBy(data, val => {
+<<<<<<< Updated upstream
             return (groupDataByUserDefinedFn as any)(compRef.viewParent, {'row': val.dataObject || val});
+=======
+            return (groupDataByUserDefinedFn as any)(compRef.viewParent, {'row': (val as any).dataObject || val});
+>>>>>>> Stashed changes
         });
     } else {
         groupedLiData = getGroupedData(data, groupby, match, orderby, dateformat, datePipe, innerItem, AppDefaults);

@@ -178,10 +178,8 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         let start, end;
         // checks if datavalue is an object and not a Date object
         if (isObject(this.datavalue) && !isDate(this.datavalue)) {
-            // @ts-ignore
-            start = moment(this.datavalue.start);
-            // @ts-ignore
-            end   = moment(this.datavalue.end);
+            start = moment((this.datavalue as any).start);
+            end   = moment((this.datavalue as any).end);
         } else {
             start = moment(this.datavalue);
             end   = moment(this.datavalue).add(1, 'day').startOf('day');

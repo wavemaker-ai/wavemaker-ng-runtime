@@ -402,12 +402,6 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
                     try {
                         (<any>root).App.isApplicationThumbnailCaptured = true;
                         const screenshotUrl = canvas.toDataURL("image/png");
-                        console.log(screenshotUrl);
-
-                        const a = document.createElement("a");
-                        a.href = screenshotUrl;
-                        a.download = "screenshot.jpg";
-                        a.click();
                     } catch (error) {
                         console.error('Error in html2canvas then block:', error);
                     }

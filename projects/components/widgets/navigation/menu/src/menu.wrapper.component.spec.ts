@@ -1,4 +1,5 @@
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
+
 import { By } from '@angular/platform-browser';
 import { waitForAsync, ComponentFixture, ComponentFixtureAutoDetect, fakeAsync, tick } from '@angular/core/testing';
 import { Component, ViewChild } from '@angular/core';

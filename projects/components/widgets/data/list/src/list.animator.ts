@@ -61,16 +61,15 @@ export class ListAnimator extends SwipeAnimation {
     }
 
     // Returns amount of transition to be applied on element when swiped left or right
-    private computeTransitionProportions($ele: JQuery<HTMLElement>): number {
+    private computeTransitionProportions($ele: JQuery<HTMLElement>): number[] {
         const totalWidth = this.computeTotalChildrenWidth($ele);
         const reverse = this.position === 'right';
         let d = 0;
-        // @ts-ignore
-        return map($ele.children(), e => {
+        return map($ele.children() as any, (e: any) => {
             const f = (totalWidth - d) / totalWidth;
             d += $(e).outerWidth();
             return reverse ? f : (d / totalWidth);
-        });
+        }) as number[];
     }
 
     // Resets the transform applied on the element.

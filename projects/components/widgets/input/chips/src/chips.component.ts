@@ -29,6 +29,7 @@ import {
     isEqual,
     isObject,
     max,
+    noop,
     pullAt,
     reduce,
     slice,
@@ -118,7 +119,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
                         this.registerChipItemClass(item, index);
                     });
                 }
-            });
+            }).catch(noop);
         }, 150);
 
         const datasetSubscription = this.dataset$.subscribe(() => {
@@ -314,7 +315,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
             this.removeDuplicates();
             this.updateMaxSize();
             $appDigest();
-        });
+        }).catch(noop);
     }
 
     private resetSearchModel(defaultQuery?: boolean) {
@@ -429,8 +430,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
         this.nextItemIndex++;
         return this.searchComponent.getDataSource(query, true, index)
             .then((response) => {
-                // @ts-ignore
-                return filter(query, queryVal => {
+                return filter(query as string[], queryVal => {
                     find(response, {value: queryVal});
                 });
             });

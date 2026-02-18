@@ -58,6 +58,7 @@ import {
     isObject,
     isUndefined,
     map,
+    noop,
     split,
     toString,
     trim
@@ -594,7 +595,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
                     this.typeahead.hide();
                 }
             }
-        });
+        }).catch(noop);
     }
 
     private updateByDatavalue(data) {
@@ -762,7 +763,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
                 this._loadingItems = false;
                 this._lastResult = result;
                 return result;
-            });
+            }).catch(() => [] as DataSetItem[]);
     }
 
     // this method returns the parent context i.e. Page context and not parent component's context.

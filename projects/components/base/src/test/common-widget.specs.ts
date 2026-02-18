@@ -83,7 +83,6 @@ export class ComponentTestBase {
 
                 it('"' + attrName + '" should be on the widget with value as: ' + processedAttrValue, () => {
                     let attrProps = widgetProps.get(attrName) || {};
-                    // console.log(++count, ' checking', attrName, ' of type', attrProps.type, ' for value', processedAttrValue)
 
                     // convert the type of the attr.value and compare with its corresponding iScope property
                     if (attrProps.type === 1) {
@@ -337,7 +336,6 @@ export class ComponentTestBase {
                 it(prop + ': should be applied', () => {
                     initValue = this.widgetDef.$unCompiled.attr(propName);
                     cssValue = component.$element[0].widget[cssName];
-                    // console.log(cssValue, 'vss*****');
                     if (initValue) {
                         if (cssName === 'backgroundimage') {
                             initValue = initValue

@@ -117,6 +117,7 @@ describe('CalendarComponent', () => {
         expect(CalendarWrapperComponent).toBeTruthy();
     })
 
+    // DISABLED: Test suite cannot compile due to pre-existing type errors in form-utils.ts
     xit('should apply the view to be month view', waitForAsync(() => {
         fixture.whenStable().then(() => {
             expect(document.getElementsByClassName('fc-month-view').length).toBe(1);
