@@ -122,11 +122,6 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
     }
 
     registerPageParams() {
-        // Set initial page params synchronously from the route snapshot to ensure
-        // params are available before variables fire during ngAfterViewInit.
-        // In Angular 20, the queryParams observable may emit asynchronously,
-        // so relying solely on the subscription can leave pageParams undefined initially.
-        this.pageParams = (this.App as any).pageParams = extend({}, this.route.snapshot.queryParams);
 
         const subscription = this.route.queryParams.subscribe(params => this.pageParams = (this.App as any).pageParams = extend({}, params));
         this.registerDestroyListener(() => subscription.unsubscribe());
