@@ -35,6 +35,12 @@ export class TableRowActionDirective extends BaseComponent implements OnInit, On
     target;
     conditionalclass;
     conditionalstyle;
+    dataset;
+    itemlabel;
+    itemicon;
+    itemlink;
+    itemaction;
+    menuaction;
 
     constructor(
         inj: Injector,
@@ -54,6 +60,7 @@ export class TableRowActionDirective extends BaseComponent implements OnInit, On
     }
 
     populateAction() {
+        const isMenuWidget = this['widget-type'] == 'menu';
         this.buttonDef = {
             key: this.key,
             displayName: this['display-name'] || this.caption || '',
@@ -69,7 +76,13 @@ export class TableRowActionDirective extends BaseComponent implements OnInit, On
             hyperlink: this.hyperlink,
             target: this.target || '',
             conditionalclass: this.conditionalclass || '',
-            conditionalstyle: this.conditionalstyle || {}
+            conditionalstyle: this.conditionalstyle || {},
+            dataset: isMenuWidget ? this.dataset || [] : undefined,
+            itemlabel: isMenuWidget? this.itemlabel || '' : undefined,
+            itemicon: isMenuWidget ? this.itemicon || '' : undefined,
+            itemlink: isMenuWidget ? this.itemlink || '' : undefined,
+            itemaction: isMenuWidget ? this.itemaction || '' : undefined,
+            menuaction: isMenuWidget ? this.menuaction : undefined
         };
     }
 

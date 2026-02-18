@@ -296,7 +296,14 @@ const rowActionAttrs = new Map(
         ['conditionalclass.bind', 'conditionalclass.bind'],
         ['conditionalstyle.bind', 'conditionalstyle.bind'],
         ['expandtitle.bind', 'expandtitle.bind'],
-        ['collapsetitle.bind', 'collapsetitle.bind']
+        ['collapsetitle.bind', 'collapsetitle.bind'],
+        // Menu widget props for datatable
+        ['dataset', 'dataset'],
+        ['dataset.bind', 'dataset.bind'],
+        ['itemlabel', 'itemlabel'],
+        ['itemicon', 'itemicon'],
+        ['itemlink', 'itemlink'],
+        ['itemaction', 'itemaction']
     ]
 );
 

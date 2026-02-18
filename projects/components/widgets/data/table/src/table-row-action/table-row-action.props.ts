@@ -18,7 +18,13 @@ export const registerProps = () => {
                 ['tabindex', {value: 0, ...PROP_NUMBER}],
                 ['target', PROP_STRING],
                 ['title', PROP_STRING],
-                ['widget-type', {value: 'button', ...PROP_STRING}]
+                ['widget-type', {value: 'button', ...PROP_STRING}],
+                ['dataset', PROP_STRING],
+                ['itemlabel', PROP_STRING],
+                ['itemicon', PROP_STRING],
+                ['itemlink', PROP_STRING],
+                ['itemaction', PROP_STRING],
+                ['menuaction', PROP_STRING]
             ]
         )
     );
