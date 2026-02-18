@@ -203,7 +203,17 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
     _onFocusField($evt) {
         this._activeField = true;
         $($evt.target).closest('.live-field').addClass('active');
-
+        // Notify caption position directive to add float-active class on focus
+        const captionEl = $(this.nativeElement).find('.caption-floating');
+        if (captionEl.length > 0) {
+            const hasValue = ((isDefined(this.datavalue) && this.datavalue !== '' && this.datavalue !== null) || captionEl.find('input, select, textarea').val()) || captionEl.find('input:-webkit-autofill').length;
+            this.app.notify('captionPositionAnimate', {
+                displayVal: hasValue,
+                nativeEl: captionEl,
+                isSelectMultiple: this.formWidget && this.formWidget.multiple,
+                isFocused: true
+            });
+        }
     }
 
     // Function to get the active element markup based on widget type
@@ -240,6 +250,17 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
         this._activeField = false;
         this._triggeredByUser = false;
         this._clicktriggeredByUser = false;
+        // Notify caption position directive to remove float-active class on blur if no value
+        const captionEl = $(this.nativeElement).find('.caption-floating');
+        if (captionEl.length > 0) {
+            const hasValue = ((isDefined(this.datavalue) && this.datavalue !== '' && this.datavalue !== null) || captionEl.find('input, select, textarea').val()) || captionEl.find('input:-webkit-autofill').length;
+            this.app.notify('captionPositionAnimate', {
+                displayVal: hasValue,
+                nativeEl: captionEl,
+                isSelectMultiple: this.formWidget && this.formWidget.multiple,
+                isFocused: false
+            });
+        }
     }
 
     // Expression to be evaluated in view mode of form field
@@ -681,9 +702,13 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
             this.formWidget = this.formWidget.nativeElement.widget;
         if (this.formWidget) {
             if(this.widgetSubType === "wm-form-field-custom-widget") {
-                this.formWidget.configSubject.asObservable().subscribe(() => {
+                if (this.formWidget.configSubject) {
+                    this.formWidget.configSubject.asObservable().subscribe(() => {
+                        this.prepareFormWidget();
+                    });
+                } else {
                     this.prepareFormWidget();
-                });
+                }
             } else {
                 this.prepareFormWidget();
             }

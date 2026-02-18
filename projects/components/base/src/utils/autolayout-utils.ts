@@ -207,7 +207,7 @@ export class AutoLayoutUtils {
             }
 
             if (key === 'height') {
-                if (this.parentElement?.hasAttribute('wmcontainer') || this.parentElement.hasAttribute('wmautolayout')) {
+                if (this.parentElement?.hasAttribute('wmcontainer') || this.parentElement?.hasAttribute('wmautolayout')) {
                     this.$element.css({
                         'align-self': 'stretch',
                         'flex-grow': '1'

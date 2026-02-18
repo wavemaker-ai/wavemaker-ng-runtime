@@ -28,6 +28,9 @@ export class CaptionPositionDirective implements AfterViewInit, OnInit, OnDestro
     }
 
     private onBlurCb() { // on blur, remove animation and placeholder if there is no value
+        if (!this.compositeEle || !this.inputEl || !this.inputEl.length) {
+            return;
+        }
         let mobileInputVal;
         // In case of mobile date / time picker check for input element's value which has 'mobile-input' class
         if (this.inputEl.length > 1 && this.inputEl.hasClass('mobile-input')) {
@@ -44,8 +47,13 @@ export class CaptionPositionDirective implements AfterViewInit, OnInit, OnDestro
     }
 
     private onFocusCb() { //  on focus, add animation class and the place holder
+        if (!this.compositeEle || !this.inputEl || !this.inputEl.length) {
+            return;
+        }
         this.compositeEle.classList.add('float-active');
-        this.inputEl.attr('placeholder', this.placeholder);
+        if (this.placeholder) {
+            this.inputEl.attr('placeholder', this.placeholder);
+        }
     }
 
     // For select widget, display placeholder only on focus else remove the text of the option selected.
@@ -58,6 +66,9 @@ export class CaptionPositionDirective implements AfterViewInit, OnInit, OnDestro
     }
 
     private setDefaultValueAnimation() { // set animation when default values are present
+        if (!this.compositeEle || !this.inputEl || !this.inputEl.length) {
+            return;
+        }
         // remove placeholder when the input el has placeholder and the placeholder is not bound to any variable
         if (!this._isPlaceholderBound && this.inputEl.attr('placeholder')) {
             this.placeholder = this.inputEl.attr('placeholder');
@@ -134,8 +145,11 @@ export class CaptionPositionDirective implements AfterViewInit, OnInit, OnDestro
             // call the below function to apply float-active class when there are default values to the fields
             setTimeout(this.setDefaultValueAnimation.bind(this), 0);
 
-            this.inputEl.focus(this.onFocusCb.bind(this));
-            this.inputEl.blur(this.onBlurCb.bind(this));
+            // Use .on() with namespaced events for better compatibility in production builds
+            // Remove any existing handlers first to avoid duplicate bindings
+            this.inputEl.off('focus.floatCaption blur.floatCaption');
+            this.inputEl.on('focus.floatCaption', this.onFocusCb.bind(this));
+            this.inputEl.on('blur.floatCaption', this.onBlurCb.bind(this));
 
             // observe for placeholder attribute change when placeholder is bound via db variable or an expression
             if (this._isPlaceholderBound) {
@@ -147,22 +161,33 @@ export class CaptionPositionDirective implements AfterViewInit, OnInit, OnDestro
     // captionPositionAnimate is only notified for date-time, time and search widgets as input el is not updated with value on selection of dropdown/popups
     ngOnInit() {
         this.labelAnimationSubscription = this.app.subscribe('captionPositionAnimate', (data) => {
+            if (!data || !data.nativeEl || !data.nativeEl.length) {
+                return;
+            }
             // displayVal is true when there is a value entered in the input field
             // In case of form fields, when the field is in focus, isFocused will be set as true
             // isSelectMultiple is set to true when for select widget, multiple option is enabled
             // Checking inputEl focus - when form is represented as dialog and the first field is automatically in focus
-            const isInputElFocused = this.inputEl && this.inputEl.is(':focus');
+            const isInputElFocused = this.inputEl && this.inputEl.length && this.inputEl.is(':focus');
             if (data.displayVal || data.isFocused || data.isSelectMultiple || isInputElFocused) {
                 data.nativeEl.addClass('float-active');
-                if (!data.displayVal && isInputElFocused) {
+                // Also update compositeEle if it exists and is different from data.nativeEl
+                if (this.compositeEle && data.nativeEl[0] && !data.nativeEl[0].contains(this.compositeEle) && !this.compositeEle.contains(data.nativeEl[0])) {
+                    this.compositeEle.classList.add('float-active');
+                }
+                if (!data.displayVal && isInputElFocused && this.inputEl && this.inputEl.length && this.placeholder) {
                     this.inputEl.attr('placeholder', this.placeholder);
                 }
             } else {
                 data.nativeEl.removeClass('float-active');
+                // Also update compositeEle if it exists and is different from data.nativeEl
+                if (this.compositeEle && data.nativeEl[0] && !data.nativeEl[0].contains(this.compositeEle) && !this.compositeEle.contains(data.nativeEl[0])) {
+                    this.compositeEle.classList.remove('float-active');
+                }
                 // Remove placeholder on removing float-active, if not the label and placeholder are collided
                 // before placeholder is removed assign it to the placeholder variable
                 // check for placeholder in inputel and selectel
-                if (this.inputEl) {
+                if (this.inputEl && this.inputEl.length) {
                     const selectElPlaceholderOption = this.nativeEl.querySelector('#placeholderOption');
                     if (this.inputEl.attr('placeholder') || selectElPlaceholderOption) {
                         if (selectElPlaceholderOption) {
@@ -183,6 +208,10 @@ export class CaptionPositionDirective implements AfterViewInit, OnInit, OnDestro
         }
         if (this._attrObserver) {
             this._attrObserver.disconnect();
+        }
+        // Clean up jQuery event handlers
+        if (this.inputEl && this.inputEl.length) {
+            this.inputEl.off('focus.floatCaption blur.floatCaption');
         }
     }
 }
