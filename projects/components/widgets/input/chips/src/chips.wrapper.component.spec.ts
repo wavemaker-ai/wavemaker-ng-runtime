@@ -847,16 +847,18 @@ describe('wm-chips: Component Specific Tests', () => {
             expect(wmComponent.$element.append).toHaveBeenCalledWith(mockInputEl);
         });
 
-        xit('should focus search box when autofocus is true', (done) => {
+        it('should focus search box when autofocus is true', (done) => {
             const mockChipsList = { length: 1 };
             wmComponent.$element.find.mockReturnValue(mockChipsList);
+            // Mock focus() to prevent base class from accessing $element[0]
+            jest.spyOn(wmComponent as any, 'focus').mockImplementation();
             const focusSearchBoxSpy = jest.spyOn((wmComponent as any), 'focusSearchBox').mockImplementation();
             wmComponent.onPropertyChange('autofocus', true, false);
             setTimeout(() => {
                 expect(focusSearchBoxSpy).toHaveBeenCalled();
                 focusSearchBoxSpy.mockRestore();
                 done();
-            }, 0);
+            }, 100);
         });
 
         it('should call super.onPropertyChange', () => {

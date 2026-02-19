@@ -1,8 +1,8 @@
 import { waitForAsync, ComponentFixture, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { App, AppDefaults, DynamicComponentRefProvider, AbstractI18nService, UserDefinedExecutionContext, Viewport, $appDigest, isElementInViewport, scrollToElement, $invokeWatchers, getValidJSON, extendProto, $parseEvent } from '@wm/core';
+import { App, AppDefaults, DynamicComponentRefProvider, AbstractI18nService, AbstractDialogService, UserDefinedExecutionContext, Viewport, $appDigest, isElementInViewport, scrollToElement, $invokeWatchers, getValidJSON, extendProto, $parseEvent } from '@wm/core';
 import { FormComponent } from './form.component';
 import { FormWidgetDirective } from './form-widget.directive';
-import { InputTextComponent } from '@wm/components/input';
+import { InputTextComponent } from '@wm/components/input/text';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Component, ViewChild } from '@angular/core';
 import { IMaskModule } from 'angular-imask';
@@ -11,7 +11,7 @@ import { FormFieldDirective } from './form-field/form-field.directive';
 import { compileTestComponent, setInputValue, onClickCheckTaglengthOnBody, checkCustomElementClass, mockViewport, mockApp } from '../../../../base/src/test/util/component-test-util';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
-import { performDataOperation } from '@wm/components/base';
+import { performDataOperation, WidgetRef } from '@wm/components/base';
 import { LayoutGridRowDirective } from '@wm/components/containers/layout-grid';
 import { VALIDATOR } from '@wm/core';
 import { DatePipe, CommonModule, DecimalPipe } from '@angular/common';
@@ -21,9 +21,13 @@ import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { ToDatePipe } from '../../../../base/src/pipes/custom-pipes';
 import { triggerTimerClickonArrowsByIndex, getTimePickerElement, MockAbstractI18nService } from 'projects/components/base/src/test/util/date-test-util';
 import { fullNameValidator, registerFullNameValidator, nameComparisionValidator } from 'projects/components/base/src/test/util/validations-test-util';
-import { DateComponent } from "../../../input/epoch/src/date/date.component";
-import { TimeComponent } from "../../../input/epoch/src/time/time.component";
-import { LabelDirective } from '@wm/components/basic';
+import { DateComponent } from "@wm/components/input/epoch/date";
+import { TimeComponent } from "@wm/components/input/epoch/time";
+import { LabelDirective } from '@wm/components/basic/label';
+import { NumberComponent } from '@wm/components/input/number';
+import { TrustAsPipe } from '../../../../base/src/pipes/trust-as.pipe';
+import { SanitizePipe } from '../../../../base/src/pipes/sanitize.pipe';
+import { TrailingZeroDecimalPipe } from '../../../../base/src/pipes/custom-pipes';
 
 jest.mock('@wm/core', () => ({
     ...jest.requireActual('@wm/core'),
@@ -230,16 +234,18 @@ const testModuleDef: ITestModuleDef = {
         CommonModule,
         BsDatepickerModule.forRoot(),
         TimepickerModule.forRoot(),
-        BsDropdownModule.forRoot()
-    ],
-    declarations: [
-        FormWrapperComponent,
+        BsDropdownModule.forRoot(),
         FormComponent,
         FormActionDirective,
         FormFieldDirective,
         FormWidgetDirective,
         TimeComponent,
-        DateComponent
+        DateComponent,
+        NumberComponent,
+        ToDatePipe
+    ],
+    declarations: [
+        FormWrapperComponent
     ],
     providers: [
         { provide: App, useValue: mockApp },
@@ -251,7 +257,12 @@ const testModuleDef: ITestModuleDef = {
         { provide: DatePipe, useClass: DatePipe },
         { provide: DecimalPipe, useClass: DecimalPipe },
         { provide: UserDefinedExecutionContext, useValue: mockApp },
-        { provide: AbstractI18nService, useClass: MockAbstractI18nService }
+        { provide: AbstractI18nService, useClass: MockAbstractI18nService },
+        { provide: AbstractDialogService, useValue: { addToOpenedDialogs: jest.fn(), getOpenedDialogs: jest.fn().mockReturnValue([]), register: jest.fn(), deRegister: jest.fn(), open: jest.fn(), close: jest.fn(), getDialogRefFromClosedDialogs: jest.fn() } },
+        TrustAsPipe,
+        SanitizePipe,
+        TrailingZeroDecimalPipe,
+        { provide: WidgetRef, useValue: { widget: { name: 'TestForm' } } }
     ],
     teardown: { destroyAfterEach: false }
 };
@@ -693,14 +704,19 @@ describe('FormComponent', () => {
         lastNameFormField._control.markAsTouched();
         // Positive case
         lastNameFormField.datavalue = invalidTestValue;
+        fixture.detectChanges();
         // Added tick to kick in depended control validators
         tick(500);
+        // Re-validate after CD has propagated the value to the formWidget
+        firstNameFormField.fieldValidations.validate();
         expect(firstNameFormField._control.valid).toBeFalsy();
         expect(firstNameFormField._control.errors.errorMessage).toEqual('First name and last name cannot be same.');
         // Negetive case
         lastNameFormField.datavalue = validTestValue;
+        fixture.detectChanges();
         // Added tick to kick in depended control validators
         tick(500);
+        firstNameFormField.fieldValidations.validate();
         expect(firstNameFormField._control.valid).toBeTruthy();
         discardPeriodicTasks();
     }));

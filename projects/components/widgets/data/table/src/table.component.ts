@@ -1020,6 +1020,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     private _gridData;
     private _selectedItemsExist = false;
     set gridData(newValue) {
+        if (this.isDestroyed) {
+            this._gridData = newValue;
+            return;
+        }
         this.isDataLoading = false;
         // Fix for [WMS-24012]: hide no datafound msg when variableInflight is true and dataset is empty
         if (this.variableInflight && isEmpty(newValue)) {
@@ -1607,7 +1611,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.selectedItems = [];
         this.fieldDefs = [];
         this.fullFieldDefs = [];
-        this.gridData = [];
         this.__fullData = null;
 
         // MEMORY LEAK FIX: Destroy jQuery datatable widget before clearing gridOptions
@@ -1639,22 +1642,22 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
         // MEMORY LEAK FIX: Clear all @ContentChildren QueryLists holding template references
         // These QueryLists hold TemplateRef instances that create circular references to the parent LView
-        if (this.rowActionTmpl) {
+        if (this.rowActionTmpl && typeof this.rowActionTmpl.reset === 'function') {
             this.rowActionTmpl.reset([]);
         }
-        if (this.filterTmpl) {
+        if (this.filterTmpl && typeof this.filterTmpl.reset === 'function') {
             this.filterTmpl.reset([]);
         }
-        if (this.inlineWidgetTmpl) {
+        if (this.inlineWidgetTmpl && typeof this.inlineWidgetTmpl.reset === 'function') {
             this.inlineWidgetTmpl.reset([]);
         }
-        if (this.inlineWidgetNewTmpl) {
+        if (this.inlineWidgetNewTmpl && typeof this.inlineWidgetNewTmpl.reset === 'function') {
             this.inlineWidgetNewTmpl.reset([]);
         }
-        if (this.customExprTmpl) {
+        if (this.customExprTmpl && typeof this.customExprTmpl.reset === 'function') {
             this.customExprTmpl.reset([]);
         }
-        if (this.rowExpansionActionTmpl) {
+        if (this.rowExpansionActionTmpl && typeof this.rowExpansionActionTmpl.reset === 'function') {
             this.rowExpansionActionTmpl.reset([]);
         }
 
@@ -1829,7 +1832,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     }
 
     callDataGridMethod(...args) {
-        if (!this.datagridElement || !this.datagridElement.datatable('instance')) {
+        if (!this.datagridElement || typeof this.datagridElement.datatable !== 'function' || !this.datagridElement.datatable('instance')) {
             this.applyProps.set(args[1], args);
             return; // If datagrid is not initiliazed or destroyed, return here
         }

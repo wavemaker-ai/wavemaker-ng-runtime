@@ -1,4 +1,5 @@
 import { waitForAsync, ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { addClass, adjustContainerPosition, adjustContainerRightEdges, App, findRootContainer, setCSSFromObj } from '@wm/core';
 import { Component, ViewChild } from '@angular/core';
 import { PopoverComponent } from './popover.component';
@@ -163,42 +164,53 @@ describe('PopoverComponent', () => {
 
     /************************* icon properties starts ****************************************** **/
 
-    // TypeError: Cannot read properties of undefined (reading 'match')
-    xit('icon class should be applied', () => {
-        wmComponent.iconclass = "wi wi-star-border";
+    it('icon class should be applied', () => {
+        const anchorEl = fixture.debugElement.query(By.css('a[wmAnchor]'));
+        expect(anchorEl).toBeTruthy();
+        const anchorComponent: AnchorComponent = anchorEl.componentInstance;
+        anchorComponent.getWidget().iconclass = "wi wi-star-border";
         fixture.detectChanges();
-        expect(document.getElementsByClassName('app-icon').length).toBe(1);
+        const iconEl = anchorEl.query(By.css('.app-icon'));
+        expect(iconEl).toBeTruthy();
+        expect(iconEl.nativeElement.classList).toContain('wi');
+        expect(iconEl.nativeElement.classList).toContain('wi-star-border');
     })
 
-    // TypeError: Cannot read properties of undefined (reading 'match')
-
-
-    //TypeError: Cannot read properties of undefined (reading 'match')
-    xit('icon url should should show the image', () => {
-        wmComponent.iconurl = "https://therightsofnature.org/wp-content/uploads/2018/01/turkey-3048299_1920-1366x550.jpg";
+    it('icon url should should show the image', () => {
+        const anchorEl = fixture.debugElement.query(By.css('a[wmAnchor]'));
+        const anchorComponent: AnchorComponent = anchorEl.componentInstance;
+        anchorComponent.getWidget().iconurl = "https://therightsofnature.org/wp-content/uploads/2018/01/turkey-3048299_1920-1366x550.jpg";
         fixture.detectChanges();
-        expect(document.getElementsByClassName('anchor-image-icon').length).toBe(1);
+        const imgEl = anchorEl.query(By.css('.anchor-image-icon'));
+        expect(imgEl).toBeTruthy();
     })
 
-    //TypeError: Cannot read properties of undefined (reading 'match')
-    xit('icon width , height and margin with icon class should be applied', () => {
-        wmComponent.iconclass = "wi wi-star-border";
-        wmComponent.iconwidth = "60px";
-        wmComponent.iconheight = "40px";
-        wmComponent.iconmargin = "4px";
+    it('icon width , height and margin with icon class should be applied', () => {
+        const anchorEl = fixture.debugElement.query(By.css('a[wmAnchor]'));
+        const anchorComponent: AnchorComponent = anchorEl.componentInstance;
+        anchorComponent.getWidget().iconclass = "wi wi-star-border";
+        anchorComponent.getWidget().iconwidth = "60px";
+        anchorComponent.getWidget().iconheight = "40px";
+        anchorComponent.getWidget().iconmargin = "4px";
         fixture.detectChanges();
-        expect(document.getElementsByClassName('app-icon')[0]['style']['width']).toBe('60px');
-        expect(document.getElementsByClassName('app-icon')[0]['style']['height']).toBe('40px');
-        expect(document.getElementsByClassName('app-icon')[0]['style']['margin']).toBe('4px');
+        const iconEl = anchorEl.query(By.css('.app-icon'));
+        expect(iconEl).toBeTruthy();
+        expect(iconEl.nativeElement.style.width).toBe('60px');
+        expect(iconEl.nativeElement.style.height).toBe('40px');
+        expect(iconEl.nativeElement.style.margin).toBe('4px');
     })
 
-    xit('icon width and height with url should be applied', () => {
-        wmComponent.iconurl = "https://therightsofnature.org/wp-content/uploads/2018/01/turkey-3048299_1920-1366x550.jpg";
-        wmComponent.iconwidth = "60px";
-        wmComponent.iconheight = "40px";
+    it('icon width and height with url should be applied', () => {
+        const anchorEl = fixture.debugElement.query(By.css('a[wmAnchor]'));
+        const anchorComponent: AnchorComponent = anchorEl.componentInstance;
+        anchorComponent.getWidget().iconurl = "https://therightsofnature.org/wp-content/uploads/2018/01/turkey-3048299_1920-1366x550.jpg";
+        anchorComponent.getWidget().iconwidth = "60px";
+        anchorComponent.getWidget().iconheight = "40px";
         fixture.detectChanges();
-        expect(document.getElementsByClassName('anchor-image-icon')[0]['style']['width']).toBe('60px');
-        expect(document.getElementsByClassName('anchor-image-icon')[0]['style']['height']).toBe('40px');
+        const imgEl = anchorEl.query(By.css('.anchor-image-icon'));
+        expect(imgEl).toBeTruthy();
+        expect(imgEl.nativeElement.style.width).toBe('60px');
+        expect(imgEl.nativeElement.style.height).toBe('40px');
     })
 
 

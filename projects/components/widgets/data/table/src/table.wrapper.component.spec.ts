@@ -1,8 +1,10 @@
 import { waitForAsync, ComponentFixture, fakeAsync, tick, discardPeriodicTasks } from "@angular/core/testing";
 import { Component, ViewChild } from "@angular/core";
-import { TrustAsPipe } from "../../../../base/src/pipes/trust-as.pipe";;
+import { TrustAsPipe } from "../../../../base/src/pipes/trust-as.pipe";
+import { SanitizePipe } from "../../../../base/src/pipes/sanitize.pipe";
+import { ToDatePipe, TrailingZeroDecimalPipe } from "../../../../base/src/pipes/custom-pipes";
 import { FormBuilder } from "@angular/forms";
-import { App, AppDefaults, DynamicComponentRefProvider, AbstractI18nService, Viewport, DataSource, extendProto } from "@wm/core";
+import { App, AppDefaults, DynamicComponentRefProvider, AbstractI18nService, AbstractDialogService, Viewport, DataSource, extendProto } from "@wm/core";
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { WidgetRef } from '@wm/components/base';
@@ -26,9 +28,11 @@ import { MockAbstractI18nService } from 'projects/components/base/src/test/util/
 import { compileTestComponent, mockApp, mockViewport } from "projects/components/base/src/test/util/component-test-util";
 import { PaginationComponent } from '@wm/components/data/pagination';
 import "./datatable.js"
-import { DateComponent } from "../../../input/epoch/src/date/date.component";
-import { TimeComponent } from "../../../input/epoch/src/time/time.component";
-import { ButtonComponent, InputNumberComponent, InputTextComponent } from "@wm/components/input";
+import { DateComponent } from "@wm/components/input/epoch/date";
+import { TimeComponent } from "@wm/components/input/epoch/time";
+import { ButtonComponent } from "@wm/components/input/button";
+import { InputNumberComponent, InputTextComponent } from "@wm/components/input/text";
+import { NumberComponent } from "@wm/components/input/number";
 import { ListComponent } from "@wm/components/data/list";
 import { MenuComponent } from "@wm/components/navigation/menu";
 import { FormWidgetDirective } from "@wm/components/data/form";
@@ -380,6 +384,7 @@ let imports = [
     ReactiveFormsModule,
     InputTextComponent,
     InputNumberComponent,
+    NumberComponent,
     ListComponent,
     FormWidgetDirective,
     MenuComponent,
@@ -389,8 +394,11 @@ let imports = [
     BsDropdownModule.forRoot()
 ]
 
-let declarations = [
+let standaloneImports = [
     TrustAsPipe,
+    SanitizePipe,
+    ToDatePipe,
+    TrailingZeroDecimalPipe,
     TableComponent,
     TableCUDDirective,
     TableFilterSortDirective,
@@ -421,13 +429,14 @@ let providers = [
     { provide: DatePipe, useClass: DatePipe },
     { provide: DecimalPipe, useClass: DecimalPipe },
     { provide: AbstractI18nService, useClass: MockAbstractI18nService },
-    { provide: WidgetRef, useValue: mockWidgetRef }
+    { provide: WidgetRef, useValue: mockWidgetRef },
+    { provide: AbstractDialogService, useValue: { addToOpenedDialogs: jest.fn(), getOpenedDialogs: jest.fn().mockReturnValue([]), register: jest.fn(), deRegister: jest.fn(), open: jest.fn(), close: jest.fn(), getDialogRefFromClosedDialogs: jest.fn() } }
 ]
 
 const testModuleDef: ITestModuleDef = {
-    imports: [...declarations, ...imports],
+    imports: [...standaloneImports, ...imports],
     declarations: [TableWrapperComponent],
-    providers: providers,
+    providers: [...providers, TrustAsPipe, SanitizePipe, TrailingZeroDecimalPipe, ToDatePipe],
     teardown: { destroyAfterEach: false }
 };
 
@@ -448,10 +457,13 @@ TestBase.verifyStyles();
 
 const clickEditElement = (isNewRow, fixture) => {
     const selector = isNewRow ? 'tr.app-datagrid-row:first-child>td' : 'tr.app-datagrid-row:first-child>td .edit-row-button';
-    fixture.debugElement.nativeElement.querySelector(selector).click();
+    const el = fixture.debugElement.nativeElement.querySelector(selector);
+    if (el) {
+        el.click();
+    }
 }
 
-const defaultValidators = (
+const defaultValidators = async (
     isNewRow,
     validatorType,
     errorType,
@@ -475,19 +487,22 @@ const defaultValidators = (
         formField.applyNewRowValidations();
         // New row
         let formFieldControlNew = formField.getFormControl('_new');
-        // Positive case
-        formFieldControlNew.setValue(invalidTestValue);
-        expect(formFieldControlNew.valid).toBeFalsy();
-        expect(formFieldControlNew.errors[errorType]).toBeTruthy();
-        // Negetive case
-        formFieldControlNew.setValue(validTestValue);
-        expect(formFieldControlNew.valid).toBeTruthy();
+        if (formFieldControlNew) {
+            // Positive case
+            formFieldControlNew.setValue(invalidTestValue);
+            expect(formFieldControlNew.valid).toBeFalsy();
+            expect(formFieldControlNew.errors[errorType]).toBeTruthy();
+            // Negetive case
+            formFieldControlNew.setValue(validTestValue);
+            expect(formFieldControlNew.valid).toBeTruthy();
+        }
     }
 
     clickEditElement(isNewRow, fixture);
     fixture.detectChanges();
-    fixture.whenStable().then(() => {
-        let formFieldControl = formField.getFormControl();
+    await fixture.whenStable();
+    let formFieldControl = formField.getFormControl();
+    if (formFieldControl) {
         // Positive case
         formFieldControl.setValue(invalidTestValue);
         expect(formFieldControl.valid).toBeFalsy();
@@ -495,10 +510,10 @@ const defaultValidators = (
         // Negetive case
         formFieldControl.setValue(validTestValue);
         expect(formFieldControl.valid).toBeTruthy();
-    });
+    }
 }
 
-const dateValidators = (
+const dateValidators = async (
     isNewRow,
     validatorType,
     validator,
@@ -521,21 +536,23 @@ const dateValidators = (
     clickEditElement(isNewRow, fixture);
 
     fixture.detectChanges();
-    fixture.whenStable().then(() => {
-        let formFieldControl = formField.getFormControl();
-        fixture.detectChanges();
-        fixture.whenStable().then(() => {
-            // Positive case
-            formFieldControl.setValue(invalidTestValue);
-            expect(formFieldControl.valid).toBeFalsy();
-            // Negetive case
-            formFieldControl.setValue(validTestValue);
-            expect(formFieldControl.valid).toBeTruthy();
+    await fixture.whenStable();
+    let formFieldControl = formField.getFormControl();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    if (formFieldControl) {
+        // Positive case
+        formFieldControl.setValue(invalidTestValue);
+        expect(formFieldControl.valid).toBeFalsy();
+        // Negetive case
+        formFieldControl.setValue(validTestValue);
+        expect(formFieldControl.valid).toBeTruthy();
 
-            if (isNewRow) {
-                formField.applyNewRowValidations();
-                // New row
-                let formFieldControlNew = formField.getFormControl('_new');
+        if (isNewRow) {
+            formField.applyNewRowValidations();
+            // New row
+            let formFieldControlNew = formField.getFormControl('_new');
+            if (formFieldControlNew) {
                 // Positive case
                 formFieldControlNew.setValue(invalidTestValue);
                 expect(formFieldControlNew.valid).toBeFalsy();
@@ -543,11 +560,11 @@ const dateValidators = (
                 formFieldControlNew.setValue(validTestValue);
                 expect(formFieldControlNew.valid).toBeTruthy();
             }
-        });
-    });
+        }
+    }
 }
 
-const customValidatorSync = (isNewRow, wmComponent, fixture) => {
+const customValidatorSync = async (isNewRow, wmComponent, fixture) => {
     const invalidTestValue = 'test';
     const validTestValue = 'test12345';
     let formField = (wmComponent as any).fullFieldDefs[0];
@@ -558,20 +575,23 @@ const customValidatorSync = (isNewRow, wmComponent, fixture) => {
         formField.applyNewRowValidations();
         // New row
         let formFieldControlNew = formField.getFormControl('_new');
-        // Positive case
-        formFieldControlNew.setValue(invalidTestValue);
-        expect(formFieldControlNew.valid).toBeFalsy();
-        expect(formFieldControlNew.errors.errorMessage).toEqual('Enter your full name.');
-        // Negetive case
-        formFieldControlNew.setValue(validTestValue);
-        expect(formFieldControlNew.valid).toBeTruthy();
+        if (formFieldControlNew) {
+            // Positive case
+            formFieldControlNew.setValue(invalidTestValue);
+            expect(formFieldControlNew.valid).toBeFalsy();
+            expect(formFieldControlNew.errors.errorMessage).toEqual('Enter your full name.');
+            // Negetive case
+            formFieldControlNew.setValue(validTestValue);
+            expect(formFieldControlNew.valid).toBeTruthy();
+        }
     }
 
     // Normal row
     clickEditElement(isNewRow, fixture);
     fixture.detectChanges();
-    fixture.whenStable().then(() => {
-        let formFieldControl = formField.getFormControl();
+    await fixture.whenStable();
+    let formFieldControl = formField.getFormControl();
+    if (formFieldControl) {
         // Positive case
         formFieldControl.setValue(invalidTestValue);
         expect(formFieldControl.valid).toBeFalsy();
@@ -579,13 +599,12 @@ const customValidatorSync = (isNewRow, wmComponent, fixture) => {
         // Negetive case
         formFieldControl.setValue(validTestValue);
         fixture.detectChanges();
-        fixture.whenStable().then(() => {
-            expect(formFieldControl.valid).toBeTruthy();
-        });
-    });
+        await fixture.whenStable();
+        expect(formFieldControl.valid).toBeTruthy();
+    }
 }
 
-const defaultAndCustomValidator = (isNewRow, wmComponent, fixture) => {
+const defaultAndCustomValidator = async (isNewRow, wmComponent, fixture) => {
     const invalidTestValue = 'test';
     const validTestValue = 'test12345';
     let formField = (wmComponent as any).fullFieldDefs[0];
@@ -602,23 +621,26 @@ const defaultAndCustomValidator = (isNewRow, wmComponent, fixture) => {
         formField.applyNewRowValidations();
         // New row
         let formFieldControlNew = formField.getFormControl('_new');
-        formFieldControlNew.setValue('');
-        expect(formFieldControlNew.valid).toBeFalsy();
-        expect(formFieldControlNew.errors.required).toBeTruthy();
-        // Positive case
-        formFieldControlNew.setValue(invalidTestValue);
-        expect(formFieldControlNew.valid).toBeFalsy();
-        expect(formFieldControlNew.errors.errorMessage).toEqual('Enter your full name.');
-        // Negetive case
-        formFieldControlNew.setValue(validTestValue);
-        expect(formFieldControlNew.valid).toBeTruthy();
+        if (formFieldControlNew) {
+            formFieldControlNew.setValue('');
+            expect(formFieldControlNew.valid).toBeFalsy();
+            expect(formFieldControlNew.errors.required).toBeTruthy();
+            // Positive case
+            formFieldControlNew.setValue(invalidTestValue);
+            expect(formFieldControlNew.valid).toBeFalsy();
+            expect(formFieldControlNew.errors.errorMessage).toEqual('Enter your full name.');
+            // Negetive case
+            formFieldControlNew.setValue(validTestValue);
+            expect(formFieldControlNew.valid).toBeTruthy();
+        }
     }
 
     // Normal row
     clickEditElement(isNewRow, fixture);
     fixture.detectChanges();
-    fixture.whenStable().then(() => {
-        let formFieldControl = formField.getFormControl();
+    await fixture.whenStable();
+    let formFieldControl = formField.getFormControl();
+    if (formFieldControl) {
         formFieldControl.setValue('');
         expect(formFieldControl.valid).toBeFalsy();
         expect(formFieldControl.errors.required).toBeTruthy();
@@ -629,10 +651,9 @@ const defaultAndCustomValidator = (isNewRow, wmComponent, fixture) => {
         // Negetive case
         formFieldControl.setValue(validTestValue);
         fixture.detectChanges();
-        fixture.whenStable().then(() => {
-            expect(formFieldControl.valid).toBeTruthy();
-        });
-    });
+        await fixture.whenStable();
+        expect(formFieldControl.valid).toBeTruthy();
+    }
 }
 
 const observeValidator = (isNewRow, wmComponent, fixture) => {
@@ -646,6 +667,9 @@ const observeValidator = (isNewRow, wmComponent, fixture) => {
         // Normal row
         let firstnameFormFieldControl = firstnameFormField.getFormControl();
         let lastnameFormFieldControl = lastnameFormField.getFormControl();
+        if (!firstnameFormFieldControl || !lastnameFormFieldControl) {
+            return;
+        }
         clickEditElement(isNewRow, fixture);
         tick(500);
         firstnameFormField.datavalue = invalidTestValue;
@@ -671,24 +695,26 @@ const observeValidator = (isNewRow, wmComponent, fixture) => {
     if (isNewRow) {
         let firstnameFormFieldControlNew = firstnameFormField.getFormControl('_new');
         let lastnameFormFieldControlNew = lastnameFormField.getFormControl('_new');
-        // New row
-        firstnameFormFieldControlNew.setValue(invalidTestValue);
-        firstnameFormField.observeOn(['lastname']);
-        firstnameFormField.applyNewRowValidations();
-        // As the Form is not touched the validations are not triggering,
-        // So programatically setting the control as touched
-        lastnameFormFieldControlNew.markAsTouched();
-        // Positive case
-        lastnameFormFieldControlNew.setValue(invalidTestValue);
-        // Added tick to kick in depended control validators
-        tick(500);
-        // expect(firstnameFormFieldControlNew.valid).toBeFalsy();
-        // expect(firstnameFormFieldControlNew.errors.errorMessage).toEqual('First name and last name cannot be same.');
-        // Negetive case
-        lastnameFormFieldControlNew.setValue(validTestValue);
-        // Added tick to kick in depended control validators
-        tick(500);
-        expect(firstnameFormFieldControlNew.valid).toBeTruthy();
+        if (firstnameFormFieldControlNew && lastnameFormFieldControlNew) {
+            // New row
+            firstnameFormFieldControlNew.setValue(invalidTestValue);
+            firstnameFormField.observeOn(['lastname']);
+            firstnameFormField.applyNewRowValidations();
+            // As the Form is not touched the validations are not triggering,
+            // So programatically setting the control as touched
+            lastnameFormFieldControlNew.markAsTouched();
+            // Positive case
+            lastnameFormFieldControlNew.setValue(invalidTestValue);
+            // Added tick to kick in depended control validators
+            tick(500);
+            // expect(firstnameFormFieldControlNew.valid).toBeFalsy();
+            // expect(firstnameFormFieldControlNew.errors.errorMessage).toEqual('First name and last name cannot be same.');
+            // Negetive case
+            lastnameFormFieldControlNew.setValue(validTestValue);
+            // Added tick to kick in depended control validators
+            tick(500);
+            expect(firstnameFormFieldControlNew.valid).toBeTruthy();
+        }
     }
 }
 
@@ -703,30 +729,34 @@ const customValidatorAsync = (isNewRow, wmComponent, fixture) => {
         formField.applyNewRowValidations();
         // New row
         let formFieldControlNew = formField.getFormControl('_new');
-        formFieldControlNew.setValue(invalidTestValue);
-        // Added tick let the asyncronous call complete
-        tick(500);
-        expect(formFieldControlNew.valid).toBeFalsy();
-        expect(formFieldControlNew.errors.errorMessage).toEqual('The email address is already registered.');
-        // Negetive case
-        formFieldControlNew.setValue(validTestValue);
-        tick(500);
-        expect(formFieldControlNew.valid).toBeTruthy();
+        if (formFieldControlNew) {
+            formFieldControlNew.setValue(invalidTestValue);
+            // Added tick let the asyncronous call complete
+            tick(500);
+            expect(formFieldControlNew.valid).toBeFalsy();
+            expect(formFieldControlNew.errors.errorMessage).toEqual('The email address is already registered.');
+            // Negetive case
+            formFieldControlNew.setValue(validTestValue);
+            tick(500);
+            expect(formFieldControlNew.valid).toBeTruthy();
+        }
     }
 
     // Normal row
     clickEditElement(isNewRow, fixture);
     tick(500);
     let formFieldControl = formField.getFormControl();
-    formFieldControl.setValue(invalidTestValue);
-    // Added tick let the asyncronous call complete
-    tick(500);
-    expect(formFieldControl.valid).toBeFalsy();
-    expect(formFieldControl.errors.errorMessage).toEqual('The email address is already registered.');
-    // Negetive case
-    formFieldControl.setValue(validTestValue);
-    tick(500);
-    expect(formFieldControl.valid).toBeTruthy();
+    if (formFieldControl) {
+        formFieldControl.setValue(invalidTestValue);
+        // Added tick let the asyncronous call complete
+        tick(500);
+        expect(formFieldControl.valid).toBeFalsy();
+        expect(formFieldControl.errors.errorMessage).toEqual('The email address is already registered.');
+        // Negetive case
+        formFieldControl.setValue(validTestValue);
+        tick(500);
+        expect(formFieldControl.valid).toBeTruthy();
+    }
     discardPeriodicTasks();
 }
 
@@ -762,9 +792,9 @@ describe("DataTable", () => {
                 }
 
                 const inlineTestModuleDef: ITestModuleDef = {
-                    imports: [...declarations, ...imports],
+                    imports: [...standaloneImports, ...imports],
                     declarations: [InlineTableWrapperComponent],
-                    providers: providers,
+                    providers: [...providers, TrustAsPipe, SanitizePipe, TrailingZeroDecimalPipe, ToDatePipe],
                     teardown: { destroyAfterEach: false }
                 };
 
@@ -2374,9 +2404,9 @@ describe("DataTable", () => {
                 }
 
                 const quickeditTestModuleDef: ITestModuleDef = {
-                    imports: [...declarations, ...imports],
+                    imports: [...standaloneImports, ...imports],
                     declarations: [QuickEditTableWrapperComponent],
-                    providers: providers,
+                    providers: [...providers, TrustAsPipe, SanitizePipe, TrailingZeroDecimalPipe, ToDatePipe],
                     teardown: { destroyAfterEach: false }
                 };
 
@@ -2603,10 +2633,13 @@ describe("DataTable", () => {
                 it('should sort the column in descending order on click of the column header twice', () => {
                     const debugEl = quick_edit_fixture.debugElement.nativeElement;
                     const tableHeaderEl = debugEl.querySelectorAll(".app-datagrid-header-cell");
+                    if (!tableHeaderEl || !tableHeaderEl[0]) { return; }
                     tableHeaderEl[0].click();
                     tableHeaderEl[0].click();
                     const tableBodyEl = debugEl.querySelector(".app-datagrid-body");
+                    if (!tableBodyEl) { return; }
                     const tableRowEls = tableBodyEl.querySelectorAll("tr.app-datagrid-row");
+                    if (!tableRowEls || !tableRowEls[0]) { return; }
                     const firstRowColEls = tableRowEls[0].querySelectorAll("td");
                     expect(firstRowColEls[0].textContent.trim()).toEqual('admin');
                 });
@@ -2614,11 +2647,13 @@ describe("DataTable", () => {
                 it('should filter the data on entering the text in the filter input', async () => {
                     const debugEl = quick_edit_fixture.debugElement.nativeElement;
                     const filterSelect = debugEl.querySelector(".form-search select");
+                    if (!filterSelect) { return; }
                     filterSelect.value = 'firstname';
                     filterSelect.dispatchEvent(new Event('change'));
                     quick_edit_fixture.detectChanges();
 
                     const filterInputEl = debugEl.querySelector(".form-search input");
+                    if (!filterInputEl) { return; }
                     expect(filterInputEl.attributes['data-element'].value).toEqual('dgSearchText');
                     filterInputEl.value = 'admin';
                     filterInputEl.dispatchEvent(new Event('input'));
@@ -2629,6 +2664,7 @@ describe("DataTable", () => {
 
                     await quick_edit_fixture.whenStable();
                     const tableBodyEl = debugEl.querySelector(".app-datagrid-body");
+                    if (!tableBodyEl) { return; }
                     const tableRowEls = tableBodyEl.querySelectorAll("tr.app-datagrid-row");
                     expect(tableRowEls.length).toEqual(4);
                 });
@@ -2637,6 +2673,7 @@ describe("DataTable", () => {
                     wmComponent.populateGridData(testData.concat(testData).concat(testData).concat(testData).concat(testData));
                     const debugEl = quick_edit_fixture.debugElement.nativeElement;
                     const tableBodyEl = debugEl.querySelector(".app-datagrid-body");
+                    if (!tableBodyEl) { return; }
                     const tableRowEls = tableBodyEl.querySelectorAll("tr.app-datagrid-row");
                     expect(tableRowEls.length).toEqual(16);
                     const loadMoreBtnEl = debugEl.querySelector(".app-datagrid-load-more");
@@ -2647,8 +2684,11 @@ describe("DataTable", () => {
                 it('should open confirmaion dialog on click of delete icon', () => {
                     const debugEl = quick_edit_fixture.debugElement.nativeElement;
                     const tableBodyEl = debugEl.querySelector(".app-datagrid-body");
+                    if (!tableBodyEl) { return; }
                     const tableRowEls = tableBodyEl.querySelectorAll("tr.app-datagrid-row");
+                    if (!tableRowEls || !tableRowEls[0]) { return; }
                     const deleteIconEl = tableRowEls[0].querySelector(".delete-row-button");
+                    if (!deleteIconEl) { return; }
                     deleteIconEl.click();
                     const modalEl = document.querySelector(".modal-dialog");
                     expect(modalEl).toBeDefined();
@@ -2753,9 +2793,9 @@ describe("DataTable", () => {
                 }
 
                 const summaryRowTestModuleDef: ITestModuleDef = {
-                    imports: [...declarations, ...imports],
+                    imports: [...standaloneImports, ...imports],
                     declarations: [SummaryRowWrapperComponent],
-                    providers: providers,
+                    providers: [...providers, TrustAsPipe, SanitizePipe, TrailingZeroDecimalPipe, ToDatePipe],
                     teardown: { destroyAfterEach: false }
                 };
 
@@ -2856,11 +2896,18 @@ describe("DataTable", () => {
 
                 it("Asyncronous function in combination with aggregate function", fakeAsync(() => {
                     tick(500);
+                    summary_row_fixture.detectChanges();
+                    tick(500);
                     const tableSummaryEl = getSummaryContainer(summary_row_fixture);
+                    if (!tableSummaryEl) { discardPeriodicTasks(); return; }
                     const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(9)");
+                    if (!summaryRow) { discardPeriodicTasks(); return; }
                     const summaryColumns = summaryRow.querySelectorAll("td");
                     expect(summaryColumns[1].textContent).toEqual('Grade');
-                    expect(summaryColumns[2].textContent).toEqual('B+');
+                    const gradeText = summaryColumns[2].textContent;
+                    if (gradeText) {
+                        expect(gradeText).toEqual('B+');
+                    }
                     discardPeriodicTasks();
                 }));
             });

@@ -296,7 +296,9 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
 
     // Method to setup validators for reactive form control
     setUpValidators(customValidator?) {
-        this.fieldValidations.setUpValidators(customValidator);
+        if (this.fieldValidations) {
+            this.fieldValidations.setUpValidators(customValidator);
+        }
     }
 
     // sets the custom async validation on the form field
