@@ -180,6 +180,8 @@ jira_feature_dev:
 
 unit_tests:
   stage: unit_tests
+  tags:
+    - npm
   only:
     - merge_requests
   script:
@@ -192,8 +194,7 @@ unit_tests:
     - rm -rf ../custom-widgets-m3 ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/custom-widgets-m3.git ../custom-widgets-m3
     - cd ../custom-widgets-m3 ; npm install ;
     - npm run build 
-    - rmags:
-    - npm -rf ../wavemaker-foundation-css ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-foundation-css.git ../wavemaker-foundation-css
+    - rm -rf ../wavemaker-foundation-css ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-foundation-css.git ../wavemaker-foundation-css
     - cd ../wavemaker-foundation-css ; npm install ;
     - npm run build
     - cd ../wavemaker-ng-runtime
@@ -208,8 +209,9 @@ unit_tests:
     - echo "npm_test finished $(date +%Y-%m-%d\ %H:%M:%S)"
     - date
   retry:
-    max: 2
-    when: stuck_or_timeout_failure
+        max: 2
+        when: stuck_or_timeout_failure
+
 notify_job:
   stage: notify
   tags:
