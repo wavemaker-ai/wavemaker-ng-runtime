@@ -160,6 +160,7 @@ const LIVE_ACTION_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/form', 
 const DEPENDS_ON_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/form', name: 'DependsonDirective' }];
 const LIVE_FILTER_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/form', name: 'LiveFilterDirective' }];
 const LIVE_FORM_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/form', name: 'LiveFormDirective' }];
+const CAPTION_POSITION_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/input/caption-position', name: 'CaptionPositionDirective'}];
 const FORM_COMPONENT: ImportDef[] = [
     ...NG_FORM_MODULE,
     ...NG_REACTIVE_FORM_MODULE,
@@ -170,6 +171,7 @@ const FORM_COMPONENT: ImportDef[] = [
     ...DEPENDS_ON_DIRECTIVE,
     ...LIVE_FILTER_DIRECTIVE,
     ...LIVE_FORM_DIRECTIVE,
+    ...CAPTION_POSITION_DIRECTIVE,
     { from: '@wm/components/data/form', name: 'FormComponent' }];
 const COMPOSITE_DIRECTIVE = [{ from: '@wm/components/input/composite', name: 'CompositeDirective' }, { from: '@wm/components/input/caption-position', name: 'CaptionPositionDirective' }]
 
