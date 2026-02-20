@@ -1,26 +1,25 @@
 stages:
-        - jira_feature_dev
+  - jira_feature_dev
         # - jira_next_release
         # - jira_hotfix_release
         # - jira_preprod_release
         # - jira_verification_merge
-        - unit_tests
-        - notify
+  - unit_tests
+  - notify
         # - ai_inline_review
         # - opencode_review
 #default:
 #  tags:
 #    - docker
 
- before_script:
-   - export NVM_DIR="$HOME/.nvm"
-   - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # Load nvm'
-   - '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # Load nvm bash_completion'  
+before_script:
+  - export NVM_DIR="$HOME/.nvm"
+  - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # Load nvm'
+  - '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # Load nvm bash_completion'  
 
 variables:
   NODE_OPTIONS: "--max-old-space-size=16384"
-  GITLAB_PAT_API: "glpat-m5Pr8WTobzXRwL16atbqRW86MQp1OjZsCA.01.0y0eij75v"
-
+  # GITLAB_PAT_API: "glpat-m5Pr8WTobzXRwL16atbqRW86MQp1OjZsCA.01.0y0eij75v"
 # ai_inline_review:
 #   stage: ai_inline_review
 #   tags:
@@ -128,17 +127,17 @@ variables:
 #          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes"
 #
 
- jira_feature_dev:
-   stage: jira_feature_dev
-   tags:
-       - jira
-   only:
-       - /^feature.*$/
+jira_feature_dev:
+  stage: jira_feature_dev
+  tags:
+    - jira
+  only:
+    - /^feature.*$/
         
-   script:
-     - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
-     - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 4 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
- 
+  script:
+    - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
+    - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 4 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
+
 # jira_next_release:
 #   stage: jira_next_release
 #   tags:
@@ -179,45 +178,45 @@ variables:
 #     - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$NEXT_HOT_FIX_VERSION"
 #     - python3 /home/gitlab-runner/jira-ci-scripts/verify_tickets_in_commits.py "$TOKEN" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$CI_PROJECT_ID" "$GITLAB_TOKEN"
 
- unit_tests:
-   stage: unit_tests
-   only:
-     - merge_requests
-   script:
-     - node --version
-     - npm --version
-     - rm -rf ../wavemaker-ui-variables ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-ui-variables.git ../wavemaker-ui-variables
-     - cd ../wavemaker-ui-variables ; npm install ; npm install --save-dev @types/babel__core @types/babel__generator @types/babel__template @types/babel__traverse @types/graceful-fs @types/istanbul-lib-coverage @types/istanbul-lib-report @types/istanbul-reports @types/stack-utils @types/yargs @types/yargs-parser
-     - npm i yalc -g
-     - npm run build 
-     - rm -rf ../custom-widgets-m3 ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/custom-widgets-m3.git ../custom-widgets-m3
-     - cd ../custom-widgets-m3 ; npm install ;
-     - npm run build 
-     - rmags:
-     - npm -rf ../wavemaker-foundation-css ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-foundation-css.git ../wavemaker-foundation-css
-     - cd ../wavemaker-foundation-css ; npm install ;
-     - npm run build
-     - cd ../wavemaker-ng-runtime
-     - npm install 
-     - yalc add @wavemaker/variables
-     - yalc add @wavemaker/custom-widgets-m3
-     - yalc add @wavemaker/foundation-css
-     - bash build.sh
-     - bash bundle-runtime-cli.sh
-     - echo "npm_test starting"
-     - npm run test 
-     - echo "npm_test finished $(date +%Y-%m-%d\ %H:%M:%S)"
-     - date
-   retry:
-         max: 2
-         when: stuck_or_timeout_failure
- notify_job:
-   stage: notify
-   tags:
+unit_tests:
+  stage: unit_tests
+  only:
+    - merge_requests
+  script:
+    - node --version
+    - npm --version
+    - rm -rf ../wavemaker-ui-variables ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-ui-variables.git ../wavemaker-ui-variables
+    - cd ../wavemaker-ui-variables ; npm install ; npm install --save-dev @types/babel__core @types/babel__generator @types/babel__template @types/babel__traverse @types/graceful-fs @types/istanbul-lib-coverage @types/istanbul-lib-report @types/istanbul-reports @types/stack-utils @types/yargs @types/yargs-parser
+    - npm i yalc -g
+    - npm run build 
+    - rm -rf ../custom-widgets-m3 ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/custom-widgets-m3.git ../custom-widgets-m3
+    - cd ../custom-widgets-m3 ; npm install ;
+    - npm run build 
+    - rmags:
+    - npm -rf ../wavemaker-foundation-css ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-foundation-css.git ../wavemaker-foundation-css
+    - cd ../wavemaker-foundation-css ; npm install ;
+    - npm run build
+    - cd ../wavemaker-ng-runtime
+    - npm install 
+    - yalc add @wavemaker/variables
+    - yalc add @wavemaker/custom-widgets-m3
+    - yalc add @wavemaker/foundation-css
+    - bash build.sh
+    - bash bundle-runtime-cli.sh
+    - echo "npm_test starting"
+    - npm run test 
+    - echo "npm_test finished $(date +%Y-%m-%d\ %H:%M:%S)"
+    - date
+  retry:
+    max: 2
+    when: stuck_or_timeout_failure
+notify_job:
+  stage: notify
+  tags:
      - npm
-    only:
-     - merge_requests
-   script:
+  only:
+    - merge_requests
+  script:
      - |
        MR_URL="https://gitlab.wavemaker.com/${CI_PROJECT_PATH}/merge_requests/${CI_MERGE_REQUEST_IID}"
        MESSAGE="Unit Test Cases  failed: on branch: $CI_COMMIT_REF_NAME. Merge Request: $MR_URL"
@@ -227,7 +226,7 @@ variables:
            --destination "ToAddresses=$GITLAB_USER_EMAIL" \
            --message "Subject={Data=Unit Test Cases Pipeline Status},Body={Text={Data=$MESSAGE}}"
 
+  when: on_failure
+  dependencies:
+    - unit_tests
 
-   when: on_failure
-   dependencies:
-     - unit_tests
