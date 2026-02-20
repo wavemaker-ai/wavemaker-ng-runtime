@@ -228,7 +228,7 @@ notify_job:
            --destination "ToAddresses=$GITLAB_USER_EMAIL" \
            --message "Subject={Data=Unit Test Cases Pipeline Status},Body={Text={Data=$MESSAGE}}"
 
-  when: on_failure
-  dependencies:
-    - unit_tests
+  # when: on_failure
+  # dependencies:
+  #   - unit_tests
 
