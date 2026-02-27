@@ -12,15 +12,19 @@ import {
     AfterContentInit,
     AfterViewInit,
     Attribute,
+    ChangeDetectorRef,
     Component,
     ContentChildren,
+    ElementRef,
     HostBinding,
+    HostListener,
     Inject,
     Injector,
     OnDestroy,
     OnInit,
     Optional,
-    QueryList
+    QueryList,
+    ViewChild
 } from '@angular/core';
 
 import {
@@ -80,12 +84,19 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
     public type;
     public nodatamessage;
     public autoActivation:boolean;
+    public showLeftArrow:boolean = false;
+    public showRightArrow:boolean = false;
+    public addTabMargin:boolean = false;
+    public isOverflowing: boolean = false;
+
+    private readonly OVERFLOW_EPSILON = 3;
     private panesChangesSubscription: any;
     private dynamicComponentRefs: any[] = [];
 
     @HostBinding('attr.icon-position') iconposition: string = '';
 
     @ContentChildren(TabPaneComponent) panes: QueryList<TabPaneComponent>;
+    @ViewChild('tabsContainer') tabsContainer!: ElementRef<HTMLDivElement>;
 
     constructor(
         inj: Injector,
@@ -93,7 +104,8 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
         @Attribute('transition') _transition: string,
         @Attribute('tabsposition') _tabsPosition: string,
         statePersistence: StatePersistence,
-        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
+        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any,
+        private cdr: ChangeDetectorRef
     ) {
         // handle to the promise resolver
         let resolveFn: Function = noop;
@@ -150,6 +162,8 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
                     }
                 }
             }
+            this.cdr.detectChanges();
+            this.scheduleOverflowCheck();
         }
     }
 
@@ -471,7 +485,7 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
 
     registerTabsScroll() {
         setTimeout(() => {
-            const $ul = this.$element.find('> ul');
+            const $ul = this.$element.find('ul.nav.nav-tabs');
             let $liPosition;
 
             const  $li = $ul.children();
@@ -528,13 +542,101 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
             if (this.panes.length) {
                 this.selectDefaultPaneByIndex(this.defaultpaneindex || 0);
             }
+            this.scheduleOverflowCheck();
         });
+    }
+
+    /** Schedules overflow detection after the DOM has updated (e.g. after panes added). */
+    private scheduleOverflowCheck(): void {
+        setTimeout(() => {
+            this.detectOverflow();
+            this.updateArrows();
+        }, 200);
+    }
+
+    /**
+     * Detects horizontal overflow from the current scrollable element (#tabsContainer).
+     * When not overflowing: container is the ul; when overflowing: container is div.tabs-container.
+     * Updates isOverflowing and triggers change detection so the template switches containers.
+     */
+    private detectOverflow(): void {
+        const container = this.tabsContainer?.nativeElement;
+        if (!container) return;
+
+        const scrollWidth = container.scrollWidth;
+        const clientWidth = container.clientWidth;
+        const overflow = scrollWidth > clientWidth + this.OVERFLOW_EPSILON;
+
+        if (overflow !== this.isOverflowing) {
+            this.isOverflowing = overflow;
+            this.cdr.detectChanges();
+            // After switching to overflow view, run updateArrows() once the new #tabsContainer is in the DOM
+            if (this.isOverflowing) {
+                setTimeout(() => this.updateArrows(), 0);
+            }
+        }
     }
 
     ngAfterViewInit() {
         super.ngAfterViewInit();
         this.registerTabsScroll();
+        setTimeout(() => {
+            this.detectOverflow();
+            this.updateArrows();
+            const el = this.tabsContainer?.nativeElement;
+            if (el) {
+                el.addEventListener('scroll', () => this.updateArrows());
+            }
+        }, 200);
     }
+
+    @HostListener('window:resize')
+    onResize() {
+        this.detectOverflow();
+        this.updateArrows();
+    }
+
+    updateArrows(): void {
+        const container = this.tabsContainer?.nativeElement;
+        if (!container) return;
+
+        const scrollLeft = container.scrollLeft;
+        const clientWidth = container.clientWidth;
+        const scrollWidth = container.scrollWidth;
+        const epsilon = this.OVERFLOW_EPSILON;
+
+        const wasOverflowing = this.isOverflowing;
+        this.isOverflowing = scrollWidth > clientWidth + epsilon;
+        if (this.isOverflowing !== wasOverflowing) {
+            this.cdr.detectChanges();
+            if (this.isOverflowing) {
+                setTimeout(() => this.updateArrows(), 0);
+            }
+        }
+
+        if (!this.isOverflowing) {
+            this.showLeftArrow = false;
+            this.showRightArrow = false;
+            this.addTabMargin = false;
+            return;
+        }
+
+        this.showLeftArrow = scrollLeft > epsilon;
+        const atEnd = scrollLeft + clientWidth >= scrollWidth - epsilon;
+        this.showRightArrow = !atEnd;
+        this.addTabMargin = this.showLeftArrow || this.showRightArrow;
+    }
+    
+      scrollSteps(direction: 'left' | 'right'): void {
+        const container = this.tabsContainer.nativeElement;
+        const scrollAmount = 150; // scroll pixels
+        container.scrollBy({
+          left: direction === 'left' ? -scrollAmount : scrollAmount,
+          behavior: 'smooth'
+        });
+    
+        setTimeout(() => this.updateArrows(), 100);
+      }
 
     getSelectedPaneIndex() {
         const index = this.panes.toArray().findIndex(pane =>

@@ -16,6 +16,8 @@ import {
     Component,
     ContentChild,
     ContentChildren,
+    ElementRef,
+    HostListener,
     Inject,
     Injector,
     OnDestroy,
@@ -23,7 +25,8 @@ import {
     Optional,
     QueryList,
     Self,
-    TemplateRef
+    TemplateRef,
+    ViewChild
 } from '@angular/core';
 
 import {DynamicComponentRefProvider, isDefined, noop} from '@wm/core';
@@ -55,6 +58,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
 
     @ContentChildren(WizardStepComponent) steps: QueryList<WizardStepComponent>;
     @ContentChild('wizardAction', { read: TemplateRef, descendants: false }) wizardAction: TemplateRef<any>;
+    @ViewChild('stepsContainer') stepsContainer!: ElementRef<HTMLDivElement>;
 
     public message: {caption: string, type: string};
     public currentStep: WizardStepComponent;
@@ -82,6 +86,11 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     public defaultstepindex;
     private _isFirstLoad: boolean = true;
     public autoActivation:boolean;
+    public showLeftArrow:boolean = false;
+    public showRightArrow:boolean = false;
+    public addStepMargin:boolean = false;
+
+  
     private stepsSubscription: any; // MEMORY LEAK FIX: Store subscription for cleanup
 
     get hasPrevStep(): boolean {
@@ -721,9 +730,59 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         }
         });
     }
+     @HostListener('window:resize')
+        onResize() {
+            this.updateArrows();
+        }
+        updateArrows(): void {
+            const container = this.stepsContainer?.nativeElement;
+            if (!container) return;
+            const parentHeading = container.closest('.app-wizard-heading');
+
+            const scrollLeft = container.scrollLeft;
+            const clientWidth = container.clientWidth;
+            const scrollWidth = container.scrollWidth;
+
+            const epsilon = 3; // handles zoom / fractional pixels
+
+            // If no overflow at all → no arrows
+            if (scrollWidth <= clientWidth + epsilon) {
+                this.showLeftArrow = false;
+                this.showRightArrow = false;
+                this.addStepMargin = false;
+                if (parentHeading) {
+                    parentHeading.classList.remove('overflowing-wizard');
+                }
+                return;
+            }
+
+            // Show left arrow only if not at start
+            this.showLeftArrow = scrollLeft > epsilon;
+
+            // Hide right arrow when last step is in view
+            const atEnd = scrollLeft + clientWidth >= scrollWidth - epsilon;
+            this.showRightArrow = !atEnd;
+
+            this.addStepMargin = this.showLeftArrow || this.showRightArrow;
+            if (parentHeading) {
+                parentHeading.classList.add('overflowing-wizard');
+            }
+        }
+
+  scrollSteps(direction: 'left' | 'right'): void {
+    const container = this.stepsContainer.nativeElement;
+    const scrollAmount = 150; // scroll pixels
+    container.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
+
+    setTimeout(() => this.updateArrows(), 300);
+  }
     ngAfterViewChecked() {
         this.nativeElement.querySelectorAll('div.app-wizard-actions').forEach(el => el?.classList.add(this.actionsalignment));
         this.nativeElement.querySelectorAll('div.app-wizard-actions-right').forEach(el => el?.classList.remove('app-container'));
+        setTimeout(() => this.updateArrows(), 200);
     }
     public getActiveStepIndex(): number {
         return findIndex(this.steps.toArray(), {isCurrent: true});
