@@ -1,24 +1,60 @@
-<ul class="nav nav-tabs" [ngClass]="{'nav-stacked': vertical, 'nav-justified': justified}" role="tablist">
-  @for (pane of panes; track pane; let i = $index) {
-    <li class="tab-header" [attr.data-paneid]="pane.widgetId" [ngClass]="{'active': pane.isActive, 'disabled': pane.disabled}"
-      [hidden]="!pane.show" role="presentation">
-      <a [attr.aria-label]="pane.badgevalue ? pane.title + ' ' + pane.badgevalue : pane.title"
-        [attr.icon-position]="iconposition"
-        [attr.title]="pane.title"
-        [tabindex]="pane.isActive ? '0' : '-1'"
-        class="tab-heading" href="javascript:void(0);"
-        [attr.aria-selected]="pane.isActive" role="tab" (click)="pane.select($event); pane.tabpaneHeaderClick($event, i);" (keydown)="onkeydown($event)">
-        @if (pane.paneicon) {
-          <i [ngClass]="['app-icon', pane.paneicon]"></i>
-        }
-        <span [textContent]="pane.title"></span>
-        @if (pane.badgevalue) {
-          <span class="label label-{{pane.badgetype}}" [textContent]="pane.badgevalue"></span>
-        }
-      </a>
-    </li>
+
+  @if (isOverflowing) {
+  <!-- Container 1: overflow – scroll wrapper with arrows -->
+    <button
+      type="button"
+      class="scroll-arrow left"
+      (click)="scrollSteps('left')"
+      [disabled]="!showLeftArrow"
+      aria-label="Scroll left"
+    >
+      <i class="wi wi-chevron-left"></i>
+    </button>
   }
-</ul>
+    <ul class="nav nav-tabs"
+        #tabsContainer
+        [ngClass]="{'nav-stacked': vertical, 'nav-justified': justified, 'tabs-ul-overflow': isOverflowing}"
+        role="tablist">
+      @for (pane of panes; track pane; let i = $index) {
+        <li class="tab-header"
+            [attr.data-paneid]="pane.widgetId"
+            [ngClass]="{'active': pane.isActive, 'disabled': pane.disabled}"
+            [hidden]="!pane.show"
+            role="presentation">
+          <a
+            class="tab-heading"
+            href="javascript:void(0);"
+            [attr.aria-label]="pane.badgevalue ? pane.title + ' ' + pane.badgevalue : pane.title"
+            [attr.icon-position]="iconposition"
+            [attr.title]="pane.title"
+            [tabindex]="pane.isActive ? '0' : '-1'"
+            [attr.aria-selected]="pane.isActive"
+            role="tab"
+            (click)="pane.select($event); pane.tabpaneHeaderClick($event, i);"
+            (keydown)="onkeydown($event)"
+          >
+            @if (pane.paneicon) {
+              <i [ngClass]="['app-icon', pane.paneicon]"></i>
+            }
+            <span [textContent]="pane.title"></span>
+            @if (pane.badgevalue) {
+              <span class="label label-{{pane.badgetype}}" [textContent]="pane.badgevalue"></span>
+            }
+          </a>
+        </li>
+      }
+    </ul>
+    @if (isOverflowing) {
+    <button
+      type="button"
+      class="scroll-arrow right"
+      (click)="scrollSteps('right')"
+      [disabled]="!showRightArrow"
+      aria-label="Scroll right"
+    >
+      <i class="wi wi-chevron-right"></i>
+    </button>
+    }
 @if (type !== 'dynamic') {
   <div class="tab-content" [ngClass]="{'tab-stacked': vertical, 'tab-justified': justified}">
     <ng-content ngProjectAs="div[wmTabPane]"></ng-content>
