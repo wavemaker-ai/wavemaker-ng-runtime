@@ -1,4 +1,15 @@
 <div class="app-wizard-heading">
+   <button
+    type="button"
+    class="scroll-arrow left"
+    (click)="scrollSteps('left')"
+    [hidden]="!addStepMargin"
+    [disabled]="!showLeftArrow"
+    aria-label="Scroll left"
+  >
+    <i class="wi wi-chevron-left"></i>
+  </button>
+   <div class="steps-container" #stepsContainer [class.add-step-margin]="addStepMargin">
   <ul class="app-wizard-steps nav nav-pills {{stepClass}}">
     @for (step of steps; track step; let i = $index) {
       <li class="app-wizard-step" [hidden]="!step.show"
@@ -43,6 +54,19 @@
       </li>
     }
   </ul>
+  </div>
+
+  <!-- Right arrow -->
+  <button
+    type="button"
+    class="scroll-arrow right"
+    (click)="scrollSteps('right')"
+    [hidden]="!addStepMargin"
+    [disabled]="!showRightArrow"
+    aria-label="Scroll right"
+  >
+    <i class="wi wi-chevron-right"></i>
+  </button>
 </div>
 @if (type !== 'dynamic') {
 <div class="app-wizard-body panel-body">
