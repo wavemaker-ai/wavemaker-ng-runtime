@@ -207,7 +207,11 @@ export class AutoLayoutUtils {
             }
 
             if (key === 'height') {
-                if (this.parentElement?.hasAttribute('wmcontainer') || this.parentElement.hasAttribute('wmautolayout')) {
+                const parent = this.nativeElement?.parentElement ?? null;
+                if (parent) {
+                const parentStyle = getComputedStyle(parent);
+                const isParentFlex = ['flex', 'inline-flex'].includes(parentStyle.display);
+                if (isParentFlex) {
                     this.$element.css({
                         'align-self': 'stretch',
                         'flex-grow': '1'
@@ -215,6 +219,7 @@ export class AutoLayoutUtils {
                 } else {
                     this.$element.css('height', '100%');
                 }
+            }
             }
         }
 
