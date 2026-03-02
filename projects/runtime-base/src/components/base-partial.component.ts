@@ -12,7 +12,6 @@ import { Subject } from 'rxjs';
 
 import {
     $invokeWatchers,
-    $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
     App,
@@ -249,11 +248,6 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
     }
 
     ngOnDestroy(): void {
-        // MEMORY LEAK FIX: Unwatch all Partial-scoped watchers for THIS specific partial when partial is destroyed
-        // Only unwatch watchers for this partial, not all partials (other partials may still be on the page)
-        if (this.partialName) {
-            $unwatchAllByScope('Partial', this.partialName);
-        }
         this.destroy$.complete();
     }
 
