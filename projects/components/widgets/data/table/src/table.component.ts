@@ -1607,7 +1607,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.selectedItems = [];
         this.fieldDefs = [];
         this.fullFieldDefs = [];
-        this.gridData = [];
+        // this.gridData = [];
         this.__fullData = null;
 
         // MEMORY LEAK FIX: Destroy jQuery datatable widget before clearing gridOptions
