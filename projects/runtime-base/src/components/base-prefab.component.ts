@@ -308,9 +308,6 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
             this.fragmentsLoaded$ = null;
         }
         // MEMORY LEAK FIX: Clear references to prevent memory leaks
-        this.Widgets = null;
-        this.Variables = null;
-        this.Actions = null;
         this.App = null;
         this.containerWidget = null;
         this.prefabMngr = null;
