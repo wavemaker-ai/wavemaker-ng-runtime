@@ -32,7 +32,7 @@ export const muteWatchers = () => {
 
 export const unMuteWatchers = () => {
     muted = false;
-    $invokeWatchers(false);
+    $invokeWatchers(true);
 };
 
 const arrayConsumer = (listenerFn, restExpr, newVal, oldVal) => {
@@ -116,7 +116,7 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
     if (muted && !ignoreMuted) {
         return;
     }
-
+    log(".......................triggerWatchers.................................");
     const limit = 5;
     let pass = 1;
     let changeDetected;
@@ -179,14 +179,19 @@ let scheduled = false,
 
 const MAX_PASSES = 5,
     DEBOUNCE_TIME = 200,
-    MAX_CONSECUTIVE_RERUNS = 3,
-    DEBUG = (window as any).__WM_DEBUG_WATCHERS__ === true;
+    MAX_CONSECUTIVE_RERUNS = 3;
+
+(window as any).__WM_DEBUG_WATCHERS__ = false;
 
 export const $invokeWatchers = (
     force = false,
     ignoreMuted = false
 ): void => {
-    scheduleExecution(ignoreMuted);
+    if (force) {
+        triggerWatchers(ignoreMuted);
+    } else {
+        scheduleExecution(ignoreMuted);
+    }
 };
 
 function scheduleExecution(ignoreMuted: boolean) {
@@ -334,7 +339,7 @@ export const $appDigest = (() => {
 })();
 
 function log(message: string) {
-    if (DEBUG) {
+    if ((window as any).__WM_DEBUG_WATCHERS__) {
         console.log(message);
     }
 }
