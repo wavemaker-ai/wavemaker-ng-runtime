@@ -266,9 +266,6 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
         }
 
         // MEMORY LEAK FIX: Clear references to prevent memory leaks
-        this.Widgets = null;
-        this.Variables = null;
-        this.Actions = null;
         this.App = null;
         this.containerWidget = null;
         this.i18nService = null;
