@@ -363,9 +363,6 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         }
 
         // MEMORY LEAK FIX: Clear references to prevent memory leaks
-        this.Widgets = null;
-        this.Variables = null;
-        this.Actions = null;
         this.App = null;
         this.route = null;
         this.appManager = null;

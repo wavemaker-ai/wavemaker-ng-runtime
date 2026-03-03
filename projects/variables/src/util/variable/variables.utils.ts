@@ -309,7 +309,7 @@ const setParamsFromURL = (queryParams, params) => {
  * @param variable: the variable that is called from user action
  * @param requestParams object consisting the info to construct the XHR request for the service
  */
-const downloadThroughIframe = (requestParams, success, dataBinding) => {
+const downloadThroughIframe = (requestParams, success, dataBinding,error) => {
     // Todo: SHubham: URL contains '//' in between which should be handled at the URL formation only
     if (requestParams.url[1] === '/' && requestParams.url[2] === '/') {
         requestParams.url = requestParams.url.slice(0, 1) + requestParams.url.slice(2);
@@ -373,9 +373,29 @@ const downloadThroughIframe = (requestParams, success, dataBinding) => {
 
     // timeout for IE 10, iframeElement.contents() is empty in IE 10 without timeout
     setTimeout(function () {
+        let completed = false;
+        iFrameElement.on("load", function () {
+            if (completed) return;
+            const text = iFrameElement.contents().find('body').text();
+            if (text && text.trim()) {
+                completed = true;
+                let message;
+                try {
+                    message ={error:JSON.parse(text.trim())} ;
+                } catch (e) {
+                   message=""
+                }
+                triggerFn(error, message);
+            }
+        });
         iFrameElement.contents().find('body').append(formEl);
         formEl.submit();
-        triggerFn(success);
+        setTimeout(() => {
+            if (!completed) {
+                completed = true;
+                triggerFn(success);
+            }
+        }, 2000);
     }, 100);
 };
 
@@ -681,7 +701,7 @@ export const simulateFileDownload = (requestParams, fileName, exportFormat, succ
     if (!isEmpty(requestParams.headers) || isXsrfEnabled()) {
         downloadThroughAnchor(requestParams, success, error);
     } else {
-        downloadThroughIframe(requestParams, success, dataBinding);
+        downloadThroughIframe(requestParams, success, dataBinding,error);
     }
 };
 
