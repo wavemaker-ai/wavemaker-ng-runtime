@@ -247,8 +247,27 @@ export function AutoLayout(options: { targetSelector?: string } = {}) {
             const target = getTargetElement(inst);
             const styles: any = {};
             if (nv === 'fill') {
-                styles[key] = '100%';
-                if (key === 'height') { styles['align-self'] = 'stretch'; styles['flex-grow'] = '1'; }
+                if (key === 'height') {
+                    const element = target?.[0];
+                    // If element or parent doesn't exist → fallback to 100% height
+                    if (!element?.parentElement) {
+                        styles[key] = '100%';
+                        return;
+                    }
+                    const parent = element.parentElement;
+                        const parentStyle = getComputedStyle(parent);
+                        const isParentFlex = ['flex', 'inline-flex'].includes(parentStyle.display);
+                        // If parent is flex, use flex stretching
+                        if (isParentFlex) {
+                            styles['align-self'] = 'stretch';
+                            styles['flex-grow'] = '1';
+                        } else {
+                            // If parent is not flex, flex properties won’t work → fallback to 100% height
+                            styles[key] = '100%';
+                        } 
+                }else if(key === 'width') {
+                    styles[key] = '100%';
+                }
             } else if (nv === 'hug') {
                 styles[key] = 'fit-content';
             } else {
