@@ -1,4 +1,4 @@
-import {PROP_ANY, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register} from '@wm/components/base';
+import {AUTO_LAYOUT_PROPS, PROP_ANY, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register} from '@wm/components/base';
 
 const propsMap = new Map(
     [
@@ -21,6 +21,7 @@ const propsMap = new Map(
         ['tabindex', {value: 0, ...PROP_NUMBER}],
         ['title', PROP_STRING],
         ['itemsperrow', PROP_STRING],
+        ...AUTO_LAYOUT_PROPS
     ]
 );
 

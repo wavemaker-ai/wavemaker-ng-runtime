@@ -42,6 +42,7 @@ import {
     setListClass,
 } from '@wm/core';
 import {
+    AutoLayout,
     FilterPipe,
     getFieldLayoutConfig,
     Live_Operations,
@@ -156,6 +157,7 @@ const setTouchedState = (self, ngForm, fieldName) => {
         ngForm.markAsTouched();
     }
 };
+@AutoLayout({ targetSelector: '.app-form' })
 
 @Component({
   standalone: true,
