@@ -10,6 +10,8 @@ forcelibs=false
 
 sourceModified=false
 
+WM_NPM_SCOPE="${WM_NPM_SCOPE:-@wavemaker-ai}"
+
 for arg in "$@"
 do
     case ${arg} in
@@ -28,8 +30,13 @@ do
         -l | --locale)
             locale=true
             ;;
+        --npm-scope=*)
+            WM_NPM_SCOPE="${arg#*=}"
+            ;;
     esac
 done
+
+export WM_NPM_SCOPE
 
 RIMRAF=./node_modules/.bin/rimraf
 ROLLUP=./node_modules/.bin/rollup

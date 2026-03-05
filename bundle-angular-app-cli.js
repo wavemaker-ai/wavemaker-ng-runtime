@@ -1,7 +1,7 @@
 
 /**
- * To update the @wavemaker/app-ng-runtime package.json version
- * Add the dependency of @wavemaker/app-ng-runtime in package.json file
+ * To update the @wavemaker-ai/app-ng-runtime package.json version
+ * Add the dependency of @wavemaker-ai/app-ng-runtime in package.json file
  * Update the TS config and TS config web app json with package version
  *
  * CONSOLE ARGUMENTS:-
@@ -12,6 +12,8 @@
 import fs from 'fs';
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+
+const WM_NPM_SCOPE = process.env.WM_NPM_SCOPE || '@wavemaker-ai';
 
 const argv = yargs(hideBin(process.argv))
     .options({
@@ -43,15 +45,15 @@ const addWMDependency = async () => {
 	packageJSON["files"].push("**/*");
 	packageJSON["files"].push(".npmrc");
 
-	packageJSON['dependencies']['@wavemaker/app-ng-runtime'] = argv.publishVersion;
-	packageJSON['dependencies']['@wavemaker/variables'] = argv.publishVersion;
-	console.log(`${DEBUG_LOG} Added @wavemaker/app-ng-runtime@${argv.publishVersion}, @wavemaker/variables@${argv.publishVersion} dependency to angular app`);
+	packageJSON['dependencies'][`${WM_NPM_SCOPE}/app-ng-runtime`] = argv.publishVersion;
+	packageJSON['dependencies'][`${WM_NPM_SCOPE}/variables`] = argv.publishVersion;
+	console.log(`${DEBUG_LOG} Added ${WM_NPM_SCOPE}/app-ng-runtime@${argv.publishVersion}, ${WM_NPM_SCOPE}/variables@${argv.publishVersion} dependency to angular app`);
 	fs.writeFileSync(path, JSON.stringify(packageJSON, null, 4));
 };
 
 /**
  * To replace the libraries with node_modules path in angular.json
- * @param {*} wm_pkg_name  ng runtime pm package name @wavemaker/app-ng-runtime
+ * @param {*} wm_pkg_name  ng runtime pm package name @wavemaker-ai/app-ng-runtime
  */
 const updateAngularJSON = async (wm_pkg_name) => {
 	const path = './dist/runtime-cli/angular-app/angular.json';
@@ -68,7 +70,7 @@ const updateAngularJSON = async (wm_pkg_name) => {
 /**
  *  To update the app-ng-runtime package in TS config
  * @param {*} path TS Config path
- * @param {*} wm_pkg_name ng runtime pm package name @wavemaker/app-ng-runtime
+ * @param {*} wm_pkg_name ng runtime pm package name @wavemaker-ai/app-ng-runtime
  */
 const updateTSConfig = async (path, wm_pkg_name) => {
 	const json = JSON.parse(fs.readFileSync(path, 'utf8'));
@@ -91,7 +93,7 @@ const updateTSConfig = async (path, wm_pkg_name) => {
  * Update TS config with package name
  */
 const init = async () => {
-	const wm_pkg_name = '@wavemaker/app-ng-runtime';
+	const wm_pkg_name = `${WM_NPM_SCOPE}/app-ng-runtime`;
 	await addWMDependency();
 	await updateAngularJSON(wm_pkg_name);
 	await updateTSConfig('./dist/runtime-cli/angular-app/tsconfig.json', wm_pkg_name);

@@ -1,4 +1,4 @@
-import {$rootScope as rootScope} from '@wavemaker/variables';
+import {$rootScope as rootScope} from '@wavemaker-ai/variables';
 export const CONSTANTS = {
     isStudioMode: false,
     isRunMode: true,
