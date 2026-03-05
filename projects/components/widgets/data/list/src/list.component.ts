@@ -197,6 +197,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private _selectedItemsExist;
     private listItemsChangesSubscription: any;
     private boundClickHandler: (event: Event) => void;
+    public itemAttrsMap: { [k: string]: string } = {};
 
     private touching;
     private touched;
@@ -782,6 +783,8 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 $ul.removeAttribute('aria-describedby');
             }
         }
+
+        this._readItemAttrsFromHost();
     }
 
     ngOnDestroy() {
@@ -1493,6 +1496,20 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             };
             // Triggered on click of add action
             $addItem.addEventListener('click', this.boundAddItemHandler);
+        }
+    }
+
+    private _readItemAttrsFromHost() {
+        const raw = this.nativeElement.getAttribute("itemattrs");
+        if (!raw) {
+            this.itemAttrsMap = {};
+            return;
+        }
+        try {
+            this.itemAttrsMap = JSON.parse(raw);
+        } catch (e) {
+            console.warn("list.component: failed to parse itemattrs JSON", e, raw);
+            this.itemAttrsMap = {};
         }
     }
 }

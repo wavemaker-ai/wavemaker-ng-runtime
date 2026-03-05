@@ -1,4 +1,5 @@
-import { App } from '@wm/core';
+import { App, $watch } from '@wm/core';
+import { Subject } from 'rxjs';
 
 const ALIGN_MAP: any = {
     'top-left':      { jc: 'flex-start', ai: 'flex-start' },
@@ -15,13 +16,16 @@ const ALIGN_MAP: any = {
     'end':           { jc: 'space-between', ai: 'flex-end' }
 };
 
-export function AutoLayout(options: { targetSelector?: string } = {}) {
+export function AutoLayout(options: { targetSelector?: string, bindParent?: string } = {}) {
     return function (constructor: Function) {
         const proto = constructor.prototype;
         const _onProp = proto.onPropertyChange;
         const _onStyle = proto.onStyleChange;
+        const _onDestroy = proto.ngOnDestroy;
 
         // --- INTERNAL LOGIC ---
+
+        const hasValue = (val: any) => val !== undefined && val !== null && val !== '';
 
         const getAutolayoutStore = (inst: any) => {
             if (!inst.__al_store) {
@@ -35,13 +39,50 @@ export function AutoLayout(options: { targetSelector?: string } = {}) {
                     pos: undefined,
                     overflow: undefined,
                     clip: undefined,
-                    top: undefined,
-                    right: undefined,
-                    bottom: undefined,
-                    left: undefined,
+                    inset: undefined,
+                    watches: new Set<string>(), // Track active watches on keys
+                    destroySub: new Subject<void>() // Internal decorator lifecylce
                 };
             }
             return inst.__al_store;
+        };
+
+        // --- Internal watch registeration ---
+        const setupInternalWatch = (inst: any, key: string, expression: string) => {
+            const store = getAutolayoutStore(inst);
+            
+            // prevent duplicate watches
+            if (store.watches.has(key)) return;
+            store.watches.add(key);
+
+            const cleanExpr = expression.replace('bind:', '');
+            const scope = options.bindParent ? options.bindParent.split('.').reduce((o, k) => o?.[k], inst) : inst.viewParent;
+
+            if (scope) {
+                const unwatch = $watch(cleanExpr, scope, inst, (nv: any) => {
+                    // When value changes, call setProperty again with the real value
+                    // This will trigger onPropertyChange again but without the 'bind:' prefix
+                    if (inst.setProperty) {
+                        inst.setProperty(key, nv);
+                    }
+                });
+
+                // cleanup
+                store.destroySub.subscribe(() => {
+                    if (typeof unwatch === 'function') unwatch();
+                });
+            }
+        };
+
+        // --- override for cleanup ---
+        proto.ngOnDestroy = function () {
+            const store = this.__al_store;
+            if (store && store.destroySub) {
+                store.destroySub.next();
+                store.destroySub.complete();
+            }
+            // call original ngOnDestroy if it exists
+            if (_onDestroy) _onDestroy.apply(this);
         };
 
         const getTargetElement = (inst: any) => {
@@ -50,22 +91,6 @@ export function AutoLayout(options: { targetSelector?: string } = {}) {
                 return target ? $(target) : inst.$element;
             }
             return inst.$element;
-        };
-
-        // const formatPosVal = (v: any) => {
-        // if (v === undefined || v === null || v === '') return '';
-        // return (typeof v === 'number') ? `${v}px` : `${v}`;
-        // };
-
-        const formatPosVal = (v: any): string => {
-            if (v === undefined || v === null || v === "") return "";
-
-            const s = String(v).trim();
-
-            // matches integers, decimals and optional +/-, e.g. "12", "-3.5", ".5", "+0.2"
-            const isNumeric = /^[-+]?(?:\d+|\d*\.\d+)$/.test(s);
-
-            return isNumeric ? `${s}px` : s;
         };
 
         const applyFlexStyles = (inst: any) => {
@@ -77,18 +102,18 @@ export function AutoLayout(options: { targetSelector?: string } = {}) {
             const styles: any = {};
             let isFlex = false;
 
-            if (store.dir !== undefined) {
+            if (hasValue(store.dir)) {
                 styles['flex-direction'] = store.dir;
                 isFlex = true;
                 if(store.dir === 'column') store.wrap = false;
             }
 
-            if (store.wrap !== undefined) {
+            if (hasValue(store.wrap)) {
                 styles['flex-wrap'] = store.wrap ? 'wrap' : 'nowrap';
                 isFlex = true;
             }
 
-            if (store.align !== undefined) {
+            if (hasValue(store.align)) {
                 const m = ALIGN_MAP[store.align] || ALIGN_MAP['top-left'];
                 const dir = store.dir || 'row';
                 const isR = dir === 'row';
@@ -118,10 +143,10 @@ export function AutoLayout(options: { targetSelector?: string } = {}) {
                 isFlex = true;
             }
 
-            const hasGap = store.gap !== undefined || store.cg !== undefined;
+            const hasGap = hasValue(store.gap) || hasValue(store.cg);
             if (hasGap) {
-                const g = store.gap !== undefined && store.gap !== 'auto' ? `${store.gap}px` : '';
-                const cg = store.cg !== undefined && store.cg !== 'auto' ? `${store.cg}px` : '';
+                const g = hasValue(store.gap) && store.gap !== 'auto' ? `${store.gap}px` : '';
+                const cg = hasValue(store.cg) && store.cg !== 'auto' ? `${store.cg}px` : '';
                 const gapValue = g ? (cg ? `${g} ${cg}` : g) : cg;
                 if (gapValue) {
                     setTimeout(() => {
@@ -131,7 +156,7 @@ export function AutoLayout(options: { targetSelector?: string } = {}) {
                 }
             }
 
-            if (isFlex) {
+            if (isFlex && hasValue(store.dir)) {
                 styles['display'] = 'flex';
             }
 
@@ -187,23 +212,12 @@ export function AutoLayout(options: { targetSelector?: string } = {}) {
 
             if (!target) return;
 
-            // BUILD NORMALIZED OFFSET VALUES ONCE
-            const normalizedOffsets = {
-                top: store.top !== undefined && store.top !== "" ? store.top : "",
-                right: store.right !== undefined && store.right !== "" ? store.right : "",
-                bottom: store.bottom !== undefined && store.bottom !== "" ? store.bottom : "",
-                left: store.left !== undefined && store.left !== "" ? store.left : "",
-            };
-
             // IF position NOT PROVIDED, CLEAR ANY INLINE POSITION STYLES
-            if (store.pos === undefined) {
+            if (!hasValue(store.pos)) {
                 target.css({
                     position: "",
-                    top: "",
-                    right: "",
-                    bottom: "",
-                    left: "",
                     "z-index": "",
+                    inset: ""
                 });
                 return;
             }
@@ -211,36 +225,10 @@ export function AutoLayout(options: { targetSelector?: string } = {}) {
             const baseStyle: any = {
                 position: store.pos || "",
                 "z-index": store.z || "",
+                inset: store.inset || "",
             };
 
-            if (store.pos === "sticky") {
-                // IF NONE OF THE OFFSETS WERE PROVIDED, APPLY DEFAULTS top:0 left:0
-                const allOffsetsEmpty =
-                    !normalizedOffsets.top &&
-                    !normalizedOffsets.right &&
-                    !normalizedOffsets.bottom &&
-                    !normalizedOffsets.left;
-
-                const finalOffsets = allOffsetsEmpty
-                    ? { top: "0", right: "", bottom: "", left: "0" }
-                    : {
-                          top: normalizedOffsets.top,
-                          right: normalizedOffsets.right,
-                          bottom: normalizedOffsets.bottom,
-                          left: normalizedOffsets.left,
-                      };
-
-                target.css({ ...baseStyle, ...finalOffsets });
-            } else {
-                // absolute / fixed / relative / etc. - only set offsets provided (others cleared)
-                target.css({
-                    ...baseStyle,
-                    top: normalizedOffsets.top,
-                    right: normalizedOffsets.right,
-                    bottom: normalizedOffsets.bottom,
-                    left: normalizedOffsets.left,
-                });
-            }
+            target.css(baseStyle);
         };
 
         const applySize = (inst: any, key: string, nv: any) => {
@@ -289,6 +277,12 @@ export function AutoLayout(options: { targetSelector?: string } = {}) {
                 let needsFlex = false;
                 let needsOverflow = false;
                 let needsPosition = false;
+
+                // Set watcher on the binded props
+                if (['position', 'positionvalue'].includes(key) && nv?.startsWith('bind:')) {
+                    setupInternalWatch(this, key, nv);
+                }
+
                 switch (key) {
                     case 'direction':
                         store.dir = nv;
@@ -318,11 +312,8 @@ export function AutoLayout(options: { targetSelector?: string } = {}) {
                         store.clip = nv;
                         needsOverflow = true;
                         break;
-                    case 'top':
-                    case 'right':
-                    case 'bottom':
-                    case 'left':
-                    store[key] = formatPosVal(nv);
+                    case 'positionvalue':
+                    store.inset = nv;
                     needsPosition = true;
                     break;
                 }
@@ -345,6 +336,11 @@ export function AutoLayout(options: { targetSelector?: string } = {}) {
                     applyOverflow(this);
                 }
                 if (key === 'zindex') {
+                    // Set watcher on the binded prop
+                    if(nv?.startsWith('bind:')) {
+                        setupInternalWatch(this, key, nv);
+                    }
+
                     store.z = nv;
                     if (store.pos !== undefined) applyPosition(this);
                 }

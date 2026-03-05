@@ -13,8 +13,5 @@ export const AUTO_LAYOUT_PROPS = new Map<string, any>([
   ['padding', PROP_STRING],
   ['width', PROP_STRING],
   ['height', PROP_STRING],
-  ['top', PROP_STRING],
-  ['right', PROP_STRING],
-  ['bottom', PROP_STRING],
-  ['left', PROP_STRING]
+  ['positionvalue', PROP_STRING]
 ]);
