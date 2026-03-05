@@ -396,6 +396,9 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
     }
 
     onStyleChange(key, nv, ov?) {
+        if (key === "width") {
+            this.$element.css("width", nv);
+        }
         this.setFormWidget(key, nv);
         this.setMaxFormWidget(key, nv);
         super.onStyleChange(key, nv, ov);
