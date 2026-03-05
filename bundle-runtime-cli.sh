@@ -54,7 +54,7 @@ cp ./wm.package.json libraries/package.json
 rm -rf dist/npm-packages/package
 mkdir -p dist/npm-packages/package
 
-TARBALL_NAME="wavemaker-app-ng-runtime-${publishVersion}.tgz"
+TARBALL_NAME="wavemaker-ai-app-ng-runtime-${publishVersion}.tgz"
 
 if [[ "${publish}" == true ]]; then
     node bundle-runtime-cli.js --publishVersion=${publishVersion}

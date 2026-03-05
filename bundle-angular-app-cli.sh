@@ -63,7 +63,7 @@ cp -rf dist/runtime-cli/angular-app/. dist/npm-packages/package
 cp -rf dist/runtime-cli/pwa-assets dist/npm-packages/package
 cp -rf dist/runtime-cli/dependencies dist/npm-packages/package
 
-TARBALL_NAME="wavemaker-angular-app-${publishVersion}.tgz"
+TARBALL_NAME="wavemaker-ai-angular-app-${publishVersion}.tgz"
 cd dist/npm-packages/package
 
 if [[ "${publish}" == true ]]; then
