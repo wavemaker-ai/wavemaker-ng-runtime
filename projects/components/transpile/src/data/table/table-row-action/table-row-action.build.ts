@@ -4,10 +4,10 @@ import { getRowActionAttrs } from '@wm/core';
 const tagName = 'div';
 
 const getSaveCancelTemplate = () => {
-    return `<button type="button" aria-label="Save edit icon" class="save row-action-button btn app-button btn-transparent save-edit-row-button hidden" title="Save">
+    return `<button type="button" aria-label="Save edit icon" class="save row-action-button btn app-button btn-transparent save-edit-row-button hidden" title="{{appLocale?.LABEL_SAVE || 'Save'}}">
                 <i class="wi wi-done" aria-hidden="true"></i>
             </button>
-            <button type="button" aria-label="Cancel edit icon" class="cancel row-action-button btn app-button btn-transparent cancel-edit-row-button hidden" title="Cancel">
+            <button type="button" aria-label="Cancel edit icon" class="cancel row-action-button btn app-button btn-transparent cancel-edit-row-button hidden" title="{{appLocale?.LABEL_CANCEL || 'Cancel'}}">
                 <i class="wi wi-cancel" aria-hidden="true"></i>
             </button>`;
 };

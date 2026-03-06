@@ -960,7 +960,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
         },
         noChangesDetected: () => {
-            this.toggleMessage(true, 'info', 'No Changes Detected', '');
+            this.toggleMessage(true, 'info', this.appLocale.MESSAGE_NO_CHANGES, '');
         },
         // Function to redraw the widgets on resize of columns
         redrawWidgets: () => {
