@@ -457,6 +457,10 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
             this.nativeElement.hidden = !nv;
         } else if (key === 'hint') {
             setAttr(this.nativeElement, 'title', nv);
+            const formControl = (this as any).formControl?.control;
+            if (formControl?.invalid) {
+                setAttr(this.nativeElement, 'title', "");
+            }
         } else if (key === 'class') {
             switchClass(this.nativeElement, nv, ov);
         } else if (key === 'name' || key === 'tabindex') {

@@ -221,6 +221,9 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
 
     setAriaAttributes() {
         const element = this.getActiveElement();
+        if(this.formWidget?.nativeElement) {
+            this.formWidget.nativeElement.setAttribute('title', this.formWidget._formControl.valid ? this.formWidget.hint : '')
+        }
         if (this.ngform.controls[this._fieldName].invalid && this.ngform.controls[this._fieldName].touched && this.form.isUpdateMode) {
             this.nativeElement.setAttribute('__errormsg', `${this.nativeElement.getAttribute('__validationId')}`);
             element?.setAttribute('aria-invalid', `${this.ngform.controls[this._fieldName].invalid}`);
