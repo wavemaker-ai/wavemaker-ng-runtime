@@ -201,24 +201,29 @@ export class AutoLayoutUtils {
     private applySize(key: string, nv: any) {
 
         if (nv === 'fill') {
-
-            if (key === 'width') {
-                this.$element.css('width', '100%');
+            const element = this.$element?.[0];
+            // If element or parent doesn't exist → fallback to 100%
+            if (!element?.parentElement) {
+                this.$element.css(key, '100%');
+                return;
             }
-
-            if (key === 'height') {
-                if (this.parentElement?.hasAttribute('wmcontainer') || this.parentElement.hasAttribute('wmautolayout')) {
-                    this.$element.css({
-                        'align-self': 'stretch',
-                        'flex-grow': '1'
-                    });
-                } else {
-                    this.$element.css('height', '100%');
-                }
+            const parent = element.parentElement;
+            const parentStyle = getComputedStyle(parent);
+            const isParentFlex = ['flex', 'inline-flex'].includes(parentStyle.display);
+            if (!isParentFlex) {
+                // Non-flex parent → fallback
+                this.$element.css(key, '100%');
+                return;
             }
-        }
-
-        else if (nv === 'hug') {
+            const flexDirection = parentStyle.flexDirection;
+            const isRow = ['row', 'row-reverse'].includes(flexDirection);
+            const isMainAxis = (key === 'width' && isRow) || (key === 'height' && !isRow);
+            if (isMainAxis) {
+                this.$element.css('flex-grow', '1');
+            } else {
+                this.$element.css('align-self', 'stretch');
+            }
+        }else if (nv === 'hug') {
 
             if (key === 'width') {
                 this.$element.css('width', 'fit-content');

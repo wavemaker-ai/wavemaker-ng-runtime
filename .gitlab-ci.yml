@@ -6,7 +6,7 @@ stages:
         - jira_preprod_release
         - jira_verification_merge
         - unit_tests
-        - notify
+        - notify       
 
 before_script:
   - export NVM_DIR="$HOME/.nvm"
