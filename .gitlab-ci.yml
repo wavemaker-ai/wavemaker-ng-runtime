@@ -1,5 +1,4 @@
 stages:
-        - review
         - jira_feature_dev
         - jira_next_release
         - jira_hotfix_release
@@ -7,35 +6,6 @@ stages:
         - jira_verification_merge
         - unit_tests
         - notify       
-ai-review:
-  stage: review
-  tags:
-      - docker
-  image: nikitafilonov/ai-review:latest
-  rules:
-    - if: '$CI_MERGE_REQUEST_IID'
-  before_script: [] 
-  script:
-    - ai-review run
-  variables:
-    # --- LLM configuration ---
-    LLM__PROVIDER: "CLAUDE"
-    LLM__META__MODEL: "claude-sonnet-4-5-20250929"
-    LLM__META__MAX_TOKENS: "50000"
-    LLM__META__TEMPERATURE: "0.3"
-    LLM__HTTP_CLIENT__API_URL: "https://api.anthropic.com"
-    LLM__HTTP_CLIENT__API_TOKEN: "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"
-
-    # --- GitLab integration ---
-    VCS__PROVIDER: "GITLAB"
-    VCS__PIPELINE__PROJECT_ID: "$CI_PROJECT_ID"
-    VCS__PIPELINE__MERGE_REQUEST_ID: "$CI_MERGE_REQUEST_IID"
-    VCS__HTTP_CLIENT__API_URL: "https://gitlab.wavemaker.com"
-    VCS__HTTP_CLIENT__API_TOKEN: "glpat-m5Pr8WTobzXRwL16atbqRW86MQp1OjZsCA.01.0y0eij75v"
-    GIT_DEPTH: 0  # Full clone to get complete diff history
-  allow_failure: true  # Optional: don't block pipeline if AI review fails
-
-
 
 before_script:
   - export NVM_DIR="$HOME/.nvm"
