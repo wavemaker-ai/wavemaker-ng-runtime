@@ -2270,6 +2270,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 if (nv) {
                     this.$element.find('.on-demand-datagrid > a').text(nv);
                 }
+                this.setDataGridOption('ondemandmessage', nv);
                 this.gridOptions.ondemandmessage = nv;
                 break;
             case 'allowpagesizechange':
@@ -2299,6 +2300,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.gridOptions.radioselectarialabel = nv;
                 break;
             case 'viewlessmessage':
+                this.setDataGridOption('viewlessmessage', nv);
                 this.gridOptions.viewlessmessage = nv;
                 break;
             case 'show':
