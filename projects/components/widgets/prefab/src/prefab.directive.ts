@@ -99,22 +99,5 @@ export class PrefabDirective extends StylableComponent implements OnDestroy {
 
     ngOnDestroy() {
         this.invokeEventCallback('destroy', { widget: this });
-
-        // Save widget reference before super.ngOnDestroy() removes it from viewParent.Widgets
-        const viewParent = (this as any).viewParent;
-        const widgetName = this.name;
-        const widgetRef = viewParent?.Widgets?.[widgetName];
-
-        this.propsReady = null;
-        super.ngOnDestroy();
-
-        // Restore widget reference so property bindings like
-        // caption="bind:Page.Widgets.prefabName.propName" continue to resolve
-        // after the prefab is destroyed (e.g. hidden via *ngIf).
-        // Internal cleanup (watchers, subscriptions, registryById) is still performed
-        // by super.ngOnDestroy(); only the external Widgets reference is preserved.
-        if (viewParent?.Widgets && widgetName && widgetRef) {
-            viewParent.Widgets[widgetName] = widgetRef;
-        }
     }
 }
