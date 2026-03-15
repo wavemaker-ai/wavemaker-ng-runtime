@@ -22,6 +22,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
         const _onProp = proto.onPropertyChange;
         const _onStyle = proto.onStyleChange;
         const _onDestroy = proto.ngOnDestroy;
+        const _afterViewInit = proto.ngAfterViewInit;
 
         // --- INTERNAL LOGIC ---
 
@@ -40,6 +41,13 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                     overflow: undefined,
                     clip: undefined,
                     inset: undefined,
+                    padding: undefined,
+                    width: undefined,
+                    height: undefined,
+                    isViewInitialized: false,
+                    needsFlex: false,
+                    needsOverflow: false,
+                    needsPosition: false,
                     watches: new Set<string>(), // Track active watches on keys
                     destroySub: new Subject<void>() // Internal decorator lifecylce
                 };
@@ -85,10 +93,31 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             if (_onDestroy) _onDestroy.apply(this);
         };
 
+        proto.ngAfterViewInit = function () {
+            const app = this['app'] || this['injector']?.get(App);
+            if (app?.isPrism) {
+                const store = getAutolayoutStore(this);
+                store.isViewInitialized = true;
+
+                // Sync all stored values to DOM now that target exists
+                if (store.needsFlex) applyFlexStyles(this);
+                if (store.needsOverflow) applyOverflow(this);
+                if (store.needsPosition) applyPosition(this);
+                
+                if (hasValue(store.width)) applySize(this, 'width', store.width);
+                if (hasValue(store.height)) applySize(this, 'height', store.height);
+                if (hasValue(store.padding)) {
+                    const target = getTargetElement(this);
+                    if (target) target.css('padding', store.padding);
+                }
+            }
+            if (_afterViewInit) _afterViewInit.apply(this);
+        };
+
         const getTargetElement = (inst: any) => {
             if (options.targetSelector) {
                 const target = inst.nativeElement.querySelector(options.targetSelector);
-                return target ? $(target) : inst.$element;
+                return target ? $(target) : null;
             }
             return inst.$element;
         };
@@ -274,9 +303,6 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             const app = this['app'] || this['injector']?.get(App);
             if (app?.isPrism) {
                 const store = getAutolayoutStore(this);
-                let needsFlex = false;
-                let needsOverflow = false;
-                let needsPosition = false;
 
                 // Set watcher on the binded props
                 if (['position', 'positionvalue'].includes(key) && nv?.startsWith('bind:')) {
@@ -286,40 +312,42 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 switch (key) {
                     case 'direction':
                         store.dir = nv;
-                        needsFlex = true;
+                        store.needsFlex = true;
                         break;
                     case 'wrap':
                         store.wrap = nv;
-                        needsFlex = true;
+                        store.needsFlex = true;
                         break;
                     case 'alignment':
                         store.align = nv;
-                        needsFlex = true;
+                        store.needsFlex = true;
                         break;
                     case 'gap':
                         store.gap = nv;
-                        needsFlex = true;
+                        store.needsFlex = true;
                         break;
                     case 'columngap':
                         store.cg = nv;
-                        needsFlex = true;
+                        store.needsFlex = true;
                         break;
                     case 'position':
                         store.pos = nv;
-                        needsPosition = true;
+                        store.needsPosition = true;
                         break;
                     case 'clipcontent':
                         store.clip = nv;
-                        needsOverflow = true;
+                        store.needsOverflow = true;
                         break;
                     case 'positionvalue':
                     store.inset = nv;
-                    needsPosition = true;
+                    store.needsPosition = true;
                     break;
                 }
-                if (needsFlex) applyFlexStyles(this);
-                if (needsOverflow) applyOverflow(this);
-                if (needsPosition) applyPosition(this);
+                if (store.isViewInitialized) {
+                    if (store.needsFlex) applyFlexStyles(this);
+                    if (store.needsOverflow) applyOverflow(this);
+                    if (store.needsPosition) applyPosition(this);
+                }
             }
             if (_onProp) _onProp.apply(this, [key, nv, ov]);
         };
@@ -328,29 +356,74 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             const app = this['app'] || this['injector']?.get(App);
             if (app?.isPrism) {
                 const store = getAutolayoutStore(this);
-                if (key === 'width' || key === 'height') {
-                    applySize(this, key, nv);
-                }
-                if (key === 'overflow') {
-                    store.overflow = nv;
-                    applyOverflow(this);
-                }
-                if (key === 'zindex') {
-                    // Set watcher on the binded prop
-                    if(nv?.startsWith('bind:')) {
-                        setupInternalWatch(this, key, nv);
-                    }
+                const isReady = store.isViewInitialized;
 
-                    store.z = nv;
-                    if (store.pos !== undefined) applyPosition(this);
-                }
+                switch (key) {
+                    case 'width':
+                    case 'height':
+                        store[key] = nv;
+                        if (isReady) applySize(this, key, nv);
+                        break;
 
-                if (key === 'padding') {
-                    const target = getTargetElement(this);
-                    target.css('padding', nv);
+                    case 'padding':
+                        store.padding = nv;
+                        if (isReady) {
+                            const target = getTargetElement(this);
+                            if (target) target.css('padding', nv);
+                        }
+                        break;
+
+                    case 'overflow':
+                        store.overflow = nv;
+                        store.needsOverflow = true;
+                        if (isReady) applyOverflow(this);
+                        break;
+
+                    case 'zindex':
+                        store.z = nv;
+                        // Always setup watch for bindings immediately
+                        if (nv?.startsWith('bind:')) {
+                            setupInternalWatch(this, key, nv);
+                        }
+                        // Only apply to DOM if ready and position exists
+                        if(store.pos !== undefined) {
+                            store.needsPosition = true;
+
+                            if(isReady) applyPosition(this);
+                        }
+                        break;
                 }
             }
             if (_onStyle) _onStyle.apply(this, [key, nv, ov]);
         };
+
+        // proto.onStyleChange = function (key: string, nv: any, ov?: any) {
+        //     const app = this['app'] || this['injector']?.get(App);
+        //     if (app?.isPrism) {
+        //         const store = getAutolayoutStore(this);
+        //         if (key === 'width' || key === 'height') {
+        //             applySize(this, key, nv);
+        //         }
+        //         if (key === 'overflow') {
+        //             store.overflow = nv;
+        //             applyOverflow(this);
+        //         }
+        //         if (key === 'zindex') {
+        //             // Set watcher on the binded prop
+        //             if(nv?.startsWith('bind:')) {
+        //                 setupInternalWatch(this, key, nv);
+        //             }
+
+        //             store.z = nv;
+        //             if (store.pos !== undefined) applyPosition(this);
+        //         }
+
+        //         if (key === 'padding') {
+        //             const target = getTargetElement(this);
+        //             target.css('padding', nv);
+        //         }
+        //     }
+        //     if (_onStyle) _onStyle.apply(this, [key, nv, ov]);
+        // };
     };
 }
