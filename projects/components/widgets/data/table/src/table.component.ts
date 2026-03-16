@@ -27,6 +27,8 @@ import {
     $parseEvent,
     $unwatch,
     $watch,
+    muteWatchers,
+    unMuteWatchers,
     App,
     closePopover,
     DataSource,
@@ -632,7 +634,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.prevData = getClonedObject(row);
         },
         afterRowUpdate: (row, e, callBack, options) => {
+            muteWatchers();
             this.updateRecord(extend({}, options, {row, 'prevData': options.rowindex?options.rowindex:this.prevData, 'event': e, 'callBack': callBack}));
+            setTimeout(() => {
+                unMuteWatchers();
+            }, 10);
         },
         onBeforeRowUpdate: (row, e, options) => {
             return this.invokeEventCallback('beforerowupdate', {$event: e, $data: row, row, options: options});
@@ -1607,7 +1613,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.selectedItems = [];
         this.fieldDefs = [];
         this.fullFieldDefs = [];
-        // this.gridData = [];
         this.__fullData = null;
 
         // MEMORY LEAK FIX: Destroy jQuery datatable widget before clearing gridOptions
