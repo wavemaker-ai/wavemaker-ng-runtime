@@ -28,6 +28,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
 
         const hasValue = (val: any) => val !== undefined && val !== null && val !== '';
 
+        // --- Getter Method ---
         const getAutolayoutStore = (inst: any) => {
             if (!inst.__al_store) {
                 inst.__al_store = {
@@ -53,6 +54,13 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 };
             }
             return inst.__al_store;
+        };
+
+        // --- Setter Method ---
+        const setAutolayoutStore = (inst: any, updates: Partial<any>) => {
+            const store = getAutolayoutStore(inst);
+            Object.assign(store, updates);
+            return store;
         };
 
         // --- Internal watch registeration ---
@@ -97,7 +105,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             const app = this['app'] || this['injector']?.get(App);
             if (app?.isPrism) {
                 const store = getAutolayoutStore(this);
-                store.isViewInitialized = true;
+                setAutolayoutStore(this, { isViewInitialized: true });
 
                 // Sync all stored values to DOM now that target exists
                 if (store.needsFlex) applyFlexStyles(this);
@@ -134,7 +142,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             if (hasValue(store.dir)) {
                 styles['flex-direction'] = store.dir;
                 isFlex = true;
-                if(store.dir === 'column') store.wrap = false;
+                if(store.dir === 'column') setAutolayoutStore(inst, { wrap: false });
             }
 
             if (hasValue(store.wrap)) {
@@ -292,7 +300,10 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             } else if (nv === 'hug') {
                 styles[key] = 'fit-content';
             } else {
+                // Reset the styles in case of fixed values
                 styles['flex-shrink'] = '0';
+                styles['flex-grow'] = '0'; 
+                styles['align-self'] = 'auto';
             }
             target?.css(styles);
         };
@@ -311,38 +322,34 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
 
                 switch (key) {
                     case 'direction':
-                        store.dir = nv;
-                        store.needsFlex = true;
+                        setAutolayoutStore(this, { dir: nv, needsFlex: true });
                         break;
                     case 'wrap':
-                        store.wrap = nv;
-                        store.needsFlex = true;
+                        setAutolayoutStore(this, { wrap: nv, needsFlex: true });
                         break;
                     case 'alignment':
-                        store.align = nv;
-                        store.needsFlex = true;
+                        setAutolayoutStore(this, { align: nv, needsFlex: true });
                         break;
                     case 'gap':
-                        store.gap = nv;
-                        store.needsFlex = true;
+                        setAutolayoutStore(this, { gap: nv, needsFlex: true });
                         break;
                     case 'columngap':
-                        store.cg = nv;
-                        store.needsFlex = true;
+                        setAutolayoutStore(this, { cg: nv, needsFlex: true });
                         break;
                     case 'position':
-                        store.pos = nv;
-                        store.needsPosition = true;
+                        setAutolayoutStore(this, { pos: nv, needsPosition: true });
                         break;
                     case 'clipcontent':
-                        store.clip = nv;
-                        store.needsOverflow = true;
+                        setAutolayoutStore(this, { clip: nv, needsOverflow: true });
                         break;
                     case 'positionvalue':
-                    store.inset = nv;
-                    store.needsPosition = true;
-                    break;
+                        setAutolayoutStore(this, { inset: nv, needsPosition: true });
+                        break;
                 }
+
+                /* We need to apply the styles only when the target element is rendered in the dom. 
+                   Because onPropertyChange might get triggered before the view has been renndered 
+                   and the element might not exist at that time. */
                 if (store.isViewInitialized) {
                     if (store.needsFlex) applyFlexStyles(this);
                     if (store.needsOverflow) applyOverflow(this);
@@ -361,12 +368,12 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 switch (key) {
                     case 'width':
                     case 'height':
-                        store[key] = nv;
+                        setAutolayoutStore(this, { key: nv });
                         if (isReady) applySize(this, key, nv);
                         break;
 
                     case 'padding':
-                        store.padding = nv;
+                        setAutolayoutStore(this, { padding: nv });
                         if (isReady) {
                             const target = getTargetElement(this);
                             if (target) target.css('padding', nv);
@@ -374,20 +381,19 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                         break;
 
                     case 'overflow':
-                        store.overflow = nv;
-                        store.needsOverflow = true;
+                        setAutolayoutStore(this, { overflow: nv, needsOverflow: true });
                         if (isReady) applyOverflow(this);
                         break;
 
                     case 'zindex':
-                        store.z = nv;
+                        setAutolayoutStore(this, { z: nv });
                         // Always setup watch for bindings immediately
                         if (nv?.startsWith('bind:')) {
                             setupInternalWatch(this, key, nv);
                         }
                         // Only apply to DOM if ready and position exists
                         if(store.pos !== undefined) {
-                            store.needsPosition = true;
+                            setAutolayoutStore(this, { needsPosition: true });
 
                             if(isReady) applyPosition(this);
                         }
@@ -396,34 +402,5 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             }
             if (_onStyle) _onStyle.apply(this, [key, nv, ov]);
         };
-
-        // proto.onStyleChange = function (key: string, nv: any, ov?: any) {
-        //     const app = this['app'] || this['injector']?.get(App);
-        //     if (app?.isPrism) {
-        //         const store = getAutolayoutStore(this);
-        //         if (key === 'width' || key === 'height') {
-        //             applySize(this, key, nv);
-        //         }
-        //         if (key === 'overflow') {
-        //             store.overflow = nv;
-        //             applyOverflow(this);
-        //         }
-        //         if (key === 'zindex') {
-        //             // Set watcher on the binded prop
-        //             if(nv?.startsWith('bind:')) {
-        //                 setupInternalWatch(this, key, nv);
-        //             }
-
-        //             store.z = nv;
-        //             if (store.pos !== undefined) applyPosition(this);
-        //         }
-
-        //         if (key === 'padding') {
-        //             const target = getTargetElement(this);
-        //             target.css('padding', nv);
-        //         }
-        //     }
-        //     if (_onStyle) _onStyle.apply(this, [key, nv, ov]);
-        // };
     };
 }
