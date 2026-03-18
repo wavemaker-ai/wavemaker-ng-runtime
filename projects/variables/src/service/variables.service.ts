@@ -1,24 +1,32 @@
-import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
+import {Injectable} from '@angular/core';
+import {Router} from '@angular/router';
 
 import {
-    $watch,
+    $invokeWatchers,
     $parseEvent,
+    $watch,
     AbstractDialogService,
     AbstractHttpService,
     AbstractNavigationService,
-    AbstractToasterService, processFilterExpBindNode, $invokeWatchers, getClonedObject
+    AbstractToasterService,
+    processFilterExpBindNode
 } from '@wm/core';
-import { OAuthService } from '@wm/oAuth';
-import { SecurityService } from '@wm/security';
+import {OAuthService} from '@wm/oAuth';
+import {SecurityService} from '@wm/security';
 
-import { VariableFactory } from '../factory/variable.factory';
-import { wmSetDependency, BaseAction, getTarget, setValueToNode, getTargetNodeKey, internalBoundNodeMap } from '@wavemaker-ai/variables';
-import {setDependency, simulateFileDownload} from '../util/variable/variables.utils';
-import { MetadataService } from './metadata-service/metadata.service';
-import { VARIABLE_CONSTANTS } from '../constants/variables.constants';
-import {appManager} from '../util/variable/variables.utils';
-import { DateFormatter } from '@wavemaker-ai/variables';
+import {VariableFactory} from '../factory/variable.factory';
+import {
+    BaseAction,
+    DateFormatter,
+    getTarget,
+    getTargetNodeKey,
+    internalBoundNodeMap,
+    setValueToNode,
+    wmSetDependency
+} from '@wavemaker-ai/variables';
+import {appManager, setDependency, simulateFileDownload} from '../util/variable/variables.utils';
+import {MetadataService} from './metadata-service/metadata.service';
+import {VARIABLE_CONSTANTS} from '../constants/variables.constants';
 import {isArray, isFunction, isUndefined, set} from "lodash-es";
 
 export class Formatter implements DateFormatter {
@@ -183,7 +191,7 @@ export class VariablesService {
 
            }
 
-           if (this.isVariableSeperated(variablesJson, variableName) || variablesJson[variableName].category === 'wm.TimerVariable') {
+           if (this.isVariableSeperated(variablesJson, variableName) || variablesJson[variableName].category === 'wm.TimerAction') {
                for (const e in VARIABLE_CONSTANTS.EVENT) {
                    if (varInstance[VARIABLE_CONSTANTS.EVENT[e]]) {
                        varInstance[VARIABLE_CONSTANTS.EVENT[e]] = $parseEvent(varInstance[VARIABLE_CONSTANTS.EVENT[e]]);

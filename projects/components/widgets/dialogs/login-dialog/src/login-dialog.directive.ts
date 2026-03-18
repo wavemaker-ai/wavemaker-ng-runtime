@@ -1,8 +1,17 @@
-import { AfterViewInit, ContentChild, ContentChildren, Directive, Inject, OnDestroy, QueryList, Self } from '@angular/core';
+import {
+    AfterViewInit,
+    ContentChild,
+    ContentChildren,
+    Directive,
+    Inject,
+    OnDestroy,
+    QueryList,
+    Self
+} from '@angular/core';
 
-import { $appDigest } from '@wm/core';
-import { Context, DialogRef, MessageComponent } from '@wm/components/base';
-import { FormComponent } from '@wm/components/data/form';
+import {$appDigest} from '@wm/core';
+import {Context, DialogRef, MessageComponent} from '@wm/components/base';
+import {FormComponent} from '@wm/components/data/form';
 
 @Directive({
   standalone: true,
@@ -68,7 +77,7 @@ export class LoginDialogDirective implements AfterViewInit, OnDestroy {
                         evt.stopPropagation();
                         /**
                          * As this function is getting executed outside of angular context,
-                         * trigger a digest cycle and then trigger doLogin method, So that the bindings in the loginVariable will be evaluated property
+                         * trigger a digest cycle and then trigger doLogin method, So that the bindings in the loginAction will be evaluated property
                          */
                         $appDigest();
                         this.doLogin();

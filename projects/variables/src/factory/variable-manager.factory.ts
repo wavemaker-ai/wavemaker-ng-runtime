@@ -1,19 +1,19 @@
-import { NavigationActionManager } from '../manager/action/navigation-action.manager';
-import { NotificationActionManager } from '../manager/action/notification-action.manager';
-import { BaseVariableManager } from '../manager/variable/base-variable.manager';
-import { BaseActionManager } from '../manager/action/base-action.manager';
-import { LoginActionManager } from '../manager/action/login-action.manager';
-import { LogoutActionManager } from '../manager/action/logout-action.manager';
-import { WebSocketVariableManager } from '../manager/variable/web-socket-variable.manager';
+import {NavigationActionManager} from '../manager/action/navigation-action.manager';
+import {NotificationActionManager} from '../manager/action/notification-action.manager';
+import {BaseVariableManager} from '../manager/variable/base-variable.manager';
+import {BaseActionManager} from '../manager/action/base-action.manager';
+import {LoginActionManager} from '../manager/action/login-action.manager';
+import {LogoutActionManager} from '../manager/action/logout-action.manager';
+import {WebSocketVariableManager} from '../manager/variable/web-socket-variable.manager';
 
 const managerMap = new Map(),
     typeToManagerMap = {
         'Variable': BaseVariableManager,
         'Action': BaseActionManager,
-        'wm.NavigationVariable': NavigationActionManager,
-        'wm.NotificationVariable': NotificationActionManager,
-        'wm.LoginVariable': LoginActionManager,
-        'wm.LogoutVariable': LogoutActionManager,
+        'wm.NavigationAction': NavigationActionManager,
+        'wm.NotificationAction': NotificationActionManager,
+        'wm.LoginAction': LoginActionManager,
+        'wm.LogoutAction': LogoutActionManager,
         'wm.WebSocketVariable': WebSocketVariableManager
     };
 
