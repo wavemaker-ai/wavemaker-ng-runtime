@@ -1,4 +1,4 @@
-import { PROP_BOOLEAN, PROP_STRING } from "../widgets/framework/widget-props";
+import { PROP_ANY, PROP_BOOLEAN, PROP_STRING } from "../widgets/framework/widget-props";
 
 export const AUTO_LAYOUT_PROPS = new Map<string, any>([
   ['direction', PROP_STRING],
@@ -13,5 +13,8 @@ export const AUTO_LAYOUT_PROPS = new Map<string, any>([
   ['padding', PROP_STRING],
   ['width', PROP_STRING],
   ['height', PROP_STRING],
-  ['positionvalue', PROP_STRING]
+  ['positionvalue', PROP_STRING],
+  ['class', PROP_STRING],
+  ['conditionalclass', PROP_ANY],
+  ['conditionalstyle', PROP_ANY],
 ]);

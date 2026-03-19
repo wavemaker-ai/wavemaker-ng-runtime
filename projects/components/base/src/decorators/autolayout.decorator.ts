@@ -316,8 +316,20 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 const store = getAutolayoutStore(this);
 
                 // Set watcher on the binded props
-                if (['position', 'positionvalue'].includes(key) && nv?.startsWith('bind:')) {
-                    setupInternalWatch(this, key, nv);
+                if (['position', 'positionvalue', 'conditionalclass', 'conditionalstyle'].includes(key) && nv) {
+                    // 1. Handle the Case where nv is just a String
+                    if (typeof nv === 'string' && nv.startsWith('bind:')) {
+                        setupInternalWatch(this, key, nv);
+                    } 
+                    
+                    // 2. Handle the Case where nv is an Object with a toAdd array
+                    else if (typeof nv === 'object' && Array.isArray(nv.toAdd)) {
+                        nv.toAdd.forEach((item: any) => {
+                            if (typeof item === 'string' && item.startsWith('bind:')) {
+                                setupInternalWatch(this, key, item);
+                            }
+                        });
+                    }
                 }
 
                 switch (key) {
@@ -366,36 +378,44 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 const isReady = store.isViewInitialized;
 
                 switch (key) {
-                    case 'width':
-                    case 'height':
-                        setAutolayoutStore(this, { key: nv });
+                    case "width":
+                    case "height":
+                        setAutolayoutStore(this, { [key]: nv });
                         if (isReady) applySize(this, key, nv);
                         break;
 
-                    case 'padding':
+                    case "padding":
                         setAutolayoutStore(this, { padding: nv });
                         if (isReady) {
                             const target = getTargetElement(this);
-                            if (target) target.css('padding', nv);
+                            if (target) target.css("padding", nv);
                         }
                         break;
 
-                    case 'overflow':
-                        setAutolayoutStore(this, { overflow: nv, needsOverflow: true });
+                    case "overflow":
+                        setAutolayoutStore(this, {
+                            overflow: nv,
+                            needsOverflow: true,
+                        });
                         if (isReady) applyOverflow(this);
                         break;
 
-                    case 'zindex':
+                    case "zindex":
                         setAutolayoutStore(this, { z: nv });
                         // Always setup watch for bindings immediately
-                        if (nv?.startsWith('bind:')) {
+                        if (nv?.startsWith("bind:")) {
                             setupInternalWatch(this, key, nv);
                         }
                         // Only apply to DOM if ready and position exists
-                        if(store.pos !== undefined) {
+                        if (store.pos !== undefined) {
                             setAutolayoutStore(this, { needsPosition: true });
 
-                            if(isReady) applyPosition(this);
+                            if (isReady) applyPosition(this);
+                        }
+                        break;
+                    case "backgroundimage":
+                        if (nv?.startsWith("bind:")) {
+                            setupInternalWatch(this, key, nv);
                         }
                         break;
                 }
