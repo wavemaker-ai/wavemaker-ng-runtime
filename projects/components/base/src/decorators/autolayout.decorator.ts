@@ -27,6 +27,13 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
         // --- INTERNAL LOGIC ---
 
         const hasValue = (val: any) => val !== undefined && val !== null && val !== '';
+        const hasValidDir = (val: any) => hasValue(val) && ['row', 'column'].includes(val);
+
+        const formatGap = (val: any): string => {
+            if (!hasValue(val) || val === 'auto') return '';
+            // If it's a number or a string that's just a number, append 'px'
+            return !isNaN(Number(val)) ? `${val}px` : val;
+        };
 
         // --- Getter Method ---
         const getAutolayoutStore = (inst: any) => {
@@ -139,7 +146,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             const styles: any = {};
             let isFlex = false;
 
-            if (hasValue(store.dir)) {
+            if (hasValidDir(store.dir)) {
                 styles['flex-direction'] = store.dir;
                 isFlex = true;
                 if(store.dir === 'column') setAutolayoutStore(inst, { wrap: false });
@@ -167,6 +174,9 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                     } else if (store.cg !== 'auto' && store.gap === 'auto') {
                         styles['justify-content'] = directionalJC;
                         styles['align-content'] = "space-between";
+                    } else {
+                        styles['justify-content'] = isR ? m.jc : m.ai;
+                        styles['align-content'] = isR ? m.ai : m.jc;
                     }
                 } else {
                     if(store.gap === 'auto') {
@@ -182,18 +192,26 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
 
             const hasGap = hasValue(store.gap) || hasValue(store.cg);
             if (hasGap) {
-                const g = hasValue(store.gap) && store.gap !== 'auto' ? `${store.gap}px` : '';
-                const cg = hasValue(store.cg) && store.cg !== 'auto' ? `${store.cg}px` : '';
-                const gapValue = g ? (cg ? `${g} ${cg}` : g) : cg;
-                if (gapValue) {
-                    setTimeout(() => {
-                        target.css('gap', gapValue);
-                    });
+                const g = formatGap(store.gap);
+                const cg = formatGap(store.cg);
+
+                setTimeout(() => {
+                    if (store.wrap) { 
+                        target.css({ 'row-gap': g, 'column-gap': cg });
+                    } else {
+                        target.css({ 'gap': g });
+                    }
+                });
+
+                if (g || (store.wrap && cg)) {
                     isFlex = true;
                 }
+            } else if (store.gap === "" && store.cg === "") {
+                target.css({ 'row-gap': '', 'column-gap': '', 'gap': '' });
+                isFlex = true;
             }
 
-            if (isFlex && hasValue(store.dir)) {
+            if (isFlex && hasValidDir(store.dir)) {
                 styles['display'] = 'flex';
             }
 

@@ -198,6 +198,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private listItemsChangesSubscription: any;
     private boundClickHandler: (event: Event) => void;
     public itemAttrsMap: { [k: string]: string } = {};
+    public hasAutolayout: boolean = false;
 
     private touching;
     private touched;
@@ -743,6 +744,10 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             minIndex: null,
             maxIndex: null
         };
+
+        // Check if the host element has any of these autolayout attributes
+        const autoLayoutAttrs = ['direction', 'wrap', 'alignment', 'gap', 'columngap'];
+        this.hasAutolayout = autoLayoutAttrs.some(attr => this.nativeElement.hasAttribute(attr));
     }
 
     ngAfterViewInit() {
