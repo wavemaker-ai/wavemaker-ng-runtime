@@ -225,40 +225,38 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             if (!target) return;
 
             const overflow = store.overflow?.toLowerCase();
+            if (store.clip) {
+                switch (overflow) {
+                    case "vertical":
+                        target.css({
+                            "overflow-x": "hidden",
+                            "overflow-y": "scroll",
+                        });
+                        break;
 
-            switch (overflow) {
-                case 'vertical':
-                    target.css({
-                        'overflow-x': 'hidden',
-                        'overflow-y': 'scroll'
-                    });
-                    break;
+                    case "horizontal":
+                        target.css({
+                            "overflow-x": "scroll",
+                            "overflow-y": "hidden",
+                        });
+                        break;
 
-                case 'horizontal':
-                    target.css({
-                        'overflow-x': 'scroll',
-                        'overflow-y': 'hidden'
-                    });
-                    break;
+                    case "both directions":
+                        target.css({
+                            overflow: "scroll",
+                        });
+                        break;
 
-                case 'both directions':
-                    target.css({
-                        'overflow': 'scroll'
-                    });
-                    break;
+                    case "no scrolling":
+                        target.css({ overflow: "hidden" });
+                        break;
 
-                case 'no scrolling':
-                    if (store.clip) {
-                        target.css({ 'overflow': 'hidden' });
-                    } else {
-                        target.css({ 'overflow': '' });
-                    }
-                    break;
-
-                default:
-                    break;
+                    default:
+                        break;
+                }
+            } else {
+                target.css({ overflow: '' });
             }
-
         };
 
         const applyPosition = (inst: any) => {
