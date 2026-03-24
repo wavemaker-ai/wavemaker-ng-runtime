@@ -41,6 +41,9 @@
             "@wavemaker-ai/custom-widgets-m3": [
                 "node_modules/@wavemaker-ai/custom-widgets-m3/"
             ],
+            "@wavemaker-ai/foundation-css": [
+                "node_modules/@wavemaker-ai/foundation-css/"
+            ],
             "@wm/components/base": [
                 "libraries/components/base"
             ],
