@@ -1,5 +1,5 @@
 {
-    "name": "@wavemaker/angular-app",
+    "name": "@wavemaker-ai/angular-app",
     "version": "1.0.0-dev",
     "scripts": {
         "ng": "ng",
@@ -36,11 +36,11 @@
         "@fullcalendar/list": "6.1.18",
         "@fullcalendar/timegrid": "6.1.18",
         "@metrichor/jmespath": "0.3.1",
-        "@wavemaker/custom-widgets-m3": "file:.yalc/@wavemaker/custom-widgets-m3",
+        "@wavemaker-ai/custom-widgets-m3": "file:.yalc/@wavemaker-ai/custom-widgets-m3",
         "@wavemaker/focus-trap": "1.0.1",
-        "@wavemaker/foundation-css": "file:.yalc/@wavemaker/foundation-css",
+        "@wavemaker-ai/foundation-css": "file:.yalc/@wavemaker-ai/foundation-css",
         "@wavemaker/nvd3": "1.8.16",
-        "@wavemaker/variables": "file:.yalc/@wavemaker/variables",
+        "@wavemaker-ai/variables": "file:.yalc/@wavemaker-ai/variables",
         "@ztree/ztree_v3": "3.5.48",
         "acorn": "^8.15.0",
         "angular-imask": "7.6.1",
@@ -120,9 +120,9 @@
         "npm": "10.9.3"
     },
     "overrides": {
-    "ng-packagr": {
-        "@rollup/wasm-node": "4.40.2"
-    }
-},
+        "ng-packagr": {
+            "@rollup/wasm-node": "4.40.2"
+        }
+    },
     "engineStrict": true
 }
