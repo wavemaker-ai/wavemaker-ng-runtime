@@ -1,4 +1,4 @@
-import { App, $watch } from '@wm/core';
+import { App, $watch, toBoolean } from '@wm/core';
 import { Subject } from 'rxjs';
 
 const ALIGN_MAP: any = {
@@ -353,7 +353,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                         setAutolayoutStore(this, { dir: nv, needsFlex: true });
                         break;
                     case 'wrap':
-                        setAutolayoutStore(this, { wrap: nv, needsFlex: true });
+                        setAutolayoutStore(this, { wrap: toBoolean(nv), needsFlex: true });
                         break;
                     case 'alignment':
                         setAutolayoutStore(this, { align: nv, needsFlex: true });
@@ -368,7 +368,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                         setAutolayoutStore(this, { pos: nv, needsPosition: true });
                         break;
                     case 'clipcontent':
-                        setAutolayoutStore(this, { clip: nv, needsOverflow: true });
+                        setAutolayoutStore(this, { clip: toBoolean(nv), needsOverflow: true });
                         break;
                     case 'positionvalue':
                         setAutolayoutStore(this, { inset: nv, needsPosition: true });
