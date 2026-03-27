@@ -50,7 +50,6 @@ export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
     public arialabel: string;
     public trailingiconclass: string;
     public leadingiconclass: string;
-    public supportingtext: string
 
     @ViewChild('input', {static: true}) inputEl: ElementRef;
     @ViewChild(NgModel) ngModel: NgModel;
@@ -74,6 +73,10 @@ export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
             default:
                 super.onPropertyChange(key, nv, ov);
         }
+    }
+    get computedClasses() {
+        return {'with-leading-icon': this.leadingiconclass, 'with-trailing-icon': this.trailingiconclass,
+            ...(typeof this.conditionalclass === 'string' ? { [this.conditionalclass]: true } : this.conditionalclass || {})};
     }
 
     get mask() {

@@ -68,6 +68,8 @@ $.widget('wm.datatable', {
             'selectField': 'Select Field'
         },
         loadingicon: '',
+        ondemandmessage: '',
+        viewlessmessage: '',
         startRowIndex: 1,
         editmode: '',
         actionsEnabled: {

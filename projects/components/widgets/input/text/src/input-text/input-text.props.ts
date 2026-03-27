@@ -34,8 +34,7 @@ export const inputTextTypeProps = new Map(
         ['conditionalclass', PROP_ANY],
         ['conditionalstyle', PROP_ANY],
         ['trailingiconclass', PROP_STRING],
-        ['leadingiconclass', PROP_STRING],
-        ['supportingtext', PROP_STRING]
+        ['leadingiconclass', PROP_STRING]
     ]
 );
 

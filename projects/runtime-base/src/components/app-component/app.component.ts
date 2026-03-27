@@ -27,7 +27,6 @@ import {setTheme} from 'ngx-bootstrap/utils';
 
 import {
     $invokeWatchers,
-    $unwatchAllByScope,
     AbstractDialogService,
     AbstractSpinnerService,
     addClass,
@@ -67,10 +66,6 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     public enableSkipToMainContent = getWmProjectProperties().enableSkipToMainContent === 'true' || getWmProjectProperties().enableSkipToMainContent === true;
     private retryCount = 0;
     private navigationEndSubscription!: Subscription;
-    private oAuthProvidersSubscription!: Subscription;
-    private spinnerMessageSubscription!: Subscription;
-    private routerEventsSubscription!: Subscription;
-    private appManagerSubscriptions: Array<() => void> = []; // MEMORY LEAK FIX: Track appManager subscriptions
     appLocale: any = {};
 
     @ViewChild(RouterOutlet) routerOutlet: RouterOutlet;
@@ -102,8 +97,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         }
 
         // subscribe to OAuth changes
-        // MEMORY LEAK FIX: Store subscription reference for cleanup
-        this.oAuthProvidersSubscription = oAuthService.getOAuthProvidersAsObservable().subscribe((providers: any) => {
+        oAuthService.getOAuthProvidersAsObservable().subscribe((providers: any) => {
             this.providersConfig = providers;
             if (providers.length) {
                 this.showOAuthDialog();
@@ -113,8 +107,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         });
 
         // Subscribe to the message source to show/hide app spinner
-        // MEMORY LEAK FIX: Store subscription reference for cleanup
-        this.spinnerMessageSubscription = this.spinnerService.getMessageSource().asObservable().subscribe((data: any) => {
+        this.spinnerService.getMessageSource().asObservable().subscribe((data: any) => {
             // setTimeout is to avoid 'ExpressionChangedAfterItHasBeenCheckedError'
             setTimeout(() => {
                 this.spinner.show = data.show;
@@ -130,8 +123,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
 
         let onPageRendered = noop;
 
-        // MEMORY LEAK FIX: Store subscription reference for cleanup
-        this.routerEventsSubscription = this.router.events.subscribe(e => {
+        this.router.events.subscribe(e => {
             if (e instanceof NavigationStart) {
                 let page = e.url.split('?')[0];
                 page = page.substring(1);
@@ -167,13 +159,12 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
                 }, 1000);
             }
         });
-        // MEMORY LEAK FIX: Store subscription unsubscribe functions
-        this.appManagerSubscriptions.push(this.appManager.subscribe('pageReady', () => {
+        this.appManager.subscribe('pageReady', () => {
             onPageRendered();
-        }));
-        this.appManagerSubscriptions.push(this.appManager.subscribe('pageAttach', () => {
+        });
+        this.appManager.subscribe('pageAttach', () => {
             onPageRendered();
-        }));
+        });
     }
 
     providersConfig;
@@ -261,39 +252,9 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        // MEMORY LEAK FIX: Unwatch all App-scoped watchers when app is destroyed
-        $unwatchAllByScope('App');
-
-        // MEMORY LEAK FIX: Unsubscribe from navigation end subscription
         if (this.navigationEndSubscription){
             this.navigationEndSubscription.unsubscribe();
-            this.navigationEndSubscription = null;
         }
-
-        // MEMORY LEAK FIX: Unsubscribe from OAuth providers subscription
-        if (this.oAuthProvidersSubscription) {
-            this.oAuthProvidersSubscription.unsubscribe();
-            this.oAuthProvidersSubscription = null;
-        }
-
-        // MEMORY LEAK FIX: Unsubscribe from spinner message subscription
-        if (this.spinnerMessageSubscription) {
-            this.spinnerMessageSubscription.unsubscribe();
-            this.spinnerMessageSubscription = null;
-        }
-
-        // MEMORY LEAK FIX: Unsubscribe from router events subscription
-        if (this.routerEventsSubscription) {
-            this.routerEventsSubscription.unsubscribe();
-            this.routerEventsSubscription = null;
-        }
-
-        // MEMORY LEAK FIX: Unsubscribe from appManager subscriptions
-        this.appManagerSubscriptions.forEach(unsubscribe => {
-            if (unsubscribe) {
-                unsubscribe();
-            }
-        });
-        this.appManagerSubscriptions = [];
     }
 }
+

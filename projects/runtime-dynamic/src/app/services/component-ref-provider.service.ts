@@ -41,7 +41,7 @@ import {
 } from '@wm/runtime/base';
 import { AppResourceManagerService } from './app-resource-manager.service';
 import { isString, isUndefined } from "lodash-es";
-import * as customWidgets from '@wavemaker/custom-widgets-m3';
+import * as customWidgets from '@wavemaker-ai/custom-widgets-m3';
 import { ContentComponent, LayoutDirective, PageContentComponent, PageDirective, RouterOutletDirective, SpaPageDirective } from '@wm/components/page';
 import { MetadataService, VariablesService } from '@wm/variables';
 import { OAuthService } from '@wm/oAuth';
