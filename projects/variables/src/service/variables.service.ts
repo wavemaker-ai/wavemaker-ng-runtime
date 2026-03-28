@@ -170,6 +170,9 @@ export class VariablesService {
         for (const variableName in variablesJson) {
             const params: any = {};
             varInstance = VariableFactory.create(variablesJson[variableName], scope);
+            if (!varInstance) {
+                continue;
+            }
             varInstance.init();
            if (this.isVariableSeperated(variablesJson, variableName)) {
                this.processBinding(varInstance, scope, 'dataBinding', this.getBindSourceTarget(varInstance));

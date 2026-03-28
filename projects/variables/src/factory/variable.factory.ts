@@ -39,6 +39,10 @@ export class VariableFactory {
                 break;
             case VARIABLE_CONSTANTS.CATEGORY.WEBSOCKET:
                 variableInstance = new WebSocketVariable(variable);
+                break;
+            default:
+                console.warn(`VariableFactory: Unknown variable category "${variable.category}" for variable "${variable.name}". Skipping.`);
+                return null;
         }
 
         variableInstance._context = context;
