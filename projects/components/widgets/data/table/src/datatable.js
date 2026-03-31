@@ -1769,9 +1769,34 @@ $.widget('wm.datatable', {
             $headerCheckbox.prop('checked', false);
         }
     },
+    // Handles the label-checkbox/radio double-click problem and normalizes checkbox/radio handling.
+    // When a <label> wrapping a checkbox/radio is clicked, the browser fires two click events:
+    // one on the label/caption and a second programmatic one directly on the <input>.
+    // For any click within the select column (on the label, its children, or the input itself),
+    // we call preventDefault() to let toggleRowSelection manage the checked state exclusively,
+    // preventing the browser's native toggle from conflicting with our state management.
+    _handleSelectColumnClick: function (e) {
+        var $target = $(e.target);
+        if ($target.is('input[name="gridMultiSelect"], input[rowSelectInput]') ||
+            $target.closest('label').find('input[name="gridMultiSelect"], input[rowSelectInput]').length) {
+            e.preventDefault();
+        }
+    },
+
+    // Normalizes e.target to the closest <td> cell so that event handlers and user callbacks
+    // receive a consistent target regardless of which inner element was actually clicked.
+    _normalizeEventTarget: function (e) {
+        var $cell = $(e.target).closest('td.app-datagrid-cell');
+        if ($cell.length) {
+            Object.defineProperty(e, 'target', { value: $cell[0], configurable: true });
+        }
+    },
+
     // triggered on capture phase of click listener.
     // sets the selected rowdata on click.
     rowClickHandlerOnCapture: function (e, $row, options) {
+        this._handleSelectColumnClick(e);
+        this._normalizeEventTarget(e);
         // If 'isrowselectable' property is enabled, clicking anywhere on the row will trigger its selection. Otherwise, the row will not be selected on click.
         // Also this flag works if mutliselect or radioselect is enabled.
         // In quick edit mode, clicking any part of the row switches it to edit mode, regardless of the flag setting.
@@ -1797,6 +1822,8 @@ $.widget('wm.datatable', {
 
     /* Handles row selection. */
     rowSelectionHandler: function (e, $row, options) {
+        this._handleSelectColumnClick(e);
+        this._normalizeEventTarget(e);
         // If 'isrowselectable' property is enabled, clicking anywhere on the row will trigger its selection. Otherwise, the row will not be selected on click.
         // Also this flag works if mutliselect or radioselect is enabled.
         // In quick edit mode, clicking any part of the row switches it to edit mode, regardless of the flag setting.
