@@ -118,9 +118,14 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 if (store.needsFlex) applyFlexStyles(this);
                 if (store.needsOverflow) applyOverflow(this);
                 if (store.needsPosition) applyPosition(this);
-                
-                if (hasValue(store.width)) applySize(this, 'width', store.width);
-                if (hasValue(store.height)) applySize(this, 'height', store.height);
+
+                /* Push the applySize call to microtask so that it gets the correct parent display
+                    since ngAfterViewInit is resolved from child 1st to parent*/
+                Promise.resolve().then(() => {
+                    if (hasValue(store.width)) applySize(this, 'width', store.width);
+                    if (hasValue(store.height)) applySize(this, 'height', store.height);
+                });
+
                 if (hasValue(store.padding)) {
                     const target = getTargetElement(this);
                     if (target) target.css('padding', store.padding);
@@ -286,42 +291,57 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
 
         const applySize = (inst: any, key: string, nv: any) => {
             const target = getTargetElement(inst);
-            const styles: any = {};
-            if (nv === 'fill') {
-                const element = target?.[0];
-                // If element or parent doesn't exist → fallback to 100% 
-                if (!element?.parentElement) {
-                    styles[key] = '100%';
-                    target?.css(styles);
-                    return;
-                }
-                const parent = element.parentElement;
-                const parentStyle = getComputedStyle(parent);
-                const isParentFlex = ['flex', 'inline-flex'].includes(parentStyle.display);
-                if (!isParentFlex) {
-                    // Non-flex parent: flex properties won't work → fallback to 100%
-                    styles[key] = '100%';
-                    target?.css(styles);
-                    return;
-                }
-                const flexDirection = parentStyle.flexDirection;
-                const isRow = ['row', 'row-reverse'].includes(flexDirection );
-                const isMainAxis = (key === 'width' && isRow) || (key === 'height' && !isRow);
+            if (!target) return;
 
-                if (isMainAxis) {
-                    styles['flex-grow'] = '1';
-                } else {
-                    styles['align-self'] = 'stretch';
-                }
-            } else if (nv === 'hug') {
-                styles[key] = 'fit-content';
-            } else {
-                // Reset the styles in case of fixed values
-                styles['flex-shrink'] = '0';
-                styles['flex-grow'] = '0'; 
-                styles['align-self'] = 'auto';
+            const styles: any = {};
+            const minKey = key === 'width' ? 'min-width' : 'min-height';
+
+            // Determine parent flex context once
+            const element = target[0];
+            const parent = element?.parentElement;
+            const parentStyle = parent ? getComputedStyle(parent) : null;
+            const isParentFlex = parentStyle && ['flex', 'inline-flex'].includes(parentStyle.display);
+
+            let isMainAxis = false;
+            if (isParentFlex) {
+                const flexDir = parentStyle.flexDirection;
+                const isRow = ['row', 'row-reverse'].includes(flexDir);
+                isMainAxis = (key === 'width' && isRow) || (key === 'height' && !isRow);
             }
-            target?.css(styles);
+
+            if (nv === 'fill') {
+                if (!isParentFlex) {
+                    styles[key] = '100%';
+                } else {
+                    styles[key] = '';
+                    if (isMainAxis) {
+                        styles['flex-grow'] = '1';
+                        styles['flex-shrink'] = '';
+                        styles[minKey] = '0';
+                    } else {
+                        styles['align-self'] = 'stretch';
+                    }
+                }
+            } else {
+                if (nv === 'hug') styles[key] = 'fit-content';
+
+                if (isParentFlex) {
+                    if (isMainAxis) {
+                        styles['flex-grow'] = '';
+                        styles['flex-shrink'] = '0';  // intentional — don't shrink fixed sizes
+                        styles[minKey] = ''; // Need this because flex items default to min-height: auto, meaning they won't shrink smaller than their content.
+                    } else {
+                        styles['align-self'] = '';
+                    }
+                } else {
+                    styles['flex-grow'] = '';
+                    styles['flex-shrink'] = '0';
+                    styles['align-self'] = '';
+                    styles[minKey] = '';
+                }
+            }
+
+            target.css(styles);
         };
 
         // --- METHOD INTERCEPTION ---

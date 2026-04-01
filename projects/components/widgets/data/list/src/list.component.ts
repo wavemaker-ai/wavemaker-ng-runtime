@@ -746,8 +746,10 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         };
 
         // Check if the host element has any of these autolayout attributes
-        const autoLayoutAttrs = ['direction', 'wrap', 'alignment', 'gap', 'columngap'];
-        this.hasAutolayout = autoLayoutAttrs.some(attr => this.nativeElement.hasAttribute(attr));
+        const autoLayoutAttrs = ['wrap', 'alignment', 'gap', 'columngap'];
+        const directionValue = this.nativeElement.getAttribute('direction');
+        const hasAutoLayoutDirection = directionValue === 'row' || directionValue === 'column';
+        this.hasAutolayout = hasAutoLayoutDirection || autoLayoutAttrs.some(attr => this.nativeElement.hasAttribute(attr));
     }
 
     ngAfterViewInit() {
