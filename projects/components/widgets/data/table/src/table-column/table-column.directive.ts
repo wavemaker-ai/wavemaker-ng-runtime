@@ -778,7 +778,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
                 this.defaultvalue = getDefaultValue(this.defaultvalue, this.type, this.editWidgetType);
                 break;
             case 'show':
-                this.table.redraw(true);
+                this.table.redraw(false);
                 this.showinfilter = this.nativeElement.hasAttribute('showinfilter') ? this.nativeElement.getAttribute('showinfilter') : nv;
                 break;
             case 'filterdataset':
