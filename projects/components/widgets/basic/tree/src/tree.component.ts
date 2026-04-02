@@ -1,8 +1,9 @@
-import {Attribute, Component, Inject, Injector, OnInit, Optional, ViewEncapsulation} from '@angular/core';
+import { ApplicationRef, Attribute, Component, ComponentRef, EnvironmentInjector, Inject, Injector, NgZone, OnDestroy, Optional, ViewEncapsulation, createComponent } from '@angular/core';
 import { APPLY_STYLES_TYPE, getEvaluatedData, getOrderedDataset, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 import { registerProps } from './tree.props';
 import { $parseEvent, getClonedObject } from "@wm/core";
-import {isArray, isEmpty, isObject, isString} from "lodash-es";
+import { isArray, isEmpty, isObject, isString } from "lodash-es";
+import { TreeNodeTemplateHostComponent } from './tree-node-template-host.component';
 
 declare const $;
 
@@ -18,7 +19,7 @@ const defaultTreeIconClass = 'plus-minus';
     ],
     encapsulation: ViewEncapsulation.None
 })
-export class TreeComponent extends StylableComponent implements OnInit {
+export class TreeComponent extends StylableComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     private nodes: Array<any>;
@@ -38,6 +39,14 @@ export class TreeComponent extends StylableComponent implements OnInit {
     public nodeicon: string;
     public nodechildren: string;
     public orderby: string;
+    /** Partial name for custom tree node UI (set via setTemplate or binding). */
+    public template: string;
+
+    /** Dynamic hosts for custom node template (cleared on each render). */
+    private nodeTemplateRefs: Array<ComponentRef<TreeNodeTemplateHostComponent>> = [];
+    private readonly ngZone: NgZone;
+    private readonly applicationRef: ApplicationRef;
+    private readonly environmentInjector: EnvironmentInjector;
 
     private setting = {
         data: {
@@ -66,6 +75,9 @@ export class TreeComponent extends StylableComponent implements OnInit {
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, WIDGET_INFO, explicitContext);
+        this.ngZone = inj.get(NgZone);
+        this.applicationRef = inj.get(ApplicationRef);
+        this.environmentInjector = inj.get(EnvironmentInjector);
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER);
 
         this.setting.view['nodeClasses']    = this.setNodeClasses;
@@ -104,14 +116,115 @@ export class TreeComponent extends StylableComponent implements OnInit {
                 this.treeicons = nv;
                 this.renderTree();
                 break;
+            case 'template':
+                this.template = nv;
+                this.renderTree();
+                break;
             case 'class':
                 this.treeClass = nv;
                 this.setTreeTemplate(this.treeClass);
+                super.onPropertyChange(key, nv, ov);
                 this.renderTree();
+                break;
             default:
                 super.onPropertyChange(key, nv, ov);
                 break;
         }
+    }
+
+    // set tree node template
+    public setTemplate(partialName: string) {
+        this.template = partialName;
+        if (this.viewParent && this.viewParent.prefabName) {
+            this['prefabName'] = this.viewParent.prefabName;
+        }
+        this.renderTree();
+    }
+
+    private destroyNodeTemplateHostRefs(): void {
+        this.nodeTemplateRefs.forEach(ref => ref.destroy());
+        this.nodeTemplateRefs = [];
+    }
+
+    /** Re-run change detection on custom node partials after zTree mutates node state (e.g. open). No-op when template is unset or no hosts exist. */
+    private refreshTreeNodeTemplateHosts(): void {
+        if (!this.template || !this.nodeTemplateRefs.length) {
+            return;
+        }
+        this.ngZone.run(() => {
+            for (const ref of this.nodeTemplateRefs) {
+                try {
+                    ref.changeDetectorRef.detectChanges();
+                } catch {
+                    /* host destroyed */
+                }
+            }
+        });
+    }
+
+    /** Item passed to the custom template: zTree node API + row fields + toggle/select helpers. */
+    private buildCustomTemplateItemProxy(treeNode: any): any {
+        const rowData = treeNode.data;
+        const node = Object.create(treeNode);
+        node.toggleExpand = (event?: Event) => {
+            if (event) {
+                event.preventDefault?.();
+                event.stopPropagation?.();
+            }
+            if (!treeNode.isParent) {
+                return;
+            }
+            this.expandNode(treeNode, !treeNode.open, true);
+        };
+      
+        const item = Object.create(node);
+        if (rowData && typeof rowData === 'object') {
+            Object.assign(item, rowData);
+        }
+        Object.defineProperty(item, 'isSelected', {
+            enumerable: true,
+            configurable: true,
+            get: () => !!this.zTree?.isSelectedNode?.(treeNode),
+        });
+      
+        return item;
+    }
+
+    private mountTreeNodeTemplateHost(host: HTMLElement, treeNode: any): void {
+        const ref = createComponent(TreeNodeTemplateHostComponent, {
+            environmentInjector: this.environmentInjector,
+            elementInjector: this.inj,
+            hostElement: host,
+        });
+        ref.setInput('template', this.template);
+        ref.setInput('userComponentParams', { dataObject: this.buildCustomTemplateItemProxy(treeNode) });
+        this.applicationRef.attachView(ref.hostView);
+        ref.changeDetectorRef.detectChanges();
+        this.nodeTemplateRefs.push(ref);
+    }
+
+    private addDiyDom = (_treeId: string, treeNode: any) => {
+        if (!this.template) {
+            return;
+        }
+        const aObj = $('#' + treeNode.tId + '_a');
+        if (!aObj.length || aObj.find('.wm-tree-node-template-host').length) {
+            return;
+        }
+        /** hide default zTree switch & icon and hide the built-in label span when using a custom template. */
+        const switchEl = $('#' + treeNode.tId + '_switch');
+        switchEl.hide();
+        $('#' + treeNode.tId + '_span').hide();
+
+        const host = document.createElement('span');
+        host.className = 'wm-tree-node-template-host wm-tree-node-item';
+        aObj.append(host);
+        this.mountTreeNodeTemplateHost(host, treeNode);
+    };
+
+    ngOnDestroy() {
+        this.destroyNodeTemplateHostRefs();
+        super.ngOnDestroy();
     }
 
     // expands the tree nodes if the property is selected.
@@ -130,16 +243,18 @@ export class TreeComponent extends StylableComponent implements OnInit {
 
     // sets the template for the tree based on the property selected.
     private setTreeTemplate(value) {
-        const classList = value.split(" ");
-        if (classList.includes('Classic')) {
-            this.setting.check["enable"] = false;
-        } else if(classList.includes('Checkbox')) {
-            this.setting.check["enable"] = true;
-            this.setting.check["chkStyle"] = 'checkbox';
-        } else if (classList.includes('Radio')) {
-            this.setting.check["enable"] = true;
-            this.setting.check["chkStyle"] = 'radio';
-            this.setting.check["radioType"] = "all";
+        const classList = value?.split(" ");
+        if (classList?.length) {
+            if (classList.includes('Classic')) {
+                this.setting.check["enable"] = false;
+            } else if (classList.includes('Checkbox')) {
+                this.setting.check["enable"] = true;
+                this.setting.check["chkStyle"] = 'checkbox';
+            } else if (classList.includes('Radio')) {
+                this.setting.check["enable"] = true;
+                this.setting.check["chkStyle"] = 'radio';
+                this.setting.check["radioType"] = "all";
+            }
         }
     }
 
@@ -160,9 +275,23 @@ export class TreeComponent extends StylableComponent implements OnInit {
         } else if (isObject(newVal)) {
             nodes = [newVal];
         } else if (isString(newVal) && !isEmpty(newVal)) {
-            newVal = newVal.trim();
-            if (newVal) {
-                nodes = this.getNodesFromString(newVal);
+            const trimmed = newVal.trim();
+            if (trimmed) {
+                if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        if (isArray(parsed)) {
+                            nodes = getOrderedDataset(parsed, this.orderby);
+                        } else if (isObject(parsed)) {
+                            nodes = [parsed];
+                        }
+                    } catch {
+                        // Not valid JSON; treat as comma-separated labels below.
+                    }
+                }
+                if (!nodes) {
+                    nodes = this.getNodesFromString(trimmed);
+                }
             }
         }
         return nodes;
@@ -233,6 +362,7 @@ export class TreeComponent extends StylableComponent implements OnInit {
                 });
             }
         });
+        this.refreshTreeNodeTemplateHosts();
     }
 
     public onCollapse(event, treeId, treeNode) {
@@ -243,20 +373,35 @@ export class TreeComponent extends StylableComponent implements OnInit {
             "$path" : path
         };
         this.invokeEventCallback('collapse', eventParams);
+        this.refreshTreeNodeTemplateHosts();
     }
 
     // function to support backward compatibility of objects
     private constructZTreeData(data, zTreeData) {
         data.forEach(node => {
             const zNode = {};
-            const name = getEvaluatedData(node, {field: this.nodelabel, bindExpression: this.bindnodelabel}, this.viewParent) || node.label;
-            const icon = getEvaluatedData(node, {field: this.nodeicon, bindExpression: this.bindnodeicon}, this.viewParent) || node.icon;
-            const nodeId = getEvaluatedData(node, {field: this.nodeid, bindExpression: this.bindnodeid}, this.viewParent);
-            const children = getEvaluatedData(node, {field: this.nodechildren, bindExpression: this.bindnodechildren}, this.viewParent) || node.children;
-            zNode['name'] = name;
+            const evaluatedLabel = getEvaluatedData(node, { field: this.nodelabel, bindExpression: this.bindnodelabel }, this.viewParent);
+            // Avoid zTree rendering the literal "undefined" when label field is missing or nodelabel does not match dataset (e.g. data uses "key" only).
+            const name =
+                evaluatedLabel !== undefined && evaluatedLabel !== null && evaluatedLabel !== ''
+                    ? evaluatedLabel
+                    : (node.label ?? node.key ?? node.name ?? '');
+            const icon = getEvaluatedData(node, { field: this.nodeicon, bindExpression: this.bindnodeicon }, this.viewParent) || node.icon;
+            const nodeId = getEvaluatedData(node, { field: this.nodeid, bindExpression: this.bindnodeid }, this.viewParent);
+            const children = getEvaluatedData(node, { field: this.nodechildren, bindExpression: this.bindnodechildren }, this.viewParent) || node.children;
+            zNode['name'] = name === undefined || name === null ? '' : String(name);
             zNode['icon'] = icon;
             zNode['nodeId'] = nodeId;
             zNode['data'] = getClonedObject(node);
+            if (node.iconSkin != null && node.iconSkin !== '') {
+                zNode['iconSkin'] = node.iconSkin;
+            }
+            if (node.iconOpen != null && node.iconOpen !== '') {
+                zNode['iconOpen'] = node.iconOpen;
+            }
+            if (node.iconClose != null && node.iconClose !== '') {
+                zNode['iconClose'] = node.iconClose;
+            }
             if (isArray(children) && children.length) {
                 zNode['children'] = [];
                 this.constructZTreeData(children, zNode['children']);
@@ -267,6 +412,9 @@ export class TreeComponent extends StylableComponent implements OnInit {
 
     // Renders the tree on to the dom
     public renderTree() {
+        this.destroyNodeTemplateHostRefs();
+        this.setting.view['addDiyDom'] = this.template ? this.addDiyDom : undefined;
+        this.nativeElement.classList.toggle('wm-tree-has-custom-node', !!this.template);
         this.zTreeNodes = [];
         if(this.nodes?.length) {
             this.nativeElement.setAttribute('id', this.name);
@@ -295,6 +443,7 @@ export class TreeComponent extends StylableComponent implements OnInit {
         deSelectElm.removeClass('selected');
 
         if(!node) {
+            this.refreshTreeNodeTemplateHosts();
             return;
         }
         const selectElm = $(`#${node.tId}:has(.curSelectedNode)`);
@@ -322,12 +471,14 @@ export class TreeComponent extends StylableComponent implements OnInit {
             $parseEvent(nodeAction)(this);
         }
         this.invokeEventCallback('select', eventParams);
+        this.refreshTreeNodeTemplateHosts();
     }
 
     private expandNode(node, expand, eventFlag) {
         this.zTree.expandNode(node, expand, false, false, eventFlag);
         const el = $(`#${node.tId}_switch`);
         $(el).addClass(this.treeicons || defaultTreeIconClass);
+        this.refreshTreeNodeTemplateHosts();
     }
 
     private postRenderTree() {
