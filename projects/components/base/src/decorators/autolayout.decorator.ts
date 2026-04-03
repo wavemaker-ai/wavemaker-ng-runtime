@@ -151,6 +151,8 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             const styles: any = {};
             let isFlex = false;
 
+            const shouldApplyFlex = () => isFlex && hasValidDir(store.dir);
+
             if (hasValidDir(store.dir)) {
                 styles['flex-direction'] = store.dir;
                 isFlex = true;
@@ -170,20 +172,20 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 const directionalAI = isR ? m.ai : m.jc;
 
                 if(store.wrap) {
-                    if(store.cg === 'auto' && store.gap === 'auto') {
-                        styles['justify-content'] = directionalJC;
+                    styles['justify-content'] = directionalJC;
+                    styles['align-items'] = directionalAI;
+
+                    if (store.cg === 'auto' && store.gap === 'auto') {
                         styles['align-content'] = directionalJC;
                     } else if (store.cg === 'auto' && store.gap !== 'auto') {
-                        styles['justify-content'] = directionalJC;
                         styles['align-content'] = directionalAI;
                     } else if (store.cg !== 'auto' && store.gap === 'auto') {
-                        styles['justify-content'] = directionalJC;
-                        styles['align-content'] = "space-between";
+                        styles['align-content'] = 'space-between';
                     } else {
-                        styles['justify-content'] = isR ? m.jc : m.ai;
-                        styles['align-content'] = isR ? m.ai : m.jc;
+                        styles['align-content'] = directionalAI;
                     }
                 } else {
+                    styles['align-content'] = '';
                     if(store.gap === 'auto') {
                         styles['justify-content'] = m.jc;
                         styles['align-items'] = m.ai;
@@ -201,10 +203,12 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 const cg = formatGap(store.cg);
 
                 setTimeout(() => {
-                    if (store.wrap) { 
-                        target.css({ 'row-gap': g, 'column-gap': cg });
-                    } else {
-                        target.css({ 'gap': g });
+                    if (shouldApplyFlex()) {
+                        if (store.wrap) { 
+                            target.css({ 'row-gap': g, 'column-gap': cg });
+                        } else {
+                            target.css({ 'gap': g });
+                        }
                     }
                 });
 
@@ -216,11 +220,10 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 isFlex = true;
             }
 
-            if (isFlex && hasValidDir(store.dir)) {
+            if (shouldApplyFlex()) {
                 styles['display'] = 'flex';
+                target.css(styles);
             }
-
-            target.css(styles);
         };
 
         const applyOverflow = (inst: any) => {
@@ -266,7 +269,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
 
         const applyPosition = (inst: any) => {
             const store = getAutolayoutStore(inst);
-            const target = getTargetElement(inst);
+            const target = inst?.$element; 
 
             if (!target) return;
 
@@ -280,10 +283,15 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 return;
             }
 
+            const defaultInset =
+                store.pos === "sticky" && !hasValue(store.inset)
+                    ? "0px auto auto 0px"
+                    : store.inset || "";
+
             const baseStyle: any = {
                 position: store.pos || "",
                 "z-index": store.z || "",
-                inset: store.inset || "",
+                inset: defaultInset,
             };
 
             target.css(baseStyle);
