@@ -40,7 +40,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             if (!inst.__al_store) {
                 inst.__al_store = {
                     dir: "row",
-                    wrap: false,
+                    wrap: undefined,
                     align: undefined,
                     gap: undefined,
                     cg: undefined,
@@ -269,7 +269,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
 
         const applyPosition = (inst: any) => {
             const store = getAutolayoutStore(inst);
-            const target = inst?.$element; 
+            const target = inst?.$element;
 
             if (!target) return;
 
@@ -277,24 +277,51 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             if (!hasValue(store.pos)) {
                 target.css({
                     position: "",
-                    "z-index": "",
-                    inset: ""
+                    "z-index": store.z || "",
+                    top: "",
+                    right: "",
+                    bottom: "",
+                    left: "",
                 });
                 return;
             }
 
-            const defaultInset =
-                store.pos === "sticky" && !hasValue(store.inset)
-                    ? "0px auto auto 0px"
-                    : store.inset || "";
+            const rawInset =
+                store.pos === 'sticky' && !hasValue(store.inset)
+                    ? '0px auto auto 0px'
+                    : store.inset || '';
 
-            const baseStyle: any = {
+            // Parse the inset value into individual sides
+            const parts = rawInset.split(/\s+/).filter(Boolean);
+            let top, right, bottom, left;
+
+            if (parts.length === 1) {
+                top = right = bottom = left = parts[0];
+            } else if (parts.length === 2) {
+                top = bottom = parts[0];
+                right = left = parts[1];
+            } else if (parts.length === 3) {
+                top = parts[0];
+                right = left = parts[1];
+                bottom = parts[2];
+            } else if (parts.length === 4) {
+                top = parts[0];
+                right = parts[1];
+                bottom = parts[2];
+                left = parts[3];
+            }
+
+            // Only set sides that have a real value, clear ones that are 'auto'
+            const posStyles: any = {
                 position: store.pos || "",
                 "z-index": store.z || "",
-                inset: defaultInset,
+                top: (top && top !== 'auto') ? top : "",
+                right: (right && right !== 'auto') ? right : "",
+                bottom: (bottom && bottom !== 'auto') ? bottom : "",
+                left: (left && left !== 'auto') ? left : "",
             };
 
-            target.css(baseStyle);
+            target.css(posStyles);
         };
 
         const applySize = (inst: any, key: string, nv: any) => {
