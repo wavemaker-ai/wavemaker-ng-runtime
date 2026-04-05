@@ -7,7 +7,7 @@ export const AUTO_LAYOUT_PROPS = new Map<string, any>([
   ['gap', PROP_STRING],
   ['columngap', PROP_STRING],
   ['clipcontent', PROP_STRING],
-  ['position', {value: 'relative', ...PROP_STRING}],
+  ['position', PROP_STRING],
   ['overflow', PROP_STRING],
   ['zindex', PROP_STRING],
   ['padding', PROP_STRING],
