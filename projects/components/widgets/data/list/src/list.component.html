@@ -43,7 +43,8 @@
   }
 </div>
 
-<ul [attr.tabindex]="tabindex"  class="app-livelist-container clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}} {{listclass}}" role="list"
+<ul [attr.tabindex]="tabindex"  class="list-group app-livelist-container clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}} {{listclass}}" role="list"
+  [class.list-group-autolayout]="hasAutolayout"
   (keydown.enter)="handleKeyDown($event, 'select')"
 
   (keydown.space)="handleKeyDown($event, 'space')"
@@ -74,7 +75,7 @@
   } @else {
     @for (groupObj of groupedData; track groupObj; let groupIndex = $index) {
       <li class="app-list-item-group clearfix">
-        <ul [attr.tabindex]="tabindex" class="list-group item-group" [ngClass]="listclass">
+        <ul [attr.tabindex]="tabindex" class="list-group item-group" [ngClass]="listclass" [class.list-group-autolayout]="hasAutolayout">
           <li class="app-list-item-header list-item list-group-header" (click)="handleHeaderClick($event)" [ngClass]="{'collapsible-content': collapsible}">
             <h4>{{groupObj.key}}
               <div class="header-action">
@@ -88,7 +89,7 @@
             </h4>
           </li>
           <li class="list-group-container">
-            <ul class="list-group clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}}">
+            <ul class="list-group clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}}" [class.list-group-autolayout]="hasAutolayout">
               @for (item of groupObj.data; track trackByFn($index, item)) {
                 <li [attr.tabindex]="tabindex"
                   class="app-list-item group-list-item {{itemsPerRowClass}}"
