@@ -292,6 +292,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     private isDataLoading;
     private currentPage;
     private applyProps = new Map();
+    private _lastWatchDataSetTs = 0;
+    private _lastWatchDataSetRef: any;
 
     redraw = debounce(this._redraw, 150);
     debouncedHandleLoading = debounce(this.handleLoading, 350);
@@ -1025,6 +1027,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     private _gridData;
     private _selectedItemsExist = false;
+    private _lastRenderedData: any;
     set gridData(newValue) {
         this.isDataLoading = false;
         // Fix for [WMS-24012]: hide no datafound msg when variableInflight is true and dataset is empty
@@ -1094,7 +1097,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     console.warn('Error in beforedatarender event callback, continuing with table rendering:', error);
                 }
             }
-            this.setDataGridOption('data', getClonedObject(this._gridData));
+            const clonedData = getClonedObject(this._gridData);
+            if (!isEqual(clonedData, this._lastRenderedData)) {
+                this._lastRenderedData = clonedData;
+                this.setDataGridOption('data', clonedData, true);
+            }
         }
     }
 
@@ -1424,6 +1431,15 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             return;
         }
 
+        // Dedup: skip if the same data reference was just processed within 50ms
+        // (covers double calls from datasource + dataset property changes in the same tick)
+        const now = Date.now();
+        if (newVal !== undefined && newVal === this._lastWatchDataSetRef && (now - this._lastWatchDataSetTs) < 50) {
+            return;
+        }
+        this._lastWatchDataSetTs = now;
+        this._lastWatchDataSetRef = newVal;
+
         let result;
         // Check for Variable filters if applied
         if (this.gridOptions.isNavTypeScrollOrOndemand()) {
@@ -1675,6 +1691,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         // MEMORY LEAK FIX: Clear ViewChild references
         this.dataNavigator = null;
         this._tableElement = null;
+        this._lastRenderedData = null;
+        this._lastWatchDataSetRef = null;
 
        // console.log("table component destroyed");
         super.ngOnDestroy();

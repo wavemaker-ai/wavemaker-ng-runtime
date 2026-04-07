@@ -596,7 +596,8 @@ $.widget('wm.datatable', {
                     this.renderTableOnViewLess = false;
                 }
             } else {
-                $tbody = this.gridElement.empty();
+                // Build rows in a detached container first, then swap atomically to reduce flicker
+                $tbody = $('<tbody></tbody>');
             }
 
         if(isScrollorOnDemand) {
@@ -634,6 +635,13 @@ $.widget('wm.datatable', {
                 $tbody.append($tr);
             }
         });
+
+        // For non-scroll: swap content atomically — clear old rows and insert new in a single operation
+        if (!isScrollorOnDemand) {
+            this.gridElement.empty().append($tbody.children());
+            $tbody = this.gridElement;
+        }
+
         // set last action performed to default and clear action row index, after generating templates
         // Fix for [WMS-23263] For Dynamic table _getGridTemplate() is being called twice
         // so reset the lastActionPerformed flag if it is not dynamic table
@@ -1104,8 +1112,10 @@ $.widget('wm.datatable', {
     },
 
     refreshGrid: function () {
-        window.clearTimeout(this.refreshGridTimeout);
-        this.refreshGridTimeout = window.setTimeout(this._refreshGrid.bind(this), 50);
+        if (this.refreshGridRafId) {
+            window.cancelAnimationFrame(this.refreshGridRafId);
+        }
+        this.refreshGridRafId = window.requestAnimationFrame(this._refreshGrid.bind(this));
     },
     /* Function to call the renderGrid method for infinite scroll pagination type
     * Remove the markup of grid-footer and always-new-row
@@ -3724,6 +3734,8 @@ $.widget('wm.datatable', {
         this.compiledCellTemplates = {};
         
         this.element.text('');
-        window.clearTimeout(this.refreshGridTimeout);
+        if (this.refreshGridRafId) {
+            window.cancelAnimationFrame(this.refreshGridRafId);
+        }
     }
 });
