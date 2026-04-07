@@ -113,6 +113,84 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         return this.enablenext ? true : (this.currentStep.enableNext && this.currentStep.isValid);
     }
 
+    /**
+     * Step header icons (iconclass / doneiconclass): same rules as iconstepper, plus tabstepper
+     * (e.g. wizard-tabstepper, tabstepper, tabstepper_vertical). Uses class property + host className
+     * so preview stays correct when the DOM is updated before the bound property.
+     */
+    private wizardHostClassString(): string {
+        const fromProp = typeof this.class === 'string' ? this.class : '';
+        const rawDom = this.nativeElement?.className;
+        const fromDom =
+            typeof rawDom === 'string' ? rawDom : (rawDom as { baseVal?: string })?.baseVal || '';
+        return `${fromProp} ${fromDom}`.trim();
+    }
+
+    get showWizardStepIcons(): boolean {
+        const c = this.wizardHostClassString();
+        if (!c) {
+            return false;
+        }
+        return c.includes('iconstepper') || c.includes('tabstepper');
+    }
+
+    /** Tab layout only (not icon stepper): omit icon column when step has no icon. */
+    get isTabStepperWizard(): boolean {
+        const c = this.wizardHostClassString();
+        return c.includes('tabstepper') && !c.includes('iconstepper');
+    }
+
+    /** Default matches wm-wizardstep props; used for icon stepper when iconclass is empty. */
+    stepIconClassOrDefault(step: WizardStepComponent): string {
+        const c = step?.iconclass;
+        return typeof c === 'string' && c.trim() ? c.trim() : 'wi wi-person';
+    }
+
+    hasNonEmptyIconClass(step: WizardStepComponent): boolean {
+        const ic = step?.iconclass;
+        return typeof ic === 'string' && ic.trim() !== '';
+    }
+
+    /** Primary glyph in the step circle (active / pending, or done when no separate done icon). */
+    shouldShowPrimaryStepIcon(step: WizardStepComponent): boolean {
+        if (!step || !this.showWizardStepIcons) {
+            return false;
+        }
+        const tabOnly = this.isTabStepperWizard;
+        if (!step.isDone) {
+            return tabOnly ? this.hasNonEmptyIconClass(step) : true;
+        }
+        const d = step.doneiconclass;
+        const hasDone = typeof d === 'string' && d.trim() !== '';
+        if (hasDone) {
+            return false;
+        }
+        return tabOnly ? this.hasNonEmptyIconClass(step) : true;
+    }
+
+    /**
+     * Tab stepper: omit the whole wizard-step-number wrapper when the step has no icon and no done icon.
+     * Other layouts: keep the wrapper (numbers, dots, icon stepper default glyph).
+     */
+    shouldRenderWizardStepNumberSpan(step: WizardStepComponent): boolean {
+        if (!this.showWizardStepIcons) {
+            return true;
+        }
+        if (this.isTabStepperWizard) {
+            return (
+                this.shouldShowPrimaryStepIcon(step) ||
+                (step.isDone && this.hasNonEmptyDoneIconClass(step))
+            );
+        }
+        return true;
+    }
+
+    /** Avoid `String()` in templates (strict mode treats it as a component property). */
+    hasNonEmptyDoneIconClass(step: WizardStepComponent): boolean {
+        const d = step?.doneiconclass;
+        return typeof d === 'string' && d.trim() !== '';
+    }
+
     get enableDone(): boolean {
         if (!this.currentStep) {
             return;

@@ -50,6 +50,8 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
 
     public show: boolean;
     public name: string;
+    public iconclass: string;
+    public doneiconclass: string;
     public enableskip: any;
     public disablenext: boolean;
     public disabledone: boolean;
