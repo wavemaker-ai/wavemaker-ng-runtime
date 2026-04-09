@@ -160,32 +160,44 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         return typeof ic === 'string' && ic.trim() !== '';
     }
 
-    /** Primary glyph in the step circle (active / pending, or done when no separate done icon). */
+    /**
+     * Primary `app-icon` for icon/tab stepper: only when `iconclass` is set (no default glyph for icon stepper).
+     * When `doneiconclass` is set, the done row is shown instead of this primary icon.
+     */
     shouldShowPrimaryStepIcon(step: WizardStepComponent): boolean {
         if (!step || !this.showWizardStepIcons) {
             return false;
         }
-        const tabOnly = this.isTabStepperWizard;
         if (!step.isDone) {
-            return tabOnly ? this.hasNonEmptyIconClass(step) : true;
+            return this.hasNonEmptyIconClass(step);
         }
         const d = step.doneiconclass;
         const hasDone = typeof d === 'string' && d.trim() !== '';
         if (hasDone) {
             return false;
         }
-        return tabOnly ? this.hasNonEmptyIconClass(step) : true;
+        return this.hasNonEmptyIconClass(step);
     }
 
     /**
-     * Tab stepper: omit the whole wizard-step-number wrapper when the step has no icon and no done icon.
-     * Other layouts: keep the wrapper (numbers, dots, icon stepper default glyph).
+     * Tab stepper: no `wizard-step-number` when the step is done but `doneiconclass` is empty.
+     * Icon stepper: omit the wrapper when there is no primary icon and no done icon to show.
+     * Other layouts: keep the wrapper (numbers, dots, etc.).
      */
     shouldRenderWizardStepNumberSpan(step: WizardStepComponent): boolean {
         if (!this.showWizardStepIcons) {
             return true;
         }
         if (this.isTabStepperWizard) {
+            if (step.isDone && !this.hasNonEmptyDoneIconClass(step)) {
+                return false;
+            }
+            return (
+                this.shouldShowPrimaryStepIcon(step) ||
+                (step.isDone && this.hasNonEmptyDoneIconClass(step))
+            );
+        }
+        if (this.wizardHostClassString().includes('iconstepper')) {
             return (
                 this.shouldShowPrimaryStepIcon(step) ||
                 (step.isDone && this.hasNonEmptyDoneIconClass(step))
@@ -507,20 +519,20 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             currentStep.done = true;
             nextStep.active = true;
             this.currentStep = nextStep;
-            // Remove 'current' class from all wizard steps in header
+            // Remove 'active' class from all wizard steps in header
             const allStepItems = this.nativeElement.querySelectorAll('li[data-stepid]');
             allStepItems.forEach((el: Element) => {
-                el.classList.remove('current');
+                el.classList.remove('active');
                 const anchor = el.querySelector('a');
                 if (anchor) {
                     anchor.setAttribute('tabindex', '-1');
                 }
             });
-            // Add 'current' to next step header item
+            // Add 'active' to next step header item
             const newStepLi = this.nativeElement.querySelector(`li[data-stepid="${nextStep.widgetId}"]`);
             const newStepAnchor = newStepLi?.querySelector('a') as HTMLElement;
             if (newStepLi && newStepAnchor) {
-                newStepLi.classList.add('current');
+                newStepLi.classList.add('active');
                 newStepAnchor.setAttribute('tabindex', '0');
                 newStepAnchor.focus();
             }
@@ -568,20 +580,20 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             currentStep.disabled = true;
             prevStep.active = true;
             this.currentStep = prevStep;
-            //  Remove 'current' class from all steps
+            //  Remove 'active' class from all steps
             const allStepItems = this.nativeElement.querySelectorAll('li[data-stepid]');
             allStepItems.forEach((el: Element) => {
-                el.classList.remove('current');
+                el.classList.remove('active');
                 const anchor = el.querySelector('a');
                 if (anchor) {
                     anchor.setAttribute('tabindex', '-1');
                 }
             });
-            // Apply 'current' to prev step
+            // Apply 'active' to prev step
             const prevStepLi = this.nativeElement.querySelector(`li[data-stepid="${prevStep.widgetId}"]`);
             const prevStepAnchor = prevStepLi?.querySelector('a') as HTMLElement;
             if (prevStepLi && prevStepAnchor) {
-                prevStepLi.classList.add('current');
+                prevStepLi.classList.add('active');
                 prevStepAnchor.setAttribute('tabindex', '0');
                 prevStepAnchor.focus();
             }
@@ -638,16 +650,16 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
 
         var newWindowWidth = $(window).width();
         if(newWindowWidth < 768){
-        $(".app-wizard-step.current .subtitle-wrapper .step-title").css({"height":"auto","display":"block"});
-        var subtitleTextLength = $(".app-wizard-step.current .subtitle-wrapper .step-title").height();
+        $(".app-wizard-step.active .subtitle-wrapper .step-title").css({"height":"auto","display":"block"});
+        var subtitleTextLength = $(".app-wizard-step.active .subtitle-wrapper .step-title").height();
         $(".read_more").css("display","none");
-        $(".current .subtitle-wrapper").removeClass("readmore_subtitle");
+        $(".app-wizard-step.active .subtitle-wrapper").removeClass("readmore_subtitle");
 
         if(subtitleTextLength>44){
-            $(".app-wizard-step.current .subtitle-wrapper .step-title").css({"height":"44px","display":"-webkit-box"});
-            $(".current .read_more").css("display","block");
-            $(".active .read_more").css("display","none");
-            $(".disable .read_more").css("display","none");
+            $(".app-wizard-step.active .subtitle-wrapper .step-title").css({"height":"44px","display":"-webkit-box"});
+            $(".app-wizard-step.active .read_more").css("display","block");
+            $(".app-wizard-step.finished .read_more").css("display","none");
+            $(".app-wizard-step.default .read_more").css("display","none");
             $(".app-wizard-step>a").css("height","100px")
             }
         }
@@ -655,16 +667,16 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
 
     }
     public readMoreSubtitle(){
-        $(".current .subtitle-wrapper").addClass("readmore_subtitle");
-        $(".current .read_more").css("display","none");
+        $(".app-wizard-step.active .subtitle-wrapper").addClass("readmore_subtitle");
+        $(".app-wizard-step.active .read_more").css("display","none");
         $(document).on("mouseup",function(e:any)
         {
             var container = $(".subtitle-wrapper");
             // if the target of the click isn't the container nor a descendant of the container
             if (!container.is(e.target) && container.has(e.target).length === 0)
             {
-                $(".current .subtitle-wrapper").removeClass("readmore_subtitle");
-                $(".current .read_more").css("display","block");
+                $(".app-wizard-step.active .subtitle-wrapper").removeClass("readmore_subtitle");
+                $(".app-wizard-step.active .read_more").css("display","block");
                 $(document).off("mouseup");
             }
         });
@@ -684,7 +696,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
 
     private updateStepFocus() {
         setTimeout(() => {
-            const currentStepElement = this.nativeElement.querySelector(".app-wizard-heading li.current a") as HTMLElement;
+            const currentStepElement = this.nativeElement.querySelector(".app-wizard-heading li.active a") as HTMLElement;
             currentStepElement?.focus();
         });
     }
@@ -884,7 +896,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             case 'Spacebar':
                 event.preventDefault();
                 setTimeout(() => {
-                    const activeElement  = this.nativeElement.querySelector('li.current');
+                    const activeElement  = this.nativeElement.querySelector('li.active');
                     const stepLi = activeElement.closest('li[data-stepid]');
                     const isInWizardHeader = activeElement.closest('.app-wizard-heading');
 
@@ -915,9 +927,9 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
                 return;
         }
        if (newStep) {
-            this.nativeElement.querySelector('li.current')?.classList.remove('current');
-             this.nativeElement.querySelector(`li[data-stepid="${newStep.widgetId}"]`)?.classList.add('current');
-             const stepLi = this.nativeElement.querySelector(".app-wizard-heading li.current a") as HTMLElement;
+            this.nativeElement.querySelector('li.active')?.classList.remove('active');
+             this.nativeElement.querySelector(`li[data-stepid="${newStep.widgetId}"]`)?.classList.add('active');
+             const stepLi = this.nativeElement.querySelector(".app-wizard-heading li.active a") as HTMLElement;
              const allStepItems = this.nativeElement.querySelectorAll('li[data-stepid] a');
              allStepItems.forEach((el: Element) => {
                 (el as HTMLElement).setAttribute('tabindex', '-1');
@@ -928,7 +940,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     }
     getSelectedStepIndex() {
         const index = this.steps.toArray().findIndex(step =>
-            this.nativeElement.querySelector(`li[data-stepid="${step.widgetId}"]`)?.classList.contains("current"));
+            this.nativeElement.querySelector(`li[data-stepid="${step.widgetId}"]`)?.classList.contains("active"));
         return index >= 0 ? index : this.getActiveStepIndex();
     }
 

@@ -70,7 +70,7 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
     // reference to the components which needs a redraw(eg, grid, chart) when the height of this component changes
     @ContentChildren(RedrawableDirective, {descendants: true}) reDrawableComponents;
 
-    @HostBinding('class.current')
+    @HostBinding('class.active')
     get isCurrent() {
         return this.active;
     }
