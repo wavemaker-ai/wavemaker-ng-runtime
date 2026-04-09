@@ -2,7 +2,7 @@
   <ul class="app-wizard-steps nav nav-pills {{stepClass}}">
     @for (step of steps; track step; let i = $index) {
       <li class="app-wizard-step" [hidden]="!step.show"
-        [ngClass]="{active: step.done, current: step.active, disabled: step.disabled}"
+        [ngClass]="{finished: step.done, active: step.active, default: step.disabled}"
         (click)="onWizardHeaderClick($event, step)" [attr.data-stepid]="step.widgetId">
         <a href="javascript:void(0)" [attr.aria-current]="step.active ? 'step' : null"
           [attr.aria-disabled]="step.disabled" [attr.aria-label]='step.subtitle ? "step " + (i + 1) + " " +  step.title + " " + step.subtitle : "step " + (i + 1) + " " +  step.title' [attr.title]= "step.title"
