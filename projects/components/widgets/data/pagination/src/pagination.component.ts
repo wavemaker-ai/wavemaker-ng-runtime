@@ -14,7 +14,15 @@ import {
 } from '@angular/core';
 
 import {
-    $appDigest, $watch, adjustVerticalPosition, AppConstants, DataSource, debounce, isDefined, switchClass, triggerFn
+    $appDigest,
+    $watch,
+    adjustVerticalPosition,
+    AppConstants,
+    DataSource,
+    debounce,
+    isDefined,
+    switchClass,
+    triggerFn
 } from '@wm/core';
 import {
     DEBOUNCE_TIMES,
@@ -246,6 +254,11 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         return this.datasource && this.datasource.execute(DataSource.Operation.IS_PAGEABLE);
     }
 
+    /*Checks if the pagination uses zero-based page indexing.*/
+    private isZeroBasedIndexPagination(): boolean {
+        return !!(this.datasource && this.datasource._paginationConfig && this.datasource._paginationConfig.isZeroBasedIndex);
+    }
+
     // this function returns an object which gives summary of the current page data (ex: In UI it is shown as  1 to 10 out of 50 records)
     getPageDetails(startIndex, endIndex, totalRecords) {
         this.rowSummary =  (isDefined(startIndex) && isDefined(endIndex) && isDefined(totalRecords)) ? {
@@ -310,7 +323,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     maxResults = this.pagination.size = Number(this.pagination.size) ? this.pagination.size : get(this.datasource.dataSet, this.pagination.size);
                     this.pagination.numberOfElements = Number(this.pagination.numberOfElements) ? this.pagination.numberOfElements : get(this.datasource.dataSet, this.pagination.numberOfElements)
                     if (this.pagination.numberOfElements > 0) {
-                        if (isDefined(this.pagination.number)) { // number is page number received from backend
+                        if (isDefined(this.pagination.number) && !this.isZeroBasedIndexPagination()) {
                             this.dn.currentPage = this.pagination.number + 1;
                         }
                         currentPage = this.dn.currentPage || 1;
@@ -421,7 +434,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                 pageIndex = this.parent.actionRowPage;
             }
             this.datasource.execute(DataSource.Operation.LIST_RECORDS, {
-                'page': pageIndex,
+                'page': this.isZeroBasedIndexPagination() ? pageIndex - 1 : pageIndex,
                 'size': this.maxResults,
                 'filterFields': this.filterFields,
                 'orderBy': this.sortOptions,
