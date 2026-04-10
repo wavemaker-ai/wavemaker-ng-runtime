@@ -27,6 +27,8 @@ import {
     $parseEvent,
     $unwatch,
     $watch,
+    muteWatchers,
+    unMuteWatchers,
     App,
     closePopover,
     DataSource,
@@ -632,7 +634,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.prevData = getClonedObject(row);
         },
         afterRowUpdate: (row, e, callBack, options) => {
+            muteWatchers();
             this.updateRecord(extend({}, options, {row, 'prevData': options.rowindex?options.rowindex:this.prevData, 'event': e, 'callBack': callBack}));
+            setTimeout(() => {
+                unMuteWatchers();
+            }, 10);
         },
         onBeforeRowUpdate: (row, e, options) => {
             return this.invokeEventCallback('beforerowupdate', {$event: e, $data: row, row, options: options});
@@ -960,7 +966,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
         },
         noChangesDetected: () => {
-            this.toggleMessage(true, 'info', 'No Changes Detected', '');
+            this.toggleMessage(true, 'info', this.appLocale.MESSAGE_NO_CHANGES, '');
         },
         // Function to redraw the widgets on resize of columns
         redrawWidgets: () => {
@@ -1607,7 +1613,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.selectedItems = [];
         this.fieldDefs = [];
         this.fullFieldDefs = [];
-        this.gridData = [];
         this.__fullData = null;
 
         // MEMORY LEAK FIX: Destroy jQuery datatable widget before clearing gridOptions
@@ -2270,6 +2275,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 if (nv) {
                     this.$element.find('.on-demand-datagrid > a').text(nv);
                 }
+                this.setDataGridOption('ondemandmessage', nv);
                 this.gridOptions.ondemandmessage = nv;
                 break;
             case 'allowpagesizechange':
@@ -2299,6 +2305,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.gridOptions.radioselectarialabel = nv;
                 break;
             case 'viewlessmessage':
+                this.setDataGridOption('viewlessmessage', nv);
                 this.gridOptions.viewlessmessage = nv;
                 break;
             case 'show':

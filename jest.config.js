@@ -4,7 +4,7 @@ module.exports = {
   roots: ["<rootDir>/projects"],
     testEnvironment: 'jest-environment-jsdom',
   transformIgnorePatterns: [
-    '/node_modules/(?!(@wavemaker/app-ng-runtime|lodash-es|@angular|angular-imask|ng-circle-progress|@wavemaker/variables|@wavemaker/foundation-css|@wavemaker/custom-widgets-m3|ngx-toastr|ngx-bootstrap|ngx-color-picker|@fullcalendar|preact)/)',
+    '/node_modules/(?!(@wavemaker-ai/app-ng-runtime|lodash-es|@angular|angular-imask|ng-circle-progress|@wavemaker-ai/variables|@wavemaker-ai/foundation-css|@wavemaker-ai/custom-widgets-m3|ngx-toastr|ngx-bootstrap|ngx-color-picker|@fullcalendar|preact)/)',
   ],
   testMatch: [
     "**/projects/**/*.spec.ts"
@@ -22,9 +22,9 @@ module.exports = {
     "libraries/scripts/tree-keyboard-navigation",
     "libraries/scripts/jquery.ui.touch-punch",
     "libraries/scripts/swipey",
-    ".yalc/@wavemaker/variables/src/",
-    ".yalc/@wavemaker/foundation-css",
-    ".yalc/@wavemaker/custom-widgets-m3",
+    ".yalc/@wavemaker-ai/variables/src/",
+    ".yalc/@wavemaker-ai/foundation-css",
+    ".yalc/@wavemaker-ai/custom-widgets-m3",
     "projects/components/base/src/test/"
   ],
   // collectCoverageFrom: [
