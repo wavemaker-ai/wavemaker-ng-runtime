@@ -33,6 +33,17 @@ import {registerProps} from './wizard.props';
 import {WizardStepComponent} from "./wizard-step/wizard-step.component";
 import {find, findIndex, forEach, get, indexOf, isArray, isNumber, isString} from "lodash-es";
 
+/**
+ * Header row shape for icon/tab-stepper helpers. Uses this instead of `WizardStepComponent` on
+ * those parameters so TypeScript/ng-packagr does not hit a circular resolution order
+ * (wizard-step imports WizardComponent).
+ */
+type WizardStepHeaderModel = {
+    isDone: boolean;
+    iconclass?: string;
+    doneiconclass?: string;
+};
+
 const DEFAULT_CLS = 'app-wizard panel clearfix';
 const WIDGET_CONFIG: IWidgetConfig = {
     widgetType: 'wm-wizard',
@@ -141,12 +152,12 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     }
 
     /** Default matches wm-wizardstep props; used for icon stepper when iconclass is empty. */
-    stepIconClassOrDefault(step: WizardStepComponent): string {
+    stepIconClassOrDefault(step: WizardStepHeaderModel): string {
         const c = step?.iconclass;
         return typeof c === 'string' && c.trim() ? c.trim() : 'wi wi-person';
     }
 
-    hasNonEmptyIconClass(step: WizardStepComponent): boolean {
+    hasNonEmptyIconClass(step: WizardStepHeaderModel): boolean {
         const ic = step?.iconclass;
         return typeof ic === 'string' && ic.trim() !== '';
     }
@@ -155,7 +166,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
      * Primary `app-icon` for icon/tab stepper: only when `iconclass` is set (no default glyph for icon stepper).
      * When `doneiconclass` is set, the done row is shown instead of this primary icon.
      */
-    shouldShowPrimaryStepIcon(step: WizardStepComponent): boolean {
+    shouldShowPrimaryStepIcon(step: WizardStepHeaderModel): boolean {
         if (!step || !this.showWizardStepIcons) {
             return false;
         }
@@ -175,7 +186,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
      * Icon stepper: omit the wrapper when there is no primary icon and no done icon to show.
      * Other layouts: keep the wrapper (numbers, dots, etc.).
      */
-    shouldRenderWizardStepNumberSpan(step: WizardStepComponent): boolean {
+    shouldRenderWizardStepNumberSpan(step: WizardStepHeaderModel): boolean {
         if (!this.showWizardStepIcons) {
             return true;
         }
@@ -198,7 +209,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     }
 
     /** Avoid `String()` in templates (strict mode treats it as a component property). */
-    hasNonEmptyDoneIconClass(step: WizardStepComponent): boolean {
+    hasNonEmptyDoneIconClass(step: WizardStepHeaderModel): boolean {
         const d = step?.doneiconclass;
         return typeof d === 'string' && d.trim() !== '';
     }
