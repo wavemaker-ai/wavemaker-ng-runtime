@@ -1300,7 +1300,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
         if (this.editmode === EDIT_MODE.QUICK_EDIT) {
             this.documentClickBind = this._documentClickBind.bind(this);
-            document.addEventListener('click', this.documentClickBind);
+            document.addEventListener('click', this.documentClickBind, true);
         }
     }
     private getConfiguredState() {
@@ -1551,7 +1551,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     ngOnDestroy() {
         // MEMORY LEAK FIX: Remove document click listener
-        document.removeEventListener('click', this.documentClickBind);
+        document.removeEventListener('click', this.documentClickBind, true);
 
         // MEMORY LEAK FIX: Unsubscribe from navigator watches
         if (this.navigatorResultWatch) {

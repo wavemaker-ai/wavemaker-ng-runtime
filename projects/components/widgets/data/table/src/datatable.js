@@ -1772,7 +1772,6 @@ $.widget('wm.datatable', {
     // triggered on capture phase of click listener.
     // sets the selected rowdata on click.
     rowClickHandlerOnCapture: function (e, $row, options) {
-        console.log('rowclick handler ', e.target);
         // If 'isrowselectable' property is enabled, clicking anywhere on the row will trigger its selection. Otherwise, the row will not be selected on click.
         // Also this flag works if mutliselect or radioselect is enabled.
         // In quick edit mode, clicking any part of the row switches it to edit mode, regardless of the flag setting.
@@ -1798,7 +1797,6 @@ $.widget('wm.datatable', {
 
     /* Handles row selection. */
     rowSelectionHandler: function (e, $row, options) {
-        console.log('rowselection ', e.target);
         // If 'isrowselectable' property is enabled, clicking anywhere on the row will trigger its selection. Otherwise, the row will not be selected on click.
         // Also this flag works if mutliselect or radioselect is enabled.
         // In quick edit mode, clicking any part of the row switches it to edit mode, regardless of the flag setting.
