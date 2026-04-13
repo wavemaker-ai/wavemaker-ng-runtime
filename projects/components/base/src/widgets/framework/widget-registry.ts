@@ -30,7 +30,9 @@ export const register = (widget: any, viewParent: any, widgetId: string, name?: 
     return () => {
         registryById.delete(widgetId);
         if (registered) {
-            viewParent.Widgets[name] = undefined;
+            // MEMORY LEAK FIX: Delete the property instead of setting to undefined
+            // This ensures the property is completely removed from the object
+            delete viewParent.Widgets[name];
         }
     };
 };
@@ -43,7 +45,8 @@ export const renameWidget = (viewParent: any, widget: any, nv: string, ov?: stri
         return;
     }
     if (ov) {
-        viewParent.Widgets[ov] = undefined;
+        // MEMORY LEAK FIX: Delete the old property instead of setting to undefined
+        delete viewParent.Widgets[ov];
     }
     if (nv) {
         viewParent.Widgets[nv] = widget;

@@ -85,7 +85,21 @@ export const setProperty = (node: HTMLElement, propName: string, val: any, sync?
 };
 
 export const setAttr = (node: HTMLElement, attrName: string, val: any, sync?: boolean) => {
-    const task = () => node instanceof Element && node.setAttribute(attrName, val);
+    const task = () => {
+        if (node instanceof Element) {
+            // Handle tabindex specifically - ensure it's a valid string representation
+            if (attrName === 'tabindex') {
+                // Convert to string, handling 0, null, undefined, and NaN
+                if (val === null || val === undefined || (typeof val === 'number' && isNaN(val))) {
+                    node.removeAttribute(attrName);
+                } else {
+                    node.setAttribute(attrName, String(val));
+                }
+            } else {
+                node.setAttribute(attrName, val);
+            }
+        }
+    };
     sync ? task() : invokeLater(task);
 };
 

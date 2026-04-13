@@ -1,6 +1,32 @@
-@if(!showmarkers){
-  <span [textContent]="minvalue" class="app-slider-value pull-left"></span>
-  <span [textContent]="maxvalue" class="app-slider-value pull-right"></span>
+@if (isPrism) {
+<div class="slider-container">
+  @if (showicons) {
+  <button class="btn-icon" type="button" name="decrementButton" (click)="decrementButtonClick($event)">
+    <i aria-hidden="true" [ngClass]="starticon"></i></button>
+  }
+  <div class="slider-control">
+    @if(!showmarkers){
+    <span [textContent]="minvalue||0" class="app-slider-value pull-left"></span>
+    <span [textContent]="maxvalue||100" class="app-slider-value pull-right"></span>
+    }
+    <input class="range-input" type="range" aria-orientation="horizontal" focus-target [title]="datavalue"
+      [attr.min]="minvalue" [attr.max]="maxvalue" [attr.step]="step" [(ngModel)]="datavalue"
+      [ngModelOptions]="{ standalone: true }" [disabled]="disabled||readonly" [attr.accesskey]="shortcutkey"
+      [attr.aria-label]="arialabel" (blur)="invokeOnTouched($event)" (ngModelChange)="handleChange($event)"
+      [attr.name]="name" [tabindex]="tabindex" />
+    <p class="active-slider"></p>
+  </div>
+  @if (showicons) {
+  <button class="btn-icon" type="button" name="incrementButton" (click)="incrementButtonClick($event)">
+    <i aria-hidden="true" [ngClass]="endicon"></i>
+  </button>
+  }
+</div>
+
+} @else {
+  @if(!showmarkers){
+  <span [textContent]="minvalue||0" class="app-slider-value pull-left"></span>
+  <span [textContent]="maxvalue||100" class="app-slider-value pull-right"></span>
 }
 <input class="range-input" aria-orientation="horizontal"
   focus-target
@@ -10,13 +36,14 @@
   [attr.step]="step"
   [(ngModel)]="datavalue"
   [ngModelOptions]="{standalone: true}"
-  [disabled]="disabled"
+  [disabled]="disabled||readonly"
   [attr.accesskey]="shortcutkey"
   [attr.aria-label]="arialabel"
   (blur)="invokeOnTouched($event)"
   (ngModelChange)="handleChange($event)"
   [attr.name]="name"
   [tabindex]="tabindex"/>
+}
 @if (readonly || disabled) {
   <div aria-readonly="true" class="readonly-wrapper"></div>
 }

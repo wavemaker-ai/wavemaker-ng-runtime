@@ -1,5 +1,5 @@
 import {IMaskDirective, IMaskModule} from 'angular-imask';
-import {ChangeDetectorRef, Component, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {BsDatepickerDirective, BsDatepickerModule} from 'ngx-bootstrap/datepicker';
 import {
@@ -119,6 +119,7 @@ export class DateComponent extends BaseDateTimeComponent {
         this.dateContainerCls = `app-date-${this.widgetId}`;
         this._dateOptions.containerClass = `app-date ${this.dateContainerCls}`;
         this._dateOptions.showWeekNumbers = false;
+        this._dateOptions.customTodayClass='current-date';
         this._bsDefaultLoadCheck = true;
         this.datepattern = this.appDefaults.dateFormat || getDisplayDateTimeFormat(FormWidgetType.DATE);
         this.updateFormat('datepattern');
@@ -178,9 +179,9 @@ export class DateComponent extends BaseDateTimeComponent {
     onDatePickerOpen() {
         this.isOpen = true;
         this.activeDate = this.bsDataValue ? this.bsDataValue : (this.timeZone ? getMomentLocaleObject(this.timeZone) : new Date());
-        if (!this.bsDataValue) {
-            this.hightlightToday(this.activeDate);
-        }
+        // if (!this.bsDataValue) {
+        //     this.hightlightToday(this.activeDate);
+        // }
         this.updateIMask();
         if (this.bsDatePickerDirective && (this.dateNotInRange||this.invalidDateTimeFormat)) {
             this.bsDatePickerDirective._bsValue = null;
@@ -347,5 +348,32 @@ export class DateComponent extends BaseDateTimeComponent {
         } else {
             super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clean up event listener deregister function
+        if (this.deregisterEventListener) {
+            this.deregisterEventListener();
+            this.deregisterEventListener = null;
+        }
+
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.bsDatePickerDirective = null;
+        this.imask = null;
+
+        // MEMORY LEAK FIX: Deactivate focus trap if active
+        if (this.focusTrap) {
+            this.focusTrap.deactivate();
+            this.focusTrap = null;
+        }
+
+        // MEMORY LEAK FIX: Clear removeKeyupListener if set
+        if (this.removeKeyupListener) {
+            this.removeKeyupListener();
+            this.removeKeyupListener = null;
+        }
+
+        // Call parent ngOnDestroy (BaseDateTimeComponent has cleanup)
+        super.ngOnDestroy();
     }
 }

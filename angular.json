@@ -88,6 +88,13 @@
               "./node_modules/jssha/dist/sha256.js",
               "./node_modules/@ztree/ztree_v3/js/jquery.ztree.all.js",
               "./libraries/scripts/tree-keyboard-navigation/keyboard-navigation.js"
+            ],
+            "allowedCommonJsDependencies": [
+                "angular2-websocket/angular2-websocket",
+                "he",
+                "moment",
+                "moment-timezone",
+                "x2js"
             ]
           },
           "configurations": {
@@ -126,7 +133,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb"
+                  "maximumWarning": "5mb"
                 }
               ]
             },

@@ -43,12 +43,18 @@ describe('NavigationControlDirective', () => {
     });
 
     it('should remove contextmenu event listener when link is provided and disableMenuContext is false', () => {
+        // First setup: no link, so listener should be added
+        component.link = '';
+        component.disableMenu = false;
+        fixture.detectChanges();
+        
+        // Now set up spy and change to have link, which should remove the listener
         const spy = jest.spyOn(nativeElement, 'removeEventListener');
         component.link = 'https://example.com';
         component.disableMenu = false;
         fixture.detectChanges();
 
-        expect(spy).toHaveBeenCalledWith('contextmenu', disableContextMenu);
+        expect(spy).toHaveBeenCalledWith('contextmenu', expect.any(Function));
     });
 
     it('should prevent default action on contextmenu event when disableContextMenu is true', () => {

@@ -148,6 +148,12 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
         super.ngAfterViewInit();
         this.init();
         if(this.hasGoToPageExpr) {
+            // Clean up any existing subscription before creating a new one
+            if (this.cancelSubscription) {
+                this.cancelSubscription();
+                this.cancelSubscription = null;
+            }
+            
             // In SPA, it highlights active page link when we navigate within the same layout
             this.cancelSubscription = this.app.subscribe("highlightActiveLink", (data) => {
                 if(this.hasNavigationToCurrentPageExpr && this.goToPageName !== this.app.activePageName) {
@@ -170,9 +176,18 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
     }
 
     public ngOnDestroy() {
-        this._eventNotifier.destroy();
+        // Unsubscribe from app event first to prevent any callbacks during destruction
         if(this.cancelSubscription) {
             this.cancelSubscription();
+            this.cancelSubscription = null;
+        }
+        
+        // Destroy local event notifier
+        this._eventNotifier.destroy();
+        
+        // Remove event listener if it exists
+        if (this.nativeElement) {
+            this.nativeElement.removeEventListener('contextmenu', disableContextMenu);
         }
         super.ngOnDestroy();
     }

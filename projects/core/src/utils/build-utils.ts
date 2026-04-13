@@ -72,6 +72,9 @@ export const getFormWidgetTemplate = (widgetType: string, innerTmpl: string, att
         case FormWidgetType.TOGGLE:
             tmpl = `<div wmCheckbox ${innerTmpl} ${attrs.get('required') === 'true' ? 'required=true' : ''} type="toggle" ${showTmpl}></div>`;
             break;
+        case FormWidgetType.ICONBUTTONTOGGLE:
+            tmpl = `<div wmCheckbox ${innerTmpl} ${attrs.get('required') === 'true' ? 'required=true' : ''} type="button" ${showTmpl}></div>`;
+            break;
         case FormWidgetType.SLIDER:
             tmpl = `<div wmSlider ${innerTmpl} ${showTmpl}></div>`;
             break;
@@ -164,6 +167,7 @@ export const getRequiredFormWidget = (widgetType): string => {
             return 'wm-textarea';
         case FormWidgetType.CHECKBOX:
         case FormWidgetType.TOGGLE:
+        case FormWidgetType.ICONBUTTONTOGGLE:
             return 'wm-checkbox';
         case FormWidgetType.UPLOAD:
             return 'wm-fileupload';

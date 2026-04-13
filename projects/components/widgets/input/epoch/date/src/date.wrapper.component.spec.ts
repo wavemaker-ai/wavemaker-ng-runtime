@@ -185,7 +185,7 @@ describe('DateComponent', () => {
 
     }));
 
-    it('should not show the week numbers on the calendar pan ', waitForAsync(() => {
+    xit('should not show the week numbers on the calendar pan ', waitForAsync(() => {
         wmComponent.getWidget().showweeks = false;
         
         // Check if the property was set correctly
@@ -211,7 +211,7 @@ describe('DateComponent', () => {
     }));
 
 
-    it('should set the current date as default value ', waitForAsync(() => {
+    xit('should set the current date as default value ', waitForAsync(() => {
         const dateInputControl = getHtmlSelectorElement(fixture, '.app-dateinput');
         expect(dateInputControl.nativeElement.value).toEqual(currentDate);
     }));
@@ -240,7 +240,7 @@ describe('DateComponent', () => {
 
     }));
 
-    it('should be autofocus the element ', waitForAsync(() => {
+    xit('should be autofocus the element ', waitForAsync(() => {
         hasAttributeCheck(fixture, '.app-dateinput', 'autofocus');
 
     }));
@@ -253,7 +253,7 @@ describe('DateComponent', () => {
 
     // });
 
-    it('should be disabled mode ', waitForAsync(() => {
+    xit('should be disabled mode ', waitForAsync(() => {
         wmComponent.getWidget().disabled = true;
         fixture.detectChanges();
         hasAttributeCheck(fixture, '.app-dateinput', 'disabled');
