@@ -393,6 +393,9 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             zNode['icon'] = icon;
             zNode['nodeId'] = nodeId;
             zNode['data'] = getClonedObject(node);
+            if (node.selected) {
+                zNode['selected'] = true;
+            }
             if (node.iconSkin != null && node.iconSkin !== '') {
                 zNode['iconSkin'] = node.iconSkin;
             }
@@ -484,6 +487,16 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     private postRenderTree() {
         setTimeout(() => {
             this.changeTreeIcons(this.treeicons || defaultTreeIconClass);
+
+            const allNodes = this.zTree.transformToArray(this.zTree.getNodes());
+            const selectedNode = allNodes.find(n => n.selected);
+
+            if (selectedNode) {
+                this.zTree.selectNode(selectedNode, false);
+                this.selectNode(undefined, selectedNode);
+                this.expandNode(selectedNode, true, false);
+                return;
+            }
 
             if (this.datavalue && !this.selecteditem) {
                 const nodes = this.zTree.getNodes();
