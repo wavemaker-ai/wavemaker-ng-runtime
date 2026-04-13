@@ -245,6 +245,8 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
     onPropertyChange(key: string, nv: any, ov?: any) {
 
         if (key === 'tabindex') {
+            // Let the base class handle tabindex setting via setAttr
+            super.onPropertyChange(key, nv, ov);
             return;
         }
 

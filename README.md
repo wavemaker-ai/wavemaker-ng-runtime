@@ -1,3 +1,4 @@
-# WaveMaker
+# WaveMaker Angular Runtime
 
-Widgets - API Documentation
+This is the Angular runtime for WaveMaker applications.
+

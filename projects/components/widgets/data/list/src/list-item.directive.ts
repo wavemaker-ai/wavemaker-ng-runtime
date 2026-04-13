@@ -7,8 +7,8 @@ import {
     inject,
     Injector,
     Input,
+    OnDestroy,
     OnInit,
-    Optional,
     ViewContainerRef
 } from '@angular/core';
 
@@ -27,7 +27,7 @@ declare const $;
     selector: '[wmListItem]',
     exportAs: 'listItemRef'
 })
-export class ListItemDirective implements OnInit, AfterViewInit {
+export class ListItemDirective implements OnInit, AfterViewInit, OnDestroy {
 
     public item;
     public context;
@@ -120,34 +120,47 @@ export class ListItemDirective implements OnInit, AfterViewInit {
         }
     }
 
+    private boundEditHandler: (event: Event) => void;
+    private boundDeleteHandler: (event: Event) => void;
+    private boundMouseEnterHandler: (event: Event) => void;
+    private boundMouseLeaveHandler: (event: Event) => void;
+
     private setUpCUDHandlers() {
         const $editItem = this.nativeElement.querySelector('.edit-list-item');
         const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
 
         if ($editItem) {
-            // Triggered on click of edit action
-            $editItem.addEventListener('click', evt => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundEditHandler = (evt: Event) => {
                 this.listComponent.update();
-            });
+            };
+            // Triggered on click of edit action
+            $editItem.addEventListener('click', this.boundEditHandler);
         }
 
         if ($deleteItem) {
-            // Triggered on click of delete action
-            $deleteItem.addEventListener('click', evt => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundDeleteHandler = (evt: Event) => {
                 this.listComponent.delete();
-            });
+            };
+            // Triggered on click of delete action
+            $deleteItem.addEventListener('click', this.boundDeleteHandler);
         }
     }
     ngOnInit() {
         if (this.listComponent.mouseEnterCB) {
-            this.nativeElement.addEventListener('mouseenter', ($event) => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundMouseEnterHandler = ($event: Event) => {
                 this.listComponent.invokeEventCallback('mouseenter', {widget: this, $event});
-            });
+            };
+            this.nativeElement.addEventListener('mouseenter', this.boundMouseEnterHandler);
         }
         if (this.listComponent.mouseLeaveCB) {
-            this.nativeElement.addEventListener('mouseleave', ($event) => {
+            // MEMORY LEAK FIX: Store bound handler for cleanup
+            this.boundMouseLeaveHandler = ($event: Event) => {
                 this.listComponent.invokeEventCallback('mouseleave', {widget: this, $event});
-            });
+            };
+            this.nativeElement.addEventListener('mouseleave', this.boundMouseLeaveHandler);
         }
         // adding item attribute on every list item
         $(this.nativeElement).attr('listitemindex', this.$index);
@@ -163,5 +176,73 @@ export class ListItemDirective implements OnInit, AfterViewInit {
                 }
             }
         });
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Remove event listeners
+        if (this.boundMouseEnterHandler && this.nativeElement) {
+            try {
+                this.nativeElement.removeEventListener('mouseenter', this.boundMouseEnterHandler);
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
+            this.boundMouseEnterHandler = null;
+        }
+        if (this.boundMouseLeaveHandler && this.nativeElement) {
+            try {
+                this.nativeElement.removeEventListener('mouseleave', this.boundMouseLeaveHandler);
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
+            this.boundMouseLeaveHandler = null;
+        }
+
+        if (this.nativeElement) {
+            const $editItem = this.nativeElement.querySelector('.edit-list-item');
+            if ($editItem && this.boundEditHandler) {
+                try {
+                    $editItem.removeEventListener('click', this.boundEditHandler);
+                } catch (e) {
+                    // Silently handle cleanup errors
+                }
+                this.boundEditHandler = null;
+            }
+
+            const $deleteItem = this.nativeElement.querySelector('.delete-list-item');
+            if ($deleteItem && this.boundDeleteHandler) {
+                try {
+                    $deleteItem.removeEventListener('click', this.boundDeleteHandler);
+                } catch (e) {
+                    // Silently handle cleanup errors
+                }
+                this.boundDeleteHandler = null;
+            }
+        }
+
+        // MEMORY LEAK FIX: Clear context to release references
+        if (this.context) {
+            Object.keys(this.context).forEach(key => {
+                delete this.context[key];
+            });
+            this.context = null;
+        }
+
+        // MEMORY LEAK FIX: Clear ViewContainerRef reference
+        if (this.viewContainerRef) {
+            this.viewContainerRef = null;
+        }
+
+        // MEMORY LEAK FIX: Complete the destroy subject
+        if (this.destroy) {
+            try {
+                if (!this.destroy.closed) {
+                    this.destroy.next(null);
+                    this.destroy.complete();
+                }
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
+            this.destroy = null;
+        }
     }
 }

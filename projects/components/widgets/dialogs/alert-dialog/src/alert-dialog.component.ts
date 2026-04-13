@@ -4,12 +4,13 @@ import {
     Inject,
     Injector,
     OnInit,
+    OnDestroy,
     Optional,
     TemplateRef,
     ViewChild
 } from '@angular/core';
 
-import { toBoolean } from '@wm/core';
+import { App, toBoolean } from '@wm/core';
 import { IWidgetConfig, provideAsDialogRef, provideAsWidgetRef, TextContentDirective } from '@wm/components/base';
 import { BaseDialog, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent } from '@wm/components/dialogs';
 
@@ -19,6 +20,13 @@ import { ButtonComponent } from "@wm/components/input/button";
 const DIALOG_CLS = 'app-dialog modal-dialog app-alert-dialog';
 
 const WIDGET_INFO: IWidgetConfig = { widgetType: 'wm-alertdialog' };
+
+const alertMap: Record<string, string> = {
+  information: 'info',
+  error: 'danger',
+  success: 'success',
+  warning: 'warning'
+};
 
 @Component({
     standalone: true,
@@ -30,8 +38,10 @@ const WIDGET_INFO: IWidgetConfig = { widgetType: 'wm-alertdialog' };
         provideAsDialogRef(AlertDialogComponent)
     ]
 })
-export class AlertDialogComponent extends BaseDialog implements OnInit {
+export class AlertDialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
+    isPrism: boolean;
+    alerttype: any;
 
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate: TemplateRef<any>;
 
@@ -40,7 +50,8 @@ export class AlertDialogComponent extends BaseDialog implements OnInit {
         @Attribute('class') dialogClass: string,
         @Attribute('modal') modal: string | boolean,
         @Attribute('closable') closable: string | boolean,
-        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
+        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any,
+        public app: App
     ) {
         if (modal === null || modal === undefined) {
             modal = false;
@@ -63,6 +74,7 @@ export class AlertDialogComponent extends BaseDialog implements OnInit {
             },
             explicitContext
         );
+     this.isPrism = this.app.isPrism;
     }
 
     protected getTemplateRef(): TemplateRef<any> {
@@ -80,6 +92,14 @@ export class AlertDialogComponent extends BaseDialog implements OnInit {
 
     ngOnInit() {
         super.ngOnInit();
+        this.alerttype = alertMap[this.alerttype] ?? this.alerttype;
         this.register(this.viewParent);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.dialogTemplate = null;
+
+        super.ngOnDestroy();
     }
 }

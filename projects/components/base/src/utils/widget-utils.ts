@@ -551,3 +551,11 @@ export const getKeyboardFocusableElements = (element: HTMLElement) => {
             && (!el.hasAttribute('tabindex') || (el.hasAttribute('tabindex') && !el.getAttribute("tabindex").startsWith('-'))));
     });
 }
+
+export const getCurrentWidgets = (element, widgets) => {
+    const componentElements = Array.from(element.querySelectorAll('[widget-id]'));
+    return Object.assign(widgets, componentElements.reduce((result, comp: any,) => {
+        result[comp.widget.name] = comp.widget;
+        return result;
+    }, {}));
+}

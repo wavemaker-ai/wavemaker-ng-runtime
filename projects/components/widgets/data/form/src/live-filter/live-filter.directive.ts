@@ -1,4 +1,4 @@
-import { Directive, Inject, Self } from '@angular/core';
+import { Directive, Inject, OnDestroy, Self } from '@angular/core';
 import { $appDigest, DataSource, DataType, debounce, FormWidgetType, getClonedObject, isDefined } from '@wm/core';
 import { applyFilterOnField, fetchDistinctValues, getDistinctValuesForField, getEmptyMatchMode, getEnableEmptyFilter, getRangeFieldValue, getRangeMatchMode, isDataSetWidget } from '@wm/components/base';
 
@@ -15,7 +15,7 @@ const noop = () => {};
   standalone: true,
     selector: '[wmLiveFilter]'
 })
-export class LiveFilterDirective {
+export class LiveFilterDirective implements OnDestroy {
     static  initializeProps = registerLiveFilterProps();
     private _options;
 
@@ -258,6 +258,7 @@ export class LiveFilterDirective {
                         break;
                     case FormWidgetType.CHECKBOX:
                     case FormWidgetType.TOGGLE:
+                    case FormWidgetType.ICONBUTTONTOGGLE:
                         if (isDefined(filterField._value) && filterField._value !== '') {
                             fieldValue = filterField.type === DataType.BOOLEAN ? JSON.parse(filterField._value) : filterField._value;
                         }
@@ -343,5 +344,18 @@ export class LiveFilterDirective {
     registerFormWidget(widget) {
         const name = widget.key || widget.name;
         this.form.filterWidgets[name] = widget;
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Cancel debounced function
+        if (this._filter && (this._filter as any).cancel) {
+            (this._filter as any).cancel();
+            this._filter = null;
+        }
+
+        // MEMORY LEAK FIX: Clear form reference
+        this.form = null;
+        this._options = null;
+        this.orderBy = null;
     }
 }

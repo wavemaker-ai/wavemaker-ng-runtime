@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
 import {IWidgetConfig, provideAs, provideAsWidgetRef} from '@wm/components/base';
@@ -24,7 +24,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(InputColorComponent)
     ]
 })
-export class InputColorComponent extends BaseInput {
+export class InputColorComponent extends BaseInput implements OnDestroy {
     static initializeProps = registerProps();
 
     public required: boolean;
@@ -47,5 +47,14 @@ export class InputColorComponent extends BaseInput {
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.inputEl = null;
+        this.ngModel = null;
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }

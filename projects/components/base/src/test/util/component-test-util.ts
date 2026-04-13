@@ -85,6 +85,7 @@ export const notHavingTheAttribute = async <T>(fixture: ComponentFixture<T>, sel
 }
 
 export const mockApp = {
+    isPrism: true,
     subscribe: () => { return () => { } },
     getSelectedLocale: () => {
         return 'en';

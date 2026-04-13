@@ -55,6 +55,7 @@ module.exports = {
     "@wm/components/(.*)$": "<rootDir>/projects/components/widgets/$1/src/public_api.ts",
     "@wm/(.*)$": "<rootDir>/projects/$1/index.ts",
     "projects/(.*)$": "<rootDir>/projects/$1",
+    "libraries/scripts/jquery.ui.touch-punch/jquery.ui.touch-punch.min.js": "<rootDir>/projects/jquery.ui.touch-punch/jquery.ui.touch-punch.min.js",
     "libraries/(.*)$": "<rootDir>/libraries/$1"
   }
 

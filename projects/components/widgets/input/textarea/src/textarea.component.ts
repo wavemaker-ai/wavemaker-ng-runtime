@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {AfterViewChecked, Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {AfterViewChecked, Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
 import {provideAs, provideAsWidgetRef} from '@wm/components/base';
@@ -24,7 +24,7 @@ const WIDGET_CONFIG = {
         provideAsWidgetRef(TextareaComponent)
     ]
 })
-export class TextareaComponent extends BaseInput implements AfterViewChecked {
+export class TextareaComponent extends BaseInput implements AfterViewChecked, OnDestroy {
     static initializeProps = registerProps();
     public required: boolean;
     public maxchars: number;
@@ -55,4 +55,13 @@ export class TextareaComponent extends BaseInput implements AfterViewChecked {
     ngAfterViewChecked(): void {
         this.charlength = this.inputEl.nativeElement.value.length;
       }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.inputEl = null;
+        this.ngModel = null;
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
+    }
 }

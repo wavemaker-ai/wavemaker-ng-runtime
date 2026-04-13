@@ -347,7 +347,33 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         // MEMORY LEAK FIX: Unwatch all Page-scoped watchers for THIS specific page when page is destroyed
         //this.captureApplicationThumbnail();
         this.savePageSnapShot();
-        this.destroy$.complete();
+
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
+        if (this.destroy$) {
+            this.destroy$.complete();
+            this.destroy$ = null;
+        }
+        if (this.viewInit$) {
+            this.viewInit$.complete();
+            this.viewInit$ = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references to prevent memory leaks
+        this.App = null;
+        this.route = null;
+        this.appManager = null;
+        this.navigationService = null;
+        this.router = null;
+        this.pageParams = null;
+        this.i18nService = null;
+        this.appLocale = null;
+        this.pageDirective = null;
+        this.$page = null;
+        this.scriptLoaderService = null;
+        this.Viewport = null;
+
+        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
+        this.cleanupFragmentMonitor();
     }
 
     captureApplicationThumbnail() {
