@@ -1,17 +1,23 @@
-import {APP_INITIALIZER, ApplicationConfig, importProvidersFrom, LOCALE_ID, provideZoneChangeDetection} from "@angular/core";
-import {provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation} from "@angular/router";
+import {
+    APP_INITIALIZER,
+    ApplicationConfig,
+    importProvidersFrom,
+    LOCALE_ID,
+    provideZoneChangeDetection
+} from "@angular/core";
+import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation } from "@angular/router";
 import {
     HTTP_INTERCEPTORS,
     provideHttpClient,
     withInterceptorsFromDi,
     withXsrfConfiguration
 } from "@angular/common/http";
-import {provideAnimations} from "@angular/platform-browser/animations";
-import {routes} from "./app.routes";
-import {HttpServiceImpl} from "@wm/http";
-import {SecurityService} from "@wm/security";
-import {MetadataService, VariablesService} from "@wm/variables";
-import {OAuthService} from "@wm/oAuth";
+import { provideAnimations } from "@angular/platform-browser/animations";
+import { routes } from "./app.routes";
+import { HttpServiceImpl } from "@wm/http";
+import { SecurityService } from "@wm/security";
+import { MetadataService, VariablesService } from "@wm/variables";
+import { OAuthService } from "@wm/oAuth";
 import {
     AppBeforeLoadResolve,
     AppDefaultsService,
