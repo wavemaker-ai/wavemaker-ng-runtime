@@ -3,7 +3,6 @@ import { Subject } from 'rxjs';
 
 import {
     $watch,
-    $unwatchAllByScope,
     AbstractI18nService,
     App,
     isIE,
@@ -286,13 +285,6 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
     ngOnDestroy(): void {
-        // MEMORY LEAK FIX: Unwatch all Prefab-scoped watchers for THIS specific prefab when prefab is destroyed
-        // Only unwatch watchers for this prefab, not all prefabs (other prefabs may still be on the page)
-        if (this.prefabName) {
-            $unwatchAllByScope('Prefab', this.prefabName);
-        }
-
-        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
         if (this.destroy$) {
             this.destroy$.complete();
             this.destroy$ = null;
@@ -302,7 +294,6 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
             this.viewInit$ = null;
         }
 
-        // MEMORY LEAK FIX: Clear references to prevent memory leaks
         this.App = null;
         this.containerWidget = null;
         this.prefabMngr = null;
@@ -314,7 +305,6 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
         this.Viewport = null;
         this.viewParent = null;
 
-        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
         this.cleanupFragmentMonitor();
     }
 
