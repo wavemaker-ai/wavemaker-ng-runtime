@@ -17,6 +17,7 @@ import {
     Optional,
     QueryList,
     TemplateRef,
+    EmbeddedViewRef,
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
@@ -201,6 +202,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     viewlessmessage;
     showviewlessbutton = false;
     _triggeredByUser;
+    _isInlineEditSave;
     isGridEditMode;
     loadingdatamsg;
     multiselect;
@@ -634,11 +636,20 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.prevData = getClonedObject(row);
         },
         afterRowUpdate: (row, e, callBack, options) => {
+            const isQuickEditModelVar = this.editmode === 'quickedit' && get(this.datasource, 'category') === 'wm.Variable';
+            if (isQuickEditModelVar) {
+                this._isInlineEditSave = true;
+            }
             muteWatchers();
             const v = get(this.datasource, 'category') === 'wm.Variable' && options && options.rowindex != null;
             this.updateRecord(extend({}, options, {row, prevData: v ? options.rowindex : this.prevData, event: e, callBack}));
             setTimeout(() => {
                 unMuteWatchers();
+                if (isQuickEditModelVar) {
+                    setTimeout(() => {
+                        this._isInlineEditSave = false;
+                    });
+                }
             }, 10);
         },
         onBeforeRowUpdate: (row, e, options) => {
@@ -710,10 +721,66 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.customExprCompiledTl = {};
             this.customExprCompiledSummaryTl = {};
         },
+        updateCustomExpressionContexts: (preparedData) => {
+            const viewCount = this.customExprViewRef.length;
+            for (let i = 0; i < viewCount; i++) {
+                const viewRef = this.customExprViewRef.get(i) as EmbeddedViewRef<any>;
+                if (!viewRef || !viewRef.context || !viewRef.context.row || viewRef.context.row.$index === undefined) {
+                    continue;
+                }
+                const existingRow = viewRef.context.row;
+                const rowIndex = existingRow.$index - 1;
+                const dataRow = preparedData[rowIndex];
+                if (!dataRow) {
+                    continue;
+                }
+                Object.keys(dataRow).forEach(key => {
+                    if (key !== '$$index' && key !== '$$pk') {
+                        existingRow[key] = dataRow[key];
+                    }
+                });
+                existingRow.$isFirst = existingRow.$index === 1;
+                existingRow.$isLast = this.gridData.length === existingRow.$index;
+                viewRef.markForCheck();
+            }
+        },
         clearRowDetailExpression: () => {
             this.rowDetailViewRef.clear();
             this.rowDefMap = {};
             this.rowDefInstances = {};
+        },
+        invalidateRowDetailCache: (preparedData) => {
+            this.rowDefMap = {};
+            this.rowDefInstances = {};
+            // Update existing row detail view contexts in-place so currently
+            // expanded partials pick up the new row data via change detection.
+            const viewCount = this.rowDetailViewRef.length;
+            for (let i = 0; i < viewCount; i++) {
+                const viewRef = this.rowDetailViewRef.get(i) as EmbeddedViewRef<any>;
+                if (!viewRef || !viewRef.context || !viewRef.context.row) {
+                    continue;
+                }
+                const existingRow = viewRef.context.row;
+                const rowIndex = existingRow.$index - 1;
+                const dataRow = preparedData[rowIndex];
+                if (!dataRow) {
+                    continue;
+                }
+                Object.keys(dataRow).forEach(key => {
+                    if (key !== '$$index' && key !== '$$pk') {
+                        existingRow[key] = dataRow[key];
+                    }
+                });
+                viewRef.markForCheck();
+            }
+        },
+        refreshSelectedItems: () => {
+            const selectedRows = this.callDataGridMethod('getSelectedRows');
+            if (selectedRows.length) {
+                this.items.length = 0;
+                selectedRows.forEach(row => this.items.push(row));
+                this.selectedItemChange.next(selectedRows);
+            }
         },
         generateCustomExpressions: (rowData, index, summaryRow?) => {
             const row = this.getClonedRowObject(rowData);
@@ -1095,7 +1162,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     console.warn('Error in beforedatarender event callback, continuing with table rendering:', error);
                 }
             }
-            this.setDataGridOption('data', getClonedObject(this._gridData));
+            if (this._isInlineEditSave) {
+                const clonedData = getClonedObject(this._gridData);
+                this.gridOptions.data = clonedData;
+                this.callDataGridMethod('softRefreshData', clonedData);
+            } else {
+                this.setDataGridOption('data', getClonedObject(this._gridData));
+            }
         }
     }
 
