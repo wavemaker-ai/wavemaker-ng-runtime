@@ -203,6 +203,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     showviewlessbutton = false;
     _triggeredByUser;
     _isInlineEditSave;
+    /** Covers async navigator/dataset updates after inline/quickedit save (wm.Variable). */
+    private _modelVarEditSoftRefreshActiveUntil = 0;
     isGridEditMode;
     loadingdatamsg;
     multiselect;
@@ -636,19 +638,23 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.prevData = getClonedObject(row);
         },
         afterRowUpdate: (row, e, callBack, options) => {
-            const isQuickEditModelVar = this.editmode === 'quickedit' && get(this.datasource, 'category') === 'wm.Variable';
-            if (isQuickEditModelVar) {
+            const isModelVarInlineOrQuick = this.isModelVariableInlineOrQuickEdit();
+            if (isModelVarInlineOrQuick) {
                 this._isInlineEditSave = true;
+                // Inline save triggers navigatePage / dataset emit asynchronously; a
+                // microtask timeout cleared the flag before gridData ran → full rerender.
+                this._modelVarEditSoftRefreshActiveUntil = Date.now() + 550;
             }
             muteWatchers();
             const v = get(this.datasource, 'category') === 'wm.Variable' && options && options.rowindex != null;
             this.updateRecord(extend({}, options, {row, prevData: v ? options.rowindex : this.prevData, event: e, callBack}));
             setTimeout(() => {
                 unMuteWatchers();
-                if (isQuickEditModelVar) {
+                if (isModelVarInlineOrQuick) {
                     setTimeout(() => {
                         this._isInlineEditSave = false;
-                    });
+                        this._modelVarEditSoftRefreshActiveUntil = 0;
+                    }, 520);
                 }
             }, 10);
         },
@@ -1091,6 +1097,21 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
     };
 
+    /** wm.Variable + inline or quickedit (editmode is string from markup; normalize case). */
+    private isModelVariableInlineOrQuickEdit(): boolean {
+        if (get(this.datasource, 'category') !== 'wm.Variable') {
+            return false;
+        }
+        const em = String(this.editmode || '').toLowerCase();
+        return em === 'quickedit' || em === 'inline';
+    }
+
+    /** True while an inline/quickedit row save is updating the grid (incl. delayed navigator emit). */
+    private shouldSoftRefreshAfterModelVarRowSave(): boolean {
+        return this.isModelVariableInlineOrQuickEdit()
+            && (this._isInlineEditSave || this._modelVarEditSoftRefreshActiveUntil > Date.now());
+    }
+
     private _gridData;
     private _selectedItemsExist = false;
     set gridData(newValue) {
@@ -1162,7 +1183,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     console.warn('Error in beforedatarender event callback, continuing with table rendering:', error);
                 }
             }
-            if (this._isInlineEditSave) {
+            if (this.shouldSoftRefreshAfterModelVarRowSave()) {
                 const clonedData = getClonedObject(this._gridData);
                 this.gridOptions.data = clonedData;
                 this.callDataGridMethod('softRefreshData', clonedData);
@@ -1609,6 +1630,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     }
 
     ngOnDestroy() {
+        this._modelVarEditSoftRefreshActiveUntil = 0;
+        this._isInlineEditSave = false;
         // MEMORY LEAK FIX: Remove document click listener
         document.removeEventListener('click', this.documentClickBind);
 
