@@ -1141,6 +1141,13 @@ $.widget('wm.datatable', {
      * Used during quickedit inline save for model variables to avoid focus loss.
      */
     softRefreshData: function (newData) {
+        // With pagination, navigator / selection can emit the same page twice in one
+        // save cycle. Full refresh skipped duplicate data via isEqual on option set;
+        // soft refresh must do the same or onDataRender (datarender) fires twice.
+        if (this.options.data && newData && _.isEqual(this.options.data, newData)) {
+            return;
+        }
+
         var self = this,
             isScrollOrOnDemand = this.options.isNavTypeScrollOrOndemand(),
             pageStartIndex = this.getPageStartIndex(),
@@ -1236,6 +1243,8 @@ $.widget('wm.datatable', {
         this.options.clearRowActions();
         this._appendRowExpansionButtons($dataRows);
         this._appendRowActions($dataRows);
+        // Regenerated action / expansion DOM — re-bind handlers (attachEventHandlers only runs on full render).
+        this._bindRowActionsAndExpansionClickHandlers($dataRows);
 
         // Re-render summary row if present
         if (this.options.summaryRow) {
@@ -3025,6 +3034,28 @@ $.widget('wm.datatable', {
             this.sortHandler(event);
         }
     },
+    /**
+     * Binds jQuery handlers on save/cancel row-action buttons and row-expansion controls.
+     * Must run after DOM for those controls is replaced (e.g. softRefreshData).
+     */
+    _bindRowActionsAndExpansionClickHandlers: function ($scope) {
+        var self = this;
+        if (this.options.rowActions.length) {
+            $scope.find('.cancel-edit-row-button').off('click');
+            $scope.find('.save-edit-row-button').off('click');
+            $scope.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
+            $scope.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
+        }
+        $scope.find('[data-identifier="rowExpansionButtons"]').off('click');
+        $scope.find('[data-identifier="rowExpansionButtons"]').on('click', function (e) {
+            var $row = $(e.target).closest('tr.app-datagrid-row');
+            if ($(this).find('.app-button').attr('disabled')) {
+                return;
+            }
+            self.toggleExpandRow(+$row.attr('data-row-id'), undefined, e);
+        });
+    },
+
     /* Attaches all event handlers for the table. */
     attachEventHandlers: function ($htm) {
         var $header = this.gridHeaderElement,
@@ -3078,12 +3109,7 @@ $.widget('wm.datatable', {
                 }
             }
         }
-        if (this.options.rowActions.length) {
-            $htm.find('.cancel-edit-row-button').off('click');
-            $htm.find('.save-edit-row-button').off('click');
-            $htm.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
-            $htm.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
-        }
+        this._bindRowActionsAndExpansionClickHandlers($htm);
         if (self.options.editmode === self.CONSTANTS.QUICK_EDIT) {
             $htm.on('focus', 'tr.app-datagrid-row', function (e) {
                 var $row = $(e.currentTarget);
@@ -3147,15 +3173,6 @@ $.widget('wm.datatable', {
             });
         }
 
-        // row selection
-        $htm.find('[data-identifier="rowExpansionButtons"]').off("click");
-        $htm.find('[data-identifier="rowExpansionButtons"]').on('click', function (e) {
-            var $row = $(e.target).closest('tr.app-datagrid-row');
-            if ($(this).find('.app-button').attr('disabled')) {
-                return;
-            }
-            self.toggleExpandRow(+$row.attr('data-row-id'), undefined, e);
-        });
     },
     expandRow: function(rowId) {
         this.toggleExpandRow(rowId, true)
