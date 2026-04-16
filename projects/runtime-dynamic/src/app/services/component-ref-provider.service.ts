@@ -26,7 +26,7 @@ import {
 } from '@wm/runtime/base';
 import { AppResourceManagerService } from './app-resource-manager.service';
 import { isString, isUndefined } from "lodash-es";
-import * as customWidgets from '@wavemaker/custom-widgets-m3';
+import * as customWidgets from '@wavemaker-ai/custom-widgets-m3';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 

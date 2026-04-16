@@ -7,7 +7,6 @@ import { LayoutDirective, SpaPageDirective } from '@wm/components/page';
 import {Subject} from 'rxjs';
 
 import {
-    $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
     App,
@@ -329,10 +328,6 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     }
 
     ngOnDestroy(): void {
-        // MEMORY LEAK FIX: Unwatch all Page-scoped watchers for THIS specific page when page is destroyed
-        if (this.pageName) {
-            $unwatchAllByScope('Page', this.pageName);
-        }
         this.savePageSnapShot();
 
         // MEMORY LEAK FIX: Complete Subjects to release subscriptions
@@ -350,7 +345,6 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
             this.fragmentsLoaded$ = null;
         }
 
-        // MEMORY LEAK FIX: Clear references to prevent memory leaks
         this.App = null;
         this.route = null;
         this.appManager = null;
@@ -365,7 +359,6 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
         this.scriptLoaderService = null;
         this.Viewport = null;
 
-        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
         this.cleanupFragmentMonitor();
     }
 

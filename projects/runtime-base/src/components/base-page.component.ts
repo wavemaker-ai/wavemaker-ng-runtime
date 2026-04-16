@@ -11,7 +11,6 @@ import {
 import {ActivatedRoute, Router} from '@angular/router';
 
 import {
-    $unwatchAllByScope,
     AbstractI18nService,
     AbstractNavigationService,
     App,
@@ -347,14 +346,10 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
 
     ngOnDestroy(): void {
         // MEMORY LEAK FIX: Unwatch all Page-scoped watchers for THIS specific page when page is destroyed
-        if (this.pageName) {
-            $unwatchAllByScope('Page', this.pageName);
-        }
         //this.captureApplicationThumbnail();
         this.savePageSnapShot();
 
-        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
-        if (this.destroy$ && !this.destroy$.closed) {
+        if (this.destroy$) {
             this.destroy$.complete();
             this.destroy$ = null;
         }
@@ -363,11 +358,6 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
             this.viewInit$ = null;
         }
 
-        if (this.fragmentsLoaded$ && !this.fragmentsLoaded$.closed) {
-            this.fragmentsLoaded$.complete();
-            this.fragmentsLoaded$ = null;
-        }
-        // MEMORY LEAK FIX: Clear references to prevent memory leaks
         this.App = null;
         this.route = null;
         this.appManager = null;
@@ -381,7 +371,6 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         this.scriptLoaderService = null;
         this.Viewport = null;
 
-        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
         this.cleanupFragmentMonitor();
     }
 

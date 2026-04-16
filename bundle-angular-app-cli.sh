@@ -5,6 +5,9 @@ cd $BASEDIR
 dev=true
 publish=false
 publishVersion='x.x.x'
+
+WM_NPM_SCOPE="${WM_NPM_SCOPE:-@wavemaker-ai}"
+
 while [ "$1" != "" ]; do
     case $1 in
         --publish-version)
@@ -13,9 +16,14 @@ while [ "$1" != "" ]; do
             dev=false
             publish=true
         ;;
+        --npm-scope=*)
+            WM_NPM_SCOPE="${1#*=}"
+        ;;
     esac
     shift
 done
+
+export WM_NPM_SCOPE
 
 node_modules/.bin/rimraf dist/runtime-cli
 
@@ -39,7 +47,7 @@ cp -r pwa-assets dist/runtime-cli
 cp ./config/ngx-bootstrap-patch.mjs dist/runtime-cli/angular-app/build-scripts/
 
 cp angular.json package.json package-lock.json .npmrc tsconfig.json tsconfig.web-app.json wm-custom-webpack.config.js generate-dependency-report.js dist/runtime-cli/angular-app
-cp dist/transpilation/transpilation-web.cjs.js dist/transpilation/expression-parser.cjs.js dist/transpilation/pipe-provider.cjs.js projects/runtime-base/src/components/app-component/app.component.html ./node_modules/@wavemaker/custom-widgets-m3/custom-widgets-bundle.cjs.js dist/runtime-cli/dependencies
+cp dist/transpilation/transpilation-web.cjs.js dist/transpilation/expression-parser.cjs.js dist/transpilation/pipe-provider.cjs.js projects/runtime-base/src/components/app-component/app.component.html ./node_modules/${WM_NPM_SCOPE}/custom-widgets-m3/custom-widgets-bundle.cjs.js dist/runtime-cli/dependencies
 
 if [[ "${publish}" == true ]]; then
     cd dist/runtime-cli/angular-app
@@ -56,7 +64,7 @@ cp -rf dist/runtime-cli/angular-app/. dist/npm-packages/package
 cp -rf dist/runtime-cli/pwa-assets dist/npm-packages/package
 cp -rf dist/runtime-cli/dependencies dist/npm-packages/package
 
-TARBALL_NAME="wavemaker-angular-app-${publishVersion}.tgz"
+TARBALL_NAME="wavemaker-ai-angular-app-${publishVersion}.tgz"
 cd dist/npm-packages/package
 
 if [[ "${publish}" == true ]]; then
@@ -71,7 +79,7 @@ if [[ "${publish}" == true ]]; then
     cd ../../..
     tar -zcf dist/npm-packages/${TARBALL_NAME} -C dist/npm-packages/ package
 
-    node ../process-npm-package-stats.js --path=dist/npm-packages/${TARBALL_NAME} --packageName=@wavemaker/angular-app --publishVersion=${publishVersion}
+    node ../process-npm-package-stats.js --path=dist/npm-packages/${TARBALL_NAME} --packageName=${WM_NPM_SCOPE}/angular-app --publishVersion=${publishVersion}
 else
     yalc publish --no-dev-mod --no-sig --push --content
 fi

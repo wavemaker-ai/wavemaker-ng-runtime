@@ -336,7 +336,7 @@ export class AppManagerService implements OnDestroy {
             loginMethod = loginConfig.type.toUpperCase();
             switch (loginMethod) {
                 case LOGIN_METHOD.DIALOG:
-                    // Through loginDialog, user will remain in the current state and failed calls will be executed post login through LoginVariableService.
+                    // Through loginDialog, user will remain in the current state and failed calls will be executed post login through LoginActionService.
                     // NOTE: user will be redirected to respective landing page only if dialog is opened manually(not through a failed 401 call).
                     this.noRedirect(true);
                     this.showLoginDialog();

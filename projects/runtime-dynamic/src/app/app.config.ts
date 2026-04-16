@@ -1,4 +1,11 @@
-import { ApplicationConfig, importProvidersFrom, LOCALE_ID, RendererFactory2, APP_INITIALIZER } from "@angular/core";
+import {
+    APP_INITIALIZER,
+    ApplicationConfig,
+    importProvidersFrom,
+    LOCALE_ID,
+    RendererFactory2,
+    provideZoneChangeDetection
+} from "@angular/core";
 import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation } from "@angular/router";
 import {
     HTTP_INTERCEPTORS,
@@ -137,6 +144,10 @@ export function setAngularLocale(I18nService) {
 
 export const appConfig: ApplicationConfig = {
     providers: [
+        provideZoneChangeDetection({
+            eventCoalescing: true,
+            runCoalescing: true
+        }),
         { provide: HTTP_INTERCEPTORS, useClass: HttpCallInterceptor, multi: true },
         // Provide Angular core services FIRST
         provideRouter(routes, withHashLocation(), withComponentInputBinding()),

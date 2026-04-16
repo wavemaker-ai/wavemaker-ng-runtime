@@ -11,7 +11,7 @@ stages:
 before_script:
   - export NVM_DIR="$HOME/.nvm"
   - '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # Load nvm'
-  - '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # Load nvm bash_completion'  
+  - '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # Load nvm bash_completion'
 
 variables:
   NODE_OPTIONS: "--max-old-space-size=16384"
@@ -22,11 +22,11 @@ jira_feature_dev:
       - jira
   only:
       - /^feature.*$/
-        
+
   script:
     - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
     - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 4 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_RELEASE_VERSION"
- 
+
 jira_next_release:
   stage: jira_next_release
   tags:
@@ -56,7 +56,7 @@ jira_preprod_release:
     - "$PREPOD_BRANCH"
   script:
     - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_PREPOD_VERSION"
-    - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 5 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_PREPOD_VERSION"      
+    - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 5 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_PREPOD_VERSION"
 
 jira_verification_merge:
   stage: jira_verification_merge
@@ -79,22 +79,22 @@ unit_tests:
     - rm -rf ../wavemaker-ui-variables ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-ui-variables.git ../wavemaker-ui-variables
     - cd ../wavemaker-ui-variables ; npm install ; npm install --save-dev @types/babel__core @types/babel__generator @types/babel__template @types/babel__traverse @types/graceful-fs @types/istanbul-lib-coverage @types/istanbul-lib-report @types/istanbul-reports @types/stack-utils @types/yargs @types/yargs-parser
     - npm i yalc -g
-    - npm run build 
+    - npm run build
     - rm -rf ../custom-widgets-m3 ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/custom-widgets-m3.git ../custom-widgets-m3
     - cd ../custom-widgets-m3 ; npm install ;
-    - npm run build 
+    - npm run build
     - rm -rf ../wavemaker-foundation-css ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-foundation-css.git ../wavemaker-foundation-css
     - cd ../wavemaker-foundation-css ; npm install ;
     - npm run build
     - cd ../wavemaker-ng-runtime
-    - npm install 
-    - yalc add @wavemaker/variables
-    - yalc add @wavemaker/custom-widgets-m3
-    - yalc add @wavemaker/foundation-css
+    - npm install
+    - yalc add @wavemaker-ai/variables
+    - yalc add @wavemaker-ai/custom-widgets-m3
+    - yalc add @wavemaker-ai/foundation-css
     - bash build.sh
     - bash bundle-runtime-cli.sh
     - echo "npm_test starting"
-    - npm run test 
+    - npm run test
     - echo "npm_test finished $(date +%Y-%m-%d\ %H:%M:%S)"
     - date
   retry:

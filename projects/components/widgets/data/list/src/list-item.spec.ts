@@ -152,8 +152,8 @@ describe('ListItemDirective', () => {
         expect((directive as any).destroy$.subscribe).toHaveBeenCalledWith(mockWatchResult);
 
         // Simulate destruction of the component
-        directive.destroy.next(null);
-        directive.destroy.complete();
+        directive.destroySub.next(null);
+        directive.destroySub.complete();
     });
 
 
