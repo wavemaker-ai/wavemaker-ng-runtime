@@ -124,6 +124,7 @@ export {
     addForIdAttributes,
     adjustContainerPosition,
     adjustContainerRightEdges,
+    adjustVerticalPosition,
     setTranslation3dPosition,
     getWebkitTraslationMatrix,
     closePopover,

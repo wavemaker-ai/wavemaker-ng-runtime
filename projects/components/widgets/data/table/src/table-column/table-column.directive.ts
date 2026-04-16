@@ -503,8 +503,10 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
                     this.widget['lookup-field'] = last(split(this.field, '.'));
                 }
                 if (this.filterwidget === FormWidgetType.AUTOCOMPLETE) {
+                   if (this.filterInstance) {
                     this.filterInstance.dataoptions = getDistinctFieldProperties(this.table.datasource, this);
                     this.filterInstance.datasource = this.table.datasource;
+                   }
                 } else {
                     getDistinctValues(this.table.datasource, this.widget, 'filterwidget').then((res: any) => {
                         this._filterDataSet = res.data;

@@ -8,6 +8,9 @@ import "summernote/dist/summernote-lite.min.js";
 import { DomSanitizer } from '@angular/platform-browser';
 import { App } from '@wm/core';
 
+/** Summernote + template compile can exceed the default 15s hook timeout in CI. */
+jest.setTimeout(60000);
+
 const markup = `<div wmRichTextEditor #wm_richtexteditor1="wmRichTextEditor"
                         [attr.aria-label]="wm_richtexteditor1.arialabel || 'Help text for test richtext editor'"
                         hint="Help text for test richtext editor"
@@ -17,6 +20,7 @@ const markup = `<div wmRichTextEditor #wm_richtexteditor1="wmRichTextEditor"
                 </div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class RichTextEditorWrapperComponent {

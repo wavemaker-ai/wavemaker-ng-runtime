@@ -93,6 +93,7 @@ export abstract class App {
     dynamicComponentContainerRef: any;
     clearPageCache: (pageName?: string) => void;
     isPrism: boolean;
+    hasOwnObjectProperty: (obj: any, prop: string) => boolean;
 
     activePageName: string;
     activePage: any;

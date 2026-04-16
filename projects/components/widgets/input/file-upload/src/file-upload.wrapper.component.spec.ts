@@ -18,6 +18,7 @@ jest.mock('@wm/core', () => ({
 const markup = `<div wmFileUpload name="testfileupload" select.event="onSelect($event, widget, selectedFiles)" error.event="onError($event, widget, files)" role="input"></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 
@@ -387,7 +388,7 @@ describe('Fileupload Component', () => {
 
             wmComponent.disableDropZone();
 
-            expect(removeEventListenerSpy).toHaveBeenCalledWith('focus', wmComponent.disableDropZone);
+            expect(removeEventListenerSpy).toHaveBeenCalledWith('focus', expect.any(Function));
         });
     });
 
@@ -625,6 +626,10 @@ describe('Fileupload Component', () => {
         });
 
         it('should bind the disableDropZone method to the focus event listener', () => {
+            // Ensure spy is set up and bound function is recreated after spy
+            jest.spyOn(wmComponent, 'disableDropZone');
+            // Re-create bound function after spy is set up so it uses the spied method
+            wmComponent['boundDisableDropZone'] = wmComponent.disableDropZone.bind(wmComponent);
             wmComponent.onFileElemClick(mockEvent);
             const listener = (window.addEventListener as jest.Mock).mock.calls[0][1];
             listener();

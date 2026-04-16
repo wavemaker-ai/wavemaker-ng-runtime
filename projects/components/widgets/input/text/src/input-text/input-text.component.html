@@ -1,3 +1,6 @@
+<button class="btn-leading-icon" type="button" name="leadingIcon" *ngIf="leadingiconclass" (click)="iconClickEvent($event, 'leadingiconclick')">
+       <i aria-hidden="true" [ngClass]="leadingiconclass"></i>
+</button>
 <input class="form-control app-textbox"
        focus-target
        [type]="type"
@@ -16,7 +19,7 @@
        [attr.placeholder]="placeholder"
        [attr.accesskey]="shortcutkey"
        [autofocus]="autofocus"
-       [ngClass]="conditionalclass"
+       [ngClass]="computedClasses"
        [ngStyle]="conditionalstyle"
        (ngModelChange)="handleChange($event)"
        (blur)="handleBlur($event); checkForDisplayFormat($event)"
@@ -24,3 +27,6 @@
        [autocomplete]="autocomplete ? 'on' : 'off'"
        (keyup.enter)="flushViewChanges(input.value)"
        #input>
+<button class="btn-trailing-icon" type="button" name="trailingIcon" *ngIf="trailingiconclass" (click)="iconClickEvent($event, 'trailingiconclick')">
+       <i aria-hidden="true" [ngClass]="trailingiconclass"></i>
+</button>

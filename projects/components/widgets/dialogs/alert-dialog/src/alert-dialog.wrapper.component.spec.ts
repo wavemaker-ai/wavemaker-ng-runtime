@@ -33,6 +33,7 @@ class MockAbstractDialogService {
 
 const markup = `<div wmAlertDialog></div>`;
 @Component({
+    standalone: false,
     template: markup
 })
 class AlertDialogWrapperComponent {

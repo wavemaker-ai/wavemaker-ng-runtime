@@ -117,9 +117,10 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
         });
 
         if(this.spa) {
-            this.pageDirective = this.injector ? this.injector.get(SpaPageDirective) : inject(SpaPageDirective);
+            // Resolve optionally because custom widgets can initialize before a page exists
+            this.pageDirective = this.injector ? this.injector.get(SpaPageDirective, null) : (inject as any)(SpaPageDirective, { optional: true });
         } else {
-            this.pageDirective = this.injector ? this.injector.get(PageDirective) : inject(PageDirective);
+            this.pageDirective = this.injector ? this.injector.get(PageDirective, null) : (inject as any)(PageDirective, { optional: true });
         }
         if (this.pageDirective) {
             this.registerDestroyListener(this.pageDirective.subscribe('attach', data => this.ngOnAttach(data.refreshData)));
@@ -375,7 +376,44 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
     }
 
     ngOnDestroy(): void {
-        this.destroy$.complete();
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
+        if (this.destroy$ && !this.destroy$.closed) {
+            this.destroy$.complete();
+            this.destroy$ = null;
+        }
+        if (this.viewInit$ && !this.viewInit$.closed) {
+            this.viewInit$.complete();
+            this.viewInit$ = null;
+        }
+
+        if (this.fragmentsLoaded$ && !this.fragmentsLoaded$.closed) {
+            this.fragmentsLoaded$.complete();
+            this.fragmentsLoaded$ = null;
+        }
+        // MEMORY LEAK FIX: Clear references to prevent memory leaks
+        this.Widgets = null;
+        this.BaseWidget = null;
+        this.Variables = null;
+        this.Actions = null;
+        this.App = null;
+        this.containerWidget = null;
+        this.i18nService = null;
+        this.appLocale = null;
+        this.pageDirective = null;
+        this.Prefab = null;
+        this.scriptLoaderService = null;
+        this.customwidgetConfigProvider = null;
+        this.Viewport = null;
+        this.route = null;
+        this.appManager = null;
+        this.navigationService = null;
+        this.router = null;
+        this.props = null;
+        this.events = null;
+        this.viewParent = null;
+
+        // MEMORY LEAK FIX: Cleanup FragmentMonitor resources
+        this.cleanupFragmentMonitor();
     }
 
     ngOnAttach(refreshData) {

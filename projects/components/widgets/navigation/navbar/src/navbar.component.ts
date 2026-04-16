@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild, OnDestroy} from '@angular/core';
 
 import { APPLY_STYLES_TYPE, styler, StylableComponent, provideAsWidgetRef, TextContentDirective ,TrustAsPipe} from '@wm/components/base';
 
@@ -19,7 +19,7 @@ declare const $;
         provideAsWidgetRef(NavbarComponent)
     ]
 })
-export class NavbarComponent extends StylableComponent implements AfterViewInit {
+export class NavbarComponent extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public menuiconclass: any;
@@ -44,5 +44,12 @@ export class NavbarComponent extends StylableComponent implements AfterViewInit 
 
     private toggleNavCollapse() {
         this.navContent.nativeElement.classList.toggle('in');
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.navContent = null;
+
+        super.ngOnDestroy();
     }
 }

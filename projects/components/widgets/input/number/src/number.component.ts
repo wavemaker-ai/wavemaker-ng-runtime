@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
-import {Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 
 import {AbstractI18nService} from '@wm/core';
 import {IWidgetConfig, provideAs, provideAsWidgetRef, TrailingZeroDecimalPipe} from '@wm/components/base';
@@ -25,7 +25,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(NumberComponent)
     ]
 })
-export class NumberComponent extends NumberLocale {
+export class NumberComponent extends NumberLocale implements OnDestroy {
     static initializeProps = registerProps();
 
     public required: boolean;
@@ -44,5 +44,15 @@ export class NumberComponent extends NumberLocale {
 
     constructor(inj: Injector, i18nService: AbstractI18nService, trailingZeroDecimalPipe: TrailingZeroDecimalPipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, i18nService, trailingZeroDecimalPipe, explicitContext);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild references
+        // These retain the entire component tree including parent contexts
+        this.inputEl = null;
+        this.ngModel = null;
+
+        // Call parent ngOnDestroy (NumberLocale → StylableComponent → BaseComponent)
+        super.ngOnDestroy();
     }
 }

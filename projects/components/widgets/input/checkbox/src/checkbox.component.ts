@@ -8,6 +8,7 @@ import {
     HostListener,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     ViewChild
@@ -60,7 +61,7 @@ export const unStringify = (val, defaultVal?) => {
         provideAsWidgetRef(CheckboxComponent)
     ]
 })
-export class CheckboxComponent extends BaseFormCustomComponent implements OnInit, AfterViewInit {
+export class CheckboxComponent extends BaseFormCustomComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public proxyModel: boolean;
@@ -75,6 +76,8 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
     public _caption = '&nbsp';
     private _checkedvalue;
     private _uncheckedvalue;
+    public unselectedicon;
+    public selectedicon;
 
     @ViewChild(NgModel) ngModel: NgModel;
     @ViewChild('checkbox', { static: true, read: ElementRef }) checkboxEl: ElementRef;
@@ -98,6 +101,11 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
         @Attribute('type') public type,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
+        if(type === 'button'){
+            WIDGET_CONFIG.hostClass = 'app-iconbutton-toggle'
+        }else{
+            WIDGET_CONFIG.hostClass = DEFAULT_CLS
+        }
         super(inj, WIDGET_CONFIG, explicitContext);
 
         this._checkedvalue = unStringify(checkedVal, true);
@@ -129,7 +137,7 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
         } else if (key === 'datavalue') {
             this.datavalue = unStringify(nv);
             this._onChange(this.datavalue);
-        } else {
+        }else {
             super.onPropertyChange(key, nv, ov);
         }
     }
@@ -157,5 +165,14 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
     ngAfterViewInit() {
         super.ngAfterViewInit();
         styler(this.nativeElement.querySelector('label'), this);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.ngModel = null;
+        this.checkboxEl = null;
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }

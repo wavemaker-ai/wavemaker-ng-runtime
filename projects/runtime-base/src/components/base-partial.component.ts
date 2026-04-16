@@ -103,10 +103,11 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
             this.pageParams = this.containerWidget.partialParams;
         });
 
-        if(this.spa) {
-            this.pageDirective = this.injector ? this.injector.get(SpaPageDirective) : inject(SpaPageDirective);
+        if (this.spa) {
+            // Resolve optionally because Common/app-level partials can initialize before a page exists
+            this.pageDirective = this.injector ? this.injector.get(SpaPageDirective, null) : (inject as any)(SpaPageDirective, { optional: true });
         } else {
-            this.pageDirective = this.injector ? this.injector.get(PageDirective) : inject(PageDirective);
+            this.pageDirective = this.injector ? this.injector.get(PageDirective, null) : (inject as any)(PageDirective, { optional: true });
         }
         if (this.pageDirective) {
             this.registerDestroyListener(this.pageDirective.subscribe('attach', data => this.ngOnAttach(data.refreshData)));
@@ -248,7 +249,32 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
     }
 
     ngOnDestroy(): void {
-        this.destroy$.complete();
+        if (this.destroy$) {
+            this.destroy$.complete();
+            this.destroy$ = null;
+        }
+        if (this.viewInit$ && !this.viewInit$.closed) {
+            this.viewInit$.complete();
+            this.viewInit$ = null;
+        }
+
+        this.App = null;
+        this.containerWidget = null;
+        this.i18nService = null;
+        this.appLocale = null;
+        this.partialDirective = null;
+        this.pageDirective = null;
+        this.Prefab = null;
+        this.scriptLoaderService = null;
+        this.Viewport = null;
+        this.route = null;
+        this.appManager = null;
+        this.navigationService = null;
+        this.router = null;
+        this.pageParams = null;
+        this.viewParent = null;
+
+        this.cleanupFragmentMonitor();
     }
 
     ngOnAttach(refreshData) {

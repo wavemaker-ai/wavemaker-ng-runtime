@@ -10,7 +10,7 @@ const dataSetKey = 'dataset';
 register(wmListTag, (): IBuildTaskDef => {
     return {
         requires: ['wm-form', 'wm-liveform'],
-        template: (node: Element) => {
+        template: (node: Element, shared) => {
 
             const datasetAttr = node.attrs.find(attr => attr.name === dataSetKey);
             const widgetNameAttr = node.attrs.find(attr => attr.name === 'name');
@@ -24,10 +24,32 @@ register(wmListTag, (): IBuildTaskDef => {
                 return;
             }
             updateTemplateAttrs(node, boundExpr, widgetNameAttr.value, 'itemRef.');
+            
+            const listTemplateNode = (node.children || []).find(
+                (c) => c instanceof Element && (c as Element)?.name === 'wm-listtemplate'
+            ) as Element | undefined;
+
+            if (listTemplateNode) {
+                const meta: { [k: string]: string } = {};
+                (listTemplateNode.attrs || []).forEach(a => {
+                    meta[a.name] = a.value;
+                });
+                shared.set('listTemplateAttrs', JSON.stringify(meta));
+            } else {
+                shared.set('listTemplateAttrs', null);
+            }
         },
         pre: (attrs, shared, parentForm, parentLiveForm) => {
             const parent = parentForm || parentLiveForm;
             shared.set('form_reference', parent && parent.get('form_reference'));
+
+            const listTemplateAttrsJson = shared.get('listTemplateAttrs');
+            if (listTemplateAttrsJson) {
+                // Escape double quotes so they can sit safely inside an HTML attribute
+                const escapedJson = listTemplateAttrsJson.replace(/"/g, '&quot;');
+                attrs.set('itemattrs', escapedJson);
+            }
+
             return `<${listTagName} wmList wmLiveActions ${getAttrMarkup(attrs)}>`;
         },
         post: () => `</${listTagName}>`,

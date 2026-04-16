@@ -68,6 +68,8 @@ $.widget('wm.datatable', {
             'selectField': 'Select Field'
         },
         loadingicon: '',
+        ondemandmessage: '',
+        viewlessmessage: '',
         startRowIndex: 1,
         editmode: '',
         actionsEnabled: {
@@ -2157,7 +2159,7 @@ $.widget('wm.datatable', {
     },
     /* Toggles the edit state of a row. */
     toggleEditRow: function (e, options) {
-        if($(e.target).closest('.app-menu').length) {
+        if(e?.target && $(e.target).closest('.app-menu').length) {
             return;
         }
         options = options || {};

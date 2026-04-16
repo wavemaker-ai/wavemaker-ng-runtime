@@ -3,6 +3,7 @@ import {
     Component,
     Injector,
     OnInit,
+    OnDestroy,
     TemplateRef,
     ViewChild,
     HostListener,
@@ -30,7 +31,7 @@ const WIDGET_INFO = {widgetType: 'wm-confirmdialog'};
         provideAsDialogRef(ConfirmDialogComponent)
     ]
 })
-export class ConfirmDialogComponent extends BaseDialog implements OnInit {
+export class ConfirmDialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate: TemplateRef<any>;
 
@@ -92,5 +93,12 @@ export class ConfirmDialogComponent extends BaseDialog implements OnInit {
     ngOnInit() {
         super.ngOnInit();
         this.register(this.viewParent);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.dialogTemplate = null;
+
+        super.ngOnDestroy();
     }
 }

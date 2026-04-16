@@ -4,16 +4,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { isAndroid, isIos, Viewport, ScriptLoaderService, registerFnByExpr } from '@wm/core';
 import { LayoutDirective, SpaPageDirective } from '@wm/components/page';
 
-import {Subject, Subscription} from 'rxjs';
+import {Subject} from 'rxjs';
 
 import {
     AbstractI18nService,
     AbstractNavigationService,
-    addClass,
     App,
     muteWatchers,
     noop,
-    removeClass,
     unMuteWatchers,
     UtilsService
 } from '@wm/core';
@@ -331,7 +329,37 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
 
     ngOnDestroy(): void {
         this.savePageSnapShot();
-        this.destroy$.complete();
+
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
+        if (this.destroy$ && !this.destroy$.closed) {
+            this.destroy$.complete();
+            this.destroy$ = null;
+        }
+         // Complete all subjects to prevent memory leaks
+         if (this.viewInit$ && !this.viewInit$.closed) {
+            this.viewInit$.complete();
+            this.viewInit$ = null;
+        }
+        if (this.fragmentsLoaded$ && !this.fragmentsLoaded$.closed) {
+            this.fragmentsLoaded$.complete();
+            this.fragmentsLoaded$ = null;
+        }
+
+        this.App = null;
+        this.route = null;
+        this.appManager = null;
+        this.navigationService = null;
+        this.router = null;
+        this.pageParams = null;
+        this.i18nService = null;
+        this.appLocale = null;
+        this.layoutDirective = null;
+        this.spaPageDirective = null;
+        this.$page = null;
+        this.scriptLoaderService = null;
+        this.Viewport = null;
+
+        this.cleanupFragmentMonitor();
     }
 
     onReady() {}

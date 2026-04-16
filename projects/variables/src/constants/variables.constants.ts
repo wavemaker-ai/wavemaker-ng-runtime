@@ -1,4 +1,5 @@
-import {$rootScope as rootScope} from '@wavemaker/variables';
+import {$rootScope as rootScope} from '@wavemaker-ai/variables';
+
 export const CONSTANTS = {
     isStudioMode: false,
     isRunMode: true,
@@ -13,11 +14,11 @@ export const VARIABLE_CONSTANTS = {
         CRUD: 'wm.CrudVariable',
         SERVICE: 'wm.ServiceVariable',
         WEBSOCKET: 'wm.WebSocketVariable',
-        NAVIGATION: 'wm.NavigationVariable',
-        NOTIFICATION: 'wm.NotificationVariable',
-        TIMER: 'wm.TimerVariable',
-        LOGIN: 'wm.LoginVariable',
-        LOGOUT: 'wm.LogoutVariable',
+        NAVIGATION: 'wm.NavigationAction',
+        NOTIFICATION: 'wm.NotificationAction',
+        TIMER: 'wm.TimerAction',
+        LOGIN: 'wm.LoginAction',
+        LOGOUT: 'wm.LogoutAction',
     },
     EVENTS: ['onBefore',
         'onBeforeUpdate',

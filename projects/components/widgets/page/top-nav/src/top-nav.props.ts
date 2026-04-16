@@ -8,7 +8,8 @@ export const registerProps = () => {
                 ['name', PROP_STRING],
                 ['content', PROP_STRING],
                 ['hint', PROP_STRING],
-                ['arialabel', PROP_STRING]
+                ['arialabel', PROP_STRING],
+                ['class', PROP_STRING]
             ]
         )
     );

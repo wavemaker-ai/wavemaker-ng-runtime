@@ -11,10 +11,6 @@ const findChild = (node: Element, childName: string): Element => {
     return child as Element;
 };
 
-const createElement = name => {
-    return new Element(name, [], [], noSpan, noSpan, noSpan);
-};
-
 const getElementNode = (name, node) => {
     let elementNode;
     if (!node) {
@@ -44,14 +40,9 @@ register('wm-page', (): IBuildTaskDef => {
                  pageContentNode = getElementNode('wm-page-content',  getElementNode('wm-content', node));
             }
             if (pageContentNode) {
-                const conditionalNode = createElement('ng-container');
-                const ifOpenText = new Text('@if (compilePageContent) {', null, undefined, undefined);
-                conditionalNode.children.push(ifOpenText);
-                conditionalNode.children = conditionalNode.children.concat(pageContentNode.children);
-                conditionalNode.children.push(new Text('{{onPageContentReady()}}', null, undefined, undefined));
-                const ifCloseText = new Text('}', null, undefined, undefined);
-                conditionalNode.children.push(ifCloseText);
-                pageContentNode.children = [conditionalNode];
+                // Wrap content in @if block with proper newlines to avoid template syntax errors
+                pageContentNode.children.unshift(new Text('@if (compilePageContent) {\n', null, undefined, undefined));
+                pageContentNode.children.push(new Text('\n{{onPageContentReady()}}\n}', null, undefined, undefined));
             }
         },
         pre: (attrs) => {

@@ -158,6 +158,7 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
+        const isPristine=this.formControl?.pristine;
         if (key === 'tabindex') {
             return;
         }
@@ -172,6 +173,9 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
             this.mintimeMaxtimeValidation();
         } else {
             super.onPropertyChange(key, nv, ov);
+        }
+        if((key === 'mintime'||key === 'maxtime') && isPristine) {
+            this.formControl?.control?.markAsPristine()
         }
     }
 

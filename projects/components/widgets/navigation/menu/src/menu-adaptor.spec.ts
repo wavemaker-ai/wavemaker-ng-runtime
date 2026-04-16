@@ -7,6 +7,7 @@ import { App } from '@wm/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 
 @Component({
+    standalone: false,
     selector: 'app-test-menu-adapter',
     template: '<div></div>'
 })

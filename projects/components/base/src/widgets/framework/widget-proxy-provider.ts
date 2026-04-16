@@ -24,13 +24,16 @@ export const proxyHandler = {
 };
 
 const $RAF = window.requestAnimationFrame;
-const $RAFQueue = [];
+let $RAFQueue = [];
 
 const invokeLater = fn => {
     if (!$RAFQueue.length) {
         $RAF(() => {
+            // Execute all queued functions
             $RAFQueue.forEach(f => f());
-            $RAFQueue.length = 0;
+            
+            // MEMORY LEAK FIX: Explicitly clear the array to release closure references
+            $RAFQueue = [];
         });
     }
     $RAFQueue.push(fn);

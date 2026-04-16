@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IMaskModule } from 'angular-imask';
-import {Component, ElementRef, Inject, Injector, OnInit, Optional, ViewChild} from '@angular/core';
+import {Component, ElementRef, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
 import {IWidgetConfig, provideAs, provideAsWidgetRef} from '@wm/components/base';
@@ -25,7 +25,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(InputTextComponent)
     ]
 })
-export class InputTextComponent extends BaseInput implements OnInit{
+export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     public required: boolean;
@@ -48,6 +48,8 @@ export class InputTextComponent extends BaseInput implements OnInit{
     private lazy: boolean = false;
     public hint: string;
     public arialabel: string;
+    public trailingiconclass: string;
+    public leadingiconclass: string;
 
     @ViewChild('input', {static: true}) inputEl: ElementRef;
     @ViewChild(NgModel) ngModel: NgModel;
@@ -71,6 +73,10 @@ export class InputTextComponent extends BaseInput implements OnInit{
             default:
                 super.onPropertyChange(key, nv, ov);
         }
+    }
+    get computedClasses() {
+        return {'with-leading-icon': this.leadingiconclass, 'with-trailing-icon': this.trailingiconclass,
+            ...(typeof this.conditionalclass === 'string' ? { [this.conditionalclass]: true } : this.conditionalclass || {})};
     }
 
     get mask() {
@@ -124,5 +130,19 @@ export class InputTextComponent extends BaseInput implements OnInit{
     ngOnInit() {
         super.ngOnInit();
         this.isFocused = !!this.datavalue;
+    }
+
+    iconClickEvent($event, type: string){
+        this.invokeEventCallback(type, { $event })
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear all ViewChild references
+        this.inputEl = null;
+        this.ngModel = null;
+        this.imask = null;
+
+        // Call parent ngOnDestroy (BaseInput → BaseFormCustomComponent → StylableComponent → BaseComponent)
+        super.ngOnDestroy();
     }
 }

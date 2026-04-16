@@ -9,6 +9,7 @@ import {
     ContentChild,
     ContentChildren,
     ElementRef,
+    EnvironmentInjector,
     HostListener,
     Inject,
     Injector,
@@ -236,6 +237,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     statehandler;
     selectedItemChange = new Subject();
     selectedItemChange$: Observable<any> = this.selectedItemChange.asObservable();
+    selectedItemChangeSubscription;
 
     actions = [];
     _actions = {
@@ -966,7 +968,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
         },
         noChangesDetected: () => {
-            this.toggleMessage(true, 'info', 'No Changes Detected', '');
+            this.toggleMessage(true, 'info', this.appLocale.MESSAGE_NO_CHANGES, '');
         },
         // Function to redraw the widgets on resize of columns
         redrawWidgets: () => {
@@ -1126,6 +1128,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     constructor(
         public inj: Injector,
+        private envInjector: EnvironmentInjector,
         public fb: FormBuilder,
         private app: App,
         private dynamicComponentProvider: DynamicComponentRefProvider,
@@ -1188,7 +1191,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     return;
                 }
                 this._isDependent = true;
-                this.selectedItemChange$
+                // Unsubscribe previous subscription if exists to prevent memory leak
+                if (this.selectedItemChangeSubscription) {
+                    this.selectedItemChangeSubscription.unsubscribe();
+                }
+                this.selectedItemChangeSubscription = this.selectedItemChange$
                     .pipe(debounceTime(250))
                     .subscribe(this.triggerWMEvent.bind(this));
             })
@@ -1286,15 +1293,23 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.renderOperationColumns();
         this.gridOptions.colDefs = this.fieldDefs;
 
-        this.datagridElement.datatable(this.gridOptions);
-        this.callDataGridMethod('setStatus', 'loading', this.loadingdatamsg);
+        // Defer initialization to ensure datatable.js is loaded (Angular 20 timing issue in dev server)
+        const initTable = () => {
+            if (typeof this.datagridElement.datatable === 'function') {
+                this.datagridElement.datatable(this.gridOptions);
+                this.callDataGridMethod('setStatus', 'loading', this.loadingdatamsg);
+                this.applyProps.forEach(args => this.callDataGridMethod(...args));
+            } else {
+                // Retry if datatable not loaded yet
+                setTimeout(initTable, 50);
+            }
+        };
+        setTimeout(initTable, 0);
         // if(this.gridOptions.data.length || this.variableInflight) {
         //     this.callDataGridMethod('setStatus', 'loading', this.loadingdatamsg);
         // } else {
         //     this.callDataGridMethod('setStatus', 'nodata', this.nodatamessage);
         // }
-
-        this.applyProps.forEach(args => this.callDataGridMethod(...args));
 
         if (this.editmode === EDIT_MODE.QUICK_EDIT) {
             this.documentClickBind = this._documentClickBind.bind(this);
@@ -1532,6 +1547,19 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (newVal) {
             this.populateGridData(newVal);
         }
+        // when select widget options are loaded in search filter then initializing it
+        const widgetState = this.statePersistence.getWidgetState(this);
+        if (get(widgetState, 'search')) {
+            if (isArray(widgetState.search)) {
+                forEach(widgetState.search, (filterObj) => {
+                    const widget=$(this.rowFilterCompliedTl[filterObj.field])?.find('[widget-id]')?.prop("tagName")?.toLowerCase();
+                    if(widget==='wm-select' && filterObj.value){
+                        const select = $(this.rowFilterCompliedTl[filterObj.field]).find("select");
+                        select?.find("option")?.filter((_, o) => o.textContent.trim() === filterObj.value)?.prop("selected", true)
+                    }
+                });
+            }
+        }
     }
 
     ngOnDestroy() {
@@ -1611,31 +1639,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
         }
 
-        // MEMORY LEAK FIX: Clear gridOptions to release all function closures and data
-        // gridOptions holds many closures that capture 'this' and prevent GC
-        if (this.gridOptions) {
-            // Clear data array
-            if (this.gridOptions.data) {
-                this.gridOptions.data = [];
-            }
-            // Clear column definitions
-            if (this.gridOptions.colDefs) {
-                this.gridOptions.colDefs = [];
-            }
-            // Clear row actions
-            if (this.gridOptions.rowActions) {
-                this.gridOptions.rowActions = [];
-            }
-            // Clear header config
-            if (this.gridOptions.headerConfig) {
-                this.gridOptions.headerConfig = [];
-            }
-            // Nullify all function references to break closures
-            Object.keys(this.gridOptions).forEach(key => {
-                if (typeof this.gridOptions[key] === 'function') {
-                    this.gridOptions[key] = null;
-                }
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
             });
+            this._dynamicContext = null;
         }
 
         // MEMORY LEAK FIX: Clear other data structures
@@ -2047,21 +2056,55 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             tmpl += `<wm-table-column ${attrsTmpl} tableName="${this.name}${(this as any).$attrs.get('table_reference')}">${customTmpl}</wm-table-column>`;
         });
         this.dynamicTableRef.clear();
+        
+        // Setup dynamic context for the table component
         if (!this._dynamicContext) {
             this._dynamicContext = Object.create(this.viewParent);
             this._dynamicContext[this.getAttr('wmTable')] = this;
         }
+        
         this.noOfColumns = columns.length;
-        const componentFactoryRef = await this.dynamicComponentProvider.getComponentFactoryRef(
-            'app-table-dynamic-' + this.widgetId,
-            tmpl,
-            {
-                noCache: true,
-                transpile: true
+        
+        try {
+            // Generate unique component selector for this dynamic table instance
+            const componentSelector = `app-table-dynamic-${this.widgetId}`;
+            
+            // Get the dynamically compiled table component class
+            const DynamicTableComponentClass = await this.dynamicComponentProvider.getComponentFactoryRef(
+                componentSelector,
+                tmpl,
+                {
+                    noCache: true,
+                    transpile: true
+                }
+            );
+            
+            if (!DynamicTableComponentClass) {
+                console.error(`Failed to create dynamic table component: ${componentSelector}`);
+                return;
+            }
+
+            // Create component with both environmentInjector (for standalone imports/providers)
+            // and injector (for element-level dependencies)
+            const componentRef = this.dynamicTableRef.createComponent(DynamicTableComponentClass, {
+                index: 0,
+                environmentInjector: this.envInjector,
+                injector: this.inj
             });
-        const component = this.dynamicTableRef.createComponent(componentFactoryRef, 0, this.inj);
-        extendProto(component.instance, this._dynamicContext);
-        this.$element.find('.dynamic-table-container')[0].appendChild(component.location.nativeElement);
+            
+            // Extend component instance with dynamic context
+            extendProto(componentRef.instance, this._dynamicContext);
+            
+            // Append to DOM
+            const containerElement = this.$element.find('.dynamic-table-container')[0];
+            if (containerElement) {
+                containerElement.appendChild(componentRef.location.nativeElement);
+            } else {
+                console.error('Dynamic table container element not found');
+            }
+        } catch (error) {
+            console.error('Error creating dynamic table component:', error);
+        }
     }
 
     prepareColDefs(data) {
@@ -2281,6 +2324,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 if (nv) {
                     this.$element.find('.on-demand-datagrid > a').text(nv);
                 }
+                this.setDataGridOption('ondemandmessage', nv);
                 this.gridOptions.ondemandmessage = nv;
                 break;
             case 'allowpagesizechange':
@@ -2310,6 +2354,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.gridOptions.radioselectarialabel = nv;
                 break;
             case 'viewlessmessage':
+                this.setDataGridOption('viewlessmessage', nv);
                 this.gridOptions.viewlessmessage = nv;
                 break;
             case 'show':

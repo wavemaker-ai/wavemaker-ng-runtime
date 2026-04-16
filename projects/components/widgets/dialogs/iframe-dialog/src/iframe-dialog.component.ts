@@ -4,6 +4,7 @@ import {
     Inject,
     Injector,
     OnInit,
+    OnDestroy,
     Optional,
     TemplateRef,
     ViewChild
@@ -30,7 +31,7 @@ const WIDGET_INFO = {widgetType: 'wm-iframedialog'};
         provideAsDialogRef(IframeDialogComponent)
     ]
 })
-export class IframeDialogComponent extends BaseDialog implements OnInit {
+export class IframeDialogComponent extends BaseDialog implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ViewChild('dialogTemplate' , { static: true }) dialogTemplate: TemplateRef<any>;
@@ -81,5 +82,12 @@ export class IframeDialogComponent extends BaseDialog implements OnInit {
     ngOnInit() {
         super.ngOnInit();
         this.register(this.viewParent);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.dialogTemplate = null;
+
+        super.ngOnDestroy();
     }
 }

@@ -1,5 +1,5 @@
 {
-    "name": "@wavemaker/app-ng-runtime",
+    "name": "@wavemaker-ai/app-ng-runtime",
     "version": "1.0.0-dev",
     "description": "All modules required for a WaveMaker application.",
     "main": "index.js",
