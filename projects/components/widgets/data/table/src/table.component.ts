@@ -1533,6 +1533,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
         if (newVal) {
             this.populateGridData(newVal);
+            this.refreshRowFilterDataFromDataset();
         }
         // when select widget options are loaded in search filter then initializing it
         const widgetState = this.statePersistence.getWidgetState(this);
@@ -2383,6 +2384,15 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     onDataSourceChange() {
         this.fieldDefs.forEach(col => {
            triggerFn(col.onDataSourceChange && col.onDataSourceChange.bind(col));
+        });
+    }
+
+    private refreshRowFilterDataFromDataset() {
+        if (this.filtermode !== 'multicolumn') {
+            return;
+        }
+        this.fieldDefs.forEach(col => {
+            triggerFn(col.loadFilterData && col.loadFilterData.bind(col));
         });
     }
 
