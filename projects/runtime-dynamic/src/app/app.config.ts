@@ -18,7 +18,7 @@ import { provideAnimations } from "@angular/platform-browser/animations";
 import { routes } from "./app.routes";
 import { HttpServiceImpl } from "@wm/http";
 import { SecurityService } from "@wm/security";
-import { VariablesService, MetadataService } from "@wm/variables";
+import { MetadataService, VariablesService } from "@wm/variables";
 import { OAuthService } from "@wm/oAuth";
 import {
     AppBeforeLoadResolve,

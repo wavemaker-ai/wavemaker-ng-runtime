@@ -1769,9 +1769,34 @@ $.widget('wm.datatable', {
             $headerCheckbox.prop('checked', false);
         }
     },
+    // Handles the label-checkbox/radio double-click problem and normalizes checkbox/radio handling.
+    // When a <label> wrapping a checkbox/radio is clicked, the browser fires two click events:
+    // one on the label/caption and a second programmatic one directly on the <input>.
+    // For any click within the select column (on the label, its children, or the input itself),
+    // we call preventDefault() to let toggleRowSelection manage the checked state exclusively,
+    // preventing the browser's native toggle from conflicting with our state management.
+    _handleSelectColumnClick: function (e) {
+        var $target = $(e.target);
+        if ($target.is('input[name="gridMultiSelect"], input[rowSelectInput]') ||
+            $target.closest('label').find('input[name="gridMultiSelect"], input[rowSelectInput]').length) {
+            e.preventDefault();
+        }
+    },
+
+    // Normalizes e.target to the closest <td> cell so that event handlers and user callbacks
+    // receive a consistent target regardless of which inner element was actually clicked.
+    _normalizeEventTarget: function (e) {
+        var $cell = $(e.target).closest('td.app-datagrid-cell');
+        if ($cell.length) {
+            Object.defineProperty(e, 'target', { value: $cell[0], configurable: true });
+        }
+    },
+
     // triggered on capture phase of click listener.
     // sets the selected rowdata on click.
     rowClickHandlerOnCapture: function (e, $row, options) {
+        this._handleSelectColumnClick(e);
+        this._normalizeEventTarget(e);
         // If 'isrowselectable' property is enabled, clicking anywhere on the row will trigger its selection. Otherwise, the row will not be selected on click.
         // Also this flag works if mutliselect or radioselect is enabled.
         // In quick edit mode, clicking any part of the row switches it to edit mode, regardless of the flag setting.
@@ -1797,6 +1822,8 @@ $.widget('wm.datatable', {
 
     /* Handles row selection. */
     rowSelectionHandler: function (e, $row, options) {
+        this._handleSelectColumnClick(e);
+        this._normalizeEventTarget(e);
         // If 'isrowselectable' property is enabled, clicking anywhere on the row will trigger its selection. Otherwise, the row will not be selected on click.
         // Also this flag works if mutliselect or radioselect is enabled.
         // In quick edit mode, clicking any part of the row switches it to edit mode, regardless of the flag setting.
@@ -2973,13 +3000,23 @@ $.widget('wm.datatable', {
                     isRelatedTargetRowAction = $relatedTarget.closest('span.actions-column').length>0,
                     isTargetGridAction = $relatedTarget.closest('div.app-datagrid-actions').length>0,
                     isRelatedTargetGridAction = $relatedTarget.closest('div.app-datagrid-actions').length>0,
+                    currentGridId = $($target.closest('.app-grid'))?.attr('widget-id'),
+                    relatedGrid = $relatedTarget.closest('.app-grid')[0],
+                    relatedGridId = relatedGrid ? $(relatedGrid).attr('widget-id') : null,
+                    isRelatedGridDifferent = relatedGrid && relatedGridId !== currentGridId,
                     invalidTargets = '.row-editing:not(".always-new-row"), .row-action-button, .app-datagrid-cell, .caption, button.btn-time, button.btn-date';
 
                 //Check if the focus out element is outside the grid or some special elements
                 function isInvalidTarget() {
-                    if (!$relatedTarget.closest('.app-grid').length) {
+                    // If relatedTarget is not in any grid, it's invalid (outside all tables)
+                    if (!relatedGrid) {
                         return true;
                     }
+                    // If relatedTarget is in a different grid, allow save (return false)
+                    if (isRelatedGridDifferent) {
+                        return false;  // NOT invalid - we should save the grid
+                    }
+                    // If relatedTarget is in SAME grid, check if it's an invalid target within this grid
                     return $relatedTarget.is(invalidTargets);
                 }
 
@@ -2996,10 +3033,11 @@ $.widget('wm.datatable', {
                 }
                 // Save the Row if any button from Grid action is clicked / AddRow action is
                 // triggered from the Row Actions
-                if (!isTargetGridAction && !isTargetRowAction) {
-                    //Save the row on last column of the data table. Do not save the row if focus is out of input file.
+                if (!isTargetGridAction && !isTargetRowAction && !isRelatedGridDifferent) {
+                    // If focus moved to a DIFFERENT grid, allow save (skip isLastColumn check)
+                    // Otherwise Save the row on last column of the data table. Do not save the row if focus is out of input file.
                     if (!isLastColumn || (isLastColumn && (e.relatedTarget === null || $(e.target).is('tr.app-datagrid-row'))) || $target.hasClass("file-upload")) {
-                        return;
+                            return;
                     }
                 }
                 self.options.timeoutCall(function () {
@@ -3007,7 +3045,9 @@ $.widget('wm.datatable', {
                         'action': 'save',
                         'noMsg': true,
                         'success': function (skipFocus, error, isNewRow) {
-                            if (!isNewRow) {
+                            // Only navigate to next row if staying in SAME grid
+                            // If switching to DIFFERENT grid, let that grid's click handler take over
+                            if (!isNewRow && !isRelatedGridDifferent) {
                                 self.editSuccessHandler(skipFocus, error, e, $row,false);
                             }
                         }

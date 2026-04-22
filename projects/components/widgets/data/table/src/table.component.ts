@@ -381,6 +381,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         viewlessmessage: '',
         loadingdatamsg: '',
         isNextPageData: undefined,
+        enableSort: true,
+        multiselect: false,
         multiselecttitle: '',
         multiselectarialabel: '',
         radioselecttitle: '',
@@ -1546,6 +1548,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
         if (newVal) {
             this.populateGridData(newVal);
+            this.refreshRowFilterDataFromDataset();
         }
         // when select widget options are loaded in search filter then initializing it
         const widgetState = this.statePersistence.getWidgetState(this);
@@ -2330,12 +2333,19 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             case 'allowpagesizechange':
                 this.gridOptions.allowpagesizechange = nv;
                 this.allowpagesizechange = nv;
+                this.dataNavigator.allowpagesizechange = nv;
                 break;
             case 'pagesizeoptions':
                 this.prevPagesizeoptions = this.sanitizeCommaSeparatedIntegers(ov);
                 this.gridOptions.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
                 this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
                 if(this.allowpagesizechange) this.setDefaultPageSize(nv);
+                break;
+            case 'enablesort':
+                this.setDataGridOption('enableSort', nv);
+                break;
+            case 'multiselect':
+                this.setDataGridOption('multiselect', nv);
                 break;
             case 'multiselecttitle':
                 this.setDataGridOption('multiselecttitle', nv);
@@ -2425,6 +2435,15 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     onDataSourceChange() {
         this.fieldDefs.forEach(col => {
            triggerFn(col.onDataSourceChange && col.onDataSourceChange.bind(col));
+        });
+    }
+
+    private refreshRowFilterDataFromDataset() {
+        if (this.filtermode !== 'multicolumn') {
+            return;
+        }
+        this.fieldDefs.forEach(col => {
+            triggerFn(col.loadFilterData && col.loadFilterData.bind(col));
         });
     }
 
