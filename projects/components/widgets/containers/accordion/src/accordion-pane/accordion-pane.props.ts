@@ -1,4 +1,4 @@
-import { PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register } from '@wm/components/base';
+import { AUTO_LAYOUT_PROPS, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register } from '@wm/components/base';
 
 export const registerProps = () => {
     register(
@@ -19,7 +19,8 @@ export const registerProps = () => {
                 ['smoothscroll', {value: false, ...PROP_BOOLEAN}],
                 ['subheading', PROP_STRING],
                 ['tabindex', {value: 0, ...PROP_NUMBER}],
-                ['title', {value: 'Title', ...PROP_STRING}]
+                ['title', {value: 'Title', ...PROP_STRING}],
+                ...AUTO_LAYOUT_PROPS
             ]
         )
     );
