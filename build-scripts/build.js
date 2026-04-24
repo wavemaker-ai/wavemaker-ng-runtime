@@ -1,6 +1,5 @@
 const { spawnSync } = require('child_process');
 const path = require('path');
-const fs = require('fs');
 
 let processArgs = process.argv;
 if (processArgs.findIndex(arg => arg.startsWith('--max-old-space-size')) !== -1) {
@@ -8,16 +7,9 @@ if (processArgs.findIndex(arg => arg.startsWith('--max-old-space-size')) !== -1)
     console.log("Setting node options: ", process.env.NODE_OPTIONS);
 }
 
-// Patch ngx-bootstrap ESM files in node_modules before Angular build
-// Resolve from this script so cwd quirks do not break the path; file must still exist under generated-app.
-const patchScript = path.join(__dirname, '..', 'config', 'ngx-bootstrap-patch.mjs');
-if (!fs.existsSync(patchScript)) {
-    console.error(
-        'Missing config/ngx-bootstrap-patch.mjs. The UI build must include the full ng-runtime `config` folder ' +
-        '(e.g. copy it from a current wavemaker-ng-runtime source tree, or update the platform/app template that materializes generated-app).'
-    );
-    process.exit(1);
-}
+// Patch ngx-bootstrap ESM files in node_modules before Angular build.
+// Module lives in build-scripts/ next to this file so it always ships with build.js.
+const patchScript = path.join(__dirname, 'ngx-bootstrap-patch.mjs');
 console.log("\x1b[36m", "Patching ngx-bootstrap ESM files...\x1b[0m");
 const patchProcess = spawnSync('node', [patchScript], { stdio: 'inherit' });
 
