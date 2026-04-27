@@ -1,4 +1,5 @@
 const { spawnSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 let processArgs = process.argv;
@@ -7,8 +8,20 @@ if (processArgs.findIndex(arg => arg.startsWith('--max-old-space-size')) !== -1)
     console.log("Setting node options: ", process.env.NODE_OPTIONS);
 }
 
-// Patch ngx-bootstrap ESM files in node_modules before Angular build
-const patchScript = path.resolve(process.cwd(), 'config', 'ngx-bootstrap-patch.mjs');
+// Patch ngx-bootstrap ESM files in node_modules before Angular build.
+// Packaged angular-app (bundle-angular-app-cli) places the script under build-scripts/; local dev keeps it in config/.
+const patchInBuildScripts = path.resolve(process.cwd(), 'build-scripts', 'ngx-bootstrap-patch.mjs');
+const patchInConfig = path.resolve(process.cwd(), 'config', 'ngx-bootstrap-patch.mjs');
+const patchScript = fs.existsSync(patchInBuildScripts) ? patchInBuildScripts : patchInConfig;
+if (!fs.existsSync(patchScript)) {
+    console.error(
+        'Cannot find ngx-bootstrap-patch.mjs. Expected it at',
+        patchInBuildScripts,
+        'or',
+        patchInConfig
+    );
+    process.exit(1);
+}
 console.log("\x1b[36m", "Patching ngx-bootstrap ESM files...\x1b[0m");
 const patchProcess = spawnSync('node', [patchScript], { stdio: 'inherit' });
 
