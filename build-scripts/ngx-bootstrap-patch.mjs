@@ -1,6 +1,8 @@
 /**
  * ngx-bootstrap patching utilities.
- * 
+ * Lives in build-scripts/ (next to build.js) so the angular-app package and any copy of
+ * build-scripts/ to target always includes the patch; avoid keeping this file only under config/.
+ *
  * Provides Rollup plugin for bundling and standalone function for patching ESM files.
  * Patches: PositioningService (DestroyRef, reopen), ComponentLoader (subscriptions),
  * Dropdown/Modal (ngx-bootstrap v20 compatibility).

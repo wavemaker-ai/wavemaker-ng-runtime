@@ -8,20 +8,35 @@ if (processArgs.findIndex(arg => arg.startsWith('--max-old-space-size')) !== -1)
     console.log("Setting node options: ", process.env.NODE_OPTIONS);
 }
 
-// Patch ngx-bootstrap ESM files in node_modules before Angular build.
-// Packaged angular-app (bundle-angular-app-cli) places the script under build-scripts/; local dev keeps it in config/.
-const patchInBuildScripts = path.resolve(process.cwd(), 'build-scripts', 'ngx-bootstrap-patch.mjs');
-const patchInConfig = path.resolve(process.cwd(), 'config', 'ngx-bootstrap-patch.mjs');
-const patchScript = fs.existsSync(patchInBuildScripts) ? patchInBuildScripts : patchInConfig;
-if (!fs.existsSync(patchScript)) {
+/**
+ * Find ngx-bootstrap-patch.mjs. Prefer paths derived from this file's location
+ * (`__dirname`) so resolution does not break when `process.cwd()` is not the
+ * app root. Fall back to cwd-based paths for edge cases.
+ */
+function resolveNgxBootstrapPatch() {
+    const fromScriptDir = path.join(__dirname, 'ngx-bootstrap-patch.mjs');
+    const fromAppConfig = path.join(__dirname, '..', 'config', 'ngx-bootstrap-patch.mjs');
+    const fromCwdBuildScripts = path.resolve(process.cwd(), 'build-scripts', 'ngx-bootstrap-patch.mjs');
+    const fromCwdConfig = path.resolve(process.cwd(), 'config', 'ngx-bootstrap-patch.mjs');
+    const candidates = [fromScriptDir, fromAppConfig, fromCwdBuildScripts, fromCwdConfig];
+    for (const p of candidates) {
+        if (fs.existsSync(p)) {
+            return p;
+        }
+    }
+    return { missing: true, tried: candidates };
+}
+
+const patchResult = resolveNgxBootstrapPatch();
+if (patchResult.missing) {
     console.error(
-        'Cannot find ngx-bootstrap-patch.mjs. Expected it at',
-        patchInBuildScripts,
-        'or',
-        patchInConfig
+        'Cannot find ngx-bootstrap-patch.mjs. Searched:',
+        patchResult.tried
     );
     process.exit(1);
 }
+const patchScript = patchResult;
+console.log('Using ngx-bootstrap patch at:', patchScript);
 console.log("\x1b[36m", "Patching ngx-bootstrap ESM files...\x1b[0m");
 const patchProcess = spawnSync('node', [patchScript], { stdio: 'inherit' });
 
@@ -46,7 +61,8 @@ if (ngBuildProcess.status === 0) {
     process.exit(1);
 }
 
-const ngPostBuildArgs = ['build-scripts/post-build.js', ...args];
+const postBuildPath = path.join(__dirname, 'post-build.js');
+const ngPostBuildArgs = [postBuildPath, ...args];
 console.log("Post build params - ", ngPostBuildArgs);
 
 const ngPostBuildProcess = spawnSync('node', ngPostBuildArgs, { stdio: 'inherit' });

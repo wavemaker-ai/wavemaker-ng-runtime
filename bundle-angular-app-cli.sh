@@ -44,10 +44,11 @@ cp -rf angular.json package.json package-lock.json .npmrc tsconfig.json tsconfig
 cp -r src dist/runtime-cli/angular-app
 cp -r build-scripts dist/runtime-cli/angular-app
 cp -r pwa-assets dist/runtime-cli
-cp ./config/ngx-bootstrap-patch.mjs dist/runtime-cli/angular-app/build-scripts/
-# Also ship under config/ so build.js that resolves config/ngx-bootstrap-patch.mjs (older / cached packages) still finds the script.
+# ngx-bootstrap-patch.mjs is versioned under build-scripts/ (next to build.js) so any copy of
+# build-scripts/ to target/generated-app always includes the patch. Also mirror to config/ for
+# older build.js that only looked under config/.
 mkdir -p dist/runtime-cli/angular-app/config
-cp ./config/ngx-bootstrap-patch.mjs dist/runtime-cli/angular-app/config/
+cp ./build-scripts/ngx-bootstrap-patch.mjs dist/runtime-cli/angular-app/config/
 
 cp angular.json package.json package-lock.json .npmrc tsconfig.json tsconfig.web-app.json wm-custom-webpack.config.js generate-dependency-report.js dist/runtime-cli/angular-app
 cp dist/transpilation/transpilation-web.cjs.js dist/transpilation/expression-parser.cjs.js dist/transpilation/pipe-provider.cjs.js projects/runtime-base/src/components/app-component/app.component.html ./node_modules/${WM_NPM_SCOPE}/custom-widgets-m3/custom-widgets-bundle.cjs.js dist/runtime-cli/dependencies
