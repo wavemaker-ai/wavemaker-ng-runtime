@@ -1,7 +1,7 @@
 /**
  * ngx-bootstrap patching utilities.
- * Single location: build-scripts/ next to build.js. The angular-app tarball includes this tree
- * (e.g. target/ui-build/generated-app/build-scripts/ on project builds).
+ * Canonical path: build-scripts/ next to build.js only (angular-app tarball → generated-app/build-scripts/).
+ * Do not rely on a separate copy under config/.
  *
  * Provides Rollup plugin for bundling and standalone function for patching ESM files.
  * Patches: PositioningService (DestroyRef, reopen), ComponentLoader (subscriptions),

@@ -44,7 +44,8 @@ cp -rf angular.json package.json package-lock.json .npmrc tsconfig.json tsconfig
 cp -r src dist/runtime-cli/angular-app
 cp -r build-scripts dist/runtime-cli/angular-app
 cp -r pwa-assets dist/runtime-cli
-# build-scripts/ (includes ngx-bootstrap-patch.mjs) is the only copy; no config/ mirror.
+# build-scripts/ includes build.js and ngx-bootstrap-patch.mjs; shipped in the angular-app package
+# (e.g. target/.../generated-app/build-scripts/). No duplicate under config/.
 
 cp angular.json package.json package-lock.json .npmrc tsconfig.json tsconfig.web-app.json wm-custom-webpack.config.js generate-dependency-report.js dist/runtime-cli/angular-app
 cp dist/transpilation/transpilation-web.cjs.js dist/transpilation/expression-parser.cjs.js dist/transpilation/pipe-provider.cjs.js projects/runtime-base/src/components/app-component/app.component.html ./node_modules/${WM_NPM_SCOPE}/custom-widgets-m3/custom-widgets-bundle.cjs.js dist/runtime-cli/dependencies

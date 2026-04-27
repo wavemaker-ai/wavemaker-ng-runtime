@@ -8,7 +8,7 @@ if (processArgs.findIndex(arg => arg.startsWith('--max-old-space-size')) !== -1)
     console.log("Setting node options: ", process.env.NODE_OPTIONS);
 }
 
-// Patch lives only in build-scripts/ (next to this file), shipped in @wavemaker-ai/angular-app as build-scripts/.
+// Patch lives only in build-scripts/ (next to this file), shipped in @wavemaker-ai/angular-app.
 const patchPath = path.join(__dirname, 'ngx-bootstrap-patch.mjs');
 if (!fs.existsSync(patchPath)) {
     console.error('Cannot find ngx-bootstrap-patch.mjs at', patchPath);
