@@ -1,6 +1,8 @@
 /**
  * ngx-bootstrap patching utilities.
- * 
+ * Single location: build-scripts/ next to build.js. The angular-app tarball includes this tree
+ * (e.g. target/ui-build/generated-app/build-scripts/ on project builds).
+ *
  * Provides Rollup plugin for bundling and standalone function for patching ESM files.
  * Patches: PositioningService (DestroyRef, reopen), ComponentLoader (subscriptions),
  * Dropdown/Modal (ngx-bootstrap v20 compatibility).
@@ -13,7 +15,7 @@ import path from 'path';
 // Utilities
 // ============================================
 
-const matchesModule = (id, ...modules) => 
+const matchesModule = (id, ...modules) =>
     modules.some(mod => id.includes(`ngx-bootstrap-${mod}`) || id.includes(`ngx-bootstrap/${mod}`));
 
 const applyReplacement = (code, pattern, replacement, logMsg) => {
@@ -57,7 +59,7 @@ const PATCHES = {
                 const result = applyReplacement(
                     current,
                     /this\.positionElements\.set\(_getHtmlElement\(options\.element\),\s*options\);/g,
-                    `this.positionElements.set(_getHtmlElement(options.element), options);\n        this.enable();\n        this.update$$$$.next(null);`,
+                    `this.positionElements.set(_getHtmlElement(options.element), options);\n        this.enable();\n        this.update$$.next(null);`,
                     'Patched PositioningService: Reopen fix'
                 );
                 current = result.code;
@@ -145,8 +147,6 @@ const PATCHES = {
             let current = code;
             let anyChanged = false;
 
-            // Patch 1: Remove problematic styles (overflow-y:auto, height:100px)
-            // These cause visibility issues with view encapsulation
             if (current.includes(':host.dropdown-menu,.dropdown-menu{overflow-y:auto;height:100px}')) {
                 const result = applyReplacement(
                     current,
@@ -200,18 +200,18 @@ const FILES_TO_PATCH = [
  */
 export function patchNgxBootstrapFiles(nodeModulesPath = 'node_modules') {
     console.log('\n🔧 Patching ngx-bootstrap ESM files...\n');
-    
+
     const ngxPath = path.join(nodeModulesPath, 'ngx-bootstrap');
     let totalPatched = 0;
 
     for (const { path: filePath, patchKey } of FILES_TO_PATCH) {
         const fullPath = path.join(ngxPath, filePath);
-        
+
         if (!fs.existsSync(fullPath)) continue;
 
         const code = fs.readFileSync(fullPath, 'utf-8');
         const patch = PATCHES[patchKey];
-        
+
         if (patch) {
             const result = patch.apply(code);
             if (result.wasPatched) {
@@ -221,9 +221,10 @@ export function patchNgxBootstrapFiles(nodeModulesPath = 'node_modules') {
         }
     }
 
-    console.log(totalPatched > 0 
-        ? `\n✅ Patched ${totalPatched} ngx-bootstrap file(s)\n`
-        : '\n✓ ngx-bootstrap files already patched or no patches needed\n'
+    console.log(
+        totalPatched > 0
+            ? `\n✅ Patched ${totalPatched} ngx-bootstrap file(s)\n`
+            : '\n✓ ngx-bootstrap files already patched or no patches needed\n'
     );
 
     return totalPatched;

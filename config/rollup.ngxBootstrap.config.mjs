@@ -10,7 +10,7 @@
 
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import { ngxBootstrapPatchPlugin } from './ngx-bootstrap-patch.mjs';
+import { ngxBootstrapPatchPlugin } from '../build-scripts/ngx-bootstrap-patch.mjs';
 
 // ngx-bootstrap modules to bundle
 const NGX_BOOTSTRAP_MODULES = [
