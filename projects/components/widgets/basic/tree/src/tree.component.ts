@@ -392,7 +392,9 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             const nodeId = getEvaluatedData(node, { field: this.nodeid, bindExpression: this.bindnodeid }, this.viewParent);
             const children = getEvaluatedData(node, { field: this.nodechildren, bindExpression: this.bindnodechildren }, this.viewParent) || node.children;
             zNode['name'] = name === undefined || name === null ? '' : String(name);
-            zNode['icon'] = icon;
+            if(!this.template) {
+                zNode['icon'] = icon;
+            }
             zNode['nodeId'] = nodeId;
             zNode['data'] = getClonedObject(node);
             if (node.selected) {
