@@ -443,6 +443,18 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
     // On field value change, propagate event to parent form
     onFilterValueChange(val) {
         this.table.rowFilter[this.field].value = val;
+        // When a row-filter widget value changes (multi-column filter),
+        // apply cascading filter so dependent filter widgets update their datasets.
+        // Example: filtering City should narrow down Street filter options.
+        if (this.isDestroyed || !this.table || !this.table.datasource) {
+            return;
+        }
+        // Don't cascade on null/undefined; clearing a filter should reset dependent datasets via their own refresh.
+        if (val !== null && val !== undefined) {
+            applyFilterOnField(this.table.datasource, this.widget, this.table.fieldDefs, val, {
+                widget: 'filterwidget'
+            });
+        }
     }
 
     // Get of the active from control
