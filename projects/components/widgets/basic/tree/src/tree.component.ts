@@ -165,8 +165,11 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     /** Item passed to the custom template: zTree node API + row fields + toggle/select helpers. */
     private buildCustomTemplateItemProxy(treeNode: any): any {
         const rowData = treeNode.data;
-        const node = Object.create(treeNode);
-        node.toggleExpand = (event?: Event) => {
+        const itemPayload = rowData && typeof rowData === 'object' ? getClonedObject(rowData) : rowData;
+
+        const self = this;
+        const nodeHelperProto = Object.create(treeNode);
+        nodeHelperProto.toggleExpand = (event?: Event) => {
             if (event) {
                 event.preventDefault?.();
                 event.stopPropagation?.();
@@ -174,20 +177,19 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             if (!treeNode.isParent) {
                 return;
             }
-            this.expandNode(treeNode, !treeNode.open, true);
+            self.expandNode(treeNode, !treeNode.open, true);
         };
-      
-        const item = Object.create(node);
-        if (rowData && typeof rowData === 'object') {
-            Object.assign(item, rowData);
-        }
-        Object.defineProperty(item, 'isSelected', {
+        Object.defineProperty(nodeHelperProto, 'isSelected', {
             enumerable: true,
             configurable: true,
-            get: () => !!this.zTree?.isSelectedNode?.(treeNode),
+            get: () => !!self.zTree?.isSelectedNode?.(treeNode),
         });
-      
-        return item;
+
+        const nodeApi = Object.create(nodeHelperProto);
+        return {
+            ... itemPayload,
+            _node: nodeApi,
+        };
     }
 
     private mountTreeNodeTemplateHost(host: HTMLElement, treeNode: any): void {
@@ -393,6 +395,9 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             zNode['icon'] = icon;
             zNode['nodeId'] = nodeId;
             zNode['data'] = getClonedObject(node);
+            if (node.selected) {
+                zNode['selected'] = true;
+            }
             if (node.iconSkin != null && node.iconSkin !== '') {
                 zNode['iconSkin'] = node.iconSkin;
             }
@@ -414,7 +419,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     public renderTree() {
         this.destroyNodeTemplateHostRefs();
         this.setting.view['addDiyDom'] = this.template ? this.addDiyDom : undefined;
-        this.nativeElement.classList.toggle('wm-tree-has-custom-node', !!this.template);
+        this.nativeElement.classList.toggle('app-tree-custom', !!this.template);
         this.zTreeNodes = [];
         if(this.nodes?.length) {
             this.nativeElement.setAttribute('id', this.name);
@@ -484,6 +489,16 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     private postRenderTree() {
         setTimeout(() => {
             this.changeTreeIcons(this.treeicons || defaultTreeIconClass);
+
+            const allNodes = this.zTree.transformToArray(this.zTree.getNodes());
+            const selectedNode = allNodes.find(n => n.selected);
+
+            if (selectedNode) {
+                this.zTree.selectNode(selectedNode, false);
+                this.selectNode(undefined, selectedNode);
+                this.expandNode(selectedNode, true, false);
+                return;
+            }
 
             if (this.datavalue && !this.selecteditem) {
                 const nodes = this.zTree.getNodes();

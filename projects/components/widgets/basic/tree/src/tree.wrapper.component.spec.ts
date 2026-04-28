@@ -660,6 +660,8 @@ describe('wm-tree: Component Specific Tests', () => {
                     init: jest.fn().mockReturnValue({
                         getNodes: jest.fn(),
                         selectNode: jest.fn(),
+                        // zTree API: flatten tree nodes (postRenderTree / selectById use instance method)
+                        transformToArray: jest.fn((nodes) => (Array.isArray(nodes) ? nodes : [])),
                     })
                 },
                 zTreeKeyboardNavigation: jest.fn()
