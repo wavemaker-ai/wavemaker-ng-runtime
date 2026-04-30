@@ -38,7 +38,6 @@ import {
     getClonedObject,
     getDatasourceFromExpr,
     getValidJSON,
-    isClickInsideFloatingPickerOrOverlay,
     isDataSourceEqual,
     isDefined,
     isMobile,
@@ -115,17 +114,24 @@ const ROW_OPS_FIELD = 'rowOperations';
 const noop = () => {};
 
 const isInputBodyWrapper = target => {
-    const el = target && target[0];
-    if (el && isClickInsideFloatingPickerOrOverlay(el)) {
-        return true;
-    }
-    const attrs = ['bsdatepickerdaydecorator'];
-    for (let i = 0; i < attrs.length; i++) {
-        if (el && el.hasAttribute(attrs[i])) {
-            return true;
+    const classes = ['.dropdown-menu', '.uib-typeahead-match', '.modal-dialog', '.toast'];
+    let isInput = false;
+    classes.forEach(cls => {
+        if (target.closest(cls).length) {
+            isInput = true;
+            return false;
         }
+    });
+    const attrs = ['bsdatepickerdaydecorator'];
+    if (!isInput) {
+        attrs.forEach(attr => {
+            if (target[0].hasAttribute(attr)) {
+                isInput = true;
+                return false;
+            }
+        });
     }
-    return false;
+    return isInput;
 };
 
 @Component({
@@ -774,14 +780,15 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
             // Expand the row detail
             callback();
-            // Always rebuild row-detail content so bindings see the latest row (preparedData / selection updates).
-            // A cached template instance would keep stale $data after dataset refresh or re-expand.
+            // Row is already rendered. Return here
+            if (this.rowDefMap[rowId] && this.rowDefMap[rowId].content === rowDef.content) {
+                this.rowInstance.invokeEventCallback('rowexpand', {$event, row, $data: this.rowDefInstances[rowId]});
+                return;
+            }
             this.rowDefMap[rowId] = rowDef;
             $target.empty();
             $target.hide();
             $overlay.show();
-            // Row detail nodes are moved into the grid DOM; clear the container so re-expand does not leak embedded views.
-            this.rowDetailViewRef.clear();
             const context = {
                 // Provide multiple aliases for row data to keep older templates working.
                 // Some templates expect `row`, others use `$implicit` or `item`.

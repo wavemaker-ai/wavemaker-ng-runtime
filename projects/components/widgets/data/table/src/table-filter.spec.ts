@@ -208,16 +208,14 @@ describe('TableFilterSortDirective', () => {
     });
 
     describe('getTableVisibleCols', () => {
-        it('should return searchable columns unless showinfilter is explicitly false (aligned with search field dropdown)', () => {
+        it('should return columns where showinfilter is true and column is searchable', () => {
             (directive as any).table.columns = {
                 col1: { showinfilter: 'true', searchable: true },
                 col2: { showinfilter: 'false', searchable: true },
                 col3: { showinfilter: 'true', searchable: false },
-                col4: { showinfilter: undefined, searchable: true },
-                col5: { showinfilter: true, searchable: true },
                 rowOperations: { showinfilter: 'true', searchable: true },
             };
-            expect(directive.getTableVisibleCols()).toEqual(['col1', 'col4', 'col5']);
+            expect(directive.getTableVisibleCols()).toEqual(['col1']);
         });
     });
 

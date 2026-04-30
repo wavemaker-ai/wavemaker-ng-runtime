@@ -119,14 +119,7 @@ export class LiveFormDirective implements OnDestroy {
         }
         // Set the default value only if it exists.
         if (isDefined(nv) && nv !== null && nv !== '' && nv !== 'null') {
-            const parsed = parseValueByType(nv, field.type, field.widgettype, field.trailingzero);
-            // Same coercion as setFormData so wm-time receives a stable value (fixes default not showing in live form).
-            if (isTimeType(field)) {
-                const vt = getValidTime(parsed != null ? String(parsed) : '');
-                field.value = vt !== undefined ? vt : parsed;
-            } else {
-                field.value = parsed;
-            }
+            field.value = parseValueByType(nv, field.type, field.widgettype, field.trailingzero);
         } else {
             field.value = undefined;
         }

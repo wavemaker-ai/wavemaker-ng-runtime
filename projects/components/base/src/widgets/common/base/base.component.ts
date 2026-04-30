@@ -839,20 +839,13 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      * @returns injector
      */
     createCustomInjector(contextKey: string, context: any) {
-        const existing = this.customInjectorMap[contextKey];
-        if (existing) {
-            if (existing.contextRef) {
-                existing.contextRef.value = context;
-                return existing.injector;
-            }
-            // Legacy cache shape (pre contextRef): factory closed over a stale object — replace entry.
-            delete this.customInjectorMap[contextKey];
+        if(this.customInjectorMap[contextKey]) {
+            return this.customInjectorMap[contextKey].injector;
         }
-        const contextRef = { value: context };
         const injector = Injector.create({
-            providers: [{ provide: 'EXPLICIT_CONTEXT', useFactory: () => contextRef.value }]
+            providers: [{ provide: 'EXPLICIT_CONTEXT', useFactory: () => context }]
         });
-        this.customInjectorMap[contextKey] = { contextRef, injector };
+        this.customInjectorMap[contextKey] = { context, injector };
         return injector;
     }
 

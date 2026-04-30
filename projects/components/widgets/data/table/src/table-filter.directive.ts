@@ -234,14 +234,11 @@ export class TableFilterSortDirective implements OnDestroy {
         includes(this.table.primaryKey, this.table.sortInfo.field) ? 'first' : 'last';
     }
 
-    // Returns searchable columns available for filter/search field selection.
-    // Align with datatable.js _getSearchEl: include unless showinfilter is explicitly false (mirrors colDef.show tied to show when unset).
+    // Returns all the columns of the table wherein, showinfilter is set to true
     getTableVisibleCols() {
         const visibleCols = [];
         forEach(this.table.columns, (val, col) => {
-            const sif = val.showinfilter;
-            const excluded = toLower(toString(sif)) === 'false' || sif === false;
-            if (!excluded && col !== 'rowOperations' && val.searchable) {
+            if (toLower(toString(val.showinfilter)) === 'true' && col !== 'rowOperations' && val.searchable) {
                 visibleCols.push(col);
             }
         });

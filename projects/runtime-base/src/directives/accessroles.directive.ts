@@ -103,13 +103,7 @@ export class AccessrolesDirective implements OnDestroy {
         const isAccessible = !this.securityEnabled || this.hasAccessToWidget(widgetRoles, this.userRoles);
         if (isAccessible) {
             // [WMS-19294] pass on the previous context as second param.
-            // Provide EXPLICIT_CONTEXT via DI so wm-* widgets inside the ng-template evaluate binds like table/list/ngTemplateOutlet paths.
-            this.viewContainerRef.createEmbeddedView(this.templateRef, this.context, {
-                injector: Injector.create({
-                    parent: this.inj,
-                    providers: [{provide: 'EXPLICIT_CONTEXT', useValue: this.context}]
-                })
-            });
+            this.viewContainerRef.createEmbeddedView(this.templateRef, this.context);
         } else {
             this.viewContainerRef.clear();
         }

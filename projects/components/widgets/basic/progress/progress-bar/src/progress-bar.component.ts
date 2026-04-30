@@ -98,8 +98,7 @@ export class ProgressBarComponent extends StylableComponent {
 
     protected prepareData() {
         // when the dataset is provided, iterate over the dataset to set the proper values in the data
-        // dataset-bound bars only need datavalue + dataset; type can default when omitted (common in table columns).
-        if (this.dataset && isArray(this.dataset) && this.dataset.length && this.datavalue) {
+        if (this.dataset && isArray(this.dataset) && this.type && this.datavalue) {
             this.data = this.dataset.map((datum): IProgressInfo => {
                 const val: string = findValueOf(datum, this.datavalue).toString();
                 let percentVal = val;
@@ -107,7 +106,7 @@ export class ProgressBarComponent extends StylableComponent {
                     percentVal = `${val}%`;
                 }
                 return {
-                    cls: TYPE_CLASS_MAP[this.type] || TYPE_CLASS_MAP[findValueOf(datum, this.type)] || TYPE_CLASS_MAP.default,
+                    cls: TYPE_CLASS_MAP[findValueOf(datum, this.type)],
                     progressBarWidth: percentVal,
                     displayValue: this.getFormattedDisplayVal(val)
                 };

@@ -1373,32 +1373,6 @@ export const addForIdAttributes = (element: HTMLElement) => {
 };
 
 /**
- * True when the click target sits inside a floating picker, overlay, or modal that is often
- * attached under document.body (not under the host widget). Use this so document-level
- * handlers (popover outside-click, datatable quick-edit save, etc.) ignore those interactions.
- */
-export const isClickInsideFloatingPickerOrOverlay = (target: EventTarget | null): boolean => {
-    if (!target || !(target instanceof Element)) {
-        return false;
-    }
-    return !!(
-        target.closest('.bs-datepicker-container') ||
-        target.closest('bs-datepicker-container') ||
-        target.closest('.bs-datepicker') ||
-        target.closest('.bs-calendar-container') ||
-        target.closest('.dropdown-menu') ||
-        target.closest('.modal') ||
-        target.closest('.modal-dialog') ||
-        target.closest('timepicker') ||
-        target.closest('.bs-timepicker') ||
-        target.closest('.uib-typeahead-match') ||
-        target.closest('.toast') ||
-        target.closest('bs-dropdown-container') ||
-        target.closest('.cdk-overlay-container')
-    );
-};
-
-/**
  * This method is used to adjust the container position
  * For example: 1. When datepicker control placed closed to the screen left edges, it is going to negative values which is  cutting the container.
  * To Fix the container overlapping issue changing the contrainer left translation to 0

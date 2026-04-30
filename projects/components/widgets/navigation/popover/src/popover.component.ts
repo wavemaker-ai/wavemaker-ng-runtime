@@ -22,7 +22,6 @@ import {
     adjustContainerRightEdges,
     App,
     findRootContainer,
-    isClickInsideFloatingPickerOrOverlay,
     setCSSFromObj
 } from '@wm/core';
 import {
@@ -138,7 +137,13 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             this.isHandlingClick = true;
 
             try {
-                if (isClickInsideFloatingPickerOrOverlay(target)) {
+                // Check for special containers as before
+                const isInsideSpecialContainer = !!(
+                    target.closest('.bs-datepicker-container') ||
+                    target.closest(".dropdown-menu")
+                );
+
+                if (isInsideSpecialContainer) {
                     return;
                 }
 

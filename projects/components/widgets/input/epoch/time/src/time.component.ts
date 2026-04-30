@@ -328,8 +328,6 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
         if (!this.timeNotInRange && this.datavalue === this.getPrevDataValue()) {
             const displayTime = getFormattedDate(this.datePipe, this.datavalue, this.timepattern, this.timeZone, null, null, this) || '';
             $(this.nativeElement).find('.display-input').val(this.safeReplaceMeridians(displayTime));
-            this.invokeOnTouched();
-            return;
         }
         this.invokeOnTouched();
         this.invokeOnChange(this.datavalue, {}, true);

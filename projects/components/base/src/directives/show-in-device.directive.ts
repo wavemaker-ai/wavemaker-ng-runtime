@@ -14,11 +14,11 @@ export class ShowInDeviceDirective implements OnDestroy {
     
     constructor(
         private viewContainerRef: ViewContainerRef,
-        private inj: Injector,
+        inj: Injector,
         private templateRef: TemplateRef<any>,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
-        extend(this.context, (this.inj as any)._lView[8], explicitContext);
+        extend(this.context, (inj as any)._lView[8], explicitContext);
 
         // MEMORY LEAK FIX: Store bound function reference for proper removal
         this.boundOnResize = this.onResize.bind(this);
@@ -57,12 +57,7 @@ export class ShowInDeviceDirective implements OnDestroy {
             ||  (this.devices.indexOf('xs') > -1 && window.matchMedia("(max-width: "+smUnit+")").matches)
             ||  (this.devices.indexOf('all') > -1)) {
             if (!this.embeddedView) {
-                this.embeddedView = this.viewContainerRef.createEmbeddedView(this.templateRef, this.context, {
-                    injector: Injector.create({
-                        parent: this.inj,
-                        providers: [{provide: 'EXPLICIT_CONTEXT', useValue: this.context}]
-                    })
-                });
+                this.embeddedView = this.viewContainerRef.createEmbeddedView(this.templateRef, this.context);
             }
         } else {
             this.viewContainerRef.clear();

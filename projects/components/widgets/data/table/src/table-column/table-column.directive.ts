@@ -449,10 +449,12 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
         if (this.isDestroyed || !this.table || !this.table.datasource) {
             return;
         }
-        // Include null/undefined so clearing a parent filter resets dependent distinct datasets (applyFilterOnField clears filterFields).
-        applyFilterOnField(this.table.datasource, this.widget, this.table.fieldDefs, val, {
-            widget: 'filterwidget'
-        });
+        // Don't cascade on null/undefined; clearing a filter should reset dependent datasets via their own refresh.
+        if (val !== null && val !== undefined) {
+            applyFilterOnField(this.table.datasource, this.widget, this.table.fieldDefs, val, {
+                widget: 'filterwidget'
+            });
+        }
     }
 
     // Get of the active from control

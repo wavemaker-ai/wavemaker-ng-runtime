@@ -1,6 +1,6 @@
 import { Attribute, Directive, ElementRef, EnvironmentInjector, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
 
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, filter } from 'rxjs/operators';
 
 import { $invokeWatchers, App, ComponentType, noop, PartialRefProvider } from '@wm/core';
 
@@ -131,15 +131,12 @@ export class PartialContainerDirective implements OnDestroy {
             }
         });
 
-        // Params can be registered (wm-param ngOnInit / value.bind watchers) before the first content render finishes.
-        // Filtering on contentInitialized dropped those emissions so pageParams stayed stale inside popovers/dialogs.
         const subscription = componentInstance.params$
-            .pipe(debounceTime(200))
-            .subscribe(() => {
-                if (componentInstance.content) {
-                    this.renderPartial(componentInstance.content);
-                }
-            });
+            .pipe(
+                filter(() => this.contentInitialized),
+                debounceTime(200)
+            )
+            .subscribe(() => this.renderPartial(componentInstance.content));
         // reload the partial content on partial param change
         componentInstance.registerDestroyListener(() => subscription.unsubscribe());
     }

@@ -168,8 +168,6 @@ export const setAppRef = ref => {
 export const isChangeFromWatch = () => changedByWatch;
 export const resetChangeFromWatch = () => changedByWatch = false;
 
-(<any>window).watchRegistry = registry;
-
 let skipWatchers;
 
 let scheduled = false,
