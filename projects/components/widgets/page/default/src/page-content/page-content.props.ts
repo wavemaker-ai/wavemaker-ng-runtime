@@ -10,7 +10,9 @@ export const registerProps = () => {
                 ['content', PROP_STRING],
                 ['name', PROP_STRING],
                 ['pulltorefresh', {value: false, ...PROP_BOOLEAN}],
-                ...AUTO_LAYOUT_PROPS
+                ...AUTO_LAYOUT_PROPS,
+                ['direction', { value: 'column', ...PROP_STRING }],
+                ['alignment', { value: 'top-left', ...PROP_STRING }]
             ]
         )
     );
