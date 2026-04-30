@@ -19,7 +19,7 @@ export class CaptionPositionDirective implements AfterViewInit, OnInit, OnDestro
     private _isPlaceholderBound;
 
     // skip floating caption for the below form fields
-    private skipFloatPositionWidgets: string[] = ['radioset', 'checkboxset', 'richtext', 'switch', 'chips', 'checkbox', 'slider', 'rating', 'toggle', 'upload'];
+    private skipFloatPositionWidgets: string[] = ['radioset', 'checkboxset', 'richtext', 'switch', 'chips', 'checkbox', 'slider', 'rating', 'toggle', 'upload', 'password'];
 
     constructor(inj: Injector, app: App) {
         this.elementRef = inj.get(ElementRef);

@@ -162,16 +162,18 @@ export class DateComponent extends BaseDateTimeComponent {
         if (getFormattedDate(this.datePipe, newVal, this.dateInputFormat, this.timeZone, null, this.isCurrentDate, this) === this.displayValue) {
             $(this.nativeElement).find('.display-input').val(this.displayValue);
         }
-        if(!this.dateNotInRange){
+        if (!this.dateNotInRange) {
             if (newVal) {
                 this.bsDataValue = newVal;
                 this.updateIMask();
             } else {
                 this.bsDataValue = undefined;
             }
-            if(this.datavalue=== this.getPrevDataValue()){
-                const date=getFormattedDate(this.datePipe, this.datavalue, this.dateInputFormat, this.timeZone, null, this.isCurrentDate, this)
-                $(this.nativeElement).find('.display-input').val(date);}
+            if (this.datavalue === this.getPrevDataValue()) {
+                const date = getFormattedDate(this.datePipe, this.datavalue, this.dateInputFormat, this.timeZone, null, this.isCurrentDate, this);
+                $(this.nativeElement).find('.display-input').val(date);
+                return;
+            }
         }
         this.invokeOnChange(this.datavalue, {}, true);
     }

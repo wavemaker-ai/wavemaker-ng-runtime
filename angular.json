@@ -42,6 +42,11 @@
                 "ignore": [
                   "**/*.txt"
                ]
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/@wavemaker-ai/foundation-css/foundation",
+                "output": "wmapp/styles/foundation"
               }
             ],
             "styles": [

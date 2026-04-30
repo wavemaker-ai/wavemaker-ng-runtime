@@ -28,7 +28,8 @@
         }
         @if (!match.isHeader()) {
           <ng-container [ngTemplateOutlet]="itemTemplate"
-            [ngTemplateOutletContext]="{item: match.item, index: i, match: match, query: query}">
+            [ngTemplateOutletContext]="{item: match.item, index: i, match: match, query: query}"
+            [ngTemplateOutletInjector]="createCustomInjector('search_match_' + i, {item: match.item, index: i, match: match, query: query})">
           </ng-container>
         }
       </li>

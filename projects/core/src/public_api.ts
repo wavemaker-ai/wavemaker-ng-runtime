@@ -122,6 +122,7 @@ export {
     removeExtraSlashes,
     getDisplayDateTimeFormat,
     addForIdAttributes,
+    isClickInsideFloatingPickerOrOverlay,
     adjustContainerPosition,
     adjustContainerRightEdges,
     adjustVerticalPosition,

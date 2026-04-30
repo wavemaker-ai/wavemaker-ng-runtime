@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, Injector, OnDestroy, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
 
 import { Toast, ToastPackage, ToastrService } from 'ngx-toastr';
 
@@ -37,7 +37,8 @@ export class CustomToasterComponent extends Toast implements AfterViewInit, OnDe
     // constructor is only necessary when not using AoT
     constructor(
         protected toastrService: ToastrService,
-        public toastPackage: ToastPackage
+        public toastPackage: ToastPackage,
+        private readonly hostInjector: Injector
     ) {
         super(toastrService, toastPackage);
         this.pagename = this.message || '';
@@ -69,7 +70,14 @@ export class CustomToasterComponent extends Toast implements AfterViewInit, OnDe
 
         this.customToastRef.clear();
 
-        $targetLayout[0].appendChild(this.customToastRef.createEmbeddedView(this.customToastTmpl).rootNodes[0]);
+        const explicitContext = (<any>this.options)?.context || {};
+        const embedded = this.customToastRef.createEmbeddedView(this.customToastTmpl, {}, {
+            injector: Injector.create({
+                parent: this.hostInjector,
+                providers: [{ provide: 'EXPLICIT_CONTEXT', useValue: explicitContext }]
+            })
+        });
+        $targetLayout[0].appendChild(embedded.rootNodes[0]);
     }
 
     ngAfterViewInit() {

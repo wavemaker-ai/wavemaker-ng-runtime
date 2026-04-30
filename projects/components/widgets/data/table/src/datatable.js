@@ -464,7 +464,7 @@ $.widget('wm.datatable', {
             var _rowData, $row, rowId, rowIndex = index;
             $row = $(this).closest('tr.app-datagrid-row');
             rowId = parseInt($row.attr('data-row-id'), 10);
-            _rowData = _.clone(self.options.data[rowId]);
+            _rowData = _.clone(self.preparedData[rowId] || self.options.data[rowId]);
             _rowData.$index = rowIndex + 1;
             self.options.generateRowExpansionCell(_rowData, rowIndex);
             $(this).empty().append(self.options.getRowExpansionAction(rowIndex));
@@ -3094,7 +3094,7 @@ $.widget('wm.datatable', {
         var self = this,
             $tbody = self.gridElement,
             $row = $($tbody.find('> tr.app-datagrid-row[data-row-id="'+ rowId +'"]')),
-            rowData = _.clone(self.options.data[rowId]),
+            rowData = _.clone(self.preparedData[rowId] || self.options.data[rowId]),
             $nextDetailRow = $row.next('tr.app-datagrid-detail-row'),
             isClosed = !$nextDetailRow.is(':visible'),
             $icon = $row.find('[data-identifier="rowExpansionButtons"] i.app-icon'),
@@ -3121,7 +3121,7 @@ $.widget('wm.datatable', {
                     var $otherDetailRow = $(this),
                         $otherIcon = $otherDetailRow.prev('tr.app-datagrid-row').find('[data-identifier="rowExpansionButtons"] i.app-icon'),
                         otherRowId = +$otherDetailRow.attr('data-row-id'),
-                        otherRowData = self.options.data[otherRowId];
+                        otherRowData = self.preparedData[otherRowId] || self.options.data[otherRowId];
                     $otherDetailRow.hide();
                     self._collapseRow(e, otherRowData, otherRowId, $otherDetailRow, $otherIcon);
                 });

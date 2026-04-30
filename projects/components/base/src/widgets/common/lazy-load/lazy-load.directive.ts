@@ -24,16 +24,16 @@ export class LazyLoadDirective implements OnDestroy {
     private unSubscribeFn: Function;
 
     constructor(
-        inj: Injector,
+        private inj: Injector,
         private templateRef: TemplateRef<any>,
         private viewContainer: ViewContainerRef,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any = {}
     ) {
-        let viewParentApp = inj ? inj.get(App) : inject(App);
-        let lView = (inj as any)._lView;
+        let viewParentApp = this.inj ? this.inj.get(App) : inject(App);
+        let lView = (this.inj as any)._lView;
         this.viewParent = findParent(lView, viewParentApp)
         //this.context = (inj as any).view.context;
-        extend(this.context, (inj as any)._lView[8], explicitContext);
+        extend(this.context, (this.inj as any)._lView[8], explicitContext);
     }
 
     @Input()
@@ -54,7 +54,12 @@ export class LazyLoadDirective implements OnDestroy {
             this.context,
             (val) => {
                 if (!this.embeddedView && val) {
-                    this.embeddedView  = this.viewContainer.createEmbeddedView(this.templateRef, this.context);
+                    this.embeddedView = this.viewContainer.createEmbeddedView(this.templateRef, this.context, {
+                        injector: Injector.create({
+                            parent: this.inj,
+                            providers: [{provide: 'EXPLICIT_CONTEXT', useValue: this.context}]
+                        })
+                    });
                     // Unsubscribe after creating the view (lazy load is complete)
                     if (this.unSubscribeFn && typeof this.unSubscribeFn === 'function') {
                         try {
