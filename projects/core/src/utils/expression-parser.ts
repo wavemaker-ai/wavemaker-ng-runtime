@@ -16,7 +16,8 @@ import {
     Parser,
     PrefixNot,
     PropertyRead,
-    Unary
+    Unary,
+    ParenthesizedExpression
 } from '@angular/compiler';
 import {get} from "lodash-es";
 
@@ -293,6 +294,12 @@ class ASTCompiler {
         return v;
     }
 
+    processParenthesizedExpression() {
+        const ast = this.cAst;
+        const stmts = this.cStmts;
+        return  this.build(ast.expression, stmts);
+    }
+
     processConditional() {
         const ast = this.cAst;
         const stmts = this.cStmts;
@@ -403,6 +410,8 @@ class ASTCompiler {
             return this.processUnary();
         } else if (ast instanceof Binary) {
             return this.processBinary();
+        } else if (ast instanceof ParenthesizedExpression) {
+            return this.processParenthesizedExpression();
         } else if (ast instanceof Conditional) {
             return this.processConditional();
         } else if (ast instanceof Call) {
