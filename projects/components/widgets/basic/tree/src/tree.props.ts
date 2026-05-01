@@ -18,6 +18,7 @@ export const registerProps = () => {
                 ['nodeid', PROP_STRING],
                 ['nodelabel', PROP_STRING],
                 ['orderby', PROP_STRING],
+                ['statehandler', {value: 'none', ...PROP_STRING}],
                 ['show', {value: true, ...PROP_BOOLEAN}],
                 ['tabindex', {value: 0, ...PROP_NUMBER}],
                 ['treeicons', PROP_STRING]
