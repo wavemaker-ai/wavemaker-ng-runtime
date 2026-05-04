@@ -54,16 +54,61 @@ const PATCHES = {
                 anyChanged = r2.changed || anyChanged;
             }
 
-            // Reopen fix
-            if (!current.includes('this.enable();') || !current.includes('this.update$$.next(null);')) {
+            // Repair bad reopen line: a plain replacement string cannot contain literal $$ (see reopen fix below).
+            if (current.includes('this.update$.next')) {
+                const beforeRepair = current;
+                current = current.replace(/this\.update\$\.next\(null\);?/g, () => 'this.update$$.next(null);');
+                if (current !== beforeRepair) {
+                    anyChanged = true;
+                    console.log('  ✅ Patched PositioningService: Repair update$$.next reopen line');
+                }
+            }
+
+            // Reopen fix: pristine addPositionElement only calls set(); gate on that body (not global
+            // this.enable(); / calcPosition’s update$$) so the patch still applies after ngx-bootstrap edits.
+            const needsPositioningReopenFix =
+                /addPositionElement\(options\)\s*\{\s*\n\s*this\.positionElements\.set\(_getHtmlElement\(options\.element\),\s*options\);\s*\n\s*\}/m.test(
+                    current
+                );
+            if (needsPositioningReopenFix) {
                 const result = applyReplacement(
                     current,
                     /this\.positionElements\.set\(_getHtmlElement\(options\.element\),\s*options\);/g,
-                    `this.positionElements.set(_getHtmlElement(options.element), options);\n        this.enable();\n        this.update$$.next(null);`,
+                    'this.positionElements.set(_getHtmlElement(options.element), options);\n        this.enable();\n        this.update$$$$.next(null);',
                     'Patched PositioningService: Reopen fix'
                 );
                 current = result.code;
                 anyChanged = result.changed || anyChanged;
+            }
+
+            // BS5: computeAutoPlacement returns hyphenated keys (e.g. bottom-end) not in PlacementForBs5;
+            // lookup is undefined → dataPlacement.split throws during PositioningService Map.forEach (wm-libs).
+            if (!current.includes('PlacementForBs5[data.placement] ?? data.placement')) {
+                const r3 = applyReplacement(
+                    current,
+                    /const dataPlacement = getBsVer\(\)\.isBs5\s*\n\s*\?\s*PlacementForBs5\[data\.placement\]\s*\n\s*:\s*data\.placement;/,
+                    `const dataPlacementRaw = getBsVer().isBs5
+        ? PlacementForBs5[data.placement] ?? data.placement
+        : data.placement;
+    const dataPlacement = dataPlacementRaw ?? '';`,
+                    'Patched updateContainerClass: BS5 placement fallback'
+                );
+                current = r3.code;
+                anyChanged = r3.changed || anyChanged;
+            }
+            if (!current.includes('String(dataPlacement).split(/[\\s-]/)[0]')) {
+                const safeReplaceLine =
+                    'containerClass = containerClass.replace(/left|right|top|bottom|end|start/g, `' +
+                    '${(String(dataPlacement).split(/[\\s-]/)[0] || \'bottom\')}`' +
+                    ');';
+                const r4 = applyReplacement(
+                    current,
+                    /containerClass = containerClass\.replace\(\/left\|right\|top\|bottom\|end\|start\/g, `\$\{dataPlacement\.split\(' '\)\[0\]\}`\);/,
+                    safeReplaceLine,
+                    'Patched updateContainerClass: safe placement primary axis'
+                );
+                current = r4.code;
+                anyChanged = r4.changed || anyChanged;
             }
 
             return { code: current, wasPatched: anyChanged };
@@ -112,14 +157,20 @@ const PATCHES = {
     dropdown: {
         matcher: (id) => matchesModule(id, 'dropdown'),
         apply: (code) => {
-            if (!code.includes('"class.show": "isOpen"')) {
+            // ngx-bootstrap 20 + Bootstrap 5: host `.show` toggles dropdown visibility. Removing it breaks
+            // datetime timepicker (dropdown menu) and similar `[dropdown]` hosts — restore if stripped.
+            if (
+                code.includes(
+                    'properties: { "class.dropup": "dropup", "class.open": "isOpen", "class.show": "isOpen" }'
+                )
+            ) {
                 return { code, wasPatched: false };
             }
             const result = applyReplacement(
                 code,
-                /, "class\.show": "isOpen"/g,
-                '',
-                'Patched Dropdown: Remove show class binding'
+                /properties: \{ "class\.dropup": "dropup", "class\.open": "isOpen" \}/,
+                'properties: { "class.dropup": "dropup", "class.open": "isOpen", "class.show": "isOpen" }',
+                'Patched Dropdown: Restore BS5 show class on directive host'
             );
             return { code: result.code, wasPatched: result.changed };
         }
@@ -174,7 +225,7 @@ export function ngxBootstrapPatchPlugin() {
             for (const patch of Object.values(PATCHES)) {
                 if (patch.matcher(id)) {
                     const result = patch.apply(code);
-                    if (result.wasPatched) {
+                    if (result.wasPatched || result.code !== code) {
                         return { code: result.code, map: null };
                     }
                 }
