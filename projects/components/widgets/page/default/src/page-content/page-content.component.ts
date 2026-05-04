@@ -8,6 +8,7 @@ import { registerProps } from './page-content.props';
 const DEFAULT_CLS = 'app-page-content app-content-column';
 const WIDGET_CONFIG = {widgetType: 'wm-page-content', hostClass: DEFAULT_CLS};
 
+@AutoLayout()
 @Component({
     standalone: true,
     selector: '[wmPageContent]',

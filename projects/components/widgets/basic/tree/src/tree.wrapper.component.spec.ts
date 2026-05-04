@@ -154,6 +154,12 @@ describe('wm-tree: Component Specific Tests', () => {
             expect(wmComponent.renderTree).toHaveBeenCalled();
         });
 
+        it('should update template and render tree', () => {
+            wmComponent.onPropertyChange('template', 'MyTreeNodePartial');
+            expect(wmComponent.template).toBe('MyTreeNodePartial');
+            expect(wmComponent.renderTree).toHaveBeenCalled();
+        });
+
         it('should update class, set tree template, and render tree', () => {
             wmComponent.onPropertyChange('class', 'new-tree-class');
             expect((wmComponent as any).treeClass).toBe('new-tree-class');
@@ -361,6 +367,7 @@ describe('wm-tree: Component Specific Tests', () => {
             wmComponent['getPath'] = jest.fn().mockReturnValue('/path/to/node');
             wmComponent['setChecked'] = jest.fn();
             wmComponent['invokeEventCallback'] = jest.fn();
+            wmComponent['refreshTreeNodeTemplateHosts'] = jest.fn();
 
             // Mock jQuery
             jquerySpy = jest.spyOn(global, '$' as any).mockReturnValue({
@@ -378,6 +385,7 @@ describe('wm-tree: Component Specific Tests', () => {
         it('should deselect previously selected node and select new node', () => {
             wmComponent['selectNode'](mockEvent, mockNode);
 
+            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(jquerySpy).toHaveBeenCalledWith('.app-tree[name=testTree] li[treenode].selected');
             expect(removeClassSpy).toHaveBeenCalledWith('selected');
             expect(jquerySpy).toHaveBeenCalledWith('#node1:has(.curSelectedNode)');
@@ -387,6 +395,7 @@ describe('wm-tree: Component Specific Tests', () => {
         it('should not select a new node if node is null', () => {
             wmComponent['selectNode'](mockEvent, null);
 
+            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(jquerySpy).toHaveBeenCalledWith('.app-tree[name=testTree] li[treenode].selected');
             expect(removeClassSpy).toHaveBeenCalledWith('selected');
             expect(jquerySpy).toHaveBeenCalledTimes(3);
@@ -397,6 +406,7 @@ describe('wm-tree: Component Specific Tests', () => {
             wmComponent['treeClass'] = 'Checkbox';
             wmComponent['selectNode'](mockEvent, mockNode);
 
+            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(wmComponent['setChecked']).toHaveBeenCalledWith(mockNode, mockNode.data);
         });
 
@@ -404,12 +414,14 @@ describe('wm-tree: Component Specific Tests', () => {
             wmComponent['treeClass'] = 'Radio';
             wmComponent['selectNode'](mockEvent, mockNode);
 
+            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(wmComponent['setChecked']).toHaveBeenCalledWith(mockNode, mockNode.data);
         });
 
         it('should set selecteditem with path', () => {
             wmComponent['selectNode'](mockEvent, mockNode);
 
+            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(wmComponent['selecteditem']).toEqual({
                 name: 'Node 1',
                 path: '/path/to/node'
@@ -419,6 +431,7 @@ describe('wm-tree: Component Specific Tests', () => {
         it('should invoke select event callback', () => {
             wmComponent['selectNode'](mockEvent, mockNode);
 
+            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(wmComponent['invokeEventCallback']).toHaveBeenCalledWith('select', {
                 '$event': mockEvent,
                 '$item': { name: 'Node 1' },
@@ -648,6 +661,8 @@ describe('wm-tree: Component Specific Tests', () => {
                     init: jest.fn().mockReturnValue({
                         getNodes: jest.fn(),
                         selectNode: jest.fn(),
+                        // zTree API: flatten tree nodes (postRenderTree / selectById use instance method)
+                        transformToArray: jest.fn((nodes) => (Array.isArray(nodes) ? nodes : [])),
                     })
                 },
                 zTreeKeyboardNavigation: jest.fn()
