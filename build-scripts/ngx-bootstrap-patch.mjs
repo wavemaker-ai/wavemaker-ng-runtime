@@ -18,6 +18,12 @@ import path from 'path';
 const matchesModule = (id, ...modules) =>
     modules.some(mod => id.includes(`ngx-bootstrap-${mod}`) || id.includes(`ngx-bootstrap/${mod}`));
 
+/**
+ * @param {string} code
+ * @param {RegExp} pattern
+ * @param {string | ((...args: string[]) => string)} replacement String ($1, $2 capture groups) or function (preferred when the inserted code must contain a literal "$$")
+ * @param {string | null} logMsg
+ */
 const applyReplacement = (code, pattern, replacement, logMsg) => {
     const patched = code.replace(pattern, replacement);
     const changed = patched !== code;
@@ -36,7 +42,8 @@ const PATCHES = {
             let current = code;
             let anyChanged = false;
 
-            // DestroyRef injection fix
+            // DestroyRef injection fix: only rewrite takeUntilDestroyed() after inject line is inserted;
+            // otherwise __destroyRef is undefined if constructor shape changes upstream.
             if (current.includes('takeUntilDestroyed()') && !current.includes('const __destroyRef = i0.inject(i0.DestroyRef)')) {
                 const r1 = applyReplacement(
                     current,
@@ -44,28 +51,31 @@ const PATCHES = {
                     '$1\n        const __destroyRef = i0.inject(i0.DestroyRef);',
                     null
                 );
-                const r2 = applyReplacement(
-                    r1.code,
-                    /takeUntilDestroyed\(\)/g,
-                    'takeUntilDestroyed(__destroyRef)',
-                    'Patched PositioningService: DestroyRef injection'
-                );
-                current = r2.code;
-                anyChanged = r2.changed || anyChanged;
-            }
-
-            // Repair bad reopen line: a plain replacement string cannot contain literal $$ (see reopen fix below).
-            if (current.includes('this.update$.next')) {
-                const beforeRepair = current;
-                current = current.replace(/this\.update\$\.next\(null\);?/g, () => 'this.update$$.next(null);');
-                if (current !== beforeRepair) {
-                    anyChanged = true;
-                    console.log('  ✅ Patched PositioningService: Repair update$$.next reopen line');
+                if (r1.changed) {
+                    const r2 = applyReplacement(
+                        r1.code,
+                        /takeUntilDestroyed\(\)/g,
+                        'takeUntilDestroyed(__destroyRef)',
+                        'Patched PositioningService: DestroyRef injection'
+                    );
+                    current = r2.code;
+                    anyChanged = r2.changed || anyChanged;
                 }
             }
 
+            // Repair wrong subject name: FESM uses update$$; a single $ breaks .next (undefined / no reflow).
+            // Function replacer so the output can contain literal $$ (string replace() treats $$ in replacement strings).
+            const wrongUpdateRepair = applyReplacement(
+                current,
+                /this\.update\$\.next\s*\(\s*null\s*\)\s*;?/g,
+                () => 'this.update$$.next(null);',
+                'Patched PositioningService: Repair update$$.next reopen line'
+            );
+            current = wrongUpdateRepair.code;
+            anyChanged = wrongUpdateRepair.changed || anyChanged;
+
             // Reopen fix: pristine addPositionElement only calls set(); gate on that body (not global
-            // this.enable(); / calcPosition’s update$$) so the patch still applies after ngx-bootstrap edits.
+            // this.enable(); / calcPosition's update$$) so the patch still applies after ngx-bootstrap edits.
             const needsPositioningReopenFix =
                 /addPositionElement\(options\)\s*\{\s*\n\s*this\.positionElements\.set\(_getHtmlElement\(options\.element\),\s*options\);\s*\n\s*\}/m.test(
                     current
@@ -74,7 +84,8 @@ const PATCHES = {
                 const result = applyReplacement(
                     current,
                     /this\.positionElements\.set\(_getHtmlElement\(options\.element\),\s*options\);/g,
-                    'this.positionElements.set(_getHtmlElement(options.element), options);\n        this.enable();\n        this.update$$$$.next(null);',
+                    (match) =>
+                        `${match}\n        this.enable();\n        this.update$$.next(null);`,
                     'Patched PositioningService: Reopen fix'
                 );
                 current = result.code;
