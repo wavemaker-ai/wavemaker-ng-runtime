@@ -257,3 +257,4 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         }
     }
 }
+
