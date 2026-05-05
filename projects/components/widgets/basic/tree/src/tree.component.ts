@@ -235,6 +235,9 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
 
         const host = document.createElement('span');
         host.className = 'wm-tree-node-template-host wm-tree-node-item';
+        if (treeNode.disabled) {
+            host.classList.add('wm-tree-node-disabled');
+        }
         aObj.append(host);
         this.mountTreeNodeTemplateHost(host, treeNode);
     };
@@ -314,10 +317,16 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
         return nodes;
     }
 
-
     // adds class to the nodes inorder to add icons to respective node.
     private setNodeClasses(treeId, treeNode) {
-        return treeNode.icon ? {add: [`${treeNode.icon}`]} : '';
+        const add: string[] = [];
+        if (treeNode.icon) {
+            add.push(`${treeNode.icon}`);
+        }
+        if (treeNode.disabled) {
+            add.push('wm-tree-node-disabled');
+        }
+        return add.length ? { add } : '';
     };
 
     // adds tree icons to the nodes on load of the tree
@@ -346,6 +355,9 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
 
     // binds the click event to all nodes to open the child nodes
     public onClick(event, treeId, treeNode, clickFlag) {
+        if (treeNode.disabled) {
+            return;
+        }
         if(this.nodeclick === "expand") {
             var nodes = this.zTree.getSelectedNodes();
             if (nodes.length>0) {
@@ -415,6 +427,10 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             if (node.selected) {
                 zNode['selected'] = true;
             }
+            if (node.disabled) {
+                zNode['disabled'] = true;
+                zNode['chkDisabled'] = true;
+            }
             if (node.iconSkin != null && node.iconSkin !== '') {
                 zNode['iconSkin'] = node.iconSkin;
             }
@@ -435,7 +451,12 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     // Renders the tree on to the dom
     public renderTree() {
         this.destroyNodeTemplateHostRefs();
-        this.setting.view['addDiyDom'] = this.template ? this.addDiyDom : undefined;
+        this.setting.view['addDiyDom'] = this.template ? this.addDiyDom : function(treeId, treeNode) {
+            if (treeNode.disabled) {
+                const switchObj = $("#" + treeNode.tId + "_switch");
+                switchObj.addClass("wm-tree-node-disabled");
+              }
+        };
         this.nativeElement.classList.toggle('app-tree-custom', !!this.template);
         this.zTreeNodes = [];
         if(this.nodes?.length) {
@@ -556,7 +577,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
 
     /** Expand parents, zTree <code>selectNode</code>, app <code>selectNode</code> (works for default + custom templates). */
     private applyStoredSelectionToTree(treeNode: any): void {
-        if (!treeNode || !this.zTree) {
+        if (!treeNode || !this.zTree || treeNode.disabled) {
             return;
         }
         this.expandAncestors(treeNode);
@@ -631,6 +652,9 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             this.refreshTreeNodeTemplateHosts();
             return;
         }
+        if (node.disabled) {
+            return;
+        }
         const selectElm = $(`#${node.tId}:has(.curSelectedNode)`);
         selectElm.addClass('selected');
 
@@ -684,7 +708,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             return;
         }
         const allNodes = this.getAllZTreeNodesFlat();
-        const selectedFromDataset = allNodes.find((n) => n.selected);
+        const selectedFromDataset = allNodes.find((n) => n.selected && !n.disabled);
         if (selectedFromDataset) {
             this.zTree.selectNode(selectedFromDataset, false);
             this.selectNode(undefined, selectedFromDataset);
@@ -710,9 +734,14 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
         }
         let node: any;
         if (this.datavalue === 'FirstNode') {
-            node = nodes[0];
+            node = nodes.find((n) => !n.disabled) ?? null;
         } else if (this.datavalue === 'LastNode') {
-            node = nodes[nodes.length - 1];
+            for (let i = nodes.length - 1; i >= 0; i--) {
+                if (!nodes[i].disabled) {
+                    node = nodes[i];
+                    break;
+                }
+            }
         }
         if (node) {
             this.zTree.selectNode(node, false);
