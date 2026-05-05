@@ -6,6 +6,7 @@ export const registerProps = () => {
         new Map(
             [
                 ['class', PROP_STRING],
+                ['template', PROP_STRING],
                 ['dataset', {value: 'node1, node2, node3', ...PROP_ANY}],
                 ['datavalue', PROP_STRING],
                 ['levels', {value: 0, ...PROP_NUMBER}],

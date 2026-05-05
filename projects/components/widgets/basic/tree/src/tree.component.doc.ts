@@ -75,6 +75,10 @@ export class Tree {
      */
     @Input() class: string;
     /**
+     * Tree node template name for custom zTree row UI (same as <code>setTemplate</code> in script). Renders via zTree <code>addDiyDom</code> with the default name span hidden; use <code>wmHideZTreeIcon</code> / <code>wmShowZTreeSwitch</code> on node data to control default zTree chrome. In the partial, <code>pageParams.item</code> uses the dataset row as own properties and inherits the live zTree node plus actions: <code>pageParams.item.open</code>, <code>pageParams.item.isParent</code>, <code>pageParams.item.level</code>, etc. (always current); <code>pageParams.item.toggleExpand($event)</code> and <code>pageParams.item.selectTreeNode($event)</code>. Avoid dataset fields named <code>open</code> or <code>toggleExpand</code> or they shadow the inherited values.
+     */
+    @Input() template: string;
+    /**
      * Callback function which will be triggered when the tree node is expanded.
      * @param $event  DOM event on which call back is triggered
      * @param widget  Instance of the button widget
