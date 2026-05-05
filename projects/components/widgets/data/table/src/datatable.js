@@ -1553,8 +1553,19 @@ $.widget('wm.datatable', {
 
     /* Sets the options for the grid. */
     _setOption: function (key, value) {
+        const isSortEnabled = v => v !== false && v !== 'false';
+        let prev;
+
+        if (key === 'enableSort') {
+            prev = isSortEnabled(this.options.enableSort);
+        }
         this._super(key, value);
         switch (key) {
+            case 'enableSort':
+                if (this.tableContainer?.length && prev !== isSortEnabled(this.options.enableSort)) {
+                    this.refreshSortHeader();
+                }
+                break;
             case 'showHeader':
                 this._toggleHeader();
                 this._toggleSearch();
@@ -1637,6 +1648,17 @@ $.widget('wm.datatable', {
         return this.options;
     },
 
+    /** After sortable/bind or enableSort changes: rebuild thead only, then widths. */
+    refreshSortHeader: function () {
+        this._prepareHeaderData();
+        if (this.options.showHeader) {
+            this._renderHeader();
+            this._attachHeaderEventHandlers();
+        }
+        this.setColGroupWidths();
+        this.addOrRemoveScroll();
+    },
+
     /* Toggles the table header visibility. */
     _toggleHeader: function () {
         if (this.gridHeaderElement) {
@@ -1649,6 +1671,7 @@ $.widget('wm.datatable', {
         this.setDefaultColsData();
         if (this.options.showHeader) {
             this._renderHeader();
+            this._attachHeaderEventHandlers();
         }
     },
 
@@ -2923,8 +2946,7 @@ $.widget('wm.datatable', {
     },
     /* Attaches all event handlers for the table. */
     attachEventHandlers: function ($htm) {
-        var $header = this.gridHeaderElement,
-            self = this;
+        var self = this;
 
         if (this.options.enableRowSelection) {
             $htm[0].removeEventListener('click', this.rowClickHandlerOnCapture.bind(this));
@@ -2946,34 +2968,8 @@ $.widget('wm.datatable', {
             $htm.on('keydown', this.onKeyDown.bind(this));
         }
 
-        if ($header) {
-            if (this.options.enableColumnSelection) {
-                $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
-                $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
-            } else {
-                $header.find('th[data-col-selectable]').off('click');
-            }
+        this._attachHeaderEventHandlers();
 
-            if (this.options.enableSort) {
-                if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
-                } else {
-                    $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
-                }
-            } else {
-                if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click');
-                } else {
-                    $header.find('th[data-col-sortable]').off('click');
-                }
-            }
-        }
         if (this.options.rowActions.length) {
             $htm.find('.cancel-edit-row-button').off('click');
             $htm.find('.save-edit-row-button').off('click');
@@ -3065,6 +3061,42 @@ $.widget('wm.datatable', {
             }
             self.toggleExpandRow(+$row.attr('data-row-id'), undefined, e);
         });
+    },
+    /**
+     * Binds sort/column-selection handlers on thead. Needed when thead is rebuilt (e.g. showHeader toggle)
+     * without a full _renderGrid — attachEventHandlers would otherwise skip the new cells.
+     */
+    _attachHeaderEventHandlers: function () {
+        var $header = this.gridHeaderElement;
+        if (!$header || !$header.length) {
+            return;
+        }
+        if (this.options.enableColumnSelection) {
+            $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
+            $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
+        } else {
+            $header.find('th[data-col-selectable]').off('click');
+        }
+
+        if (!(this.options.enableSort === false || this.options.enableSort === 'false')) {
+            if (this.options.enableColumnSelection) {
+                $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+            } else {
+                $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+            }
+        } else {
+            if (this.options.enableColumnSelection) {
+                $header.find('th[data-col-sortable] .header-data').off('click');
+            } else {
+                $header.find('th[data-col-sortable]').off('click');
+            }
+        }
     },
     expandRow: function(rowId) {
         this.toggleExpandRow(rowId, true)
@@ -3251,11 +3283,19 @@ $.widget('wm.datatable', {
             self.gridHeaderElement.parent().prop('scrollLeft', this.scrollLeft);
         });
         if (!this.options.showHeader) {
+            this.tableContainer.find('colgroup').remove();
             this.tableContainer.append($colgroup);
             this.gridHeaderElement.hide();
             //this.gridElement.prepend($colgroup.clone());
             return;
         } else {
+            /* _toggleHeader() removes thead from the DOM when toggling showHeader; gridHeaderElement
+             * still references the detached thead. Re-insert it before the tbody so the header
+             * is visible when bind changes from false to true. */
+            if (this.gridHeaderElement.length && this.tableContainer?.length &&
+                !this.tableContainer[0].contains(this.gridHeaderElement[0])) {
+                this.tableContainer.prepend(this.gridHeaderElement);
+            }
             this.gridHeaderElement.show();
         }
         $header = headerTemplate.header;
@@ -3304,7 +3344,7 @@ $.widget('wm.datatable', {
                 $headerCol.hide();
             }
         });
-
+        this.tableContainer.find('colgroup').remove();
         /*For mobile view, append header to the main table only*/
         if (this.options.isMobile) {
             this.tableContainer.append($colgroup);
