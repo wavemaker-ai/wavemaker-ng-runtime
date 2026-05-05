@@ -4,7 +4,6 @@
     "scripts": {
         "ng": "ng",
         "start": "./node_modules/.bin/ng serve",
-        "postinstall": "node build-scripts/ngx-bootstrap-patch.mjs",
         "build": "node build-scripts/build.js",
         "post-build": "node build-scripts/post-build.js",
         "test": "jest --no-cache",
