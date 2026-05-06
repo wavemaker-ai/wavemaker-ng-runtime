@@ -848,7 +848,9 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         // as it can contain default value which will again be overridden by undefined.
         const fd = innerFormdata ? innerFormdata : data;
         if (fd) {
-            if (fd.hasOwnProperty(key)) {
+            if (!innerFormdata && field.defaultvalue) { // Fix for [WMS-31245]: when child form has no formdata and if its field has default value, then use default value instead of parent data
+                field.value = field.defaultvalue;
+            } else if (fd.hasOwnProperty(key)) {
                 field.value = get(fd, key);
             } else if (includes(key, '.')) {
                 // key contains '.' when mapping the fields to child reference i.e. childCol is having key as "parent.childCol"
