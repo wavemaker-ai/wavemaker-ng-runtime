@@ -383,7 +383,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         isNextPageData: undefined,
         enableSort: true,
         multiselect: false,
-        showRadioColumn: false,
         multiselecttitle: '',
         multiselectarialabel: '',
         radioselecttitle: '',
@@ -2381,17 +2380,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
                 if(this.allowpagesizechange) this.setDefaultPageSize(nv);
                 break;
-            case 'showheader':
-                this.setDataGridOption('showHeader', nv);
-                break;
             case 'enablesort':
                 this.setDataGridOption('enableSort', nv);
                 break;
             case 'multiselect':
                 this.setDataGridOption('multiselect', nv);
-                break;
-            case 'radioselect':
-                this.setDataGridOption('showRadioColumn', nv);
                 break;
             case 'multiselecttitle':
                 this.setDataGridOption('multiselecttitle', nv);
@@ -2464,30 +2457,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.dataNavigator.onPageSizeChange(undefined, pagesize);
     }
 
-    sanitizeCommaSeparatedIntegers(input) {
+    sanitizeCommaSeparatedIntegers(input: string): string {
         if (!input) return "";
-        let arr;
-        if (Array.isArray(input)) {
-            arr = input;
-        } else if (typeof input === "string") {
-            const trimmed = input.trim();
-            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-                try {
-                    arr = JSON.parse(trimmed);
-                } catch {
-                    arr = [];
-                }
-            } else {
-                arr = trimmed.split(",");
-            }
-        } else {
-            return "";
-        }
-
         const uniqueNumbers = Array.from(
             new Set(
-                arr
-                    .map(v => String(v).trim())
+                input
+                    .split(",")
+                    .map(v => v.trim())
                     .filter(v => /^-?\d+$/.test(v))
                     .map(v => Math.abs(parseInt(v, 10)))
             )
