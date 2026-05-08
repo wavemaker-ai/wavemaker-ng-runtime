@@ -2266,8 +2266,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     this.gridOptions.setIsNextPageData(false);
                 }
                 if (this.binddatasource && !this.datasource) {
-                    // If datasource is not set yet, clear loading state and show no data
-                    // This prevents tables from being stuck in loading state
+                    // If datasource is not set yet but dataset has arrived (e.g. model/script binding),
+                    // render from dataset directly instead of bailing out. Otherwise, clear loading state
+                    // to prevent the table from being stuck in "loading".
+                    if (!isUndefined(nv) && nv !== '') {
+                        this.variableInflight = false;
+                        this.createGridColumns(nv);
+                        return;
+                    }
                     if (this.variableInflight) {
                         this.variableInflight = false;
                         this.callDataGridMethod('setStatus', 'nodata', this.nodatamessage);

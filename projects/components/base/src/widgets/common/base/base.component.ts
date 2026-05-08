@@ -840,6 +840,19 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      */
     createCustomInjector(contextKey: string, context: any) {
         if(this.customInjectorMap[contextKey]) {
+            // Sync the cached context object in place so widgets that are
+            // re-instantiated under the same template position (e.g. table cells
+            // recreated after a CRUD refresh) see the latest row data via
+            // EXPLICIT_CONTEXT. The injector's useFactory captured this reference,
+            // so mutating it propagates to fresh constructors that extend their
+            // context with EXPLICIT_CONTEXT.
+            const cachedCtx = this.customInjectorMap[contextKey].context;
+            if (cachedCtx !== context) {
+                Object.keys(cachedCtx).forEach(k => {
+                    if (!(k in context)) delete cachedCtx[k];
+                });
+                Object.assign(cachedCtx, context);
+            }
             return this.customInjectorMap[contextKey].injector;
         }
         const injector = Injector.create({
