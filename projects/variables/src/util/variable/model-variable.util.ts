@@ -49,7 +49,27 @@ export const setItem = (variable, i, value) => {
         return variable.dataSet;
     }
     if (isObject(i)) {
-        index = findIndex(variable.dataSet, i);
+        // `i` can be a stale/cloned row object (e.g. after sort on a widget),
+        // so avoid lodash "matches" predicate which requires all properties to match.
+        // Prefer reference match, then a shallow equality ignoring internal $$ keys.
+        const stripInternalKeys = (obj: any) => {
+            if (!isObject(obj)) {
+                return obj;
+            }
+            const cleaned: any = {};
+            Object.keys(obj).forEach((k) => {
+                if (k !== '$$hashKey' && !k.startsWith('$$')) {
+                    cleaned[k] = obj[k];
+                }
+            });
+            return cleaned;
+        };
+        index = findIndex(variable.dataSet, (row: any) => {
+            if (row === i) {
+                return true;
+            }
+            return isEqual(stripInternalKeys(row), stripInternalKeys(i));
+        });
     } else {
         index = i;
     }
