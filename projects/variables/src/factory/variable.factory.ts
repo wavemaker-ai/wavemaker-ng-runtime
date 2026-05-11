@@ -1,6 +1,7 @@
 import { NavigationAction } from '../model/action/navigation-action';
 import { NotificationAction } from '../model/action/notification-action';
-import { ModelVariable, ServiceVariable, LiveVariable, CrudVariable, TimerAction, VARIABLE_CONSTANTS } from '@wavemaker/variables';
+import { ModelVariable, ServiceVariable, LiveVariable, CrudVariable, TimerAction } from '@wavemaker/variables';
+import { VARIABLE_CONSTANTS } from '../constants/variables.constants';
 import { LoginAction } from '../model/action/login-action';
 import { LogoutAction } from '../model/action/logout-action';
 import { WebSocketVariable } from '../model/variable/web-socket-variable';

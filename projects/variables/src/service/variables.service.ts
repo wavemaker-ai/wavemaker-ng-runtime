@@ -134,9 +134,9 @@ export class VariablesService {
     }
 
     getBindSourceTarget(variable) {
-        if (variable.category === 'wm.LiveVariable') {
+        if (variable.category === VARIABLE_CONSTANTS.CATEGORY.LIVE) {
             return variable.operation === 'read' ? 'filterFields' : 'inputFields';
-        } else if (variable.category === 'wm.ModelVariable') {
+        } else if (variable.category === VARIABLE_CONSTANTS.CATEGORY.MODEL) {
             return 'dataSet';
         } else {
             return 'dataBinding';
