@@ -129,7 +129,8 @@ export class VariablesService {
 
     isVariableSeperated(variablesJson, variableName) {
         return variablesJson[variableName].category === 'wm.Variable' || variablesJson[variableName].category === 'wm.ServiceVariable' ||
-            variablesJson[variableName].category === 'wm.LiveVariable' || variablesJson[variableName].category === 'wm.CrudVariable'
+            variablesJson[variableName].category === 'wm.LiveVariable' || variablesJson[variableName].category === 'wm.CrudVariable' ||
+            variablesJson[variableName].category === VARIABLE_CONSTANTS.CATEGORY.DEVICE
     }
 
     getBindSourceTarget(variable) {

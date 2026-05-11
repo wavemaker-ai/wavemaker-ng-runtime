@@ -18,6 +18,7 @@ export const VARIABLE_CONSTANTS = {
         TIMER: 'wm.TimerVariable',
         LOGIN: 'wm.LoginVariable',
         LOGOUT: 'wm.LogoutVariable',
+        DEVICE: 'wm.DeviceVariable',
     },
     EVENTS: ['onBefore',
         'onBeforeUpdate',

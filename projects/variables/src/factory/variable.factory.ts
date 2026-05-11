@@ -39,6 +39,16 @@ export class VariableFactory {
                 break;
             case VARIABLE_CONSTANTS.CATEGORY.WEBSOCKET:
                 variableInstance = new WebSocketVariable(variable);
+                break;
+            case VARIABLE_CONSTANTS.CATEGORY.DEVICE:
+                variableInstance = new ServiceVariable(variable);
+                break;
+        }
+
+        if (!variableInstance) {
+            throw new Error(
+                `VariableFactory.create: unsupported variable category "${variable?.category ?? '(missing)'}"`
+            );
         }
 
         variableInstance._context = context;
