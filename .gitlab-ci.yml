@@ -128,11 +128,13 @@ notify_job:
 # Optional: DOCSFLOW_SYNC_MR_PIPELINES=true for merge_request_event; PACKAGE_JSON, DOCSFLOW_PATH_MAP.
 docsflow_sync_tech_stack:
   stage: docsflow
+  tags:
+    - npm
   image: python:3.12-slim
   variables:
     DOCSFLOW_SYNC_JOB: "true"
-    DOCSFLOW_SYNC_TARGET_BRANCH: "dummytest"
-    DOCSFLOW_SYNC_SOURCE_BRANCH: "testBugs"
+    DOCSFLOW_SYNC_TARGET_BRANCH: $DOCS_FLOW_SYNC_TARGET_BRANCH
+    DOCSFLOW_SYNC_SOURCE_BRANCH: $DOCS_FLOW_SYNC_SOURCE_BRANCH
     DOCSFLOW_TECH_STACK_VERSION: "1-0-1-beta"
     MCP_SERVER_URL: "https://docsflow-mcp.wavemaker.ai/mcp"
   before_script:
