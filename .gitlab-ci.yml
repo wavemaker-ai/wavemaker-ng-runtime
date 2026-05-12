@@ -128,6 +128,8 @@ notify_job:
 # Optional: DOCSFLOW_SYNC_MR_PIPELINES=true for merge_request_event; PACKAGE_JSON, DOCSFLOW_PATH_MAP.
 docsflow_sync_tech_stack:
   stage: docsflow
+  tags:
+    - npm
   image: python:3.12-slim
   variables:
     DOCSFLOW_SYNC_JOB: "true"
@@ -141,5 +143,5 @@ docsflow_sync_tech_stack:
   script:
     - python3 scripts/docsflow-sync/sync_tech_stack.py --skip-prompt
   rules:
-    - if: '$DOCSFLOW_SYNC_JOB == "true" && $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $DOCSFLOW_SYNC_TARGET_BRANCH'
-    - if: '$DOCSFLOW_SYNC_JOB == "true" && $DOCSFLOW_SYNC_MR_PIPELINES == "true" && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $DOCSFLOW_SYNC_TARGET_BRANCH && ($DOCSFLOW_SYNC_SOURCE_BRANCH == "" || $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == $DOCSFLOW_SYNC_SOURCE_BRANCH)'
+    # - if: '$DOCSFLOW_SYNC_JOB == "true" && $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $DOCSFLOW_SYNC_TARGET_BRANCH'
+    # - if: '$DOCSFLOW_SYNC_JOB == "true" && $DOCSFLOW_SYNC_MR_PIPELINES == "true" && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $DOCSFLOW_SYNC_TARGET_BRANCH && ($DOCSFLOW_SYNC_SOURCE_BRANCH == "" || $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == $DOCSFLOW_SYNC_SOURCE_BRANCH)'
