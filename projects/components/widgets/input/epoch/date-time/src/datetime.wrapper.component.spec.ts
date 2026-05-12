@@ -980,7 +980,7 @@ describe(('Datetime Component with Localization'), () => {
             (wmComponent as any).onDateTimeInputFocus = jest.fn();
             (wmComponent as any).invokeEventCallback = jest.fn();
             (wmComponent as any).isDropDownDisplayEnabledOnInput = jest.fn().mockReturnValue(true);
-            wmComponent.bsDatePickerDirective = { toggle: jest.fn(), isOpen: true };
+            wmComponent.bsDatePickerDirective = { toggle: jest.fn(), isOpen: true, hide: jest.fn() };
             (wmComponent as any).addBodyClickListener = jest.fn();
 
             originalJQuery = (global as any).$;

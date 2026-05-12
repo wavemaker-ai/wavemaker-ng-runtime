@@ -110,6 +110,8 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     private preventFocusShift: boolean = false;
     private partialLoadedSubscription: any;
     private arrowPositionSubscription: any;
+    /** Stable handler so we do not stack duplicate listeners on each onShown */
+    private popoverStopPropagationHandler: (e: Event) => void;
     isPrism: boolean;
 
     @ViewChild(PopoverDirective) private bsPopoverDirective;
@@ -222,11 +224,19 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         this.cdr.detectChanges();
     }
 
+    private removePopoverContainerPropagationListener() {
+        const popoverContainer = document.querySelector(`.${this.popoverContainerCls}`) as HTMLElement | null;
+        if (popoverContainer && this.popoverStopPropagationHandler) {
+            popoverContainer.removeEventListener('click', this.popoverStopPropagationHandler);
+        }
+    }
+
     // This mehtod is used to hide/close the popover.
     public close() {
         if (this.isOpen) {
             this.isClosingProgrammatically = true;
             this.isOpen = false;
+            this.removePopoverContainerPropagationListener();
             if (this.bsPopoverDirective) {
                 this.bsPopoverDirective.hide();
             }
@@ -326,10 +336,12 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (popoverContainer) {
             popoverContainer.setAttribute('data-popover-id', this.widgetId);
 
-            // Add click event listener to stop propagation
-            popoverContainer.addEventListener('click', (event: Event) => {
-                event.stopPropagation();
-            });
+            // Add click event listener to stop propagation (dedupe across opens)
+            if (!this.popoverStopPropagationHandler) {
+                this.popoverStopPropagationHandler = (event: Event) => event.stopPropagation();
+            }
+            popoverContainer.removeEventListener('click', this.popoverStopPropagationHandler);
+            popoverContainer.addEventListener('click', this.popoverStopPropagationHandler);
             if (this.isPrism) this.applyVariantClass(popoverContainer);
         }
         setCSSFromObj(popoverContainer, {
@@ -540,6 +552,9 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (this.closePopoverTimeout) {
             clearTimeout(this.closePopoverTimeout);
         }
+
+        this.removePopoverContainerPropagationListener();
+        this.popoverStopPropagationHandler = null;
 
         // Clear anchor event handlers
         if (this.anchorRef?.nativeElement) {

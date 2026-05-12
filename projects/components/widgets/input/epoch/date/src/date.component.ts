@@ -357,10 +357,6 @@ export class DateComponent extends BaseDateTimeComponent {
             this.deregisterEventListener = null;
         }
 
-        // MEMORY LEAK FIX: Clear ViewChild references
-        this.bsDatePickerDirective = null;
-        this.imask = null;
-
         // MEMORY LEAK FIX: Deactivate focus trap if active
         if (this.focusTrap) {
             this.focusTrap.deactivate();
@@ -372,6 +368,16 @@ export class DateComponent extends BaseDateTimeComponent {
             this.removeKeyupListener();
             this.removeKeyupListener = null;
         }
+
+        // Tear down body/app-hosted overlay (e.g. popover closed while picker open) before dropping the directive ref
+        const dp = this.bsDatePickerDirective;
+        if (dp?.isOpen) {
+            dp.hide();
+        }
+
+        // MEMORY LEAK FIX: Clear ViewChild references
+        this.bsDatePickerDirective = null;
+        this.imask = null;
 
         // Call parent ngOnDestroy (BaseDateTimeComponent has cleanup)
         super.ngOnDestroy();

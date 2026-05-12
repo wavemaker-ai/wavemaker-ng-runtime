@@ -523,4 +523,24 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
             this.invokeEventCallback('blur', { $event });
         }
     }
+
+    ngOnDestroy() {
+        if (this.deregisterDatepickerEventListener) {
+            this.deregisterDatepickerEventListener();
+            this.deregisterDatepickerEventListener = null;
+        }
+        if (this.deregisterTimepickeEventListener) {
+            this.deregisterTimepickeEventListener();
+            this.deregisterTimepickeEventListener = null;
+        }
+        if (this.focusTrap) {
+            this.focusTrap.deactivate();
+            this.focusTrap = null;
+        }
+        const dp = this.bsDatePickerDirective;
+        if (dp?.isOpen) {
+            dp.hide();
+        }
+        super.ngOnDestroy();
+    }
 }
