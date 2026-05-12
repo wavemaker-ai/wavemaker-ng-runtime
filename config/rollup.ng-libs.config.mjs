@@ -1,3 +1,30 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const angularHttpXhrBridge = path.resolve(__dirname, 'angular-http-xhr-bridge.mjs');
+
+/**
+ * Ensures HTTP UMD uses the same `XhrFactory` token as `ng.common` (see angular-http-xhr-bridge.mjs).
+ */
+function redirectAngularCommonXhr() {
+    return {
+        name: 'redirect-angular-common-xhr',
+        resolveId(source, importer) {
+            if (source === angularHttpXhrBridge) {
+                return source;
+            }
+            if (source.endsWith('/angular/common/fesm2022/xhr.mjs')) {
+                return angularHttpXhrBridge;
+            }
+            if (source === './xhr.mjs' && importer && importer.includes(`${path.sep}@angular${path.sep}common${path.sep}fesm2022`)) {
+                return angularHttpXhrBridge;
+            }
+            return null;
+        }
+    };
+}
+
 export default [
     {
         input: "node_modules/@angular/core/fesm2022/core.mjs",
@@ -87,6 +114,7 @@ export default [
     },
     {
         input: "./node_modules/@angular/common/fesm2022/http.mjs",
+        plugins: [redirectAngularCommonXhr()],
         output: {
             file: "node_modules/@angular/common/bundles/common-http.umd.js",
             format: "umd",

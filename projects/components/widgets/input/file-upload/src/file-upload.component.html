@@ -62,9 +62,9 @@
               <div class="media-body media-middle file-details">
                 <p class="uploaddetails col-md-3">
                   <span class="upload-title">{{ ft.storageName || ft.name }}</span>
-                  @if (ft.status === 'success' || ft._response?.success) {
+                  @if (ft.status === 'success' && (!datasource || (datasource && ft._response?.success))) {
                     <span
-                    class="status-icon {{'success' | stateClass }}"></span>
+                    class="status-icon {{ft.status | stateClass }}"></span>
                   }
                   <br/>
                   @if (ft.fileLength  !== 0) {
@@ -73,7 +73,7 @@
                   @if (ft.status === 'error') {
                     <span
                       class="status-icon {{ft.status | stateClass }}"
-                    title="{{ft.errMsg || appLocale.MESSAGE_FILE_UPLOAD_FAILED}}"></span>
+                    title="{{ft.errMsg || this.appLocale.MESSAGE_FILE_UPLOAD_FAILED}}"></span>
                   }
                   @if (ft.status === 'error') {
                     <span class="error-message">Upload Failed</span>
@@ -109,7 +109,7 @@
                   </a>
                 }
               </div>
-              @if (ft.status === 'success' || ft._response?.success) {
+              @if (ft.status === 'success' && (!datasource || (datasource && ft._response?.success))) {
                 <div class="media-right media-middle">
                   <a href="javascript:void(0)" (click)="onFileDelete($event, ft)"
                     class="btn btn-transparent btn-default status-icon" title="{{deleteiconhint}}" type="button">
@@ -125,7 +125,7 @@
   }
   <!-- list of selectedfolders UI to show the error in title -->
   @if (selectedFolders.length > 0) {
-    <ul class="list-group file-upload" [ngStyle]="{height: filelistheight, overflow: overflow}" title="{{appLocale.MESSAGE_FOLDER_UPLOADS_NOT_ALLOWED}}" >
+    <ul class="list-group file-upload" [ngStyle]="{height: filelistheight, overflow: overflow}" title="{{this.appLocale.MESSAGE_FOLDER_UPLOADS_NOT_ALLOWED}}" >
       @for (ft of selectedFolders; track ft) {
         <li class="list-group-item file-upload-status">
           <div class="media upload-file-list">
