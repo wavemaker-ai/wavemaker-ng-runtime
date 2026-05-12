@@ -62,9 +62,9 @@
               <div class="media-body media-middle file-details">
                 <p class="uploaddetails col-md-3">
                   <span class="upload-title">{{ ft.storageName || ft.name }}</span>
-                  @if (ft.status === 'success' || ft._response?.success) {
+                  @if (ft.status === 'success' && (!datasource || (datasource && ft._response?.success))) {
                     <span
-                    class="status-icon {{'success' | stateClass }}"></span>
+                    class="status-icon {{ft.status | stateClass }}"></span>
                   }
                   <br/>
                   @if (ft.fileLength  !== 0) {
@@ -109,7 +109,7 @@
                   </a>
                 }
               </div>
-              @if (ft.status === 'success' || ft._response?.success) {
+              @if (ft.status === 'success' && (!datasource || (datasource && ft._response?.success))) {
                 <div class="media-right media-middle">
                   <a href="javascript:void(0)" (click)="onFileDelete($event, ft)"
                     class="btn btn-transparent btn-default status-icon" title="{{deleteiconhint}}" type="button">

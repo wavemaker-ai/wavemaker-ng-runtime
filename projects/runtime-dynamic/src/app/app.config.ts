@@ -9,8 +9,8 @@ import {
 import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation } from "@angular/router";
 import {
     HTTP_INTERCEPTORS,
+    HttpXhrBackend,
     provideHttpClient,
-    withFetch,
     withInterceptorsFromDi,
     withXsrfConfiguration
 } from "@angular/common/http";
@@ -73,7 +73,7 @@ import { ToastNoAnimationModule } from "ngx-toastr";
 import { ModalModule } from "ngx-bootstrap/modal";
 import { BsDatepickerModule } from "ngx-bootstrap/datepicker";
 import { NgCircleProgressModule } from "ng-circle-progress";
-import { DatePipe, DecimalPipe, Location } from "@angular/common";
+import { DatePipe, DecimalPipe, Location, XhrFactory } from "@angular/common";
 import { CustomwidgetConfigProviderService } from "./services/customwidget-config-provider.service";
 import { AppJSProviderService } from "./services/app-js-provider.service";
 import { AppVariablesProviderService } from "./services/app-variables-provider.service";
@@ -101,6 +101,8 @@ const wmModules = [
         NgCircleProgressModule.forRoot()
     )
 ];
+
+const WM_XHR_FACTORY: XhrFactory = { build: () => new XMLHttpRequest() } as XhrFactory;
 
 export const xsrfHeaderName = getWmProjectProperties().xsrf_header_name || "X-WM-XSRF-TOKEN";
 
@@ -152,15 +154,16 @@ export const appConfig: ApplicationConfig = {
         // Provide Angular core services FIRST
         provideRouter(routes, withHashLocation(), withComponentInputBinding()),
         provideAnimations(),
+        { provide: XhrFactory, useValue: WM_XHR_FACTORY },
         provideHttpClient(
-            withFetch(),
             withInterceptorsFromDi(),
             withXsrfConfiguration({
                 cookieName: "wm_xsrf_token",
                 headerName: xsrfHeaderName
             })
         ),
-        
+        { provide: HttpXhrBackend, useFactory: () => new HttpXhrBackend(WM_XHR_FACTORY) },
+
         // Custom renderer overrides (must be early)
         { provide: RendererFactory2, useClass: WMDomRendererFactory2 },
         // Provide HttpService EARLY (AppManagerService needs it)
@@ -221,7 +224,7 @@ export const appConfig: ApplicationConfig = {
         {
             provide: APP_INITIALIZER,
             useFactory: InitializeApp,
-            deps: [AbstractI18nService, AppJSResolve, AppBeforeLoadResolve, AppVariablesResolve, AppExtensionJSResolve, PipeService],
+            deps: [AbstractI18nService, AppJSResolve, AppBeforeLoadResolve, AppVariablesResolve, AppExtensionJSResolve],
             multi: true
         },
         // LOCALE_ID will be set by I18n service
