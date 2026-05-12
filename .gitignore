@@ -46,6 +46,7 @@ testem.log
 Thumbs.db
 *.iml
 *.txt
+!scripts/docsflow-sync/requirements.txt
 
 # Karma test report: UI unit tests
 karma-test-report.txt
