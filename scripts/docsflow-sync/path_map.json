@@ -1,0 +1,15 @@
+{
+  "_comment": "Optional legacy path overrides. Bootstrap is not listed: DocsFlow keeps Bootstrap CSS (e.g. 3.3.7) unchanged by this sync.",
+  "paths": {
+    "angular": [],
+    "jquery": [],
+    "jquery_ui": [],
+    "ngx_bootstrap": [],
+    "d3": [],
+    "nvd3": [],
+    "fullcalendar": [],
+    "lodash_es": [],
+    "node": [],
+    "npm": []
+  }
+}
