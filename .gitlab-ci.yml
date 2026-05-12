@@ -5,7 +5,7 @@ stages:
         - jira_hotfix_release
         - jira_preprod_release
         - jira_verification_merge
-        - unit_tests
+          # - unit_tests
         - notify       
         - docsflow
 
@@ -68,59 +68,6 @@ jira_verification_merge:
     - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$NEXT_HOT_FIX_VERSION"
     - python3 /home/gitlab-runner/jira-ci-scripts/verify_tickets_in_commits.py "$TOKEN" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$CI_PROJECT_ID" "$GITLAB_TOKEN"
 
-# unit_tests:
-#   stage: unit_tests
-#   tags:
-#     - npm
-#   only:
-#     - merge_requests
-#   script:
-#     - node --version
-#     - npm --version
-#     - rm -rf ../wavemaker-ui-variables ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-ui-variables.git ../wavemaker-ui-variables
-#     - cd ../wavemaker-ui-variables ; npm install ; npm install --save-dev @types/babel__core @types/babel__generator @types/babel__template @types/babel__traverse @types/graceful-fs @types/istanbul-lib-coverage @types/istanbul-lib-report @types/istanbul-reports @types/stack-utils @types/yargs @types/yargs-parser
-#     - npm i yalc -g
-#     - npm run build
-#     - rm -rf ../custom-widgets-m3 ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/custom-widgets-m3.git ../custom-widgets-m3
-#     - cd ../custom-widgets-m3 ; npm install ;
-#     - npm run build
-#     - rm -rf ../wavemaker-foundation-css ; git clone --depth 1 --branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME https://oauth2:$GITLAB_TOKEN@gitlab.wavemaker.com/wm-eng/wavemaker-foundation-css.git ../wavemaker-foundation-css
-#     - cd ../wavemaker-foundation-css ; npm install ;
-#     - npm run build
-#     - cd ../wavemaker-ng-runtime
-#     - npm install
-#     - yalc add @wavemaker-ai/variables
-#     - yalc add @wavemaker-ai/custom-widgets-m3
-#     - yalc add @wavemaker-ai/foundation-css
-#     - bash build.sh
-#     - bash bundle-runtime-cli.sh
-#     - echo "npm_test starting"
-#     - npm run test
-#     - echo "npm_test finished $(date +%Y-%m-%d\ %H:%M:%S)"
-#     - date
-#   retry:
-#         max: 2
-#         when: stuck_or_timeout_failure
-# notify_job:
-#   stage: notify
-#   tags:
-#     - npm
-#   only:
-#     - merge_requests
-#   script:
-#     - |
-#       MR_URL="https://gitlab.wavemaker.com/${CI_PROJECT_PATH}/merge_requests/${CI_MERGE_REQUEST_IID}"
-#       MESSAGE="Unit Test Cases  failed: on branch: $CI_COMMIT_REF_NAME. Merge Request: $MR_URL"
-#       echo "User Email is $GITLAB_USER_EMAIL"
-#       aws ses send-email \
-#           --from devops-notifications@wavemaker.com \
-#           --destination "ToAddresses=$GITLAB_USER_EMAIL" \
-#           --message "Subject={Data=Unit Test Cases Pipeline Status},Body={Text={Data=$MESSAGE}}"
-
-
-#   when: on_failure
-#   dependencies:
-#     - unit_tests
 
 # --- DocsFlow MCP (thin client; does not use global before_script — job defines its own) ---
 # Defaults in job variables; override in CI/CD. Set DOCSFLOW_MCP_API_KEY or MCP_TOKEN (masked).
@@ -138,8 +85,8 @@ docsflow_sync_tech_stack:
     DOCSFLOW_TECH_STACK_VERSION: "1-0-1-beta"
     MCP_SERVER_URL: "https://docsflow-mcp.wavemaker.ai/mcp"
   before_script:
-    - pip install --upgrade pip -q
-    - pip install -r scripts/docsflow-sync/requirements.txt -q
+    # - python3 -m pip install --upgrade pip -q
+    - python3 -m pip install -r scripts/docsflow-sync/requirements.txt -q
   script:
     - python3 scripts/docsflow-sync/sync_tech_stack.py --skip-prompt
   #rules:
