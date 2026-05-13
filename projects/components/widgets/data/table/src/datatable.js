@@ -1555,6 +1555,16 @@ $.widget('wm.datatable', {
     _setOption: function (key, value) {
         this._super(key, value);
         switch (key) {
+            case 'enableSort':
+                if (this.tableContainer?.length) {
+                    this.refreshSortHeader(); // Refresh the table header and update column widths when sort is enabled/disabled
+                }
+                break;
+            case 'enableColumnSelection':
+                if (this.tableContainer?.length) {
+                    this.refreshSortHeader(); // Refresh the table header and update column widths when column selection is enabled/disabled
+                }
+                break;
             case 'showHeader':
                 this._toggleHeader();
                 this._toggleSearch();
@@ -1637,6 +1647,17 @@ $.widget('wm.datatable', {
         return this.options;
     },
 
+    /** function to rebuild table header and update column widths. */
+    refreshSortHeader: function () {
+        this._prepareHeaderData();
+        if (this.options.showHeader) {
+            this._renderHeader();
+            this._attachHeaderEventHandlers();
+        }
+        this.setColGroupWidths();
+        this.addOrRemoveScroll();
+    },
+
     /* Toggles the table header visibility. */
     _toggleHeader: function () {
         if (this.gridHeaderElement) {
@@ -1649,6 +1670,7 @@ $.widget('wm.datatable', {
         this.setDefaultColsData();
         if (this.options.showHeader) {
             this._renderHeader();
+            this._attachHeaderEventHandlers(); // Attach all event handlers specifically for the table header
         }
     },
 
@@ -1731,11 +1753,14 @@ $.widget('wm.datatable', {
         if (this.options.showRadioColumn) {
             $radio = $row.find('td input[rowSelectInput]:radio:not(:disabled)');
             $radio.prop('checked', selected);
+            $radio.attr('checked', selected ? 'checked' : null); //
             this.preparedData[rowId]._checked = selected;
         }
         if (this.options.multiselect) {
             $checkbox = $row.find('td input[name="gridMultiSelect"]:checkbox:not(:disabled)');
             $checkbox.prop('checked', selected);
+            $checkbox.attr('checked', selected ? 'checked' : null);
+            $checkbox.closest('label').toggleClass('unchecked', !selected);
             $checkbox.siblings('span.sr-only').text(selected ? 'Row Selected' : 'Row Deselected');
             this.preparedData[rowId]._checked = selected;
             // if we check header checkbox(select/unselect all the records) then updating selectAll checkbox state is not required.
@@ -1769,34 +1794,10 @@ $.widget('wm.datatable', {
             $headerCheckbox.prop('checked', false);
         }
     },
-    // Handles the label-checkbox/radio double-click problem and normalizes checkbox/radio handling.
-    // When a <label> wrapping a checkbox/radio is clicked, the browser fires two click events:
-    // one on the label/caption and a second programmatic one directly on the <input>.
-    // For any click within the select column (on the label, its children, or the input itself),
-    // we call preventDefault() to let toggleRowSelection manage the checked state exclusively,
-    // preventing the browser's native toggle from conflicting with our state management.
-    _handleSelectColumnClick: function (e) {
-        var $target = $(e.target);
-        if ($target.is('input[name="gridMultiSelect"], input[rowSelectInput]') ||
-            $target.closest('label').find('input[name="gridMultiSelect"], input[rowSelectInput]').length) {
-            e.preventDefault();
-        }
-    },
-
-    // Normalizes e.target to the closest <td> cell so that event handlers and user callbacks
-    // receive a consistent target regardless of which inner element was actually clicked.
-    _normalizeEventTarget: function (e) {
-        var $cell = $(e.target).closest('td.app-datagrid-cell');
-        if ($cell.length) {
-            Object.defineProperty(e, 'target', { value: $cell[0], configurable: true });
-        }
-    },
 
     // triggered on capture phase of click listener.
     // sets the selected rowdata on click.
     rowClickHandlerOnCapture: function (e, $row, options) {
-        this._handleSelectColumnClick(e);
-        this._normalizeEventTarget(e);
         // If 'isrowselectable' property is enabled, clicking anywhere on the row will trigger its selection. Otherwise, the row will not be selected on click.
         // Also this flag works if mutliselect or radioselect is enabled.
         // In quick edit mode, clicking any part of the row switches it to edit mode, regardless of the flag setting.
@@ -1822,8 +1823,6 @@ $.widget('wm.datatable', {
 
     /* Handles row selection. */
     rowSelectionHandler: function (e, $row, options) {
-        this._handleSelectColumnClick(e);
-        this._normalizeEventTarget(e);
         // If 'isrowselectable' property is enabled, clicking anywhere on the row will trigger its selection. Otherwise, the row will not be selected on click.
         // Also this flag works if mutliselect or radioselect is enabled.
         // In quick edit mode, clicking any part of the row switches it to edit mode, regardless of the flag setting.
@@ -2655,8 +2654,10 @@ $.widget('wm.datatable', {
     /* Handles table sorting. */
     sortHandler: function (e) {
           e.stopImmediatePropagation();
-        // If header span is clicked and column selection is enabled, call header click
+        // If header span is clicked and column selection is enabled, call header click hand
+        //Calling the column selection handler so that column selection works even when the bind exp changes later from false to true.
         if ($(e.target).hasClass('header-data') && this.options.enableColumnSelection) {
+            this.columnSelectionHandler(e);
             this.headerClickHandler(e);
         }
         var $e = $(e.target),
@@ -2923,8 +2924,7 @@ $.widget('wm.datatable', {
     },
     /* Attaches all event handlers for the table. */
     attachEventHandlers: function ($htm) {
-        var $header = this.gridHeaderElement,
-            self = this;
+        var self = this;
 
         if (this.options.enableRowSelection) {
             $htm[0].removeEventListener('click', this.rowClickHandlerOnCapture.bind(this));
@@ -2946,34 +2946,8 @@ $.widget('wm.datatable', {
             $htm.on('keydown', this.onKeyDown.bind(this));
         }
 
-        if ($header) {
-            if (this.options.enableColumnSelection) {
-                $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
-                $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
-            } else {
-                $header.find('th[data-col-selectable]').off('click');
-            }
+        this._attachHeaderEventHandlers();
 
-            if (this.options.enableSort) {
-                if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
-                } else {
-                    $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
-                }
-            } else {
-                if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click');
-                } else {
-                    $header.find('th[data-col-sortable]').off('click');
-                }
-            }
-        }
         if (this.options.rowActions.length) {
             $htm.find('.cancel-edit-row-button').off('click');
             $htm.find('.save-edit-row-button').off('click');
@@ -3065,6 +3039,42 @@ $.widget('wm.datatable', {
             }
             self.toggleExpandRow(+$row.attr('data-row-id'), undefined, e);
         });
+    },
+    /**
+     * Function which attaches all event handlers specifically for the table header.
+     * Needed when table header is rebuilt (e.g. showHeader toggle) without a full _renderGrid
+     */
+    _attachHeaderEventHandlers: function () {
+        var $header = this.gridHeaderElement;
+        if (!$header || !$header.length) {
+            return;
+        }
+        if (this.options.enableColumnSelection) {
+            $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
+            $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
+        } else {
+            $header.find('th[data-col-selectable]').off('click');
+        }
+
+        if (!(this.options.enableSort === false || this.options.enableSort === 'false')) {
+            if (this.options.enableColumnSelection) {
+                $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+            } else {
+                $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+            }
+        } else {
+            if (this.options.enableColumnSelection) {
+                $header.find('th[data-col-sortable] .header-data').off('click');
+            } else {
+                $header.find('th[data-col-sortable]').off('click');
+            }
+        }
     },
     expandRow: function(rowId) {
         this.toggleExpandRow(rowId, true)
@@ -3251,11 +3261,19 @@ $.widget('wm.datatable', {
             self.gridHeaderElement.parent().prop('scrollLeft', this.scrollLeft);
         });
         if (!this.options.showHeader) {
+            this.tableContainer.find('colgroup').remove(); // Remove the colgroup from the table container when showHeader is false
             this.tableContainer.append($colgroup);
             this.gridHeaderElement.hide();
             //this.gridElement.prepend($colgroup.clone());
             return;
         } else {
+            /* _toggleHeader() removes thead from the DOM when toggling showHeader; gridHeaderElement
+             * still references the detached thead. Re-insert it before the tbody so the header
+             * is visible when bind changes from false to true. */
+            if (this.gridHeaderElement.length && this.tableContainer?.length &&
+                !this.tableContainer[0].contains(this.gridHeaderElement[0])) {
+                this.tableContainer.prepend(this.gridHeaderElement); // Re-insert the table header before the tbody when showHeader is true
+            }
             this.gridHeaderElement.show();
         }
         $header = headerTemplate.header;
@@ -3304,7 +3322,7 @@ $.widget('wm.datatable', {
                 $headerCol.hide();
             }
         });
-
+        this.tableContainer.find('colgroup').remove(); // Remove the colgroup from the table container when showHeader is false
         /*For mobile view, append header to the main table only*/
         if (this.options.isMobile) {
             this.tableContainer.append($colgroup);

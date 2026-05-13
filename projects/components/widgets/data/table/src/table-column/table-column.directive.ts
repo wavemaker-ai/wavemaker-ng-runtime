@@ -806,6 +806,11 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             case 'showinfilter':
                 this.showinfilter = nv;
                 break;
+            case 'sortable':
+                if (this.table) {
+                    this.table.callDataGridMethod('refreshSortHeader');
+                }
+                break;
             default:
                 if (inlineWidgetProps.includes(key)) {
                     this.setInlineWidgetProp('inlineInstance', key, nv);
