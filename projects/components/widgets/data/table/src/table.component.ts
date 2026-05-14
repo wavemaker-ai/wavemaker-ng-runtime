@@ -1340,23 +1340,15 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.renderOperationColumns();
         this.gridOptions.colDefs = this.fieldDefs;
 
-        // Defer initialization to ensure datatable.js is loaded (Angular 20 timing issue in dev server)
-        const initTable = () => {
-            if (typeof this.datagridElement.datatable === 'function') {
-                this.datagridElement.datatable(this.gridOptions);
-                this.callDataGridMethod('setStatus', 'loading', this.loadingdatamsg);
-                this.applyProps.forEach(args => this.callDataGridMethod(...args));
-            } else {
-                // Retry if datatable not loaded yet
-                setTimeout(initTable, 50);
-            }
-        };
-        setTimeout(initTable, 0);
+        this.datagridElement.datatable(this.gridOptions);
+        this.callDataGridMethod('setStatus', 'loading', this.loadingdatamsg);
         // if(this.gridOptions.data.length || this.variableInflight) {
         //     this.callDataGridMethod('setStatus', 'loading', this.loadingdatamsg);
         // } else {
         //     this.callDataGridMethod('setStatus', 'nodata', this.nodatamessage);
         // }
+
+        this.applyProps.forEach(args => this.callDataGridMethod(...args));
 
         if (this.editmode === EDIT_MODE.QUICK_EDIT) {
             this.documentClickBind = this._documentClickBind.bind(this);
@@ -2107,19 +2099,19 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             tmpl += `<wm-table-column ${attrsTmpl} tableName="${this.name}${(this as any).$attrs.get('table_reference')}">${customTmpl}</wm-table-column>`;
         });
         this.dynamicTableRef.clear();
-        
+
         // Setup dynamic context for the table component
         if (!this._dynamicContext) {
             this._dynamicContext = Object.create(this.viewParent);
             this._dynamicContext[this.getAttr('wmTable')] = this;
         }
-        
+
         this.noOfColumns = columns.length;
-        
+
         try {
             // Generate unique component selector for this dynamic table instance
             const componentSelector = `app-table-dynamic-${this.widgetId}`;
-            
+
             // Get the dynamically compiled table component class
             const DynamicTableComponentClass = await this.dynamicComponentProvider.getComponentFactoryRef(
                 componentSelector,
@@ -2129,7 +2121,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     transpile: true
                 }
             );
-            
+
             if (!DynamicTableComponentClass) {
                 console.error(`Failed to create dynamic table component: ${componentSelector}`);
                 return;
@@ -2142,10 +2134,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 environmentInjector: this.envInjector,
                 injector: this.inj
             });
-            
+
             // Extend component instance with dynamic context
             extendProto(componentRef.instance, this._dynamicContext);
-            
+
             // Append to DOM
             const containerElement = this.$element.find('.dynamic-table-container')[0];
             if (containerElement) {
@@ -2275,14 +2267,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     this.gridOptions.setIsNextPageData(false);
                 }
                 if (this.binddatasource && !this.datasource) {
-                    // If datasource is not set yet but dataset has arrived (e.g. model/script binding),
-                    // render from dataset directly instead of bailing out. Otherwise, clear loading state
-                    // to prevent the table from being stuck in "loading".
-                    if (!isUndefined(nv) && nv !== '') {
-                        this.variableInflight = false;
-                        this.createGridColumns(nv);
-                        return;
-                    }
+                    // If datasource is not set yet, clear loading state and show no data
+                    // This prevents tables from being stuck in loading state
                     if (this.variableInflight) {
                         this.variableInflight = false;
                         this.callDataGridMethod('setStatus', 'nodata', this.nodatamessage);

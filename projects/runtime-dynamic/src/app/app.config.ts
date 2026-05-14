@@ -128,7 +128,7 @@ export const initializeProjectDetails = () => {
     }
 };
 
-export function InitializeApp(I18nService, AppJSResolve, AppBeforeLoadResolve, AppVariablesResolve, AppExtensionJSResolve) {
+export function InitializeApp(I18nService, AppJSResolve, AppBeforeLoadResolve, AppVariablesResolve, AppExtensionJSResolve, PipeService) {
     return async () => {
         initializeProjectDetails();
         await AppJSResolve.resolve();
@@ -224,7 +224,7 @@ export const appConfig: ApplicationConfig = {
         {
             provide: APP_INITIALIZER,
             useFactory: InitializeApp,
-            deps: [AbstractI18nService, AppJSResolve, AppBeforeLoadResolve, AppVariablesResolve, AppExtensionJSResolve],
+            deps: [AbstractI18nService, AppJSResolve, AppBeforeLoadResolve, AppVariablesResolve, AppExtensionJSResolve, PipeService],
             multi: true
         },
         // LOCALE_ID will be set by I18n service
