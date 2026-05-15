@@ -1,7 +1,7 @@
 @if (title) {
-  <div class="panel-heading">
-    <h3 class="panel-title">
-      <div class="pull-left"><i class="app-icon panel-icon {{iconclass}}" [class.ng-hide]="!iconclass"></i></div>
+  <div class="chart-header">
+    <h3 class="chart-title">
+      <div class="pull-left"><i class="app-icon chart-icon {{iconclass}}" [class.ng-hide]="!iconclass"></i></div>
       <div class="heading" [innerHTML]="title"></div>
       @if (subheading) {
         <div class="description" [innerHTML]="subheading"></div>
@@ -9,7 +9,7 @@
     </h3>
   </div>
 }
-<div class="app-chart-inner" [ngClass]="{'loading':isLoadInProgress, 'panel-body': title}">
+<div class="app-chart-inner" [ngClass]="{'loading':isLoadInProgress, 'chart-body': title}">
   <svg></svg>
   @if (showContentLoadError && showNoDataMsg) {
     <div class="wm-content-info readonly-wrapper">

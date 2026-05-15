@@ -77,10 +77,10 @@ import {
     split
 } from "lodash-es";
 
-const WIDGET_CONFIG = {widgetType: 'wm-form', hostClass: 'panel app-panel app-form'};
+const WIDGET_CONFIG = {widgetType: 'wm-form', hostClass: 'app-form'};
 const LOGIN_FORM_CONFIG = {widgetType: 'wm-form', hostClass: 'app-form app-login-form'};
-const LIVE_FORM_CONFIG = {widgetType: 'wm-liveform', hostClass: 'panel app-panel app-liveform liveform-inline'};
-const LIVE_FILTER_CONFIG = {widgetType: 'wm-livefilter', hostClass: 'panel app-panel app-livefilter clearfix liveform-inline'};
+const LIVE_FORM_CONFIG = {widgetType: 'wm-liveform', hostClass: 'app-liveform liveform-inline'};
+const LIVE_FILTER_CONFIG = {widgetType: 'wm-livefilter', hostClass: 'app-livefilter clearfix liveform-inline'};
 
 const getWidgetConfig = (isLiveForm, isLiveFilter, role) => {
     let config = WIDGET_CONFIG;
@@ -260,7 +260,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
 
     set isLayoutDialog(nv) {
         if (nv) {
-            removeClass(this.nativeElement, 'panel app-panel liveform-inline');
+            removeClass(this.nativeElement, 'liveform-inline');
         }
         this._isLayoutDialog = nv;
     }
@@ -1212,7 +1212,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         let $gridLayout;
         // Check if grid layout is present or not for first time
         if (isUndefined(this._isGridLayoutPresent)) {
-            this._isGridLayoutPresent = this.$element.find('.panel-body [wmlayoutgrid]').length > 0;
+            this._isGridLayoutPresent = this.$element.find('.app-form-body [wmlayoutgrid]').length > 0;
         }
         if (this._isGridLayoutPresent) {
             $gridLayout = this.$element.find('.form-elements [wmlayoutgrid]').first();

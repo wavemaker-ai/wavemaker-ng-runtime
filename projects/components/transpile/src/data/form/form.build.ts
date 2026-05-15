@@ -82,7 +82,7 @@ const buildTask = (directiveAttr = ''): IBuildTaskDef => {
             if(dependsOn) {
                 attrs.set('dependsontable', attrs.get('dependson'));
             }
-            const classProp = attrs.get('formlayout') === 'page' ? 'app-device-liveform panel liveform-inline' : '';
+            const classProp = attrs.get('formlayout') === 'page' ? 'app-device-liveform liveform-inline' : '';
             const dialogAttributes = ['title', 'title.bind', 'iconclass', 'iconclass.bind', 'width'];
             attrs.delete('dependson');
             const liveFormTmpl = `<${tagName} wmForm data-role="${role}" ${directiveAttr} #${counter} ngNativeValidate [formGroup]="${counter}.ngform" [noValidate]="${counter}.validationtype !== 'html'"
@@ -128,7 +128,7 @@ const buildTask = (directiveAttr = ''): IBuildTaskDef => {
                                             </ng-container>
                                     }
                                         </header>
-                                        <div class="form-elements panel-body" >`;
+                                        <div class="form-elements form-body" >`;
             }
 
             tmpl = getAttrMarkup(attrs);

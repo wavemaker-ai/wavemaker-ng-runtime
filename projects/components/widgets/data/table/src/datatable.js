@@ -1276,7 +1276,7 @@ $.widget('wm.datatable', {
         } else {
             // if the loading indicator ele is not created, create it and append it to grid ele if it is already present.
             // If not create grid ele and then append the loading indicator to grid ele
-            var $loadingEl = $('<div class="loading-data-msg spin-icon-in-center"><span><i class="app-icon panel-icon fa-spin ' + this.options.loadingicon + '"></i>' +
+            var $loadingEl = $('<div class="loading-data-msg spin-icon-in-center"><span><i class="app-icon table-icon fa-spin ' + this.options.loadingicon + '"></i>' +
                 '<span class="sr-only">Loading</span><span class="loading-text"></span></span></div>');
             $loadingEl.find('.loading-text').html(loadingdatamsg);
             if ($dataGrid.length) {
@@ -2125,7 +2125,7 @@ $.widget('wm.datatable', {
     // WMS-18568 changes added Save and Cancel buttons for Inline Data Table with no actions
     toggleNewRowActions: function (saveInd) {
         var self = this,
-            $gridActions = $(this.element).siblings('div.panel-footer, div.panel-heading').find('div.app-datagrid-actions'),
+            $gridActions = $(this.element).siblings('div.table-footer, div.table-heading').find('div.app-datagrid-actions'),
             $newRow = this.gridElement.find('tr.app-datagrid-row.row-editing'),
             $newRowButton = $gridActions.find('i.wi-plus').closest('.app-button');
         if (this.options.editmode === this.CONSTANTS.INLINE && (this.options.rowActions.length === 0 || !_.some(this.options.rowActions, { action: 'editRow($event)' }))) {

@@ -1,8 +1,8 @@
 @if (title || subheading || iconclass) {
-  <div class="panel-heading">
-    <h3 class="panel-title">
+  <div class="list-header">
+    <h3 class="list-title">
       <div class="pull-left">
-        <i class="app-icon panel-icon {{iconclass}}" aria-hidden="true" [hidden]="!iconclass"></i>
+        <i class="app-icon list-icon {{iconclass}}" aria-hidden="true" [hidden]="!iconclass"></i>
       </div>
       <div class="pull-left">
         <div class="heading" [innerHTML]="title"></div>
@@ -117,7 +117,7 @@
 @if (variableInflight && !pulltorefresh) {
   <div class="loading-data-msg">
     <span>
-      <i class="app-icon panel-icon fa-spin" aria-hidden="true" [ngClass]="loadingicon"></i>
+      <i class="app-icon list-icon fa-spin" aria-hidden="true" [ngClass]="loadingicon"></i>
       <span class="sr-only">Loading</span>
       <span class="loading-text" [textContent]="loadingdatamsg"></span>
     </span>
@@ -139,7 +139,7 @@
 }
 
 @if (navigation !== 'None') {
-  <div class="panel-footer" [hidden]="!showNavigation || (onDemandLoad && dataNavigator.isDisableNext) || (dataNavigator?.dataSize <= pagesize && !allowpagesizechange) || (!dataNavigator.dataSize && !dataNavigator.datasource?.pagination?.next)">
+  <div class="list-footer" [hidden]="!showNavigation || (onDemandLoad && dataNavigator.isDisableNext) || (dataNavigator?.dataSize <= pagesize && !allowpagesizechange) || (!dataNavigator.dataSize && !dataNavigator.datasource?.pagination?.next)">
     <nav wmPagination
       navigationalign.bind="navigationalign"
       navigation.bind="navControls"

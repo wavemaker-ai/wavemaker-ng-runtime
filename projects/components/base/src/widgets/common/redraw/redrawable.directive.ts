@@ -11,7 +11,7 @@ export class RedrawableDirective implements IRedrawableComponent {
     constructor(@Self() @Inject(WidgetRef) widget) {
         this.redraw = () => {
             const tabEl = widget.$element.closest("[wmtabpane]");
-            const accordionEl = widget.$element.closest('[wmaccordionpane]').find('.panel-heading');
+            const accordionEl = widget.$element.closest('[wmaccordionpane]').find('.accordion-header');
             if ((tabEl.length && !tabEl.hasClass('active')) || (accordionEl.length && !accordionEl.hasClass('active'))) {
                 return;
             }

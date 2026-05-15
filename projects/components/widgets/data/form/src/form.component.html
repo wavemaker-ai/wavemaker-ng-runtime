@@ -4,18 +4,18 @@
   <ng-container *ngTemplateOutlet="content"></ng-container>
 } @else {
   @if (!isLayoutDialog && (title || subheading || iconclass || showButtons('header'))) {
-    <div class="panel-heading">
-      <h3 class="panel-title">
+    <div class="form-header">
+      <h3 class="form-title">
+        @if (iconclass) {
         <div class="pull-left">
-          @if (iconclass) {
-            <i class="app-icon panel-icon" aria-hidden="true" [ngClass]="iconclass"></i>
-          }
+            <i class="app-icon form-icon" aria-hidden="true" [ngClass]="iconclass"></i>
         </div>
+        }
         <div class="pull-left">
           <div class="heading" [innerHTML]="title"></div>
           <div class="description" [innerHTML]="subheading"></div>
         </div>
-        <div class="form-action panel-actions basic-btn-grp">
+        <div class="form-action basic-btn-grp">
           @for (btn of buttonArray | filter : 'position' : 'header'; track btn; let index = $index) {
             <ng-container
               [ngTemplateOutlet]="btn.widgetType === 'button' ? buttonRef : anchorRef"
@@ -24,21 +24,21 @@
             </ng-container>
           }
           @if (collapsible) {
-            <button type="button" class="app-icon wi panel-action" [title]="expanded? (this.appLocale?.LABEL_COLLAPSE||'Collapse'):(this.appLocale?.LABEL_EXPAND||'Expand')"
+            <button type="button" class="app-icon wi form-action" [title]="expanded? (this.appLocale?.LABEL_COLLAPSE||'Collapse'):(this.appLocale?.LABEL_EXPAND||'Expand')"
             [ngClass]="expanded ? 'wi-minus': 'wi-plus'" (click)="expandCollapsePanel();"></button>
           }
         </div>
       </h3>
     </div>
   }
-  <div class="panel-body" [ngClass]="{'form-elements': isLayoutDialog, 'form-body': !isLayoutDialog}" [class.hidden]="!expanded">
+  <div  [ngClass]="{'form-elements': isLayoutDialog, 'form-body': !isLayoutDialog}" [class.hidden]="!expanded">
     @if (!!statusMessage.caption) {
       <p wmMessage [attr.aria-hidden]="!statusMessage.caption" [attr.aria-label]="statusMessage.caption" caption.bind="statusMessage.caption" type.bind="statusMessage.type"></p>
     }
     <div [ngClass]="{'form-elements': !isLayoutDialog, 'form-content': isLayoutDialog}">
       <ng-container *ngTemplateOutlet="content"></ng-container>
     </div>
-    <div class="basic-btn-grp form-action panel-footer clearfix" [ngClass]="{'modal-footer': isLayoutDialog}" [class.hidden]="!expanded || !showButtons('footer')">
+    <div class="basic-btn-grp form-action form-footer clearfix" [ngClass]="{'modal-footer': isLayoutDialog}" [class.hidden]="!expanded || !showButtons('footer')">
       @for (btn of buttonArray | filter : 'position' : 'footer'; track btn; let index = $index) {
         <ng-container
           [ngTemplateOutlet]="btn.widgetType === 'button' ? buttonRef : anchorRef"

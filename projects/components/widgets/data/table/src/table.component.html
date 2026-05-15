@@ -1,17 +1,17 @@
 @if (title || subheading || iconclass || exportOptions.length || _actions.header.length) {
-  <div class="panel-heading">
-    <h3 class="panel-title">
+  <div class="table-heading">
+    <h3 class="table-title">
+      @if (iconclass) {
       <div class="pull-left">
-        @if (iconclass) {
-          <i class="app-icon panel-icon {{iconclass}}"></i>
-        }
+          <i class="app-icon table-icon {{iconclass}}"></i>
       </div>
+      }
       <div class="pull-left">
         <div class="heading" [innerHTML]="title"></div>
         <div class="description" [innerHTML]="subheading"></div>
       </div>
       @if (exportOptions.length || _actions.header.length) {
-        <div class="panel-actions app-datagrid-actions">
+        <div class="app-datagrid-actions">
           @for (btn of _actions.header; track btn; let index = $index) {
             <ng-container
               [ngTemplateOutlet]="btn.widgetType === 'button' ? buttonRef : anchorRef"
@@ -30,7 +30,7 @@
 }
 <div class="app-datagrid" #datagridElement></div>
 
-<div class="panel-footer clearfix" [hidden]="!_actions.footer.length && (!shownavigation || (onDemandLoad && dataNavigator.isDisableNext)) ">
+<div class="table-footer clearfix" [hidden]="!_actions.footer.length && (!shownavigation || (onDemandLoad && dataNavigator.isDisableNext)) ">
   <div class="app-datagrid-paginator" [hidden]="(!dataNavigator?.dataSize && !dataNavigator.datasource?.pagination?.next) || !shownavigation || (onDemandLoad && dataNavigator.isDisableNext)">
     <nav wmPagination show.bind="shownavigation" navigationalign.bind="navigationalign"
       navigationsize.bind="navigationSize"

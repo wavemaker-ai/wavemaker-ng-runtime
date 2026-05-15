@@ -100,7 +100,7 @@ import {BsDropdownModule} from 'ngx-bootstrap/dropdown';
 
 declare const $;
 
-const DEFAULT_CLS = 'app-grid app-panel panel';
+const DEFAULT_CLS = 'app-grid';
 const WIDGET_CONFIG = {widgetType: 'wm-table', hostClass: DEFAULT_CLS};
 
 const exportIconMapping = {
@@ -473,7 +473,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             const parentTrElement =  $(this.nativeElement).closest('tr');
             const parentObj = {
                 'parentId': parentTrElement.prev('tr.app-datagrid-row')?.attr('data-row-id'),
-                'parentPage': parentTrElement.closest('div.app-grid.app-panel.panel')?.attr('currentpage') || 1
+                'parentPage': parentTrElement.closest('div.app-grid')?.attr('currentpage') || 1
             }
             return parentObj;
         },
