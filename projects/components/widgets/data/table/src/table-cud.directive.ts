@@ -255,7 +255,11 @@ export class TableCUDDirective implements OnDestroy {
         if (dataSource.execute(DataSource.Operation.SUPPORTS_CRUD) || !dataSource.execute(DataSource.Operation.IS_API_AWARE) || dataSource.category === 'wm.CrudVariable') {
             if (!dataSource.execute(DataSource.Operation.IS_API_AWARE)) {
                 const extraOptions = this.generatePath(this.table.binddataset);
-                dataSource.execute(DataSource.Operation.SET_ITEM, {prevItem: options.prevData, item: options.row, path: extraOptions.path, parentIndex: extraOptions.index});
+                const item = options.row as any;
+                if (dataSource.category === 'wm.Variable' && item) {
+                    delete item['$$wmSourceListIndex'];
+                }
+                dataSource.execute(DataSource.Operation.SET_ITEM, {prevItem: options.prevData, item, path: extraOptions.path, parentIndex: extraOptions.index});
                 this.updateSuccessHandler(options.row, options);
                 return;
             }
@@ -340,7 +344,13 @@ export class TableCUDDirective implements OnDestroy {
         if (dataSource.execute(DataSource.Operation.SUPPORTS_CRUD) || !dataSource.execute(DataSource.Operation.IS_API_AWARE) || this.table._isDependent || dataSource.category === 'wm.CrudVariable') {
             if (!dataSource.execute(DataSource.Operation.IS_API_AWARE)) {
                 const extraOptions = this.generatePath(this.table.binddataset);
-                dataSource.execute(DataSource.Operation.REMOVE_ITEM, {item: options.row, path: extraOptions.path, parentIndex: extraOptions.index});
+                let item: any = options.row;
+                if (dataSource.category === 'wm.Variable' && options.rowindex != null) {
+                    item = options.rowindex;
+                } else if (dataSource.category === 'wm.Variable' && item) {
+                    delete item['$$wmSourceListIndex'];
+                }
+                dataSource.execute(DataSource.Operation.REMOVE_ITEM, {item, path: extraOptions.path, parentIndex: extraOptions.index});
                 this.deleteSuccessHandler(options.row, undefined, options.evt, options.callBack);
                 return;
             }

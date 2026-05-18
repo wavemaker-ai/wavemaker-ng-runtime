@@ -2183,6 +2183,10 @@ $.widget('wm.datatable', {
         var rowId = parseInt($row.attr('data-row-id'), 10);
         return rowId >= this.preparedData.length || $row.hasClass('always-new-row');
     },
+    _getWmVariableRowLocator: function (rowId) {
+        var liveRow = this.options.data[parseInt(rowId, 10)];
+        return (liveRow && liveRow.$$wmSourceListIndex != null) ? liveRow.$$wmSourceListIndex : (liveRow || parseInt(rowId, 10));
+    },
     /* Toggles the edit state of a row. */
     toggleEditRow: function (e, options) {
         if(e?.target && $(e.target).closest('.app-menu').length) {
@@ -2388,8 +2392,9 @@ $.widget('wm.datatable', {
                                 return;
                             }
                         }
-                        if(this.options?.getDataSource()?.category== "wm.Variable") {
-                            editOptions.rowindex = rowindex;
+                        var ds = this.options.getDataSource && this.options.getDataSource();
+                        if (ds && ds.category === 'wm.Variable') {
+                            editOptions.rowindex = self._getWmVariableRowLocator(rowindex);
                         }
                         this.options.afterRowUpdate(rowData, e, onSaveSuccess, editOptions);
                     }
@@ -2541,6 +2546,10 @@ $.widget('wm.datatable', {
             if (isValid === false) {
                 return;
             }
+        }
+        var deleteDs = this.options.getDataSource && this.options.getDataSource();
+        if (deleteDs && deleteDs.category === 'wm.Variable') {
+            options.rowindex = this._getWmVariableRowLocator(rowId);
         }
         if (_.isFunction(this.options.onRowDelete)) {
             className = this.options.cssClassNames.deleteRow;
