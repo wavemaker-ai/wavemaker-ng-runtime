@@ -635,7 +635,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         },
         afterRowUpdate: (row, e, callBack, options) => {
             muteWatchers();
-            this.updateRecord(extend({}, options, {row, 'prevData': options.rowindex?options.rowindex:this.prevData, 'event': e, 'callBack': callBack}));
+            const v = get(this.datasource, 'category') === 'wm.Variable' && options && options.rowindex != null;
+            this.updateRecord(extend({}, options, {row, prevData: v ? options.rowindex : this.prevData, event: e, callBack}));
             setTimeout(() => {
                 unMuteWatchers();
             }, 10);
@@ -1724,6 +1725,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         row.$isLast = this.gridData.length === row.$index;
         delete row.$$index;
         delete row.$$pk;
+        delete row.$$wmSourceListIndex;
         return row;
     }
 
@@ -1978,6 +1980,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         // Apply filter and sort, if data is refreshed through Refresh data method
         if (!this.isNavigationEnabled() && this._isClientSearch) {
             data = getClonedObject(serviceData);
+            if (isObject(data) && !isArray(data)) {
+                data = [data];
+            }
+            if (get(this.datasource, 'category') === 'wm.Variable' && isArray(data)) {
+                for (let i = 0; i < data.length; i++) {
+                    data[i].$$wmSourceListIndex = i;
+                }
+            }
             data = this.getSearchResult(data, this.filterInfo);
             data = this.getSortResult(data, this.sortInfo);
             this.serverData = data;
@@ -2504,6 +2514,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             data = getClonedObject(this.__fullData);
             if (isObject(data) && !isArray(data)) {
                 data = [data];
+            }
+            if (get(this.datasource, 'category') === 'wm.Variable' && isArray(data)) {
+                for (let i = 0; i < data.length; i++) {
+                    data[i].$$wmSourceListIndex = i;
+                }
             }
             data = this.getSearchResult(data, this.filterInfo);
             data = this.getSortResult(data, this.sortInfo);
