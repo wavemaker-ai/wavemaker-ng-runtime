@@ -438,6 +438,11 @@ export class TableFilterSortDirective implements OnDestroy {
         if (isObject(data) && !isArray(data)) {
             data = [data];
         }
+        if (get(this.table.datasource, 'category') === 'wm.Variable' && isArray(data)) {
+            for (let i = 0; i < data.length; i++) {
+                data[i].$$wmSourceListIndex = i;
+            }
+        }
         /*Both the functions return same 'data' if arguments are undefined*/
         data = this.getSearchResult(data, this.table.filterInfo);
         data = this.getSortResult(data, this.table.sortInfo);
