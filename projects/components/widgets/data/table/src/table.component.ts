@@ -725,7 +725,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         },
         generateCustomExpressions: (rowData, index, summaryRow?) => {
             const row = this.getClonedRowObject(rowData);
-            const compileTemplate = (tmpl, tmplIndex?: string | number) => {
+            const compileTemplate = (tmpl) => {
                 if (!tmpl) {
                     return;
                 }
@@ -735,12 +735,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     colDef
                 };
                 this.addEventsToContext(context);
-                const injectorKey = `customExpr_${tmplIndex ?? 'x'}_${index}`;
-                const customExprView = this.customExprViewRef.createEmbeddedView(
-                    tmpl,
-                    context,
-                    { injector: this.createCustomInjector(injectorKey, context) }
-                );
+                const customExprView = this.customExprViewRef.createEmbeddedView(tmpl, context);
                 const rootNode = customExprView.rootNodes[0];
                 const fieldName = rootNode.getAttribute('data-col-identifier');
                 extend(colDef, this.columns[fieldName]);
@@ -752,23 +747,18 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             };
             if (this.isdynamictable) {
                 this.fieldDefs.forEach(col => {
-                    compileTemplate(col.customExprTmpl, col?.field ? String(col.field) : undefined);
+                    compileTemplate(col.customExprTmpl);
                 });
                 return;
             }
             // For all the columns inside the table, generate the custom expression
-            this.customExprTmpl.forEach((tmpl, tmplIndex) => compileTemplate(tmpl, tmplIndex));
+            this.customExprTmpl.forEach(compileTemplate.bind(this));
         },
         generateRowExpansionCell: (rowData, index) => {
             const row = this.getClonedRowObject(rowData);
             // For all the columns inside the table, generate the inline widget
             this.rowExpansionActionTmpl.forEach((tmpl) => {
-                const context = { row };
-                this.rowExpansionActionTl[index] = this.rowExpansionActionViewRef.createEmbeddedView(
-                    tmpl,
-                    context,
-                    { injector: this.createCustomInjector(`rowExpansionAction_${index}`, context) }
-                ).rootNodes;
+                this.rowExpansionActionTl[index] = this.rowExpansionActionViewRef.createEmbeddedView(tmpl, {row}).rootNodes;
             });
         },
         getRowExpansionAction: (index) => {
@@ -810,11 +800,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     }, 500);
                 }
             };
-            const rootNode = this.rowDetailViewRef.createEmbeddedView(
-                this.rowExpansionTmpl,
-                context,
-                { injector: this.createCustomInjector(`rowDetail_${rowId}`, context) }
-            ).rootNodes[0];
+            const rootNode = this.rowDetailViewRef.createEmbeddedView(this.rowExpansionTmpl, context).rootNodes[0];
             $target[0].appendChild(rootNode);
             $appDigest();
         },
@@ -844,14 +830,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.rowActionsCompiledTl[index] = [];
             // For all the columns inside the table, generate the inline widget
             this.rowActionTmpl.forEach((tmpl) => {
-                const context = { row };
-                this.rowActionsCompiledTl[index].push(
-                    ...this.rowActionsViewRef.createEmbeddedView(
-                        tmpl,
-                        context,
-                        { injector: this.createCustomInjector(`rowActions_${index}`, context) }
-                    ).rootNodes
-                );
+                this.rowActionsCompiledTl[index].push(...this.rowActionsViewRef.createEmbeddedView(tmpl, {row}).rootNodes);
             });
         },
         getRowAction: (index) => {
@@ -878,11 +857,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                             return this.columns[fieldName] && this.columns[fieldName].showPendingSpinnerNew;
                         }
                     };
-                    const rootNode = this.inlineEditNewViewRef.createEmbeddedView(
-                        tmpl,
-                        context,
-                        { injector: this.createCustomInjector(`inlineNew_${this.widgetId}`, context) }
-                    ).rootNodes[0];
+                    const rootNode = this.inlineEditNewViewRef.createEmbeddedView(tmpl, context).rootNodes[0];
                     fieldName = rootNode.getAttribute('data-col-identifier');
                     this.inlineNewCompliedTl[fieldName] = rootNode;
                 });
@@ -908,11 +883,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                         return this.columns[fieldName] && this.columns[fieldName].showPendingSpinner;
                     }
                  };
-                const rootNode = this.inlineEditViewRef.createEmbeddedView(
-                    tmpl,
-                    context,
-                    { injector: this.createCustomInjector(`inline_${this.widgetId}`, context) }
-                ).rootNodes[0];
+                const rootNode = this.inlineEditViewRef.createEmbeddedView(tmpl, context).rootNodes[0];
                 fieldName = rootNode.getAttribute('data-col-identifier');
                 this.inlineCompliedTl[fieldName] = rootNode;
             });
@@ -972,11 +943,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                         return this.emptyMatchModes.indexOf(this.rowFilter[fieldName] && this.rowFilter[fieldName].matchMode) > -1;
                     }
                 };
-                const rootNode = this.filterViewRef.createEmbeddedView(
-                    tmpl,
-                    context,
-                    { injector: this.createCustomInjector(`filter_${this.widgetId}`, context) }
-                ).rootNodes[0];
+                const rootNode = this.filterViewRef.createEmbeddedView(tmpl, context).rootNodes[0];
                 this.rowFilterCompliedTl[rootNode.getAttribute('data-col-identifier')] = rootNode;
             });
         },
