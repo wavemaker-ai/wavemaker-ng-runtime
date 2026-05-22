@@ -1,5 +1,12 @@
-<i class="app-icon {{iconclass}}"></i>
-@if (iconclass) {
+@if (useSvgIcon) {
+  <i class="app-icon app-icon-svg"
+     role="img"
+     [attr.aria-label]="arialabel || caption || appLocale.LABEL_ICON"
+     [iconUrl]="iconurl"></i>
+} @else {
+  <i class="app-icon {{iconclass}}"></i>
+}
+@if (iconclass || useSvgIcon) {
   <span class="sr-only">{{ arialabel || caption || appLocale.LABEL_ICON }}</span>
 }
 @if (caption) {
