@@ -84,6 +84,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
     public pm: string;
     private dateOnShowSubscription: Subscription;
     private cancelLocaleChangeSubscription;
+    public strictdate = false;
     public get timeZone() { return this.inj.get(AbstractI18nService).getTimezone(this); }
 
     formatsByLocale = {'timezone': ''};
@@ -359,7 +360,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
     private setActiveDateFocus(newDate, isMouseEvent?: boolean, fromKeyboardEvents?: boolean) {
         this.setNextData(newDate);
         this.clicked = false;
-        const activeMonth = this.activeDate.getMonth();
+        const activeMonth = (new Date((this.activeDate || this.datavalue))).getMonth();
         // check for keyboard event
         if (!isMouseEvent) {
             if (newDate.getMonth() < activeMonth) {
@@ -1048,9 +1049,15 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         } else if (key === 'mindate') {
             this._dateOptions.minDate = (nv === CURRENT_DATE) ? this.mindate = new Date() : getDateObj(nv);
             this.minDateMaxDateValidationOnInput(this.datavalue);
+            if(this.strictdate && this.dateNotInRange ){
+                this.datavalue=""
+            }
         } else if (key === 'maxdate') {
             this._dateOptions.maxDate = (nv === CURRENT_DATE) ? this.maxdate = new Date() : getDateObj(nv);
             this.minDateMaxDateValidationOnInput(this.datavalue);
+            if(this.strictdate && this.dateNotInRange ){
+                this.datavalue=""
+            }
         } else if (key === 'excludedates' || key === 'excludedays') {
             if (this.excludedays) {
                 this.excludedDaysToDisable = split(this.excludedays, ',').map((day) => {
@@ -1066,6 +1073,9 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                 this.excludedDatesToDisable = this.excludedDatesToDisable.map(d => getDateObj(d));
             }
             this.minDateMaxDateValidationOnInput(this.datavalue);
+            if(this.strictdate && this.dateNotInRange){
+                this.datavalue=""
+            }
         } else if (key === 'selectfromothermonth') {
             this._dateOptions.selectFromOtherMonth = nv;
 

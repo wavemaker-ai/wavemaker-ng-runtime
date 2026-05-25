@@ -143,6 +143,9 @@ export class DateComponent extends BaseDateTimeComponent {
         // date pattern validation
         // if invalid pattern is entered, device is showing an error.
         if (!this.formatValidation(newVal, inputVal, isNativePicker)) {
+            if(this.strictdate){
+                this.setDataValue(new Date(this.datavalue))
+            }
             return;
         }
         // min date and max date validation in mobile view.
@@ -161,6 +164,19 @@ export class DateComponent extends BaseDateTimeComponent {
         this.minDateMaxDateValidationOnInput(newVal);
         if (getFormattedDate(this.datePipe, newVal, this.dateInputFormat, this.timeZone, null, this.isCurrentDate, this) === this.displayValue) {
             $(this.nativeElement).find('.display-input').val(this.displayValue);
+        }
+        if(this.strictdate && this.dateNotInRange){
+            this.dateNotInRange=false
+            const isSameDate = new Date(this.datavalue).toDateString() === new Date(newVal).toDateString();
+            if(isSameDate){
+                newVal=""
+                this.datavalue=newVal;
+            }else{
+                newVal=this.datavalue
+            }
+            if(!newVal){
+                $(this.nativeElement).find('.display-input').val(undefined);
+            }
         }
         if(!this.dateNotInRange){
             if (newVal) {
