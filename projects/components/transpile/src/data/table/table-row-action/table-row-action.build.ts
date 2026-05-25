@@ -20,9 +20,43 @@ const getRowActionTmpl = (attrs) => {
     const btnClass = action ? (action.includes('editRow(') ? 'edit edit-row-button' :
                         (action.includes('deleteRow(') ? 'delete delete-row-button' : '')) : '';
     const tabIndex = attrs.get('tabindex') ? `tabindex="${attrs.get('tabindex')}"` : '';
-    const tag = attrs.get('widget-type') === 'anchor' ? 'a' : 'button';
-    const directive = attrs.get('widget-type') === 'anchor' ? 'wmAnchor' : 'wmButton';
-    return `<ng-template #rowActionTmpl let-row="row">
+    const widgetType: string = attrs.get('widget-type') || 'button';
+
+    const tagMap: Record<string, string> = {
+        anchor: 'a',
+        button: 'button',
+        menu: 'div'
+    };
+
+    const directiveMap: Record<string, string> = {
+        anchor: 'wmAnchor',
+        button: 'wmButton',
+        menu: 'wmMenu'
+    };
+
+    const tag = tagMap[widgetType] || 'button';
+    const directive = directiveMap[widgetType] || 'wmButton';
+
+    if (widgetType === 'menu') {
+        const iconclass = attrs.get('iconclass') || 'wi wi-more-vert';
+        const menuBtnClass = attrs.get('class') || "";
+        const menuaction =  attrs.get('menuaction');
+        const menuItemActionTmpl: string = menuaction ? ` select.event="${menuaction}" ` : '';
+        return `<ng-template #rowActionTmpl let-row="row">
+                  <div wmMenu dropdown
+                       ${getRowActionAttrs(attrs)} container="body"
+                       class="dropdown app-menu row-action row-action-button row-action-menu ${menuBtnClass}"
+                       menuposition="down,right"
+                       menuclass="${iconclass}"
+                       ${menuItemActionTmpl}
+                       ${actionTmpl}
+                       ${tabIndex}>
+                  </div>
+
+                  ${saveCancelTmpl}
+                </ng-template> `;
+    } else {
+        return `<ng-template #rowActionTmpl let-row="row">
                <${tag} ${directive} data-action-key="${attrs.get('key')}"
                     ${getRowActionAttrs(attrs)}
                     class="row-action row-action-button ${attrs.get('class')} ${btnClass}"
@@ -32,6 +66,7 @@ const getRowActionTmpl = (attrs) => {
                     type="button"></${tag}>
                 ${saveCancelTmpl}
             </ng-template>`;
+    }
 };
 
 register('wm-table-row-action', (): IBuildTaskDef => {
