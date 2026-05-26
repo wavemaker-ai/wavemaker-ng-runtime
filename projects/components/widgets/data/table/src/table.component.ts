@@ -2365,6 +2365,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.pagesizeoptions = this.gridOptions.pagesizeoptions;
                 if (this.allowpagesizechange) {
                     this.setDefaultPageSize(this.pagesize || this.actualPageSize || this.gridOptions.getPageSize());
+                    if (get(this.datasource, 'category') !== 'wm.Variable') {
+                        this.dataNavigator.onPageSizeChange(undefined, this.dataNavigator.pageSizeOptions[0] || this.pagesize);
+                    }
                 }
                 break;
             case 'showheader':
@@ -2422,7 +2425,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         let widgetState = this.statePersistence.getWidgetState(this);
         if (this.gridOptions.allowpagesizechange) {
             const normalizedPageSizeOptions = this.getNormalizedPageSizeOptionsArray(this.pagesizeoptions);
-            if (get(widgetState, 'pagesize')) {
+            if (this.isPageSizeOptionsChanged() && normalizedPageSizeOptions.length) { // if pagesize options are changed, then update the pagesize without checking for statepersistence
+                nv = normalizedPageSizeOptions[0];
+                this.pagesize = nv;
+            } else if (get(widgetState, 'pagesize')) {
                 nv = get(widgetState, 'pagesize');
                 this.pagesize = nv; // updating the default pagesize to user selected pagesize
             }else if (this.pagesizeoptions && normalizedPageSizeOptions.length) {
