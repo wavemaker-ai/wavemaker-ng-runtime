@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import {Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
 
-import {DISPLAY_TYPE, ImagePipe, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective} from '@wm/components/base';
+import {DISPLAY_TYPE, ImagePipe, isSvgIconUrl, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, SvgIconDirective, TextContentDirective} from '@wm/components/base';
 
 import {registerProps} from './button.props';
 
@@ -14,7 +14,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective, ImagePipe],
+    imports: [CommonModule, TextContentDirective, ImagePipe, SvgIconDirective],
     selector: 'button[wmButton]',
     templateUrl: './button.component.html',
     providers: [
@@ -39,5 +39,10 @@ export class ButtonComponent extends StylableComponent {
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
+    }
+
+    // True when `iconurl` is set and points to an `.svg` asset.
+    public get isSvgIcon(): boolean {
+        return isSvgIconUrl(this.iconurl);
     }
 }

@@ -3,10 +3,15 @@
      role="img"
      [attr.aria-label]="arialabel || caption || appLocale.LABEL_ICON"
      [iconUrl]="iconurl"></i>
+} @else if (useImageIcon) {
+  <img data-identifier="img"
+       class="app-icon app-icon-img"
+       [src]="iconurl | image"
+       [alt]="arialabel || caption || appLocale.LABEL_ICON"/>
 } @else {
-  <i class="app-icon {{iconclass}}"></i>
+  <i class="app-icon {{resolvedIconClass}}"></i>
 }
-@if (iconclass || useSvgIcon) {
+@if (resolvedIconClass || useSvgIcon || useImageIcon) {
   <span class="sr-only">{{ arialabel || caption || appLocale.LABEL_ICON }}</span>
 }
 @if (caption) {

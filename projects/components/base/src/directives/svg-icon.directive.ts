@@ -5,6 +5,15 @@ import { Observable, Subscription } from 'rxjs';
 import { shareReplay, tap } from 'rxjs/operators';
 import { ImagePipe } from '../pipes/image.pipe';
 
+// check if the url is a svg icon url
+export function isSvgIconUrl(url: string | null | undefined): boolean {
+    if (!url) {
+        return false;
+    }
+    const path = url.split(/[?#]/)[0];
+    return /\.svg$/i.test(path);
+}
+
 /**
  * Module-level cache for already-normalized SVG markup, keyed by the
  * pipe-transformed URL. Shared across every directive instance so repeated
@@ -20,18 +29,24 @@ const inFlightRequests = new Map<string, Observable<string>>();
 
 /**
  * Renders the SVG fetched from `iconUrl` inline on the host element so the
- * markup behaves like a font icon - inheriting `color`, `font-size`, `:hover`,
- * and transitions from the host's CSS.
+ * markup behaves like a font icon - it can be sized via `font-size`, supports
+ * `:hover` / transitions on the host, and (for SVGs authored with
+ * `currentColor`) inherits `color` from CSS.
  *
  * Usage:
  *   <i class="wm-icon" [iconUrl]="url"></i>
  *
  * The incoming URL is first run through `ImagePipe` (so relative project
  * paths, CDN rewrites, etc. work the same way as `<img [src]>`), then fetched
- * as text via `HttpClient`. The fetched markup is normalized so `fill` /
- * `stroke` values map to `currentColor` and the root `<svg>` gets `width="1em"`
- * / `height="1em"` if not already specified, allowing the icon to scale with
- * the host element's `font-size`.
+ * as text via `HttpClient`. The fetched markup is normalized so the root
+ * `<svg>` gets `width="1em"` / `height="1em"` if not already specified (so
+ * the icon scales with the host's `font-size`) and a root `fill="currentColor"`
+ * fallback when no `fill` attribute is declared.
+ *
+ * Original `fill` / `stroke` values inside the SVG are preserved verbatim so
+ * a multi-color SVG renders with its source colors. To make an SVG themeable
+ * via the host's CSS `color`, author the source with `fill="currentColor"`
+ * (the convention used by Material Icons, Heroicons, Font Awesome, etc.).
  */
 @Directive({
     standalone: true,

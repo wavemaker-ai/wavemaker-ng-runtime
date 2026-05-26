@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import {Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
 
-import {IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, SvgIconDirective, TextContentDirective} from '@wm/components/base';
+import {ImagePipe, isSvgIconUrl, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, SvgIconDirective, TextContentDirective} from '@wm/components/base';
 import {registerProps} from './icon.props';
 
 const DEFAULT_CLS = 'app-icon-wrapper';
@@ -12,7 +12,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective, SvgIconDirective],
+    imports: [CommonModule, TextContentDirective, SvgIconDirective, ImagePipe],
     selector: '[wmIcon]',
     templateUrl: './icon.component.html',
     providers: [
@@ -37,14 +37,27 @@ export class IconComponent extends StylableComponent {
         styler(this.nativeElement, this);
     }
 
-    ngAfterViewInit(): void {
-        if (!this.iconclass && !this.iconurl) {
-            this.iconclass = 'wm-sl-l sl-user';
-        }
+    /**
+     * SVG branch is taken when no `iconclass` is configured and `iconurl`
+     * points to an `.svg` asset (query string / fragment ignored).
+     */
+    public get useSvgIcon(): boolean {
+        return !this.iconclass && isSvgIconUrl(this.iconurl);
     }
 
-    /** SVG branch is taken only when no `iconclass` is configured and a `url` is provided. */
-    public get useSvgIcon(): boolean {
-        return !this.iconclass && !!this.iconurl;
+    /**
+     * Image branch is taken when no `iconclass` is configured and `iconurl`
+     * points to an image asset (query string / fragment ignored).
+     */
+    public get useImageIcon(): boolean {
+        return !this.iconclass && !!this.iconurl && !isSvgIconUrl(this.iconurl);
+    }
+
+    // This method is used to resolve the icon class.
+    public get resolvedIconClass(): string {
+        if (this.iconclass) {
+            return this.iconclass;
+        }
+        return this.iconurl ? '' : 'wm-sl-l sl-user';
     }
 }

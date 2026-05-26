@@ -4,7 +4,7 @@ import { IMaskModule } from 'angular-imask';
 import {Component, ElementRef, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
-import {IWidgetConfig, provideAs, provideAsWidgetRef} from '@wm/components/base';
+import {ImagePipe, isSvgIconUrl, IWidgetConfig, provideAs, provideAsWidgetRef, SvgIconDirective} from '@wm/components/base';
 import {registerProps} from './input-text.props';
 import {BaseInput} from '../base-input/base-input';
 import {IMaskDirective} from 'angular-imask';
@@ -16,7 +16,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IMaskModule],
+  imports: [CommonModule, FormsModule, IMaskModule, SvgIconDirective, ImagePipe],
     selector: 'wm-input[type="text"], wm-input:not([type]), wm-input[type="password"], wm-input[type="search"], wm-input[type="tel"], wm-input[type="url"]',
     templateUrl: './input-text.component.html',
     providers: [
@@ -50,6 +50,8 @@ export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
     public arialabel: string;
     public trailingiconclass: string;
     public leadingiconclass: string;
+    public leadingiconurl: string;
+    public trailingiconurl: string;
 
     @ViewChild('input', {static: true}) inputEl: ElementRef;
     @ViewChild(NgModel) ngModel: NgModel;
@@ -75,8 +77,17 @@ export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
         }
     }
     get computedClasses() {
-        return {'with-leading-icon': this.leadingiconclass, 'with-trailing-icon': this.trailingiconclass,
+        return {'with-leading-icon': this.leadingiconclass || this.leadingiconurl, 'with-trailing-icon': this.trailingiconclass || this.trailingiconurl,
             ...(typeof this.conditionalclass === 'string' ? { [this.conditionalclass]: true } : this.conditionalclass || {})};
+    }
+
+    // True when `leadingiconurl` is set and points to an `.svg` asset.
+    public get isLeadingSvgIcon(): boolean {
+        return isSvgIconUrl(this.leadingiconurl);
+    }
+
+    public get isTrailingSvgIcon(): boolean {
+        return isSvgIconUrl(this.trailingiconurl);
     }
 
     get mask() {

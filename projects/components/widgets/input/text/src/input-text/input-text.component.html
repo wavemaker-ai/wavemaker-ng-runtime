@@ -1,5 +1,11 @@
-<button class="btn-leading-icon" type="button" name="leadingIcon" *ngIf="leadingiconclass" (click)="iconClickEvent($event, 'leadingiconclick')">
-       <i aria-hidden="true" [ngClass]="leadingiconclass"></i>
+<button class="btn-leading-icon" type="button" name="leadingIcon" *ngIf="leadingiconclass || leadingiconurl" (click)="iconClickEvent($event, 'leadingiconclick')">
+       @if (leadingiconclass) {
+        <i aria-hidden="true" [ngClass]="leadingiconclass"></i>
+       } @else if (isLeadingSvgIcon) {
+        <i role="img" class="app-icon app-icon-svg" aria-hidden="true" [iconUrl]="leadingiconurl"></i>
+       } @else {
+        <img data-identifier="img" alt="leading icon" class="app-icon input-image-icon" [src]="leadingiconurl | image"/>
+       }
 </button>
 <input class="form-control app-textbox"
        focus-target
@@ -27,6 +33,12 @@
        [autocomplete]="autocomplete ? 'on' : 'off'"
        (keyup.enter)="flushViewChanges(input.value)"
        #input>
-<button class="btn-trailing-icon" type="button" name="trailingIcon" *ngIf="trailingiconclass" (click)="iconClickEvent($event, 'trailingiconclick')">
-       <i aria-hidden="true" [ngClass]="trailingiconclass"></i>
+<button class="btn-trailing-icon" type="button" name="trailingIcon" *ngIf="trailingiconclass || trailingiconurl" (click)="iconClickEvent($event, 'trailingiconclick')">
+       @if (trailingiconclass) {
+        <i aria-hidden="true" [ngClass]="trailingiconclass"></i>
+       } @else if (isTrailingSvgIcon) {
+        <i role="img" class="app-icon app-icon-svg" aria-hidden="true" [iconUrl]="trailingiconurl"></i>
+       } @else {
+        <img data-identifier="img" alt="trailing icon" class="app-icon input-image-icon" [src]="trailingiconurl | image"/>
+       }
 </button>
