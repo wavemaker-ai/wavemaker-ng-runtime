@@ -152,7 +152,7 @@ export class LiveFormDirective implements OnDestroy {
         return href;
     }
 
-    setFormData(dataObj, formFields?) {
+    setFormData(dataObj, formFields?, formData?) {
         if (!dataObj) {
             return;
         }
@@ -166,7 +166,7 @@ export class LiveFormDirective implements OnDestroy {
                 field.href  = this.getBlobURL(dataObj, field.key, value);
                 field.value = isString(value) ? '' : value;
             } else {
-                this.form.setFieldValue(field, dataObj);
+                this.form.setFieldValue(field, dataObj, formData);
             }
         });
         this.savePrevDataValues();
