@@ -1618,7 +1618,7 @@ export const setListClass = (scope) => {
             scope.itemsPerRowClass = `col-xs-${(12 / parseInt(scope.itemsperrow, 10))}`;
         }
     } else { // If itemsperrow is not specified make it full width
-        scope.itemsPerRowClass = 'col-xs-12';
+        scope.itemsPerRowClass = '';
     }
 };
 
