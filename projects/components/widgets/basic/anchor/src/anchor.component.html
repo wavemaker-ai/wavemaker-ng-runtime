@@ -1,10 +1,6 @@
-@if (iconurl) {
-  <img data-identifier="img" alt="Image" class="anchor-image-icon" [src]="iconurl | image" [ngStyle]="{width:iconwidth, height:iconheight, margin:iconmargin}"/>
-}
-@if (iconclass) {
-  <i class="app-icon {{iconclass}}" aria-hidden="true" [ngStyle]="{width:iconwidth, height:iconheight, margin:iconmargin}"></i>
-}
-@if (iconclass) {
+
+<wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [iconClasses]="iconurl ? 'anchor-image-icon' : ''" [iconStyle]="{width: iconwidth, height: iconheight, margin: iconmargin, fontSize: iconwidth}" alt="Anchor icon"></wm-app-icon>
+@if (iconclass || iconurl) {
   <span class="sr-only">{{caption}} {{appLocale.LABEL_ICON}}</span>
 }
 <span class="anchor-caption" [innerHTML]="caption"></span>

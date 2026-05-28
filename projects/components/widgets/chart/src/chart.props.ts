@@ -21,6 +21,7 @@ export const registerProps = () => {
                 ['height', {value: '210px', PROP_STRING}],
                 ['highlightpoints', PROP_BOOLEAN],
                 ['iconclass', PROP_STRING],
+                ['iconurl', PROP_STRING],
                 ['interpolation', {value: 'linear', ...PROP_STRING}],
                 ['labelthreshold', {value: 0.01, ...PROP_NUMBER}],
                 ['labeltype', {value: 'percent', ...PROP_STRING}],

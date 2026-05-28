@@ -1,5 +1,5 @@
 import {CommonModule} from '@angular/common';
-import {DialogRef, ImagePipe, TextContentDirective} from "@wm/components/base";
+import {DialogRef, ImagePipe, TextContentDirective, WmAppIconComponent} from "@wm/components/base";
 import {Component, ElementRef, Inject, Input} from '@angular/core';
 
 import {addClass, App, toBoolean} from '@wm/core';
@@ -10,7 +10,7 @@ const DEFAULT_ICON_DIMENSIONS = '21px';
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective, ImagePipe],
+    imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: 'div[wmDialogHeader]',
     templateUrl: './dialog-header.component.html'
 })

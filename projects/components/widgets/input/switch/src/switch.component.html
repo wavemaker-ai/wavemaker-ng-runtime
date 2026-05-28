@@ -13,10 +13,10 @@
       (click)="selectOpt($event, $index, opt)"
       >
       @if (opt.dataObject && opt.dataObject[iconclass] && (!opt.selected ||!checkediconclass)) {
-        <i aria-hidden="true" [ngClass]="['app-icon', opt.dataObject[iconclass] || opt['icon']]"></i>
+        <wm-app-icon [iconclass]="opt.dataObject[iconclass] || opt['icon']" [iconurl]="opt.dataObject[iconurl]" iconClasses="app-icon"></wm-app-icon>
       }
       @if (opt.selected && checkediconclass) {
-        <i aria-hidden="true" [ngClass]="[checkediconclass]"></i>
+        <wm-app-icon [iconclass]="checkediconclass" [iconurl]="checkediconurl" iconClasses="app-icon"></wm-app-icon>
       }
       <span class="caption" [textContent]="opt[displayfield] || opt.label"></span>
     </a>

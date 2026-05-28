@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { TextContentDirective, TrustAsPipe } from "@wm/components/base";
+import { TextContentDirective, TrustAsPipe, WmAppIconComponent } from "@wm/components/base";
 import {
     AfterContentInit,
     Component,
@@ -25,7 +25,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAUL
 
 @Component({
     standalone: true,
-    imports: [BsDropdownModule, CommonModule, TextContentDirective, TrustAsPipe, MenuComponent],
+    imports: [BsDropdownModule, CommonModule, TextContentDirective, TrustAsPipe, MenuComponent, WmAppIconComponent],
     selector: '[wmPanel]',
     templateUrl: './panel.component.html',
     providers: [
@@ -40,6 +40,9 @@ export class PanelComponent extends MenuAdapterComponent implements OnInit, Afte
     public $lazyLoad = noop;
     public iconurl: string;
     public iconclass: string;
+    public iconwidth: string;
+    public iconheight: string;
+    public iconmargin: string;
     public collapsible: boolean;
     public expanded = true;
     public enablefullscreen: boolean;

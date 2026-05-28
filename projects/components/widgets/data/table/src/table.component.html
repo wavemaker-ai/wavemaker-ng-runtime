@@ -1,9 +1,9 @@
-@if (title || subheading || iconclass || exportOptions.length || _actions.header.length) {
+@if (title || subheading || iconclass || iconurl || exportOptions.length || _actions.header.length) {
   <div class="panel-heading">
     <h3 class="panel-title">
       <div class="pull-left">
-        @if (iconclass) {
-          <i class="app-icon panel-icon {{iconclass}}"></i>
+        @if (iconclass || iconurl) {
+          <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [iconClasses]="iconurl ? 'panel-image-icon' : 'panel-icon'" alt="Table icon"></wm-app-icon>
         }
       </div>
       <div class="pull-left">

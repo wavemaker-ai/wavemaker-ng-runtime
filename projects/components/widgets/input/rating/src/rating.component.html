@@ -10,7 +10,17 @@
         (mouseleave)="onMouseleave($event, rate)"
         (mouseover)="onMouseOver($event, rate)"
         [for]="_id + '-' + rate.index">
-        <i class="app-icon {{rate.index <= selectedRatingValue ? activeiconclass : inactiveiconclass}}" aria-hidden="true"></i>
+        @if (rate.index <= selectedRatingValue) {
+          <wm-app-icon [iconclass]="activeiconclass"
+                       [iconurl]="activeiconurl"
+                       [defaultIconClass]="defaultActiveIconClass"
+                       alt="Rating"></wm-app-icon>
+        } @else {
+          <wm-app-icon [iconclass]="inactiveiconclass"
+                       [iconurl]="inactiveiconurl"
+                       [defaultIconClass]="defaultInactiveIconClass"
+                       alt="Rating"></wm-app-icon>
+        }
         <input #ratingInput type="radio" role="radio" [attr.aria-label]="(rate.label || rate.index) + ' out of ' + ratingItems.length + ' ratings'" [attr.aria-checked]="rate.label === datavalue ? 'true' : 'false'"
           [id]="_id + '-' + rate.index" (click)="onRatingClick($event, rate)" name="ratings-id" [value]="rate.key || rate.index"/>
       </label>
@@ -18,10 +28,18 @@
   </div>
     <div class="ratings-container readonly" [class.hidden]="!isDecimal" [ngStyle]="{ 'font-size': iconsize }">
         <div class="ratings-base">
-            <i class="app-icon {{inactiveiconclass}}" *ngFor="let s of starsArray"></i>
+            <wm-app-icon *ngFor="let s of starsArray"
+                         [iconclass]="inactiveiconclass"
+                         [iconurl]="inactiveiconurl"
+                         [defaultIconClass]="defaultInactiveIconClass"
+                         alt="Rating"></wm-app-icon>
         </div>
         <div class="ratings active" [ngStyle]="{ width: ratingsWidth, color: iconcolor }">
-            <i class="app-icon {{activeiconclass}}" *ngFor="let s of starsArray"></i>
+            <wm-app-icon *ngFor="let s of starsArray"
+                         [iconclass]="activeiconclass"
+                         [iconurl]="activeiconurl"
+                         [defaultIconClass]="defaultActiveIconClass"
+                         alt="Rating"></wm-app-icon>
         </div>
     </div>
     @if (showcaptions) {

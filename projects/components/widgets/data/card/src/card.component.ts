@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { TextContentDirective } from "@wm/components/base";
+import { TextContentDirective, WmAppIconComponent } from "@wm/components/base";
 import { PictureDirective } from '@wm/components/basic/picture';
 import { MenuComponent } from '@wm/components/navigation/menu';
 import {
@@ -29,7 +29,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective, PictureDirective, MenuComponent],
+    imports: [CommonModule, TextContentDirective, PictureDirective, MenuComponent, WmAppIconComponent],
     selector: '[wmCard]',
     templateUrl: './card.component.html',
     providers: [
