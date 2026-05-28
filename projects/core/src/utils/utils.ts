@@ -1381,9 +1381,17 @@ export const addForIdAttributes = (element: HTMLElement) => {
  * @param ref - scope of particular library directive
  * @param ele - Child element(jquery). For some of the widgets(time, search) containerElem doesn't have height. The inner element(dropdown-menu) has height so passing it as optional.
  */
+const runAfterStable = (ref, fn: () => void) => {
+    const zoneRef = ref?._ngZone || ref?.ngZone;
+    if (zoneRef?.onStable) {
+        zoneRef.onStable.pipe(take(1)).subscribe(() => fn());
+    } else {
+        fn();
+    }
+};
+
 export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) => {
-    const zoneRef = ref._ngZone || ref.ngZone;
-    zoneRef.onStable.pipe(take(1)).subscribe(() => {
+    runAfterStable(ref, () => {
         const containerEleTransformations = getWebkitTraslationMatrix(containerElem);
         if (containerEleTransformations && containerEleTransformations.m41 < 0) {
              containerEleTransformations.m41 = 0;
@@ -1407,8 +1415,7 @@ export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) =>
         const parentDimesion = parentElem.getBoundingClientRect();
         const parentRight = parentDimesion.right + window.scrollX;
         let newLeft;
-        const zoneRef = ref._ngZone || ref.ngZone;
-        zoneRef.onStable.pipe(take(1)).subscribe(() => {
+        runAfterStable(ref, () => {
             const containerEleTransformations = getWebkitTraslationMatrix(containerElem);
             if (!containerEleTransformations) {
                 return;

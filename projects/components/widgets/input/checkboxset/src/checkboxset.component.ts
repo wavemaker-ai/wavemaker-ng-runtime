@@ -93,10 +93,10 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent implements O
         }
     }
 
-    @HostListener('keydown.enter', ['$event', '"ENTER"'])
-    onKeyDown($event) {
+    @HostListener('keydown.enter', ['$event'])
+    onKeyDown($event: KeyboardEvent) {
         $event.preventDefault();
-        $event.target.click();
+        ($event.target as HTMLElement).click();
     }
 
     onPropertyChange(key, nv, ov?) {

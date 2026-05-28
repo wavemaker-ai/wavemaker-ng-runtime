@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
 
-import { Toast, ToastPackage, ToastrService } from 'ngx-toastr';
+import { Toast } from 'ngx-toastr';
 
 import { $watch, $appDigest } from '@wm/core';
 import {forEach, isString} from "lodash-es";
@@ -26,7 +26,7 @@ declare const $;
         </ng-template>`,
     preserveWhitespaces: false
 })
-export class CustomToasterComponent extends Toast implements AfterViewInit, OnDestroy {
+export class CustomToasterComponent extends Toast implements OnInit, AfterViewInit, OnDestroy {
 
     @ViewChild('customToast', { static: true, read: ViewContainerRef }) customToastRef: ViewContainerRef;
     @ViewChild('customToastTmpl') customToastTmpl: TemplateRef<any>;
@@ -34,24 +34,20 @@ export class CustomToasterComponent extends Toast implements AfterViewInit, OnDe
     watchers: any = [];
     params: any = {};
 
-    // constructor is only necessary when not using AoT
-    constructor(
-        protected toastrService: ToastrService,
-        public toastPackage: ToastPackage
-    ) {
-        super(toastrService, toastPackage);
-        this.pagename = this.message || '';
+    ngOnInit() {
+        this.pagename = this.message() || '';
         this.generateParams();
     }
 
     // Generate the params for partial page. If bound, watch the expression and set the value
     generateParams() {
-        forEach((<any>this.options).partialParams, (param) => {
+        const options = this.options() as any;
+        forEach(options.partialParams, (param) => {
             if (isString(param.value) && param.value.indexOf('bind:') === 0) {
                 //[Todo-CSP]: bind expr fn should be generated in the toaster action for this
                 this.watchers.push($watch(
                     param.value.substr(5),
-                    (<any>this.options).context,
+                    options.context,
                     {},
                     nv => {
                         this.params[param.name] = nv;

@@ -95,10 +95,10 @@ import {
 
 const wmModules = [
     importProvidersFrom(
-        ModalModule.forRoot(),
+        ModalModule,
         ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true }),
-        BsDatepickerModule.forRoot(),
-        NgCircleProgressModule.forRoot()
+        BsDatepickerModule,
+        NgCircleProgressModule
     )
 ];
 
