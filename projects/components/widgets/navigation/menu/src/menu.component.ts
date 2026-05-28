@@ -136,13 +136,28 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
         $appDigest();
     }
 
-    @HostListener('keydown.arrowup', ['$event', '"UP-ARROW"'])
-    @HostListener('mouseenter', ['$event', '"MOUSE-ENTER"'])
-    @HostListener('mouseleave', ['$event', '"MOUSE-LEAVE"'])
-    @HostListener('keydown.arrowdown', ['$event', '"DOWN-ARROW"'])
-    @HostListener('keydown.arrowright', ['$event', '"RIGHT-ARROW"'])
-    @HostListener('keydown.arrowleft', ['$event', '"LEFT-ARROW"'])
-    @HostListener('keydown.enter', ['$event', '"ENTER"']) onKeyDown($event, eventAction) {
+    @HostListener('keydown.arrowup', ['$event'])
+    onKeyDownArrowUp($event: KeyboardEvent) { this.onKeyDown($event, 'UP-ARROW'); }
+
+    @HostListener('mouseenter', ['$event'])
+    onMouseEnter($event: MouseEvent) { this.onKeyDown($event, 'MOUSE-ENTER'); }
+
+    @HostListener('mouseleave', ['$event'])
+    onMouseLeave($event: MouseEvent) { this.onKeyDown($event, 'MOUSE-LEAVE'); }
+
+    @HostListener('keydown.arrowdown', ['$event'])
+    onKeyDownArrowDown($event: KeyboardEvent) { this.onKeyDown($event, 'DOWN-ARROW'); }
+
+    @HostListener('keydown.arrowright', ['$event'])
+    onKeyDownArrowRight($event: KeyboardEvent) { this.onKeyDown($event, 'RIGHT-ARROW'); }
+
+    @HostListener('keydown.arrowleft', ['$event'])
+    onKeyDownArrowLeft($event: KeyboardEvent) { this.onKeyDown($event, 'LEFT-ARROW'); }
+
+    @HostListener('keydown.enter', ['$event'])
+    onKeyDownEnter($event: KeyboardEvent) { this.onKeyDown($event, 'ENTER'); }
+
+    onKeyDown($event: KeyboardEvent | MouseEvent, eventAction: string) {
         const KEY_MOVEMENTS = clone(KEYBOARD_MOVEMENTS);
         if (this.menuposition === MENU_POSITION.UP_RIGHT) {
             KEY_MOVEMENTS.MOVE_UP = 'DOWN-ARROW';
@@ -251,7 +266,9 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
         }
 
         if (key === 'autoclose') {
-            this.bsDropdown.autoClose = nv !== AUTOCLOSE_TYPE.DISABLED;
+            // ngx-bootstrap 21: autoClose is an InputSignal; WaveMaker sets internal dropdown state at runtime.
+            (this.bsDropdown as unknown as { _state: { autoClose: boolean } })._state.autoClose =
+                nv !== AUTOCLOSE_TYPE.DISABLED;
             this.autoclose = nv;
         } else {
             super.onPropertyChange(key, nv, ov);

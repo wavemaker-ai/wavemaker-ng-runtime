@@ -12,6 +12,8 @@ export abstract class BaseLayoutComponent implements AfterViewInit, OnDestroy {
     layoutName: string;
     layoutPages: string[];
 
+    private routerOutletPatched = false;
+
     @ViewChild(RouterOutlet) routerOutlet: RouterOutlet;
     @ViewChild(PageDirective) pageDirective: PageDirective;
 
@@ -29,24 +31,34 @@ export abstract class BaseLayoutComponent implements AfterViewInit, OnDestroy {
         });
     }
 
+    private scheduleOverrideRouterOutlet(attempt = 0) {
+        const maxAttempts = 50;
+        if (this.routerOutlet?.attach && !this.routerOutletPatched) {
+            this.overrideRouterOutlet();
+            this.routerOutletPatched = true;
+            return;
+        }
+        if (attempt < maxAttempts) {
+            setTimeout(() => this.scheduleOverrideRouterOutlet(attempt + 1), 20);
+        }
+    }
+
     private overrideRouterOutlet() {
-        //override the attach/detach methods
-        const oAttach = this.routerOutlet.attach;
-        const oDetach = this.routerOutlet.detach;
-        this.routerOutlet.attach = (componentRef: any, activatedRoute:  ActivatedRoute) => {
-            oAttach.call(this.routerOutlet, componentRef, activatedRoute);
+        const outlet = this.routerOutlet;
+        if (!outlet?.attach || !outlet?.detach) {
+            return;
+        }
+        const oAttach = outlet.attach.bind(outlet);
+        const oDetach = outlet.detach.bind(outlet);
+        outlet.attach = (componentRef: any, activatedRoute: ActivatedRoute) => {
+            oAttach(componentRef, activatedRoute);
             componentRef.instance.ngOnAttach();
         };
-        this.routerOutlet.detach = () => {
-            const componentRef = oDetach.call(this.routerOutlet);
-            return componentRef;
-        };
+        outlet.detach = () => oDetach();
     }
 
     ngAfterViewInit() {
-        setTimeout(() => {
-            this.overrideRouterOutlet();
-        }, 10);
+        this.scheduleOverrideRouterOutlet();
     }
 
     init() {

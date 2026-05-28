@@ -83,6 +83,12 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     public queryModel: Array<DataSetItem> | string;
     public query = '';
     public limit: any;
+    /** Used when `limit` is unset and dataset exceeds default typeahead cap (ngx-bootstrap 21: bind, do not assign on directive). */
+    private _dynamicTypeaheadOptionsLimit: number | undefined;
+
+    get typeaheadOptionsLimit(): number | undefined {
+        return isDefined(this.limit) ? this.limit : this._dynamicTypeaheadOptionsLimit;
+    }
     public showsearchicon: boolean;
     public minchars: number;
     public type: string;
@@ -723,9 +729,11 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
                     this.formattedDataset = response;
                 }
 
-                // explicitly setting the optionslimit as the matches more than 20 will be ignored if optionslimit is not specified.
+                // ngx-bootstrap 21: typeaheadOptionsLimit is an InputSignal — update bound value instead of assigning on directive.
                 if (this.formattedDataset.length > 20 && !isDefined(this.limit)) {
-                    this.typeahead.typeaheadOptionsLimit = this.formattedDataset.length;
+                    this._dynamicTypeaheadOptionsLimit = this.formattedDataset.length;
+                } else {
+                    this._dynamicTypeaheadOptionsLimit = undefined;
                 }
 
                 // In mobile, trigger the search by default until the results have height upto page height. Other results can be fetched by scrolling

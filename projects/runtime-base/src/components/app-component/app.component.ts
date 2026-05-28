@@ -65,6 +65,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     public isApplicationType = false;
     public enableSkipToMainContent = getWmProjectProperties().enableSkipToMainContent === 'true' || getWmProjectProperties().enableSkipToMainContent === true;
     private retryCount = 0;
+    private routerOutletPatched = false;
     private navigationEndSubscription!: Subscription;
     appLocale: any = {};
 
@@ -191,25 +192,40 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         //fix: https://blog.angular-university.io/angular-debugging/
         setTimeout(() => {
             this.startApp = true;
+            this.scheduleOverrideRouterOutlet();
         });
         setTimeout(() => {
             this.app.dynamicComponentContainerRef = this.dynamicComponentContainerRef;
-            this.overrideRouterOutlet();
         }, 10);
     }
 
+    /** Router-outlet is inside @if (startApp); wait until ViewChild exists before patching attach/detach. */
+    private scheduleOverrideRouterOutlet(attempt = 0) {
+        const maxAttempts = 50;
+        if (this.routerOutlet?.attach && !this.routerOutletPatched) {
+            this.overrideRouterOutlet();
+            this.routerOutletPatched = true;
+            return;
+        }
+        if (attempt < maxAttempts) {
+            setTimeout(() => this.scheduleOverrideRouterOutlet(attempt + 1), 20);
+        }
+    }
+
     private overrideRouterOutlet() {
-        //override the attach/detach methods
-        const oAttach = this.routerOutlet.attach;
-        const oDetach = this.routerOutlet.detach;
-        this.routerOutlet.attach = (componentRef: any, activatedRoute:  ActivatedRoute) => {
-            oAttach.call(this.routerOutlet, componentRef, activatedRoute);
+        const outlet = this.routerOutlet;
+        if (!outlet?.attach || !outlet?.detach) {
+            return;
+        }
+        const oAttach = outlet.attach.bind(outlet);
+        const oDetach = outlet.detach.bind(outlet);
+        outlet.attach = (componentRef: any, activatedRoute: ActivatedRoute) => {
+            oAttach(componentRef, activatedRoute);
             componentRef.instance.ngOnAttach();
         };
-        this.routerOutlet.detach = () => {
-            this.app.activePage.ngOnDetach();
-            const componentRef = oDetach.call(this.routerOutlet);
-            return componentRef;
+        outlet.detach = () => {
+            this.app.activePage?.ngOnDetach?.();
+            return oDetach();
         };
     }
 

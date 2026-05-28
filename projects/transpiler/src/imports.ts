@@ -6,15 +6,15 @@ const NG_REACTIVE_FORM_MODULE: ImportDef[] = [{ from: '@angular/forms', name: 'R
 
 // NGX Bootstrap Modules
 const NGX_BS_DATE_PICKER: ImportDef[] = [{ from: 'ngx-bootstrap/datepicker', name: 'BsDatepickerModule', as: 'ngx_BsDatepickerModule' }];
-const NGX_CAROUSEL_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/carousel', name: 'CarouselModule', as: 'ngxCarouselModule', forRoot: true }];
+const NGX_CAROUSEL_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/carousel', name: 'CarouselModule', as: 'ngxCarouselModule' }];
 const NGX_COLOR_PICKER_DIRECTIVE: ImportDef[] = [{ from: 'ngx-color-picker', name: 'ColorPickerDirective', as: 'ngx_ColorPickerDirective' }];
-const NGX_DROP_DOWN_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/dropdown', name: 'BsDropdownModule', as: 'ngxBsDropdownModule', forRoot: true }];
+const NGX_DROP_DOWN_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/dropdown', name: 'BsDropdownModule', as: 'ngxBsDropdownModule' }];
 //const NGX_MODAL_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/modal', name: 'ModalModule', as: 'ngx_ModalModule' }];
-const NGX_PAGINATION_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/pagination', name: 'PaginationModule', as: 'ngxPaginationModule', forRoot: true }];
-const NGX_POPOVER_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/popover', name: 'PopoverModule', as: 'ngxPopoverModule', forRoot: true }];
-const NGX_TIME_PICKER: ImportDef[] = [{ from: 'ngx-bootstrap/timepicker', name: 'TimepickerModule', as: 'ngx_TimepickerModule', forRoot: true }];
-const NGX_TOOL_TIP_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/tooltip', name: 'TooltipModule', as: 'ngxTooltipModule', forRoot: true }];
-const NGX_TYPE_HEAD_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/typeahead', name: 'TypeaheadModule', as: 'ngxTypeaheadModule', forRoot: true }];
+const NGX_PAGINATION_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/pagination', name: 'PaginationModule', as: 'ngxPaginationModule' }];
+const NGX_POPOVER_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/popover', name: 'PopoverModule', as: 'ngxPopoverModule' }];
+const NGX_TIME_PICKER: ImportDef[] = [{ from: 'ngx-bootstrap/timepicker', name: 'TimepickerModule', as: 'ngx_TimepickerModule' }];
+const NGX_TOOL_TIP_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/tooltip', name: 'TooltipModule', as: 'ngxTooltipModule' }];
+const NGX_TYPE_HEAD_MODULE: ImportDef[] = [{ from: 'ngx-bootstrap/typeahead', name: 'TypeaheadModule', as: 'ngxTypeaheadModule' }];
 
 // Progess Modules
 const PROGRESS_BAR_COMPONENT: ImportDef[] = [{ from: '@wm/components/basic/progress/progress-bar', name: 'ProgressBarComponent' }];

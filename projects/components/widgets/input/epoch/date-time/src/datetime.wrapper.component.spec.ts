@@ -105,7 +105,7 @@ class DatetimeWrapperComponent {
 
 const dateComponentModuleDef: ITestModuleDef = {
     declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule, TimepickerModule, BsDatepickerModule],
     providers: [
         { provide: Router, useValue: Router },
         { provide: App, useValue: mockApp },
@@ -379,7 +379,7 @@ describe("DatetimeComponent", () => {
 
 const dateComponentLocaleModuleDef: ITestModuleDef = {
     declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule, TimepickerModule, BsDatepickerModule],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: LOCALE_ID, useValue: 'de' },
@@ -1024,7 +1024,7 @@ describe(('Datetime Component with Localization'), () => {
 
 const dateComponentROLocaleModuleDef: ITestModuleDef = {
     declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule, TimepickerModule, BsDatepickerModule],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: LOCALE_ID, useValue: 'ro' },

@@ -385,9 +385,9 @@ let imports = [
     FormWidgetDirective,
     MenuComponent,
     IMaskModule,
-    BsDatepickerModule.forRoot(),
-    TimepickerModule.forRoot(),
-    BsDropdownModule.forRoot()
+    BsDatepickerModule,
+    TimepickerModule,
+    BsDropdownModule
 ]
 
 let declarations = [
