@@ -185,6 +185,40 @@ export class Text {
      */
     onKeyup($event: KeyboardEvent, widget: any) {}
 
+    /**
+     * CSS class of a font icon to render before the text value (e.g. `wi wi-search`).
+     * Takes precedence over `leadingiconurl` when both are set.
+     * <p><em>Bindable: </em><code>true</code></p>
+     */
+    @Input() leadingiconclass: string;
+
+    /**
+     * URL of an image or SVG asset to render before the text value. When the URL
+     * ends with `.svg` (query string and fragment ignored), the SVG is fetched
+     * and inlined so it inherits the input's color and font-size; other URLs
+     * (png, jpg, jpeg, gif, etc.) are rendered through the existing `<img>` flow.
+     * Has no effect when `leadingiconclass` is set.
+     * <p><em>Bindable: </em><code>true</code></p>
+     */
+    @Input() leadingiconurl: string;
+
+    /**
+     * CSS class of a font icon to render after the text value (e.g. `wi wi-close`).
+     * Takes precedence over `trailingiconurl` when both are set.
+     * <p><em>Bindable: </em><code>true</code></p>
+     */
+    @Input() trailingiconclass: string;
+
+    /**
+     * URL of an image or SVG asset to render after the text value. When the URL
+     * ends with `.svg` (query string and fragment ignored), the SVG is fetched
+     * and inlined so it inherits the input's color and font-size; other URLs
+     * (png, jpg, jpeg, gif, etc.) are rendered through the existing `<img>` flow.
+     * Has no effect when `trailingiconclass` is set.
+     * <p><em>Bindable: </em><code>true</code></p>
+     */
+    @Input() trailingiconurl: string;
+
     onLeadingIconClick($event: MouseEvent, widget: any) {}
 
     onTrailingIconClick($event: MouseEvent, widget: any) {}

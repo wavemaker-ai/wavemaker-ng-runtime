@@ -4,7 +4,7 @@ import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild}
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import {generateGUId, noop} from '@wm/core';
-import { getOrderedDataset, provideAs, provideAsWidgetRef, styler, TextContentDirective } from '@wm/components/base';
+import { getOrderedDataset, provideAs, provideAsWidgetRef, styler, WmAppIconComponent } from '@wm/components/base';
 import { DatasetAwareFormComponent } from '@wm/components/input/dataset-aware-form';
 
 import { registerProps } from './rating.props';
@@ -18,7 +18,7 @@ const DEFAULT_RATING = 5;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, TextContentDirective, FormsModule],
+  imports: [CommonModule, FormsModule, WmAppIconComponent],
     selector: '[wmRating]',
     templateUrl: './rating.component.html',
     providers: [
@@ -46,7 +46,14 @@ export class RatingComponent extends DatasetAwareFormComponent implements OnDest
     private touchEnabled:boolean;
     public activeiconclass: string = '';
     public inactiveiconclass: string = '';
+    public activeiconurl: string;
+    public inactiveiconurl: string;
     @ViewChild('ratingInput', /* TODO: add static flag */ { read: ElementRef }) ratingEl: ElementRef;
+
+    public static readonly DEFAULT_ACTIVE_ICON_CLASS = 'wi wi-star';
+    public static readonly DEFAULT_INACTIVE_ICON_CLASS = 'wi wi-star-border';
+    public readonly defaultActiveIconClass = RatingComponent.DEFAULT_ACTIVE_ICON_CLASS;
+    public readonly defaultInactiveIconClass = RatingComponent.DEFAULT_INACTIVE_ICON_CLASS;
 
     get selectedRatingValue() {
         return this._selectedRatingValue;

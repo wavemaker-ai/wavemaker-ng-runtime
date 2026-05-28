@@ -17,6 +17,7 @@ export const registerProps = () => {
                 ['isdynamic', PROP_BOOLEAN], // internal property
                 ['name', PROP_STRING],
                 ['paneicon', PROP_STRING],
+                ['paneiconurl', PROP_STRING],
                 ['show', {value: true, ...PROP_BOOLEAN}],
                 ['smoothscroll', {value: false, ...PROP_BOOLEAN}],
                 ['title', {value: 'Tab Title', ...PROP_STRING}],

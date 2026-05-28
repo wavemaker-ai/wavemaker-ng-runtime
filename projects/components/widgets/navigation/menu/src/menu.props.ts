@@ -16,6 +16,7 @@ export const registerProps = () => {
                 ['arialabel', PROP_STRING],
                 ['isactive', PROP_STRING],
                 ['iconclass', PROP_STRING],
+                ['iconurl', PROP_STRING],
                 ['iconposition', {value: 'left', ...PROP_STRING}],
                 ['itemaction', PROP_STRING],
                 ['itemchildren', PROP_STRING],

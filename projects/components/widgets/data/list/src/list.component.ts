@@ -13,6 +13,7 @@ import {
     StylableComponent,
     styler,
     TextContentDirective,
+    WmAppIconComponent,
     ToDatePipe,
     toggleAllHeaders,
     unsupportedStatePersistenceTypes,
@@ -95,7 +96,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-list', hostClass: DEFAULT_CLS};
 @AutoLayout({ targetSelector: 'ul' })
 @Component({
   standalone: true,
-  imports: [CommonModule, TextContentDirective, PaginationComponent, ListItemDirective],
+  imports: [CommonModule, TextContentDirective, PaginationComponent, ListItemDirective, WmAppIconComponent],
     selector: 'div[wmList]',
     templateUrl: './list.component.html',
     providers: [
@@ -153,6 +154,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     public title: string;
     public subheading: string;
     public iconclass: string;
+    public iconurl: string;
     public listclass: any;
     public statehandler: any;
     public currentIndex: number;

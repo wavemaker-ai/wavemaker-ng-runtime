@@ -12,6 +12,7 @@ export const registerProps = () => {
                 ['content', PROP_STRING],
                 ['dynamicPaneIndex', PROP_NUMBER], // internal property
                 ['iconclass', PROP_STRING],
+                ['iconurl', PROP_STRING],
                 ['isdefaultpane', PROP_BOOLEAN],
                 ['isdynamic', PROP_STRING], // internal property
                 ['name', PROP_STRING],

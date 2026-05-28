@@ -1,6 +1,6 @@
 import {Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
 
-import {IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective} from '@wm/components/base';
+import {IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective, WmAppIconComponent} from '@wm/components/base';
 import {registerProps} from './icon.props';
 
 const DEFAULT_CLS = 'app-icon-wrapper';
@@ -11,7 +11,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
     standalone: true,
-    imports: [TextContentDirective],
+    imports: [TextContentDirective, WmAppIconComponent],
     selector: '[wmIcon]',
     templateUrl: './icon.component.html',
     providers: [
@@ -25,6 +25,8 @@ export class IconComponent extends StylableComponent {
     public caption: string;
     public hint: string;
     public arialabel: string;
+    public iconurl: string;
+
     @HostBinding('attr.icon-position') iconposition: string;
     @HostBinding('style.fontSize') iconsize: string;
 
