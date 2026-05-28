@@ -54,12 +54,15 @@ import {
     getConditionalClasses,
     getOrderByExpr,
     getRowOperationsColumn,
+    ImagePipe,
+    isSvgIconUrl,
     NAVIGATION_TYPE,
     prepareFieldDefs,
     provideAs,
     provideAsWidgetRef,
     StylableComponent,
     styler,
+    SvgIconDirective,
     transformData,
     TrustAsPipe,
     unsupportedStatePersistenceTypes
@@ -135,7 +138,7 @@ const isInputBodyWrapper = target => {
 
 @Component({
       standalone: true,
-      imports: [CommonModule, AnchorComponent, PaginationComponent, ButtonComponent, BsDropdownModule, MenuComponent],
+      imports: [CommonModule, AnchorComponent, PaginationComponent, ButtonComponent, BsDropdownModule, MenuComponent, SvgIconDirective, ImagePipe],
     selector: '[wmTable]',
     templateUrl: './table.component.html',
     providers: [
@@ -196,6 +199,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     gridclass;
     gridfirstrowselect;
     iconclass;
+    iconurl: string;
     ondemandmessage;
     allowpagesizechange;
     viewlessmessage;
@@ -295,6 +299,17 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     redraw = debounce(this._redraw, 150);
     debouncedHandleLoading = debounce(this.handleLoading, 350);
+
+    // SVG branch is taken when no `iconclass` is set and `iconurl` points to
+    // an `.svg` asset. Image branch is taken for any other `iconurl` value.
+    // Otherwise the existing `iconclass` font-icon flow is used.
+    public get useSvgIcon(): boolean {
+        return !this.iconclass && isSvgIconUrl(this.iconurl);
+    }
+
+    public get useImageIcon(): boolean {
+        return !this.iconclass && !!this.iconurl && !isSvgIconUrl(this.iconurl);
+    }
 
     // Filter and Sort Methods
     rowFilter: any = {};

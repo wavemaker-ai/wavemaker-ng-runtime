@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { TextContentDirective } from "@wm/components/base";
+import { isSvgIconUrl, SvgIconDirective, TextContentDirective } from "@wm/components/base";
 import { PictureDirective } from '@wm/components/basic/picture';
 import { MenuComponent } from '@wm/components/navigation/menu';
 import {
@@ -29,7 +29,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective, PictureDirective, MenuComponent],
+    imports: [CommonModule, TextContentDirective, PictureDirective, MenuComponent, SvgIconDirective],
     selector: '[wmCard]',
     templateUrl: './card.component.html',
     providers: [
@@ -53,6 +53,11 @@ export class CardComponent extends MenuAdapterComponent implements OnInit, After
     constructor(inj: Injector, private render2: Renderer2, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.SHELL);
+    }
+
+    /** True when `iconurl` is set and points to an `.svg` asset. */
+    public get isSvgIcon(): boolean {
+        return isSvgIconUrl(this.iconurl);
     }
 
     ngAfterViewInit() {

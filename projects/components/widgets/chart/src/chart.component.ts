@@ -22,7 +22,7 @@ import {
     removeAttr,
     triggerFn,
 } from '@wm/core';
-import { APPLY_STYLES_TYPE, IRedrawableComponent, provideAsWidgetRef, StylableComponent, styler,  } from '@wm/components/base';
+import { APPLY_STYLES_TYPE, ImagePipe, IRedrawableComponent, isSvgIconUrl, provideAsWidgetRef, StylableComponent, styler, SvgIconDirective } from '@wm/components/base';
 
 import { registerProps } from './chart.props';
 import { allShapes, getDateList, getSampleData, initChart, isAreaChart, isAxisDomainValid, isBarChart, isBubbleChart, isChartDataArray, isChartDataJSON, isLineTypeChart, isPieType, postPlotChartProcess } from './chart.utils';
@@ -129,7 +129,7 @@ const angle = d => {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, SpinnerComponent],
+    imports: [CommonModule, SpinnerComponent, SvgIconDirective, ImagePipe],
     selector: 'div[wmChart]',
     templateUrl: './chart.component.html',
     styleUrls: ['../../../../../node_modules/@wavemaker/nvd3/build/nv.d3.min.css'],
@@ -149,6 +149,19 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
     isVisuallyGrouped;
     orderby;
     iconclass = '';
+    iconurl: string;
+
+    // SVG branch is taken when no `iconclass` is set and `iconurl` points to
+    // an `.svg` asset. Image branch is taken for any other `iconurl` value.
+    // Otherwise the existing `iconclass` font-icon flow is used.
+    public get useSvgIcon(): boolean {
+        return !this.iconclass && isSvgIconUrl(this.iconurl);
+    }
+
+    public get useImageIcon(): boolean {
+        return !this.iconclass && !!this.iconurl && !isSvgIconUrl(this.iconurl);
+    }
+
     type: string;
     showContentLoadError;
     invalidConfig;

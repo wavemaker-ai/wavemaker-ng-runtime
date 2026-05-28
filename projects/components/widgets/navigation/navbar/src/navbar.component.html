@@ -2,7 +2,19 @@
   <div class="navbar-header">
     <button type="button" class="btn-transparent navbar-toggle collapsed" data-toggle="collapse" (click)="toggleCollapse()" aria-expanded="false">
       <span class="sr-only">Toggle navigation</span>
-      <i [ngClass]="menuiconclass"></i>
+      @if (useSvgMenuIcon) {
+        <i class="app-icon app-icon-svg"
+           role="img"
+           aria-hidden="true"
+           [iconUrl]="menuiconurl"></i>
+      } @else if (useImageMenuIcon) {
+        <img data-identifier="img"
+             class="app-icon"
+             alt="Menu icon"
+             [src]="menuiconurl | image"/>
+      } @else {
+        <i [ngClass]="menuiconclass"></i>
+      }
     </button>
     @if (title || imgsrc) {
       <a class="navbar-brand" [href]="(homelink | trustAs: 'resource') || '#/'">

@@ -11,6 +11,9 @@
         @if (pane.paneicon) {
           <i [ngClass]="['app-icon', pane.paneicon]"></i>
         }
+        @if (pane.paneiconurl) {
+          <i class="app-icon-svg" role="img" aria-hidden="true" [iconUrl]="pane.paneiconurl"></i>
+        }
         <span [textContent]="pane.title"></span>
         @if (pane.badgevalue) {
           <span class="label label-{{pane.badgetype}}" [textContent]="pane.badgevalue"></span>

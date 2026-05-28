@@ -8,10 +8,13 @@ import {
     getOrderedDataset,
     groupData,
     handleHeaderClick,
+    ImagePipe,
+    isSvgIconUrl,
     NAVIGATION_TYPE,
     provideAsWidgetRef,
     StylableComponent,
     styler,
+    SvgIconDirective,
     TextContentDirective,
     ToDatePipe,
     toggleAllHeaders,
@@ -95,7 +98,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-list', hostClass: DEFAULT_CLS};
 @AutoLayout({ targetSelector: 'ul' })
 @Component({
   standalone: true,
-  imports: [CommonModule, TextContentDirective, PaginationComponent, ListItemDirective],
+  imports: [CommonModule, TextContentDirective, PaginationComponent, ListItemDirective, SvgIconDirective, ImagePipe],
     selector: 'div[wmList]',
     templateUrl: './list.component.html',
     providers: [
@@ -153,7 +156,19 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     public title: string;
     public subheading: string;
     public iconclass: string;
+    public iconurl: string;
     public listclass: any;
+
+    // SVG branch is taken when no `iconclass` is set and `iconurl` points to
+    // an `.svg` asset. Image branch is taken for any other `iconurl` value.
+    // Otherwise the existing `iconclass` font-icon flow is used.
+    public get useSvgIcon(): boolean {
+        return !this.iconclass && isSvgIconUrl(this.iconurl);
+    }
+
+    public get useImageIcon(): boolean {
+        return !this.iconclass && !!this.iconurl && !isSvgIconUrl(this.iconurl);
+    }
     public statehandler: any;
     public currentIndex: number;
     public titleId: string;

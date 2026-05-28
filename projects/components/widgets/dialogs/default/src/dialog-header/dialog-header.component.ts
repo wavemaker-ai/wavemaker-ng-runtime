@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ImagePipe, TextContentDirective } from "@wm/components/base";
+import { ImagePipe, isSvgIconUrl, SvgIconDirective, TextContentDirective } from "@wm/components/base";
 import {Component, ElementRef, Inject, Input} from '@angular/core';
 
 import {addClass, App, toBoolean} from '@wm/core';
@@ -12,7 +12,7 @@ const DEFAULT_ICON_DIMENSIONS = '21px';
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective, ImagePipe],
+    imports: [CommonModule, TextContentDirective, ImagePipe, SvgIconDirective],
     selector: 'div[wmDialogHeader]',
     templateUrl: './dialog-header.component.html'
 })
@@ -33,6 +33,11 @@ export class DialogHeaderComponent {
 
     public get isClosable() {
         return toBoolean(this.closable);
+    }
+
+    /** True when `iconurl` is set and points to an `.svg` asset. */
+    public get isSvgIcon(): boolean {
+        return isSvgIconUrl(this.iconurl);
     }
 
     constructor(elRef: ElementRef, @Inject(DialogRef) public dialogRef: BaseDialog, public app: App ) {

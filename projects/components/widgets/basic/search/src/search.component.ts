@@ -35,12 +35,15 @@ import {
     extractDataAsArray,
     getContainerTargetClass,
     getUniqObjsByDataField,
+    ImagePipe,
+    isSvgIconUrl,
     ItemTemplateDirective,
     PartialContainerDirective,
     PartialParamHandlerDirective,
     provideAs,
     provideAsWidgetRef,
     styler,
+    SvgIconDirective,
     TextContentDirective,
     transformFormData
 } from '@wm/components/base';
@@ -67,7 +70,7 @@ const WIDGET_CONFIG = { widgetType: 'wm-search', hostClass: 'input-group' };
 
 @Component({
     standalone: true,
-    imports: [CommonModule, FormsModule, ScrollableDirective, TypeaheadModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective],
+    imports: [CommonModule, FormsModule, ScrollableDirective, TypeaheadModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective, SvgIconDirective, ImagePipe],
     selector: '[wmSearch]',
     templateUrl: './search.component.html',
     providers: [
@@ -108,8 +111,33 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     public typeaheadContainer: TypeaheadContainerComponent;
     public containerTarget: string;
     public clearsearchiconclass: string;
+    public clearsearchiconurl: string;
     public backsearchiconclass: string;
+    public backsearchiconurl: string;
     public searchiconclass: string;
+    public searchiconurl: string;
+
+    // SVG branch is taken when no `*iconclass` is set and `*iconurl` points
+    // to an `.svg` asset. Image branch is taken for any other `*iconurl`
+    // value. Otherwise the existing `*iconclass` font-icon flow is used.
+    public get useSvgClearIcon(): boolean {
+        return !this.clearsearchiconclass && isSvgIconUrl(this.clearsearchiconurl);
+    }
+    public get useImageClearIcon(): boolean {
+        return !this.clearsearchiconclass && !!this.clearsearchiconurl && !isSvgIconUrl(this.clearsearchiconurl);
+    }
+    public get useSvgBackIcon(): boolean {
+        return !this.backsearchiconclass && isSvgIconUrl(this.backsearchiconurl);
+    }
+    public get useImageBackIcon(): boolean {
+        return !this.backsearchiconclass && !!this.backsearchiconurl && !isSvgIconUrl(this.backsearchiconurl);
+    }
+    public get useSvgSearchIcon(): boolean {
+        return !this.searchiconclass && isSvgIconUrl(this.searchiconurl);
+    }
+    public get useImageSearchIcon(): boolean {
+        return !this.searchiconclass && !!this.searchiconurl && !isSvgIconUrl(this.searchiconurl);
+    }
 
     @ViewChild(TypeaheadDirective) typeahead: TypeaheadDirective;
     @ViewChild('ulElement') ulElement: ElementRef;

@@ -7,9 +7,19 @@
             <i class="app-icon panel-icon {{iconclass}}"></i>
           }
           @if (iconurl) {
-            <img data-identifier="img" title="iconurl" alt="Panel icon" class="panel-image-icon"
-              [src]="iconurl | image"
-              [ngStyle]="{width: iconwidth ,height: iconheight, margin: iconmargin}" />
+            @if (isSvgIcon) {
+              <i data-identifier="svg"
+                 role="img"
+                 aria-hidden="true"
+                 title="iconurl"
+                 class="panel-image-icon app-icon app-icon-svg"
+                 [iconUrl]="iconurl"
+                 [ngStyle]="{width: iconwidth, height: iconheight, margin: iconmargin, fontSize: iconwidth}"></i>
+            } @else {
+              <img data-identifier="img" title="iconurl" alt="Panel icon" class="panel-image-icon"
+                [src]="iconurl | image"
+                [ngStyle]="{width: iconwidth ,height: iconheight, margin: iconmargin}" />
+            }
           }
         </div>
         <div class="pull-left">

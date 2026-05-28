@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { TextContentDirective, TrustAsPipe } from "@wm/components/base";
+import { ImagePipe, isSvgIconUrl, SvgIconDirective, TextContentDirective, TrustAsPipe } from "@wm/components/base";
 import {
     AfterContentInit,
     Component,
@@ -25,7 +25,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAUL
 
 @Component({
     standalone: true,
-    imports: [BsDropdownModule, CommonModule, TextContentDirective, TrustAsPipe, MenuComponent],
+    imports: [BsDropdownModule, CommonModule, TextContentDirective, TrustAsPipe, MenuComponent, SvgIconDirective, ImagePipe],
     selector: '[wmPanel]',
     templateUrl: './panel.component.html',
     providers: [
@@ -69,6 +69,11 @@ export class PanelComponent extends MenuAdapterComponent implements OnInit, Afte
     // conditions to show header
     public get showHeader() {
         return this.iconurl || this.iconclass || this.collapsible || this.actions || this.title || this.subheading || this.enablefullscreen;
+    }
+
+    /** True when `iconurl` is set and points to an `.svg` asset. */
+    public get isSvgIcon(): boolean {
+        return isSvgIconUrl(this.iconurl);
     }
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {

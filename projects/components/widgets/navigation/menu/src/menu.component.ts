@@ -30,8 +30,11 @@ import {
     AUTOCLOSE_TYPE,
     DatasetAwareNavComponent,
     hasLinkToCurrentPage,
+    ImagePipe,
+    isSvgIconUrl,
     provideAsWidgetRef,
     styler,
+    SvgIconDirective,
     TextContentDirective
 } from '@wm/components/base';
 import {NavComponent} from './nav/nav.component';
@@ -86,7 +89,7 @@ const AUTO_OPEN = {
 const WIDGET_CONFIG = { widgetType: 'wm-menu', hostClass: 'dropdown app-menu' };
 @Component({
     standalone: true,
-    imports: [BsDropdownModule, CommonModule, TextContentDirective, AnchorComponent, ButtonComponent, MenuDropdownComponent],
+    imports: [BsDropdownModule, CommonModule, TextContentDirective, AnchorComponent, ButtonComponent, MenuDropdownComponent, SvgIconDirective, ImagePipe],
     selector: '[wmMenu]',
     templateUrl: './menu.component.html',
     providers: [
@@ -103,7 +106,22 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
     public menuclass: string;
     public linktarget: string;
     public iconclass: string;
+    public iconurl: string;
     public animateitems: string;
+
+    // SVG branch is taken when no `iconclass` is set and `iconurl` points to
+    // an `.svg` asset. Image branch is taken for any other `iconurl` value.
+    // Otherwise the existing `iconclass` font-icon flow is used. This getter
+    // is only consumed by the (currently unused) inline template; the menu
+    // anchor / button receive `iconurl` via `.bind` and handle the branch
+    // themselves.
+    public get useSvgIcon(): boolean {
+        return !this.iconclass && isSvgIconUrl(this.iconurl);
+    }
+
+    public get useImageIcon(): boolean {
+        return !this.iconclass && !!this.iconurl && !isSvgIconUrl(this.iconurl);
+    }
     public disableMenuContext: boolean;
     public showonhover: boolean;
     public autoclose: string;

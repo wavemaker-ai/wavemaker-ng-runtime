@@ -1,8 +1,18 @@
-@if (title || subheading || iconclass || exportOptions.length || _actions.header.length) {
+@if (title || subheading || iconclass || iconurl || exportOptions.length || _actions.header.length) {
   <div class="panel-heading">
     <h3 class="panel-title">
       <div class="pull-left">
-        @if (iconclass) {
+        @if (useSvgIcon) {
+          <i class="app-icon panel-icon app-icon-svg"
+             role="img"
+             aria-hidden="true"
+             [iconUrl]="iconurl"></i>
+        } @else if (useImageIcon) {
+          <img data-identifier="img"
+               class="app-icon panel-icon"
+               alt="Table icon"
+               [src]="iconurl | image"/>
+        } @else if (iconclass) {
           <i class="app-icon panel-icon {{iconclass}}"></i>
         }
       </div>

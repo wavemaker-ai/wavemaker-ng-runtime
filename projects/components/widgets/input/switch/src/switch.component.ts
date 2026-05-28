@@ -3,7 +3,7 @@ import {AfterViewInit, Component, Inject, Injector, OnDestroy, Optional} from '@
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import {$appDigest, debounce, isDefined, setCSS, toBoolean} from '@wm/core';
-import { DataSetItem, provideAs, provideAsWidgetRef, styler, TextContentDirective } from '@wm/components/base';
+import { DataSetItem, ImagePipe, isSvgIconUrl, provideAs, provideAsWidgetRef, styler, SvgIconDirective, TextContentDirective } from '@wm/components/base';
 import { DatasetAwareFormComponent } from '@wm/components/input/dataset-aware-form';
 
 import { registerProps } from './switch.props';
@@ -16,7 +16,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-switch', hostClass: DEFAULT_CLS};
 
 @Component({
   standalone: true,
-  imports: [CommonModule, TextContentDirective],
+  imports: [CommonModule, TextContentDirective, SvgIconDirective, ImagePipe],
     selector: '[wmSwitch]',
     templateUrl: './switch.component.html',
     providers: [
@@ -31,8 +31,46 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
     options = [];
     selectedItem: DataSetItem;
     iconclass;
+    iconurl: string;
     checkediconclass;
+    checkediconurl: string;
     multiple: boolean;
+
+    // `iconclass` / `iconurl` are field NAMES used to look up the actual
+    // class / url on each dataset item. `checkediconclass` / `checkediconurl`
+    // are literal values applied to the selected-state overlay.
+    //
+    // Both `iconclass` and `iconurl` flows are independent: when a per-item
+    // `iconurl` field is populated, the SVG/IMG branch renders; otherwise the
+    // existing `iconclass` font-icon flow is used. Same rule applies to the
+    // checked overlay (`checkediconurl` wins over `checkediconclass` when
+    // both are set), so setting a URL always makes it visible.
+    public itemIconClass(opt: any): string {
+        return (opt && opt.dataObject && this.iconclass) ? opt.dataObject[this.iconclass] : '';
+    }
+    public itemIconUrl(opt: any): string {
+        return (opt && opt.dataObject && this.iconurl) ? opt.dataObject[this.iconurl] : '';
+    }
+    public useSvgItemIcon(opt: any): boolean {
+        return isSvgIconUrl(this.itemIconUrl(opt));
+    }
+    public useImageItemIcon(opt: any): boolean {
+        const url = this.itemIconUrl(opt);
+        return !!url && !isSvgIconUrl(url);
+    }
+    public hasItemIcon(opt: any): boolean {
+        return !!this.itemIconUrl(opt) || !!this.itemIconClass(opt);
+    }
+
+    public get useSvgCheckedIcon(): boolean {
+        return isSvgIconUrl(this.checkediconurl);
+    }
+    public get useImageCheckedIcon(): boolean {
+        return !!this.checkediconurl && !isSvgIconUrl(this.checkediconurl);
+    }
+    public get hasAnyCheckedIcon(): boolean {
+        return !!this.checkediconclass || !!this.checkediconurl;
+    }
     private btnwidth;
     public disabled: boolean;
     public required: boolean;
@@ -44,6 +82,7 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
         super(inj, WIDGET_CONFIG, explicitContext);
         this.multiple = this.getAttr("multiple") === "true";
         this.checkediconclass = this.getAttr("checkediconclass");
+        this.checkediconurl = this.getAttr("checkediconurl");
 
         this._debounceSetSelectedValue = debounce((val) => {
             this.setSelectedValue();

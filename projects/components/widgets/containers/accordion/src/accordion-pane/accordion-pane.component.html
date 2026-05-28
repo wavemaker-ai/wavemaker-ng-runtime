@@ -4,7 +4,19 @@
            class="accordion-toggle clearfix"
            href="javascript:void(0);" role="button">
             <div class="pull-left">
-                <i class="app-icon panel-icon {{iconclass}}" [hidden]="!iconclass"></i>
+                @if (useSvgIcon) {
+                  <i class="app-icon panel-icon app-icon-svg"
+                     role="img"
+                     aria-hidden="true"
+                     [iconUrl]="iconurl"></i>
+                } @else if (useImageIcon) {
+                  <img data-identifier="img"
+                       class="app-icon panel-icon"
+                       alt="Accordion icon"
+                       [src]="iconurl | image"/>
+                } @else {
+                  <i class="app-icon panel-icon {{iconclass}}" [hidden]="!iconclass"></i>
+                }
             </div>
             <div class="pull-left">
                 <div class="heading" [innerHTML]="title"></div>

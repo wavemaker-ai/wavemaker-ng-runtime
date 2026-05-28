@@ -82,7 +82,15 @@
     [attr.aria-label]="arialabel || 'Search field'"/>
   <i class="btn-close wi wi-cancel" [hidden]="!showClosebtn" (click)="clearSearch($event);"></i>
 } @else {
-  <button type="button" class="btn btn-icon form-control-feedback back-btn" aria-hidden="true" (click)="closeSearch()"><i class="app-icon {{backsearchiconclass}}"></i></button>
+  <button type="button" class="btn btn-icon form-control-feedback back-btn" aria-hidden="true" (click)="closeSearch()">
+    @if (useSvgBackIcon) {
+      <i class="app-icon app-icon-svg" role="img" aria-hidden="true" [iconUrl]="backsearchiconurl"></i>
+    } @else if (useImageBackIcon) {
+      <img data-identifier="img" class="app-icon" alt="Back" [src]="backsearchiconurl | image"/>
+    } @else {
+      <i class="app-icon {{backsearchiconclass}}"></i>
+    }
+  </button>
   <span class="sr-only">Back button</span>
   <input [title]="query || ''" type="text" class="app-textbox form-control list-of-objs app-search-input" [placeholder]="placeholder || ''"
     focus-target
@@ -122,14 +130,29 @@
   @if (_loadingItems) {
     <span aria-hidden="true" class="fa fa-circle-o-notch fa-spin form-control-feedback"></span>
   }
-  <button type="button" class="btn btn-icon form-control-feedback clear-btn" [ngClass]="{'show-btn': isQueryEntered()}" (click)="clearSearch($event, true)"><i class="app-icon {{clearsearchiconclass}}"></i></button>
+  <button type="button" class="btn btn-icon form-control-feedback clear-btn" [ngClass]="{'show-btn': isQueryEntered()}" (click)="clearSearch($event, true)">
+    @if (useSvgClearIcon) {
+      <i class="app-icon app-icon-svg" role="img" aria-hidden="true" [iconUrl]="clearsearchiconurl"></i>
+    } @else if (useImageClearIcon) {
+      <img data-identifier="img" class="app-icon" alt="Clear" [src]="clearsearchiconurl | image"/>
+    } @else {
+      <i class="app-icon {{clearsearchiconclass}}"></i>
+    }
+  </button>
   <span class="sr-only">Clear button</span>
   @if (showsearchicon) {
     <span [ngClass]="{'disabled': disabled}" class="input-group-addon">
       <form>
         <button title="Search" [disabled]="disabled" class="app-search-button btn btn-icon" type="submit"
           (click)="onSearchSelect($event)">
-          <i class="app-icon {{searchiconclass}}"></i></button>
+          @if (useSvgSearchIcon) {
+            <i class="app-icon app-icon-svg" role="img" aria-hidden="true" [iconUrl]="searchiconurl"></i>
+          } @else if (useImageSearchIcon) {
+            <img data-identifier="img" class="app-icon" alt="Search" [src]="searchiconurl | image"/>
+          } @else {
+            <i class="app-icon {{searchiconclass}}"></i>
+          }
+        </button>
         </form>
       </span>
     }

@@ -12,11 +12,23 @@
       [attr.aria-pressed]="opt.selected ? true : false"
       (click)="selectOpt($event, $index, opt)"
       >
-      @if (opt.dataObject && opt.dataObject[iconclass] && (!opt.selected ||!checkediconclass)) {
-        <i aria-hidden="true" [ngClass]="['app-icon', opt.dataObject[iconclass] || opt['icon']]"></i>
+      @if (hasItemIcon(opt) && (!opt.selected || !hasAnyCheckedIcon)) {
+        @if (useSvgItemIcon(opt)) {
+          <i class="app-icon app-icon-svg" role="img" aria-hidden="true" [iconUrl]="itemIconUrl(opt)"></i>
+        } @else if (useImageItemIcon(opt)) {
+          <img data-identifier="img" class="app-icon" alt="" [src]="itemIconUrl(opt) | image"/>
+        } @else {
+          <i aria-hidden="true" [ngClass]="['app-icon', itemIconClass(opt) || opt['icon']]"></i>
+        }
       }
-      @if (opt.selected && checkediconclass) {
-        <i aria-hidden="true" [ngClass]="[checkediconclass]"></i>
+      @if (opt.selected && hasAnyCheckedIcon) {
+        @if (useSvgCheckedIcon) {
+          <i class="app-icon app-icon-svg" role="img" aria-hidden="true" [iconUrl]="checkediconurl"></i>
+        } @else if (useImageCheckedIcon) {
+          <img data-identifier="img" class="app-icon" alt="" [src]="checkediconurl | image"/>
+        } @else {
+          <i aria-hidden="true" [ngClass]="[checkediconclass]"></i>
+        }
       }
       <span class="caption" [textContent]="opt[displayfield] || opt.label"></span>
     </a>
@@ -25,7 +37,13 @@
 @if (!multiple) {
   <span [title]="selectedItem ? selectedItem.label : modelByKey" aria-hidden="true"
     class="btn btn-primary app-switch-overlay switch-handle">
-    <i [ngClass]="[checkediconclass]"></i>
+    @if (useSvgCheckedIcon) {
+      <i class="app-icon app-icon-svg" role="img" aria-hidden="true" [iconUrl]="checkediconurl"></i>
+    } @else if (useImageCheckedIcon) {
+      <img data-identifier="img" class="app-icon" alt="" [src]="checkediconurl | image"/>
+    } @else {
+      <i [ngClass]="[checkediconclass]"></i>
+    }
     <span class="caption">{{selectedItem ? selectedItem.label : modelByKey}}</span>
   </span>
 }

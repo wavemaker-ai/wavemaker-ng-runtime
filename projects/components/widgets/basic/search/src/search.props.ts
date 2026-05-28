@@ -46,9 +46,12 @@ export const searchProps = new Map(
         ['type', { value: 'search', ...PROP_STRING }],
         ['debouncetime', { value: 250, ...PROP_NUMBER }],
         ['width', PROP_STRING],
-        ['clearsearchiconclass', {value: 'wi wi-close', ...PROP_STRING}],
-        ['backsearchiconclass', {value: 'wi wi-arrow-left', ...PROP_STRING}],
-        ['searchiconclass', {value: 'wm-sl-l sl-search', ...PROP_STRING}],
+        ['clearsearchiconclass', PROP_STRING],
+        ['clearsearchiconurl', PROP_STRING],
+        ['backsearchiconclass', PROP_STRING],
+        ['backsearchiconurl', PROP_STRING],
+        ['searchiconclass', PROP_STRING],
+        ['searchiconurl', PROP_STRING],
     ]
 );
 

@@ -6,7 +6,15 @@
           <i class="app-icon" [ngClass]="iconclass"></i>
         }
         @if (iconurl) {
-          <img class="img-circle" [src]="iconurl" />
+          @if (isSvgIcon) {
+            <i data-identifier="svg"
+               role="img"
+               aria-hidden="true"
+               class="app-icon app-icon-svg"
+               [iconUrl]="iconurl"></i>
+          } @else {
+            <img class="img-circle" [src]="iconurl" />
+          }
         }
       </div>
     }

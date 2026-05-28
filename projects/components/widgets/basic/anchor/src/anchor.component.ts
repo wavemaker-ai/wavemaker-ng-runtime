@@ -11,7 +11,7 @@ import {
     removeClass,
     setAttr
 } from '@wm/core';
-import {DISPLAY_TYPE, ImagePipe, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective} from '@wm/components/base';
+import {DISPLAY_TYPE, ImagePipe, isSvgIconUrl, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, SvgIconDirective, TextContentDirective} from '@wm/components/base';
 
 import {registerProps} from './anchor.props'; 
 
@@ -29,7 +29,7 @@ export const disableContextMenu = ($event: Event) => {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, ImagePipe, TextContentDirective],
+    imports: [CommonModule, ImagePipe, TextContentDirective, SvgIconDirective],
     selector: 'a[wmAnchor]',
     templateUrl: './anchor.component.html',
     providers: [
@@ -67,6 +67,11 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
+    }
+
+    /** True when `iconurl` is set and points to an `.svg` asset. */
+    public get isSvgIcon(): boolean {
+        return isSvgIconUrl(this.iconurl);
     }
 
     protected processEventAttr(eventName: string, expr: string, meta?: string) {

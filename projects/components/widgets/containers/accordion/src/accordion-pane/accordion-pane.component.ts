@@ -5,11 +5,14 @@ import {
     APPLY_STYLES_TYPE,
     AutoLayout,
     getCurrentWidgets,
+    ImagePipe,
+    isSvgIconUrl,
     IWidgetConfig,
     provideAsWidgetRef,
     RedrawableDirective,
     StylableComponent,
     styler,
+    SvgIconDirective,
 } from '@wm/components/base';
 
 import {registerProps} from './accordion-pane.props';
@@ -21,7 +24,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-accordionpane', hostClass
 @AutoLayout({ targetSelector: '.panel-body' })
 @Component({
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, SvgIconDirective, ImagePipe],
     selector: 'div[wmAccordionPane]',
     templateUrl: './accordion-pane.component.html',
     providers: [
@@ -34,6 +37,7 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
 
     public isActive = false;
     public iconclass: string;
+    public iconurl: string;
     public title: any;
     public subheading: string;
     public badgetype: any;
@@ -126,6 +130,17 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
 
     get currentAccordionWidgets() {
         return getCurrentWidgets(this.nativeElement, this._currentAccordionWidgets);
+    }
+
+    // SVG branch is taken when no `iconclass` is set and `iconurl` points to
+    // an `.svg` asset. Image branch is taken for any other `iconurl` value.
+    // Otherwise the existing `iconclass` font-icon flow is used.
+    public get useSvgIcon(): boolean {
+        return !this.iconclass && isSvgIconUrl(this.iconurl);
+    }
+
+    public get useImageIcon(): boolean {
+        return !this.iconclass && !!this.iconurl && !isSvgIconUrl(this.iconurl);
     }
 
     onPropertyChange(key, nv, ov) {

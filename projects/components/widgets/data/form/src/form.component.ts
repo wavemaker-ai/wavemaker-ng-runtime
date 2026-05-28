@@ -44,6 +44,8 @@ import {
 import {
     FilterPipe,
     getFieldLayoutConfig,
+    ImagePipe,
+    isSvgIconUrl,
     Live_Operations,
     MessageComponent,
     parseValueByType,
@@ -52,6 +54,7 @@ import {
     provideAsWidgetRef,
     StylableComponent,
     styler,
+    SvgIconDirective,
     WidgetRef
 } from '@wm/components/base';
 import {PrefabDirective} from '@wm/components/prefab';
@@ -159,7 +162,7 @@ const setTouchedState = (self, ngForm, fieldName) => {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FilterPipe, AnchorComponent, ButtonComponent, MessageComponent],
+  imports: [CommonModule, FilterPipe, AnchorComponent, ButtonComponent, MessageComponent, SvgIconDirective, ImagePipe],
     selector: 'form[wmForm]',
     templateUrl: './form.component.html',
     providers: [
@@ -176,6 +179,19 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     autoupdate;
     public formlayout: any;
     public isDataSourceUpdated: boolean;
+    public iconclass: string;
+    public iconurl: string;
+
+    // SVG branch is taken when no `iconclass` is set and `iconurl` points to
+    // an `.svg` asset. Image branch is taken for any other `iconurl` value.
+    // Otherwise the existing `iconclass` font-icon flow is used.
+    public get useSvgIcon(): boolean {
+        return !this.iconclass && isSvgIconUrl(this.iconurl);
+    }
+
+    public get useImageIcon(): boolean {
+        return !this.iconclass && !!this.iconurl && !isSvgIconUrl(this.iconurl);
+    }
     captionAlignClass: string;
     validationtype: string;
     captionalign: string;

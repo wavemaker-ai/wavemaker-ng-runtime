@@ -4,7 +4,7 @@ import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit
 import { Subject, Subscription } from 'rxjs';
 
 import { App, DataSource, getWmProjectProperties, isAudioFile, isImageFile, isVideoFile, AbstractDialogService, IDGenerator } from '@wm/core';
-import {FileIconClassPipe, FileSizePipe, provideAsWidgetRef, StateClassPipe, StylableComponent, styler } from '@wm/components/base';
+import {FileIconClassPipe, FileSizePipe, ImagePipe, isSvgIconUrl, provideAsWidgetRef, StateClassPipe, StylableComponent, styler, SvgIconDirective } from '@wm/components/base';
 
 import {registerProps} from './file-upload.props';
 import {forEach, includes, isEmpty, toLower} from "lodash-es";
@@ -19,7 +19,7 @@ const WIDGET_CONFIG = {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, FileIconClassPipe, StateClassPipe, FileSizePipe],
+    imports: [CommonModule, FileIconClassPipe, StateClassPipe, FileSizePipe, SvgIconDirective, ImagePipe],
     selector: '[wmFileUpload]',
     templateUrl: './file-upload.component.html',
     providers: [
@@ -42,8 +42,27 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
     caption = 'Upload';
     formName = '';
     maxfilesize;
+    iconclass;
+    iconurl: string;
     cleariconclass;
+    cleariconurl: string;
     cleariconhint;
+
+    // SVG branch is taken when no `*iconclass` is set and `*iconurl` points
+    // to an `.svg` asset. Image branch is taken for any other `*iconurl`
+    // value. Otherwise the existing `*iconclass` font-icon flow is used.
+    public get useSvgIcon(): boolean {
+        return !this.iconclass && isSvgIconUrl(this.iconurl);
+    }
+    public get useImageIcon(): boolean {
+        return !this.iconclass && !!this.iconurl && !isSvgIconUrl(this.iconurl);
+    }
+    public get useSvgClearIcon(): boolean {
+        return !this.cleariconclass && isSvgIconUrl(this.cleariconurl);
+    }
+    public get useImageClearIcon(): boolean {
+        return !this.cleariconclass && !!this.cleariconurl && !isSvgIconUrl(this.cleariconurl);
+    }
     selectedUploadTypePath;
     DEFAULT_CAPTIONS = {
         MULTIPLE_SELECT: 'Drop your files here.',
