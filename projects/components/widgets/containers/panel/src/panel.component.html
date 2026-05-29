@@ -3,11 +3,14 @@
     <div class="panel-title">
       <a href="javascript:void(0)" class="panel-toggle" (click)="toggle($event)" [attr.aria-expanded]="!!expanded">
         <div class="pull-left">
-          <wm-app-icon [iconclass]="iconclass"
-                       [iconurl]="iconurl"
-                       [iconClasses]="iconurl ? 'panel-image-icon' : 'panel-icon'"
-                       [iconStyle]="{width: iconwidth, height: iconheight, margin: iconmargin, fontSize: iconwidth}"
-                       alt="Panel icon"></wm-app-icon>
+          @if (iconclass && !iconurl) {
+            <i class="app-icon panel-icon {{iconclass}}"></i>
+          }
+          @if (iconurl) {
+            <img data-identifier="img" title="iconurl" alt="Panel icon" class="panel-image-icon"
+              [src]="iconurl | image"
+              [ngStyle]="{width: iconwidth ,height: iconheight, margin: iconmargin}" />
+          }
         </div>
         <div class="pull-left">
           <div class="heading" [innerHTML]="title" [title]="title"></div>

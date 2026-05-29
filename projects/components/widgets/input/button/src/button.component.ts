@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import {Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
 
-import {DISPLAY_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective, WmAppIconComponent} from '@wm/components/base';
+import {DISPLAY_TYPE, ImagePipe, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective} from '@wm/components/base';
 
 import {registerProps} from './button.props';
 
@@ -14,7 +14,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective, WmAppIconComponent],
+    imports: [CommonModule, TextContentDirective, ImagePipe],
     selector: 'button[wmButton]',
     templateUrl: './button.component.html',
     providers: [
@@ -27,9 +27,6 @@ export class ButtonComponent extends StylableComponent {
 
     public iconurl: string;
     public iconclass: string;
-    public iconwidth: string;
-    public iconheight: string;
-    public iconmargin: string;
     public caption: string;
     public badgevalue: string;
     public arialabel: string;

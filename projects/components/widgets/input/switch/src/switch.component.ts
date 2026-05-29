@@ -3,7 +3,7 @@ import {AfterViewInit, Component, Inject, Injector, OnDestroy, Optional} from '@
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import {$appDigest, debounce, isDefined, setCSS, toBoolean} from '@wm/core';
-import { DataSetItem, provideAs, provideAsWidgetRef, styler, TextContentDirective, WmAppIconComponent } from '@wm/components/base';
+import { DataSetItem, provideAs, provideAsWidgetRef, styler, TextContentDirective } from '@wm/components/base';
 import { DatasetAwareFormComponent } from '@wm/components/input/dataset-aware-form';
 
 import { registerProps } from './switch.props';
@@ -16,7 +16,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-switch', hostClass: DEFAULT_CLS};
 
 @Component({
   standalone: true,
-  imports: [CommonModule, TextContentDirective, WmAppIconComponent],
+  imports: [CommonModule, TextContentDirective],
     selector: '[wmSwitch]',
     templateUrl: './switch.component.html',
     providers: [
@@ -31,9 +31,7 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
     options = [];
     selectedItem: DataSetItem;
     iconclass;
-    iconurl: string;
     checkediconclass;
-    checkediconurl: string;
     multiple: boolean;
     private btnwidth;
     public disabled: boolean;
@@ -46,7 +44,6 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
         super(inj, WIDGET_CONFIG, explicitContext);
         this.multiple = this.getAttr("multiple") === "true";
         this.checkediconclass = this.getAttr("checkediconclass");
-        this.checkediconurl = this.getAttr("checkediconurl");
 
         this._debounceSetSelectedValue = debounce((val) => {
             this.setSelectedValue();

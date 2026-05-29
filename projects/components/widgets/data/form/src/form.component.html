@@ -3,12 +3,12 @@
 @if (formlayout === 'page') {
   <ng-container *ngTemplateOutlet="content"></ng-container>
 } @else {
-  @if (!isLayoutDialog && (title || subheading || iconclass || iconurl || showButtons('header'))) {
+  @if (!isLayoutDialog && (title || subheading || iconclass || showButtons('header'))) {
     <div class="panel-heading">
       <h3 class="panel-title">
         <div class="pull-left">
-          @if (iconclass || iconurl) {
-            <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [iconClasses]="iconurl ? 'panel-image-icon' : 'panel-icon'" alt="Form icon"></wm-app-icon>
+          @if (iconclass) {
+            <i class="app-icon panel-icon" aria-hidden="true" [ngClass]="iconclass"></i>
           }
         </div>
         <div class="pull-left">

@@ -42,8 +42,7 @@ import {
     provideAsWidgetRef,
     styler,
     TextContentDirective,
-    transformFormData,
-    WmAppIconComponent
+    transformFormData
 } from '@wm/components/base';
 import { DatasetAwareFormComponent } from '@wm/components/input/dataset-aware-form';
 import { registerProps } from './search.props';
@@ -68,7 +67,7 @@ const WIDGET_CONFIG = { widgetType: 'wm-search', hostClass: 'input-group' };
 
 @Component({
     standalone: true,
-    imports: [CommonModule, FormsModule, ScrollableDirective, TypeaheadModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective, WmAppIconComponent],
+    imports: [CommonModule, FormsModule, ScrollableDirective, TypeaheadModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective],
     selector: '[wmSearch]',
     templateUrl: './search.component.html',
     providers: [
@@ -109,11 +108,8 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     public typeaheadContainer: TypeaheadContainerComponent;
     public containerTarget: string;
     public clearsearchiconclass: string;
-    public clearsearchiconurl: string;
     public backsearchiconclass: string;
-    public backsearchiconurl: string;
     public searchiconclass: string;
-    public searchiconurl: string;
 
     @ViewChild(TypeaheadDirective) typeahead: TypeaheadDirective;
     @ViewChild('ulElement') ulElement: ElementRef;

@@ -53,8 +53,7 @@ import {
     provideAsWidgetRef,
     StylableComponent,
     styler,
-    WidgetRef,
-    WmAppIconComponent
+    WidgetRef
 } from '@wm/components/base';
 import {PrefabDirective} from '@wm/components/prefab';
 import {ListComponent} from '@wm/components/data/list';
@@ -161,7 +160,7 @@ const setTouchedState = (self, ngForm, fieldName) => {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FilterPipe, AnchorComponent, ButtonComponent, MessageComponent, WmAppIconComponent],
+  imports: [CommonModule, FilterPipe, AnchorComponent, ButtonComponent, MessageComponent],
     selector: 'form[wmForm]',
     templateUrl: './form.component.html',
     providers: [
@@ -178,8 +177,6 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     autoupdate;
     public formlayout: any;
     public isDataSourceUpdated: boolean;
-    public iconclass: string;
-    public iconurl: string;
     captionAlignClass: string;
     validationtype: string;
     captionalign: string;

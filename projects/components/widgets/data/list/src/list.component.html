@@ -1,8 +1,8 @@
-@if (title || subheading || iconclass || iconurl) {
+@if (title || subheading || iconclass) {
   <div class="panel-heading">
     <h3 class="panel-title">
       <div class="pull-left">
-        <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" iconClasses="panel-icon" alt="List icon"></wm-app-icon>
+        <i class="app-icon panel-icon {{iconclass}}" aria-hidden="true" [hidden]="!iconclass"></i>
       </div>
       <div class="pull-left">
         <div class="heading" [innerHTML]="title"></div>

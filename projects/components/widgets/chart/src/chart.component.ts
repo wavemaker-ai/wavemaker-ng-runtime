@@ -22,7 +22,7 @@ import {
     removeAttr,
     triggerFn,
 } from '@wm/core';
-import { APPLY_STYLES_TYPE, IRedrawableComponent, provideAsWidgetRef, StylableComponent, styler, WmAppIconComponent } from '@wm/components/base';
+import { APPLY_STYLES_TYPE, IRedrawableComponent, provideAsWidgetRef, StylableComponent, styler,  } from '@wm/components/base';
 
 import { registerProps } from './chart.props';
 import { allShapes, getDateList, getSampleData, initChart, isAreaChart, isAxisDomainValid, isBarChart, isBubbleChart, isChartDataArray, isChartDataJSON, isLineTypeChart, isPieType, postPlotChartProcess } from './chart.utils';
@@ -129,7 +129,7 @@ const angle = d => {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, SpinnerComponent, WmAppIconComponent],
+    imports: [CommonModule, SpinnerComponent],
     selector: 'div[wmChart]',
     templateUrl: './chart.component.html',
     styleUrls: ['../../../../../node_modules/@wavemaker/nvd3/build/nv.d3.min.css'],
@@ -149,8 +149,6 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
     isVisuallyGrouped;
     orderby;
     iconclass = '';
-    iconurl: string;
-
     type: string;
     showContentLoadError;
     invalidConfig;

@@ -1,7 +1,7 @@
 
 
 <ng-template #innerTemplate>
-  <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" alt="Menu icon"></wm-app-icon>
+  <i class="app-icon {{iconclass}}"></i>
   <span class="caption" [textContent]="caption"></span>
   <span class="pull-right caret fa {{menuCaret}}"></span>
 </ng-template>
@@ -20,7 +20,6 @@
     tabindex.bind="tabindex"
     caption.bind="caption"
     iconclass.bind="iconclass"
-    iconurl.bind="iconurl"
     iconposition.bind="iconposition"
     badgevalue.bind="badgevalue"
     >
@@ -38,7 +37,6 @@
     tabindex.bind="tabindex"
     caption.bind="caption"
     iconclass.bind="iconclass"
-    iconurl.bind="iconurl"
     iconposition.bind="iconposition"
     type="button">
     <span class="pull-right caret fa" [ngClass]="[menuCaret]"></span>

@@ -31,7 +31,6 @@ export const registerProps = () => {
                 ['gridclass', {value: 'table-hover', ...PROP_STRING}],
                 ['gridfirstrowselect', PROP_BOOLEAN],
                 ['iconclass', PROP_STRING],
-                ['iconurl', PROP_STRING],
                 ['insertmessage', {value: 'Record added successfully', ...PROP_STRING}],
                 ['isdynamictable', PROP_BOOLEAN], // internal property to determine dynamic table
                 ['isrowexpansionenabled', PROP_BOOLEAN],

@@ -40,7 +40,6 @@ export const registerFormProps = () => {
     formMap.set('novalidate', PROP_BOOLEAN);
     formMap.set('validationtype', {value: 'default', ...PROP_STRING});
     formMap.set('iconclass', PROP_STRING);
-    formMap.set('iconurl', PROP_STRING);
     formMap.set('readonly',{value: false, ...PROP_BOOLEAN});
 
     register(
@@ -62,7 +61,6 @@ export const registerLiveFormProps = () => {
     liveFormMap.set('novalidate', PROP_BOOLEAN);
     liveFormMap.set('validationtype', {value: 'default', ...PROP_STRING});
     liveFormMap.set('iconclass', PROP_STRING);
-    liveFormMap.set('iconurl', PROP_STRING);
 
     register(
         'wm-liveform',
@@ -76,7 +74,6 @@ export const registerLiveFilterProps = () => {
     liveFilterMap.set('enableemptyfilter', {value: ' ', ...PROP_STRING});
     liveFilterMap.set('pagesize', {value: 20, ...PROP_NUMBER});
     liveFilterMap.set('iconclass', {value: 'wi wi-filter-list', ...PROP_STRING});
-    liveFilterMap.set('iconurl', PROP_STRING);
 
     register(
         'wm-livefilter',

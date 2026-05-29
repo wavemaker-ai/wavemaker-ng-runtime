@@ -3,7 +3,7 @@
   @if (!_isMobileType && multiple) {
     <div class="app-multi-file-upload">
       <div id="dropzone" class="drop-box" (click)="triggerFileSelect()" [ngClass]="{'highlight-drop-box' : highlightDropArea}" (dragover)="dragOverHandler($event);" (drop)="onFileDrop($event);">
-        <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" alt="Upload"></wm-app-icon>
+        <i class="{{iconclass}}"></i>
         <div class="message">
           <label [innerHtml]="caption" class="upload-label"></label>
           <form class="form-horizontal" name="{{formName}}">
@@ -42,7 +42,7 @@
               name="files" type="file">
           }
           <button id="dropzone" focus-target class="app-button btn btn-default" [ngClass]="{'highlight-drop-box' : highlightDropArea}">
-            <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" alt="Upload"></wm-app-icon>
+            <i class="{{iconclass}}" aria-hidden="true"></i>
             <span class="caption" [innerHTML]="caption"></span>
           </button>
         </form>
@@ -102,10 +102,10 @@
                 </div>
               }
               <div class="media-right media-middle">
-                @if ((cleariconclass !== '' || cleariconurl) && ft.status !== 'onProgress') {
+                @if (cleariconclass !== '' && ft.status !== 'onProgress') {
                   <a href="javascript:void(0)" (click)="clear(ft)"
                     class="btn btn-transparent btn-default status-icon" title="{{cleariconhint}}" type="button">
-                    <wm-app-icon [iconclass]="cleariconclass" [iconurl]="cleariconurl" alt="Clear"></wm-app-icon>
+                    <i class="{{cleariconclass}}"></i>
                   </a>
                 }
               </div>

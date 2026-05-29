@@ -10,7 +10,6 @@ import {
     RedrawableDirective,
     StylableComponent,
     styler,
-    WmAppIconComponent,
 } from '@wm/components/base';
 
 import {registerProps} from './accordion-pane.props';
@@ -22,7 +21,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-accordionpane', hostClass
 @AutoLayout({ targetSelector: '.panel-body' })
 @Component({
     standalone: true,
-    imports: [CommonModule, WmAppIconComponent],
+    imports: [CommonModule],
     selector: 'div[wmAccordionPane]',
     templateUrl: './accordion-pane.component.html',
     providers: [
@@ -35,7 +34,6 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
 
     public isActive = false;
     public iconclass: string;
-    public iconurl: string;
     public title: any;
     public subheading: string;
     public badgetype: any;

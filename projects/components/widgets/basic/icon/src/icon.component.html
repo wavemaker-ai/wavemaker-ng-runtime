@@ -1,5 +1,5 @@
-<wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl"></wm-app-icon>
-@if (iconclass || iconurl) {
+<i class="app-icon {{iconclass}}"></i>
+@if (iconclass) {
   <span class="sr-only">{{ arialabel || caption || appLocale.LABEL_ICON }}</span>
 }
 @if (caption) {

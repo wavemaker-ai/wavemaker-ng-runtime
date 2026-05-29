@@ -28,16 +28,10 @@ export class Icon {
      * CSS class of the icon.
      */
     @Input() iconclass: string = 'wi wi-star-border';
-       /**
-     * URL of an SVG asset to render inline inside the icon. When set (and
-     * `iconclass` is empty) the SVG markup is fetched, normalized so its
-     * `fill`/`stroke` use <code>currentColor</code>, and injected into the
-     * icon element so it inherits color, font-size, and hover styles from
-     * the surrounding <code>.app-icon</code> styles.
-     * <p><em>Bindable: </em><code>true</code></p>
+    /**
+     * url of the icon.
      */
     @Input() iconurl: string;
-
     /**
      * Property to set the position of icon in the widget.
      * <p><em>Allowed Values: </em><code>left, right</code></p>

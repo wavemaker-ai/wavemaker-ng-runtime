@@ -67,13 +67,6 @@ export class TabPane {
     @Input() paneicon: string;
 
     /**
-     * Icon URL which we displayed on the tab-header. <br>
-     * This is will be used only when the default template is used.
-     * <p><em>Bindable: </em><code>true</code></p>
-     */
-    @Input() paneiconurl: string;
-
-    /**
      * Callback function which will be triggered when tab pane is loaded.
      * @param $event  DOM event on which call back is triggered
      * @param widget  Instance of the tab pane widget

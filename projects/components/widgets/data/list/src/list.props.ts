@@ -18,7 +18,6 @@ export const registerProps = () => {
                 ['forceellipses', {value: true, ...PROP_BOOLEAN}],
                 ['groupby', PROP_STRING],
                 ['iconclass', PROP_STRING],
-                ['iconurl', PROP_STRING],
                 ['itemclass', {value: '', ...PROP_STRING}],
                 ['itemsperrow', PROP_STRING],
                 ['listclass', {value: 'list-group', ...PROP_STRING}],

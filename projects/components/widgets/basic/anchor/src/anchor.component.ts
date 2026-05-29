@@ -11,7 +11,7 @@ import {
     removeClass,
     setAttr
 } from '@wm/core';
-import {DISPLAY_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective, WmAppIconComponent} from '@wm/components/base';
+import {DISPLAY_TYPE, ImagePipe, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective} from '@wm/components/base';
 
 import {registerProps} from './anchor.props'; 
 
@@ -29,7 +29,7 @@ export const disableContextMenu = ($event: Event) => {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective, WmAppIconComponent],
+    imports: [CommonModule, ImagePipe, TextContentDirective],
     selector: 'a[wmAnchor]',
     templateUrl: './anchor.component.html',
     providers: [
@@ -49,7 +49,6 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
     public hyperlink;
     public iconheight: string;
     public iconwidth: string;
-    public iconmargin: string;
     public iconurl: string;
     public iconclass: string;
     public caption: any;

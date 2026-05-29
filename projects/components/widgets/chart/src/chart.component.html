@@ -1,9 +1,7 @@
 @if (title) {
   <div class="panel-heading">
     <h3 class="panel-title">
-      <div class="pull-left">
-        <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" iconClasses="panel-icon" alt="Chart icon"></wm-app-icon>
-      </div>
+      <div class="pull-left"><i class="app-icon panel-icon {{iconclass}}" [class.ng-hide]="!iconclass"></i></div>
       <div class="heading" [innerHTML]="title"></div>
       @if (subheading) {
         <div class="description" [innerHTML]="subheading"></div>

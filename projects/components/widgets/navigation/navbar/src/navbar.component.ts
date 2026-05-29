@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild, OnDestroy} from '@angular/core';
 
-import { APPLY_STYLES_TYPE, ImagePipe, styler, StylableComponent, provideAsWidgetRef, TextContentDirective, TrustAsPipe, WmAppIconComponent } from '@wm/components/base';
+import { APPLY_STYLES_TYPE, styler, StylableComponent, provideAsWidgetRef, TextContentDirective ,TrustAsPipe} from '@wm/components/base';
 
 import { registerProps } from './navbar.props';
 
@@ -12,7 +12,7 @@ declare const $;
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective, TrustAsPipe, ImagePipe, WmAppIconComponent],
+    imports: [CommonModule, TextContentDirective,TrustAsPipe],
     selector: '[wmNavbar]',
     templateUrl: './navbar.component.html',
     providers: [
@@ -23,7 +23,6 @@ export class NavbarComponent extends StylableComponent implements AfterViewInit,
     static initializeProps = registerProps();
 
     public menuiconclass: any;
-    public menuiconurl: string;
     public title: string;
     public imgsrc: string;
     @ViewChild('navContent', {static: true}) private navContent: ElementRef;

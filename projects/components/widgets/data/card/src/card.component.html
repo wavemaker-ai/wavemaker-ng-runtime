@@ -2,7 +2,12 @@
   <div class="app-card-header panel-heading">
     @if (iconclass || iconurl) {
       <div class="app-card-avatar">
-        <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [iconClasses]="iconurl ? 'img-circle' : ''"></wm-app-icon>
+        @if (iconclass && !iconurl) {
+          <i class="app-icon" [ngClass]="iconclass"></i>
+        }
+        @if (iconurl) {
+          <img class="img-circle" [src]="iconurl" />
+        }
       </div>
     }
     <div class="app-card-header-text">
