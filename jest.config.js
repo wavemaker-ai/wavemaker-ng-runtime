@@ -34,6 +34,7 @@ module.exports = {
   // ],
   coverageDirectory: "coverage",
   moduleNameMapper: {
+    "@wavemaker-ai/variables": "<rootDir>/.yalc/@wavemaker-ai/variables/dist/es2015/index.js",
     "@fullcalendar/(.*)$": "<rootDir>/node_modules/@fullcalendar/core/index.cjs",
     "^jQuery$": "jquery",
     "@wm/security": "<rootDir>/projects/security/src/public_api.ts",

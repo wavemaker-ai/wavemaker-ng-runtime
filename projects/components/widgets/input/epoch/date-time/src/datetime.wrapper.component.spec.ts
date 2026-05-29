@@ -22,7 +22,6 @@ import {
     compileTestComponent,
     getHtmlSelectorElement,
     checkElementClass,
-    notHavingTheAttribute,
     hasAttributeCheck,
     onClickCheckTaglengthOnBody,
     mockApp
@@ -188,8 +187,11 @@ describe("DatetimeComponent", () => {
 
 
     /************************* Properties starts ****************************************** **/
-    it('should not add the hidden property, element always visible', fakeAsync(async () => {
-        await notHavingTheAttribute(fixture, '.app-datetime', 'hidden');
+    it('should not add the hidden property, element always visible', fakeAsync(() => {
+        fixture.detectChanges();
+        tick();
+        const element = getHtmlSelectorElement(fixture, dateComponentDef.widgetSelector);
+        expect(element.nativeElement.hasAttribute('hidden')).toBe(false);
     }));
 
     it("should not show the calendar panel on click the input control (show date picker on only button click) ", waitForAsync(() => {
