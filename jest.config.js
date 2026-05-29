@@ -1,3 +1,12 @@
+const fs = require('fs');
+const path = require('path');
+
+const variablesEntry = [
+  '.yalc/@wavemaker-ai/variables/index.js',
+  '.yalc/@wavemaker-ai/variables/dist/es2015/index.js',
+  'node_modules/@wavemaker-ai/variables/index.js',
+].find((entry) => fs.existsSync(path.join(__dirname, entry)));
+
 module.exports = {
   preset: "jest-preset-angular",
   testTimeout: 15000,
@@ -34,7 +43,7 @@ module.exports = {
   // ],
   coverageDirectory: "coverage",
   moduleNameMapper: {
-    "@wavemaker-ai/variables": "<rootDir>/.yalc/@wavemaker-ai/variables/dist/es2015/index.js",
+    "@wavemaker-ai/variables": `<rootDir>/${variablesEntry || '.yalc/@wavemaker-ai/variables/index.js'}`,
     "@fullcalendar/(.*)$": "<rootDir>/node_modules/@fullcalendar/core/index.cjs",
     "^jQuery$": "jquery",
     "@wm/security": "<rootDir>/projects/security/src/public_api.ts",
