@@ -1,46 +1,7 @@
-/* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./out-tsc/spec",
-    "types": [
-      "jest",
-      "node",
-      "jquery"
-    ],
-    "module": "ES2022",
-    "paths": {
-      "@swipey": [
-        "projects/swipey/src/public_api.ts"
-      ],
-      "@wm/core": [
-        "projects/core/src/public_api.ts"
-      ],
-      "@wm/components/base": [
-        "projects/components/base/index.ts"
-      ],
-      "@wm/components/dialogs": [
-        "projects/components/widgets/dialogs/default/src/public_api.ts"
-      ],
-      "@wm/components/data/pagination": [
-        "projects/components/widgets/data/pagination/src/public_api.ts"
-      ],
-      "@wm/components/input/button": [
-        "projects/components/widgets/input/button/src/public_api.ts"
-      ],
-      "@wm/*": [
-        "projects/*/src/public_api.ts",
-        "projects/*/index.ts"
-      ],
-      "@wm/components/*": [
-        "projects/components/widgets/*/src/public_api.ts",
-        "projects/components/*/src/public_api.ts"
-      ]
-    }
-  },
-  "include": [
-    "src/**/*.spec.ts",
-    "src/**/*.d.ts",
-    "projects/**/*.spec.ts"
-  ]
+    "extends": "./tsconfig.json",
+    "include": [
+        "projects/**/*.spec.ts",
+        "src/setup-jest.js"
+    ]
 }

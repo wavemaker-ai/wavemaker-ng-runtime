@@ -36,7 +36,7 @@
                 "libraries/core"
             ],
             "@wavemaker-ai/variables": [
-                "node_modules/@wavemaker-ai/variables/"
+                ".yalc/@wavemaker-ai/variables/dist/es2015/index"
             ],
             "@wavemaker-ai/custom-widgets-m3": [
                 "node_modules/@wavemaker-ai/custom-widgets-m3/"
