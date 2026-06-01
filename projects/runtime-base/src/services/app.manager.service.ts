@@ -433,6 +433,29 @@ export class AppManagerService implements OnDestroy {
     }
 
     /**
+     * Notifies access denied for a page (e.g. RoleGuard) and invokes App.onServiceError
+     * with a 403-shaped response.
+     */
+    notifyAccessDenied(pageName?: string, message?: string) {
+        const errorMessage = message
+            || get(this.getAppLocale(), 'LABEL_ACCESS_DENIED')
+            || this.$app.appLocale?.LABEL_ACCESS_DENIED
+            || 'Access Denied';
+        const pagePath = pageName || this.$security.getCurrentRoutePage();
+        const errorResponse = {
+            message: errorMessage,
+            status: 403,
+            statusText: 'Forbidden',
+            ok: false,
+            url: pagePath ? `./pages/${pagePath}/page.min.json` : '',
+            body: null,
+            error: errorMessage
+        };
+        this.appOnServiceError(errorMessage, errorResponse);
+        this.notifyApp(errorMessage, 'error');
+    }
+
+    /**
      * Triggers the onBeforeService method defined in app.js of the app
      * @param requestParams
      */
