@@ -18,6 +18,7 @@ const markup = `<div blur.event="onBlur($event, widget)"
                  trailingzero="true" tabindex="1"></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 

@@ -443,6 +443,18 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
     // On field value change, propagate event to parent form
     onFilterValueChange(val) {
         this.table.rowFilter[this.field].value = val;
+        // When a row-filter widget value changes (multi-column filter),
+        // apply cascading filter so dependent filter widgets update their datasets.
+        // Example: filtering City should narrow down Street filter options.
+        if (this.isDestroyed || !this.table || !this.table.datasource) {
+            return;
+        }
+        // Don't cascade on null/undefined; clearing a filter should reset dependent datasets via their own refresh.
+        if (val !== null && val !== undefined) {
+            applyFilterOnField(this.table.datasource, this.widget, this.table.fieldDefs, val, {
+                widget: 'filterwidget'
+            });
+        }
     }
 
     // Get of the active from control
@@ -503,8 +515,10 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
                     this.widget['lookup-field'] = last(split(this.field, '.'));
                 }
                 if (this.filterwidget === FormWidgetType.AUTOCOMPLETE) {
+                   if (this.filterInstance) {
                     this.filterInstance.dataoptions = getDistinctFieldProperties(this.table.datasource, this);
                     this.filterInstance.datasource = this.table.datasource;
+                   }
                 } else {
                     getDistinctValues(this.table.datasource, this.widget, 'filterwidget').then((res: any) => {
                         this._filterDataSet = res.data;
@@ -778,7 +792,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
                 this.defaultvalue = getDefaultValue(this.defaultvalue, this.type, this.editWidgetType);
                 break;
             case 'show':
-                this.table.redraw(true);
+                this.table.redraw(false);
                 this.showinfilter = this.nativeElement.hasAttribute('showinfilter') ? this.nativeElement.getAttribute('showinfilter') : nv;
                 break;
             case 'filterdataset':
@@ -791,6 +805,11 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
                 break;
             case 'showinfilter':
                 this.showinfilter = nv;
+                break;
+            case 'sortable':
+                if (this.table) {
+                    this.table.callDataGridMethod('refreshSortHeader');
+                }
                 break;
             default:
                 if (inlineWidgetProps.includes(key)) {

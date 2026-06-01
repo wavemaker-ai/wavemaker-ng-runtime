@@ -1,14 +1,18 @@
 import { ApplicationRef, Attribute, Component, ComponentRef, EnvironmentInjector, Inject, Injector, NgZone, OnDestroy, Optional, ViewEncapsulation, createComponent } from '@angular/core';
 import { APPLY_STYLES_TYPE, getEvaluatedData, getOrderedDataset, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 import { registerProps } from './tree.props';
-import { $parseEvent, getClonedObject } from "@wm/core";
-import { isArray, isEmpty, isObject, isString } from "lodash-es";
+import { $parseEvent, getClonedObject, StatePersistence } from "@wm/core";
+import { get, isArray, isEmpty, isObject, isString } from "lodash-es";
 import { TreeNodeTemplateHostComponent } from './tree-node-template-host.component';
 
 declare const $;
 
 const WIDGET_INFO = {widgetType: 'wm-tree', hostClass: 'app-tree'};
 const defaultTreeIconClass = 'plus-minus';
+
+/** Keys merged into the widget entry under app StatePersistence (URL / localStorage / sessionStorage). */
+const TREE_STATE_SELECTED_ID = 'selectedNodeId';
+const TREE_STATE_SELECTED_PATH = 'selectedNodePath';
 
 @Component({
     standalone: true,
@@ -39,6 +43,8 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     public nodeicon: string;
     public nodechildren: string;
     public orderby: string;
+    /** Retain selected node in URL / localStorage / sessionStorage. */
+    public statehandler: string;
     /** Partial name for custom tree node UI (set via setTemplate or binding). */
     public template: string;
 
@@ -47,6 +53,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     private readonly ngZone: NgZone;
     private readonly applicationRef: ApplicationRef;
     private readonly environmentInjector: EnvironmentInjector;
+    private readonly statePersistence: StatePersistence;
 
     private setting = {
         data: {
@@ -72,12 +79,14 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
         @Attribute('nodeicon.bind') private bindnodeicon,
         @Attribute('nodechildren.bind') private bindnodechildren,
         @Attribute('nodeid.bind') private bindnodeid,
+        statePersistence: StatePersistence,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, WIDGET_INFO, explicitContext);
         this.ngZone = inj.get(NgZone);
         this.applicationRef = inj.get(ApplicationRef);
         this.environmentInjector = inj.get(EnvironmentInjector);
+        this.statePersistence = statePersistence;
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER);
 
         this.setting.view['nodeClasses']    = this.setNodeClasses;
@@ -125,6 +134,12 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
                 this.setTreeTemplate(this.treeClass);
                 super.onPropertyChange(key, nv, ov);
                 this.renderTree();
+                break;
+            case 'statehandler':
+                super.onPropertyChange(key, nv, ov);
+                if (String(nv || '').toLowerCase() !== 'none' && this.zTree && this.nodes?.length) {
+                    setTimeout(() => this.restorePersistedSelectionAfterStatehandlerChange(), 0);
+                }
                 break;
             default:
                 super.onPropertyChange(key, nv, ov);
@@ -220,6 +235,9 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
 
         const host = document.createElement('span');
         host.className = 'wm-tree-node-template-host wm-tree-node-item';
+        if (treeNode.disabled) {
+            host.classList.add('wm-tree-node-disabled');
+        }
         aObj.append(host);
         this.mountTreeNodeTemplateHost(host, treeNode);
     };
@@ -299,10 +317,16 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
         return nodes;
     }
 
-
     // adds class to the nodes inorder to add icons to respective node.
     private setNodeClasses(treeId, treeNode) {
-        return treeNode.icon ? {add: [`${treeNode.icon}`]} : '';
+        const add: string[] = [];
+        if (treeNode.icon) {
+            add.push(`${treeNode.icon}`);
+        }
+        if (treeNode.disabled) {
+            add.push('wm-tree-node-disabled');
+        }
+        return add.length ? { add } : '';
     };
 
     // adds tree icons to the nodes on load of the tree
@@ -331,6 +355,9 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
 
     // binds the click event to all nodes to open the child nodes
     public onClick(event, treeId, treeNode, clickFlag) {
+        if (treeNode.disabled) {
+            return;
+        }
         if(this.nodeclick === "expand") {
             var nodes = this.zTree.getSelectedNodes();
             if (nodes.length>0) {
@@ -400,6 +427,10 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             if (node.selected) {
                 zNode['selected'] = true;
             }
+            if (node.disabled) {
+                zNode['disabled'] = true;
+                zNode['chkDisabled'] = true;
+            }
             if (node.iconSkin != null && node.iconSkin !== '') {
                 zNode['iconSkin'] = node.iconSkin;
             }
@@ -420,7 +451,12 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     // Renders the tree on to the dom
     public renderTree() {
         this.destroyNodeTemplateHostRefs();
-        this.setting.view['addDiyDom'] = this.template ? this.addDiyDom : undefined;
+        this.setting.view['addDiyDom'] = this.template ? this.addDiyDom : function(treeId, treeNode) {
+            if (treeNode.disabled) {
+                const switchObj = $("#" + treeNode.tId + "_switch");
+                switchObj.addClass("wm-tree-node-disabled");
+              }
+        };
         this.nativeElement.classList.toggle('app-tree-custom', !!this.template);
         this.zTreeNodes = [];
         if(this.nodes?.length) {
@@ -433,6 +469,168 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
         this.zTree = $.fn.zTree.init($('ul[name="' + this.name + '"]'), this.setting, this.zTreeNodes);
         $.fn.zTreeKeyboardNavigation(this.zTree, $('ul[name="' + this.name + '"]'), null, this.treeicons || defaultTreeIconClass);
         this.postRenderTree();
+    }
+
+    // --- Selection state persistence (statehandler → StatePersistence: URL | localStorage | sessionStorage | none) ---
+
+    private isStatePersistenceEnabled(): boolean {
+        return !!this.statePersistence.computeMode(this.statehandler);
+    }
+
+    private clearPersistedTreeSelection(): void {
+        if (!this.isStatePersistenceEnabled()) {
+            return;
+        }
+        this.statePersistence.removeWidgetState(this, TREE_STATE_SELECTED_ID);
+        this.statePersistence.removeWidgetState(this, TREE_STATE_SELECTED_PATH);
+    }
+
+    private persistTreeSelection(path: string, nodeId: any): void {
+        if (!this.isStatePersistenceEnabled()) {
+            return;
+        }
+        const payload: Record<string, string | number> = { [TREE_STATE_SELECTED_PATH]: path };
+        if (nodeId !== undefined && nodeId !== null && nodeId !== '') {
+            payload[TREE_STATE_SELECTED_ID] = nodeId;
+        }
+        this.statePersistence.setWidgetState(this, payload);
+    }
+
+    private readPersistedTreeSelection(): any {
+        return this.isStatePersistenceEnabled() ? this.statePersistence.getWidgetState(this) : undefined;
+    }
+
+    private hasPersistedTreeSelection(widgetState: any): boolean {
+        if (!widgetState || typeof widgetState !== 'object') {
+            return false;
+        }
+        const id = get(widgetState, TREE_STATE_SELECTED_ID);
+        const path = get(widgetState, TREE_STATE_SELECTED_PATH);
+        const hasId = id !== undefined && id !== null && id !== '';
+        const hasPath = typeof path === 'string' && path.length > 0;
+        return hasId || hasPath;
+    }
+
+    private restorePersistedSelectionAfterStatehandlerChange(): void {
+        if (!this.zTree || !this.isStatePersistenceEnabled()) {
+            return;
+        }
+        const state = this.readPersistedTreeSelection();
+        if (this.hasPersistedTreeSelection(state)) {
+            this.restoreTreeSelectionFromPersistedState(state);
+        }
+    }
+
+    private getAllZTreeNodesFlat(): any[] {
+        return this.zTree ? this.zTree.transformToArray(this.zTree.getNodes()) : [];
+    }
+
+    /** String / number variants for zTree <code>getNodeByParam('nodeId', …)</code> and flatten fallback. */
+    private nodeIdLookupCandidates(raw: any): any[] {
+        const out: any[] = [];
+        const push = (v: any) => {
+            if (v !== undefined && v !== null && v !== '' && !out.includes(v)) {
+                out.push(v);
+            }
+        };
+        push(raw);
+        push(String(raw));
+        if (typeof raw === 'string' && raw.trim() !== '' && !Number.isNaN(Number(raw))) {
+            push(Number(raw));
+        }
+        return out;
+    }
+
+    /** Resolve by stored <code>nodeId</code>: <code>getNodeByParam</code> first, then flattened tree scan. */
+    private findZTreeNodeByStoredNodeId(nodeId: any): any {
+        if (!this.zTree || nodeId === undefined || nodeId === null || nodeId === '') {
+            return null;
+        }
+        const candidates = this.nodeIdLookupCandidates(nodeId);
+        if (typeof this.zTree.getNodeByParam === 'function') {
+            for (const c of candidates) {
+                const n = this.zTree.getNodeByParam('nodeId', c, null);
+                if (n) {
+                    return n;
+                }
+            }
+        }
+        const flat = this.getAllZTreeNodesFlat();
+        return (
+            flat.find(
+                (n) =>
+                    n.nodeId !== undefined &&
+                    n.nodeId !== null &&
+                    candidates.some((c) => String(n.nodeId) === String(c))
+            ) || null
+        );
+    }
+
+    private findZTreeNodeByStoredPath(persistedPath: string): any {
+        if (!persistedPath || !this.zTree) {
+            return null;
+        }
+        return (
+            this.getAllZTreeNodesFlat().find((n) => this.treePathsEqual(this.getPath(n, ''), persistedPath)) || null
+        );
+    }
+
+    /** Expand parents, zTree <code>selectNode</code>, app <code>selectNode</code> (works for default + custom templates). */
+    private applyStoredSelectionToTree(treeNode: any): void {
+        if (!treeNode || !this.zTree || treeNode.disabled) {
+            return;
+        }
+        this.expandAncestors(treeNode);
+        this.zTree.selectNode(treeNode, false);
+        this.selectNode(undefined, treeNode);
+        this.expandNode(treeNode, true, false);
+    }
+
+    /** Prefer stored id, then stored path; no-op if node missing (stale URL/storage after data change). */
+    private restoreTreeSelectionFromPersistedState(widgetState: any): boolean {
+        if (!this.zTree || !widgetState) {
+            return false;
+        }
+        const persistedId = get(widgetState, TREE_STATE_SELECTED_ID);
+        if (persistedId !== undefined && persistedId !== null && persistedId !== '') {
+            const byId = this.findZTreeNodeByStoredNodeId(persistedId);
+            if (byId) {
+                this.applyStoredSelectionToTree(byId);
+                return true;
+            }
+        }
+        const persistedPath = get(widgetState, TREE_STATE_SELECTED_PATH);
+        if (typeof persistedPath === 'string' && persistedPath.length) {
+            const byPath = this.findZTreeNodeByStoredPath(persistedPath);
+            if (byPath) {
+                this.applyStoredSelectionToTree(byPath);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private treePathsEqual(a: string, b: string): boolean {
+        if (a === b) {
+            return true;
+        }
+        const norm = (p: string) => (p.startsWith('/') ? p : '/' + p).replace(/\/+/g, '/');
+        return norm(a) === norm(b);
+    }
+
+    private expandAncestors(treeNode: any): void {
+        if (!this.zTree || !treeNode?.getParentNode) {
+            return;
+        }
+        const chain: any[] = [];
+        let p = treeNode.getParentNode();
+        while (p) {
+            chain.push(p);
+            p = p.getParentNode();
+        }
+        for (let i = chain.length - 1; i >= 0; i--) {
+            this.zTree.expandNode(chain[i], true, false, false, true);
+        }
     }
 
     private setChecked(zNode, node) {
@@ -449,8 +647,12 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
         const deSelectElm = $(`.app-tree[name=${this.name}] li[treenode].selected`);
         deSelectElm.removeClass('selected');
 
-        if(!node) {
+        if (!node) {
+            this.clearPersistedTreeSelection();
             this.refreshTreeNodeTemplateHosts();
+            return;
+        }
+        if (node.disabled) {
             return;
         }
         const selectElm = $(`#${node.tId}:has(.curSelectedNode)`);
@@ -465,6 +667,8 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
         const path = this.getPath(node, "");
         this.selecteditem = getClonedObject(node.data) || {};
         this.selecteditem.path = path;
+
+        this.persistTreeSelection(path, node.nodeId);
 
         const eventParams = {
             '$event'  : event,
@@ -491,48 +695,70 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     private postRenderTree() {
         setTimeout(() => {
             this.changeTreeIcons(this.treeicons || defaultTreeIconClass);
-
-            const allNodes = this.zTree.transformToArray(this.zTree.getNodes());
-            const selectedNode = allNodes.find(n => n.selected);
-
-            if (selectedNode) {
-                this.zTree.selectNode(selectedNode, false);
-                this.selectNode(undefined, selectedNode);
-                this.expandNode(selectedNode, true, false);
-                return;
-            }
-
-            if (this.datavalue && !this.selecteditem) {
-                const nodes = this.zTree.getNodes();
-                let node;
-                if(nodes.length) {
-                    if (this.datavalue === 'FirstNode') {
-                        node = nodes[0];
-                    }
-                    if(this.datavalue === 'LastNode') {
-                        node = nodes[nodes.length - 1];
-                    }
-                }
-
-                if(node) {
-                    this.zTree.selectNode(node, false);
-                    this.selectNode(undefined, node);
-                    this.expandNode(node, true, false);
-                }
-            }
+            this.syncSelectionAfterZTreeRender();
         }, 200);
     }
 
-    private selectById(value?) {
-        const simpleNodes = this.zTree?.transformToArray(this.zTree.getNodes());
-        const node = simpleNodes?.find(node => value === node.nodeId);
-        if(node) {
+    /**
+     * After zTree init: honor dataset <code>selected</code>, else persisted state, else <code>datavalue</code>
+     * (FirstNode / LastNode).
+     */
+    private syncSelectionAfterZTreeRender(): void {
+        if (!this.zTree) {
+            return;
+        }
+        const allNodes = this.getAllZTreeNodesFlat();
+        const selectedFromDataset = allNodes.find((n) => n.selected && !n.disabled);
+        if (selectedFromDataset) {
+            this.zTree.selectNode(selectedFromDataset, false);
+            this.selectNode(undefined, selectedFromDataset);
+            this.expandNode(selectedFromDataset, true, false);
+            return;
+        }
+
+        const persisted = this.readPersistedTreeSelection();
+        if (this.hasPersistedTreeSelection(persisted) && this.restoreTreeSelectionFromPersistedState(persisted)) {
+            return;
+        }
+
+        this.applyDatavalueDefaultSelection();
+    }
+
+    private applyDatavalueDefaultSelection(): void {
+        if (!this.datavalue || this.selecteditem) {
+            return;
+        }
+        const nodes = this.zTree.getNodes();
+        if (!nodes?.length) {
+            return;
+        }
+        let node: any;
+        if (this.datavalue === 'FirstNode') {
+            node = nodes.find((n) => !n.disabled) ?? null;
+        } else if (this.datavalue === 'LastNode') {
+            for (let i = nodes.length - 1; i >= 0; i--) {
+                if (!nodes[i].disabled) {
+                    node = nodes[i];
+                    break;
+                }
+            }
+        }
+        if (node) {
             this.zTree.selectNode(node, false);
             this.selectNode(undefined, node);
+            this.expandNode(node, true, false);
         }
     }
+
+    private selectById(value?) {
+        const node = this.findZTreeNodeByStoredNodeId(value);
+        if (node) {
+            this.applyStoredSelectionToTree(node);
+        }
+    }
+
     private deselectById(value?) {
         this.selecteditem = {};
-        this.selectById();
+        this.clearPersistedTreeSelection();
     }
 }

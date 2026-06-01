@@ -14,7 +14,15 @@ import {
 } from '@angular/core';
 
 import {
-    $appDigest, $watch, adjustVerticalPosition, AppConstants, DataSource, debounce, isDefined, switchClass, triggerFn
+    $appDigest,
+    $watch,
+    adjustVerticalPosition,
+    AppConstants,
+    DataSource,
+    debounce,
+    isDefined,
+    switchClass,
+    triggerFn
 } from '@wm/core';
 import {
     DEBOUNCE_TIMES,
@@ -151,8 +159,38 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
             }
             this.allowpagesizechange = this.parent.allowpagesizechange;
             if(this.allowpagesizechange)
-                this.defaultPageSizeOptions = this.parent?.pagesizeoptions ? this.parent.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) : [];
+                this.defaultPageSizeOptions =this.normalizeToNumberArray(this.parent?.pagesizeoptions);
         }, 0);
+    }
+    normalizeToNumberArray(input) { // Handles all formats in one place: "10,20,30", [10,20,30], "[10,20,30]"
+        if (!input) return [];
+
+        let arr;
+
+        if (Array.isArray(input)) {
+            arr = input;
+        } else if (typeof input === "string") {
+            const trimmed = input.trim();
+
+            // handle "[1,2,3]"
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                try {
+                    arr = JSON.parse(trimmed);
+                } catch {
+                    arr = [];
+                }
+            } else {
+                // handle "1,2,3"
+                arr = trimmed.split(",");
+            }
+        } else {
+            return [];
+        }
+
+        return arr
+            .map(v => Number(v))
+            .filter(v => !isNaN(v))
+            .sort((a, b) => a - b);
     }
 
     setResult(result) {
@@ -246,6 +284,12 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         return this.datasource && this.datasource.execute(DataSource.Operation.IS_PAGEABLE);
     }
 
+
+    private getPaginationStartIndex(): number {
+        const startIndex = this.datasource?._paginationConfig?.paginationStartIndex;
+        return isDefined(startIndex) && this.datasource?._paginationConfig?.type === 'page' ? Number(startIndex) : 1;
+    }
+
     // this function returns an object which gives summary of the current page data (ex: In UI it is shown as  1 to 10 out of 50 records)
     getPageDetails(startIndex, endIndex, totalRecords) {
         this.rowSummary =  (isDefined(startIndex) && isDefined(endIndex) && isDefined(totalRecords)) ? {
@@ -310,7 +354,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     maxResults = this.pagination.size = Number(this.pagination.size) ? this.pagination.size : get(this.datasource.dataSet, this.pagination.size);
                     this.pagination.numberOfElements = Number(this.pagination.numberOfElements) ? this.pagination.numberOfElements : get(this.datasource.dataSet, this.pagination.numberOfElements)
                     if (this.pagination.numberOfElements > 0) {
-                        if (isDefined(this.pagination.number)) { // number is page number received from backend
+                        if (isDefined(this.pagination.number) && this.getPaginationStartIndex() === 1) { // number is page number received from backend
                             this.dn.currentPage = this.pagination.number + 1;
                         }
                         currentPage = this.dn.currentPage || 1;
@@ -421,7 +465,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                 pageIndex = this.parent.actionRowPage;
             }
             this.datasource.execute(DataSource.Operation.LIST_RECORDS, {
-                'page': pageIndex,
+                'page': (pageIndex - 1) + this.getPaginationStartIndex(),
                 'size': this.maxResults,
                 'filterFields': this.filterFields,
                 'orderBy': this.sortOptions,
@@ -898,7 +942,6 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         this.filterFields = null;
         this.sortOptions = null;
         this.options = null;
-
         // MEMORY LEAK FIX: Clear page size options array
         if (this.pageSizeOptions) {
             this.pageSizeOptions = [];

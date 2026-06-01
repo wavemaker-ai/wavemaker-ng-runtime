@@ -98,7 +98,7 @@ export class WmAppIconComponent {
         return ['app-icon', 'app-icon-svg', ...this._extras()];
     }
     get _imageClasses(): string[] {
-        return ['app-icon', ...this._extras()];
+        return [...this._extras()];
     }
     get _fontClasses(): string[] {
         return ['app-icon', ...this._extras(), ...this._fontClass.split(/\s+/).filter(Boolean)];

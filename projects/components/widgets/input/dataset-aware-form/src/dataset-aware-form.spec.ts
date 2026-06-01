@@ -16,6 +16,7 @@ jest.mock('lodash-es', () => ({
     debounce: jest.fn(fn => fn)
 }));
 @Component({
+    standalone: false,
     selector: 'test-dataset-aware-form',
     template: '<div></div>'
 })

@@ -1,10 +1,8 @@
-import { CommonModule } from '@angular/common';
-import { TextContentDirective, WmAppIconComponent } from "@wm/components/base";
+import {CommonModule} from '@angular/common';
+import {DialogRef, ImagePipe, TextContentDirective,WmAppIconComponent} from "@wm/components/base";
 import {Component, ElementRef, Inject, Input} from '@angular/core';
 
 import {addClass, App, toBoolean} from '@wm/core';
-
-import {DialogRef} from '@wm/components/base';
 import {BaseDialog} from '../base-dialog';
 
 const DEFAULT_CLS = 'app-dialog-header modal-header';

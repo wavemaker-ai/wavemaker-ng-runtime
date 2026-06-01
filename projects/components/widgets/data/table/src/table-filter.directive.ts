@@ -353,9 +353,15 @@ export class TableFilterSortDirective implements OnDestroy {
     }
     // Function that checks if a given string is a valid date and returns the timestamp if it is, or NaN if it's not.
     parseDateString(dateString) {
+        if (typeof dateString !== 'string') {
+            return NaN;
+        }
+        const trimmed = dateString.trim();
+        if (!trimmed) {
+            return NaN;
+        }
         const timestamp = Date.parse(dateString);
         // handling case when string starts with string and end with number
-        const trimmed = dateString.trim();
         const monthRegex = /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/i;
         if (/^[A-Za-z]+/.test(trimmed) && /\d+$/.test(trimmed)  && !monthRegex.test(trimmed)) {
             return NaN;
@@ -372,21 +378,45 @@ export class TableFilterSortDirective implements OnDestroy {
     // Returns data sorted using sortObj
     getSortResult(data, sortObj) {
         if (sortObj && sortObj.direction) {
-            const fieldValue = get(find(data, sortObj.field), sortObj.field)
-            const isValidDateString = typeof fieldValue === 'string' ?  this.parseDateString(fieldValue) : NaN;
+            const sampleItem = find(data, (item) => {
+                const v = get(item, sortObj.field);
+                return typeof v === 'string' && !!v.trim();
+            });
+            const fieldValue = sampleItem ? get(sampleItem, sortObj.field) : undefined;
+            const isValidDateString = typeof fieldValue === 'string' ? this.parseDateString(fieldValue) : NaN;
             if (!isNaN(isValidDateString)) { // if the field is a date string
-                data = orderBy(data, [(item) => this.parseDateString(get(item, sortObj.field))], [sortObj.direction]);
+                data = orderBy(
+                    data,
+                    [
+                        (item) => {
+                            const v = get(item, sortObj.field);
+                            return v === null || v === undefined || v === '' ? 1 : 0;
+                        },
+                        (item) => {
+                            const ts = this.parseDateString(get(item, sortObj.field));
+                            return isNaN(ts) ? 1 : 0;
+                        },
+                        (item) => this.parseDateString(get(item, sortObj.field))
+                    ],
+                    ['asc', 'asc', sortObj.direction]
+                );
             } else if (sortObj.sortBy ? this.table.columns[sortObj.sortBy]?.caseinsensitive : this.table.columns[sortObj.field]?.caseinsensitive) {
                 //Fix for [WMS-27505]: Added case-insensitive sorting so that uppercase and lowercase letters are treated the same when sorting.
-                    data = orderBy(data, [
-                          (item) => {
+                data = orderBy(
+                    data,
+                    [
+                        (item) => {
+                            const val = get(item, sortObj.field);
+                            return val === null || val === undefined || val === '' ? 1 : 0;
+                        },
+                        (item) => {
                             const val = get(item, sortObj.field);
                             return typeof val === 'string' ? val.toLowerCase() : val;
-                          },
-                          (item) => get(item, sortObj.field) // fallback to original value
-                        ],
-                        [sortObj.direction, sortObj.direction]
-                      );
+                        },
+                        (item) => get(item, sortObj.field) // fallback to original value
+                    ],
+                    ['asc', sortObj.direction, sortObj.direction]
+                );
             } else {
                 data = orderBy(data, sortObj.field, sortObj.direction);
             }
@@ -407,6 +437,11 @@ export class TableFilterSortDirective implements OnDestroy {
         }
         if (isObject(data) && !isArray(data)) {
             data = [data];
+        }
+        if (get(this.table.datasource, 'category') === 'wm.Variable' && isArray(data)) {
+            for (let i = 0; i < data.length; i++) {
+                data[i].$$wmSourceListIndex = i;
+            }
         }
         /*Both the functions return same 'data' if arguments are undefined*/
         data = this.getSearchResult(data, this.table.filterInfo);

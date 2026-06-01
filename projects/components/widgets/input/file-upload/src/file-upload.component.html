@@ -73,7 +73,7 @@
                   @if (ft.status === 'error') {
                     <span
                       class="status-icon {{ft.status | stateClass }}"
-                    title="{{ft.errMsg || this.appLocale.MESSAGE_FILE_UPLOAD_FAILED}}"></span>
+                    title="{{ft.errMsg || appLocale.MESSAGE_FILE_UPLOAD_FAILED}}"></span>
                   }
                   @if (ft.status === 'error') {
                     <span class="error-message">Upload Failed</span>
@@ -125,7 +125,7 @@
   }
   <!-- list of selectedfolders UI to show the error in title -->
   @if (selectedFolders.length > 0) {
-    <ul class="list-group file-upload" [ngStyle]="{height: filelistheight, overflow: overflow}" title="{{this.appLocale.MESSAGE_FOLDER_UPLOADS_NOT_ALLOWED}}" >
+    <ul class="list-group file-upload" [ngStyle]="{height: filelistheight, overflow: overflow}" title="{{appLocale.MESSAGE_FOLDER_UPLOADS_NOT_ALLOWED}}" >
       @for (ft of selectedFolders; track ft) {
         <li class="list-group-item file-upload-status">
           <div class="media upload-file-list">

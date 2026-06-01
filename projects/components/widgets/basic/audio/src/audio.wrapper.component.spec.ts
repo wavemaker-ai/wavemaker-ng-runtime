@@ -12,7 +12,7 @@ import {
 } from 'projects/components/base/src/test/common-widget.specs';
 import { compileTestComponent, mockApp } from 'projects/components/base/src/test/util/component-test-util';
 
-@Pipe({ name: 'trustAs' })
+@Pipe({ name: 'trustAs', standalone: false })
 class MockTrustAsPipe implements PipeTransform {
     transform(value: string, type: string): string {
         return value;
@@ -22,6 +22,7 @@ class MockTrustAsPipe implements PipeTransform {
 const markup = `<div wmAudio name="audio" hint="audio" [attr.aria-label]="'audio'" tabindex="0"></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class AudioWrapperComponent {

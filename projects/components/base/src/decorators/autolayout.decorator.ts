@@ -258,12 +258,14 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                         break;
 
                     case "both directions":
+                    case "both":
                         target.css({
                             overflow: "scroll",
                         });
                         break;
 
                     case "no scrolling":
+                    case "none":
                         target.css({ overflow: "hidden" });
                         break;
 

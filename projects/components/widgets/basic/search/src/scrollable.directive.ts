@@ -1,6 +1,6 @@
 import { AfterContentInit, AfterViewInit, Directive, ElementRef, inject, Injector, OnDestroy } from '@angular/core';
 
-import { SearchComponent } from './search.component';
+import {SearchComponent} from './search.component';
 
 declare const $;
 

@@ -35,6 +35,7 @@ class MockAbstractDialogService {
 const markup = `<div wmPartialDialog></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class PartialDialogWrapperComponent {

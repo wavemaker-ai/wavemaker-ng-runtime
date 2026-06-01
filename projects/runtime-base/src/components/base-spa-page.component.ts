@@ -330,13 +330,19 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     ngOnDestroy(): void {
         this.savePageSnapShot();
 
-        if (this.destroy$) {
+        // MEMORY LEAK FIX: Complete Subjects to release subscriptions
+        if (this.destroy$ && !this.destroy$.closed) {
             this.destroy$.complete();
             this.destroy$ = null;
         }
-        if (this.viewInit$) {
+         // Complete all subjects to prevent memory leaks
+         if (this.viewInit$ && !this.viewInit$.closed) {
             this.viewInit$.complete();
             this.viewInit$ = null;
+        }
+        if (this.fragmentsLoaded$ && !this.fragmentsLoaded$.closed) {
+            this.fragmentsLoaded$.complete();
+            this.fragmentsLoaded$ = null;
         }
 
         this.App = null;

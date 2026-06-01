@@ -56,6 +56,12 @@ export class ListItemDirective  extends StylableComponent implements OnInit, Aft
      */
     trackId = widgetIdGenerator.nextUid();
 
+    // Store event listener references for cleanup
+    private editClickHandler;
+    private deleteClickHandler;
+    private mouseEnterHandler;
+    private mouseLeaveHandler;
+
     @HostBinding('class.active') isActive = false;
     @HostBinding('class.disable-item') disableItem = false;
 

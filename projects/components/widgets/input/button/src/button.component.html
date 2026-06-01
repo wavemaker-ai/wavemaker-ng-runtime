@@ -1,9 +1,12 @@
+@if (iconclass) {
+  <wm-app-icon [iconclass]="iconclass"
+               [iconStyle]="{width:iconwidth, height:iconheight, margin:iconmargin, fontSize:iconwidth}"></wm-app-icon>
+}
+@if (iconurl) {
+  <wm-app-icon [iconurl]="iconurl" [iconClasses]="'button-image-icon'" [iconStyle]="{width:iconwidth, height:iconheight, margin:iconmargin, fontSize:iconwidth}"></wm-app-icon>
+}
 
 @if (iconclass || iconurl) {
-  <wm-app-icon [iconurl]="iconurl"
-             iconClasses="button-image-icon"
-             alt="button image"
-             [iconStyle]="{width:iconwidth, height:iconheight, margin:iconmargin, fontSize:iconwidth}"></wm-app-icon>
   <span class="sr-only">{{caption}} {{appLocale.LABEL_ICON}}</span>
 }
 <span class="btn-caption" [innerHTML]="caption"></span>

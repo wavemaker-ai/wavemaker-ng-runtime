@@ -7,25 +7,26 @@ import {
     AbstractI18nService,
     AbstractSpinnerService,
     AbstractToasterService,
+    ConstantService,
+    DynamicComponentRefProvider,
     EventNotifier,
     FieldTypeService,
     FieldWidgetService,
     getWmProjectProperties,
     isDefined,
-    ConstantService,
-    UtilsService,
-    DynamicComponentRefProvider,
+    registerFnByExpr,
     StatePersistence,
-    Viewport,
-    registerFnByExpr
+    UtilsService,
+    Viewport
 } from '@wm/core';
-import { SecurityService } from '@wm/security';
+import {SecurityService} from '@wm/security';
 
-import { WmDefaultRouteReuseStrategy } from '../util/wm-route-reuse-strategy';
-import { PipeService } from "./pipe.service";
-import { each, get, isEmpty, isObject, isString } from "lodash-es";
+import {WmDefaultRouteReuseStrategy} from '../util/wm-route-reuse-strategy';
+import {PipeService} from "./pipe.service";
+import {each, get, isEmpty, isObject, isString} from "lodash-es";
 import * as momentLib from 'moment-timezone/moment-timezone';
-import { MODE_CONSTANTS } from '@wm/variables';
+import {MODE_CONSTANTS} from '@wm/variables';
+
 const moment = momentLib.default || window['moment'];
 
 const injectorMap = {
