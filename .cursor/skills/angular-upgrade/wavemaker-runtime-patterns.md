@@ -1,12 +1,10 @@
-# WaveMaker patterns (wavemaker-ng-runtime)
+# WaveMaker runtime patterns (wavemaker-ng-runtime)
 
-**Repository-specific pattern catalog** for Step 6 and the Step 8 preview checklist. The generic workflow is in `SKILL.md`; commands are in `repo.config.sh` (`PATTERNS_FILE` points here).
+Default entry in `PATTERNS_FILE` for this repo. Workflow and gates: `SKILL.md` + `repo.config.sh`.
 
-When copying this skill to another repo, add that repo’s own `*-patterns.md` and set `PATTERNS_FILE` in `repo.config.sh` — do not duplicate this file under a second name.
+Classify findings as `safe`, `needs-review`, `likely-breakage`, or `must-change`. **Block** on unresolved `must-change`.
 
-Below: **this repo’s** catalog. Use during **Step 6** (after Step 5). Classify findings into `safe`, `needs-review`, `likely-breakage`, or `must-change`. Stop on unresolved `must-change`.
-
-**WMS-29275 (Angular 18 → 20):** Sections marked with commit refs below come from that upgrade branch. Re-check them on every major bump — ngx-bootstrap modal APIs and patch regexes drift between v20 and v21+.
+**WMS-29275 (Angular 18 → 20):** Sections with commit refs come from that upgrade branch. Re-check on every major bump — ngx-bootstrap modal APIs and patch regexes drift between majors.
 
 ## Dependency classification (this repo)
 
@@ -21,21 +19,13 @@ Record decisions in `current-state.md` → **Dependency Decisions**.
 
 **Step 1 inventory paths:** `package.json`, lockfile, `angular.json`, `tsconfig*.json`, `build-scripts/ngx-bootstrap-patch.mjs`, `jest.config.js`, `src/setup-jest.js`.
 
-## ngx-bootstrap bundle verification (Steps 4, 6, 7, 8, 10)
+## ngx-bootstrap bundle verification
 
-Re-running the patch or `build.sh` is **not** sufficient. Always verify **built** artifacts:
-
-| When | Command |
-|------|---------|
-| Step 4 (after `npm install`, before build) | Diff patch vs upstream fesm; optional `--allow-missing` only |
-| Step 6 (pattern review) | Same; strict verify **not** valid until dist exists |
-| **Step 7 (gate — required)** | `build.sh` then **strict** `verify-ngx-bootstrap-bundle.sh` (automatic, no flags) |
-| Step 8 (preview) | Confirm preview loads `dist/bundles/wmapp/scripts/wm-libs.js` from this build |
-| Step 10 (finalize) | Record last strict verify result in `current-state.md` |
+Post-build script: `scripts/verify-ngx-bootstrap-bundle.sh` (when `POST_BUILD_VERIFY_SCRIPT` is set).
 
 **Artifacts:** `dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.bundle.js`, `dist/bundles/wmapp/scripts/wm-libs.js`.
 
-**Block** if `takeUntilDestroyed(__destroyRef)` appears in a bundle **without** `inject(…DestroyRef)`. See §6 and §12.
+Patch source: `build-scripts/ngx-bootstrap-patch.mjs`. See §6 and §12 for grep checks; Step 8 item 15 confirms patched `wm-libs.js` in preview.
 
 ## Where to search
 
@@ -47,7 +37,8 @@ Re-running the patch or `build.sh` is **not** sufficient. Always verify **built*
 | Custom DOM renderer | `projects/runtime-base/src/overrides/wm_dom_renderer.ts`, `wm_shared_styles_host.ts`, `WMDomRendererFactory2`, `RendererFactory2`, `ɵSharedStylesHost` |
 | Page params timing | `base-page.component.ts`, `base-spa-page.component.ts`, `route.snapshot.queryParams` |
 | ngx-bootstrap patch verify | `build-scripts/ngx-bootstrap-patch.mjs`, post-build grep on `wm-libs.js` / `ngx-bootstrap.bundle.js` (see §6 and §12) |
-| Transpiler / parser | `projects/transpiler/src/build.ts` (`createCompilerElement`), `parseBinding`, `@if`, `@for`, `ng-container` |
+| Transpiler / template AST | `projects/transpiler/src/build.ts` (`createCompilerElement`, `HtmlParser`), `@if`, `@for`, `ng-container` |
+| Expression parser | `projects/core/src/utils/expression-parser.ts` (`ASTCompiler`, `$parseExpr`, `$parseEvent`), `watcher.ts`, `registerFnByExpr` |
 | ngx-bootstrap | `ngx-bootstrap`, `build-scripts/ngx-bootstrap-patch.mjs`, widget `*.component.ts` under `popover`, `dropdown`, `epoch`, `dialogs` |
 | List / table embedded views | `list.component.html`, `table.component.ts`, `createEmbeddedView`, `createCustomInjector`, `ngTemplateOutletContext` |
 | Template `this.` refs | `rg 'this\.appLocale|this\._triggeredByUser' projects/components/widgets` |
@@ -119,16 +110,17 @@ rg 'compileModuleAndAllComponentsSync|Compiler' projects/runtime-base
 
 ### 4. Template parser / transpiler integration
 
-- `Parser.parseBinding()` with outdated location arguments
-- Internal `@angular/compiler` APIs with changed signatures
-- Synthetic `Element` / AST construction with old shapes
+**Scope:** markup → Angular template transpilation (`projects/transpiler/`). For **runtime bind/watch expressions**, see §19.
+
+- Internal `@angular/compiler` `Element` / AST construction with wrong arity or `endSourceSpan`
 - Duplicated `createElement` helpers in `*.build.ts` with wrong `Element` arity
+- `HtmlParser.parse()` shape changes
 
-**Risk:** parse failures on generated bindings and expressions; build-time AST construction throws.
+**Risk:** build-time template parse failures; structural directives (`showindevice`, `accessroles`, `deferload`) not wrapped correctly.
 
-**Angular 20 `Element` constructor (WMS-29275: `46917e48c`):** requires **9 arguments**. Centralize in `projects/transpiler/src/build.ts` as `createCompilerElement(name)` and remove per-file copies under `projects/components/transpile/src/**/**.build.ts`.
+**Angular 20 `Element` constructor (WMS-29275: `46917e48c`):** requires **9 arguments** including `endSourceSpan`. Centralize in `projects/transpiler/src/build.ts` as `createCompilerElement(name)` — use `noSpan` for **all three** span args (not `null` for `endSourceSpan`).
 
-**Search:** `projects/transpiler/src/build.ts`, `projects/transpiler/src/`, `projects/core/src/utils/utils.ts`.
+**Search:** `projects/transpiler/src/build.ts`, `projects/components/transpile/src/**/**.build.ts`.
 
 ### 5. Generated control flow
 
@@ -304,13 +296,14 @@ rg 'takeUntilDestroyed\(__destroyRef\)' node_modules/ngx-bootstrap/positioning/f
 
 Compare `PositioningService` constructor in `node_modules/ngx-bootstrap/positioning/fesm2022/ngx-bootstrap-positioning.mjs` to the regex in `PATCHES.positioning` — if shape changed, extend patch → `must-change`.
 
-**Step 7 — post-build gate (mandatory, strict by default):**
+**Step 7 — post-build gate (when bundle verify enabled):**
 
 ```bash
+UPGRADE_BUILD_CMD='<BUILD_CMD from repo.config>' UPGRADE_BUNDLE_VERIFY=yes \
+sh .cursor/skills/angular-upgrade/scripts/build.sh
+# or verify alone after build:
 sh .cursor/skills/angular-upgrade/scripts/verify-ngx-bootstrap-bundle.sh
 ```
-
-(Also runs automatically at the end of `scripts/build.sh`.)
 
 **Step 6 classification:**
 
@@ -532,6 +525,97 @@ rg 'createEmbeddedView\(' projects/components/widgets/data/table/src/table.compo
 
 **Fix:** success UI should accept `ft.status === 'success' || ft._response?.success`; remove `this.` from `appLocale` message bindings in `file-upload.component.html`.
 
+### 19. WaveMaker expression parser (`ASTCompiler` / `$parseExpr`)
+
+**Where:** `projects/core/src/utils/expression-parser.ts` — custom compiler over `@angular/compiler` `Parser` + `Lexer`
+
+**Consumers:** `watcher.ts` (watch expressions), `base-page.component.ts` / `base-partial.component.ts` / `base-layout.component.ts` (`registerFnByExpr` from build), widget bind/event handlers via `$parseExpr` / `$parseEvent`
+
+**Not the same as §4:** §4 is template markup transpilation; this section is **runtime JS expression** evaluation for `bind:`, watches, and `on-*` events.
+
+#### 19a. `Parser` API signatures (changes every major)
+
+Angular’s internal `Parser` **location/sourceSpan** args are mandatory from Angular 20 (WMS-29275: `b4ecc7218`):
+
+```typescript
+const createParseSourceSpan = (content: string): ParseSourceSpan => {
+  const sourceFile = new ParseSourceFile(content, '');
+  const start = new ParseLocation(sourceFile, 0, 0, 0);
+  const end = new ParseLocation(sourceFile, content.length, 0, content.length);
+  return new ParseSourceSpan(start, end);
+};
+
+parser.parseBinding(expr, createParseSourceSpan(expr), 0);
+parser.parseAction(expr, createParseSourceSpan(expr), 0);
+```
+
+**Do not revert to** `parseBinding(expr, '', 0)` or `parseAction(expr, false, '', 0)` (Angular 17 dropped the middle `false` — WMS-26038).
+
+**Step 6 classification:** string placeholder instead of `ParseSourceSpan` → `must-change`.
+
+#### 19b. `ASTCompiler` — AST node renames / removals (track across majors)
+
+`ASTCompiler.build()` must handle current `@angular/compiler` AST classes. Historical renames:
+
+| Angular bump | Change | Commit ref |
+|--------------|--------|------------|
+| 12 | `KeyedRead.obj` → `KeyedRead.receiver` | WMS-22541 |
+| 14 | `MethodCall` → `Call` | WMS-23342 |
+| 14+ | Add `Unary` handler | WMS-25048 |
+| 20 | `PropertyWrite` removed — assignment AST path commented out | WMS-29275 |
+| 20+ | **`ParenthesizedExpression`** is a distinct node — must unwrap | WMS-31316 |
+
+**WMS-31316 symptom:** watch/bind expressions like `(a && b)` or `(row.field \| pipe)` compile to **noop** — widgets never update, no console error.
+
+**Fix:** import `ParenthesizedExpression` and add:
+
+```typescript
+} else if (ast instanceof ParenthesizedExpression) {
+  return this.build(ast.expression, stmts);
+}
+```
+
+**Step 6:** after `@angular/compiler` bump, grep upstream AST exports and diff against `ASTCompiler.build()` instanceof chain — any new wrapper node → `likely-breakage` until handled.
+
+#### 19c. Precompiled vs runtime fallback paths
+
+Two evaluation paths (order matters):
+
+1. **Build-time (preferred):** page/partial build emits fn defs; runtime calls `registerFnByExpr(expr, fn, usedPipes)` in `base-page.component.ts` et al.
+2. **Runtime fallback:** `$parseExpr` / `$parseEvent` parse + `ASTCompiler.compile()` when precompiled fn missing.
+
+**`setPipeProvider`:** if `pipeProvider` is unset, `$parseExpr` returns **`noop`** — all dynamic bindings silently fail. Ensure `PipeService` initializes pipe provider during app bootstrap (ties to §7 `APP_INITIALIZER` deps).
+
+**CSP path:** when `new Function()` is blocked, bindings fall back to `lodash.get(ctx, expr)` (limited); events use `simpleFunctionEvaluator` (simple `fn(arg)` only). Strict CSP preview may break complex expressions even when dev works.
+
+#### 19d. Pipes in expressions
+
+- `BindingPipe` nodes compiled via `processPipe()`; pure pipes cached with `getPurePipeVal`.
+- Precompiled fns carry `usedPipes` — `registerFnByExpr(expr, fn, usedPipes)` must preserve pipe list or pipe transforms fail at runtime.
+- **Preview:** bindings using `| date`, `| number`, `| filter`, custom pipes.
+
+#### 19e. Method call context binding
+
+`processMethodCall()` binds implicit-receiver calls with `.bind(_ctx)`; property-receiver calls bind to computed context. Regressions here break `Widgets.foo()` / `Variables.bar.invoke()` in expressions (WMS-23342 fix). Re-test after compiler bump.
+
+**Step 6 grep:**
+
+```bash
+rg 'parseBinding|parseAction|ParenthesizedExpression|PropertyWrite|MethodCall|KeyedRead' projects/core/src/utils/expression-parser.ts
+rg 'registerFnByExpr|setPipeProvider|\$parseExpr' projects/runtime-base projects/core
+```
+
+**Step 6 classification:**
+
+| Finding | Label |
+|---------|--------|
+| `parseBinding(expr, '',` or missing `createParseSourceSpan` | `must-change` |
+| New compiler AST class not in `ASTCompiler.build()` | `likely-breakage` |
+| `ParenthesizedExpression` import/handler missing | `likely-breakage` (watch/bind with parentheses) |
+| `setPipeProvider` not called before first `$parseExpr` | `likely-breakage` |
+
+**Preview:** page with **watch** on parenthesized expression; bind with **pipe**; **on-click** action calling page method with args.
+
 ---
 
 ## Classification guide
@@ -547,7 +631,11 @@ rg 'createEmbeddedView\(' projects/components/widgets/data/table/src/table.compo
 
 ## Preview validation checklist (Step 8)
 
-With the user’s **preview URL** loaded (browser MCP or manual):
+Same flows on **Comparison URL** then **Preview URL** (from `repo.config.sh`). Record in `current-state.md` → **Preview Validation**.
+
+### Checklist (preview URL)
+
+With **Preview URL** loaded (browser MCP or manual):
 
 1. App shell loads without console errors (no `overrideRouterOutlet` / `reading 'attach'` on first paint; no CSP `style-src` violations from dynamic styles)
 2. **Page with query params** — variables see params on first load (not only after re-navigation)
@@ -562,6 +650,7 @@ With the user’s **preview URL** loaded (browser MCP or manual):
 11. **File upload** success state and delete action
 12. **Table** bound to modal/script variable shows data (not empty grid / stuck loading)
 13. No `NG0201` / injector errors in console
-14. Menu / typeahead / any overlay widget (confirms ngx-bootstrap bundle patch in `wm-libs.js`)
+14. **Watch / bind expressions** — parenthesized expr and piped bind update correctly (§19)
+15. Menu / typeahead / any overlay widget (confirms ngx-bootstrap bundle patch in `wm-libs.js` when Step 0 verify = yes)
 
-Record pass/fail and URLs/paths exercised in `current-state.md`.
+Record pass/fail, comparison URL notes, and regressions vs baseline in `current-state.md`.

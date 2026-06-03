@@ -13,7 +13,7 @@ if [ ! -f "$REPO_ROOT/package.json" ]; then
 fi
 
 if [ ! -f "$SKILL_DIR/repo.config.sh" ]; then
-  echo "error: missing $SKILL_DIR/repo.config.sh (copy from repo.config.example.sh)" >&2
+  echo "error: missing $SKILL_DIR/repo.config.sh" >&2
   exit 1
 fi
 

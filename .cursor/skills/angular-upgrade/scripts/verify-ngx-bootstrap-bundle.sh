@@ -6,9 +6,6 @@
 # Usage:
 #   sh scripts/verify-ngx-bootstrap-bundle.sh
 #
-# Pre-build only (Steps 4–6 before dist exists): agent may pass --allow-missing
-#   to check patch script + upstream without failing on absent bundles.
-#
 # Exit codes: 0 = pass, 1 = unpatched bundle content, 2 = required artifacts missing
 
 set -e
@@ -23,21 +20,13 @@ if [ ! -f "$REPO_ROOT/package.json" ]; then
 fi
 
 if [ ! -f "$SKILL_DIR/repo.config.sh" ]; then
-  echo "error: missing $SKILL_DIR/repo.config.sh (copy from repo.config.example.sh)" >&2
+  echo "error: missing $SKILL_DIR/repo.config.sh" >&2
   exit 1
 fi
 
 # shellcheck source=../repo.config.sh
 . "$SKILL_DIR/repo.config.sh"
 cd "$REPO_ROOT"
-
-ALLOW_MISSING=false
-for arg in "$@"; do
-  case "$arg" in
-    --allow-missing) ALLOW_MISSING=true ;;
-    --strict) ;; # no-op; kept for older docs
-  esac
-done
 
 NGX_BUNDLE="$REPO_ROOT/dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.bundle.js"
 WM_LIBS="$REPO_ROOT/dist/bundles/wmapp/scripts/wm-libs.js"
@@ -94,16 +83,8 @@ verify_bundle "ngx-bootstrap.bundle.js" "$NGX_BUNDLE"
 verify_bundle "wm-libs.js" "$WM_LIBS"
 
 if [ "$MISSING" -eq 1 ]; then
-  if [ "$ALLOW_MISSING" = true ]; then
-    echo "WARN (--allow-missing): dist bundles absent — run sh build.sh -f before Step 7"
-    if [ "$FAIL" -eq 0 ]; then
-      echo "=== ngx-bootstrap upstream/patch checks passed (bundles not built yet) ==="
-      exit 0
-    fi
-  else
-    echo "FAIL: run sh build.sh -f before bundle verification"
-    exit 2
-  fi
+  echo "FAIL: run sh build.sh -f before bundle verification"
+  exit 2
 fi
 
 if [ "$FAIL" -eq 1 ]; then

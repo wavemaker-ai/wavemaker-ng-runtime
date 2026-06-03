@@ -1,250 +1,185 @@
 ---
 name: angular-upgrade
 description: >-
-  Resumable Angular major-upgrade workflow for any repository. Configure commands
-  in repo.config.sh and patterns in PATTERNS_FILE. Runs install, security audit,
-  repo pattern review, build, preview validation, and mandatory unit tests.
-  Resumes from current-state.md.
+  Resumable Angular upgrade workflow. Versions and preview URLs come from repo.config.sh;
+  optional gate overrides and build command at Step 0. Runs Steps 1–10. Resumes from current-state.md.
 ---
 
-# Angular upgrade (generic)
+# Angular upgrade
 
-Conservative, **resumable** workflow for upgrading the Angular platform in **any** repository. State: `current-state.md`. History: `upgrade-history.md` (append one section per completed major bump).
+Conservative, **resumable** workflow. State: `current-state.md`. Summary: `docs/{major}-upgrade.md` (Step 10).
+
+**Principles:** one Angular major per run; `repo.config.sh` is source of truth for versions/URLs; stop on `blocked`; minimal code changes outside Step 3 package edits and pattern-driven fixes; every step has a pass/fail/skip before advancing.
+
+**Configuration:** `repo.config.sh` holds versions, preview URLs, build commands, optional gates, and `PATTERNS_FILE`. Step 0 reads it — do **not** ask the user for versions or URLs. Optional chat overrides: `verify yes/no`, `tests yes/no`, custom build command.
 
 ## Port to another repository
 
-1. Copy the entire `.cursor/skills/angular-upgrade/` folder.
-2. Edit **`repo.config.sh`** (commands, optional post-build verify script name, `PATTERNS_FILE`).
-3. Add or replace the patterns file named by **`PATTERNS_FILE`** (this repo: `wavemaker-patterns.md`).
-4. Reset **`current-state.md`** from the template in this file.
-5. Append **`upgrade-history.md`** when an upgrade completes.
+1. Copy `.cursor/skills/angular-upgrade/`.
+2. Edit **`repo.config.sh`** — versions, URLs, `BUILD_CMD`, gates, **`PATTERNS_FILE`**.
+3. Reset **`current-state.md`** from the template at the bottom of this file.
 
-**Only `repo.config.sh` and the `PATTERNS_FILE` patterns doc should differ between repos.** Scripts under `scripts/` are shared.
+### `PATTERNS_FILE`
 
-## Accepted prompt forms
+Comma-separated pattern markdown paths. Agent reads all in order for Steps 1–2, 6, and 8.
 
-| User says | Meaning |
+| Path form | Example |
 |-----------|---------|
-| “Upgrade Angular to …” / “Angular N+1” | Full workflow from Step 0 |
-| “Resume Angular upgrade” | Read `current-state.md`, continue first non-`done` step |
-| “Run security / build / tests” | That step’s scripts if prior steps allow or user overrides |
-| “Validate preview at …” | Step 8; store URL in `current-state.md` |
-| “Rerun build gate” | Step 7 (+ post-build verify if configured) |
+| Skill folder | `wavemaker-runtime-patterns.md` |
+| Sibling repo | `../other-repo/.cursor/skills/angular-upgrade/other-patterns.md` |
+| Absolute | `/path/to/patterns.md` |
 
-## Files
-
-| File | Purpose |
-|------|---------|
-| `repo.config.sh` | **Per-repo** install, build, test commands; optional verify script |
-| `repo.config.example.sh` | Template for new repos |
-| `PATTERNS_FILE` (e.g. `wavemaker-patterns.md`) | **Per-repo** Step 6 greps + Step 8 preview checklist |
-| `SKILL.md` | Generic workflow (this file) |
-| `README.md` | Human index |
-| `current-state.md` | Resumable status |
-| `upgrade-history.md` | Per-upgrade engineering record (skill folder) |
-| `upgrade-summary-template.md` | Template for Step 10 `docs/{major}-upgrade.md` |
-| `references.md` | External links (Step 2) |
-| `scripts/install.sh` | `INSTALL_CMD` |
-| `scripts/audit.sh` | Security gate: audit → fix → audit |
-| `scripts/build.sh` | `BUILD_CMD` / `BUILD_CMD_FULL`; runs optional post-build verify |
-| `scripts/test.sh` | `TEST_CMD` (**mandatory** Step 9) |
-| `scripts/verify-*.sh` | Optional; referenced by `POST_BUILD_VERIFY_SCRIPT` |
-
-Script paths are relative to the skill: `.cursor/skills/angular-upgrade/scripts/`.
-
-## Post-build verification (optional)
-
-If `repo.config.sh` sets `POST_BUILD_VERIFY_SCRIPT` (e.g. `verify-ngx-bootstrap-bundle.sh`), `scripts/build.sh` runs it after the build. **Block Step 7** on non-zero exit. Record results under **Post-build verify** in `current-state.md`.
-
-If empty, skip — no bundle verify section required.
-
-Before `dist` exists: optional `--allow-missing` on verify scripts that support it (Steps 4–6 only, not Step 7/8).
-
-## Unit tests (Step 9) — mandatory
-
-**Always run** `scripts/test.sh` after Step 8 is `done` (or Step 8 skipped by user for build-only). Do not skip unless the user explicitly aborts the whole upgrade.
-
-On failure: list failing spec paths, set Step 9 `blocked`, stop.
-
-## Preview scope (Step 8)
-
-Validate only the preview URL from Step 0. Skip if user chose build-only. Do not expand scope unless asked.
-
-## Status values
-
-| Status | Meaning |
-|--------|---------|
-| `pending` | Not started |
-| `in_progress` | Running |
-| `done` | Success |
-| `blocked` | Failed or waiting on user |
-
-Resume at the first step not `done`. Update `current-state.md` after every step.
+**Resolution:** absolute → skill folder → repo root. **Block** Step 6 if any file is missing or has unresolved `must-change`. Record resolved paths under **Pattern files** in `current-state.md`.
 
 ---
 
 ## Step 0 — Upgrade gate
 
-**HARD STOP** before editing `package.json`. Do not assume target version or preview URL.
+**HARD STOP** before editing `package.json`. Read **`repo.config.sh`**; do not ask for versions or preview URLs.
 
-Ask (or use values from the user message):
+| Variable | Purpose |
+|----------|---------|
+| `ANGULAR_BASE_VERSION` / `ANGULAR_TARGET_VERSION` | Major numbers only; both required |
+| `PREVIEW_URL` | Upgraded build; empty or `skip` → Step 8 skipped |
+| `COMPARISON_URL` | Baseline on base version; **required** when `PREVIEW_URL` is set |
+| `BUILD_CMD` | Full rebuild — required to mark Step 7 `done` |
+| `BUILD_CMD_INCREMENTAL` | Optional; `scripts/build.sh --incremental` only |
 
-1. **Target Angular major** (one major at a time unless user insists otherwise)
-2. **Preview URL** for Step 8, or **build-only** (skip preview after Step 7)
-3. **Branch** (optional)
+**Optional overrides** (user message only — never ask):
 
-Record in `current-state.md` → **Project**. Set Step 0 `done`.
+| Override | Default when gate configured |
+|----------|-------------------------------|
+| Bundle verify (`verify yes/no`) | `DEFAULT_RUN_BUNDLE_VERIFY` (yes) |
+| Unit tests (`tests yes/no`) | `DEFAULT_RUN_TESTS` (yes) |
+| Build command | `BUILD_CMD` |
+
+When `POST_BUILD_VERIFY_SCRIPT` or `TEST_CMD` is empty, record gate as **`n/a`**.
+
+If user says “start upgrade” / “resume upgrade” with no overrides, load from `repo.config.sh`, set Step 0 `done`, run Steps 1–10.
 
 ---
 
-## Step 1 — Detect and inventory
+## Steps 1–10
 
-Read `package.json`, lockfile, `angular.json`, `tsconfig*.json`, test config, and any paths listed in the file named by **`PATTERNS_FILE`** in `repo.config.sh`.
+| Step | Name | Gate | Verify before `done` |
+|------|------|------|----------------------|
+| 0 | Upgrade gate | **Yes** | repo.config loaded; overrides recorded |
+| 1 | Detect and inventory | **Yes** | Angular matches base; pattern paths resolved |
+| 2 | Plan upgrade path | **Yes** | [`references.md`](./references.md) + all pattern files read |
+| 3 | Apply package upgrades | **Yes** | `package.json` edited; **no install yet** |
+| 4 | Install | **Yes** | `scripts/install.sh` exit 0 |
+| 5 | Security gate | **Yes** | `scripts/audit.sh`; block on critical/high |
+| 6 | Repo pattern review | **Yes** | greps run; no unresolved `must-change` |
+| 7 | Build gate | **Yes** | full `BUILD_CMD` pass (+ verify if enabled) |
+| 8 | Preview validation | Optional | skip if `PREVIEW_URL` empty; else both URLs checked |
+| 9 | Unit tests | Optional | skip if tests=no/n/a or `TEST_CMD` empty |
+| 10 | Finalize | **Yes** | `docs/{major}-upgrade.md` written |
 
-Record current vs target versions, engines, and key ecosystem packages in `current-state.md`. Set Step 1 `done`.
+**Resume:** first step not `done`; do not skip `blocked` unless user clears it. Update `current-state.md` after every step. Re-read `repo.config.sh` before Step 7.
 
-## Step 2 — Plan upgrade path
+### Step 1 — Detect and inventory
 
-1. Read `references.md` and [Angular Update Guide](https://angular.dev/update-guide) for the target major.
-2. Use the **`PATTERNS_FILE`** doc for repo-specific dependency and patch risks.
-3. Plan version bumps, deferred packages, and post-build verify (if any).
-4. Stub a new section in `upgrade-history.md` (`NN → NN+1`, date).
+Read `package.json`, lockfile, `angular.json`, `tsconfig*.json`, test config, and inventory paths from every pattern file. Confirm installed Angular matches `ANGULAR_BASE_VERSION` (or note drift).
 
-Set Step 2 `done`.
+### Step 2 — Plan upgrade path
 
-## Step 3 — Apply package upgrades (edit only)
+1. [`references.md`](./references.md) for target-major compatibility.
+2. All pattern files for repo-specific risks.
+3. Plan base → target bumps; note verify/preview/tests from repo.config.
 
-Edit `package.json` / `overrides` per Step 2. **Do not install yet.** Record changes in `current-state.md`. Set Step 3 `done`.
+### Step 3 — Apply package upgrades
 
-## Step 4 — Install
+Edit `package.json` / overrides per Step 2. **Do not install.** Record under **Package changes**.
+
+### Step 4 — Install
 
 ```bash
 sh .cursor/skills/angular-upgrade/scripts/install.sh
 ```
 
-Uses `INSTALL_CMD` from `repo.config.sh`. Optional pre-build verify with `--allow-missing` if configured. Set Step 4 `done` or `blocked`.
-
-## Step 5 — Security gate
+### Step 5 — Security gate
 
 ```bash
 sh .cursor/skills/angular-upgrade/scripts/audit.sh
 ```
 
-- Allowed: `npm audit fix` only (no `--force` without user approval).
-- **Block** on remaining **critical** or **high** (without approved exception).
-- **Moderate/low** with no fix: record and continue unless user stops.
-- Scripts treat audit exit code **1** as “vulns listed”, not script failure.
+Block on **critical** / **high** (without approved exception). If `npm audit fix` changed lockfile, re-run `install.sh` before Step 6.
 
-If `audit.sh` (fix pass) changes lockfile, re-run `install.sh`. Set Step 5 `done` or `blocked`.
+### Step 6 — Repo pattern review
 
-## Step 6 — Repo pattern review
-
-1. Read the patterns file named by **`PATTERNS_FILE`** in `repo.config.sh`.
-2. Run greps and checks listed there on the **final** dependency tree.
-3. Record under **Pattern findings** in `current-state.md`.
+1. Read every `PATTERNS_FILE` entry in order.
+2. Run greps/checks from each file.
+3. Merge into **Pattern findings** (`safe`, `needs-review`, `likely-breakage`, `must-change`).
 4. **Block** on unresolved `must-change`.
 
-Set Step 6 `done` or `blocked`.
-
-## Step 7 — Build gate
+### Step 7 — Build gate
 
 ```bash
-sh .cursor/skills/angular-upgrade/scripts/build.sh -f
+# Full rebuild (required for Step 7 done)
+UPGRADE_BUILD_CMD='sh build.sh -f' UPGRADE_BUNDLE_VERIFY=yes \
+  sh .cursor/skills/angular-upgrade/scripts/build.sh
+
+# Mid-upgrade quick check only — do not mark Step 7 done on this alone
+sh .cursor/skills/angular-upgrade/scripts/build.sh --incremental
 ```
 
-Uses `BUILD_CMD_FULL` from `repo.config.sh`. Incremental: `build.sh` without `-f`.
+- Block on full build failure.
+- Block on bundle verify failure when verify = **yes** and `POST_BUILD_VERIFY_SCRIPT` is set.
+- Record **Build** and **Post-build verify** (`pass` / `fail` / `skipped — Step 0` / `skipped — not configured`).
 
-- **Block** on build failure or optional post-build verify failure.
-- Record under **Build** and **Post-build verify** in `current-state.md`.
+When gate not configured, omit `UPGRADE_BUNDLE_VERIFY` or use `n/a`.
 
-Set Step 7 `done` or `blocked`.
+### Step 8 — Preview validation
 
-## Step 8 — Preview validation
+Skip when `PREVIEW_URL` empty or `skip` — mark `done` with skip note.
 
-When Step 7 is `done` and a preview URL was recorded in Step 0:
+When set: load both URLs from repo.config; run preview checklist from each pattern file; same flows on comparison then preview; use browser tools when available. Block on regressions.
 
-1. Confirm post-build verify passed if configured.
-2. Load preview URL; follow checklist in the **`PATTERNS_FILE`** doc.
-3. Use browser tools when available; otherwise provide manual checklist.
+### Step 9 — Unit tests
 
-Skip if build-only. Set Step 8 `done` or `blocked`.
-
-## Step 9 — Unit test gate (mandatory)
-
-When Step 8 is `done` (or skipped build-only):
+Skip when Step 0 tests = **no** / **n/a**, or `TEST_CMD` empty.
 
 ```bash
 sh .cursor/skills/angular-upgrade/scripts/test.sh
 ```
 
-Uses `TEST_CMD` from `repo.config.sh`. **Block** on failure. Set Step 9 `done` or `blocked`.
+Block on failure.
 
-## Step 10 — Finalize
+### Step 10 — Finalize
 
-When Steps 0–9 are `done`:
-
-1. Summarize upgrade in chat.
-2. Complete the matching section in **`upgrade-history.md`** (engineering record inside the skill folder).
-3. **Write the upgrade summary doc** at repo root (required):
-   - Path from `UPGRADE_DOC_PATH` in `repo.config.sh`, with `{major}` replaced by the **target Angular major** from Step 0 (e.g. `docs/21-upgrade.md`).
-   - Use [`upgrade-summary-template.md`](./upgrade-summary-template.md) for structure.
-   - Populate from `current-state.md`, `package.json`, and the new `upgrade-history.md` section — do not leave placeholders.
-
-### Required sections in `docs/{major}-upgrade.md`
+1. Summarize in chat (versions, pass/fail/skip for steps 7–9).
+2. Write **`docs/{major}-upgrade.md`** (`UPGRADE_DOC_PATH`, `{major}` = `ANGULAR_TARGET_VERSION`):
 
 | Section | Content |
 |---------|---------|
-| **Libraries upgraded** | Table: package, version before → after (`@angular/*`, CLI, TypeScript, RxJS, zone.js, ngx-bootstrap, jest-preset-angular, and other bumped ecosystem libs) |
-| **Compatibility changes** | Code/config/build/test fixes made so the app works on the target major (NgModule/bootstrap, HostListener, rollup paths, patches, etc.) |
-| **Patches and build hooks** | Repo-specific patches (e.g. ngx-bootstrap) and verify gates |
-| **Validation completed** | Install, security, patterns, build, post-build verify, tests, preview — pass/fail/skip |
-| **New platform features intentionally not adopted** | Angular/ecosystem features available on the target major that were **skipped** because they are optional modernization or likely to break runtime, studio preview, or generated apps (e.g. full zoneless migration, signal-only rewrite, removing all NgModules, experimental APIs). One row per item with reason. |
-| **Known follow-ups** | Preview gaps, test env issues, security exceptions, studio follow-up |
-| **Security notes** | Audit outcome (e.g. remaining moderate transitive issues) |
+| Libraries upgraded | Package table: before → after |
+| Compatibility changes | Code/config/build fixes |
+| Patches and build hooks | e.g. ngx-bootstrap patch + verify |
+| Validation completed | Install through preview — pass/fail/skip |
+| New platform features not adopted | Optional modernization skipped + reason |
+| Known follow-ups | Preview gaps, test env, cross-repo work |
+| Security notes | Audit outcome |
 
-4. Record the doc path under **Upgrade summary doc** in `current-state.md`.
-5. Note follow-ups outside this repo if any.
-
-**Block** Step 10 if the summary doc is missing or still has unfilled template placeholders.
-
-Set Step 10 `done`.
+3. Record path under **Upgrade summary doc**. Block if doc missing or has placeholders.
 
 ---
 
-## Decision rules
+## Scripts and files
 
-- One Angular major per upgrade unless user approves otherwise.
-- Official Angular docs over blog posts.
-- Separate compatibility fixes from optional modernization.
-- Stop on unresolved `must-change` patterns or failed mandatory gates (build, tests, configured verify).
-- Never repeat completed steps — use `current-state.md`.
-
----
-
-## Output expectations
-
-1. Completed step(s)  
-2. Next step  
-3. Blockers  
-4. Package changes  
-5. Security result  
-6. Pattern findings summary  
-7. Build result (+ post-build verify if any)  
-8. Preview result  
-9. **Test result (mandatory)**  
-10. Finalize notes + path to `docs/{major}-upgrade.md`  
-
----
-
-## What to commit
-
-| Path | Commit? |
+| File | Purpose |
 |------|---------|
-| Skill folder (`SKILL.md`, `repo.config.sh`, `PATTERNS_FILE`, `scripts/*`, `README.md`) | Yes — customize `repo.config` + patterns file per repo |
-| `upgrade-history.md` | Yes — per-major engineering record in skill folder |
-| `docs/{major}-upgrade.md` | Yes — Step 10 summary (commit with upgrade or immediately after) |
-| `current-state.md` | Optional working snapshot |
-| Application code / lockfile | Separate commit(s) |
+| `SKILL.md` | Workflow (this file) |
+| `repo.config.sh` | Versions, URLs, build, gates, `PATTERNS_FILE` |
+| `references.md` | Step 2 link catalog |
+| `wavemaker-runtime-patterns.md` | Default runtime patterns (override via `PATTERNS_FILE`) |
+| `current-state.md` | Resumable status |
+| `scripts/install.sh` | Step 4 |
+| `scripts/audit.sh` | Step 5 |
+| `scripts/build.sh` | Step 7 |
+| `scripts/test.sh` | Step 9 |
+| `scripts/verify-ngx-bootstrap-bundle.sh` | Optional post-build verify (this repo) |
+
+**Chat recap after each session:** completed step(s), next step, blockers, repo.config recap, package/security/pattern summary, build/verify/preview/tests results.
 
 ---
 
@@ -253,37 +188,47 @@ Set Step 10 `done`.
 ```md
 # Current State
 
+## Upgrade config (repo.config.sh)
+- Base Angular: (ANGULAR_BASE_VERSION)
+- Target Angular: (ANGULAR_TARGET_VERSION)
+- Preview URL: (PREVIEW_URL or skip)
+- Comparison URL: (COMPARISON_URL or n/a)
+- Build command: (BUILD_CMD)
+- Incremental build: (BUILD_CMD_INCREMENTAL or empty)
+
+## Step 0 overrides (optional — user message only)
+- Run bundle verify: yes | no | n/a
+- Run unit tests: yes | no | n/a
+- Build command override: (only if user specified; else use BUILD_CMD)
+
 ## Project
 - Branch:
 - Started:
-- Preview URL:
-- Current Angular:
-- Target Angular:
 - Node (engines):
 - npm (engines):
 
 ## Step Status
 | Step | Name | Status | Notes |
 |---|---|---|---|
-| 0 | Upgrade gate | pending | |
+| 0 | Upgrade gate | pending | read repo.config.sh |
 | 1 | Detect and inventory | pending | |
 | 2 | Plan upgrade path | pending | |
-| 3 | Apply package upgrades (edit only) | pending | |
+| 3 | Apply package upgrades | pending | |
 | 4 | Install | pending | |
 | 5 | Security gate | pending | |
 | 6 | Repo pattern review | pending | |
 | 7 | Build gate | pending | |
-| 8 | Preview validation | pending | |
-| 9 | Unit test gate | pending | mandatory |
+| 8 | Preview validation | pending | skip if PREVIEW_URL empty |
+| 9 | Unit test gate | pending | skip if Step 0 tests=no or n/a |
 | 10 | Finalize | pending | |
 
 ## Dependency Decisions
-- Upgrade with Angular:
-- Tooling:
-- Deferred:
-- overrides:
 
 ## Package changes
+
+## Pattern files
+- PATTERNS_FILE (from repo.config.sh):
+- Resolved paths:
 
 ## Pattern findings
 - safe:
@@ -292,24 +237,22 @@ Set Step 10 `done`.
 - must-change:
 
 ## Security
-- First audit:
-- Audit fix:
-- Final audit:
 
 ## Build
 
 ## Post-build verify
+- Result: pass | fail | skipped — Step 0 | skipped — not configured
 
 ## Unit tests
-- Result:
-- Failing specs:
+- Result: pass | fail | skipped — Step 0 | skipped — not configured
 
 ## Preview Validation
-- Result:
-- Issues:
+- Preview URL result:
+- Comparison URL result:
+- Regressions vs baseline:
 
 ## Upgrade summary doc
-- Path (docs/{major}-upgrade.md):
+- Path:
 - Written:
 
 ## Deferred / user decisions
