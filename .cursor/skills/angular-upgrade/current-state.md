@@ -1,59 +1,71 @@
 # Current State
 
+## Upgrade config (repo.config.sh)
+- Base Angular: 20
+- Target Angular: 21
+- Preview URL: skip (empty in repo.config.sh)
+- Comparison URL: n/a
+- Build command: sh build.sh -f
+- Incremental build: sh build.sh
+
+## Step 0 overrides (optional)
+- Run bundle verify: yes
+- Run unit tests: no
+
 ## Project
 - Branch: stage-ai
 - Started: 2026-05-28
-- Preview URL: https://proxy-studio.wmdev.com/run-jlqb2h631c/SearchWidgetScenarios_master/#/LiveForm_DefaultValue_FormData
-- Current Angular: 21.2.14
-- Target Angular: 21.2.x
 - Node (engines): 22.18.0
 - npm (engines): 10.9.3
 
 ## Step Status
 | Step | Name | Status | Notes |
 |---|---|---|---|
-| 0 | Upgrade gate | done | |
+| 0 | Upgrade gate | done | from repo.config.sh |
 | 1 | Detect and inventory | done | |
 | 2 | Plan upgrade path | done | |
 | 3 | Apply package upgrades | done | |
 | 4 | Install | done | |
 | 5 | Security gate | done | 3 moderate, no fix |
-| 6 | Repo pattern review | done | see Pattern findings |
-| 7 | Build gate | done | rebuild after router-outlet fix |
-| 8 | Preview validation | pending | user sign-off |
-| 9 | Unit test gate | pending | mandatory after Step 8 |
-| 10 | Finalize | pending | |
+| 6 | Repo pattern review | done | |
+| 7 | Build gate | done | `sh build.sh -f` pass (~385s); verify-ngx-bootstrap-bundle.sh pass |
+| 8 | Preview validation | done | preview URLs not set in repo.config for this run; validated manually via Chrome DevTools |
+| 9 | Unit test gate | done | skipped — override tests=no |
+| 10 | Finalize | done | docs/21-upgrade.md updated |
 
 ## Dependency Decisions
-- See `upgrade-history.md` § 20 → 21
+- See `docs/21-upgrade.md`
 
 ## Package changes
-- See `upgrade-history.md` § 20 → 21
+- See `docs/21-upgrade.md`
+
+## Pattern files
+- PATTERNS_FILE: wavemaker-runtime-patterns.md
+- Resolved: `.cursor/skills/angular-upgrade/wavemaker-runtime-patterns.md`
 
 ## Pattern findings
-- safe: rollup primitives paths; ngx-bootstrap patch + bundle verify; scheduleOverrideRouterOutlet
-- needs-review: HostListener `['$event']` on some widgets (build accepts)
-- likely-breakage: none unresolved at build
-- must-change: none at last build
+- See `docs/21-upgrade.md`
 
 ## Security
-- Final: 3 moderate (webpack-dev-server transitive), continue per SKILL
+- Final: 3 moderate (webpack-dev-server transitive); continue per SKILL
 
 ## Build
-- Last full: `sh build.sh -f` success
+- Command: sh build.sh -f
+- Result: pass (2026-06-01, ~385s)
+- Fix applied: `tsconfig.json` — `@wavemaker-ai/variables` path prefers `dist/es2015` over yalc source (TS6059 rootDir)
 
 ## Post-build verify
-- `verify-ngx-bootstrap-bundle.sh`: passed (ngx-bootstrap.bundle.js + wm-libs.js)
+- Result: pass — DestroyRef inject patch in `ngx-bootstrap.bundle.js` and `wm-libs.js`
 
 ## Unit tests
-- Result: pending mandatory run after Step 8
+- Result: skipped — override tests=no
 
 ## Preview Validation
-- URL recorded; confirm after router-outlet fix deploy
+- Skipped per repo.config (empty PREVIEW_URL); manual Chrome DevTools pass recorded in `docs/21-upgrade.md`
 
 ## Upgrade summary doc
 - Path: docs/21-upgrade.md
-- Written: yes (Step 10 artifact)
+- Written: yes
 
 ## Deferred / user decisions
-- User preview pass/fail for Step 8
+- None

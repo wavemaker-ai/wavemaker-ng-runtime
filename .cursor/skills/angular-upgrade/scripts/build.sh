@@ -1,9 +1,9 @@
 #!/bin/sh
-# Build gate (Step 7). Commands from repo.config.sh.
+# Build gate (Step 7). Command from UPGRADE_BUILD_CMD or repo.config BUILD_CMD / BUILD_CMD_INCREMENTAL.
 #
 # Usage:
-#   sh scripts/build.sh       # BUILD_CMD (incremental)
-#   sh scripts/build.sh -f    # BUILD_CMD_FULL (recommended after Angular upgrade)
+#   UPGRADE_BUILD_CMD='sh build.sh -f' UPGRADE_BUNDLE_VERIFY=yes sh scripts/build.sh
+#   sh scripts/build.sh --incremental
 
 set -e
 
@@ -17,7 +17,7 @@ if [ ! -f "$REPO_ROOT/package.json" ]; then
 fi
 
 if [ ! -f "$SKILL_DIR/repo.config.sh" ]; then
-  echo "error: missing $SKILL_DIR/repo.config.sh (copy from repo.config.example.sh)" >&2
+  echo "error: missing $SKILL_DIR/repo.config.sh" >&2
   exit 1
 fi
 
@@ -25,29 +25,63 @@ fi
 . "$SKILL_DIR/repo.config.sh"
 cd "$REPO_ROOT"
 
-USE_FULL=false
+USE_INCREMENTAL=false
 EXTRA_ARGS=""
 for arg in "$@"; do
   case "$arg" in
-    -f|--full|--force) USE_FULL=true ;;
+    -i|--incremental) USE_INCREMENTAL=true ;;
     *) EXTRA_ARGS="$EXTRA_ARGS $arg" ;;
   esac
 done
 
-if [ "$USE_FULL" = true ]; then
-  echo "=== $BUILD_CMD_FULL (repo: $REPO_ROOT) ==="
-  [ -n "$REPO_BUILD_NOTE" ] && echo "    $REPO_BUILD_NOTE"
-  # shellcheck disable=SC2086
-  eval "$BUILD_CMD_FULL" $EXTRA_ARGS
+# Resolve bundle verify: n/a when repo has no script; else Step 0 env, else repo default (yes).
+if [ -z "$POST_BUILD_VERIFY_SCRIPT" ]; then
+  RESOLVED_BUNDLE_VERIFY=n/a
+elif [ "$UPGRADE_BUNDLE_VERIFY" = "yes" ] || [ "$UPGRADE_BUNDLE_VERIFY" = "no" ]; then
+  RESOLVED_BUNDLE_VERIFY=$UPGRADE_BUNDLE_VERIFY
+elif [ "$DEFAULT_RUN_BUNDLE_VERIFY" = "yes" ]; then
+  RESOLVED_BUNDLE_VERIFY=yes
 else
-  echo "=== $BUILD_CMD (repo: $REPO_ROOT) ==="
-  [ -n "$REPO_BUILD_NOTE" ] && echo "    $REPO_BUILD_NOTE"
-  # shellcheck disable=SC2086
-  eval "$BUILD_CMD" $EXTRA_ARGS
+  RESOLVED_BUNDLE_VERIFY=no
 fi
 
-if [ -n "$POST_BUILD_VERIFY_SCRIPT" ] && [ -f "$SCRIPT_DIR/$POST_BUILD_VERIFY_SCRIPT" ]; then
-  echo ""
-  echo "=== post-build verify: $POST_BUILD_VERIFY_SCRIPT ==="
-  sh "$SCRIPT_DIR/$POST_BUILD_VERIFY_SCRIPT"
+if [ -n "$UPGRADE_BUILD_CMD" ]; then
+  SELECTED_BUILD_CMD=$UPGRADE_BUILD_CMD
+  BUILD_LABEL="Step 0 build"
+  if [ -n "$POST_BUILD_VERIFY_SCRIPT" ] \
+    && [ "$UPGRADE_BUNDLE_VERIFY" != "yes" ] \
+    && [ "$UPGRADE_BUNDLE_VERIFY" != "no" ] \
+    && [ "$UPGRADE_BUNDLE_VERIFY" != "n/a" ]; then
+    echo "error: set UPGRADE_BUNDLE_VERIFY=yes|no from Step 0 (or omit to use DEFAULT_RUN_BUNDLE_VERIFY)" >&2
+    exit 2
+  fi
+elif [ "$USE_INCREMENTAL" = true ]; then
+  if [ -z "$BUILD_CMD_INCREMENTAL" ]; then
+    echo "error: incremental build requested but BUILD_CMD_INCREMENTAL is not set in repo.config.sh" >&2
+    exit 2
+  fi
+  SELECTED_BUILD_CMD=$BUILD_CMD_INCREMENTAL
+  BUILD_LABEL="incremental build"
+else
+  SELECTED_BUILD_CMD=$BUILD_CMD
+  BUILD_LABEL="full build"
+fi
+
+echo "=== $BUILD_LABEL: $SELECTED_BUILD_CMD (repo: $REPO_ROOT) ==="
+# shellcheck disable=SC2086
+eval "$SELECTED_BUILD_CMD" $EXTRA_ARGS
+
+if [ "$RESOLVED_BUNDLE_VERIFY" = "yes" ]; then
+  if [ -n "$POST_BUILD_VERIFY_SCRIPT" ] && [ -f "$SCRIPT_DIR/$POST_BUILD_VERIFY_SCRIPT" ]; then
+    echo ""
+    echo "=== post-build verify: $POST_BUILD_VERIFY_SCRIPT ==="
+    sh "$SCRIPT_DIR/$POST_BUILD_VERIFY_SCRIPT"
+  else
+    echo "error: bundle verify enabled but POST_BUILD_VERIFY_SCRIPT is missing or not found under scripts/" >&2
+    exit 1
+  fi
+elif [ "$RESOLVED_BUNDLE_VERIFY" = "no" ]; then
+  echo "=== post-build verify skipped (Step 0 or repo default: no) ==="
+else
+  echo "=== post-build verify skipped — not configured in repo.config.sh ==="
 fi

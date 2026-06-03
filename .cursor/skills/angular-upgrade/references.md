@@ -29,5 +29,5 @@ Read this file during **Step 2 — Plan upgrade path**. `SKILL.md` keeps workflo
 
 ## In-repo
 
-- [`upgrade-history.md`](./upgrade-history.md) — append one section per completed major bump
-- [`wavemaker-patterns.md`](./wavemaker-patterns.md) — this repository’s pattern catalog (`PATTERNS_FILE`)
+- [`wavemaker-runtime-patterns.md`](./wavemaker-runtime-patterns.md) — default runtime pattern catalog (override via `PATTERNS_FILE` in `repo.config.sh`)
+- `docs/{major}-upgrade.md` — per-major upgrade summary (Step 10; path from `UPGRADE_DOC_PATH` in `repo.config.sh`)
