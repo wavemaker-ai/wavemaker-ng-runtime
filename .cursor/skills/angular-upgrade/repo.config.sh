@@ -4,32 +4,32 @@
 #
 # --- Suggested chat prompt (attach skill: @.cursor/skills/angular-upgrade) ---
 #
-# Start or resume (default — all config from this file):
-#   Start Angular upgrade. Follow SKILL.md: read repo.config.sh and current-state.md,
-#   run Steps 0–10. Do not ask for Angular versions or preview URLs.
+# Start new upgrade (Step 0 overwrites current-state.md from SKILL.md template):
+#   Start Angular upgrade. Follow SKILL.md: read repo.config.sh, run Steps 0–10.
+#   Do not ask for Angular versions or preview URLs.
 #
 # With optional gate overrides (append one line):
 #   … verify yes | verify no
 #   … tests yes | tests no
 #
-# Resume after a blocker (same prompt — agent continues from first step not done):
+# Resume in-progress run (does NOT reset current-state.md):
 #   Resume Angular upgrade. Follow SKILL.md from current-state.md.
 #
 # --- Steps 0–10 (workflow summary) ---
 #
-#  0  Upgrade gate          Read repo.config.sh; record versions, URLs, gates, overrides.
+#  0  Upgrade gate          Fresh Start → overwrite current-state.md; Resume → keep file unless version mismatch.
 #                           Block if base/target empty; COMPARISON_URL required when PREVIEW_URL set.
 #  1  Detect and inventory  package.json, lockfile, angular.json, tsconfig*, tests; resolve PATTERNS_FILE.
-#                           Confirm installed Angular matches ANGULAR_BASE_VERSION.
+#                           Block if any pattern path missing; confirm Angular matches ANGULAR_BASE_VERSION.
 #  2  Plan upgrade path     Read references.md + all pattern files; plan base → target bumps.
 #  3  Apply package upgrades Edit package.json / overrides only — do not install yet.
 #  4  Install               scripts/install.sh (INSTALL_CMD)
 #  5  Security gate         scripts/audit.sh — block on critical/high; re-install if audit fix changed lockfile.
 #  6  Repo pattern review   Run greps from pattern files; block on unresolved must-change.
 #  7  Build gate            Full BUILD_CMD via scripts/build.sh — block on failure.
-#                           Optional POST_BUILD_VERIFY_SCRIPT when verify=yes (DEFAULT_RUN_BUNDLE_VERIFY).
-#                           scripts/build.sh --incremental allowed mid-fix; not enough to mark Step 7 done.
-#  8  Preview validation    Optional — skip if PREVIEW_URL empty. Else same flows on COMPARISON_URL then PREVIEW_URL.
+#                           Verify runs after full BUILD_CMD only (not --incremental).
+#  8  Preview validation    Optional — skip URL compare if PREVIEW_URL empty; manual browser OK.
+#                           Else same flows on COMPARISON_URL then PREVIEW_URL.
 #  9  Unit tests            Optional — skip if tests=no/n/a or TEST_CMD empty. Else scripts/test.sh.
 # 10  Finalize              Summarize in chat; write UPGRADE_DOC_PATH (e.g. docs/{major}-upgrade.md).
 #                           Update current-state.md after every step; resume at first step not done.
@@ -72,3 +72,5 @@ PATTERNS_FILE="wavemaker-runtime-patterns.md"
 
 # Step 10: upgrade summary doc ({major} = ANGULAR_TARGET_VERSION)
 UPGRADE_DOC_PATH="docs/{major}-upgrade.md"
+
+# After Step 10 completes: bump ANGULAR_BASE_VERSION / ANGULAR_TARGET_VERSION here before the next Start.

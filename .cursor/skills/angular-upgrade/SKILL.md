@@ -17,7 +17,7 @@ Conservative, **resumable** workflow. State: `current-state.md`. Summary: `docs/
 
 1. Copy `.cursor/skills/angular-upgrade/`.
 2. Edit **`repo.config.sh`** — versions, URLs, `BUILD_CMD`, gates, **`PATTERNS_FILE`**.
-3. Reset **`current-state.md`** from the template at the bottom of this file.
+3. On **Start** prompt, Step 0 overwrites **`current-state.md`** from the template below — no manual reset needed.
 
 ### `PATTERNS_FILE`
 
@@ -29,13 +29,31 @@ Comma-separated pattern markdown paths. Agent reads all in order for Steps 1–2
 | Sibling repo | `../other-repo/.cursor/skills/angular-upgrade/other-patterns.md` |
 | Absolute | `/path/to/patterns.md` |
 
-**Resolution:** absolute → skill folder → repo root. **Block** Step 6 if any file is missing or has unresolved `must-change`. Record resolved paths under **Pattern files** in `current-state.md`.
+**Resolution:** absolute → skill folder → repo root. **Block** Step 1 if any path is missing. **Block** Step 6 on unresolved `must-change`. Record resolved paths under **Pattern files** in `current-state.md`.
 
 ---
 
 ## Step 0 — Upgrade gate
 
 **HARD STOP** before editing `package.json`. Read **`repo.config.sh`**; do not ask for versions or preview URLs.
+
+### Reset `current-state.md` (fresh upgrade only)
+
+**Fresh upgrade** = user says **Start Angular upgrade** (not “resume”), **or** `repo.config.sh` base/target differs from **Upgrade config** in `current-state.md`, **or** Step 10 is already `done`.
+
+**Version mismatch always resets** — overwrite `current-state.md` even if the user says “resume”.
+
+| Prompt | Action |
+|--------|--------|
+| **Start Angular upgrade** | Overwrite `current-state.md` from the template below, filled from `repo.config.sh` |
+| **Resume Angular upgrade** | Keep `current-state.md` **only when** base/target match repo.config and Step 10 is not `done` |
+
+**Block Step 0** until `repo.config.sh` is fixed:
+
+- `ANGULAR_BASE_VERSION` or `ANGULAR_TARGET_VERSION` empty
+- `PREVIEW_URL` set (non-empty, not `skip`) but `COMPARISON_URL` empty
+
+On fresh start: read `repo.config.sh`, write `current-state.md` (all steps `pending`, config prefilled), apply Step 0 overrides from the user message, then mark Step 0 `done`.
 
 | Variable | Purpose |
 |----------|---------|
@@ -55,7 +73,9 @@ Comma-separated pattern markdown paths. Agent reads all in order for Steps 1–2
 
 When `POST_BUILD_VERIFY_SCRIPT` or `TEST_CMD` is empty, record gate as **`n/a`**.
 
-If user says “start upgrade” / “resume upgrade” with no overrides, load from `repo.config.sh`, set Step 0 `done`, run Steps 1–10.
+If user says “start upgrade”: overwrite `current-state.md` (fresh upgrade rules above), complete Step 0, run Steps 1–10.
+
+If user says “resume upgrade”: keep `current-state.md`, re-read `repo.config.sh`, continue from first step not `done`.
 
 ---
 
@@ -63,15 +83,15 @@ If user says “start upgrade” / “resume upgrade” with no overrides, load 
 
 | Step | Name | Gate | Verify before `done` |
 |------|------|------|----------------------|
-| 0 | Upgrade gate | **Yes** | repo.config loaded; overrides recorded |
-| 1 | Detect and inventory | **Yes** | Angular matches base; pattern paths resolved |
+| 0 | Upgrade gate | **Yes** | repo.config valid; overrides recorded |
+| 1 | Detect and inventory | **Yes** | Angular matches base; all pattern paths exist |
 | 2 | Plan upgrade path | **Yes** | [`references.md`](./references.md) + all pattern files read |
 | 3 | Apply package upgrades | **Yes** | `package.json` edited; **no install yet** |
 | 4 | Install | **Yes** | `scripts/install.sh` exit 0 |
 | 5 | Security gate | **Yes** | `scripts/audit.sh`; block on critical/high |
 | 6 | Repo pattern review | **Yes** | greps run; no unresolved `must-change` |
 | 7 | Build gate | **Yes** | full `BUILD_CMD` pass (+ verify if enabled) |
-| 8 | Preview validation | Optional | skip if `PREVIEW_URL` empty; else both URLs checked |
+| 8 | Preview validation | Optional | skip if `PREVIEW_URL` empty (manual browser OK); else both URLs checked |
 | 9 | Unit tests | Optional | skip if tests=no/n/a or `TEST_CMD` empty |
 | 10 | Finalize | **Yes** | `docs/{major}-upgrade.md` written |
 
@@ -79,7 +99,7 @@ If user says “start upgrade” / “resume upgrade” with no overrides, load 
 
 ### Step 1 — Detect and inventory
 
-Read `package.json`, lockfile, `angular.json`, `tsconfig*.json`, test config, and inventory paths from every pattern file. Confirm installed Angular matches `ANGULAR_BASE_VERSION` (or note drift).
+Read `package.json`, lockfile, `angular.json`, `tsconfig*.json`, test config, and inventory paths from every pattern file. Resolve each `PATTERNS_FILE` path (absolute → skill folder → repo root). **Block** if any path is missing. Confirm installed Angular matches `ANGULAR_BASE_VERSION` (or note drift).
 
 ### Step 2 — Plan upgrade path
 
@@ -114,26 +134,30 @@ Block on **critical** / **high** (without approved exception). If `npm audit fix
 
 ### Step 7 — Build gate
 
+Use **`BUILD_CMD`** from `repo.config.sh` (or Step 0 build override recorded in `current-state.md`).
+
 ```bash
-# Full rebuild (required for Step 7 done)
-UPGRADE_BUILD_CMD='sh build.sh -f' UPGRADE_BUNDLE_VERIFY=yes \
+# Full rebuild (required for Step 7 done) — set UPGRADE_BUILD_CMD to BUILD_CMD from repo.config
+UPGRADE_BUILD_CMD="$BUILD_CMD" UPGRADE_BUNDLE_VERIFY=yes \
   sh .cursor/skills/angular-upgrade/scripts/build.sh
 
-# Mid-upgrade quick check only — do not mark Step 7 done on this alone
+# Mid-upgrade quick check only — verify skipped; do not mark Step 7 done on this alone
 sh .cursor/skills/angular-upgrade/scripts/build.sh --incremental
 ```
 
 - Block on full build failure.
-- Block on bundle verify failure when verify = **yes** and `POST_BUILD_VERIFY_SCRIPT` is set.
+- Post-build verify runs **only after full `BUILD_CMD`**, when verify = **yes** and `POST_BUILD_VERIFY_SCRIPT` is set (not after `--incremental`).
 - Record **Build** and **Post-build verify** (`pass` / `fail` / `skipped — Step 0` / `skipped — not configured`).
 
 When gate not configured, omit `UPGRADE_BUNDLE_VERIFY` or use `n/a`.
 
 ### Step 8 — Preview validation
 
-Skip when `PREVIEW_URL` empty or `skip` — mark `done` with skip note.
+Skip automated URL comparison when `PREVIEW_URL` empty or `skip` — mark `done` with skip note.
 
-When set: load both URLs from repo.config; run preview checklist from each pattern file; same flows on comparison then preview; use browser tools when available. Block on regressions.
+**Manual preview (URLs empty):** run the preview checklist from pattern files in a browser (Chrome DevTools or MCP). Record pass/fail and notes in **Preview Validation** and Step 10 summary doc.
+
+When URLs are set: load both from repo.config; same flows on comparison then preview; use browser tools when available. Block on regressions.
 
 ### Step 9 — Unit tests
 
@@ -172,7 +196,7 @@ Block on failure.
 | `repo.config.sh` | Versions, URLs, build, gates, `PATTERNS_FILE` |
 | `references.md` | Step 2 link catalog |
 | `wavemaker-runtime-patterns.md` | Default runtime patterns (override via `PATTERNS_FILE`) |
-| `current-state.md` | Resumable status |
+| `current-state.md` | Resumable status (Step 0 overwrites on fresh Start) |
 | `scripts/install.sh` | Step 4 |
 | `scripts/audit.sh` | Step 5 |
 | `scripts/build.sh` | Step 7 |
