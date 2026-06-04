@@ -2,8 +2,8 @@
 # Build gate (Step 7). Command from UPGRADE_BUILD_CMD or repo.config BUILD_CMD / BUILD_CMD_INCREMENTAL.
 #
 # Usage:
-#   UPGRADE_BUILD_CMD='sh build.sh -f' UPGRADE_BUNDLE_VERIFY=yes sh scripts/build.sh
-#   sh scripts/build.sh --incremental
+#   UPGRADE_BUILD_CMD="$BUILD_CMD" UPGRADE_BUNDLE_VERIFY=yes sh scripts/build.sh
+#   sh scripts/build.sh --incremental   # verify skipped
 
 set -e
 
@@ -71,7 +71,9 @@ echo "=== $BUILD_LABEL: $SELECTED_BUILD_CMD (repo: $REPO_ROOT) ==="
 # shellcheck disable=SC2086
 eval "$SELECTED_BUILD_CMD" $EXTRA_ARGS
 
-if [ "$RESOLVED_BUNDLE_VERIFY" = "yes" ]; then
+if [ "$USE_INCREMENTAL" = true ] && [ -z "$UPGRADE_BUILD_CMD" ]; then
+  echo "=== post-build verify skipped — incremental build only (use full BUILD_CMD for Step 7) ==="
+elif [ "$RESOLVED_BUNDLE_VERIFY" = "yes" ]; then
   if [ -n "$POST_BUILD_VERIFY_SCRIPT" ] && [ -f "$SCRIPT_DIR/$POST_BUILD_VERIFY_SCRIPT" ]; then
     echo ""
     echo "=== post-build verify: $POST_BUILD_VERIFY_SCRIPT ==="

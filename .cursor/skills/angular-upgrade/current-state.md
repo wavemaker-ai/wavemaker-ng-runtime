@@ -8,64 +8,68 @@
 - Build command: sh build.sh -f
 - Incremental build: sh build.sh
 
-## Step 0 overrides (optional)
+## Step 0 overrides (optional — user message only)
 - Run bundle verify: yes
-- Run unit tests: no
+- Run unit tests: yes
+- Build command override:
 
 ## Project
-- Branch: stage-ai
-- Started: 2026-05-28
+- Branch: WMS-31488
+- Started: 2026-06-03
 - Node (engines): 22.18.0
 - npm (engines): 10.9.3
 
 ## Step Status
 | Step | Name | Status | Notes |
 |---|---|---|---|
-| 0 | Upgrade gate | done | from repo.config.sh |
-| 1 | Detect and inventory | done | |
-| 2 | Plan upgrade path | done | |
-| 3 | Apply package upgrades | done | |
-| 4 | Install | done | |
-| 5 | Security gate | done | 3 moderate, no fix |
-| 6 | Repo pattern review | done | |
-| 7 | Build gate | done | `sh build.sh -f` pass (~385s); verify-ngx-bootstrap-bundle.sh pass |
-| 8 | Preview validation | done | preview URLs not set in repo.config for this run; validated manually via Chrome DevTools |
-| 9 | Unit test gate | done | skipped — override tests=no |
+| 0 | Upgrade gate | done | fresh Start; repo.config valid |
+| 1 | Detect and inventory | done | @angular/core 21.2.14 (already at target) |
+| 2 | Plan upgrade path | done | re-validation; packages at 21.x |
+| 3 | Apply package upgrades | done | no edits — already at target |
+| 4 | Install | done | npm install up to date |
+| 5 | Security gate | done | 3 moderate; no critical/high |
+| 6 | Repo pattern review | done | greps clean; no must-change |
+| 7 | Build gate | done | `sh build.sh -f` ~340s; verify pass |
+| 8 | Preview validation | done | PREVIEW_URL empty — URL compare skipped |
+| 9 | Unit test gate | done | 126 suites, 4265 passed (~185s) |
 | 10 | Finalize | done | docs/21-upgrade.md updated |
 
 ## Dependency Decisions
-- See `docs/21-upgrade.md`
+- @angular/* 21.2.14, ngx-bootstrap 21.2.0, typescript 5.9.3 — at target 21
 
 ## Package changes
-- See `docs/21-upgrade.md`
+- None this run (already at Angular 21.2.14)
 
 ## Pattern files
 - PATTERNS_FILE: wavemaker-runtime-patterns.md
-- Resolved: `.cursor/skills/angular-upgrade/wavemaker-runtime-patterns.md`
+- Resolved paths: `.cursor/skills/angular-upgrade/wavemaker-runtime-patterns.md`
 
 ## Pattern findings
-- See `docs/21-upgrade.md`
+- safe: legacy compiler absent; createComponent object syntax; expression-parser OK; ngx-bootstrap patch verified
+- needs-review: none
+- likely-breakage: none
+- must-change: none
 
 ## Security
 - Final: 3 moderate (webpack-dev-server transitive); continue per SKILL
 
 ## Build
 - Command: sh build.sh -f
-- Result: pass (2026-06-01, ~385s)
-- Fix applied: `tsconfig.json` — `@wavemaker-ai/variables` path prefers `dist/es2015` over yalc source (TS6059 rootDir)
+- Result: pass (2026-06-03, ~340s)
 
 ## Post-build verify
-- Result: pass — DestroyRef inject patch in `ngx-bootstrap.bundle.js` and `wm-libs.js`
+- Result: pass — DestroyRef inject patch in ngx-bootstrap.bundle.js and wm-libs.js
 
 ## Unit tests
-- Result: skipped — override tests=no
+- Result: pass — 126 suites, 4265 tests (~185s)
 
 ## Preview Validation
-- Skipped per repo.config (empty PREVIEW_URL); manual Chrome DevTools pass recorded in `docs/21-upgrade.md`
+- Skipped automated URL compare (PREVIEW_URL empty in repo.config)
+- Manual checklist: see docs/21-upgrade.md — run when preview URLs configured
 
 ## Upgrade summary doc
 - Path: docs/21-upgrade.md
 - Written: yes
 
 ## Deferred / user decisions
-- None
+- Configure PREVIEW_URL / COMPARISON_URL for automated Step 8 on next run
