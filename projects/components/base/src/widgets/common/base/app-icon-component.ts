@@ -67,7 +67,7 @@ export class WmAppIconComponent {
     /** Fallback font-icon class used when both `iconclass` and `iconurl` are empty. */
     @Input() defaultIconClass: string | null | undefined;
     /** Extra classes appended to the rendered icon element on every branch (e.g. `'panel-icon'`). */
-    @Input() iconClasses: string | string[] | null | undefined;
+    @Input() defaultClasses: string | string[] | null | undefined;
     /** Forwarded to `ngStyle` on the rendered icon element. */
     @Input() iconStyle: { [k: string]: any } | null | undefined;
     /** `alt` text for the `<img>` branch. */
@@ -79,12 +79,15 @@ export class WmAppIconComponent {
     get _isImage(): boolean {
         return !!this.iconurl && !this._isSvg;
     }
+
     get _fontClass(): string {
-        return (this.iconclass && this.iconclass.trim()) || (this.defaultIconClass && this.defaultIconClass.trim()) || '';
+        return [this.defaultIconClass, this.iconclass]
+            .filter(Boolean)
+            .join(' ');
     }
 
     private _extras(): string[] {
-        const extras = this.iconClasses;
+        const extras = this.defaultClasses;
         if (!extras) {
             return [];
         }
@@ -95,7 +98,7 @@ export class WmAppIconComponent {
     }
 
     get _svgClasses(): string[] {
-        return ['app-icon', 'app-icon-svg', ...this._extras()];
+        return ['app-icon app-icon-svg', ...this._extras()];
     }
     get _imageClasses(): string[] {
         return [...this._extras()];

@@ -3,9 +3,10 @@
     <span class="spinner-image animated infinite" [ngClass]="animation" aria-hidden="true"
       [ngStyle]="{width: imagewidth, height: imageheight, backgroundImage: 'url(' + picture + ')', backgroundSize: imagewidth}"
     ></span>
+
   }
   @if (type === 'icon') {
-    <i class="spinner-image animated infinite" aria-hidden="true" [ngClass]="[iconclass, animation]" [style.fonSize]="iconsize"></i>
+    <wm-app-icon [iconclass]="iconclass"  [iconurl]="iconurl" [iconStyle]="{fontSize: iconsize}" [defaultClasses]="'spinner-image animated infinite ' + animation"></wm-app-icon>
   }
   @if (showCaption) {
     <span class="spinner-text" [innerHTML]="caption"></span>

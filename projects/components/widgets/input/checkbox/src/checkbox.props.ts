@@ -21,7 +21,9 @@ export const checkboxProps = new Map(
         ['tabindex', {value: 0, ...PROP_NUMBER}],
         ['uncheckedvalue', {value: false, ...PROP_STRING}],
         ['unselectedicon', PROP_STRING],
-        ['selectedicon', PROP_STRING]
+        ['selectedicon', PROP_STRING],
+        ['unselectediconurl', PROP_STRING],
+        ['selectediconurl', PROP_STRING]
 
     ]
 );

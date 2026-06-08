@@ -117,7 +117,7 @@
 @if (variableInflight && !pulltorefresh) {
   <div class="loading-data-msg">
     <span>
-      <i class="app-icon panel-icon fa-spin" aria-hidden="true" [ngClass]="loadingicon"></i>
+      <wm-app-icon [iconclass]="loadingicon" [iconurl]="loadingiconurl" iconClasses="panel-icon" alt="loading icon"></wm-app-icon>
       <span class="sr-only">Loading</span>
       <span class="loading-text" [textContent]="loadingdatamsg"></span>
     </span>

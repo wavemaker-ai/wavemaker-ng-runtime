@@ -126,6 +126,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     public selectfirstitem: boolean;
     public orderby: string;
     public loadingicon: string;
+    public loadingiconurl: string;
     public paginationclass: string;
     public ondemandmessage: string;
     public loadingdatamsg: string;

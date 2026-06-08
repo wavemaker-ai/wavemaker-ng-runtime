@@ -25,6 +25,7 @@ export const registerProps = () => {
                 ['multiselect', PROP_BOOLEAN],
                 ['loadingdatamsg', {value : 'Loading...', ...PROP_STRING}],
                 ['loadingicon', {value : 'fa fa-circle-o-notch', ...PROP_STRING}],
+                ['loadingiconurl', PROP_STRING],
                 ['match', PROP_STRING],
                 ['maxsize', {value: 5, ...PROP_NUMBER}],
                 ['name', PROP_STRING],

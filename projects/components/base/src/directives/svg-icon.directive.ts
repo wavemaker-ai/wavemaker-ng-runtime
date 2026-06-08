@@ -156,27 +156,26 @@ export class SvgIconDirective implements OnChanges, OnDestroy {
      *    the host element's `font-size`
      */
     private normalizeSvg(svg: string): string {
-        if (!svg) {
-            return '';
-        }
-        let out = svg
-            .replace(/fill\s*=\s*"(?!\s*none\s*")[^"]*"/gi, 'fill="currentColor"')
-            .replace(/fill\s*=\s*'(?!\s*none\s*')[^']*'/gi, "fill='currentColor'")
-            .replace(/stroke\s*=\s*"(?!\s*none\s*")[^"]*"/gi, 'stroke="currentColor"')
-            .replace(/stroke\s*=\s*'(?!\s*none\s*')[^']*'/gi, "stroke='currentColor'")
-            .replace(/(fill|stroke)\s*:\s*(?!\s*none\b)[^;"']+/gi, '$1: currentColor');
+        if (!svg) return '';
+        let out = svg;
+
+        // ── Color ────────────────────────────────────────────────────────
+            out = out
+                .replace(/fill\s*=\s*"(?!\s*none\s*")[^"]*"/gi,   'fill="currentColor"')
+                .replace(/fill\s*=\s*'(?!\s*none\s*')[^']*'/gi,   "fill='currentColor'")
+                .replace(/stroke\s*=\s*"(?!\s*none\s*")[^"]*"/gi, 'stroke="currentColor"')
+                .replace(/stroke\s*=\s*'(?!\s*none\s*')[^']*'/gi, "stroke='currentColor'")
+                .replace(/(fill|stroke)\s*:\s*(?!\s*none\b)[^;"']+/gi, '$1: currentColor');
 
         out = out.replace(/<svg\b([^>]*)>/i, (_match, attrs: string) => {
             let updated = attrs;
-            if (!/\swidth\s*=/i.test(updated)) {
-                updated += ' width="1em"';
-            }
-            if (!/\sheight\s*=/i.test(updated)) {
-                updated += ' height="1em"';
-            }
-            if (!/\sfill\s*=/i.test(updated)) {
-                updated += ' fill="currentColor"';
-            }
+
+            updated = updated.replace(/\swidth\s*=\s*("[^"]*"|'[^']*')/gi, '')
+                    .replace(/\s+$/, '') + ' width="1em"';
+            updated = updated.replace(/\sheight\s*=\s*("[^"]*"|'[^']*')/gi, '')
+                    .replace(/\s+$/, '') + ' height="1em"';
+            updated += ' fill="currentColor"';
+
             return `<svg${updated}>`;
         });
         return out;

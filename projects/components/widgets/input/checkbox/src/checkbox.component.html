@@ -16,11 +16,11 @@
     <span class="caption" [innerHtml]="_caption" *ngIf="type != 'button' && type != 'toggle'"></span>
     <!-- Icon toggle button -->
     <span class="caption fa-xs text-center" *ngIf="type == 'toggle'">
-        <span name="unselectedIcon" class="start-icon" [ngClass]="unselectedicon" *ngIf="!proxyModel"></span>
-        <span name="selectedIcon" class="end-icon" [ngClass]="selectedicon" *ngIf="proxyModel"></span>
+        <wm-app-icon [iconclass]="unselectedicon" [iconurl]="unselectediconurl" [defaulticonclass]="'start-icon'" *ngIf="!proxyModel"></wm-app-icon> 
+        <wm-app-icon [iconclass]="selectedicon" [iconurl]="selectediconurl" [defaulticonclass]="'end-icon'" *ngIf="proxyModel"></wm-app-icon> 
     </span>
-        <span class="toggle-icon" [ngClass]="unselectedicon" *ngIf="type === 'button' && !proxyModel"></span>
-        <span class="toggle-icon" *ngIf="proxyModel && type === 'button'" [ngClass]="selectedicon"></span>
+    <wm-app-icon [iconclass]="unselectedicon" [iconurl]="unselectediconurl" [defaultIconClass]="'toggle-icon'" [alt]="'Unselected icon'" *ngIf="type === 'button' && !proxyModel"></wm-app-icon>
+    <wm-app-icon [iconclass]="selectedicon" [iconurl]="selectediconurl" [defaultIconClass]="'toggle-icon'" [alt]="'Selected icon'" *ngIf="proxyModel && type === 'button'"></wm-app-icon>
     <img alt="Checkbox Image" aria-hidden="true" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" class="switch"/>
 </label>
 <input type="hidden" class="ng-hide model-holder" aria-hidden="true" tabindex="-1" [disabled]="disabled" [value]="proxyModel">
