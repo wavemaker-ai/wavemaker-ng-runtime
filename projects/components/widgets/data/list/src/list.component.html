@@ -2,7 +2,7 @@
   <div class="panel-heading">
     <h3 class="panel-title">
       <div class="pull-left">
-        <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" iconClasses="panel-icon" alt="List icon"></wm-app-icon>
+        <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [defaultClasses]="'panel-icon'" alt="List icon"></wm-app-icon>
       </div>
       <div class="pull-left">
         <div class="heading" [innerHTML]="title"></div>
@@ -117,7 +117,7 @@
 @if (variableInflight && !pulltorefresh) {
   <div class="loading-data-msg">
     <span>
-      <wm-app-icon [iconclass]="loadingicon" [iconurl]="loadingiconurl" iconClasses="panel-icon" alt="loading icon"></wm-app-icon>
+      <wm-app-icon [iconclass]="loadingicon" [iconurl]="loadingiconurl" [defaultClasses]="'panel-icon'" alt="loading icon"></wm-app-icon>
       <span class="sr-only">Loading</span>
       <span class="loading-text" [textContent]="loadingdatamsg"></span>
     </span>

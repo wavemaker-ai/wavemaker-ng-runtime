@@ -25,10 +25,6 @@ import { SvgIconDirective, isSvgIconUrl } from '../../../directives/svg-icon.dir
  * - The host is `display: contents` so existing CSS selectors targeting
  *   `.app-icon` directly inside the parent (e.g. `.btn .app-icon`) keep
  *   working - the wrapper element is layout-transparent.
- * - All three branches receive the same `iconClasses` (extra space-separated
- *   CSS classes) and `iconStyle` (forwarded to `ngStyle`), so callers can
- *   port their `panel-icon`, `button-image-icon`, custom widths, etc.
- *   without per-branch repetition.
  */
 @Component({
     standalone: true,

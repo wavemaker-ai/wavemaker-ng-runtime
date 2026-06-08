@@ -1,5 +1,5 @@
 
-<wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [iconClasses]="iconurl ? 'anchor-image-icon' : ''" [iconStyle]="{width: iconwidth, height: iconheight, margin: iconmargin, fontSize: iconwidth}" alt="Anchor icon"></wm-app-icon>
+<wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [defaultClasses]="iconurl ? 'anchor-image-icon' : ''" [iconStyle]="{width: iconwidth, height: iconheight, margin: iconmargin, fontSize: iconwidth}" alt="Anchor icon"></wm-app-icon>
 @if (iconclass || iconurl) {
   <span class="sr-only">{{caption}} {{appLocale.LABEL_ICON}}</span>
 }
