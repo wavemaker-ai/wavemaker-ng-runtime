@@ -9,12 +9,4 @@ register('wm-dialog', (): IBuildTaskDef => {
     };
 });
 
-// Todo:vinay remove wm-view in migration
-register('wm-view', (): IBuildTaskDef => {
-    return {
-        pre: attrs => '',
-        post: () => ''
-    };
-});
-
 export default () => {};

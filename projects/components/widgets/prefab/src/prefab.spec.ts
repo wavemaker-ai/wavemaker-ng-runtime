@@ -13,6 +13,7 @@ jest.mock('@wm/core', () => ({
 }));
 
 @Component({
+    standalone: false,
     template: '<section wmPrefab prefabname="test" name="testPrefab"></section>'
 })
 class TestComponent { }

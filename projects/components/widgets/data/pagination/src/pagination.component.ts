@@ -159,8 +159,38 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
             }
             this.allowpagesizechange = this.parent.allowpagesizechange;
             if(this.allowpagesizechange)
-                this.defaultPageSizeOptions = this.parent?.pagesizeoptions ? this.parent.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) : [];
+                this.defaultPageSizeOptions =this.normalizeToNumberArray(this.parent?.pagesizeoptions);
         }, 0);
+    }
+    normalizeToNumberArray(input) { // Handles all formats in one place: "10,20,30", [10,20,30], "[10,20,30]"
+        if (!input) return [];
+
+        let arr;
+
+        if (Array.isArray(input)) {
+            arr = input;
+        } else if (typeof input === "string") {
+            const trimmed = input.trim();
+
+            // handle "[1,2,3]"
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                try {
+                    arr = JSON.parse(trimmed);
+                } catch {
+                    arr = [];
+                }
+            } else {
+                // handle "1,2,3"
+                arr = trimmed.split(",");
+            }
+        } else {
+            return [];
+        }
+
+        return arr
+            .map(v => Number(v))
+            .filter(v => !isNaN(v))
+            .sort((a, b) => a - b);
     }
 
     setResult(result) {
@@ -912,7 +942,6 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         this.filterFields = null;
         this.sortOptions = null;
         this.options = null;
-
         // MEMORY LEAK FIX: Clear page size options array
         if (this.pageSizeOptions) {
             this.pageSizeOptions = [];

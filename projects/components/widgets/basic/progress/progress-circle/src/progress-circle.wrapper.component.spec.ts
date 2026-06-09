@@ -15,6 +15,7 @@ jest.mock('../../progress-utils/src/progress-utils');  // Mock the entire utils 
 const markup = `<div wmProgressCircle title="progress-circle" [attr.aria-label]="'progress-circle'" name="progress-circle" hint="progress-circle" tabindex="1"></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class ProgressCircleWrapperComponent {
@@ -23,7 +24,7 @@ class ProgressCircleWrapperComponent {
 
 const testModuleDef: ITestModuleDef = {
     imports: [FormsModule, ProgressCircleComponent],
-    declarations: [ProgressCircleWrapperComponent, CircleProgressComponent],
+    declarations: [ProgressCircleWrapperComponent],
     providers: [
         { provide: App, useValue: mockApp },
         provideAsWidgetRef(ProgressCircleComponent),

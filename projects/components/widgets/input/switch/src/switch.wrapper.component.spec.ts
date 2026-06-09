@@ -12,6 +12,7 @@ import { ToDatePipe } from '@wm/components/base';
 const markup = `<div wmSwitch #wm_switch1="wmSwitch" [attr.aria-label]="wm_switch1.arialabel || 'Switch button'" datavalue="yes" show="true" width="800" height="200" hint="Switch button" tabindex="0" disabled="false" name="switch1"></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class SwitchWrapperComponent {

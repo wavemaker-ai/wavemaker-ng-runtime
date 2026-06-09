@@ -6,6 +6,7 @@ export const registerProps = () => {
         new Map(
             [
                 ['class', PROP_STRING],
+                ['template', PROP_STRING],
                 ['dataset', {value: 'node1, node2, node3', ...PROP_ANY}],
                 ['datavalue', PROP_STRING],
                 ['levels', {value: 0, ...PROP_NUMBER}],
@@ -17,6 +18,7 @@ export const registerProps = () => {
                 ['nodeid', PROP_STRING],
                 ['nodelabel', PROP_STRING],
                 ['orderby', PROP_STRING],
+                ['statehandler', {value: 'none', ...PROP_STRING}],
                 ['show', {value: true, ...PROP_BOOLEAN}],
                 ['tabindex', {value: 0, ...PROP_NUMBER}],
                 ['treeicons', PROP_STRING]

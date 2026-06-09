@@ -27,7 +27,7 @@
               },
               {
                 "glob": "**/*",
-                "input": "node_modules/@wavemaker/app-ng-runtime/locales/moment-timezone",
+                "input": "node_modules/@wavemaker-ai/app-ng-runtime/locales/moment-timezone",
                 "output": "/locales/moment-timezone"
               },
               {

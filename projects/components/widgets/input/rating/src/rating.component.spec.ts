@@ -16,6 +16,7 @@ import { MockAbstractI18nService } from '../../../../base/src/test/util/date-tes
 
 const markup = `<div tabindex="1"  wmRating  name="rating1"></div>`;
 @Component({
+    standalone: false,
     template: markup
 })
 class TestComponent {

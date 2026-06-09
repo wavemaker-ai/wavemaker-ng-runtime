@@ -12,6 +12,7 @@ import { By } from "@angular/platform-browser";
 const markup = `<wm-textarea name="textarea1" hint="textarea field">`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class TextareaWrapperComponent {

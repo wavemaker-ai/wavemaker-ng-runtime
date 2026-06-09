@@ -12,6 +12,7 @@ import { compileTestComponent, mockApp } from "projects/components/base/src/test
 const markup = `<wm-select name="select1" hint="select field">`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 

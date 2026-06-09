@@ -117,9 +117,10 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
         });
 
         if(this.spa) {
-            this.pageDirective = this.injector ? this.injector.get(SpaPageDirective) : inject(SpaPageDirective);
+            // Resolve optionally because custom widgets can initialize before a page exists
+            this.pageDirective = this.injector ? this.injector.get(SpaPageDirective, null) : (inject as any)(SpaPageDirective, { optional: true });
         } else {
-            this.pageDirective = this.injector ? this.injector.get(PageDirective) : inject(PageDirective);
+            this.pageDirective = this.injector ? this.injector.get(PageDirective, null) : (inject as any)(PageDirective, { optional: true });
         }
         if (this.pageDirective) {
             this.registerDestroyListener(this.pageDirective.subscribe('attach', data => this.ngOnAttach(data.refreshData)));
@@ -376,15 +377,19 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
 
     ngOnDestroy(): void {
         // MEMORY LEAK FIX: Complete Subjects to release subscriptions
-        if (this.destroy$) {
+        if (this.destroy$ && !this.destroy$.closed) {
             this.destroy$.complete();
             this.destroy$ = null;
         }
-        if (this.viewInit$) {
+        if (this.viewInit$ && !this.viewInit$.closed) {
             this.viewInit$.complete();
             this.viewInit$ = null;
         }
 
+        if (this.fragmentsLoaded$ && !this.fragmentsLoaded$.closed) {
+            this.fragmentsLoaded$.complete();
+            this.fragmentsLoaded$ = null;
+        }
         // MEMORY LEAK FIX: Clear references to prevent memory leaks
         this.Widgets = null;
         this.BaseWidget = null;

@@ -7,6 +7,7 @@ import { App } from "@wm/core";
 const markup = `<span wmIcon name="icon1" caption="star" hint="icon"></span>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 

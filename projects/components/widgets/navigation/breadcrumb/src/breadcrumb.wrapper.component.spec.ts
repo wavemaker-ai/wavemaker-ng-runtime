@@ -13,6 +13,7 @@ import { ComponentTestBase, ITestComponentDef } from 'projects/components/base/s
 const markup = `<div wmBreadcrumb name="breadcrumb1" aria-label="breadcrumb"></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class BreadcrumbWrapperComponent {

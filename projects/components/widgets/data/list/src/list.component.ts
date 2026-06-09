@@ -1,5 +1,6 @@
 import {CommonModule} from '@angular/common';
 import {
+    AutoLayout,
     APPLY_STYLES_TYPE,
     configureDnD,
     DEBOUNCE_TIMES,
@@ -91,6 +92,7 @@ declare const $;
 const DEFAULT_CLS = 'app-livelist app-panel';
 const WIDGET_CONFIG = {widgetType: 'wm-list', hostClass: DEFAULT_CLS};
 
+@AutoLayout({ targetSelector: 'ul' })
 @Component({
   standalone: true,
   imports: [CommonModule, TextContentDirective, PaginationComponent, ListItemDirective],
@@ -178,6 +180,8 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private statePersistence: StatePersistence;
     private paginationService: PaginationService;
     private binddatasource: string;
+    private listClickHandler;
+    private addItemClickHandler;
     private match: string;
     private dateformat: string;
     private groupedData: any;
@@ -195,6 +199,8 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private _selectedItemsExist;
     private listItemsChangesSubscription: any;
     private boundClickHandler: (event: Event) => void;
+    public itemAttrsMap: { [k: string]: string } = {};
+    public hasAutolayout: boolean = false;
 
     private touching;
     private touched;
@@ -575,8 +581,13 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 this.$ulEle.removeAttr('aria-describedby');
                 this.$ulEle.sortable('disable');
             }
+        } else if (key === 'multiselect') {
+            // multiselect binding is evaluated after ngAfterViewInit, so initial value may be incorrect.
+            // Reassigning here to ensure selectedItemWidgets matches the updated multiselect value.
+            this.selectedItemWidgets = nv ? [] : {};
         } else if (key === 'allowpagesizechange') {
             this.allowpagesizechange = nv;
+            this.dataNavigator.allowpagesizechange = nv;
         } else if(key === 'pagesizeoptions') {
                 this.prevPagesizeoptions = this.sanitizeCommaSeparatedIntegers(ov);
                 this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
@@ -740,6 +751,12 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             minIndex: null,
             maxIndex: null
         };
+
+        // Check if the host element has any of these autolayout attributes
+        const autoLayoutAttrs = ['wrap', 'alignment', 'gap', 'columngap'];
+        const directionValue = this.nativeElement.getAttribute('direction');
+        const hasAutoLayoutDirection = directionValue === 'row' || directionValue === 'column';
+        this.hasAutolayout = hasAutoLayoutDirection || autoLayoutAttrs.some(attr => this.nativeElement.hasAttribute(attr));
     }
 
     ngAfterViewInit() {
@@ -769,7 +786,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         });
         this.setupHandlers();
         const $ul = this.nativeElement.querySelector('ul.app-livelist-container');
-        styler($ul as HTMLElement, this, APPLY_STYLES_TYPE.SCROLLABLE_CONTAINER);
+        styler($ul as HTMLElement, this, APPLY_STYLES_TYPE.CONTAINER);
         if (this.enablereorder) {
             if ($ul) {
                 $ul.setAttribute('aria-describedby', this.titleId);
@@ -780,6 +797,8 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 $ul.removeAttribute('aria-describedby');
             }
         }
+
+        this._readItemAttrsFromHost();
     }
 
     ngOnDestroy() {
@@ -1321,7 +1340,8 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             if (isMobile() && modalBody.length && listHt > modalHt) {
                 this.$element.css('height', modalHt + 'px');
             }
-            this.paginationService.bindScrollEvt(this, '> ul', DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
+            setTimeout(() => this.paginationService.bindScrollEvt(this, '> ul', DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME), 500);
+            // this.paginationService.bindScrollEvt(this, '> ul', DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
 
         }
 
@@ -1490,6 +1510,20 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             };
             // Triggered on click of add action
             $addItem.addEventListener('click', this.boundAddItemHandler);
+        }
+    }
+
+    private _readItemAttrsFromHost() {
+        const raw = this.nativeElement.getAttribute("itemattrs");
+        if (!raw) {
+            this.itemAttrsMap = {};
+            return;
+        }
+        try {
+            this.itemAttrsMap = JSON.parse(raw);
+        } catch (e) {
+            console.warn("list.component: failed to parse itemattrs JSON", e, raw);
+            this.itemAttrsMap = {};
         }
     }
 }

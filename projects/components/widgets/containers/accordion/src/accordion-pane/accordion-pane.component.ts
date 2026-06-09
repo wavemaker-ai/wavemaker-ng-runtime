@@ -1,8 +1,9 @@
 import {CommonModule} from '@angular/common';
 import {AfterViewInit, Component, ContentChildren, Inject, Injector, OnDestroy, Optional} from '@angular/core';
-import {noop, removeAttr} from '@wm/core';
+import {App, noop, removeAttr} from '@wm/core';
 import {
     APPLY_STYLES_TYPE,
+    AutoLayout,
     getCurrentWidgets,
     IWidgetConfig,
     provideAsWidgetRef,
@@ -17,6 +18,7 @@ import {AccordionDirective} from '../accordion.directive';
 const DEFAULT_CLS = 'app-accordion-panel panel';
 const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-accordionpane', hostClass: DEFAULT_CLS };
 
+@AutoLayout({ targetSelector: '.panel-body' })
 @Component({
     standalone: true,
     imports: [CommonModule],
@@ -46,7 +48,7 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
     // reference to the components which needs a redraw(eg, grid, chart) when the height of this component changes
     @ContentChildren(RedrawableDirective, { descendants: true }) reDrawableComponents;
 
-    constructor(inj: Injector, private accordionRef: AccordionDirective, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private accordionRef: AccordionDirective, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, private app: App) {
         super(inj, WIDGET_CONFIG, explicitContext);
 
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.SHELL);
