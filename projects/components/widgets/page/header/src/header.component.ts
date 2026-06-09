@@ -1,7 +1,7 @@
 import {Component, Inject, Injector, Optional} from '@angular/core';
 
-import {APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
-import {registerProps} from './header.props';
+import { APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
+import { registerProps } from './header.props';
 
 const DEFAULT_CLS = 'app-header clearfix';
 const WIDGET_CONFIG: IWidgetConfig = {

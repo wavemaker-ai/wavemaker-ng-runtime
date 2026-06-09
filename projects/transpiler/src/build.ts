@@ -58,18 +58,6 @@ const ignoreComments = true;
 
 const empty = () => '';
 
-const noSpan = ({} as ParseSourceSpan);
-
-/**
- * Creates an Angular Compiler Element for template transpilation.
- * Angular 20: Element constructor requires 9 arguments including proper endSourceSpan for closing tag generation.
- * @param name - The element/tag name
- * @returns Element instance with proper source spans for Angular 20 compatibility
- */
-export const createCompilerElement = (name: string): Element => {
-    return new Element(name, [], [], [], false, noSpan, noSpan, noSpan, false);
-};
-
 const isEvent = name => name[0] === 'o' && name[1] === 'n' && name[2] === '-';
 
 const getEventName = key => key.substr(3);
@@ -372,9 +360,10 @@ export const processNode = (node, importCollector: (i: ImportDef[]) => void, pro
                     /* If more than one out of showindevice, accessroles and deferload exist for a widget, add ng-container wrappers to fix angular limitation
                        of applying only one structural directive to an element.
                     *  */
-                    const showInDeviceContainer:any = showInDeviceAttr ? createCompilerElement('ng-container') : '';
-                    const accessRolesContainer:any = accessRolesAttr ? createCompilerElement('ng-container') : '';
-                    const deferLoadContainer:any = deferLoadAttr ? createCompilerElement('ng-container') : '';
+                    const noSpan = ({} as ParseSourceSpan);
+                    const showInDeviceContainer:any = showInDeviceAttr ? new Element('ng-container', [], [], noSpan, noSpan, noSpan) : '';
+                    const accessRolesContainer:any = accessRolesAttr ? new Element('ng-container', [], [], noSpan, noSpan, noSpan) : '';
+                    const deferLoadContainer:any = deferLoadAttr ? new Element('ng-container', [], [], noSpan, noSpan, noSpan) : '';
                     if (showInDeviceContainer) {
                         showInDeviceContainer.attrs.push(showInDeviceAttr);
                     }

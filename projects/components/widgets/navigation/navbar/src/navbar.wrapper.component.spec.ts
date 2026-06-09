@@ -9,7 +9,6 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 const markup = `<div wmNavbar aria-label="breadcrumb" name="navbar1"></div>`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 class NavbarWrapperComponent {

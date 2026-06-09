@@ -1,134 +1,234 @@
-/**
- * Rollup config to bundle ngx-bootstrap fesm2020/fesm2022 modules into a single IIFE file
- * for inclusion in wm-libs.js runtime bundle.
- * 
- * This config:
- * 1. Creates a virtual entry that imports all ngx-bootstrap modules
- * 2. Applies patches for Angular 20 compatibility and positioning fixes
- * 3. Outputs to dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.bundle.js
- */
+import rollupGlobals, {rollupExternals} from './rollup-utils.mjs';
 
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import { ngxBootstrapPatchPlugin } from '../build-scripts/ngx-bootstrap-patch.mjs';
-
-// ngx-bootstrap modules to bundle
-const NGX_BOOTSTRAP_MODULES = [
-    'accordion', 'buttons', 'carousel', 'chronos', 'collapse',
-    'component-loader', 'datepicker', 'dropdown', 'focus-trap',
-    'locale', 'mini-ngrx', 'modal', 'pagination', 'popover',
-    'positioning', 'progressbar', 'rating', 'sortable', 'tabs',
-    'timepicker', 'tooltip', 'typeahead', 'utils'
-];
-
-const ANGULAR_EXTERNALS = {
-    '@angular/core': 'ng.core',
-    '@angular/common': 'ng.common',
-    '@angular/forms': 'ng.forms',
-    '@angular/animations': 'ng.animations',
-    '@angular/router': 'ng.router',
-    '@angular/platform-browser': 'ng.platformBrowser',
-    '@angular/core/rxjs-interop': 'ng.core.rxjsInterop',
-    'rxjs': 'rxjs',
-    'rxjs/operators': 'rxjs.operators'
-};
-
-// ============================================
-// Utilities
-// ============================================
-
-function toCamelCase(str) {
-    return str.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-}
-
-// ============================================
-// Entry File Generation
-// ============================================
-
-function generateEntryContent() {
-    const moduleVars = NGX_BOOTSTRAP_MODULES.map(mod => ({
-        module: mod,
-        varName: toCamelCase(mod)
-    }));
-    
-    const imports = moduleVars
-        .map(({ module, varName }) => `import * as ${varName} from 'ngx-bootstrap/${module}';`)
-        .join('\n');
-
-    const moduleList = moduleVars
-        .map(({ varName }) => `        ${varName}: ${varName}`)
-        .join(',\n');
-
-    const legacyAssignments = moduleVars
-        .map(({ module, varName }) => `    global['ngx-bootstrap/${module}'] = ${varName};`)
-        .join('\n');
-
-    const exports = moduleVars
-        .map(({ varName }) => varName)
-        .join(', ');
-
-    return `/**
- * Auto-generated entry file for bundling ngx-bootstrap modules.
- */
-
-${imports}
-
-(function (global) {
-    'use strict';
-
-    var _ngxBootstrap = {
-${moduleList}
-    };
-
-    global.ngxBootstrap = _ngxBootstrap;
-
-${legacyAssignments}
-
-})(typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : this);
-
-export { ${exports} };
-`;
-}
-
-// ============================================
-// Virtual Entry Plugin
-// ============================================
-
-function virtualEntryPlugin() {
-    const VIRTUAL_ENTRY_ID = '\0virtual:ngx-bootstrap-entry';
-    const entryContent = generateEntryContent();
-
-    return {
-        name: 'virtual-entry',
-        resolveId(id) {
-            return id === 'virtual:ngx-bootstrap-entry' ? VIRTUAL_ENTRY_ID : null;
-        },
-        load(id) {
-            return id === VIRTUAL_ENTRY_ID ? entryContent : null;
+export default [
+    {
+        input: 'node_modules/ngx-bootstrap/collapse/fesm2020/ngx-bootstrap-collapse.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/collapse/bundles/ngx-bootstrap-collapse.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/collapse',
+            globals: rollupGlobals
         }
-    };
-}
-
-// ============================================
-// Rollup Configuration Export
-// ============================================
-
-export default {
-    input: 'virtual:ngx-bootstrap-entry',
-    output: {
-        file: 'dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.bundle.js',
-        format: 'iife',
-        name: 'ngxBootstrap',
-        globals: ANGULAR_EXTERNALS
     },
-    external: Object.keys(ANGULAR_EXTERNALS),
-    plugins: [
-        virtualEntryPlugin(),
-        ngxBootstrapPatchPlugin(),
-        resolve({
-            browser: true,
-            preferBuiltins: false
-        }),
-        commonjs()
-    ]
-};
+    {
+        input: './node_modules/ngx-bootstrap/chronos/fesm2020/ngx-bootstrap-chronos.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/chronos/bundles/ngx-bootstrap-chronos.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/chronos',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/utils/fesm2020/ngx-bootstrap-utils.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/utils/bundles/ngx-bootstrap-utils.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/utils',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/positioning/fesm2020/ngx-bootstrap-positioning.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/positioning/bundles/ngx-bootstrap-positioning.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/positioning',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/component-loader/fesm2020/ngx-bootstrap-component-loader.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/component-loader/bundles/ngx-bootstrap-component-loader.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/component-loader',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/dropdown/fesm2020/ngx-bootstrap-dropdown.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/dropdown/bundles/ngx-bootstrap-dropdown.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/dropdown',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/locale/fesm2020/ngx-bootstrap-locale.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/locale/bundles/ngx-bootstrap-locale.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/locale',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/buttons/fesm2020/ngx-bootstrap-buttons.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/buttons/bundles/ngx-bootstrap-buttons.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/buttons',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/carousel/fesm2020/ngx-bootstrap-carousel.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/carousel/bundles/ngx-bootstrap-carousel.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/carousel',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/mini-ngrx/fesm2020/ngx-bootstrap-mini-ngrx.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/mini-ngrx/bundles/ngx-bootstrap-mini-ngrx.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/mini-ngrx',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/focus-trap/fesm2020/ngx-bootstrap-focus-trap.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/focus-trap/bundles/ngx-bootstrap-focus-trap.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/focus-trap',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/modal/fesm2020/ngx-bootstrap-modal.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/modal/bundles/ngx-bootstrap-modal.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/modal',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/pagination/fesm2020/ngx-bootstrap-pagination.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/pagination/bundles/ngx-bootstrap-pagination.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/pagination',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/popover/fesm2020/ngx-bootstrap-popover.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/popover/bundles/ngx-bootstrap-popover.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/popover',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/progressbar/fesm2020/ngx-bootstrap-progressbar.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/progressbar/bundles/ngx-bootstrap-progressbar.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/progressbar',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/rating/fesm2020/ngx-bootstrap-rating.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/rating/bundles/ngx-bootstrap-rating.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/rating',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/sortable/fesm2020/ngx-bootstrap-sortable.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/sortable/bundles/ngx-bootstrap-sortable.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/sortable',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/tabs/fesm2020/ngx-bootstrap-tabs.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/tabs/bundles/ngx-bootstrap-tabs.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/tabs',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/timepicker/fesm2020/ngx-bootstrap-timepicker.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/timepicker/bundles/ngx-bootstrap-timepicker.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/timepicker',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/tooltip/fesm2020/ngx-bootstrap-tooltip.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/tooltip/bundles/ngx-bootstrap-tooltip.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/tooltip',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/typeahead/fesm2020/ngx-bootstrap-typeahead.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/typeahead/bundles/ngx-bootstrap-typeahead.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/typeahead',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/datepicker/fesm2020/ngx-bootstrap-datepicker.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/datepicker/bundles/ngx-bootstrap-datepicker.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/datepicker',
+            globals: rollupGlobals
+        }
+    },
+    {
+        input: 'node_modules/ngx-bootstrap/accordion/fesm2020/ngx-bootstrap-accordion.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: 'node_modules/ngx-bootstrap/accordion/bundles/ngx-bootstrap-accordion.umd.js',
+            format: 'umd',
+            name: 'ngx-bootstrap/accordion',
+            globals: rollupGlobals
+        }
+    }
+]

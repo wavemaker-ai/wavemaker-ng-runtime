@@ -10,7 +10,6 @@ import { compileTestComponent, mockApp } from 'projects/components/base/src/test
 const markup = `<div wmIframe name="iframe1" iframesrc="//bing.com" hint="iframe"></div>`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 class IframeWrapperComponent {

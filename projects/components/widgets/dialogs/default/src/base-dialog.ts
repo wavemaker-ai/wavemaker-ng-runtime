@@ -1,13 +1,14 @@
-import { Inject, Injectable, Injector, OnDestroy, Optional, TemplateRef } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
-import { BsModalRef, BsModalService, ModalOptions } from 'ngx-bootstrap/modal';
+import {Inject, Injectable, Injector, OnDestroy, Optional, TemplateRef} from '@angular/core';
+import {NavigationEnd, Router} from '@angular/router';
+import {BsModalRef, BsModalService, ModalOptions} from 'ngx-bootstrap/modal';
 
-import { Subscription } from 'rxjs';
+import {Subscription} from 'rxjs';
 
-import { AbstractDialogService, findRootContainer, generateGUId, isMobile } from '@wm/core';
+import {AbstractDialogService, findRootContainer, generateGUId, isMobile} from '@wm/core';
 
-import { BaseComponent, IDialog, IWidgetConfig, WidgetConfig } from '@wm/components/base';
+import {BaseComponent, IDialog, IWidgetConfig, WidgetConfig} from '@wm/components/base';
 
+const eventsRegistered = false;
 
 const invokeOpenedCallback = (ref) => {
     if (ref) {
@@ -30,7 +31,7 @@ const invokeOpenedCallback = (ref) => {
 
             const openedDialogs = ref.dialogService.getOpenedDialogs();
             if (openedDialogs.length > 1) {
-                const zIndex = Number($("[aria-labelledby= " + openedDialogs[openedDialogs.length - 2].titleId + "]").css('z-index'));
+                let zIndex = Number($("[aria-labelledby= " + openedDialogs[openedDialogs.length - 2].titleId + "]").css('z-index'));
                 $('[aria-labelledby= ' + ref.dialogService.getLastOpenedDialog().titleId + ']').css('z-index', zIndex + 2);
                 $('bs-modal-backdrop').css('z-index', zIndex + 1);
             }
@@ -44,7 +45,7 @@ const invokeClosedCallback = (ref) => {
         ref.dialogRef = undefined;
         const openedDialogs = ref.dialogService.getOpenedDialogs();
         if (openedDialogs.length >= 1) {
-            const zIndex: any = Number($("[aria-labelledby= " + openedDialogs[openedDialogs.length - 1].titleId + "]").css('z-index'));
+            let zIndex: any = Number($("[aria-labelledby= " + openedDialogs[openedDialogs.length - 1].titleId + "]").css('z-index'));
             $('bs-modal-backdrop').css('z-index', zIndex - 1);
         }
     }
@@ -59,7 +60,7 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
     private readonly bsModal: BsModalService;
 
     private dialogRef: BsModalRef;
-    private dialogId: string;
+    private dialogId: number;
     public titleId: string = 'wmdialog-' + generateGUId();
     public sheet: string | boolean;
     public sheetPosition: string;
@@ -85,7 +86,7 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
                     this.dialogId = id;
                 }
             }),
-            this.bsModal.onShow.subscribe(() => { }),
+            this.bsModal.onShow.subscribe(() => {}),
             this.bsModal.onHidden.subscribe((closeReason) => {
                 let ref = this.dialogService.getDialogRefFromClosedDialogs();
                 if (this.dialogId && closeReason?.id === this.dialogId) {
@@ -104,7 +105,7 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
                     }
                 }
             }),
-            this.bsModal.onHide.subscribe(() => { }),
+            this.bsModal.onHide.subscribe(() => {}),
             router.events.subscribe(e => {
                 if (e instanceof NavigationEnd) {
                     this.close();

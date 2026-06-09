@@ -73,10 +73,9 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
         }
 
         if (this.spa) {
-            // Resolve optionally because prefabs can initialize before a page exists
-            this.pageDirective = this.injector ? this.injector.get(SpaPageDirective, null) : (inject as any)(SpaPageDirective, { optional: true });
+            this.pageDirective = this.injector ? this.injector.get(SpaPageDirective) : inject(SpaPageDirective);
         } else {
-            this.pageDirective = this.injector ? this.injector.get(PageDirective, null) : (inject as any)(PageDirective, { optional: true });
+            this.pageDirective = this.injector ? this.injector.get(PageDirective) : inject(PageDirective);
         }
         if (this.pageDirective) {
             this.registerDestroyListener(this.pageDirective.subscribe('attach', data => this.ngOnAttach(data.refreshData)));
@@ -96,7 +95,7 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
 
     registerWidgets() {
         this.Widgets = {};
-        this.containerWidget.Widgets = this.Widgets;
+        this.Widgets = {};this.containerWidget.Widgets = this.Widgets;
     }
 
     initUserScript() {
@@ -286,27 +285,7 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
     ngOnDestroy(): void {
-        if (this.destroy$) {
-            this.destroy$.complete();
-            this.destroy$ = null;
-        }
-        if (this.viewInit$ && !this.viewInit$.closed) {
-            this.viewInit$.complete();
-            this.viewInit$ = null;
-        }
-
-        this.App = null;
-        this.containerWidget = null;
-        this.prefabMngr = null;
-        this.i18nService = null;
-        this.appLocale = null;
-        this.prefabContainerDirective = null;
-        this.scriptLoaderService = null;
-        this.pageDirective = null;
-        this.Viewport = null;
-        this.viewParent = null;
-
-        this.cleanupFragmentMonitor();
+        this.destroy$.complete();
     }
 
     // user overrides this

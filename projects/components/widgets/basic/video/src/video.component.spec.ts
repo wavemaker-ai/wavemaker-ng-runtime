@@ -23,7 +23,6 @@ const markup = `<video wmVideo
 </video>`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 class TestComponent {

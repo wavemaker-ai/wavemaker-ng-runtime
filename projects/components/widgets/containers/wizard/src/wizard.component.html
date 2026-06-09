@@ -2,7 +2,7 @@
   <ul class="app-wizard-steps nav nav-pills {{stepClass}}">
     @for (step of steps; track step; let i = $index) {
       <li class="app-wizard-step" [hidden]="!step.show"
-        [ngClass]="{finished: step.done, active: step.active, default: step.disabled}"
+        [ngClass]="{active: step.done, current: step.active, disabled: step.disabled}"
         (click)="onWizardHeaderClick($event, step)" [attr.data-stepid]="step.widgetId">
         <a href="javascript:void(0)" [attr.aria-current]="step.active ? 'step' : null"
           [attr.aria-disabled]="step.disabled" [attr.aria-label]='step.subtitle ? "step " + (i + 1) + " " +  step.title + " " + step.subtitle : "step " + (i + 1) + " " +  step.title' [attr.title]= "step.title"
@@ -10,25 +10,23 @@
           @if (class && class.includes('classic')) {
             <span class="arrow"></span>
           }
-          @if (shouldRenderWizardStepNumberSpan(step)) {
-            <span class="wizard-step-number">
-              @if (class && class.includes('number') && !step.isDone && !showWizardStepIcons) {
-                <span class="count">{{i+1}}</span>
-              }
-              @if (class && (class.includes('dottedstepper') || class.includes('text-inline') && !showWizardStepIcons) && !step.isDone) {
-                <i class="dottedstepper"></i>
-              }
-              @if (class && (class.includes('dottedstepper') || class.includes('number')) && step.isDone) {
-                <i class="app-icon wi wi-done"></i>
-              }
-              @if (shouldShowPrimaryStepIcon(step)) {
-                <i class="app-icon {{ stepIconClassOrDefault(step) }}"></i>
-              }
-              @if (showWizardStepIcons && step.isDone && hasNonEmptyDoneIconClass(step)) {
-                <i class="app-icon {{ step.doneiconclass }}"></i>
-              }
-            </span>
-          }
+          <span class="wizard-step-number">
+            @if (class && class.includes('number') && !step.isDone) {
+              <span class="count">{{i+1}}</span>
+            }
+            @if (class && (class.includes('dottedstepper') || class.includes('text-inline') && !class.includes('iconstepper')) && !step.isDone) {
+              <i class="dottedstepper"></i>
+            }
+            @if (class && (class.includes('dottedstepper') || class.includes('number')) && step.isDone) {
+              <i class="app-icon wi wi-done"></i>
+            }
+            @if ((class && class.includes('iconstepper')) && ((step.iconclass && !step.isDone) || (step.iconclass && step.isDone && step.doneiconclass ===''))) {
+              <i class="app-icon {{step.iconclass}}"></i>
+            }
+            @if (step.doneiconclass && step.isDone && (class && class.includes('iconstepper'))) {
+              <i class="app-icon {{step.doneiconclass}}"></i>
+            }
+          </span>
           <span class="title-wrapper">
             @if (class && class.includes('text-inline')) {
               <span>{{'0' + (i+1)}}</span>

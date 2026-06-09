@@ -1,4 +1,4 @@
-import { AUTO_LAYOUT_PROPS, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register } from '@wm/components/base';
+import { PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register } from '@wm/components/base';
 
 export const registerProps = () => {
     register(
@@ -19,8 +19,7 @@ export const registerProps = () => {
                 ['paneicon', PROP_STRING],
                 ['show', {value: true, ...PROP_BOOLEAN}],
                 ['smoothscroll', {value: false, ...PROP_BOOLEAN}],
-                ['title', {value: 'Tab Title', ...PROP_STRING}],
-                ...AUTO_LAYOUT_PROPS
+                ['title', {value: 'Tab Title', ...PROP_STRING}]
             ]
         )
     );

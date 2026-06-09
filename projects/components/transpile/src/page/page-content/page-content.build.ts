@@ -4,7 +4,7 @@ import { Element, ParseSourceSpan, Text } from "@angular/compiler";
 const tagName = 'div';
 
 const createElement = name => {
-    return new Element(name, [], [], [], false, noSpan, noSpan, noSpan, false);
+    return new Element(name, [], [], noSpan, noSpan, noSpan);
 };
 
 const noSpan = ({} as ParseSourceSpan);

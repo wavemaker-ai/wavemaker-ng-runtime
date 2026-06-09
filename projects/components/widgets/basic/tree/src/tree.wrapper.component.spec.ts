@@ -3,10 +3,10 @@ import { TreeComponent } from './tree.component';
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
 import { ComponentFixture } from '@angular/core/testing';
 import { compileTestComponent, mockApp } from '../../../../base/src/test/util/component-test-util';
-import { AbstractI18nService, App, StatePersistence } from '@wm/core';
+import { AbstractI18nService, App } from '@wm/core';
 import { MockAbstractI18nService } from '../../../../base/src/test/util/date-test-util';
 import '@ztree/ztree_v3/js/jquery.ztree.all.js';
-import "./keyboard-navigation.js";
+import "libraries/scripts/tree-keyboard-navigation/keyboard-navigation.js";
 
 const markup = `<ul wmTree name="tree1" class="testClass" height="800" width="200" tabindex="1" show="true"
                 collapse.event="tree1Collapse($event, widget, $item, $path)"
@@ -18,7 +18,6 @@ const markup = `<ul wmTree name="tree1" class="testClass" height="800" width="20
                 padding="3px 4px 5px 6px"></ul>`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 class TreeWrapperComponent {
@@ -66,28 +65,12 @@ class TreeWrapperComponent {
     }
 }
 
-const mockStatePersistence = {
-    getWidgetState: jest.fn(),
-    setWidgetState: jest.fn(),
-    removeWidgetState: jest.fn(),
-    computeMode: jest.fn((sh?: string) => {
-        if (!sh) {
-            return 'url';
-        }
-        if (String(sh).toLowerCase() === 'none') {
-            return undefined;
-        }
-        return String(sh).toLowerCase();
-    })
-};
-
 const testModuleDef: ITestModuleDef = {
     declarations: [TreeWrapperComponent,],
     imports: [TreeComponent],
     providers: [
         { provide: App, useValue: mockApp },
-        { provide: AbstractI18nService, useClass: MockAbstractI18nService },
-        { provide: StatePersistence, useValue: mockStatePersistence }
+        { provide: AbstractI18nService, useClass: MockAbstractI18nService }
     ]
 };
 
@@ -167,12 +150,6 @@ describe('wm-tree: Component Specific Tests', () => {
             const newTreeIcons = { folder: 'folder-icon', file: 'file-icon' };
             wmComponent.onPropertyChange('treeicons', newTreeIcons);
             expect(wmComponent.treeicons).toEqual(newTreeIcons);
-            expect(wmComponent.renderTree).toHaveBeenCalled();
-        });
-
-        it('should update template and render tree', () => {
-            wmComponent.onPropertyChange('template', 'MyTreeNodePartial');
-            expect(wmComponent.template).toBe('MyTreeNodePartial');
             expect(wmComponent.renderTree).toHaveBeenCalled();
         });
 
@@ -383,7 +360,6 @@ describe('wm-tree: Component Specific Tests', () => {
             wmComponent['getPath'] = jest.fn().mockReturnValue('/path/to/node');
             wmComponent['setChecked'] = jest.fn();
             wmComponent['invokeEventCallback'] = jest.fn();
-            wmComponent['refreshTreeNodeTemplateHosts'] = jest.fn();
 
             // Mock jQuery
             jquerySpy = jest.spyOn(global, '$' as any).mockReturnValue({
@@ -401,7 +377,6 @@ describe('wm-tree: Component Specific Tests', () => {
         it('should deselect previously selected node and select new node', () => {
             wmComponent['selectNode'](mockEvent, mockNode);
 
-            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(jquerySpy).toHaveBeenCalledWith('.app-tree[name=testTree] li[treenode].selected');
             expect(removeClassSpy).toHaveBeenCalledWith('selected');
             expect(jquerySpy).toHaveBeenCalledWith('#node1:has(.curSelectedNode)');
@@ -411,7 +386,6 @@ describe('wm-tree: Component Specific Tests', () => {
         it('should not select a new node if node is null', () => {
             wmComponent['selectNode'](mockEvent, null);
 
-            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(jquerySpy).toHaveBeenCalledWith('.app-tree[name=testTree] li[treenode].selected');
             expect(removeClassSpy).toHaveBeenCalledWith('selected');
             expect(jquerySpy).toHaveBeenCalledTimes(3);
@@ -422,7 +396,6 @@ describe('wm-tree: Component Specific Tests', () => {
             wmComponent['treeClass'] = 'Checkbox';
             wmComponent['selectNode'](mockEvent, mockNode);
 
-            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(wmComponent['setChecked']).toHaveBeenCalledWith(mockNode, mockNode.data);
         });
 
@@ -430,14 +403,12 @@ describe('wm-tree: Component Specific Tests', () => {
             wmComponent['treeClass'] = 'Radio';
             wmComponent['selectNode'](mockEvent, mockNode);
 
-            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(wmComponent['setChecked']).toHaveBeenCalledWith(mockNode, mockNode.data);
         });
 
         it('should set selecteditem with path', () => {
             wmComponent['selectNode'](mockEvent, mockNode);
 
-            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(wmComponent['selecteditem']).toEqual({
                 name: 'Node 1',
                 path: '/path/to/node'
@@ -447,7 +418,6 @@ describe('wm-tree: Component Specific Tests', () => {
         it('should invoke select event callback', () => {
             wmComponent['selectNode'](mockEvent, mockNode);
 
-            expect(wmComponent['refreshTreeNodeTemplateHosts']).toHaveBeenCalled();
             expect(wmComponent['invokeEventCallback']).toHaveBeenCalledWith('select', {
                 '$event': mockEvent,
                 '$item': { name: 'Node 1' },
@@ -520,15 +490,14 @@ describe('wm-tree: Component Specific Tests', () => {
 
         beforeEach(() => {
             mockNodes = [
-                { nodeId: '1', name: 'Node 1', getParentNode: () => null },
-                { nodeId: '2', name: 'Node 2', getParentNode: () => null },
-                { nodeId: '3', name: 'Node 3', getParentNode: () => null }
+                { nodeId: '1', name: 'Node 1' },
+                { nodeId: '2', name: 'Node 2' },
+                { nodeId: '3', name: 'Node 3' }
             ];
             mockZTree = {
                 transformToArray: jest.fn().mockReturnValue(mockNodes),
                 getNodes: jest.fn().mockReturnValue(mockNodes),
-                selectNode: jest.fn(),
-                expandNode: jest.fn()
+                selectNode: jest.fn()
             };
             wmComponent['zTree'] = mockZTree;
             wmComponent['selectNode'] = jest.fn();
@@ -540,7 +509,6 @@ describe('wm-tree: Component Specific Tests', () => {
             expect(mockZTree.transformToArray).toHaveBeenCalledWith(mockNodes);
             expect(mockZTree.selectNode).toHaveBeenCalledWith(mockNodes[1], false);
             expect(wmComponent['selectNode']).toHaveBeenCalledWith(undefined, mockNodes[1]);
-            expect(mockZTree.expandNode).toHaveBeenCalledWith(mockNodes[1], true, false, false, false);
         });
 
         it('should not select node when node does not exist', () => {
@@ -549,21 +517,23 @@ describe('wm-tree: Component Specific Tests', () => {
             expect(mockZTree.transformToArray).toHaveBeenCalledWith(mockNodes);
             expect(mockZTree.selectNode).not.toHaveBeenCalled();
             expect(wmComponent['selectNode']).not.toHaveBeenCalled();
-            expect(mockZTree.expandNode).not.toHaveBeenCalled();
         });
 
         it('should handle undefined value', () => {
             wmComponent['selectById'](undefined);
 
-            expect(mockZTree.transformToArray).not.toHaveBeenCalled();
+            expect(mockZTree.transformToArray).toHaveBeenCalledWith(mockNodes);
             expect(mockZTree.selectNode).not.toHaveBeenCalled();
             expect(wmComponent['selectNode']).not.toHaveBeenCalled();
-            expect(mockZTree.expandNode).not.toHaveBeenCalled();
         });
     });
 
     describe('deselectById', () => {
-        it('should clear selecteditem', () => {
+        beforeEach(() => {
+            wmComponent['selectById'] = jest.fn();
+        });
+
+        it('should clear selecteditem and call selectById', () => {
             wmComponent['deselectById']();
 
             expect(wmComponent['selecteditem']).toEqual({});
@@ -677,8 +647,6 @@ describe('wm-tree: Component Specific Tests', () => {
                     init: jest.fn().mockReturnValue({
                         getNodes: jest.fn(),
                         selectNode: jest.fn(),
-                        // zTree API: flatten tree nodes (postRenderTree / selectById use instance method)
-                        transformToArray: jest.fn((nodes) => (Array.isArray(nodes) ? nodes : [])),
                     })
                 },
                 zTreeKeyboardNavigation: jest.fn()

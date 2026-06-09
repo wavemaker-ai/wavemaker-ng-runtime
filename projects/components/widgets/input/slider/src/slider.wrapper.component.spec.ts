@@ -11,7 +11,6 @@ import { ComponentFixture } from "@angular/core/testing";
 const markup = `<div wmSlider name="slider1" hint="slider" tabindex="1">`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 

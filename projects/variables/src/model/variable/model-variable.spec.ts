@@ -1,4 +1,4 @@
-import { ModelVariable} from '@wavemaker-ai/variables';
+import { ModelVariable} from '@wavemaker/variables';
 import {findIndex} from "lodash-es";
 describe('Model Variable dataset as list', () => {
     let modelVariable: ModelVariable;

@@ -19,7 +19,7 @@
   [attr.accesskey]="shortcutkey"
   [attr.aria-label]="arialabel"
   (change)="onDisplayDateChange($event)"
-  (keydown)="_triggeredByUser = true; onDisplayKeydown($event);">
+  (keydown)="this._triggeredByUser = true; onDisplayKeydown($event);">
 
 <span class="input-group-btn">
   <button type="button"

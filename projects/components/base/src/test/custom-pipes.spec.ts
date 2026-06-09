@@ -41,7 +41,6 @@ jest.mock('@wm/core', () => ({
 }));
 
 @Component({
-    standalone: false,
     template: '<div></div>'
 })
 class PipeWrapperComponent implements OnInit {

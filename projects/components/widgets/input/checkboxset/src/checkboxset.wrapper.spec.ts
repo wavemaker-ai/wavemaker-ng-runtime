@@ -13,7 +13,6 @@ declare const _: any;
 
 const markup = `<div wmCheckboxset hint="checkboxset1" caption="Label" required itemsperrow="3" name="checkboxset1" tabindex="1"></div>`;
 @Component({
-    standalone: false,
     template: markup
 })
 
@@ -73,10 +72,9 @@ describe('CheckboxSet component', () => {
     it('should check checkbox  on keyboard enter', () => {
         expect(checkboxsetComponent.datavalue).toBeFalsy();
         const checkboxElement = getHtmlSelectorElement(fixture, '[wmCheckboxset]');
-        const mockTarget = { click: jest.fn() };
-        checkboxElement.triggerEventHandler('keydown.enter', { preventDefault: () => { }, target: mockTarget });
+        checkboxElement.triggerEventHandler('keydown.enter', { preventDefault: () => { } });
         fixture.whenStable().then(() => {
-            expect(mockTarget.click).toHaveBeenCalled();
+            expect(checkboxsetComponent.datavalue).toBeTruthy();
         });
     });
     describe('onCheckboxLabelClick', () => {

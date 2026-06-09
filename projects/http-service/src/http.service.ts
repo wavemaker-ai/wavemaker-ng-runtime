@@ -4,7 +4,7 @@ import { HttpClient, HttpEvent, HttpHeaders, HttpParams, HttpRequest, HttpRespon
 import { Observable, Subject, Subscription } from 'rxjs';
 
 import { AbstractHttpService } from '@wm/core';
-import { HttpClientService, getErrMessage } from '@wavemaker-ai/variables';
+import { HttpClientService, getErrMessage } from '@wavemaker/variables';
 import { includes, isBoolean, isFunction, isNumber } from "lodash-es";
 
 enum HTTP_EVENT_TYPE {

@@ -17,7 +17,6 @@ jest.mock('@wm/core', () => ({
 const markup = `<label wmLabel #wm_label1="wmLabel" [attr.aria-label]="wm_label1.arialabel || 'Label text'" hint="Label text"  name="label1" paddingright="0.5em" paddingleft="0.5em"></label>`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 class LabelWrapperDirective {

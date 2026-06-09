@@ -22,7 +22,6 @@ jest.mock('@wm/components/base', () => ({
 
 // Create a test component
 @Component({
-    standalone: false,
     template: '<div wmLayoutGridColumn height="100px"></div>'
 })
 class TestComponent {

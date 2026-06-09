@@ -1,7 +1,7 @@
 
 /**
- * To update the @wavemaker-ai/app-ng-runtime package.json version
- * Add the dependency of @wavemaker-ai/app-ng-runtime in package.json file
+ * To update the @wavemaker/app-ng-runtime package.json version
+ * Add the dependency of @wavemaker/app-ng-runtime in package.json file
  * Update the TS config and TS config web app json with package version
  *
  * CONSOLE ARGUMENTS:-

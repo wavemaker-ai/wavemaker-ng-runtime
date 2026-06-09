@@ -48,7 +48,6 @@ const markup = `<div
                 itemchildren="children"
                 select.event="menu1Select($event, widget, $item)">`;
 @Component({
-    standalone: false,
     template: markup
 })
 class MenuWrapperComponent {

@@ -364,7 +364,6 @@ const summaryRowData: any = [
 ];
 
 @Component({
-    standalone: false,
     template: quick_edit_markup
 })
 
@@ -755,7 +754,6 @@ describe("DataTable", () => {
             });
             describe("Inline Editable", () => {
                 @Component({
-    standalone: false,
                     template: inline_edit_markup
                 })
                 class InlineTableWrapperComponent {
@@ -2367,7 +2365,6 @@ describe("DataTable", () => {
 
             describe("Quick Edit", () => {
                 @Component({
-    standalone: false,
                     template: quick_edit_markup
                 })
                 class QuickEditTableWrapperComponent {
@@ -2681,7 +2678,6 @@ describe("DataTable", () => {
 
             describe("Summary Row", () => {
                 @Component({
-    standalone: false,
                     template: summary_row_markup
                 })
                 class SummaryRowWrapperComponent {

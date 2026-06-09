@@ -139,15 +139,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             try {
                 // Check for special containers as before
                 const isInsideSpecialContainer = !!(
-                    // ngx-bootstrap renders date/time pickers in custom elements like
-                    // <bs-datepicker-container> (not always with a CSS class), so check
-                    // both tag and class selectors.
-                    target.closest('bs-datepicker-container') ||
                     target.closest('.bs-datepicker-container') ||
-                    target.closest('bs-daterangepicker-container') ||
-                    target.closest('.bs-daterangepicker-container') ||
-                    target.closest('bs-timepicker') ||
-                    target.closest('.bs-timepicker') ||
                     target.closest(".dropdown-menu")
                 );
 
@@ -260,7 +252,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             this.arrowPositionSubscription.unsubscribe();
             this.arrowPositionSubscription = null;
         }
-
+        
         this.arrowPositionSubscription = this.bsPopoverDirective._popover._ngZone.onStable.subscribe(() => {
             popoverElem.find('.popover-arrow').css('left', popoverLeftShift + 'px');
         });
@@ -413,12 +405,12 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
                     this.partialLoadedSubscription();
                     this.partialLoadedSubscription = null;
                 }
-
+                
                 // Check if component is still alive and partialRef exists
                 if (!this.partialRef || !this.partialRef.nativeElement) {
                     return;
                 }
-
+                
                 const parEle = this.partialRef.nativeElement;
                 let partialScope;
 
@@ -507,40 +499,36 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             this.partialLoadedSubscription();
             this.partialLoadedSubscription = null;
         }
-
+        
         // Unsubscribe from arrow position adjustment
         if (this.arrowPositionSubscription) {
             this.arrowPositionSubscription.unsubscribe();
             this.arrowPositionSubscription = null;
         }
-
+        
         // Close popover if open
         if (this.isOpen && this.bsPopoverDirective) {
             this.bsPopoverDirective.hide();
         }
-
+        
         // Clear timeout
         if (this.closePopoverTimeout) {
             clearTimeout(this.closePopoverTimeout);
             this.closePopoverTimeout = null;
         }
-
+        
         // Remove document click handler
         if (this.documentClickHandler) {
             document.removeEventListener('click', this.documentClickHandler, true);
             this.documentClickHandler = null;
         }
-
+        
         // Remove from active popovers array
         const index = PopoverComponent.activePopovers.indexOf(this);
         if (index > -1) {
             PopoverComponent.activePopovers.splice(index, 1);
         }
-        // Clear timeout to prevent memory leak
-        if (this.closePopoverTimeout) {
-            clearTimeout(this.closePopoverTimeout);
-        }
-
+        
         // Clear anchor event handlers
         if (this.anchorRef?.nativeElement) {
             this.anchorRef.nativeElement.onmouseenter = null;

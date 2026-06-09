@@ -6,7 +6,6 @@ import { App } from '@wm/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 
 @Component({
-    standalone: false,
     template: `
       <div wmButtonGroup>
         <button class="app-button">Button 1</button>

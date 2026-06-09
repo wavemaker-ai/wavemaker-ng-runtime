@@ -71,35 +71,25 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
         super.ngAfterContentInit();
         if (this.table) {
             this.table._liveTableParent = this;
-            
-            // Defer live-table configuration to ensure parent table datatable is initialized (Angular 20 timing)
-            const configureLiveTable = () => {
-                if (typeof this.table.datagridElement.datatable === 'function' && this.table.datagridElement.datatable('instance')) {
-                    this.table.datagridElement.datatable('option', this.tableOptions);
+            this.table.datagridElement.datatable('option', this.tableOptions);
 
             this.selectedItemChangeSubscription = this.table.selectedItemChange$
                 .pipe(debounceTime(250))
                 .subscribe(this.onSelectedItemChange.bind(this));
 
-                    if (!this.isLayoutDialog && !this.form) {
-                        this.table.datagridElement.datatable('option', {
-                            'beforeRowUpdate' : () => {
-                                this.showErrorMessage();
-                            },
-                            'beforeRowDelete' : () => {
-                                this.showErrorMessage();
-                            },
-                            'beforeRowInsert' : () => {
-                                this.showErrorMessage();
-                            }
-                        });
+            if (!this.isLayoutDialog && !this.form) {
+                this.table.datagridElement.datatable('option', {
+                    'beforeRowUpdate' : () => {
+                        this.showErrorMessage();
+                    },
+                    'beforeRowDelete' : () => {
+                        this.showErrorMessage();
+                    },
+                    'beforeRowInsert' : () => {
+                        this.showErrorMessage();
                     }
-                } else {
-                    // Parent table not initialized yet, retry
-                    setTimeout(configureLiveTable, 50);
-                }
-            };
-            setTimeout(configureLiveTable, 0);
+                });
+            }
         }
     }
 

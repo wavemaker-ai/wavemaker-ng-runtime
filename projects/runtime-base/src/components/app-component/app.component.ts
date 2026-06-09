@@ -120,9 +120,8 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
             });
         });
 
-        // set theme to bs5 on ngx-bootstrap. This avoids runtime calculation to determine bs theme. Thus resolves performance.
-        // Note: Angular 20/ngx-bootstrap 20 only supports bs4/bs5, not bs3
-        setTheme('bs5');
+        // set theme to bs3 on ngx-bootstrap. This avoids runtime calculation to determine bs theme. Thus resolves performance.
+        setTheme('bs3');
 
         let spinnerId;
 

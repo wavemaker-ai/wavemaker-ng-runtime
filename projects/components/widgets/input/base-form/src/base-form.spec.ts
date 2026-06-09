@@ -25,7 +25,6 @@ class MockWidgetConfig implements IWidgetConfig {
 }
 
 @Component({
-    standalone: false,
     template: '<div></div>'
 })
 class TestFormComponent extends BaseFormComponent {

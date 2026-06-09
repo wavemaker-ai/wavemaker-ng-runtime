@@ -1163,7 +1163,7 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
     ngOnDestroy() {
         // destroy all subscriptions to prevent memory leak.
         this.hideTooltip();
-
+        
         // MEMORY LEAK FIX: Unsubscribe from all subscriptions
         if (this._subsciptions) {
             this._subsciptions.forEach((subscription)=>{
@@ -1171,24 +1171,24 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
             });
             this._subsciptions = [];
         }
-
+        
         // MEMORY LEAK FIX: Clear chart instance
         if (this.chart) {
             this.chart = null;
         }
-
+        
         // MEMORY LEAK FIX: Remove resize handler if exists
         if (this._resizeFn) {
             this._resizeFn = null;
         }
-
+        
         // MEMORY LEAK FIX: Clear array references
         this.chartData = [];
         this._processedData = [];
         this.sampleData = [];
         this.xDataKeyArr = [];
         this.nonPrimaryColumns = [];
-
+        
         super.ngOnDestroy();
     }
     redraw = this._plotChartProxy.bind(this);

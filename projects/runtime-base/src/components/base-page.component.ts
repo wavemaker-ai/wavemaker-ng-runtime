@@ -121,7 +121,6 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
     }
 
     registerPageParams() {
-
         const subscription = this.route.queryParams.subscribe(params => this.pageParams = (this.App as any).pageParams = extend({}, params));
         this.registerDestroyListener(() => subscription.unsubscribe());
     }
@@ -348,30 +347,7 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         // MEMORY LEAK FIX: Unwatch all Page-scoped watchers for THIS specific page when page is destroyed
         //this.captureApplicationThumbnail();
         this.savePageSnapShot();
-
-        if (this.destroy$) {
-            this.destroy$.complete();
-            this.destroy$ = null;
-        }
-        if (this.viewInit$ && !this.viewInit$.closed) {
-            this.viewInit$.complete();
-            this.viewInit$ = null;
-        }
-
-        this.App = null;
-        this.route = null;
-        this.appManager = null;
-        this.navigationService = null;
-        this.router = null;
-        this.pageParams = null;
-        this.i18nService = null;
-        this.appLocale = null;
-        this.pageDirective = null;
-        this.$page = null;
-        this.scriptLoaderService = null;
-        this.Viewport = null;
-
-        this.cleanupFragmentMonitor();
+        this.destroy$.complete();
     }
 
     captureApplicationThumbnail() {

@@ -9,7 +9,6 @@ import { App } from "@wm/core";
 const markup = `<div wmCheckbox hint="checkbox" caption="Label" name="checkbox1" tabindex="1"></div>`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 

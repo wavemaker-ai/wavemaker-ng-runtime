@@ -1,14 +1,14 @@
-import { Attribute, Directive, ElementRef, EnvironmentInjector, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
+import { Attribute, ComponentFactoryResolver, Directive, ElementRef, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
 
 import { debounceTime, filter } from 'rxjs/operators';
 
-import { $invokeWatchers, App, ComponentType, noop, PartialRefProvider } from '@wm/core';
+import { App, $invokeWatchers, noop, ComponentType, PartialRefProvider } from '@wm/core';
 
 import { WidgetRef } from "../../framework/types";
-import { debounce } from "lodash-es";
+import {debounce} from "lodash-es";
 
 @Directive({
-    standalone: true,
+  standalone: true,
     selector: '[partialContainer]'
 })
 export class PartialContainerDirective implements OnDestroy {
@@ -20,80 +20,36 @@ export class PartialContainerDirective implements OnDestroy {
         return this.componentInstance.name;
     }
 
-    async _renderPartial(partialName: string): Promise<void> {
-        if (!partialName) {
-            return;
-        }
-
-        try {
-            // Destroy the existing partial before creating new one
-            this.vcRef.clear();
-
-            // Trigger watchers for container-target query
-            $invokeWatchers(true);
-
-            // Resolve prefab context for partials inside prefabs
-            const prefabName = this.resolvePrefabContext();
-
-            // Load the partial component class
-            const PartialComponentClass = await this.partialRefProvider.getComponentFactoryRef(
-                partialName,
-                ComponentType.PARTIAL,
-                { prefab: prefabName }
-            );
-
-            if (!PartialComponentClass) {
-                console.error(`Failed to load partial component: ${partialName}`);
-                return;
-            }
-
-            // Create component with both environmentInjector (for standalone imports/providers)
-            // and injector (for element-level dependencies)
-            const componentRef = this.vcRef.createComponent(PartialComponentClass, {
-                index: 0,
-                environmentInjector: this.envInjector,
-                injector: this.inj
-            });
-
-            // Set prefab context on the partial instance if applicable
-            if (componentRef.instance && prefabName) {
-                (componentRef.instance as any).prefabName = prefabName;
-            }
-
-            // Resolve target container
-            if (!this.$target) {
-                this.$target = this.elRef.nativeElement.querySelector('[partial-container-target]')
-                    || this.elRef.nativeElement;
-            }
-
-            // Render the partial
-            this.$target.innerHTML = '';
-            this.$target.appendChild(componentRef.location.nativeElement);
-            this.contentInitialized = true;
-
-            // Notify load success after render
-            setTimeout(() => this.onLoadSuccess(), 200);
-        } catch (error) {
-            console.error(`Error rendering partial ${partialName}:`, error);
-        }
-    }
-
-    /**
-     * Resolve prefab context for the partial
-     * Checks if partial is inside a prefab and returns the prefab name
-     */
-    private resolvePrefabContext(): string | undefined {
+    async _renderPartial(nv) {
+        // destroy the existing partial
+        this.vcRef.clear();
+        // when the container-target is inside the component template, it can be queried after viewInit of the component.
+        $invokeWatchers(true);
+        // for partials with popovers and page dialogs which are inside a prefab, prefab name needs to be computed and appended
         const prefab = $(this.elRef.nativeElement).closest('.app-prefab');
-
+        let prefabName;
         if (prefab.length) {
-            return prefab.attr('prefabname');
+            prefabName = prefab.attr('prefabname');
+        } else if (this.componentInstance.viewParent) {
+            prefabName = this.componentInstance.viewParent.prefabName;
         }
 
-        if (this.componentInstance.viewParent?.prefabName) {
-            return this.componentInstance.viewParent.prefabName;
-        }
+        const componentFactory = await this.partialRefProvider.getComponentFactoryRef(nv, ComponentType.PARTIAL, {prefab: prefabName});
+        if (componentFactory) {
+            const instanceRef = this.vcRef.createComponent(componentFactory, 0, this.inj);
+            if (instanceRef && instanceRef['instance'] && prefabName) {
+                // @ts-ignore
+                instanceRef['instance'].prefabName = prefabName;
+            }
+            if (!this.$target) {
+                this.$target = this.elRef.nativeElement.querySelector('[partial-container-target]') || this.elRef.nativeElement;
+            }
 
-        return undefined;
+            this.$target.innerHTML = '';
+            this.$target.appendChild(instanceRef.location.nativeElement);
+            this.contentInitialized = true;
+            setTimeout(() => this.onLoadSuccess(), 200);
+        }
     }
 
     renderPartial = debounce(this._renderPartial, 200);
@@ -109,15 +65,15 @@ export class PartialContainerDirective implements OnDestroy {
         public vcRef: ViewContainerRef,
         public elRef: ElementRef,
         public inj: Injector,
-        private envInjector: EnvironmentInjector,
         private app: App,
         @Attribute('content') _content: string,
+        private resolver: ComponentFactoryResolver,
         private partialRefProvider: PartialRefProvider
     ) {
 
         componentInstance.registerPropertyChangeListener((key: string, nv: any, ov?: any) => {
             if (key === 'content') {
-                if ('isInlineContent' in componentInstance) {
+                if('isInlineContent' in componentInstance) {
                     componentInstance.isInlineContent = !(nv && nv !== '');
                 }
                 if (componentInstance.$lazyLoad) {

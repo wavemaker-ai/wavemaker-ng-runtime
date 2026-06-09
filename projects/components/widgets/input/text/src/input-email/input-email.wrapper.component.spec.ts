@@ -15,7 +15,6 @@ import { mockApp } from "projects/components/base/src/test/util/component-test-u
 const markup = `<wm-input type="email" name="text1" hint="email field">`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 

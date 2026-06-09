@@ -6,7 +6,7 @@ import { PipeProvider } from '../../../../../runtime-base/src/services/pipe-prov
 import { App, setPipeProvider, AbstractI18nService } from '@wm/core';
 import { LabelDirective } from '@wm/components/basic/label';
 import { MockAbstractI18nService } from 'projects/components/base/src/test/util/date-test-util';
-import '@wm/swipey';
+import 'libraries/scripts/swipey/swipey.jquery.plugin.js';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 import { Subject } from 'rxjs';
 import { SanitizePipe } from '@wm/components/base';
@@ -32,7 +32,6 @@ const markup = `
 `;
 
 @Component({
-    standalone: false,
     template: markup
 })
 class CarouselSpec {
@@ -49,22 +48,6 @@ class CarouselSpec {
 describe('wm-carousel: Widget specific test cases', () => {
     let fixture: ComponentFixture<CarouselSpec>;
     let component: CarouselSpec;
-
-    beforeAll(() => {
-        // Mock $.fn.swipey
-        ($ as any).fn.swipey = {
-            DIRECTIONS: {
-                HORIZONTAL: 'horizontal',
-                VERTICAL: 'vertical'
-            }
-        };
-        
-        // Mock jQuery swipeAnimation
-        ($.fn as any).swipeAnimation = jest.fn().mockReturnValue({
-            on: jest.fn(),
-            off: jest.fn()
-        });
-    });
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({

@@ -22,7 +22,6 @@ import { removeAttr, setAttr } from '@wm/core';
 import { styler } from '@wm/components/base';
 
 @Component({
-    standalone: false,
     template: `
         <div>
             <div wmCard name="testcard" title="Test Card" subheading="Subheading"></div>

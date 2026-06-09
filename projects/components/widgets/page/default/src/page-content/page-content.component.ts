@@ -1,14 +1,13 @@
 import {Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 
 import {App, switchClass} from '@wm/core';
-import { APPLY_STYLES_TYPE, PullToRefresh, provideAsWidgetRef, StylableComponent, styler, AutoLayout } from '@wm/components/base';
+import { APPLY_STYLES_TYPE, PullToRefresh, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 
 import { registerProps } from './page-content.props';
 
 const DEFAULT_CLS = 'app-page-content app-content-column';
 const WIDGET_CONFIG = {widgetType: 'wm-page-content', hostClass: DEFAULT_CLS};
 
-@AutoLayout()
 @Component({
     standalone: true,
     selector: '[wmPageContent]',

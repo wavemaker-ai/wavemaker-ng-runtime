@@ -17,7 +17,7 @@ import {
 import {SecurityService} from '@wm/security';
 import {$rootScope, MetadataService, VariablesService} from '@wm/variables';
 import {extend, forEach, get, isEmpty, isObject, isUndefined, merge, trim} from "lodash-es";
-import {getModesFromLocalStorage} from '../public_api';
+import { getModesFromLocalStorage } from '../public_api';
 
 enum POST_MESSAGES {
     HIDE_TEMPLATES_SHOW_CASE = 'hide-templates-show-case',
@@ -336,7 +336,7 @@ export class AppManagerService implements OnDestroy {
             loginMethod = loginConfig.type.toUpperCase();
             switch (loginMethod) {
                 case LOGIN_METHOD.DIALOG:
-                    // Through loginDialog, user will remain in the current state and failed calls will be executed post login through LoginActionService.
+                    // Through loginDialog, user will remain in the current state and failed calls will be executed post login through LoginVariableService.
                     // NOTE: user will be redirected to respective landing page only if dialog is opened manually(not through a failed 401 call).
                     this.noRedirect(true);
                     this.showLoginDialog();
@@ -373,7 +373,7 @@ export class AppManagerService implements OnDestroy {
                 })
             });
         });
-    }
+    } 
 
     noRedirect(value?: boolean) {
         if (isUndefined(value)) {
@@ -575,13 +575,13 @@ export class AppManagerService implements OnDestroy {
         }
     }
 
-    initAppModes(): void {
+    initAppModes(): void {    
         // get modes from local storage
         let storedModes = getModesFromLocalStorage();
-
+        
         // Apply restored modes
         this.$app.setMode(storedModes);
-
+    
         // Listener for postMessage-based mode changes
         // MEMORY LEAK FIX: Store bound function reference for cleanup
         this.windowMessageListener = (event) => {

@@ -112,6 +112,7 @@ export class PaginationService {
         const self = this;
         let $scrollParent;
         let scrollNode;
+        let lastScrollTop = 0;
 
         if (!$firstChild.length) {
             return;
@@ -125,67 +126,8 @@ export class PaginationService {
             scrollNode = $scrollParent[0];
         }
 
-        // Check if the parent (ListComponent) has horizontal direction. If yes, use horizontal scroll logic; else, vertical (existing).
-        // This branches the behavior without touching the original vertical code.
-        const isHorizontal = parent.direction === 'row';
-
-        if (isHorizontal) {
-            this.bindHorizontalScrollEvt(parent, $scrollParent, $rootEl, scrollNode, dataNavigator, debounceNum, self);
-        } else {
-            this.bindVerticalScrollEvt(parent, $scrollParent, $rootEl, scrollNode, dataNavigator, debounceNum, self);
-        }
-    }
-
-    private bindHorizontalScrollEvt(parent, $scrollParent, $rootEl, scrollNode, dataNavigator, debounceNum, self) {
-        // Horizontal scroll logic (mirrors vertical but uses left/width/deltaX).
-        // Has scroll (check horizontal overflow).
-        if (scrollNode.scrollWidth > scrollNode.clientWidth) {
-            let lastScrollLeft = 0;
-            $scrollParent
-                .each((index: number, node) => {
-                    // Get initial scrollLeft (horizontal position).
-                    lastScrollLeft = node === document ? $(window).scrollLeft() : (node as HTMLElement).scrollLeft;
-                })
-                .off('scroll.scroll_evt_horizontal') // Use a distinct event namespace to avoid conflicts with vertical.
-                .on('scroll.scroll_evt_horizontal', function (evt) {
-                    let target = evt.target;
-                    let clientWidth;
-                    let totalWidth;
-                    let scrollLeft;
-                    // ScrollingElement fallback for IE/Safari.
-                    target = target === document ? (target.scrollingElement || document.body) : target;
-                    if (parent.widgetType === 'wm-table' && parent.gridOptions.isNavTypeScrollOrOndemand()) {
-                        evt.stopPropagation();
-                    }
-                    clientWidth = target.clientWidth;
-                    totalWidth = target.scrollWidth;
-                    scrollLeft = target === document.body ? $(window).scrollLeft() : target.scrollLeft;
-                    // Check if scrolling rightward and near the end (90% threshold for preload).
-                    if ((lastScrollLeft < scrollLeft) && (totalWidth * 0.9 < scrollLeft + clientWidth)) {
-                        $(this).off('scroll.scroll_evt_horizontal'); // Unbind to prevent duplicates; rebind on next render.
-                        self.debouncedFetchNextDatasetOnScroll(dataNavigator, debounceNum, parent)();
-                    }
-                    lastScrollLeft = scrollLeft;
-                });
-            $rootEl.off('wheel.scroll_evt_horizontal');
-        } else {
-            // Fallback to wheel event for non-scrollable horizontal lists (detect rightward scroll).
-            $rootEl.on('wheel.scroll_evt_horizontal', e => {
-                if (parent.widgetType === 'wm-table' && parent.gridOptions.isNavTypeScrollOrOndemand()) {
-                    e.stopPropagation();
-                }
-                if (e.originalEvent.deltaX > 0) { // Rightward wheel delta.
-                    $rootEl.off('wheel.scroll_evt_horizontal');
-                    this.debouncedFetchNextDatasetOnScroll(dataNavigator, debounceNum, parent)();
-                }
-            });
-        }
-    }
-
-    // Method for vertical scroll event binding.
-    private bindVerticalScrollEvt(parent, $scrollParent, $rootEl, scrollNode, dataNavigator, debounceNum, self) {
+        // has scroll
         if (scrollNode.scrollHeight > scrollNode.clientHeight) {
-            let lastScrollTop = 0;
             $scrollParent
                 .each((index: number, node) => {
                     // scrollTop property is 0 or undefined for body in IE, safari.
@@ -202,17 +144,21 @@ export class PaginationService {
                     if (parent.widgetType === 'wm-table' && parent.gridOptions.isNavTypeScrollOrOndemand()) {
                         evt.stopPropagation();
                     }
+
                     clientHeight = target.clientHeight;
                     totalHeight = target.scrollHeight;
                     scrollTop = target === document.body ? $(window).scrollTop() : target.scrollTop;
+
                     if ((lastScrollTop < scrollTop) && (totalHeight * 0.9 < scrollTop + clientHeight)) {
                         $(this).off('scroll.scroll_evt');
                         self.debouncedFetchNextDatasetOnScroll(dataNavigator, debounceNum, parent)();
                     }
+
                     lastScrollTop = scrollTop;
                 });
             $rootEl.off('wheel.scroll_evt');
-         } else {
+        } else {
+            // if there is no scrollable element register wheel event on ul element
             $rootEl.on('wheel.scroll_evt', e => {
                 if (parent.widgetType === 'wm-table' && parent.gridOptions.isNavTypeScrollOrOndemand()) {
                     e.stopPropagation();
@@ -294,50 +240,22 @@ export class PaginationService {
      * @returns null
      */
     public setIscrollHandlers(el, dataNavigator, debounceNum) {
-        const list = $(el).find('[wmList]').first();  
-        const isHorizontal = list.attr('direction') === 'row';
-
-        if (isHorizontal) {
-            this.setHorizontalIscrollHandlers(el, dataNavigator, debounceNum, parent);
-        } else {
-            this.setVerticalIscrollHandlers(el, dataNavigator, debounceNum, parent);
-        }
-    }
-
-    private setHorizontalIscrollHandlers(el, dataNavigator, debounceNum, parent) {
-        // Horizontal iScroll logic (on 'scrollEnd' event).
-        let lastScrollLeft = 0;
-        const wrapper = get(el.iscroll, 'wrapper');
-        const self = el.iscroll;
-        el.iscroll.on('scrollEnd', () => {
-            const clientWidth = wrapper.clientWidth;
-            const totalWidth = wrapper.scrollWidth;
-            const scrollLeft = Math.abs(el.iscroll.x); // Horizontal position (absolute for rightward).
-            // Check rightward scroll and near-end threshold (90%).
-            if ((lastScrollLeft < scrollLeft) && (totalWidth * 0.9 < scrollLeft + clientWidth)) {
-                this.debouncedFetchNextDatasetOnScroll(dataNavigator, debounceNum, parent)();
-                if (self.indicatorRefresh) {
-                    self.indicatorRefresh();
-                }
-            }
-            lastScrollLeft = scrollLeft;
-        });
-    }
-
-    private setVerticalIscrollHandlers(el, dataNavigator, debounceNum, parent) {
         let lastScrollTop = 0;
         const wrapper = get(el.iscroll, 'wrapper');
         const self = el.iscroll;
+
         el.iscroll.on('scrollEnd', () => {
             const clientHeight = wrapper.clientHeight,
                 totalHeight = wrapper.scrollHeight,
                 scrollTop = Math.abs(el.iscroll.y);
+
             if ((lastScrollTop < scrollTop) && (totalHeight * 0.9 < scrollTop + clientHeight)) {
                 this.debouncedFetchNextDatasetOnScroll(dataNavigator, debounceNum, parent)();
                 if (self.indicatorRefresh) {
                     self.indicatorRefresh();
                 }
             }
+
             lastScrollTop = scrollTop;
         });
     }

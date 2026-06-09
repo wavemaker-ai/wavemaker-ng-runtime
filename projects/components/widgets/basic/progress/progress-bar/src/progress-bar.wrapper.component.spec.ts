@@ -11,7 +11,6 @@ import { provideAsWidgetRef } from "@wm/components/base";
 const markup = `<div wmProgressBar name="progress_bar1" hint="Progress bar" arialabel="Progress bar" tabindex="0"></div>`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 class ProgressBarWrapperComponent {

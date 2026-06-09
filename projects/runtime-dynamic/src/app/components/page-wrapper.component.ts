@@ -2,7 +2,6 @@ import {
     ApplicationRef,
     Component,
     ElementRef,
-    EnvironmentInjector,
     Injector,
     NgZone,
     OnDestroy,
@@ -29,7 +28,6 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
 
     constructor(
         private injector: Injector,
-        private envInjector: EnvironmentInjector,
         private route: ActivatedRoute,
         private vcRef: ViewContainerRef,
         private appRef: ApplicationRef,
@@ -54,52 +52,22 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
         $target.innerHTML = '';
     }
 
-    renderPage(pageName: string): void {
+    renderPage(pageName) {
         const $target = this.getTargetNode();
 
         this.appManager.loadAppVariables()
             .then(async () => {
-                const PageComponentClass = await this.componentRefProvider.getComponentFactoryRef(pageName, ComponentType.PAGE);
-                
-                if (!PageComponentClass) {
-                    console.error(`Failed to load page component: ${pageName}`);
-                    BasePageComponent.clear();
-                    return;
-                }
-
-                try {
-                    // Create a child injector that explicitly provides the route-specific
-                    // ActivatedRoute from PageWrapperComponent. This ensures dynamically
-                    // created page components get the correct ActivatedRoute with proper
-                    // queryParams, rather than a root-level ActivatedRoute.
-                    const childInjector = Injector.create({
-                        providers: [
-                            { provide: ActivatedRoute, useValue: this.route }
-                        ],
-                        parent: this.injector
-                    });
-
-                    const componentRef = this.vcRef.createComponent(PageComponentClass, {
-                        index: 0,
-                        environmentInjector: this.envInjector,
-                        injector: childInjector
-                    });
-                    
+                const pageComponentFactoryRef = await this.componentRefProvider.getComponentFactoryRef(pageName, ComponentType.PAGE);
+                if (pageComponentFactoryRef) {
+                    const componentRef = this.vcRef.createComponent(pageComponentFactoryRef, 0, this.injector);
                     this.instance = componentRef.instance;
                     $target.appendChild(componentRef.location.nativeElement);
-                    
-                    // Clean up any duplicate component instances
-                    if (this.vcRef.length > 1) {
-                        this.vcRef.remove(1);
-                    }
-                } catch (error) {
-                    console.error(`Error creating page component ${pageName}:`, error);
+                } else {
                     BasePageComponent.clear();
                 }
-            })
-            .catch(error => {
-                console.error(`Error loading app variables for page ${pageName}:`, error);
-                BasePageComponent.clear();
+                if (this.vcRef.length > 1) {
+                    this.vcRef.remove(1);
+                }
             });
     }
 

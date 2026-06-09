@@ -6,7 +6,6 @@ import { StylableComponent } from '../base/stylable.component';
 import { mockApp } from '../../../test/util/component-test-util';
 
 @Component({
-    standalone: false,
     template: '<div wmPartial></div>'
 })
 class TestComponent { }

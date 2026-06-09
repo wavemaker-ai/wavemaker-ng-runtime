@@ -1,13 +1,12 @@
 import {
+    Compiler,
     Component,
-    CUSTOM_ELEMENTS_SCHEMA,
-    Inject,
+    CUSTOM_ELEMENTS_SCHEMA, Inject,
     Injectable,
     Injector,
+    NgModule,
     NO_ERRORS_SCHEMA,
-    ViewEncapsulation,
-    Type,
-    inject
+    ViewEncapsulation
 } from '@angular/core';
 
 import { App, getValidJSON, UserDefinedExecutionContext } from '@wm/core';
@@ -22,30 +21,38 @@ import {
     ComponentType,
     getPrefabMinJsonUrl,
     getPrefabPartialJsonUrl,
+    I18nResolve,
+    AppExtensionJSResolve,
+    CanDeactivatePageGuard,
+    AppJSResolve,
+    PageNotFoundGuard,
+    RoleGuard,
+    AuthGuard,
+    PrefabManagerService,
+    PipeService,
+    AccessrolesDirective,
+    AppSpinnerComponent,
+    CustomToasterComponent,
+    AppComponent,
+    PrefabPreviewComponent,
+    EmptyPageComponent,
+    PrefabDirective as PrefabLoader,
     REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
 } from '@wm/runtime/base';
 import { AppResourceManagerService } from './app-resource-manager.service';
 import { isString, isUndefined } from "lodash-es";
-import * as customWidgets from '@wavemaker-ai/custom-widgets-m3';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
-// All the directive/component imports
-import {
-    AccessrolesDirective, AppSpinnerComponent, CustomToasterComponent, AppComponent,
-    PrefabPreviewComponent, EmptyPageComponent, PrefabDirective as PrefabLoader
-} from '@wm/runtime/base';
-import {
-    ContentComponent, LayoutDirective, PageContentComponent, PageDirective,
-    RouterOutletDirective, SpaPageDirective
-} from '@wm/components/page';
+import * as customWidgets from '@wavemaker/custom-widgets-m3';
+import { ContentComponent, LayoutDirective, PageContentComponent, PageDirective, RouterOutletDirective, SpaPageDirective } from '@wm/components/page';
+import { MetadataService, VariablesService } from '@wm/variables';
+import { OAuthService } from '@wm/oAuth';
+import { SecurityService } from '@wm/security';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { PartialDirective } from '@wm/components/base';
 import { ProgressBarComponent } from '@wm/components/basic/progress/progress-bar';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PrefabContainerDirective } from '@wm/components/prefab';
 
-// ==================== Types ====================
-
-interface PageMinJSON {
+interface IPageMinJSON {
     markup: string;
     script: string;
     styles: string;
@@ -53,249 +60,290 @@ interface PageMinJSON {
     config?: string;
 }
 
-interface FragmentOptions {
-    prefab?: string;
-    [key: string]: unknown;
-}
+declare const window: any;
 
-type ScriptFn = (instance: Record<string, unknown>, app: Record<string, unknown>, utils: Record<string, unknown>) => void;
+const fragmentCache = new Map<string, any>();
 
-// ==================== Caches ====================
-
-const fragmentCache = new Map<string, Promise<PageMinJSON>>();
-const componentCache = new Map<ComponentType, Map<string, Type<unknown>>>([
-    [ComponentType.PAGE, new Map()],
-    [ComponentType.PARTIAL, new Map()],
-    [ComponentType.PREFAB, new Map()],
-    [ComponentType.WIDGET, new Map()]
-]);
-const scriptCache = new Map<string, ScriptFn>();
-
-declare global {
-    interface Window { resourceCache?: Map<string, Promise<PageMinJSON>>; }
-}
 window.resourceCache = fragmentCache;
 
-// ==================== Utilities ====================
+const componentFactoryRefCache = new Map<ComponentType, Map<string, any>>();
 
-const decode = (str: string): string => {
-    try {
-        return decodeURIComponent(str.replace(/\+/g, ' '));
-    } catch {
-        return str;
-    }
-};
+componentFactoryRefCache.set(ComponentType.PAGE, new Map<string, any>());
+componentFactoryRefCache.set(ComponentType.PARTIAL, new Map<string, any>());
+componentFactoryRefCache.set(ComponentType.PREFAB, new Map<string, any>());
+componentFactoryRefCache.set(ComponentType.WIDGET, new Map<string, any>());
 
-const getUrl = (name: string, type: ComponentType, options?: FragmentOptions): string => {
+const _decodeURIComponent = (str: string) => decodeURIComponent(str.replace(/\+/g, ' '));
+
+const getFragmentUrl = (fragmentName: string, type: ComponentType, options?) => {
     if (type === ComponentType.PAGE || type === ComponentType.PARTIAL) {
-        return options?.prefab ? getPrefabPartialJsonUrl(options.prefab, name) : `./pages/${name}/page.min.json`;
+        return options && options.prefab ? getPrefabPartialJsonUrl(options.prefab, fragmentName) : `./pages/${fragmentName}/page.min.json`;
+    } else if (type === ComponentType.PREFAB) {
+        return getPrefabMinJsonUrl(fragmentName);
+    } else if (type === ComponentType.WIDGET) {
+        return `./custom-widgets/${fragmentName}/page.min.json`
     }
-    return type === ComponentType.PREFAB ? getPrefabMinJsonUrl(name) : `./custom-widgets/${name}/page.min.json`;
 };
 
-const execScript = (script: string, id: string, ctx: string, instance: Record<string, unknown>,
-    app: Record<string, unknown>, utils: Record<string, unknown>): void => {
-    let fn = scriptCache.get(id);
+const scriptCache = new Map<string, Function>();
+const execScript = (
+    script: string,
+    identifier: string,
+    ctx: string,
+    instance: any,
+    app: any,
+    utils: any
+) => {
+    let fn = scriptCache.get(identifier);
+    // Fix for [WMS-21196]: Incorrect script is being assigned,  when 2 prefabs have same partial name (i.e. same identifier).
     if ((ctx === 'Partial' && !isUndefined(instance.Prefab)) || !fn) {
-        fn = new Function(ctx, 'App', 'Utils', script) as ScriptFn;
-        scriptCache.set(id, fn);
+        fn = new Function(ctx, 'App', 'Utils', script);
+        scriptCache.set(identifier, fn);
     }
     fn(instance, app, utils);
 };
 
-// ==================== Component Imports ====================
+class BaseDynamicComponent {
+    init() { }
+}
 
-const IMPORTS = [
-    ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS, CommonModule, FormsModule, ReactiveFormsModule,
-    PartialDirective, PageDirective, AccessrolesDirective, AppSpinnerComponent, CustomToasterComponent,
-    AppComponent, PrefabLoader, PrefabPreviewComponent, EmptyPageComponent, LayoutDirective,
-    ContentComponent, PageContentComponent, SpaPageDirective, RouterOutletDirective,
-    ProgressBarComponent, PrefabContainerDirective
-] as const;
+const imports = [
+    PartialDirective,
+    PageDirective,
+    AccessrolesDirective,
+    AppSpinnerComponent,
+    CustomToasterComponent,
+    AppComponent,
+    PrefabLoader,
+    PrefabPreviewComponent,
+    EmptyPageComponent,
+    LayoutDirective,
+    ContentComponent,
+    PageContentComponent,
+    SpaPageDirective,
+    RouterOutletDirective,
+    ProgressBarComponent,
+    PrefabContainerDirective,
+]
 
-// ==================== Component Factory ====================
-
-const CONFIG_MAP = {
-    [ComponentType.PAGE]: { Base: BasePageComponent, prefix: 'app-page-', ctx: 'Page' },
-    [ComponentType.PARTIAL]: { Base: BasePartialComponent, prefix: 'app-partial-', ctx: 'Partial' },
-    [ComponentType.PREFAB]: { Base: BasePrefabComponent, prefix: 'app-prefab-', ctx: 'Prefab' },
-    [ComponentType.WIDGET]: { Base: BaseCustomWidgetComponent, prefix: 'app-custom-', ctx: 'Widget' }
+const getDynamicModule = (componentRef: any) => {
+    return NgModule({
+        declarations: [componentRef],
+        imports: [
+            ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
+            CommonModule,
+            FormsModule,
+            ReactiveFormsModule,
+            ...imports
+        ],
+        providers: [
+            PipeService,
+            DecimalPipe,
+            DatePipe,
+            AppManagerService,
+            PrefabManagerService,
+            AuthGuard,
+            RoleGuard,
+            PageNotFoundGuard,
+            CanDeactivatePageGuard,
+            AppJSResolve,
+            AppExtensionJSResolve,
+            I18nResolve,
+            SecurityService,
+            OAuthService,
+            VariablesService,
+            MetadataService,
+        ],
+        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
+    })(class DynamicModule { });
 };
 
-const createComponent = (name: string, type: ComponentType, template: string,
-    css: string, script: string, variables: string): Type<unknown> => {
-    const { Base, prefix, ctx } = CONFIG_MAP[type];
-    const selector = prefix + name;
+const getDynamicComponent = (
+    componentName,
+    type: ComponentType,
+    template: string,
+    css: string,
+    script: any,
+    variables: string,
+) => {
 
-    class DynamicComponent extends Base {
-        isDynamicComponent = true;
-        pageName?: string;
-        partialName?: string;
-        prefabName?: string;
-        customWidgetName?: string;
+    const componentDef = {
+        template,
+        styles: [css],
+        encapsulation: ViewEncapsulation.None
+    };
 
+    let BaseClass: any = BaseDynamicComponent;
+    let selector = '';
+    let context = '';
+
+    switch (type) {
+        case ComponentType.PAGE:
+            BaseClass = BasePageComponent;
+            selector = `app-page-${componentName}`;
+            context = 'Page';
+            break;
+        case ComponentType.PARTIAL:
+            BaseClass = BasePartialComponent;
+            selector = `app-partial-${componentName}`;
+            context = 'Partial';
+            break;
+        case ComponentType.PREFAB:
+            BaseClass = BasePrefabComponent;
+            selector = `app-prefab-${componentName}`;
+            context = 'Prefab';
+            break;
+        case ComponentType.WIDGET:
+            BaseClass = BaseCustomWidgetComponent;
+            selector = `app-custom-${componentName}`;
+            context = 'Widget';
+            break;
+    }
+
+    class DynamicComponent extends BaseClass {
+        isDynamicComponent: boolean = true;
+        pageName;
+        partialName;
+        prefabName;
+        customWidgetName;
         constructor(@Inject(Injector) public injector: Injector) {
             super();
             this.injector = injector;
-
-            // Set component name based on type
-            if (type === ComponentType.PAGE) this.pageName = name;
-            else if (type === ComponentType.PARTIAL) this.partialName = name;
-            else if (type === ComponentType.PREFAB) this.prefabName = name;
-            else if (type === ComponentType.WIDGET) this.customWidgetName = name;
+            switch (type) {
+                case ComponentType.PAGE:
+                    this.pageName = componentName;
+                    break;
+                case ComponentType.PARTIAL:
+                    this.partialName = componentName;
+                    break;
+                case ComponentType.PREFAB:
+                    this.prefabName = componentName;
+                    break;
+                case ComponentType.WIDGET:
+                    this.customWidgetName = componentName;
+                    break;
+            }
 
             super.init();
         }
 
-        evalUserScript(instance: Record<string, unknown>, app: Record<string, unknown>, utils: Record<string, unknown>): void {
-            execScript(script, selector, ctx, instance, app, utils);
+        evalUserScript(instance: any, appContext: any, utils: any) {
+            execScript(script, selector, context, instance, appContext, utils);
         }
 
-        getVariables(): Record<string, unknown> {
-            try {
-                return JSON.parse(variables) || {};
-            } catch {
-                return {};
-            }
+        getVariables() {
+            return JSON.parse(variables);
         }
 
-        getExpressions(): Record<string, unknown> {
+        // in preview mode, there will be no function registered. functions will be generated dynamically through $parseEvent and $parseExpr
+        getExpressions() {
             return {};
         }
     }
 
-    return Component({
-        template,
-        styles: [css],
-        encapsulation: ViewEncapsulation.None,
+    const component = Component({
+        ...componentDef,
         selector,
-        standalone: true,
-        imports: [...IMPORTS],
-        providers: [{ provide: UserDefinedExecutionContext, useExisting: DynamicComponent }],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
-    })(DynamicComponent);
+        providers: [
+            {
+                provide: UserDefinedExecutionContext,
+                useExisting: DynamicComponent
+            }
+        ]
+    })(DynamicComponent)
+    return component;
 };
-
-// ==================== Service ====================
 
 @Injectable()
 export class ComponentRefProviderService extends ComponentRefProvider {
-    private readonly cache = new Map<string, Type<unknown>>();
-    private readonly app = inject(App);
-    private readonly appManager = inject(AppManagerService);
-    private readonly resourceMngr = inject(AppResourceManagerService);
 
-    constructor() {
+    private loadResourcesOfFragment(componentName, componentType, options?): Promise<IPageMinJSON> {
+        const url = getFragmentUrl(componentName, componentType, options);
+
+        const resource = fragmentCache.get(url);
+
+        if (resource) {
+            return resource;
+        }
+        const promise = (((componentType === ComponentType.WIDGET && !customWidgets[componentName]) || componentType !== ComponentType.WIDGET) ? this.resouceMngr.get(url, true) : Promise.resolve(customWidgets[componentName]))
+            .then(({ markup, script, styles, variables, config }: IPageMinJSON) => {
+                const response = {
+                    markup: transpile(_decodeURIComponent(markup)).markup,
+                    script: _decodeURIComponent(script),
+                    styles: scopeComponentStyles(componentName, componentType, _decodeURIComponent(styles)),
+                    variables: getValidJSON(_decodeURIComponent(variables)),
+                    ...(config ? { config: getValidJSON(_decodeURIComponent(config)) } : {})
+                };
+                fragmentCache.set(url, Promise.resolve(response));
+
+                return response;
+            }, e => {
+                const status = e.details.status;
+                const errorMsgMap = {
+                    404: this.app.appLocale.MESSAGE_PAGE_NOT_FOUND || 'The page you are trying to reach is not available',
+                    403: this.app.appLocale.LABEL_ACCESS_DENIED || 'Access Denied'
+                };
+                return Promise.reject(errorMsgMap[status]);
+            });
+        fragmentCache.set(url, promise);
+        return promise;
+    }
+
+    constructor(
+        private resouceMngr: AppResourceManagerService,
+        private app: App,
+        private appManager: AppManagerService,
+        private compiler: Compiler
+    ) {
         super();
     }
 
-    /**
-     * Load component fragment (markup, script, styles, variables) from JSON resources
-     * Fetches and processes .min.json files for pages, partials, prefabs, and widgets
-     * 
-     * @param name - Component name
-     * @param type - Component type (PAGE, PARTIAL, PREFAB, WIDGET)
-     * @param options - Additional options (e.g., prefab context)
-     * @returns Promise resolving to processed component definition
-     * @throws Error with user-friendly message if loading fails (404, 403, etc.)
-     * @private
-     */
-    private async loadFragment(name: string, type: ComponentType, options?: FragmentOptions): Promise<PageMinJSON> {
-        const url = getUrl(name, type, options);
+    public async getComponentFactoryRef(componentName: string, componentType: ComponentType, options?: {}): Promise<any> {
+        // check in the cache.
+        const componentFactoryMap = componentFactoryRefCache.get(componentType);
+        let componentFactoryRef;
+        if (componentFactoryMap) {
+            const updatedComponentName = (options && options['prefab']) ? options['prefab'] + componentName : componentName;
+            componentFactoryRef = componentFactoryMap.get(updatedComponentName);
 
-        // Return cached promise if already loading/loaded
-        if (fragmentCache.has(url)) {
-            return fragmentCache.get(url)!;
-        }
-
-        // Create loading promise
-        const loadPromise = (async () => {
-            try {
-                // Determine if we need to fetch from server or use bundled custom widgets
-                const shouldFetch = type === ComponentType.WIDGET && !customWidgets[name];
-                const rawData = shouldFetch || type !== ComponentType.WIDGET
-                    ? await this.resourceMngr.get(url, true)
-                    : customWidgets[name];
-
-                // Process and return component definition
-                return {
-                    markup: transpile(decode(rawData.markup)).markup,
-                    script: decode(rawData.script),
-                    styles: scopeComponentStyles(name, type, decode(rawData.styles)),
-                    variables: getValidJSON(decode(rawData.variables)),
-                    ...(rawData.config && { config: getValidJSON(decode(rawData.config)) })
-                };
-            } catch (err: unknown) {
-                // Provide user-friendly error messages
-                const status = (err as { details?: { status?: number } })?.details?.status;
-                const errorMessages: Record<number, string> = {
-                    404: this.app.appLocale?.MESSAGE_PAGE_NOT_FOUND || 'Page not available',
-                    403: this.app.appLocale?.LABEL_ACCESS_DENIED || 'Access Denied'
-                };
-                throw errorMessages[status!] || 'Unknown error loading component';
+            if (componentFactoryRef) {
+                return componentFactoryRef;
             }
-        })();
+        }
 
-        // Cache the promise to prevent duplicate requests
-        fragmentCache.set(url, loadPromise);
-        return loadPromise;
+        return this.loadResourcesOfFragment(componentName, componentType, options)
+            .then(({ markup, script, styles, variables }) => {
+                const componentDef = getDynamicComponent(componentName, componentType, markup, styles, script, JSON.stringify(variables));
+                const moduleDef = getDynamicModule(componentDef);
+
+                componentFactoryRef = this.compiler
+                    .compileModuleAndAllComponentsSync(moduleDef)
+                    .componentFactories
+                    .filter(factory => // @ts-ignore
+                        factory.componentType === componentDef)[0];
+                const updatedComponentName = (options && options['prefab']) ? options['prefab'] + componentName : componentName;
+                componentFactoryRefCache.get(componentType).set(updatedComponentName, componentFactoryRef);
+
+                return componentFactoryRef;
+            }, (err) => {
+                if (err) {
+                    const msg = "Error while loading page";
+                    // console the error for easy debugging
+                    console.log(msg, err);
+                    this.appManager.notifyApp(
+                        isString(err) ? err : msg + ', check browser console for error details',
+                        'error'
+                    );
+                }
+            });
     }
 
-    /**
-     * Get component class by loading and compiling from JSON resources
-     * Loads page/partial/prefab/widget definitions from .min.json files and creates standalone components
-     * 
-     * @param name - Component name (e.g., 'Main', 'Header')
-     * @param type - Component type (PAGE, PARTIAL, PREFAB, WIDGET)
-     * @param options - Additional options (e.g., prefab context for partials)
-     * @returns Promise resolving to component Type or undefined if loading fails
-     */
-    public async getComponentFactoryRef(name: string, type: ComponentType, options?: FragmentOptions): Promise<Type<unknown> | undefined> {
-        const cacheKey = options?.prefab ? `${options.prefab}${name}` : name;
-        const fullKey = `${type}-${cacheKey}`;
-
-        // Check component cache (by type and name)
-        const typeCache = componentCache.get(type);
-        if (typeCache?.has(cacheKey)) {
-            return typeCache.get(cacheKey);
-        }
-        
-        // Check full cache (by full key)
-        if (this.cache.has(fullKey)) {
-            return this.cache.get(fullKey);
-        }
-
-        try {
-            // Load component definition from JSON file
-            const { markup, script, styles, variables } = await this.loadFragment(name, type, options);
-            
-            // Create standalone component class from definition
-            const ComponentClass = createComponent(
-                name, 
-                type, 
-                markup, 
-                styles, 
-                script, 
-                JSON.stringify(variables)
-            );
-
-            // Store in both caches for fast lookup
-            this.cache.set(fullKey, ComponentClass);
-            typeCache?.set(cacheKey, ComponentClass);
-
-            return ComponentClass;
-        } catch (err: unknown) {
-            const errorMsg = isString(err) ? err : 'Error loading component, check console';
-            console.error(`Failed to load ${type} component '${name}':`, err);
-            this.appManager.notifyApp(errorMsg, 'error');
-            return undefined;
-        }
-    }
-
-    public clearComponentFactoryRefCache(): void {
-        this.resourceMngr.clearCache();
+    // clears the cache map
+    public clearComponentFactoryRefCache() {
+        this.resouceMngr.clearCache();
         fragmentCache.clear();
-        this.cache.clear();
-        componentCache.forEach(m => m.clear());
+        componentFactoryRefCache.forEach(map => {
+            map.clear();
+        });
     }
 }

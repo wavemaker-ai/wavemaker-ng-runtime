@@ -17,7 +17,6 @@ import { compileTestComponent, mockApp } from "projects/components/base/src/test
 const markup = `<wm-input type="number" name="text1" hint="number field">`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 

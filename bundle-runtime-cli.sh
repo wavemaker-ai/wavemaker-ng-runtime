@@ -4,9 +4,6 @@ cd $BASEDIR
 dev=true
 publish=false
 publishVersion='x.x.x'
-
-WM_NPM_SCOPE="${WM_NPM_SCOPE:-@wavemaker-ai}"
-
 while [ "$1" != "" ]; do
     case $1 in
         --publish-version)
@@ -15,14 +12,9 @@ while [ "$1" != "" ]; do
             dev=false
             publish=true
         ;;
-        --npm-scope=*)
-            WM_NPM_SCOPE="${1#*=}"
-        ;;
     esac
     shift
 done
-
-export WM_NPM_SCOPE
 
 #copy datatable to libraries
 mkdir -p libraries/scripts/datatable/
@@ -54,7 +46,7 @@ cp ./wm.package.json libraries/package.json
 rm -rf dist/npm-packages/package
 mkdir -p dist/npm-packages/package
 
-TARBALL_NAME="wavemaker-ai-app-ng-runtime-${publishVersion}.tgz"
+TARBALL_NAME="wavemaker-app-ng-runtime-${publishVersion}.tgz"
 
 if [[ "${publish}" == true ]]; then
     node bundle-runtime-cli.js --publishVersion=${publishVersion}
@@ -71,7 +63,7 @@ if [[ "${publish}" == true ]]; then
     cd ../../..
     tar -zcf dist/npm-packages/${TARBALL_NAME} -C dist/npm-packages/ package
 
-    node ../process-npm-package-stats.js --path=dist/npm-packages/${TARBALL_NAME} --packageName=${WM_NPM_SCOPE}/app-ng-runtime --publishVersion=${publishVersion}
+    node ../process-npm-package-stats.js --path=dist/npm-packages/${TARBALL_NAME} --packageName=@wavemaker/app-ng-runtime --publishVersion=${publishVersion}
 else
     cp -r libraries/. dist/npm-packages/package
     cd dist/npm-packages/package

@@ -31,7 +31,6 @@ const markup = `
         ></button>
     `;
 @Component({
-    standalone: false,
     template: markup
 })
 class TestComponent {
@@ -219,7 +218,6 @@ describe('wm-button: Component specific tests: ', () => {
 // Button widget without class property in the markup
 const btnMarkup = `<button wmButton name="testbutton1" caption="Test Button1" type="button"></button>`;
 @Component({
-    standalone: false,
     template: btnMarkup
 })
 class BtnTestComponent {

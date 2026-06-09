@@ -12,11 +12,10 @@ import {
     Optional
 } from '@angular/core';
 
-import {App, noop, removeAttr} from '@wm/core';
+import {noop, removeAttr} from '@wm/core';
 
 import {
     APPLY_STYLES_TYPE,
-    AutoLayout,
     getCurrentWidgets,
     IWidgetConfig,
     provideAsWidgetRef,
@@ -33,7 +32,6 @@ const WIDGET_CONFIG: IWidgetConfig = {
     hostClass: DEFAULT_CLS
 };
 
-@AutoLayout({ targetSelector: '.tab-body' })
 @Component({
     standalone: true,
     selector: 'div[wmTabPane]',
@@ -66,8 +64,7 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
         inj: Injector,
         @Attribute('heading') public heading,
         @Attribute('title') public title,
-        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any,
-        private app: App
+        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);
 

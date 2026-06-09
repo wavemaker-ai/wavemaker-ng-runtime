@@ -30,7 +30,6 @@ const markup = `
     `;
 
 @Component({
-    standalone: false,
     template: markup
 })
 class WizardWrapperComponent {
@@ -203,8 +202,8 @@ describe('wm-wizard: Component Specific Tests', () => {
 
             // Mock jQuery selections
             ((global as any).$ as jest.Mock).mockImplementation((selector) => {
-                if (selector === '.app-wizard-step.active .subtitle-wrapper') return mockCurrentSubtitle;
-                if (selector === '.app-wizard-step.active .read_more') return mockReadMore;
+                if (selector === '.current .subtitle-wrapper') return mockCurrentSubtitle;
+                if (selector === '.current .read_more') return mockReadMore;
                 if (selector === document) return mockDocument;
                 return { is: jest.fn(), has: jest.fn().mockReturnValue({ length: 0 }) };
             });

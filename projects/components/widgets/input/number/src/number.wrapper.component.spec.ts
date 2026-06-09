@@ -15,7 +15,6 @@ import { MockAbstractI18nService } from 'projects/components/base/src/test/util/
 const markup = `<div wmNumber hint="Number" name="testnumber" tabindex="1" ngModel change.event="onChange($event, widget, newVal, oldVal)"></div>`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 

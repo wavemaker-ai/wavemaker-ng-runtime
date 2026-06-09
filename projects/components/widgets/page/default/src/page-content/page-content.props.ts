@@ -1,4 +1,4 @@
-import { AUTO_LAYOUT_PROPS, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register } from '@wm/components/base';
+import { PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register } from '@wm/components/base';
 
 export const registerProps = () => {
     register(
@@ -9,10 +9,7 @@ export const registerProps = () => {
                 ['columnwidth', PROP_NUMBER],
                 ['content', PROP_STRING],
                 ['name', PROP_STRING],
-                ['pulltorefresh', {value: false, ...PROP_BOOLEAN}],
-                ...AUTO_LAYOUT_PROPS,
-                ['direction', { value: 'column', ...PROP_STRING }],
-                ['alignment', { value: 'top-left', ...PROP_STRING }]
+                ['pulltorefresh', {value: false, ...PROP_BOOLEAN}]
             ]
         )
     );

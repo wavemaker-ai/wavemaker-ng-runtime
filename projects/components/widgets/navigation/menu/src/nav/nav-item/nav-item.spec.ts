@@ -16,7 +16,6 @@ const markup = `<ul>
   </ul>`
 
 @Component({
-    standalone: false,
     template: markup
 })
 class TestComponent { }

@@ -67,7 +67,6 @@ shortcutkey="t" showweeks="true" class="input-group-lg" readonly="true" required
    tap.event="datetime1Tap($event, widget)"
    ngModel></div>`;
 @Component({
-    standalone: false,
     template: markup
 })
 class DatetimeWrapperComponent {

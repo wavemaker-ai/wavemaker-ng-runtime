@@ -103,7 +103,6 @@ describe('getTimepickerConfig', () => {
 });
 
 @Component({
-    standalone: false,
     template: '<div></div>'
 })
 class TestBaseDateTimeComponent extends BaseDateTimeComponent {

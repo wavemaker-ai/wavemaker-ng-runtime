@@ -45,7 +45,6 @@ shortcutkey="g" tabindex="0" outputformat="hh:mm:ss"  timepattern="hh:mm:ss" hou
    tap.event="time1Tap($event, widget)"  class="input-group-lg" color="#9f4343" margin="5px"  autofocus="true" ngModel></div>`;
 
 @Component({
-    standalone: false,
     template: markup
 })
 class TimeWrapperComponent {

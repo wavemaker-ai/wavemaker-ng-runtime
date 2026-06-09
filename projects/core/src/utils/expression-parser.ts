@@ -10,14 +10,11 @@ import {
     LiteralArray,
     LiteralMap,
     LiteralPrimitive,
-    ParseLocation,
-    ParseSourceFile,
-    ParseSourceSpan,
     Parser,
     PrefixNot,
     PropertyRead,
-    Unary,
-    ParenthesizedExpression
+    PropertyWrite,
+    Unary
 } from '@angular/compiler';
 import {get} from "lodash-es";
 
@@ -26,14 +23,6 @@ const ifDef = (v, d) => v === void 0 ? d : v;
 const plus = (a, b) => void 0 === a ? b : void 0 === b ? a : a + b;
 const minus = (a, b) => ifDef(a, 0) - ifDef(b, 0);
 const noop = () => {};
-
-// Helper to create ParseSourceSpan for Angular 20 compatibility
-const createParseSourceSpan = (content: string): ParseSourceSpan => {
-    const sourceFile = new ParseSourceFile(content, '');
-    const start = new ParseLocation(sourceFile, 0, 0, 0);
-    const end = new ParseLocation(sourceFile, content.length, 0, content.length);
-    return new ParseSourceSpan(start, end);
-};
 
 export type ParseExprResult = (data?: any, locals?: any) => any;
 
@@ -294,12 +283,6 @@ class ASTCompiler {
         return v;
     }
 
-    processParenthesizedExpression() {
-        const ast = this.cAst;
-        const stmts = this.cStmts;
-        return  this.build(ast.expression, stmts);
-    }
-
     processConditional() {
         const ast = this.cAst;
         const stmts = this.cStmts;
@@ -400,8 +383,8 @@ class ASTCompiler {
             return this.processLiteralMap();
         } else if (ast instanceof PropertyRead) {
             return this.processPropertyRead();
-        // } else if (ast instanceof PropertyWrite) {
-        //     return this.processPropertyWrite();  // PropertyWrite removed in Angular 20
+        } else if (ast instanceof PropertyWrite) {
+            return this.processPropertyWrite();
         } else if (ast instanceof KeyedRead) {
             return this.processKeyedRead();
         } else if (ast instanceof PrefixNot) {
@@ -410,8 +393,6 @@ class ASTCompiler {
             return this.processUnary();
         } else if (ast instanceof Binary) {
             return this.processBinary();
-        } else if (ast instanceof ParenthesizedExpression) {
-            return this.processParenthesizedExpression();
         } else if (ast instanceof Conditional) {
             return this.processConditional();
         } else if (ast instanceof Call) {
@@ -557,7 +538,7 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
             };
         } else {
             const parser = new Parser(new Lexer);
-            const ast = parser.parseBinding(expr, createParseSourceSpan(expr), 0);
+            const ast = parser.parseBinding(expr, '',0);
 
             if (ast.errors.length) {
                 fn = noop;
@@ -656,7 +637,7 @@ export function $parseEvent(expr, defOnly?): ParseExprResult {
             fn = simpleFunctionEvaluator.bind(undefined, expr);
         } else {
             const parser = new Parser(new Lexer);
-            const ast = parser.parseAction(expr, createParseSourceSpan(expr), 0);
+            const ast = parser.parseAction(expr, '', 0);
 
             if (ast.errors.length) {
                 return noop;

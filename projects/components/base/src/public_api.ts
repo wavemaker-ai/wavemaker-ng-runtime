@@ -137,5 +137,3 @@ export * from './widgets/common/lazy-load/lazy-load.directive';
 export * from './widgets/common/partial-param/partial-param.directive';
 export * from './widgets/common/base/text-content.directive';
 export * from './directives/show-in-device.directive';
-export * from './decorators/autolayout.decorator';
-export * from './decorators/autolayout.props';

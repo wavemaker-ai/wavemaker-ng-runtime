@@ -286,10 +286,8 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
     // Once the datasetItems are ready, set the proxyModel by using datavalue.
     protected postDatasetItemsInit() {
         if (this.datasetItems.length && !this._defaultQueryInvoked) {
-            // Use the latest of toBeProcessedDatavalue, datavalue.
-            // IMPORTANT: lodash isEmpty treats 0/false as "empty", which breaks default values that legitimately evaluate to 0/false.
-            // Only fall back to datavalue when toBeProcessedDatavalue is actually undefined/null.
-            const _datavalue = isDefined(this.toBeProcessedDatavalue) ? this.toBeProcessedDatavalue : this.datavalue;
+            // use the latest of toBeProcessedDatavalue, datavalue
+            const _datavalue = isEmpty(this.toBeProcessedDatavalue) ? this.datavalue : this.toBeProcessedDatavalue;
             this.selectByValue(_datavalue);
         }
         // notify the dataset listeners

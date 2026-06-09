@@ -4,7 +4,6 @@ import { By } from '@angular/platform-browser';
 import { NavigationControlDirective, disableContextMenu } from './navigation-control.directive';
 
 @Component({
-    standalone: false,
     template: '<a [wmNavigationControl]="link" [disableMenuContext]="disableMenu">Test Link</a>'
 })
 class TestComponent {
