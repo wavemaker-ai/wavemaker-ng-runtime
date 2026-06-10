@@ -622,6 +622,10 @@ rg 'registerFnByExpr|setPipeProvider|\$parseExpr' projects/runtime-base projects
 
 **Scope:** Studio **codegen** output (`ng build` on a generated app), not this repo’s preview shell alone. Fixes span **two repos** — keep them in sync on every Angular major bump.
 
+**Sibling repo layout:** `wavemaker-ng-codegen` normally sits **beside** `wavemaker-ng-runtime` (default path **`../wavemaker-ng-codegen`**). **`@wavemaker-ai/angular-app`** is built from **this repo**.
+
+**Branch alignment:** Apply §20 edits on the **same branch name** in both repos (e.g. upgrade ticket branch). At Step 2/6, if ng-codegen is missing, on a different branch, or path unknown — **ask the user** to checkout/create matching branches and confirm the codegen repo path; record both branch names in `current-state.md`.
+
 **Re-check every major:** `tsconfig.web-app.json` ↔ `tsconfig.json`, ngx-bootstrap API (`forRoot` removal on third-party modules), **`templates/app.config.ts.hbs`** (codegen’s only app-bootstrap template), transpiler `imports.ts`, dependency filenames under `angular-app/dependencies/` if codegen fails at require time.
 
 **Bootstrap model (Angular 21+):** Generated apps use **`bootstrapApplication` + `app.config.ts`** — not `AppModule`. WaveMaker app-wide services are registered as **flat `providers`** in `app.config.ts.hbs`. Legacy NgModule `*.forRoot()` helpers (`CoreModule`, `WmComponentsModule`, etc.) are **removed from runtime source**; `WM_MODULES_FOR_ROOT` in `runtime-base.module.ts` is an **empty array**.

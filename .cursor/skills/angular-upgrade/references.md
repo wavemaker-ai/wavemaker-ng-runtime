@@ -34,6 +34,10 @@ Read this file during **Step 2 — Plan upgrade path**. `SKILL.md` keeps workflo
 
 ## Cross-repo (generated Angular apps)
 
-- **`wavemaker-ng-codegen`** — sibling repo; active bootstrap template **`templates/app.config.ts.hbs`** (emitted as `app.config.ts`); `templates/app.module.ts.hbs` is **legacy/unused**; `src/gen-tsconfig.js` renames `tsconfig.web-app.json` → `tsconfig.json`
-- **`@wavemaker-ai/angular-app`** — this repo’s bundled CLI app; ships `tsconfig.web-app.json`, `dependencies/*.cjs.js`, `build-scripts/build.js`
-- After each major bump: align **`tsconfig.web-app.json`** with **`tsconfig.json`**, update **`app.config.ts.hbs`** for ngx-bootstrap API changes, rebuild both packages, **re-run codegen** on test apps (see patterns §20)
+**Layout:** `wavemaker-ng-codegen` is a **sibling repo**, usually beside `wavemaker-ng-runtime` under the same parent (e.g. `wavemaker-studio-frontend/`). Default path from this repo: **`../wavemaker-ng-codegen`**.
+
+**Branches:** During an upgrade, keep **the same branch name** on both repos (e.g. ticket/feature branch). If branches differ, ask the user to create or checkout matching branches before cross-repo code changes.
+
+- **`wavemaker-ng-codegen`** — codegen templates and `gen-tsconfig.js`; active bootstrap template **`templates/app.config.ts.hbs`** (emitted as `app.config.ts`); `templates/app.module.ts.hbs` is **legacy/unused**; renames `tsconfig.web-app.json` → `tsconfig.json`
+- **`@wavemaker-ai/angular-app`** — shipped from **this repo** (`wavemaker-ng-runtime`); includes `tsconfig.web-app.json`, `dependencies/*.cjs.js`, `build-scripts/build.js`
+- After each major bump: align **`tsconfig.web-app.json`** with **`tsconfig.json`**, update **`app.config.ts.hbs`** in ng-codegen, rebuild both packages, **re-run codegen** on test apps (see patterns §20)
