@@ -29,5 +29,11 @@ Read this file during **Step 2 — Plan upgrade path**. `SKILL.md` keeps workflo
 
 ## In-repo
 
-- [`wavemaker-runtime-patterns.md`](./wavemaker-runtime-patterns.md) — default runtime pattern catalog (override via `PATTERNS_FILE` in `repo.config.sh`)
+- [`wavemaker-runtime-patterns.md`](./wavemaker-runtime-patterns.md) — default runtime pattern catalog (override via `PATTERNS_FILE` in `repo.config.sh`); **§20** = generated-app / codegen cross-repo fixes
 - `docs/{major}-upgrade.md` — per-major upgrade summary (Step 10; path from `UPGRADE_DOC_PATH` in `repo.config.sh`)
+
+## Cross-repo (generated Angular apps)
+
+- **`wavemaker-ng-codegen`** — sibling repo; active bootstrap template **`templates/app.config.ts.hbs`** (emitted as `app.config.ts`); `templates/app.module.ts.hbs` is **legacy/unused**; `src/gen-tsconfig.js` renames `tsconfig.web-app.json` → `tsconfig.json`
+- **`@wavemaker-ai/angular-app`** — this repo’s bundled CLI app; ships `tsconfig.web-app.json`, `dependencies/*.cjs.js`, `build-scripts/build.js`
+- After each major bump: align **`tsconfig.web-app.json`** with **`tsconfig.json`**, update **`app.config.ts.hbs`** for ngx-bootstrap API changes, rebuild both packages, **re-run codegen** on test apps (see patterns §20)
