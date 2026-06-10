@@ -521,12 +521,13 @@ export const extractDataSourceName = (bindDataSource) => {
     if (!bindDataSource) {
         return;
     }
-    let dataSourceName;
     const parts = bindDataSource.split('.');
     if (parts.length > 1 && parts[0] === 'Variables') {
-        dataSourceName = parts[1];
+        return parts[1];
     }
-    return dataSourceName;
+    if (parts[0] === 'App' && parts[1] === 'activePage' && parts[2] === 'Variables' && parts[3]) {
+        return parts[3];
+    }
 }
 
 export const setFocusTrap = (container, allowOutsideClick, setReturnFocusElement?) => {
