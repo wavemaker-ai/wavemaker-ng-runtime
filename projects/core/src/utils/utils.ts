@@ -1510,9 +1510,13 @@ export const triggerItemAction = (scope, item) => {
 export const getDatasourceFromExpr = (expr, scope) => {
     const isBoundToVariable = startsWith(expr, 'Variables.');
     const isBoundToWidget = startsWith(expr, 'Widgets.');
+    const isBoundToActivePageVar = startsWith(expr, 'App.activePage.Variables.');
     const parts = expr.split('.');
     if (isBoundToVariable) {
         return get(scope.viewParent.Variables, parts[1]);
+    }
+    if (isBoundToActivePageVar) {
+        return get(scope.viewParent?.App?.activePage?.Variables, parts[3]);
     }
     if (isBoundToWidget) {
         const widgetScope = get(scope.viewParent.Widgets, parts[1]);

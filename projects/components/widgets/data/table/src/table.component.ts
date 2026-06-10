@@ -2185,6 +2185,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 if (this.gridOptions.isNavTypeScrollOrOndemand() && this.gridOptions.getCurrentPage() === 1) {
                     this.gridOptions.setIsNextPageData(false);
                 }
+                if (!this.datasource && this.binddataset) {
+                    this.datasource = getDatasourceFromExpr(this.binddataset, this);
+                }
                 if (this.binddatasource && !this.datasource) {
                     // If datasource is not set yet, clear loading state and show no data
                     // This prevents tables from being stuck in loading state
