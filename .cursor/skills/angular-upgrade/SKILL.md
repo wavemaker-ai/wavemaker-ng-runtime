@@ -131,6 +131,7 @@ Block on **critical** / **high** (without approved exception). If `npm audit fix
 2. Run greps/checks from each file.
 3. Merge into **Pattern findings** (`safe`, `needs-review`, `likely-breakage`, `must-change`).
 4. **Block** on unresolved `must-change`.
+5. **Cross-repo (generated apps):** apply **`wavemaker-runtime-patterns.md` §20** — align `tsconfig.web-app.json` with `tsconfig.json`, fix **`wavemaker-ng-codegen/templates/app.config.ts.hbs`** for ngx-bootstrap API changes (not `dist/`), and record ng-codegen publish + re-codegen under **Deferred / user decisions** until verified.
 
 ### Step 7 — Build gate
 
@@ -181,7 +182,7 @@ Block on failure.
 | Patches and build hooks | e.g. ngx-bootstrap patch + verify |
 | Validation completed | Install through preview — pass/fail/skip |
 | New platform features not adopted | Optional modernization skipped + reason |
-| Known follow-ups | Preview gaps, test env, cross-repo work |
+| Known follow-ups | Preview gaps, test env, **cross-repo codegen** (§20: `tsconfig.web-app.json`, `wavemaker-ng-codegen/templates/app.config.ts.hbs`, re-codegen generated apps) |
 | Security notes | Audit outcome |
 
 3. Record path under **Upgrade summary doc**. Block if doc missing or has placeholders.

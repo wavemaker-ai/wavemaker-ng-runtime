@@ -24,6 +24,8 @@ Configuration source: `.cursor/skills/angular-upgrade/repo.config.sh`.
 ## Compatibility changes
 
 - `tsconfig.json`: `@wavemaker-ai/variables` path prefers `dist/es2015/index` over yalc source (TS6059 rootDir) — from prior 20→21 build fix
+- **`tsconfig.web-app.json`**: aligned with `tsconfig.json` — `moduleResolution: "bundler"`, `module`/`lib` es2022, `esModuleInterop`, `useDefineForClassFields` (codegen renames this file to the generated app’s `tsconfig.json`; legacy `"node"` caused TS2307 on `@angular/common/http` and ngx-bootstrap subpaths)
+- **ngx-bootstrap 21**: bare modules in `importProvidersFrom` / page imports — no `.forRoot()` on `ModalModule`, `BsDatepickerModule`, `NgCircleProgressModule` (runtime `app.config.ts`, transpiler `imports.ts`, codegen `app.config.ts.hbs`)
 - Expression parser: `ParseSourceSpan` + `ParenthesizedExpression` handler (Angular 20+ compiler AST)
 - Dynamic components: object-syntax `createComponent` with `environmentInjector`
 - ngx-bootstrap positioning: Rollup patch injects `DestroyRef` for `takeUntilDestroyed(__destroyRef)`
@@ -57,9 +59,28 @@ Configuration source: `.cursor/skills/angular-upgrade/repo.config.sh`.
 
 ## Known follow-ups
 
+### This repo (runtime)
+
 - Set `PREVIEW_URL` / `COMPARISON_URL` in `repo.config.sh` for Step 8 URL comparison on next run
 - 3 moderate webpack-dev-server advisories (no upstream fix via `npm audit fix`)
 - Jest worker teardown warning (`--detectOpenHandles` if investigating leaks)
+
+### Cross-repo — generated Angular apps (`wavemaker-ng-codegen`)
+
+Runtime Step 7 passes in **this repo**; **`ng build` on a codegen output app** needs sibling-repo fixes (patterns §20):
+
+| # | Repo | Action | Status |
+|---|------|--------|--------|
+| 1 | `wavemaker-ng-runtime` | `tsconfig.web-app.json` aligned with `tsconfig.json`; rebuild/publish `@wavemaker-ai/angular-app` | done (WMS-31488) |
+| 2 | `wavemaker-ng-runtime` | `projects/transpiler/src/imports.ts` — bare ngx-bootstrap modules; `sh build.sh -f` refreshes `dependencies/*.cjs.js` | verify on publish |
+| 3 | `wavemaker-ng-codegen` | **`templates/app.config.ts.hbs`** — remove ngx-bootstrap `.forRoot()`; `sh build.sh`; publish codegen | pending commit |
+| 4 | Generated app | Re-run **codegen** then `npm install` + `ng build` — existing folders are not auto-fixed | user verification |
+
+**Notes:**
+
+- Codegen emits **`app.config.ts`** only — `templates/app.module.ts.hbs` is **legacy/unused** (not registered in `handlebar-helpers.js`).
+- If codegen fails with `Cannot find module '../dependencies/...'`, apply §20c path suffix fixes in ng-codegen `src/` (`.cjs` → `.cjs.js`) — conditional, not required for runtime build gate.
+- Stale `.yalc/@wavemaker/angular-app` in ng-codegen may still show old `ModalModule.forRoot()` — refresh with `yalc update` after republish.
 
 ## Security notes
 
@@ -80,5 +101,6 @@ When `PREVIEW_URL` is set, repeat on comparison then preview URLs. See `wavemake
 ## References
 
 - Skill: `.cursor/skills/angular-upgrade/SKILL.md`
-- Patterns: `.cursor/skills/angular-upgrade/wavemaker-runtime-patterns.md`
+- Patterns: `.cursor/skills/angular-upgrade/wavemaker-runtime-patterns.md` (§20 = generated-app / codegen)
+- Cross-repo: `wavemaker-ng-codegen` — `templates/app.config.ts.hbs`, `src/gen-tsconfig.js`
 - State: `.cursor/skills/angular-upgrade/current-state.md`

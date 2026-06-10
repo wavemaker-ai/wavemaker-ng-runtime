@@ -17,7 +17,7 @@ Record decisions in `current-state.md` → **Dependency Decisions**.
 | `@angular-eslint/*`, `@angular-builders/custom-webpack` | `ngx-toastr`, `ngx-color-picker`, `angular-imask` | `moment`, `d3`, `@fullcalendar/*`, `angular2-websocket` |
 | `engines.node`, `engines.npm` | | `summernote`, `iscroll`, `@ztree/ztree_v3`, `acorn` |
 
-**Step 1 inventory paths:** `package.json`, lockfile, `angular.json`, `tsconfig*.json`, `build-scripts/ngx-bootstrap-patch.mjs`, `jest.config.js`, `src/setup-jest.js`.
+**Step 1 inventory paths:** `package.json`, lockfile, `angular.json`, `tsconfig.json`, **`tsconfig.web-app.json`** (codegen renames to generated `tsconfig.json` — must stay aligned), `build-scripts/ngx-bootstrap-patch.mjs`, `jest.config.js`, `src/setup-jest.js`.
 
 ## ngx-bootstrap bundle verification
 
@@ -43,6 +43,7 @@ Patch source: `build-scripts/ngx-bootstrap-patch.mjs`. See §6 and §12 for grep
 | List / table embedded views | `list.component.html`, `table.component.ts`, `createEmbeddedView`, `createCustomInjector`, `ngTemplateOutletContext` |
 | Template `this.` refs | `rg 'this\.appLocale|this\._triggeredByUser' projects/components/widgets` |
 | Rollup libs | `config/rollup.ng-libs.config.mjs` |
+| Generated app / codegen | **`tsconfig.web-app.json`**, `wavemaker-ng-codegen/templates/app.config.ts.hbs` (active), `gen-tsconfig.js`, `projects/transpiler/src/imports.ts` — see §20 |
 | Utils / positioning | `projects/core/src/utils/utils.ts` (`adjustContainerPosition`, `runAfterStable`) |
 | Jest | `jest.config.js`, `jest-preset-angular`, `src/setup-jest.js`, `**/projects/**/*.spec.ts` |
 | Build (platform gate) | Repo `build.sh` / `build.sh -f`; rollup: `config/rollup.ngxBootstrap.config.mjs`, `config/rollup.ng-libs.config.mjs` |
@@ -201,15 +202,16 @@ provideHttpClient(withInterceptorsFromDi(), …),
 - `config/rollup.ng-libs.config.mjs` — peer dependency alignment with `@angular/*`
 - Angular 21 fesm renames: `@angular/core/primitives/di` → `primitives-di.mjs`, `signals` → `primitives-signals.mjs`, `event-dispatch` → `primitives-event-dispatch.mjs`
 - `tsconfig.json` **`moduleResolution: "bundler"`** — required for ng-packagr to resolve `@angular/common/http` and core primitives
+- **`tsconfig.web-app.json` must stay aligned with `tsconfig.json`** on every major bump — codegen renames it to the generated app’s `tsconfig.json` (§20a)
 
-**Risk:** broken `dist` packages consumed by generated apps.
+**Risk:** broken `dist` packages consumed by generated apps; TS2307 / NG1010 on `ng build` after codegen.
 
 ### 8b. NgModule / `ApplicationConfig` static analysis (Angular 21)
 
 - `ModuleWithProviders` from `SomeModule.forRoot()` in `NgModule.imports` → **NG1010** (not statically analyzable)
 - **Fix:** bare modules in `imports`; spread `forRoot().providers` into `providers`, or use `importProvidersFrom` in `app.config.ts` without `.forRoot()` on ngx-bootstrap modules
 
-**Where:** `projects/runtime-dynamic/src/app/app.module.ts`, `app.config.ts`, transpiler-generated imports (`projects/transpiler/src/imports.ts` — remove `forRoot: true` on ImportDefs).
+**Where:** `projects/runtime-dynamic/src/app/app.config.ts` (flat `providers`; primary bootstrap), transpiler-generated imports (`projects/transpiler/src/imports.ts` — bare ngx-bootstrap `ImportDef`s, no `forRoot: true`), **`wavemaker-ng-codegen/templates/app.config.ts.hbs`** (§20b — edit source templates only, not `dist/`). Legacy `app.module.ts` / `WM_MODULES_FOR_ROOT` in runtime preview are not used by codegen output.
 
 ### 9. Jest / widget specs
 
@@ -615,6 +617,130 @@ rg 'registerFnByExpr|setPipeProvider|\$parseExpr' projects/runtime-base projects
 | `setPipeProvider` not called before first `$parseExpr` | `likely-breakage` |
 
 **Preview:** page with **watch** on parenthesized expression; bind with **pipe**; **on-click** action calling page method with args.
+
+### 20. Generated Angular apps (`wavemaker-ng-codegen` + `@wavemaker-ai/angular-app`)
+
+**Scope:** Studio **codegen** output (`ng build` on a generated app), not this repo’s preview shell alone. Fixes span **two repos** — keep them in sync on every Angular major bump.
+
+**Re-check every major:** `tsconfig.web-app.json` ↔ `tsconfig.json`, ngx-bootstrap API (`forRoot` removal on third-party modules), **`templates/app.config.ts.hbs`** (codegen’s only app-bootstrap template), transpiler `imports.ts`, dependency filenames under `angular-app/dependencies/` if codegen fails at require time.
+
+**Bootstrap model (Angular 21+):** Generated apps use **`bootstrapApplication` + `app.config.ts`** — not `AppModule`. WaveMaker app-wide services are registered as **flat `providers`** in `app.config.ts.hbs`. Legacy NgModule `*.forRoot()` helpers (`CoreModule`, `WmComponentsModule`, etc.) are **removed from runtime source**; `WM_MODULES_FOR_ROOT` in `runtime-base.module.ts` is an **empty array**.
+
+#### 20a. `tsconfig.web-app.json` → generated `tsconfig.json` (must-change)
+
+**Mechanism:** `wavemaker-ng-codegen/src/gen-tsconfig.js` **renames** `tsconfig.web-app.json` → `tsconfig.json` during web-app codegen. The shipped file lives in **`@wavemaker-ai/angular-app`** (this repo root).
+
+**Angular 21+ requirement:** `compilerOptions.moduleResolution` must be **`"bundler"`** (not legacy `"node"`). Legacy `"node"` cannot resolve package `"exports"` subpaths such as:
+
+- `@angular/common/http`
+- `@angular/core/primitives/di`
+- `ngx-bootstrap/datepicker`, `ngx-bootstrap/modal`, etc.
+
+**Symptoms if misaligned:**
+
+```text
+TS2307: Cannot find module '@angular/common/http'
+TS2307: Cannot find module 'ngx-bootstrap/datepicker'
+TS2307: Cannot find module '@angular/core/primitives/di'
+NG1010: imports … (not statically analyzable)  // often cascades from unresolved ngx-bootstrap modules
+```
+
+**Fix (this repo — `wavemaker-ng-runtime`):**
+
+1. After changing `tsconfig.json` for a major bump, **mirror the same** `moduleResolution`, `module`, `lib`, `esModuleInterop`, `useDefineForClassFields`, and path mappings into **`tsconfig.web-app.json`**.
+2. Do **not** assume codegen uses root `tsconfig.json` — only **`tsconfig.web-app.json`** becomes the generated app’s `tsconfig.json`.
+3. `src/tsconfig.app.json` extends `../tsconfig.json` in the angular-app package; after rename, that parent **is** the web-app config.
+
+**Step 6 grep (this repo):**
+
+```bash
+grep moduleResolution tsconfig.json tsconfig.web-app.json
+# Both must show "bundler" on Angular 21+
+```
+
+**Step 6 classification:** `tsconfig.json` = `bundler` but `tsconfig.web-app.json` = `node` → **`must-change`**.
+
+#### 20b. Codegen Handlebars — ngx-bootstrap `forRoot()` (must-change)
+
+**Repo:** `wavemaker-ng-codegen/templates/` (**source only** — never hand-edit `dist/`; `build.sh` copies `templates/` → `dist/codegen/codegen-app/`).
+
+**Active template:** `templates/app.config.ts.hbs` only — registered in `handlebar-helpers.js` as `app-config-ts` and written to generated `src/app/app.config.ts`. **`templates/app.module.ts.hbs` is legacy** (not registered, not emitted); optional consistency edit only.
+
+**Angular 21 / ngx-bootstrap 21:** `ModalModule`, `BsDatepickerModule`, `NgCircleProgressModule` **no longer expose** `.forRoot()`. Use **bare modules** inside `importProvidersFrom(...)`.
+
+| File | Priority | Change |
+|------|----------|--------|
+| `templates/app.config.ts.hbs` | **must-change** | `ModalModule`, `BsDatepickerModule`, `NgCircleProgressModule` — **no** `.forRoot()` inside `importProvidersFrom(...)` |
+| `templates/app.module.ts.hbs` | optional / legacy | Same ngx-bootstrap fix if kept for reference; **does not affect codegen output** |
+
+**Keep `.forRoot()` in `app.config.ts.hbs` where still valid:**
+
+- `ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true })` (ngx-toastr)
+
+**Do not add WaveMaker `*.forRoot()` in generated bootstrap:** register services directly in `providers` (see canonical `app.config.ts.hbs` in codegen). `RouterModule.forRoot` is not used — routing uses `provideRouter(...)`.
+
+**Symptoms if templates unchanged:**
+
+```text
+TS2339: Property 'forRoot' does not exist on type 'typeof ModalModule'
+TS2339: Property 'forRoot' does not exist on type 'typeof BsDatepickerModule'
+```
+
+**Canonical `app.config.ts.hbs` snippet:**
+
+```typescript
+const wmModules = [
+    importProvidersFrom(
+        ModalModule,
+        ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true }),
+        BsDatepickerModule,
+        NgCircleProgressModule,
+        // ...
+    )
+];
+```
+
+**Page / partial templates** (`page/page.component.ts.hbs`, `partial/partial.component.ts.hbs`): **no `.hbs` change** for ngx-bootstrap — imports come from transpiler via `{{WMComponentsImportStmts}}` / `{{WMComponentModuleStmts}}`. Fix **`projects/transpiler/src/imports.ts`** in this repo (remove `forRoot: true` on ngx-bootstrap `ImportDef`s) and rebuild the transpilation bundle shipped in `angular-app/dependencies/`.
+
+#### 20c. Codegen dependency paths (likely-breakage — apply when codegen fails)
+
+**When to fix:** Only if running codegen throws `Cannot find module '../dependencies/...'` — not a build-gate item until observed.
+
+When `@wavemaker-ai/angular-app/dependencies/` filenames use a `.cjs.js` suffix, update **`wavemaker-ng-codegen/src/`** (not `dist/`):
+
+| Old require | Angular 21+ shipped name |
+|-------------|--------------------------|
+| `../dependencies/expression-parser.cjs` | `../dependencies/expression-parser.cjs.js` |
+| `../dependencies/pipe-provider.cjs` | `../dependencies/pipe-provider.cjs.js` |
+| `../dependencies/transpilation-web.cjs` | `../dependencies/transpilation-web.cjs.js` |
+
+**Files:** `expr-parser-utils.js`, `wm-utils.js`, `pages-util.js`.
+
+**Note:** `@wavemaker-ai/angular-app/dependencies` ships **web** transpilation only — do not require `transpilation-mobile.cjs` unless the package adds it again. Match the suffix already used in `gen-components.js` (`custom-widgets-bundle.cjs.js`).
+
+#### 20d. Cross-repo upgrade checklist (Step 10 → Known follow-ups)
+
+After runtime upgrade gates pass in **this repo**, verify **generated-app** path:
+
+| # | Repo | Action |
+|---|------|--------|
+| 1 | `wavemaker-ng-runtime` | `tsconfig.web-app.json` aligned with `tsconfig.json`; rebuild/publish `@wavemaker-ai/angular-app` |
+| 2 | `wavemaker-ng-runtime` | `projects/transpiler/src/imports.ts` — no `forRoot: true` on ngx-bootstrap; `sh build.sh -f` refreshes `dependencies/*.cjs.js` |
+| 3 | `wavemaker-ng-codegen` | Edit **`templates/app.config.ts.hbs`** (required); run `sh build.sh`; yalc/publish codegen package |
+| 4 | Generated app | Re-run **codegen** (regenerates `tsconfig.json`, `app.config.ts`, pages) — existing folders are **not** auto-fixed |
+| 5 | Generated app | `npm install` + `npm run build` (`build-scripts/build.js` runs ngx-bootstrap ESM patch) |
+
+**Permanent fix** = merged source in both repos + republished packages + fresh codegen. Old generated app folders keep stale `tsconfig.json` / `app.config.ts` until re-codegen or manual edit.
+
+**Step 6 classification (cross-repo):**
+
+| Finding | Label |
+|---------|--------|
+| `tsconfig.web-app.json` still `moduleResolution: "node"` while target is Angular 21+ | `must-change` |
+| `app.config.ts.hbs` still calls ngx-bootstrap `.forRoot()` | `must-change` |
+| `app.module.ts.hbs` still calls ngx-bootstrap `.forRoot()` | `needs-review` — legacy template, not emitted |
+| Codegen runtime error: `require('../dependencies/*.cjs')` not found | `likely-breakage` — apply §20c |
+| Hand-edits under `wavemaker-ng-codegen/dist/` | `needs-review` — revert; fix `templates/` and rebuild |
 
 ---
 
