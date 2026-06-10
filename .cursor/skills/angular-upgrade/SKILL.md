@@ -13,6 +13,20 @@ Conservative, **resumable** workflow. State: `current-state.md`. Summary: `docs/
 
 **Configuration:** `repo.config.sh` holds versions, preview URLs, build commands, optional gates, and `PATTERNS_FILE`. Step 0 reads it — do **not** ask the user for versions or URLs. Optional chat overrides: `verify yes/no`, `tests yes/no`, custom build command.
 
+### Sibling repo: `wavemaker-ng-codegen`
+
+Generated-app fixes (patterns §20) live in **`wavemaker-ng-codegen`**, usually checked out **beside** this repo:
+
+```text
+…/wavemaker-studio-frontend/
+  wavemaker-ng-runtime/    ← this repo (skill runs here)
+  wavemaker-ng-codegen/    ← sibling; codegen templates + gen-tsconfig
+```
+
+**Branch policy:** For an upgrade, **both repos should use the same branch name** (e.g. `WMS-31488` / `feature/angular-21`) so runtime and codegen changes land together. At **Step 0** or **Step 2**, compare current branches; if they differ, **ask the user** to create or checkout matching branches on both repos before cross-repo edits. Record both branch names in `current-state.md` under **Upgrade config** or **Deferred / user decisions**.
+
+**Default path:** `../wavemaker-ng-codegen` relative to this repo root. If missing or elsewhere, ask the user for the codegen repo path and record it in `current-state.md`.
+
 ## Port to another repository
 
 1. Copy `.cursor/skills/angular-upgrade/`.
@@ -106,6 +120,7 @@ Read `package.json`, lockfile, `angular.json`, `tsconfig*.json`, test config, an
 1. [`references.md`](./references.md) for target-major compatibility.
 2. All pattern files for repo-specific risks.
 3. Plan base → target bumps; note verify/preview/tests from repo.config.
+4. **Cross-repo:** Confirm **`wavemaker-ng-codegen`** is available (default `../wavemaker-ng-codegen`) and on the **same branch** as this repo; if not, ask the user to align branches before §20 edits (see **Sibling repo** above).
 
 ### Step 3 — Apply package upgrades
 
@@ -131,7 +146,7 @@ Block on **critical** / **high** (without approved exception). If `npm audit fix
 2. Run greps/checks from each file.
 3. Merge into **Pattern findings** (`safe`, `needs-review`, `likely-breakage`, `must-change`).
 4. **Block** on unresolved `must-change`.
-5. **Cross-repo (generated apps):** apply **`wavemaker-runtime-patterns.md` §20** — align `tsconfig.web-app.json` with `tsconfig.json`, fix **`wavemaker-ng-codegen/templates/app.config.ts.hbs`** for ngx-bootstrap API changes (not `dist/`), and record ng-codegen publish + re-codegen under **Deferred / user decisions** until verified.
+5. **Cross-repo (generated apps):** apply **`wavemaker-runtime-patterns.md` §20** on the **same branch** in `wavemaker-ng-codegen` (default `../wavemaker-ng-codegen`) — align `tsconfig.web-app.json` with `tsconfig.json`, fix **`templates/app.config.ts.hbs`** for ngx-bootstrap API changes (not `dist/`), and record ng-codegen publish + re-codegen under **Deferred / user decisions** until verified. If codegen is on a different branch, **ask the user** to match branches before editing.
 
 ### Step 7 — Build gate
 
