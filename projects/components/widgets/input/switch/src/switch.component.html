@@ -12,8 +12,8 @@
       [attr.aria-pressed]="opt.selected ? true : false"
       (click)="selectOpt($event, $index, opt)"
       >
-      @if (opt.dataObject && opt.dataObject[iconclass] && (!opt.selected ||!checkediconclass)) {
-        <wm-app-icon [iconclass]="opt.dataObject[iconclass] || opt['icon']" [iconurl]="opt.dataObject[iconurl]"></wm-app-icon>
+      @if (opt.dataObject && (opt.dataObject[iconclass] || opt.dataObject[iconurl]) && (!opt.selected || !checkediconclass)) {
+        <wm-app-icon [iconclass]="opt.dataObject[iconclass] || opt['icon']" [iconurl]="opt.dataObject[iconurl] || opt['icon']"></wm-app-icon>
       }
       @if (opt.selected && (checkediconclass || checkediconurl)) {
         <wm-app-icon [iconclass]="checkediconclass" [iconurl]="checkediconurl"></wm-app-icon>
