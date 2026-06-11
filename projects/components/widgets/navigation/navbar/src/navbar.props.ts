@@ -9,6 +9,7 @@ export const registerProps = () => {
                 ['homelink', PROP_STRING],
                 ['imgsrc', PROP_STRING],
                 ['menuiconclass', {value: 'wi wi-more-vert', ...PROP_STRING}],
+                ['menuiconurl', PROP_STRING],
                 ['name', PROP_STRING],
                 ['show', {value: true, ...PROP_BOOLEAN}],
                 ['title', PROP_STRING]

@@ -6,7 +6,8 @@ import {
     provideAsWidgetRef,
     StylableComponent,
     styler,
-    TextContentDirective
+    TextContentDirective,
+    WmAppIconComponent
 } from "@wm/components/base";
 import {
     AfterContentInit,
@@ -48,7 +49,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective],
+    imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: 'div[wmTabs]',
     templateUrl: './tabs.component.html',
     exportAs: 'wmTabs',

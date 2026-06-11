@@ -22,10 +22,10 @@
                 <i class="app-icon wi wi-done"></i>
               }
               @if (shouldShowPrimaryStepIcon(step)) {
-                <i class="app-icon {{ stepIconClassOrDefault(step) }}"></i>
+                <wm-app-icon [iconclass]="stepIconClassOrDefault(step)" [iconurl]="step.iconurl"></wm-app-icon>
               }
               @if (showWizardStepIcons && step.isDone && hasNonEmptyDoneIconClass(step)) {
-                <i class="app-icon {{ step.doneiconclass }}"></i>
+                <wm-app-icon [iconclass]="step.doneiconclass" [iconurl]="step.doneiconurl"></wm-app-icon>
               }
             </span>
           }

@@ -2,7 +2,8 @@
 <div class="slider-container">
   @if (showicons) {
   <button class="btn-icon" type="button" name="decrementButton" (click)="decrementButtonClick($event)">
-    <i aria-hidden="true" [ngClass]="starticon"></i></button>
+    <wm-app-icon [iconclass]="starticon" [iconurl]="starticonurl"></wm-app-icon> 
+  </button>
   }
   <div class="slider-control">
     @if(!showmarkers){
@@ -18,7 +19,7 @@
   </div>
   @if (showicons) {
   <button class="btn-icon" type="button" name="incrementButton" (click)="incrementButtonClick($event)">
-    <i aria-hidden="true" [ngClass]="endicon"></i>
+    <wm-app-icon [iconclass]="endicon" [iconurl]="endiconurl"></wm-app-icon> 
   </button>
   }
 </div>

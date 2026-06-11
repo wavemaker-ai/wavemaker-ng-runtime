@@ -7,7 +7,8 @@ import {
     provideAsWidgetRef,
     StylableComponent,
     styler,
-    TextContentDirective
+    TextContentDirective,
+    WmAppIconComponent
 } from "@wm/components/base";
 import {
     AfterContentInit,
@@ -41,7 +42,9 @@ import {find, findIndex, forEach, get, indexOf, isArray, isNumber, isString} fro
 type WizardStepHeaderModel = {
     isDone: boolean;
     iconclass?: string;
+    iconurl?: string;
     doneiconclass?: string;
+    doneiconurl?: string;
 };
 
 const DEFAULT_CLS = 'app-wizard panel clearfix';
@@ -52,7 +55,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, TextContentDirective],
+  imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: 'div[wmWizard]',
     templateUrl: './wizard.component.html',
     providers: [
@@ -153,12 +156,12 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
 
     /** Default matches wm-wizardstep props; used for icon stepper when iconclass is empty. */
     stepIconClassOrDefault(step: WizardStepHeaderModel): string {
-        const c = step?.iconclass;
+        const c = step?.iconclass || step?.iconurl;
         return typeof c === 'string' && c.trim() ? c.trim() : 'wi wi-person';
     }
 
     hasNonEmptyIconClass(step: WizardStepHeaderModel): boolean {
-        const ic = step?.iconclass;
+        const ic = step?.iconclass || step?.iconurl;
         return typeof ic === 'string' && ic.trim() !== '';
     }
 
@@ -210,7 +213,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
 
     /** Avoid `String()` in templates (strict mode treats it as a component property). */
     hasNonEmptyDoneIconClass(step: WizardStepHeaderModel): boolean {
-        const d = step?.doneiconclass;
+        const d = step?.doneiconclass || step?.doneiconurl;
         return typeof d === 'string' && d.trim() !== '';
     }
 

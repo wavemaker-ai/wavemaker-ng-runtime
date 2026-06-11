@@ -4,7 +4,8 @@ import {
     provideAs,
     provideAsWidgetRef,
     styler,
-    TextContentDirective
+    TextContentDirective,
+    WmAppIconComponent
 } from "@wm/components/base";
 import {FormsModule, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 import {Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
@@ -27,7 +28,7 @@ const RANGE_LABEL_POSITION: {[key: string]: string} = {
 };
 @Component({
     standalone: true,
-    imports: [TextContentDirective, FormsModule, CommonModule],
+    imports: [TextContentDirective, FormsModule, CommonModule, WmAppIconComponent],
     selector: '[wmSlider]',
     templateUrl: './slider.component.html',
     providers: [
@@ -53,6 +54,8 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
     public showicons: boolean;
     public starticon: string;
     public endicon:string;
+    public starticonurl:string;
+    public endiconurl: string;
     public isPrism: boolean = false;
 
     @ViewChild(NgModel) ngModel: NgModel;

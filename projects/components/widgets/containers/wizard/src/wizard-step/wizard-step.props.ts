@@ -8,9 +8,11 @@ export const registerProps = () => {
                 ['class', PROP_STRING],
                 ['content', PROP_STRING],
                 ['doneiconclass', {value: 'wi wi-done', ...PROP_STRING}],
+                ['doneiconurl', PROP_STRING],
                 ['dynamicStepIndex', PROP_NUMBER], // internal property
                 ['enableskip', {value: false, ...PROP_BOOLEAN}],
                 ['iconclass', {value: 'wi wi-person', ...PROP_STRING}],
+                ['iconurl', PROP_STRING],
                 ['isdynamic', PROP_STRING], // internal property
                 ['name', PROP_STRING],
                 ['show', {value: true, ...PROP_BOOLEAN}],
