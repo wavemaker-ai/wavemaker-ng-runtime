@@ -51,7 +51,9 @@ const inFlightRequests = new Map<string, Observable<string>>();
 @Directive({
     standalone: true,
     selector: '[iconUrl]',
-    exportAs: 'svgIcon'
+    exportAs: 'svgIcon',
+    providers: [ImagePipe]
+
 })
 export class SvgIconDirective implements OnChanges, OnDestroy {
     @Input() iconUrl: string;
