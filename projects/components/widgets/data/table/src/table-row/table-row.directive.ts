@@ -22,8 +22,10 @@ export class TableRowDirective extends BaseComponent implements OnInit, OnDestro
     closeothers;
     content;
     expandicon;
+    expandiconurl;
     expandtitle;
     collapseicon;
+    collapseiconurl;
     collapsetitle;
     height;
     position;
@@ -40,8 +42,10 @@ export class TableRowDirective extends BaseComponent implements OnInit, OnDestro
             content: this.content,
             columnwidth: this.columnwidth,
             expandicon: this.expandicon,
+            expandiconurl: this.expandiconurl,
             expandtitle: this.expandtitle,
             collapsetitle: this.collapsetitle,
+            collapseiconurl: this.collapseiconurl,
             collapseicon: this.collapseicon,
             height: this.height,
             position: this.position

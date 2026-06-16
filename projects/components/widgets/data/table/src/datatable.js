@@ -54,7 +54,9 @@ $.widget('wm.datatable', {
             'descIcon': 'wi wi-long-arrow-down',
             'selectedColumn': 'selected-column',
             'rowExpandIcon': 'wi wi-minus-square',
+            'rowExpandIconUrl': '',
             'rowCollapseIcon': 'wi wi-plus-square',
+            'rowCollapseIconurl': '',
             'gridRowExpansionClass': 'table-row-expansion',
             'expandedRowClass' : 'expanded'
         },
@@ -460,12 +462,15 @@ $.widget('wm.datatable', {
     },
     _appendRowExpansionButtons: function ($htm) {
         var self = this;
+        self._rowExpansionRefs = self._rowExpansionRefs || {};
         $htm.find("[data-identifier='rowExpansionButtons']").each(function (index) {
             var _rowData, $row, rowId, rowIndex = index;
             $row = $(this).closest('tr.app-datagrid-row');
             rowId = parseInt($row.attr('data-row-id'), 10);
             _rowData = _.clone(self.options.data[rowId]);
             _rowData.$index = rowIndex + 1;
+            _rowData.__expanded = !!(self._rowExpansionRefs[rowId] && self._rowExpansionRefs[rowId].__expanded);
+            self._rowExpansionRefs[rowId] = _rowData;
             self.options.generateRowExpansionCell(_rowData, rowIndex);
             $(this).empty().append(self.options.getRowExpansionAction(rowIndex));
             var expandtitleExpr = $(this).children()[0].getAttribute('expandtitle.bind'),
@@ -3094,7 +3099,7 @@ $.widget('wm.datatable', {
     hasAllClasses: function (element, classNames) { // function to check if all the class names are present in the element
         return classNames && classNames.every(cls => element.hasClass(cls));
     },
-    _collapseRow: function(e, rowData, rowId, $nextDetailRow, $icon) {
+    _collapseRow: function(e, rowData, rowId, $nextDetailRow) {
         var self = this,
             $tbody = self.gridElement,
             $row = $($tbody.find('> tr.app-datagrid-row[data-row-id="'+ rowId +'"]'));
@@ -3103,8 +3108,9 @@ $.widget('wm.datatable', {
         if (this.options.onBeforeRowCollapse(e, rowData, rowId) === false) {
             return;
         }
-        if ($icon.length && this.hasAllClasses($icon, this.options.cssClassNames.rowExpandIcon?.split(' '))) {
-            $icon.removeClass(this.options.cssClassNames.rowExpandIcon).addClass(this.options.cssClassNames.rowCollapseIcon);
+        // Flip __expanded on the SAME row reference the action template binds
+        if (self._rowExpansionRefs && self._rowExpansionRefs[rowId]) {
+            self._rowExpansionRefs[rowId].__expanded = false;
         }
         $nextDetailRow.hide();
         this.options.onRowCollapse(e, rowData)
@@ -3116,7 +3122,6 @@ $.widget('wm.datatable', {
             rowData = _.clone(self.options.data[rowId]),
             $nextDetailRow = $row.next('tr.app-datagrid-detail-row'),
             isClosed = !$nextDetailRow.is(':visible'),
-            $icon = $row.find('[data-identifier="rowExpansionButtons"] i.app-icon'),
             expandRowBtn = $row.find( 'button, a');
         rowData.$index = rowId + 1;
         if (isExpand && !isClosed) {
@@ -3138,18 +3143,17 @@ $.widget('wm.datatable', {
             if (self.options.rowDef.closeothers) {
                 $tbody.find('> tr.app-datagrid-detail-row:visible').each(function() {
                     var $otherDetailRow = $(this),
-                        $otherIcon = $otherDetailRow.prev('tr.app-datagrid-row').find('[data-identifier="rowExpansionButtons"] i.app-icon'),
                         otherRowId = +$otherDetailRow.attr('data-row-id'),
                         otherRowData = self.options.data[otherRowId];
                     $otherDetailRow.hide();
-                    self._collapseRow(e, otherRowData, otherRowId, $otherDetailRow, $otherIcon);
+                    self._collapseRow(e, otherRowData, otherRowId, $otherDetailRow);
                 });
+            }
+            if (self._rowExpansionRefs && self._rowExpansionRefs[rowId]) {
+                self._rowExpansionRefs[rowId].__expanded = true;
             }
             self.options.generateRowDetailView(e, rowData, rowId, $nextDetailRow.find('td.app-datagrid-row-details-cell .details-section'),
                 $nextDetailRow.find('td.app-datagrid-row-details-cell .row-overlay'), function () {
-                    if ($icon.length && self.hasAllClasses($icon, self.options.cssClassNames.rowCollapseIcon?.split(' '))) {
-                        $icon.removeClass(self.options.cssClassNames.rowCollapseIcon).addClass(self.options.cssClassNames.rowExpandIcon);
-                    }
                     $nextDetailRow.show();
                 });
         } else {
@@ -3157,7 +3161,7 @@ $.widget('wm.datatable', {
             else {
                 expandRowBtn.attr('title', expandRowBtn.attr('expandtitle'));
             }
-            self._collapseRow(e, rowData, rowId, $nextDetailRow, $icon);
+            self._collapseRow(e, rowData, rowId, $nextDetailRow);
         }
     },
     /* Replaces all the templates needing angular compilation with the actual compiled templates. */

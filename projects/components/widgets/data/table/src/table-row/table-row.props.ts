@@ -10,9 +10,11 @@ export const registerProps = () => {
                 ['content', PROP_STRING],
                 ['columnwidth', {value: '50px', ...PROP_STRING}],
                 ['collapseicon', PROP_STRING],
+                ['collapseiconurl', PROP_STRING],
                 ['collapsetitle', PROP_STRING],
                 ['expandtitle', PROP_STRING],
                 ['expandicon', PROP_STRING],
+                ['expandiconurl', PROP_STRING],
                 ['height', PROP_STRING],
                 ['position', {value: '0', ...PROP_STRING}]
             ]

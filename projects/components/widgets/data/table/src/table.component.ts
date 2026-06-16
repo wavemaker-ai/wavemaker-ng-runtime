@@ -758,10 +758,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.customExprTmpl.forEach(compileTemplate.bind(this));
         },
         generateRowExpansionCell: (rowData, index) => {
-            const row = this.getClonedRowObject(rowData);
-            // For all the columns inside the table, generate the inline widget
             this.rowExpansionActionTmpl.forEach((tmpl) => {
-                this.rowExpansionActionTl[index] = this.rowExpansionActionViewRef.createEmbeddedView(tmpl, {row}).rootNodes;
+                this.rowExpansionActionTl[index] = this.rowExpansionActionViewRef.createEmbeddedView(tmpl, {row: rowData}).rootNodes;
             });
         },
         getRowExpansionAction: (index) => {
@@ -781,6 +779,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             // Row is already rendered. Return here
             if (this.rowDefMap[rowId] && this.rowDefMap[rowId].content === rowDef.content) {
                 this.rowInstance.invokeEventCallback('rowexpand', {$event, row, $data: this.rowDefInstances[rowId]});
+                $appDigest();
                 return;
             }
             this.rowDefMap[rowId] = rowDef;
@@ -812,6 +811,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         },
         onRowCollapse: ($event, row) => {
             this.rowInstance.invokeEventCallback('rowcollapse', {$event, row});
+            $appDigest();
         },
         getCustomExpression: (fieldName, index, summaryRow?) => {
             let customExpression;
@@ -2604,6 +2604,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     registerRow(tableRow, rowInstance) {
         this.rowDef = tableRow;
         this.rowInstance = rowInstance;
+        if(this.rowDef.expandiconurl)
+        this.callDataGridMethod('option', 'cssClassNames.rowExpandIconUrl', this.rowDef.expandiconurl);
+        if(this.rowDef.collapseiconurl)
+        this.callDataGridMethod('option', 'cssClassNames.rowCollapseIconurl', this.rowDef.collapseiconurl);
+        
         this.callDataGridMethod('option', 'cssClassNames.rowExpandIcon', this.rowDef.expandicon);
         this.callDataGridMethod('option', 'cssClassNames.rowCollapseIcon', this.rowDef.collapseicon);
         this.gridOptions.rowExpansionEnabled = true;
