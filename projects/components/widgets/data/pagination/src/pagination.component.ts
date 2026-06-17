@@ -159,8 +159,38 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
             }
             this.allowpagesizechange = this.parent.allowpagesizechange;
             if(this.allowpagesizechange)
-                this.defaultPageSizeOptions = this.parent?.pagesizeoptions ? this.parent.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) : [];
+                this.defaultPageSizeOptions =this.normalizeToNumberArray(this.parent?.pagesizeoptions);
         }, 0);
+    }
+    normalizeToNumberArray(input) { // Handles all formats in one place: "10,20,30", [10,20,30], "[10,20,30]"
+        if (!input) return [];
+
+        let arr;
+
+        if (Array.isArray(input)) {
+            arr = input;
+        } else if (typeof input === "string") {
+            const trimmed = input.trim();
+
+            // handle "[1,2,3]"
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                try {
+                    arr = JSON.parse(trimmed);
+                } catch {
+                    arr = [];
+                }
+            } else {
+                // handle "1,2,3"
+                arr = trimmed.split(",");
+            }
+        } else {
+            return [];
+        }
+
+        return arr
+            .map(v => Number(v))
+            .filter(v => !isNaN(v))
+            .sort((a, b) => a - b);
     }
 
     setResult(result) {
@@ -685,11 +715,13 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     }else{
                         this.pageSizeOptions = range(this.actualPageSize,  Math.max(this.actualPageSize + 1, this.actualPageSize + totalElements), this.actualPageSize); // here data has only that page data and pagesize has totalNoof Elements
                     }
-                    if (widgetState?.selectedItem && widgetState.actualpagesize !== widgetState.pagesize) {
+                    if (widgetState?.selectedItem && widgetState.actualpagesize !== widgetState.pagesize
+                        && +this.prevPageSize !== +(widgetState.pagesize || this.maxResults)) {
+                        const newPageSize = +(widgetState.pagesize || this.maxResults);
                         if (!this.prevPageSize) {
-                            this.prevPageSize = this.actualPageSize || data?.length;
+                            this.prevPageSize = widgetState.actualpagesize || this.actualPageSize || data?.length;
                         }
-                        const updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, this.prevPageSize, data?.length);
+                        const updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, this.prevPageSize,newPageSize);
                         if (updatedItems) {
                             this.parent.statePersistence.setWidgetState(this.parent, {
                                 pagination: 1,
@@ -697,8 +729,8 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                                 actualpagesize: this.actualPageSize || this.maxResults,
                                 selectedItem: updatedItems
                             })
-                            this.prevPageSize = undefined;
                         }
+                        this.prevPageSize = newPageSize;
                     }
                 } else {
                     pageSize = this.parent.getActualPageSize();
@@ -815,12 +847,14 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     }
     onPageSizeChange($event, newPageSize) {
         const widgetState = this.parent.statePersistence.getWidgetState(this.parent);
-            let updatedItems;
+        let updatedItems;
+        const oldPageSize = widgetState?.pagesize || this.maxResults;
         if (widgetState?.selectedItem) {
-            updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, this.maxResults, +newPageSize);
+            updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, oldPageSize, +newPageSize);
         }
-        this.actualPageSize = this.actualPageSize || this.maxResults;
+        this.actualPageSize = widgetState?.actualpagesize || this.actualPageSize || oldPageSize;
         this.maxResults = +newPageSize;
+        this.prevPageSize = +newPageSize;
         this.maxResultsEmitter.emit(this.maxResults);
         if (this.isDataSourceHasPaging() && this.datasource) {
             this.datasource.maxResults = this.maxResults;

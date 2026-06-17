@@ -111,6 +111,9 @@ const exportIconMapping = {
 
 const ROW_OPS_FIELD = 'rowOperations';
 
+/** Same default as `table.props.ts` — used when `pagesizeoptions` cannot be parsed to integers. */
+const DEFAULT_PAGE_SIZE_OPTIONS = '5,10,20,50,100';
+
 const noop = () => {};
 
 const isInputBodyWrapper = target => {
@@ -379,10 +382,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         showviewlessbutton: false,
         ondemandmessage: '',
         allowpagesizechange: false,
-        pagesizeoptions: '',
+        pagesizeoptions: DEFAULT_PAGE_SIZE_OPTIONS,
         viewlessmessage: '',
         loadingdatamsg: '',
         isNextPageData: undefined,
+        enableSort: true,
+        multiselect: false,
+        showRadioColumn: false,
+        enableColumnSelection: false,
         multiselecttitle: '',
         multiselectarialabel: '',
         radioselecttitle: '',
@@ -1349,7 +1356,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.gridOptions.ondemandmessage = this.ondemandmessage;
         this.gridOptions.viewlessmessage = this.viewlessmessage;
         this.gridOptions.loadingdatamsg = this.loadingdatamsg;
-        this.gridOptions.pagesizeoptions = this.pagesizeoptions;
+        this.gridOptions.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(this.pagesizeoptions);
+        this.pagesizeoptions = this.gridOptions.pagesizeoptions;
         this.gridOptions.multiselecttitle = this.multiselecttitle;
         this.gridOptions.multiselectarialabel = this.multiselectarialabel;
         this.gridOptions.radioselecttitle = this.radioselecttitle;
@@ -1922,10 +1930,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     setDataGridOption(optionName, newVal, forceSet = false) {
         if (!this.datagridElement || !this.datagridElement.datatable || !this.datagridElement.datatable('instance')) {
+            // Bound properties can update before the jQuery widget is initialized.
+            // Keep gridOptions in sync so the initial datatable() call sees the latest value.
+            this.gridOptions[optionName] = newVal;
             return;
         }
         const option = {};
-        if (isDefined && (!isEqual(newVal, this.gridOptions[optionName]) || forceSet)) {
+        if (isDefined(newVal) && (!isEqual(newVal, this.gridOptions[optionName]) || forceSet)) {
             option[optionName] = newVal;
             this.datagridElement.datatable('option', option);
             this.gridOptions[optionName] = newVal;
@@ -2387,12 +2398,48 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             case 'allowpagesizechange':
                 this.gridOptions.allowpagesizechange = nv;
                 this.allowpagesizechange = nv;
+                this.dataNavigator.allowpagesizechange = nv;
+                if (nv) {
+                    const pagesizeoptions = this.sanitizeCommaSeparatedIntegers(this.pagesizeoptions);
+                    this.gridOptions.pagesizeoptions = pagesizeoptions;
+                    this.pagesizeoptions = pagesizeoptions;
+                    this.prevPagesizeoptions = '';
+                    this.setDefaultPageSize(this.pagesize || this.actualPageSize || this.gridOptions.getPageSize());
+                }
                 break;
             case 'pagesizeoptions':
                 this.prevPagesizeoptions = this.sanitizeCommaSeparatedIntegers(ov);
                 this.gridOptions.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
-                this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
-                if(this.allowpagesizechange) this.setDefaultPageSize(nv);
+                this.pagesizeoptions = this.gridOptions.pagesizeoptions;
+                if (this.allowpagesizechange) {
+                    this.setDefaultPageSize(this.pagesize || this.actualPageSize || this.gridOptions.getPageSize());
+                    if (get(this.datasource, 'category') !== 'wm.Variable') {
+                        this.dataNavigator.onPageSizeChange(undefined, this.dataNavigator.pageSizeOptions[0] || this.pagesize);
+                    }
+                }
+                break;
+            case 'showheader':
+                this.setDataGridOption('showHeader', nv);
+                break;
+            case 'showheader':
+                this.setDataGridOption('showHeader', nv);
+                break;
+            case 'enablesort':
+                this.setDataGridOption('enableSort', nv);
+                break;
+            case 'enablecolumnselection':
+             //   this.enablecolumnselection = nv;
+                //this.gridOptions.enableColumnSelection = nv;
+                this.setDataGridOption('enableColumnSelection', nv);
+                break;
+            case 'isrowselectable':
+                this.setDataGridOption('isrowselectable', nv);
+                break;
+            case 'multiselect':
+                this.setDataGridOption('multiselect', nv);
+                break;
+            case 'radioselect':
+                this.setDataGridOption('showRadioColumn', nv);
                 break;
             case 'multiselecttitle':
                 this.setDataGridOption('multiselecttitle', nv);
@@ -2427,16 +2474,20 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     setDefaultPageSize(nv: any){
         let widgetState = this.statePersistence.getWidgetState(this);
         if (this.gridOptions.allowpagesizechange) {
-            if (get(widgetState, 'pagesize')) {
+            const normalizedPageSizeOptions = this.getNormalizedPageSizeOptionsArray(this.pagesizeoptions);
+            if (this.isPageSizeOptionsChanged() && normalizedPageSizeOptions.length) { // if pagesize options are changed, then update the pagesize without checking for statepersistence
+                nv = normalizedPageSizeOptions[0];
+                this.pagesize = nv;
+            } else if (get(widgetState, 'pagesize')) {
                 nv = get(widgetState, 'pagesize');
                 this.pagesize = nv; // updating the default pagesize to user selected pagesize
-            }else if (this.pagesizeoptions) {
-                nv = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b)[0]
+            }else if (this.pagesizeoptions && normalizedPageSizeOptions.length) {
+                nv = normalizedPageSizeOptions[0];
                 this.pagesize = nv;
             }
             this.updatedPageSize = nv;
             if(this.isPageSizeOptionsChanged()) {
-                this.dataNavigator.defaultPageSizeOptions = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) || [];
+                this.dataNavigator.defaultPageSizeOptions = normalizedPageSizeOptions;
                 this.dataNavigator.pageSizeOptions = [...this.dataNavigator.defaultPageSizeOptions];
             }
         }
@@ -2464,18 +2515,46 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.dataNavigator.onPageSizeChange(undefined, pagesize);
     }
 
-    sanitizeCommaSeparatedIntegers(input: string): string {
-        if (!input) return "";
+    sanitizeCommaSeparatedIntegers(input) {
+        if (input === null || input === undefined || input === '') {
+            return DEFAULT_PAGE_SIZE_OPTIONS;
+        }
+        let arr;
+        if (Array.isArray(input)) {
+            arr = input;
+        } else if (typeof input === "string") {
+            const trimmed = input.trim();
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                try {
+                    arr = JSON.parse(trimmed);
+                } catch {
+                    arr = [];
+                }
+            } else {
+                arr = trimmed.split(",");
+            }
+        } else {
+            return DEFAULT_PAGE_SIZE_OPTIONS;
+        }
+
         const uniqueNumbers = Array.from(
             new Set(
-                input
-                    .split(",")
-                    .map(v => v.trim())
+                arr
+                    .map(v => String(v).trim())
                     .filter(v => /^-?\d+$/.test(v))
                     .map(v => Math.abs(parseInt(v, 10)))
             )
         );
-        return uniqueNumbers.join(",");
+        const joined = uniqueNumbers.join(",");
+        return joined || DEFAULT_PAGE_SIZE_OPTIONS;
+    }
+
+    getNormalizedPageSizeOptionsArray(input) {
+        return this.sanitizeCommaSeparatedIntegers(input)
+            .split(',')
+            .map(Number)
+            .filter(v => !isNaN(v))
+            .sort((a, b) => a - b);
     }
 
     onDataSourceChange() {

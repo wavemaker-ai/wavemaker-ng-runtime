@@ -1693,8 +1693,24 @@ $.widget('wm.datatable', {
 
     /* Sets the options for the grid. */
     _setOption: function (key, value) {
+        const isSortEnabled = v => v !== false && v !== 'false';
+        let prev;
+
+        if (key === 'enableSort') {
+            prev = isSortEnabled(this.options.enableSort);
+        }
         this._super(key, value);
         switch (key) {
+            case 'enableSort':
+                if (this.tableContainer?.length) {
+                    this.refreshSortHeader(); // Refresh the table header and update column widths when sort is enabled/disabled
+                }
+                break;
+            case 'enableColumnSelection':
+                if (this.tableContainer?.length) {
+                    this.refreshSortHeader(); // Refresh the table header and update column widths when column selection is enabled/disabled
+                }
+                break;
             case 'showHeader':
                 this._toggleHeader();
                 this._toggleSearch();
@@ -1777,6 +1793,17 @@ $.widget('wm.datatable', {
         return this.options;
     },
 
+    /** function to rebuild table header and update column widths. */
+    refreshSortHeader: function () {
+        this._prepareHeaderData();
+        if (this.options.showHeader) {
+            this._renderHeader();
+            this._attachHeaderEventHandlers();
+        }
+        this.setColGroupWidths();
+        this.addOrRemoveScroll();
+    },
+
     /* Toggles the table header visibility. */
     _toggleHeader: function () {
         if (this.gridHeaderElement) {
@@ -1789,6 +1816,7 @@ $.widget('wm.datatable', {
         this.setDefaultColsData();
         if (this.options.showHeader) {
             this._renderHeader();
+            this._attachHeaderEventHandlers(); // Attach all event handlers specifically for the table header
         }
     },
 
@@ -1871,11 +1899,14 @@ $.widget('wm.datatable', {
         if (this.options.showRadioColumn) {
             $radio = $row.find('td input[rowSelectInput]:radio:not(:disabled)');
             $radio.prop('checked', selected);
+            $radio.attr('checked', selected ? 'checked' : null); //
             this.preparedData[rowId]._checked = selected;
         }
         if (this.options.multiselect) {
             $checkbox = $row.find('td input[name="gridMultiSelect"]:checkbox:not(:disabled)');
             $checkbox.prop('checked', selected);
+            $checkbox.attr('checked', selected ? 'checked' : null);
+            $checkbox.closest('label').toggleClass('unchecked', !selected);
             $checkbox.siblings('span.sr-only').text(selected ? 'Row Selected' : 'Row Deselected');
             this.preparedData[rowId]._checked = selected;
             // if we check header checkbox(select/unselect all the records) then updating selectAll checkbox state is not required.
@@ -1909,6 +1940,7 @@ $.widget('wm.datatable', {
             $headerCheckbox.prop('checked', false);
         }
     },
+
     // triggered on capture phase of click listener.
     // sets the selected rowdata on click.
     rowClickHandlerOnCapture: function (e, $row, options) {
@@ -2777,8 +2809,10 @@ $.widget('wm.datatable', {
     /* Handles table sorting. */
     sortHandler: function (e) {
           e.stopImmediatePropagation();
-        // If header span is clicked and column selection is enabled, call header click
+        // If header span is clicked and column selection is enabled, call header click hand
+        //Calling the column selection handler so that column selection works even when the bind exp changes later from false to true.
         if ($(e.target).hasClass('header-data') && this.options.enableColumnSelection) {
+            this.columnSelectionHandler(e);
             this.headerClickHandler(e);
         }
         var $e = $(e.target),
@@ -3067,8 +3101,7 @@ $.widget('wm.datatable', {
 
     /* Attaches all event handlers for the table. */
     attachEventHandlers: function ($htm) {
-        var $header = this.gridHeaderElement,
-            self = this;
+        var self = this;
 
         if (this.options.enableRowSelection) {
             $htm[0].removeEventListener('click', this.rowClickHandlerOnCapture.bind(this));
@@ -3090,33 +3123,13 @@ $.widget('wm.datatable', {
             $htm.on('keydown', this.onKeyDown.bind(this));
         }
 
-        if ($header) {
-            if (this.options.enableColumnSelection) {
-                $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
-                $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
-            } else {
-                $header.find('th[data-col-selectable]').off('click');
-            }
+        this._attachHeaderEventHandlers();
 
-            if (this.options.enableSort) {
-                if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
-                } else {
-                    $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
-                }
-            } else {
-                if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click');
-                } else {
-                    $header.find('th[data-col-sortable]').off('click');
-                }
-            }
+        if (this.options.rowActions.length) {
+            $htm.find('.cancel-edit-row-button').off('click');
+            $htm.find('.save-edit-row-button').off('click');
+            $htm.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
+            $htm.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
         }
         this._bindRowActionsAndExpansionClickHandlers($htm);
         if (self.options.editmode === self.CONSTANTS.QUICK_EDIT) {
@@ -3195,6 +3208,51 @@ $.widget('wm.datatable', {
             });
         }
 
+        // row selection
+        $htm.find('[data-identifier="rowExpansionButtons"]').off("click");
+        $htm.find('[data-identifier="rowExpansionButtons"]').on('click', function (e) {
+            var $row = $(e.target).closest('tr.app-datagrid-row');
+            if ($(this).find('.app-button').attr('disabled')) {
+                return;
+            }
+            self.toggleExpandRow(+$row.attr('data-row-id'), undefined, e);
+        });
+    },
+    /**
+     * Function which attaches all event handlers specifically for the table header.
+     * Needed when table header is rebuilt (e.g. showHeader toggle) without a full _renderGrid
+     */
+    _attachHeaderEventHandlers: function () {
+        var $header = this.gridHeaderElement;
+        if (!$header || !$header.length) {
+            return;
+        }
+        if (this.options.enableColumnSelection) {
+            $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
+            $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
+        } else {
+            $header.find('th[data-col-selectable]').off('click');
+        }
+
+        if (!(this.options.enableSort === false || this.options.enableSort === 'false')) {
+            if (this.options.enableColumnSelection) {
+                $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+            } else {
+                $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+            }
+        } else {
+            if (this.options.enableColumnSelection) {
+                $header.find('th[data-col-sortable] .header-data').off('click');
+            } else {
+                $header.find('th[data-col-sortable]').off('click');
+            }
+        }
     },
     expandRow: function(rowId) {
         this.toggleExpandRow(rowId, true)
@@ -3381,11 +3439,19 @@ $.widget('wm.datatable', {
             self.gridHeaderElement.parent().prop('scrollLeft', this.scrollLeft);
         });
         if (!this.options.showHeader) {
+            this.tableContainer.find('colgroup').remove(); // Remove the colgroup from the table container when showHeader is false
             this.tableContainer.append($colgroup);
             this.gridHeaderElement.hide();
             //this.gridElement.prepend($colgroup.clone());
             return;
         } else {
+            /* _toggleHeader() removes thead from the DOM when toggling showHeader; gridHeaderElement
+             * still references the detached thead. Re-insert it before the tbody so the header
+             * is visible when bind changes from false to true. */
+            if (this.gridHeaderElement.length && this.tableContainer?.length &&
+                !this.tableContainer[0].contains(this.gridHeaderElement[0])) {
+                this.tableContainer.prepend(this.gridHeaderElement); // Re-insert the table header before the tbody when showHeader is true
+            }
             this.gridHeaderElement.show();
         }
         $header = headerTemplate.header;
@@ -3434,7 +3500,7 @@ $.widget('wm.datatable', {
                 $headerCol.hide();
             }
         });
-
+        this.tableContainer.find('colgroup').remove(); // Remove the colgroup from the table container when showHeader is false
         /*For mobile view, append header to the main table only*/
         if (this.options.isMobile) {
             this.tableContainer.append($colgroup);
