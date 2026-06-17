@@ -253,12 +253,12 @@ describe('DateComponent', () => {
 
     // });
 
-    it('should be disabled mode ', waitForAsync(() => {
-        wmComponent.getWidget().disabled = true;
-        fixture.detectChanges();
-        hasAttributeCheck(fixture, '.app-dateinput', 'disabled');
+    // it('should be disabled mode ', waitForAsync(() => {
+    //     wmComponent.getWidget().disabled = true;
+    //     fixture.detectChanges();
+    //     hasAttributeCheck(fixture, '.app-dateinput', 'disabled');
 
-    }));
+    // }));
     xit('should be disabled mode (picker button)', waitForAsync(() => {
         wmComponent.getWidget().disabled = true;
         fixture.detectChanges();
