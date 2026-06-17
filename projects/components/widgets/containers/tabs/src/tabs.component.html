@@ -8,9 +8,7 @@
         [tabindex]="pane.isActive ? '0' : '-1'"
         class="tab-heading" href="javascript:void(0);"
         [attr.aria-selected]="pane.isActive" role="tab" (click)="pane.select($event); pane.tabpaneHeaderClick($event, i);" (keydown)="onkeydown($event)">
-        @if (pane.paneicon) {
-          <i [ngClass]="['app-icon', pane.paneicon]"></i>
-        }
+        <wm-app-icon [iconclass]="pane.paneicon" [iconurl]="pane.paneiconurl" alt="Tab icon"></wm-app-icon>
         <span [textContent]="pane.title"></span>
         @if (pane.badgevalue) {
           <span class="label label-{{pane.badgetype}}" [textContent]="pane.badgevalue"></span>

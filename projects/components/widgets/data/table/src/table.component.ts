@@ -63,7 +63,8 @@ import {
     styler,
     transformData,
     TrustAsPipe,
-    unsupportedStatePersistenceTypes
+    unsupportedStatePersistenceTypes,
+    WmAppIconComponent
 } from '@wm/components/base';
 import {PaginationComponent} from '@wm/components/data/pagination';
 
@@ -139,7 +140,7 @@ const isInputBodyWrapper = target => {
 
 @Component({
       standalone: true,
-      imports: [CommonModule, AnchorComponent, PaginationComponent, ButtonComponent, BsDropdownModule, MenuComponent],
+      imports: [CommonModule, AnchorComponent, PaginationComponent, ButtonComponent, BsDropdownModule, MenuComponent, WmAppIconComponent],
     selector: '[wmTable]',
     templateUrl: './table.component.html',
     providers: [
@@ -200,6 +201,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     gridclass;
     gridfirstrowselect;
     iconclass;
+    iconurl: string;
     ondemandmessage;
     allowpagesizechange;
     viewlessmessage;

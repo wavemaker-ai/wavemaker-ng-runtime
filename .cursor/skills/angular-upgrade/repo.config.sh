@@ -1,76 +1,40 @@
 # Repo-specific settings for the angular-upgrade skill.
-# Edit this file (and PATTERNS_FILE) when porting the skill or starting a new major bump.
-# Step 0 reads versions and preview URLs from here only — not from user chat.
+# User inputs: inputs.md. Workflow: SKILL.md. Browser pass/fail: wavemaker-runtime-patterns.md § Preview validation.
 #
-# --- Suggested chat prompt (attach skill: @.cursor/skills/angular-upgrade) ---
-#
-# Start new upgrade (Step 0 overwrites current-state.md from SKILL.md template):
-#   Start Angular upgrade. Follow SKILL.md: read repo.config.sh, run Steps 0–10.
-#   Do not ask for Angular versions or preview URLs.
-#
-# With optional gate overrides (append one line):
-#   … verify yes | verify no
-#   … tests yes | tests no
-#
-# Resume in-progress run (does NOT reset current-state.md):
-#   Resume Angular upgrade. Follow SKILL.md from current-state.md.
-#
-# --- Steps 0–10 (workflow summary) ---
-#
-#  0  Upgrade gate          Fresh Start → overwrite current-state.md; Resume → keep file unless version mismatch.
-#                           Block if base/target empty; COMPARISON_URL required when PREVIEW_URL set.
-#  1  Detect and inventory  package.json, lockfile, angular.json, tsconfig*, tests; resolve PATTERNS_FILE.
-#                           Block if any pattern path missing; confirm Angular matches ANGULAR_BASE_VERSION.
-#  2  Plan upgrade path     Read references.md + all pattern files; plan base → target bumps.
-#  3  Apply package upgrades Edit package.json / overrides only — do not install yet.
-#  4  Install               scripts/install.sh (INSTALL_CMD)
-#  5  Security gate         scripts/audit.sh — block on critical/high; re-install if audit fix changed lockfile.
-#  6  Repo pattern review   Run greps from pattern files; block on unresolved must-change.
-#  7  Build gate            Full BUILD_CMD via scripts/build.sh — block on failure.
-#                           Verify runs after full BUILD_CMD only (not --incremental).
-#  8  Preview validation    Optional — skip URL compare if PREVIEW_URL empty; manual browser OK.
-#                           Else same flows on COMPARISON_URL then PREVIEW_URL.
-#  9  Unit tests            Optional — skip if tests=no/n/a or TEST_CMD empty. Else scripts/test.sh.
-# 10  Finalize              Summarize in chat; write UPGRADE_DOC_PATH (e.g. docs/{major}-upgrade.md).
-#                           Update current-state.md after every step; resume at first step not done.
+# ANGULAR_*     — major versions (Step 0 / inputs.md)
+# PREVIEW_*     — Step 8 local Tomcat URL; empty or skip → Step 8 skipped
+# COMPARISON_*  — stage baseline; required when preview runs
+# NG_CODEGEN_PATH — sibling codegen repo (Step 6 §20, Step 8 codegen)
+# LOCAL_BUILD_DOC — path to local-angular-build command
+# BUILD_CMD     — full rebuild; Step 7 only (not Step 8)
+# RUNTIME_BUNDLE_CMD — locale + CLI bundles; Step 8 Step 2b only
+# BUILD_CMD_INCREMENTAL — optional mid-upgrade check (scripts/build.sh --incremental)
+# POST_BUILD_VERIFY_* / DEFAULT_RUN_BUNDLE_VERIFY — Step 7 ngx-bootstrap verify
+# TEST_CMD / DEFAULT_RUN_TESTS — Step 9 unit tests
+# PATTERNS_FILE — comma-separated pattern markdown paths (Step 6)
+# UPGRADE_DOC_PATH — Step 10 summary doc (docs/{major}-upgrade.md)
 
-# --- Angular version range (required) ---
-# Major numbers only (e.g. 20, 21). One major bump per upgrade run.
+# --- Angular version range (defaults — user may override in Start message) ---
 ANGULAR_BASE_VERSION="20"
 ANGULAR_TARGET_VERSION="21"
 
-# --- Preview validation (Step 8) ---
-# PREVIEW_URL: upgraded build URL. Empty or "skip" = skip Step 8.
-# COMPARISON_URL: baseline on base Angular version. Required when PREVIEW_URL is set.
-PREVIEW_URL=""
-COMPARISON_URL=""
+# --- Local Tomcat validation (Step 8 defaults) ---
+PREVIEW_URL="http://localhost:8080/SearchWidgetScenarios/#/LiveForm_Autocomplete"
+COMPARISON_URL="https://stage-platform.wavemaker.ai/run-jlqb2h631c/SearchWidgetScenarios_master/#/Main"
 
-# Install (Step 4)
+NG_CODEGEN_PATH="../wavemaker-ng-codegen"
+LOCAL_BUILD_DOC=".cursor/commands/local-angular-build.md"
+
 INSTALL_CMD="npm install"
-
-# Full rebuild (Step 7 gate — required pass before marking Step 7 done)
 BUILD_CMD="sh build.sh -f"
-
-# Incremental build — use via scripts/build.sh --incremental when a faster rebuild is enough
+RUNTIME_BUNDLE_CMD="sh build.sh --locale && sh bundle-runtime-cli.sh && sh bundle-angular-app-cli.sh"
 BUILD_CMD_INCREMENTAL="sh build.sh"
 
-# --- Optional gates (leave empty to disable a gate entirely) ---
-
-# Post-build verify (Step 7). Script name under scripts/.
 POST_BUILD_VERIFY_SCRIPT="verify-ngx-bootstrap-bundle.sh"
 DEFAULT_RUN_BUNDLE_VERIFY=yes
 
-# Unit tests (Step 9).
 TEST_CMD="npm test"
 DEFAULT_RUN_TESTS=yes
 
-# Pattern catalog — comma-separated paths; user sets in repo.config.sh only.
-# Relative paths: skill folder first, then repo root. Absolute paths OK.
-# Example: PATTERNS_FILE="wavemaker-runtime-patterns.md"
-# Example: PATTERNS_FILE="my-patterns.md,../other-repo/patterns.md"
 PATTERNS_FILE="wavemaker-runtime-patterns.md"
-
-# Step 10: upgrade summary doc ({major} = ANGULAR_TARGET_VERSION)
 UPGRADE_DOC_PATH="docs/{major}-upgrade.md"
-
-# After Step 10 completes: bump ANGULAR_BASE_VERSION / ANGULAR_TARGET_VERSION here before the next Start.

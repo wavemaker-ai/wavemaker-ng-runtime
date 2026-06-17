@@ -30,6 +30,9 @@ dependency-check-reports/
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# angular-upgrade session state (template: .cursor/skills/angular-upgrade/current-state.example.md)
+.cursor/skills/angular-upgrade/current-state.md
+
 # misc
 /.angular/cache
 /.sass-cache

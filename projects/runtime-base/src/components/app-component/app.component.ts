@@ -4,6 +4,7 @@ import {ConfirmDialogComponent} from '@wm/components/dialogs/confirm-dialog';
 import {
     AfterViewInit,
     ApplicationRef,
+    ChangeDetectorRef,
     Component,
     DoCheck,
     ElementRef,
@@ -65,11 +66,16 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     public isApplicationType = false;
     public enableSkipToMainContent = getWmProjectProperties().enableSkipToMainContent === 'true' || getWmProjectProperties().enableSkipToMainContent === true;
     private retryCount = 0;
-    private routerOutletPatched = false;
+    private _routerOutlet?: RouterOutlet;
     private navigationEndSubscription!: Subscription;
     appLocale: any = {};
 
-    @ViewChild(RouterOutlet) routerOutlet: RouterOutlet;
+    @ViewChild(RouterOutlet) set routerOutlet(outlet: RouterOutlet | undefined) {
+        this._routerOutlet = outlet;
+        if (outlet) {
+            this.overrideRouterOutlet(outlet);
+        }
+    }
 
     @ViewChild('dynamicComponent', { read: ViewContainerRef }) dynamicComponentContainerRef: ViewContainerRef;
 
@@ -81,6 +87,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         private oAuthService: OAuthService,
         private dialogService: AbstractDialogService,
         private spinnerService: AbstractSpinnerService,
+        private cdr: ChangeDetectorRef,
         ngZone: NgZone,
         private router: Router,
         public app: App,
@@ -114,6 +121,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
                 this.spinner.show = data.show;
                 this.spinner.messages = data.messages;
                 this.spinner.arialabel = data.messages.toString();
+                this.cdr.detectChanges();
             });
         });
 
@@ -193,6 +201,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         setTimeout(() => {
             this.startApp = true;
             this.scheduleOverrideRouterOutlet();
+            this.cdr.detectChanges();
         });
         setTimeout(() => {
             this.app.dynamicComponentContainerRef = this.dynamicComponentContainerRef;
@@ -202,9 +211,9 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     /** Router-outlet is inside @if (startApp); wait until ViewChild exists before patching attach/detach. */
     private scheduleOverrideRouterOutlet(attempt = 0) {
         const maxAttempts = 50;
-        if (this.routerOutlet?.attach && !this.routerOutletPatched) {
-            this.overrideRouterOutlet();
-            this.routerOutletPatched = true;
+        const outlet = this._routerOutlet;
+        if (outlet?.attach && !(outlet as any).__isPatched) {
+            this.overrideRouterOutlet(outlet);
             return;
         }
         if (attempt < maxAttempts) {
@@ -212,20 +221,28 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         }
     }
 
-    private overrideRouterOutlet() {
-        const outlet = this.routerOutlet;
-        if (!outlet?.attach || !outlet?.detach) {
+    private overrideRouterOutlet(outlet: RouterOutlet) {
+        if ((outlet as any).__isPatched) {
             return;
         }
-        const oAttach = outlet.attach.bind(outlet);
-        const oDetach = outlet.detach.bind(outlet);
+        (outlet as any).__isPatched = true;
+
+        const oAttach = outlet.attach;
+        const oDetach = outlet.detach;
+
         outlet.attach = (componentRef: any, activatedRoute: ActivatedRoute) => {
-            oAttach(componentRef, activatedRoute);
-            componentRef.instance.ngOnAttach();
+            oAttach.call(outlet, componentRef, activatedRoute);
+            if (componentRef?.instance?.ngOnAttach) {
+                componentRef.instance.ngOnAttach();
+            }
         };
+
         outlet.detach = () => {
-            this.app.activePage?.ngOnDetach?.();
-            return oDetach();
+            if (this.app?.activePage?.ngOnDetach) {
+                this.app.activePage.ngOnDetach();
+            }
+            const componentRef = oDetach.call(outlet);
+            return componentRef;
         };
     }
 

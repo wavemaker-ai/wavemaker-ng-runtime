@@ -44,11 +44,10 @@
 }
 
 <ng-template #headerTemplate>
-  @if (iconclass && !iconurl) {
-    <i [ngClass]="iconclass" [ngStyle]="{width: iconwidth, height: iconheight, margin: iconmargin}"></i>
-  }
-  @if (iconurl) {
-    <img data-identifier="img" [src]="iconurl | image" [ngStyle]="{width: iconwidth, height: iconheight, margin: iconmargin}"/>
+  @if (iconclass || iconurl) {
+  <wm-app-icon [iconclass]="iconclass"
+               [iconurl]="iconurl"
+               [iconStyle]="{width: iconwidth, height: iconheight, margin: iconmargin, fontSize: iconwidth}"></wm-app-icon>
   }
   <span class="dialog-heading" [textContent]="heading" [id]="titleid"></span>
   @if (subheading) {

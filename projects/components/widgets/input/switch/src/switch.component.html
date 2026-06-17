@@ -12,11 +12,11 @@
       [attr.aria-pressed]="opt.selected ? true : false"
       (click)="selectOpt($event, $index, opt)"
       >
-      @if (opt.dataObject && opt.dataObject[iconclass] && (!opt.selected ||!checkediconclass)) {
-        <i aria-hidden="true" [ngClass]="['app-icon', opt.dataObject[iconclass] || opt['icon']]"></i>
+      @if (opt.dataObject && (opt.dataObject[iconclass] || opt.dataObject[iconurl]) && (!opt.selected || !checkediconclass)) {
+        <wm-app-icon [iconclass]="opt.dataObject[iconclass] || opt['icon']" [iconurl]="opt.dataObject[iconurl] || opt['icon']"></wm-app-icon>
       }
-      @if (opt.selected && checkediconclass) {
-        <i aria-hidden="true" [ngClass]="[checkediconclass]"></i>
+      @if (opt.selected && (checkediconclass || checkediconurl)) {
+        <wm-app-icon [iconclass]="checkediconclass" [iconurl]="checkediconurl"></wm-app-icon>
       }
       <span class="caption" [textContent]="opt[displayfield] || opt.label"></span>
     </a>

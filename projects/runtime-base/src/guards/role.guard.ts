@@ -33,9 +33,9 @@ export class RoleGuard {
                     }
 
                     // current loggedin user doesn't have access to the page that the user is trying to view
-                    this.appManager.notifyApp(
-                        this.app.appLocale.LABEL_ACCESS_DENIED || 'Access Denied',
-                        'error'
+                    this.appManager.notifyAccessDenied(
+                        route.routeConfig?.path,
+                        this.app.appLocale.LABEL_ACCESS_DENIED || 'Access Denied'
                     );
 
                     return Promise.resolve(false);

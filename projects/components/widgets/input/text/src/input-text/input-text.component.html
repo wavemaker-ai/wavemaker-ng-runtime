@@ -1,5 +1,5 @@
-<button class="btn-leading-icon" type="button" name="leadingIcon" *ngIf="leadingiconclass" (click)="iconClickEvent($event, 'leadingiconclick')">
-       <i aria-hidden="true" [ngClass]="leadingiconclass"></i>
+<button class="btn-leading-icon" type="button" name="leadingIcon" *ngIf="leadingiconclass || leadingiconurl" (click)="iconClickEvent($event, 'leadingiconclick')">
+     <wm-app-icon [iconclass]="leadingiconclass" [iconurl]="leadingiconurl"></wm-app-icon>
 </button>
 <input class="form-control app-textbox"
        focus-target
@@ -27,6 +27,6 @@
        [autocomplete]="autocomplete ? 'on' : 'off'"
        (keyup.enter)="flushViewChanges(input.value)"
        #input>
-<button class="btn-trailing-icon" type="button" name="trailingIcon" *ngIf="trailingiconclass" (click)="iconClickEvent($event, 'trailingiconclick')">
-       <i aria-hidden="true" [ngClass]="trailingiconclass"></i>
+<button class="btn-trailing-icon" type="button" name="trailingIcon" *ngIf="trailingiconclass || trailingiconurl" (click)="iconClickEvent($event, 'trailingiconclick')">
+       <wm-app-icon [iconclass]="trailingiconclass" [iconurl]="trailingiconurl"></wm-app-icon>
 </button>

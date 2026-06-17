@@ -4,6 +4,17 @@ Default entry in `PATTERNS_FILE` for this repo. Workflow and gates: `SKILL.md` +
 
 Classify findings as `safe`, `needs-review`, `likely-breakage`, or `must-change`. **Block** on unresolved `must-change`.
 
+**Automated blockers (keep in sync):** `scripts/pattern-review.sh` enforces a subset of this file. When adding a new **must-change** grep, update **both** the script and the matching section here:
+
+| Script check | Pattern section |
+|--------------|-----------------|
+| tsconfig `moduleResolution` | §20a |
+| `startApp` + `cdr.detectChanges` | §11b |
+| spinner `@if (spinner.show)` | §11c |
+| ng-codegen `app.config.ts.hbs` no `.forRoot()` | §20b |
+| ng-codegen `update-angular-json.js` foundation path | §20e |
+| no `compileModuleAndAllComponentsSync` | §1 |
+
 **WMS-29275 (Angular 18 → 20):** Sections with commit refs come from that upgrade branch. Re-check on every major bump — ngx-bootstrap modal APIs and patch regexes drift between majors.
 
 ## Dependency classification (this repo)
@@ -25,7 +36,7 @@ Post-build script: `scripts/verify-ngx-bootstrap-bundle.sh` (when `POST_BUILD_VE
 
 **Artifacts:** `dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.bundle.js`, `dist/bundles/wmapp/scripts/wm-libs.js`.
 
-Patch source: `build-scripts/ngx-bootstrap-patch.mjs`. See §6 and §12 for grep checks; Step 8 item 15 confirms patched `wm-libs.js` in preview.
+Patch source: `build-scripts/ngx-bootstrap-patch.mjs`. See §6 and §12 for grep checks; Step 8 extended checklist **E13** confirms patched `wm-libs.js` in preview.
 
 ## Where to search
 
@@ -206,12 +217,20 @@ provideHttpClient(withInterceptorsFromDi(), …),
 
 **Risk:** broken `dist` packages consumed by generated apps; TS2307 / NG1010 on `ng build` after codegen.
 
-### 8b. NgModule / `ApplicationConfig` static analysis (Angular 21)
+#### 8b. NgModule / `ApplicationConfig` static analysis (Angular 21)
 
 - `ModuleWithProviders` from `SomeModule.forRoot()` in `NgModule.imports` → **NG1010** (not statically analyzable)
 - **Fix:** bare modules in `imports`; spread `forRoot().providers` into `providers`, or use `importProvidersFrom` in `app.config.ts` without `.forRoot()` on ngx-bootstrap modules
 
 **Where:** `projects/runtime-dynamic/src/app/app.config.ts` (flat `providers`; primary bootstrap), transpiler-generated imports (`projects/transpiler/src/imports.ts` — bare ngx-bootstrap `ImportDef`s, no `forRoot: true`), **`wavemaker-ng-codegen/templates/app.config.ts.hbs`** (§20b — edit source templates only, not `dist/`). Legacy `app.module.ts` / `WM_MODULES_FOR_ROOT` in runtime preview are not used by codegen output.
+
+#### 8c. Locale bundle before angular-app CLI bundle
+
+**When:** `bundle-angular-app-cli.sh` copies `dist/bundles/wmapp/locales`.
+
+**Symptom:** bundle step fails — locales directory missing.
+
+**Fix:** Run `sh build.sh --locale` before `bundle-angular-app-cli.sh` (local-angular-build Step 2).
 
 ### 9. Jest / widget specs
 
@@ -271,7 +290,45 @@ TypeError: Cannot read properties of undefined (reading 'attach')
 | `<router-outlet>` behind `@if` + `setTimeout` to patch outlet | `needs-review` minimum |
 | Monkey-patch of `attach`/`detach` instead of `(attach)` / `(detach)` outputs | `needs-review` (prefer template events on Angular 17+) |
 
-**Fix direction (product code, not skill):** guard before patch; run after outlet exists (`afterNextRender`, poll until `routerOutlet`, or `(attach)` / `(detach)` on `<router-outlet>`).
+**Fix direction (product code, not skill):** guard before patch; run after outlet exists (`scheduleOverrideRouterOutlet` poll, `@ViewChild` setter, `__isPatched` guard, or `(attach)` / `(detach)` on `<router-outlet>`).
+
+#### 11b. `@if`-gated app shell + `setTimeout` bootstrap — must-change
+
+**Where:** `projects/runtime-base/src/components/app-component/app.component.ts` — `startApp` toggles `@if` wrapping `<router-outlet>`.
+
+**Symptom (Angular 21+):** `ng.getComponent(app-root).startApp === true` but DOM has no `<router-outlet>` until manual `ng.applyChanges()`.
+
+**Root cause:** `startApp = true` inside `setTimeout` does not always trigger change detection that re-renders `@if` children.
+
+**Fix:**
+
+```typescript
+setTimeout(() => {
+  this.startApp = true;
+  this.scheduleOverrideRouterOutlet();
+  this.cdr.detectChanges();
+});
+```
+
+**Step 6:** enforced by `scripts/pattern-review.sh` — `startApp = true` without `cdr.detectChanges()` → **block**.
+
+#### 11c. Global spinner `@Input` staleness — must-change
+
+**Where:** `app.component.ts` spinner subscription; `app.component.html` `<app-spinner>`.
+
+**Symptom:** Parent `spinner.show === false` but child `AppSpinnerComponent.show === true`; fixed overlay blocks UI.
+
+**Fix (prefer template):**
+
+```html
+@if (spinner.show) {
+  <app-spinner [show]="true" …></app-spinner>
+}
+```
+
+**Or:** `this.cdr.detectChanges()` after updating `spinner.show` in the subscription.
+
+**Step 6:** enforced by `pattern-review.sh` when `app-spinner` lacks `@if (spinner.show)` wrapper.
 
 ### 12. ngx-bootstrap `PositioningService` / `__destroyRef` in wm-libs bundle
 
@@ -722,26 +779,62 @@ When `@wavemaker-ai/angular-app/dependencies/` filenames use a `.cjs.js` suffix,
 
 **Note:** `@wavemaker-ai/angular-app/dependencies` ships **web** transpilation only — do not require `transpilation-mobile.cjs` unless the package adds it again. Match the suffix already used in `gen-components.js` (`custom-widgets-bundle.cjs.js`).
 
-#### 20d. Cross-repo upgrade checklist (Step 10 → Known follow-ups)
+#### 20e. Prism `foundation-css` path in `update-angular-json.js` — must-change
 
-After runtime upgrade gates pass in **this repo**, verify **generated-app** path:
+**Repo:** `wavemaker-ng-codegen/src/update-angular-json.js`
+
+**Requirement:** Prism projects inject foundation CSS from the package **built output**:
+
+```text
+./node_modules/${WM_NPM_SCOPE}/foundation-css/dist/styles/foundation/foundation.css
+```
+
+**Wrong (breaks generated `ng build`):**
+
+```text
+.../foundation-css/foundation/foundation.css
+```
+
+**Prerequisite:** `foundation-css` yalc/npm package must ship `dist/` (build `wavemaker-foundation-css` before `bundle-angular-app-cli`).
+
+**Step 6:** enforced by `scripts/pattern-review.sh`.
+
+#### 20f. Generated app edit policy — must-follow
+
+**Never hand-edit** codegen output under **`~/Desktop/local-${PROJECT_NAME}/`** (e.g. `local-SearchWidgetScenarios/SearchWidgetScenarios`) — no changes to `src/`, `angular.json`, `app.config.ts`, `libraries/`.
+
+**Allowed on generated app only:** `npm install`, copy `node_modules/@wavemaker/variables` from yalc when needed, `node build-scripts/build.js` / `ng build`, deploy `dist/` to Tomcat.
+
+**All fixes:** `wavemaker-ng-runtime` and/or `wavemaker-ng-codegen` → rebuild → re-run codegen (local-angular-build Steps 2–5).
+
+**Step 8 iteration:** see `SKILL.md` Step 8 only.
+
+#### 20d. Cross-repo upgrade checklist (Step 6 blockers + Step 8 local build)
+
+After runtime Step 6 blockers pass, run upgrade **Step 7** then **Step 8** via `LOCAL_BUILD_DOC`. Build/bundle split and iteration table: **`SKILL.md` Step 7–8 only** (not duplicated here).
 
 | # | Repo | Action |
 |---|------|--------|
-| 1 | `wavemaker-ng-runtime` | `tsconfig.web-app.json` aligned with `tsconfig.json`; rebuild/publish `@wavemaker-ai/angular-app` |
-| 2 | `wavemaker-ng-runtime` | `projects/transpiler/src/imports.ts` — no `forRoot: true` on ngx-bootstrap; `sh build.sh -f` refreshes `dependencies/*.cjs.js` |
-| 3 | `wavemaker-ng-codegen` | Edit **`templates/app.config.ts.hbs`** (required); run `sh build.sh`; yalc/publish codegen package |
-| 4 | Generated app | Re-run **codegen** (regenerates `tsconfig.json`, `app.config.ts`, pages) — existing folders are **not** auto-fixed |
-| 5 | Generated app | `npm install` + `npm run build` (`build-scripts/build.js` runs ngx-bootstrap ESM patch) |
+| 1 | `wavemaker-ng-runtime` | Step 7: `BUILD_CMD`; Step 8 local 2b: `RUNTIME_BUNDLE_CMD` |
+| 2 | `wavemaker-ng-codegen` | Templates + `update-angular-json.js`; `sh build.sh` |
+| 3 | Generated app | Codegen + `ng build` — no manual edits |
+| 4 | Tomcat | Deploy per `LOCAL_BUILD_DOC`; browser verify `PREVIEW_URL` |
 
-**Permanent fix** = merged source in both repos + republished packages + fresh codegen. Old generated app folders keep stale `tsconfig.json` / `app.config.ts` until re-codegen or manual edit.
+**Permanent fix** = merged source in both repos + fresh codegen + local Tomcat validation. Do **not** move §20b/§20e fixes to Step 10 follow-ups while `pattern-review.sh` fails.
+
+**Step 6 — mandatory automated greps:**
+
+```bash
+sh .cursor/skills/angular-upgrade/scripts/pattern-review.sh
+```
 
 **Step 6 classification (cross-repo):**
 
 | Finding | Label |
 |---------|--------|
 | `tsconfig.web-app.json` still `moduleResolution: "node"` while target is Angular 21+ | `must-change` |
-| `app.config.ts.hbs` still calls ngx-bootstrap `.forRoot()` | `must-change` |
+| `app.config.ts.hbs` still calls ngx-bootstrap `.forRoot()` | `must-change` — **blocks Step 6** |
+| `update-angular-json.js` wrong foundation-css path | `must-change` — **blocks Step 6** (§20e) |
 | `app.module.ts.hbs` still calls ngx-bootstrap `.forRoot()` | `needs-review` — legacy template, not emitted |
 | Codegen runtime error: `require('../dependencies/*.cjs')` not found | `likely-breakage` — apply §20c |
 | Hand-edits under `wavemaker-ng-codegen/dist/` | `needs-review` — revert; fix `templates/` and rebuild |
@@ -761,26 +854,37 @@ After runtime upgrade gates pass in **this repo**, verify **generated-app** path
 
 ## Preview validation checklist (Step 8)
 
-Same flows on **Comparison URL** then **Preview URL** (from `repo.config.sh`). Record in `current-state.md` → **Preview Validation**.
+**Canonical browser pass/fail** — single source for Step 8 gate criteria. Referenced by `SKILL.md` Step 8 and `local-angular-build.md` browser verify; do not duplicate these lists elsewhere.
 
-### Checklist (preview URL)
+**Setup:** Step 8 runs `.cursor/commands/local-angular-build.md`. URLs from upgrade Step 0 (`current-state.md`; defaults in `inputs.md` + `repo.config.sh`). Preview and comparison may be **different routes** — comparison is stage health baseline; preview is primary pass/fail.
 
-With **Preview URL** loaded (browser MCP or manual):
+**Order:** Load **comparison** first, then **preview** (hard-refresh). On failure, iterate per `SKILL.md` Step 8 iteration table. Record in `current-state.md` → **Preview Validation**.
 
-1. App shell loads without console errors (no `overrideRouterOutlet` / `reading 'attach'` on first paint; no CSP `style-src` violations from dynamic styles)
-2. **Page with query params** — variables see params on first load (not only after re-navigation)
-3. Runtime-compiled page or partial renders
-4. Table with **row expand** opens nested content; row **actions** and **filter row** widgets render
-5. **List** with row-level **menu** widget renders and opens
-6. Modal open/close and focus return (stacked modals z-index)
-7. Popover and dropdown positioning (no `__destroyRef is not defined` / `PositioningService` in console)
-8. **Popover + date/time picker** inside — picker usable without popover closing
-9. Date/time picker open, select, close; **reopen** after close (positioning reopen patch)
-10. Typeahead / search dropdown list visible (not clipped)
-11. **File upload** success state and delete action
-12. **Table** bound to modal/script variable shows data (not empty grid / stuck loading)
-13. No `NG0201` / injector errors in console
-14. **Watch / bind expressions** — parenthesized expr and piped bind update correctly (§19)
-15. Menu / typeahead / any overlay widget (confirms ngx-bootstrap bundle patch in `wm-libs.js` when Step 0 verify = yes)
+### Gate (required — blocks Step 8 `done`)
 
-Record pass/fail, comparison URL notes, and regressions vs baseline in `current-state.md`.
+| # | Check |
+|---|--------|
+| G1 | **Comparison URL** loads successfully (stage baseline healthy) |
+| G2 | **Preview URL** — route content visible (not blank; global spinner not stuck — §11b/§11c) |
+| G3 | No fatal console errors (`overrideRouterOutlet`, `__destroyRef`, `NG0201`, unresolved module) |
+| G4 | Widgets on the preview route work (e.g. autocomplete on `LiveForm_Autocomplete`) |
+
+### Extended (run on preview URL where applicable)
+
+| # | Check |
+|---|--------|
+| E1 | **Page with query params** — variables see params on first load |
+| E2 | Runtime-compiled page or partial renders |
+| E3 | Table **row expand**, row **actions**, **filter row** widgets |
+| E4 | **List** with row-level **menu** widget |
+| E5 | Modal open/close and focus return (stacked modals z-index) |
+| E6 | Popover/dropdown positioning (no `PositioningService` / `__destroyRef` errors) |
+| E7 | **Popover + date/time picker** inside — picker usable |
+| E8 | Date/time picker open, select, close, **reopen** |
+| E9 | Typeahead / search dropdown not clipped |
+| E10 | **File upload** success and delete |
+| E11 | **Table** bound to modal/script variable shows data |
+| E12 | **Watch / bind expressions** — parenthesized expr and piped bind (§19) |
+| E13 | Menu / typeahead / overlay widget (ngx-bootstrap bundle patch when Step 7 verify = yes) |
+
+Record pass/fail per gate item, extended items tried, comparison notes, and regressions vs baseline in `current-state.md`.

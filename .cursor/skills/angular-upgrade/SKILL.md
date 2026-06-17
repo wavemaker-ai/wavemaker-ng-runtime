@@ -1,17 +1,21 @@
 ---
 name: angular-upgrade
 description: >-
-  Resumable Angular upgrade workflow. Versions and preview URLs come from repo.config.sh;
-  optional gate overrides and build command at Step 0. Runs Steps 1–10. Resumes from current-state.md.
+  Resumable Angular upgrade workflow. Step 0: inputs.md + repo.config.sh → confirm → Steps 1–10.
+  Local Tomcat validation is Step 8 (inputs from Step 0 only).
 ---
 
 # Angular upgrade
 
 Conservative, **resumable** workflow. State: `current-state.md`. Summary: `docs/{major}-upgrade.md` (Step 10).
 
-**Principles:** one Angular major per run; `repo.config.sh` is source of truth for versions/URLs; stop on `blocked`; minimal code changes outside Step 3 package edits and pattern-driven fixes; every step has a pass/fail/skip before advancing.
+**Principles:** one Angular major per run; `repo.config.sh` holds **defaults** (user overrides via `inputs.md`); stop on `blocked`; minimal code changes outside Step 3 package edits and pattern-driven fixes; every step has a pass/fail/skip before advancing.
 
-**Configuration:** `repo.config.sh` holds versions, preview URLs, build commands, optional gates, and `PATTERNS_FILE`. Step 0 reads it — do **not** ask the user for versions or URLs. Optional chat overrides: `verify yes/no`, `tests yes/no`, custom build command.
+**Progress (required):** Maintain a **todo list** for Steps 0–10 in chat (use the todo tool). Update it as each step starts and finishes. When any step is **`blocked`**, **stop advancing** and tell the user immediately using the **Blocker alert** format below — do not bury blockers in prose or only in `current-state.md`.
+
+**Configuration:** Step 0 reads [`inputs.md`](./inputs.md) + `repo.config.sh`, prints effective config, blocks until confirm. Do not install/build until `Inputs confirmed: yes` in `current-state.md`.
+
+**Inputs:** [`inputs.md`](./inputs.md) — canonical Start messages, parsing, who collects inputs (upgrade Step 0 vs standalone local build vs Step 8 no re-prompt).
 
 ### Sibling repo: `wavemaker-ng-codegen`
 
@@ -27,11 +31,13 @@ Generated-app fixes (patterns §20) live in **`wavemaker-ng-codegen`**, usually 
 
 **Default path:** `../wavemaker-ng-codegen` relative to this repo root. If missing or elsewhere, ask the user for the codegen repo path and record it in `current-state.md`.
 
+**Local Tomcat build:** `LOCAL_BUILD_DOC` is upgrade **Step 8** (upgrade mode — inputs from Step 0 only). The same doc is **standalone** (`@.cursor/commands/local-angular-build`) with its **own** input gate when not run through the skill.
+
 ## Port to another repository
 
 1. Copy `.cursor/skills/angular-upgrade/`.
 2. Edit **`repo.config.sh`** — versions, URLs, `BUILD_CMD`, gates, **`PATTERNS_FILE`**.
-3. On **Start** prompt, Step 0 overwrites **`current-state.md`** from the template below — no manual reset needed.
+3. On **Start** prompt, Step 0 creates **`current-state.md`** from [`current-state.example.md`](./current-state.example.md) (gitignored session file).
 
 ### `PATTERNS_FILE`
 
@@ -49,47 +55,105 @@ Comma-separated pattern markdown paths. Agent reads all in order for Steps 1–2
 
 ## Step 0 — Upgrade gate
 
-**HARD STOP** before editing `package.json`. Read **`repo.config.sh`**; do not ask for versions or preview URLs.
+**HARD STOP** before editing `package.json`. Follow **Upgrade Step 0 workflow** in [`inputs.md`](./inputs.md).
 
 ### Reset `current-state.md` (fresh upgrade only)
 
-**Fresh upgrade** = user says **Start Angular upgrade** (not “resume”), **or** `repo.config.sh` base/target differs from **Upgrade config** in `current-state.md`, **or** Step 10 is already `done`.
+**Fresh upgrade** = user says **Start Angular upgrade** (not “resume”), **or** effective base/target (from message or repo.config) differ from **Upgrade config** in `current-state.md`, **or** Step 10 is already `done`.
 
-**Version mismatch always resets** — overwrite `current-state.md` even if the user says “resume”.
+**Version mismatch always resets** — overwrite `current-state.md` even if the user says “resume” when effective base/target ≠ values stored in current-state.
 
 | Prompt | Action |
 |--------|--------|
-| **Start Angular upgrade** | Overwrite `current-state.md` from the template below, filled from `repo.config.sh` |
-| **Resume Angular upgrade** | Keep `current-state.md` **only when** base/target match repo.config and Step 10 is not `done` |
+| **Start Angular upgrade** | Create `current-state.md` from [`current-state.example.md`](./current-state.example.md), filled from `repo.config.sh` |
+| **Resume Angular upgrade** | Keep `current-state.md` **only when** effective base/target match stored Upgrade config and Step 10 is not `done` |
 
-**Block Step 0** until `repo.config.sh` is fixed:
+**Block Step 0** until:
 
-- `ANGULAR_BASE_VERSION` or `ANGULAR_TARGET_VERSION` empty
-- `PREVIEW_URL` set (non-empty, not `skip`) but `COMPARISON_URL` empty
+- `repo.config.sh` has valid `ANGULAR_BASE_VERSION` and `ANGULAR_TARGET_VERSION`
+- Effective run config is **confirmed** by the user (`Inputs confirmed: yes` in current-state)
+- When `skip preview no`: both effective preview and comparison URLs are non-empty
+- User-message base/target (if provided) **override** `repo.config.sh` — record effective values in `current-state.md` (see [`inputs.md`](./inputs.md) version overrides)
 
-On fresh start: read `repo.config.sh`, write `current-state.md` (all steps `pending`, config prefilled), apply Step 0 overrides from the user message, then mark Step 0 `done`.
+On fresh start: read `repo.config.sh`, resolve inputs per [`inputs.md`](./inputs.md), print effective config, **wait for confirm** unless the Start message already contains all inputs + implicit confirm (full canonical message counts as confirm).
 
-| Variable | Purpose |
-|----------|---------|
-| `ANGULAR_BASE_VERSION` / `ANGULAR_TARGET_VERSION` | Major numbers only; both required |
-| `PREVIEW_URL` | Upgraded build; empty or `skip` → Step 8 skipped |
-| `COMPARISON_URL` | Baseline on base version; **required** when `PREVIEW_URL` is set |
-| `BUILD_CMD` | Full rebuild — required to mark Step 7 `done` |
-| `BUILD_CMD_INCREMENTAL` | Optional; `scripts/build.sh --incremental` only |
-
-**Optional overrides** (user message only — never ask):
-
-| Override | Default when gate configured |
-|----------|-------------------------------|
-| Bundle verify (`verify yes/no`) | `DEFAULT_RUN_BUNDLE_VERIFY` (yes) |
-| Unit tests (`tests yes/no`) | `DEFAULT_RUN_TESTS` (yes) |
-| Build command | `BUILD_CMD` |
-
-When `POST_BUILD_VERIFY_SCRIPT` or `TEST_CMD` is empty, record gate as **`n/a`**.
+Shell variable meanings: see comments in [`repo.config.sh`](./repo.config.sh). User overrides: [`inputs.md`](./inputs.md) parsing table → recorded under **Step 0 overrides** in `current-state.md`. When `POST_BUILD_VERIFY_SCRIPT` or `TEST_CMD` is empty, record gate as **`n/a`**.
 
 If user says “start upgrade”: overwrite `current-state.md` (fresh upgrade rules above), complete Step 0, run Steps 1–10.
 
 If user says “resume upgrade”: keep `current-state.md`, re-read `repo.config.sh`, continue from first step not `done`.
+
+---
+
+## Progress tracking (todo list)
+
+At **Step 0 start** (after effective config is known), create **one todo per step** (0–10). Use these labels:
+
+| Todo id | Label |
+|---------|--------|
+| `step-0` | Step 0 — Upgrade gate |
+| `step-1` | Step 1 — Detect and inventory |
+| `step-2` | Step 2 — Plan upgrade path |
+| `step-3` | Step 3 — Apply package upgrades |
+| `step-4` | Step 4 — Install |
+| `step-5` | Step 5 — Security gate |
+| `step-6` | Step 6 — Repo pattern review |
+| `step-7` | Step 7 — Build gate |
+| `step-8` | Step 8 — Local Tomcat validation |
+| `step-9` | Step 9 — Unit tests |
+| `step-10` | Step 10 — Finalize |
+
+**While running:**
+
+1. Set the **current step** todo to `in_progress` **before** starting work on that step.
+2. Set it to `completed` when the step gate passes (or `cancelled` when skipped per Step 0 — e.g. skip preview, skip tests).
+3. Keep **only one** step `in_progress` at a time.
+4. On **resume**, mark steps already `done` in `current-state.md` as `completed`; set the first non-done step to `in_progress`.
+
+**On session end** (blocked, paused, or complete): leave todos reflecting truth — do not mark a step `completed` if it is `blocked` or still running.
+
+Sync todos with **`current-state.md` Step Status** after every step transition.
+
+---
+
+## Blocker communication
+
+When a step cannot pass its gate, set that step’s status to **`blocked`** in `current-state.md`, set the matching todo to remain **not completed** (leave `in_progress` or revert to `pending` — never `completed`), and **post a Blocker alert** in chat **before** doing unrelated work.
+
+### Blocker alert format (required)
+
+Use this structure so blockers are impossible to miss:
+
+```text
+⛔ UPGRADE BLOCKED — Step N: <step name>
+
+What failed: <one sentence — script exit code, audit finding, build error, preview URL, etc.>
+
+Evidence: <command output snippet, URL + HTTP status, or file:line>
+
+Impact: Steps <N+1>–10 are paused until this is resolved.
+
+Suggested fix: <concrete next action — or “needs your decision” with options>
+
+To continue: say “fix and continue” / “defer step N” / “resume upgrade” after you’ve addressed it.
+```
+
+**Examples of blockers:**
+
+| Step | Typical blocker |
+|------|-----------------|
+| 0 | Inputs not confirmed; invalid repo.config; branch mismatch (runtime vs codegen) |
+| 1 | Pattern file missing; repo not on expected base version (note drift, don’t silently ignore) |
+| 5 | Critical/high npm audit without approved exception |
+| 6 | `pattern-review.sh` non-zero; unresolved `must-change` |
+| 7 | `BUILD_CMD` or post-build verify failed |
+| 8 | Preview URL fails checklist; Tomcat/prereqs missing; iteration exhausted |
+| 9 | `test.sh` failed (when tests enabled) |
+| 10 | Summary doc missing or has placeholders |
+
+**Deferral:** If the user explicitly defers a blocked step, record under **Deferred / user decisions** in `current-state.md`, mark the todo `cancelled` with reason in chat, and state which later steps may still run (e.g. Step 10 allowed only when Step 8 deferral is recorded per Step 8 rules).
+
+**Non-blockers:** `needs-review` or warnings (e.g. comparison URL temporarily 404, audit lows/moderates with approved policy) — report in chat but **do not** use the Blocker alert unless the step gate requires pass.
 
 ---
 
@@ -103,9 +167,9 @@ If user says “resume upgrade”: keep `current-state.md`, re-read `repo.config
 | 3 | Apply package upgrades | **Yes** | `package.json` edited; **no install yet** |
 | 4 | Install | **Yes** | `scripts/install.sh` exit 0 |
 | 5 | Security gate | **Yes** | `scripts/audit.sh`; block on critical/high |
-| 6 | Repo pattern review | **Yes** | greps run; no unresolved `must-change` |
+| 6 | Repo pattern review | **Yes** | `pattern-review.sh` pass; no unresolved `must-change` |
 | 7 | Build gate | **Yes** | full `BUILD_CMD` pass (+ verify if enabled) |
-| 8 | Preview validation | Optional | skip if `PREVIEW_URL` empty (manual browser OK); else both URLs checked |
+| 8 | Local Tomcat validation | **Yes** | skip if `PREVIEW_URL` empty/`skip`; else `LOCAL_BUILD_DOC` + URL compare pass |
 | 9 | Unit tests | Optional | skip if tests=no/n/a or `TEST_CMD` empty |
 | 10 | Finalize | **Yes** | `docs/{major}-upgrade.md` written |
 
@@ -143,18 +207,24 @@ Block on **critical** / **high** (without approved exception). If `npm audit fix
 ### Step 6 — Repo pattern review
 
 1. Read every `PATTERNS_FILE` entry in order.
-2. Run greps/checks from each file.
-3. Merge into **Pattern findings** (`safe`, `needs-review`, `likely-breakage`, `must-change`).
-4. **Block** on unresolved `must-change`.
-5. **Cross-repo (generated apps):** apply **`wavemaker-runtime-patterns.md` §20** on the **same branch** in `wavemaker-ng-codegen` (default `../wavemaker-ng-codegen`) — align `tsconfig.web-app.json` with `tsconfig.json`, fix **`templates/app.config.ts.hbs`** for ngx-bootstrap API changes (not `dist/`), and record ng-codegen publish + re-codegen under **Deferred / user decisions** until verified. If codegen is on a different branch, **ask the user** to match branches before editing.
+2. Run **mandatory** automated greps:
+
+```bash
+sh .cursor/skills/angular-upgrade/scripts/pattern-review.sh
+```
+
+3. Run additional greps/checks from each pattern file (§1–§19 in this repo).
+4. Merge into **Pattern findings** (`safe`, `needs-review`, `likely-breakage`, `must-change`).
+5. **Block** if `pattern-review.sh` exits non-zero **or** any unresolved `must-change`.
+6. **Cross-repo (generated apps):** apply **`wavemaker-runtime-patterns.md` §20** fixes in `wavemaker-ng-codegen` (`NG_CODEGEN_PATH` from `repo.config.sh`) on the **same branch** as this repo — edit **`templates/`** and **`src/`** only (never `dist/`). Re-run `pattern-review.sh` after codegen edits. Do **not** defer §20b/§20e blockers to Step 10 follow-ups.
 
 ### Step 7 — Build gate
 
-Use **`BUILD_CMD`** from `repo.config.sh` (or Step 0 build override recorded in `current-state.md`).
+Run **`BUILD_CMD`** from `repo.config.sh` **once** per upgrade (`sh build.sh -f`). **Do not** run `build.sh -f` / `build.sh --force` again in Step 8 local-angular-build — Step 8 only runs `RUNTIME_BUNDLE_CMD` (locale + CLI bundles).
 
 ```bash
-# Full rebuild (required for Step 7 done) — set UPGRADE_BUILD_CMD to BUILD_CMD from repo.config
-UPGRADE_BUILD_CMD="$BUILD_CMD" UPGRADE_BUNDLE_VERIFY=yes \
+# Full rebuild (required for Step 7 done) — UPGRADE_BUNDLE_VERIFY from Step 0 (yes/no/n/a)
+UPGRADE_BUILD_CMD="$BUILD_CMD" UPGRADE_BUNDLE_VERIFY="${UPGRADE_BUNDLE_VERIFY:-yes}" \
   sh .cursor/skills/angular-upgrade/scripts/build.sh
 
 # Mid-upgrade quick check only — verify skipped; do not mark Step 7 done on this alone
@@ -167,13 +237,41 @@ sh .cursor/skills/angular-upgrade/scripts/build.sh --incremental
 
 When gate not configured, omit `UPGRADE_BUNDLE_VERIFY` or use `n/a`.
 
-### Step 8 — Preview validation
+### Step 8 — Local Tomcat validation
 
-Skip automated URL comparison when `PREVIEW_URL` empty or `skip` — mark `done` with skip note.
+**Inputs:** Already resolved in **upgrade Step 0** (`current-state.md` → `Inputs confirmed: yes`). **Do not** run the local-angular-build standalone input gate. Read effective `PREVIEW_URL`, `COMPARISON_URL`, and `skip preview` from `current-state.md`.
 
-**Manual preview (URLs empty):** run the preview checklist from pattern files in a browser (Chrome DevTools or MCP). Record pass/fail and notes in **Preview Validation** and Step 10 summary doc.
+**Gate:** Skip Step 8 when effective `PREVIEW_URL` is `skip` or empty. Otherwise required.
 
-When URLs are set: load both from repo.config; same flows on comparison then preview; use browser tools when available. Block on regressions.
+**Workflow:** Follow **`LOCAL_BUILD_DOC`** in **upgrade mode** (see command doc — “Upgrade Step 8”):
+
+1. Read URLs and flags from `current-state.md` (not from a new user prompt).
+2. Export variables per command doc; apply effective preview/comparison from Step 0.
+3. Confirm prerequisites (`PROJECT_WAR`, `PROJECT_ZIP`, `UNZIPPED_PROJECT_PATH`, Tomcat).
+4. Run local-angular-build **Steps 1, 2b, 3–7** — **not** Step 2a, **not** standalone input gate. **Skip Step 1** when `${PROJECT_WAR}` exists and Tomcat app is already deployed (see `LOCAL_BUILD_DOC` Step 1).
+5. **Never edit** `~/Desktop/local-*` generated app source — only ng-runtime / ng-codegen, then re-run codegen.
+
+**Browser verify:** Load `COMPARISON_URL` then `PREVIEW_URL` (from `current-state.md`). Pass/fail criteria: **Preview validation checklist** in [`wavemaker-runtime-patterns.md`](./wavemaker-runtime-patterns.md) (gate + extended items) — do not duplicate here.
+
+**On comparison failure — iterate (do not mark Step 8 `done`):**
+
+1. Set Step 8 status to `blocked`; record errors in **Preview Validation**.
+2. Diagnose (browser console, build logs, Tomcat deploy).
+3. Fix in **ng-runtime** and/or **ng-codegen** only — never patch `~/Desktop/local-*` or generated app `src/`.
+4. Re-run **minimal** local-angular-build steps:
+
+| Fix location | Re-run |
+|--------------|--------|
+| `wavemaker-ng-runtime` (runtime-base, bundle) | **upgrade Step 7** (`build.sh -f`), then local **2b** → 3 → 4 → 5 → 7 |
+| `wavemaker-ng-codegen` (templates, `update-angular-json.js`) | local 3 → 4 → 5 → 7 (skip Step 7 and 2b) |
+| Both | **upgrade Step 7**, then local 2b → 3 → 4 → 5 → 7 |
+| Maven/backend only | local 1 → 6 → 7 (skip 1 if WAR exists) |
+| Locale/bundle only (no runtime source change) | local 2b → 3 → 4 → 5 → 7 |
+
+5. Re-compare `COMPARISON_URL` then `PREVIEW_URL`.
+6. Repeat until pass or user explicitly defers (record deferral under **Deferred / user decisions** — Step 10 may still run with noted gap).
+
+**Block Step 10** if Step 8 is `blocked` without user deferral.
 
 ### Step 9 — Unit tests
 
@@ -195,9 +293,9 @@ Block on failure.
 | Libraries upgraded | Package table: before → after |
 | Compatibility changes | Code/config/build fixes |
 | Patches and build hooks | e.g. ngx-bootstrap patch + verify |
-| Validation completed | Install through preview — pass/fail/skip |
+| Validation completed | Install through local Tomcat (Step 8) + unit tests — pass/fail/skip |
 | New platform features not adopted | Optional modernization skipped + reason |
-| Known follow-ups | Preview gaps, test env, **cross-repo codegen** (§20: `tsconfig.web-app.json`, `wavemaker-ng-codegen/templates/app.config.ts.hbs`, re-codegen generated apps) |
+| Known follow-ups | Step 8 iteration gaps, test env, deferred preview items |
 | Security notes | Audit outcome |
 
 3. Record path under **Upgrade summary doc**. Block if doc missing or has placeholders.
@@ -209,91 +307,19 @@ Block on failure.
 | File | Purpose |
 |------|---------|
 | `SKILL.md` | Workflow (this file) |
-| `repo.config.sh` | Versions, URLs, build, gates, `PATTERNS_FILE` |
+| `inputs.md` | User input contract (single source) |
+| `repo.config.sh` | Defaults: versions, URLs, build, gates, `PATTERNS_FILE` |
+| `current-state.example.md` | Template for gitignored `current-state.md` |
 | `references.md` | Step 2 link catalog |
 | `wavemaker-runtime-patterns.md` | Default runtime patterns (override via `PATTERNS_FILE`) |
-| `current-state.md` | Resumable status (Step 0 overwrites on fresh Start) |
+| `current-state.md` | Resumable status (gitignored; Step 0 creates on fresh Start) |
 | `scripts/install.sh` | Step 4 |
 | `scripts/audit.sh` | Step 5 |
 | `scripts/build.sh` | Step 7 |
 | `scripts/test.sh` | Step 9 |
+| `scripts/pattern-review.sh` | Step 6 — automated blockers (keep in sync with patterns **Automated blockers** table) |
 | `scripts/verify-ngx-bootstrap-bundle.sh` | Optional post-build verify (this repo) |
+| `.cursor/commands/local-angular-build.md` | Step 8 — local Tomcat deploy workflow (`LOCAL_BUILD_DOC`) |
 
-**Chat recap after each session:** completed step(s), next step, blockers, repo.config recap, package/security/pattern summary, build/verify/preview/tests results.
+**Chat recap after each session:** todo list state (which step is active/done/blocked); **Blocker alert** if any step is blocked; completed step(s); next step; repo.config recap; package/security/pattern summary; build/verify/preview/tests results.
 
----
-
-## `current-state.md` template
-
-```md
-# Current State
-
-## Upgrade config (repo.config.sh)
-- Base Angular: (ANGULAR_BASE_VERSION)
-- Target Angular: (ANGULAR_TARGET_VERSION)
-- Preview URL: (PREVIEW_URL or skip)
-- Comparison URL: (COMPARISON_URL or n/a)
-- Build command: (BUILD_CMD)
-- Incremental build: (BUILD_CMD_INCREMENTAL or empty)
-
-## Step 0 overrides (optional — user message only)
-- Run bundle verify: yes | no | n/a
-- Run unit tests: yes | no | n/a
-- Build command override: (only if user specified; else use BUILD_CMD)
-
-## Project
-- Branch:
-- Started:
-- Node (engines):
-- npm (engines):
-
-## Step Status
-| Step | Name | Status | Notes |
-|---|---|---|---|
-| 0 | Upgrade gate | pending | read repo.config.sh |
-| 1 | Detect and inventory | pending | |
-| 2 | Plan upgrade path | pending | |
-| 3 | Apply package upgrades | pending | |
-| 4 | Install | pending | |
-| 5 | Security gate | pending | |
-| 6 | Repo pattern review | pending | |
-| 7 | Build gate | pending | |
-| 8 | Preview validation | pending | skip if PREVIEW_URL empty |
-| 9 | Unit test gate | pending | skip if Step 0 tests=no or n/a |
-| 10 | Finalize | pending | |
-
-## Dependency Decisions
-
-## Package changes
-
-## Pattern files
-- PATTERNS_FILE (from repo.config.sh):
-- Resolved paths:
-
-## Pattern findings
-- safe:
-- needs-review:
-- likely-breakage:
-- must-change:
-
-## Security
-
-## Build
-
-## Post-build verify
-- Result: pass | fail | skipped — Step 0 | skipped — not configured
-
-## Unit tests
-- Result: pass | fail | skipped — Step 0 | skipped — not configured
-
-## Preview Validation
-- Preview URL result:
-- Comparison URL result:
-- Regressions vs baseline:
-
-## Upgrade summary doc
-- Path:
-- Written:
-
-## Deferred / user decisions
-```

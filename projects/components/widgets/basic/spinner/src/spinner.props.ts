@@ -9,6 +9,7 @@ export const registerProps = () => {
                 ['caption', {value: 'Loading...', ...PROP_STRING}],
                 ['class', PROP_STRING],
                 ['iconclass', {value: 'fa fa-circle-o-notch fa-spin', ...PROP_STRING}],
+                ['iconurl', PROP_STRING],
                 ['iconsize', PROP_STRING],
                 ['image', PROP_STRING],
                 ['imageheight', PROP_STRING],

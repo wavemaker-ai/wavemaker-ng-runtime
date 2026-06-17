@@ -4,6 +4,8 @@ stages:
         - jira_next_release
         - jira_hotfix_release
         - jira_preprod_release
+        - jira_dev_ai_release
+        - jira_stage_ai_release
         - jira_verification_merge
         - unit_tests
         - notify       
@@ -120,3 +122,25 @@ notify_job:
   when: on_failure
   dependencies:
     - unit_tests
+
+
+jira_dev_ai_release:
+  stage: jira_dev_ai_release
+  tags:
+    - jira
+  only:
+    - "$DEV_AI_BRANCH"
+  script:
+    - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_DEV_AI_VERSION"
+    - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 5 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_DEV_AI_VERSION"
+
+jira_stage_ai_release:
+  stage: jira_stage_ai_release
+  tags:
+    - jira
+  only:
+    - "$STAGE_AI_BRANCH"
+  script:
+    - echo "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_STAGE_AI_VERSION"
+    - python3 /home/gitlab-runner/jira-ci-scripts/jira_connection.py "$CI_COMMIT_MESSAGE" "$CI_COMMIT_BRANCH" "$JIRA_MSG" "$TOKEN" 5 "$CI_PROJECT_ID" "$GITLAB_TOKEN" "$NEXT_STAGE_AI_VERSION"
+

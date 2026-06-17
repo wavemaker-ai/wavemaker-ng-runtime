@@ -16,7 +16,7 @@ import {
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
 import {isDefined, toggleClass} from '@wm/core';
-import {IWidgetConfig, provideAs, provideAsWidgetRef, styler} from '@wm/components/base';
+import {IWidgetConfig, provideAs, provideAsWidgetRef, styler, WmAppIconComponent} from '@wm/components/base';
 import {BaseFormCustomComponent} from '@wm/components/input/base-form-custom';
 
 import {registerProps} from './checkbox.props';
@@ -52,7 +52,7 @@ export const unStringify = (val, defaultVal?) => {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, WmAppIconComponent],
     selector: '[wmCheckbox]',
     templateUrl: './checkbox.component.html',
     providers: [
@@ -78,6 +78,9 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
     private _uncheckedvalue;
     public unselectedicon;
     public selectedicon;
+    public unselectediconurl;
+    public selectediconurl;
+
 
     @ViewChild(NgModel) ngModel: NgModel;
     @ViewChild('checkbox', { static: true, read: ElementRef }) checkboxEl: ElementRef;

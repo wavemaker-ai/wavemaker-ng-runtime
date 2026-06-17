@@ -3,7 +3,7 @@ import { TextContentDirective } from "@wm/components/base";
 import {Component, Inject, Injector, OnInit, OnDestroy, Optional} from '@angular/core';
 
 import {DataSource, validateDataSourceCtx} from '@wm/core';
-import { IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, ImagePipe } from '@wm/components/base';
+import { IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, ImagePipe, WmAppIconComponent } from '@wm/components/base';
 
 import { registerProps } from './spinner.props';
 import {includes, isEmpty, split} from "lodash-es";
@@ -13,7 +13,7 @@ const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-spinner', hostClass: DEFAU
 
 @Component({
   standalone: true,
-  imports: [CommonModule, TextContentDirective],
+  imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: '[wmSpinner]',
     templateUrl: './spinner.component.html',
     providers: [
@@ -25,6 +25,7 @@ export class SpinnerComponent extends StylableComponent implements OnInit, OnDes
     static initializeProps = registerProps();
 
     public iconclass = '';
+    public iconurl = '';
     public animation = '';
     public imagewidth;
     public imageheight;
