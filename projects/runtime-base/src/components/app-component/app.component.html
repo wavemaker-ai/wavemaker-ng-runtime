@@ -7,9 +7,7 @@
   @if (isApplicationType) {
     <div wmContainer partialContainer content="Common" hidden class="ng-hide"></div>
   }
-  @if (spinner.show) {
-    <app-spinner name="globalspinner" classname="global-spinner" role="alert" aria-live="assertive" [attr.aria-label]="spinner.arialabel || 'Loading'" [show]="true" [spinnermessages]="spinner.messages"></app-spinner>
-  }
+  <app-spinner name="globalspinner" classname="global-spinner" role="alert" aria-live="assertive" [attr.aria-label]="spinner.arialabel || 'Loading'" [show]="spinner.show" [spinnermessages]="spinner.messages"></app-spinner>
   <div wmDialog name="oAuthLoginDialog" title="Application is requesting you to sign in with"
     close.event="closeOAuthDialog()">
     <ng-template #dialogBody>

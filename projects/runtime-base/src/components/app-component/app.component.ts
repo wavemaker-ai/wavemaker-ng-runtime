@@ -4,7 +4,6 @@ import {ConfirmDialogComponent} from '@wm/components/dialogs/confirm-dialog';
 import {
     AfterViewInit,
     ApplicationRef,
-    ChangeDetectorRef,
     Component,
     DoCheck,
     ElementRef,
@@ -66,12 +65,10 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     public isApplicationType = false;
     public enableSkipToMainContent = getWmProjectProperties().enableSkipToMainContent === 'true' || getWmProjectProperties().enableSkipToMainContent === true;
     private retryCount = 0;
-    private _routerOutlet?: RouterOutlet;
     private navigationEndSubscription!: Subscription;
     appLocale: any = {};
 
     @ViewChild(RouterOutlet) set routerOutlet(outlet: RouterOutlet | undefined) {
-        this._routerOutlet = outlet;
         if (outlet) {
             this.overrideRouterOutlet(outlet);
         }
@@ -87,7 +84,6 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         private oAuthService: OAuthService,
         private dialogService: AbstractDialogService,
         private spinnerService: AbstractSpinnerService,
-        private cdr: ChangeDetectorRef,
         ngZone: NgZone,
         private router: Router,
         public app: App,
@@ -121,7 +117,6 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
                 this.spinner.show = data.show;
                 this.spinner.messages = data.messages;
                 this.spinner.arialabel = data.messages.toString();
-                this.cdr.detectChanges();
             });
         });
 
@@ -200,25 +195,10 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         //fix: https://blog.angular-university.io/angular-debugging/
         setTimeout(() => {
             this.startApp = true;
-            this.scheduleOverrideRouterOutlet();
-            this.cdr.detectChanges();
         });
         setTimeout(() => {
             this.app.dynamicComponentContainerRef = this.dynamicComponentContainerRef;
         }, 10);
-    }
-
-    /** Router-outlet is inside @if (startApp); wait until ViewChild exists before patching attach/detach. */
-    private scheduleOverrideRouterOutlet(attempt = 0) {
-        const maxAttempts = 50;
-        const outlet = this._routerOutlet;
-        if (outlet?.attach && !(outlet as any).__isPatched) {
-            this.overrideRouterOutlet(outlet);
-            return;
-        }
-        if (attempt < maxAttempts) {
-            setTimeout(() => this.scheduleOverrideRouterOutlet(attempt + 1), 20);
-        }
     }
 
     private overrideRouterOutlet(outlet: RouterOutlet) {
