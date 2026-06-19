@@ -572,7 +572,8 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         if (parts[0] === 'Variables' || parts[0] === 'Widgets') {
             bindPagingOptions = `${parts[0]}.${parts[1]}.pagination`;
         }
-        if (!binddatasource && dataset && !datasetBoundExpr) {
+        const isVariableLevelBind = binddataset?.startsWith('Prefab.Variables.');
+        if (!binddatasource && dataset && !datasetBoundExpr && !isVariableLevelBind) {
             this.dataset = dataset;
             this._debouncedApplyDataset();
             return;
