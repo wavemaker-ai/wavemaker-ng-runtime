@@ -17,11 +17,11 @@ When adding a **must-change** grep, update **both** the script and the matching 
 | `gen-tsconfig.js`, `app.config.ts.hbs`, `update-angular-json.js` present | codegen | §20 |
 | Codegen bootstrap ngx-bootstrap API | codegen | §20b |
 | Prism foundation-css path in `update-angular-json.js` | codegen | §20e |
-| `startApp` + `cdr.detectChanges` | runtime | §11b |
-| Spinner `@if (spinner.show)` | runtime | §11c |
 | No `compileModuleAndAllComponentsSync` | runtime | §1 |
 
-**Manual only (Step 6):** §2–§7, §9–§19 greps; §20c when codegen require fails; transpiler `imports.ts` when ngx-bootstrap API changes.
+**Manual only (Step 6):** §2–§11 (incl. §11b/§11c — preview-driven only), §12–§19 greps; §20c when codegen require fails; transpiler `imports.ts` when ngx-bootstrap API changes.
+
+**Product baseline (WMS-31488, `dae9a74fc`):** Do **not** re-add `ChangeDetectorRef.detectChanges`, `@if (spinner.show)` wrapper, or `scheduleOverrideRouterOutlet` polling unless Step 8 preview proves a defect. Keep `@ViewChild(RouterOutlet)` setter + `[show]="spinner.show"` + `setTimeout(10)` in `base-layout.component.ts`.
 
 **WMS-29275:** Sections with commit refs — re-check every major bump.
 
@@ -298,45 +298,27 @@ TypeError: Cannot read properties of undefined (reading 'attach')
 | `<router-outlet>` behind `@if` + `setTimeout` to patch outlet | `needs-review` minimum |
 | Monkey-patch of `attach`/`detach` instead of `(attach)` / `(detach)` outputs | `needs-review` (prefer template events on Angular 17+) |
 
-**Fix direction (product code, not skill):** guard before patch; run after outlet exists (`scheduleOverrideRouterOutlet` poll, `@ViewChild` setter, `__isPatched` guard, or `(attach)` / `(detach)` on `<router-outlet>`).
+**Fix direction:** `@ViewChild(RouterOutlet)` **setter** patches when outlet appears (WMS-28429). `base-layout` uses `setTimeout(10)` in `ngAfterViewInit`. Do **not** add `scheduleOverrideRouterOutlet` polling unless preview shows `attach` undefined errors.
 
-#### 11b. `@if`-gated app shell + `setTimeout` bootstrap — must-change
+#### 11b. `@if`-gated app shell + `setTimeout` bootstrap — needs-review (preview only)
 
-**Where:** `projects/runtime-base/src/components/app-component/app.component.ts` — `startApp` toggles `@if` wrapping `<router-outlet>`.
+**Where:** `app.component.ts` — `startApp` toggles `@if` wrapping `<router-outlet>`.
 
-**Symptom (Angular 21+):** `ng.getComponent(app-root).startApp === true` but DOM has no `<router-outlet>` until manual `ng.applyChanges()`.
+**Symptom (if it occurs):** `startApp === true` but no `<router-outlet>` in DOM until manual change detection.
 
-**Root cause:** `startApp = true` inside `setTimeout` does not always trigger change detection that re-renders `@if` children.
+**Optional fix (only if Step 8 reproduces):** `cdr.detectChanges()` after `startApp = true`.
 
-**Fix:**
+**Do not enforce by default** — reverted as unnecessary in WMS-31488 (`dae9a74fc`). `@ViewChild` setter handles outlet patching.
 
-```typescript
-setTimeout(() => {
-  this.startApp = true;
-  this.scheduleOverrideRouterOutlet();
-  this.cdr.detectChanges();
-});
-```
+#### 11c. Global spinner `@Input` staleness — needs-review (preview only)
 
-**Step 6:** enforced by `scripts/pattern-review.sh` — `startApp = true` without `cdr.detectChanges()` → **block**.
+**Where:** `app.component.ts` spinner subscription; `app.component.html` `<app-spinner [show]="spinner.show">`.
 
-#### 11c. Global spinner `@Input` staleness — must-change
+**Symptom (if it occurs):** Stuck global spinner overlay despite `spinner.show === false`.
 
-**Where:** `app.component.ts` spinner subscription; `app.component.html` `<app-spinner>`.
+**Optional fix (only if Step 8 reproduces):** `@if (spinner.show)` wrapper or `cdr.detectChanges()` after subscription update.
 
-**Symptom:** Parent `spinner.show === false` but child `AppSpinnerComponent.show === true`; fixed overlay blocks UI.
-
-**Fix (prefer template):**
-
-```html
-@if (spinner.show) {
-  <app-spinner [show]="true" …></app-spinner>
-}
-```
-
-**Or:** `this.cdr.detectChanges()` after updating `spinner.show` in the subscription.
-
-**Step 6:** enforced by `pattern-review.sh` when `app-spinner` lacks `@if (spinner.show)` wrapper.
+**Do not enforce by default** — reverted as unnecessary in WMS-31488 (`dae9a74fc`). Keep `[show]="spinner.show"` binding.
 
 ### 12. ngx-bootstrap `PositioningService` / `__destroyRef` in wm-libs bundle
 
@@ -850,7 +832,7 @@ Iteration table: `SKILL.md` Step 8 only.
 | # | Check |
 |---|--------|
 | G1 | **Comparison URL** loads successfully (stage baseline healthy) |
-| G2 | **Preview URL** — route content visible (not blank; global spinner not stuck — §11b/§11c) |
+| G2 | **Preview URL** — route content visible (not blank; global spinner not stuck) |
 | G3 | No fatal console errors (`overrideRouterOutlet`, `__destroyRef`, `NG0201`, unresolved module) |
 | G4 | Widgets on the preview route work (e.g. autocomplete on `LiveForm_Autocomplete`) |
 
