@@ -1,88 +1,70 @@
 # Current State
 
-> Copy to `current-state.md` on fresh Start, or let Step 0 create it. `current-state.md` is gitignored (session file).
+> Gitignored session file. Reset: `sh scripts/reset-state.sh` (Step 10 or Step 0 Start). Template: this file.
 
-## Upgrade config (repo.config.sh + Step 0 effective)
-- Base Angular: (effective base)
-- Target Angular: (effective target)
-- Preview URL: (effective PREVIEW_URL or skip)
-- Comparison URL: (effective COMPARISON_URL or n/a)
-- Skip preview (Step 8): yes | no
-- Skip tests (Step 9): yes | no
-- Skip bundle verify (Step 7): yes | no
+## Upgrade config
+- Base / Target Angular:
+- Preview URL / Comparison URL:
+- Skip preview (8) / tests (9) / bundle verify (7):
 - Inputs confirmed: no
-- Build command: (BUILD_CMD)
-
-## Step 0 overrides (resolved from user message)
-- Base version override:
-- Target version override:
-- Preview URL override:
-- Comparison URL override:
-- Skip preview:
-- Run bundle verify:
-- Run unit tests:
-- Build command override:
-
-## Project
-- Branch:
+- BUILD_CMD:
+- ng-runtime branch:
+- ng-codegen path: (NG_CODEGEN_PATH)
+- ng-codegen branch:
 - Started:
-- Node (engines):
-- npm (engines):
 
-## Step Status
+## Step 0 overrides
+- (base, target, URLs, skip flags — chat overrides repo.config.sh)
+
+## Step status
 | Step | Name | Status | Notes |
-|---|---|---|---|
-| 0 | Upgrade gate | pending | read inputs.md + repo.config.sh |
+|------|------|--------|-------|
+| 0 | Upgrade gate | pending | |
 | 1 | Detect and inventory | pending | |
-| 2 | Plan upgrade path | pending | |
+| 2 | Plan upgrade path | pending | references + dual-repo plan |
 | 3 | Apply package upgrades | pending | |
 | 4 | Install | pending | |
 | 5 | Security gate | pending | |
-| 6 | Repo pattern review | pending | |
+| 6 | Repo pattern review | pending | both repos |
 | 7 | Build gate | pending | |
-| 8 | Local Tomcat validation | pending | skip if PREVIEW_URL skip/empty |
-| 9 | Unit test gate | pending | skip if skip tests yes |
+| 8 | Local Tomcat validation | pending | skip if preview skip/empty |
+| 9 | Unit tests | pending | skip if tests off |
 | 10 | Finalize | pending | |
 
 ## Active blocker
-- Step:
-- What failed:
-- Evidence:
-- Since:
-- User action needed:
+- Step / What / Evidence / Since / User action:
 
-## Dependency Decisions
+## Reference review (Step 2)
+- R1–R4, R6, R8–R12: (one bullet each — see references.md format)
+
+## Dual-repo change plan (Step 2)
+| § / Ref | Repo | Files | Change |
+|---------|------|-------|--------|
+
+## Cross-repo changes (Step 6)
+| Repo | File | Change |
+|------|------|--------|
+
+## Dependency decisions
 
 ## Package changes
 
 ## Pattern files
-- PATTERNS_FILE:
-- Resolved paths:
+- Resolved PATTERNS_FILE paths:
 
 ## Pattern findings
-- safe:
-- needs-review:
-- likely-breakage:
-- must-change:
+- safe / needs-review / likely-breakage / must-change:
 
 ## Security
 
-## Build
-
-## Post-build verify
-- Result:
+## Build / Post-build verify
 
 ## Unit tests
-- Result:
 
-## Preview Validation
-- Comparison URL result:
-- Preview URL result:
-- Iteration count:
-- Regressions vs baseline:
+## Preview validation
+- Comparison / Preview / Iterations / Regressions:
 
 ## Upgrade summary doc
-- Path:
-- Written:
+- Path / Written:
 
 ## Deferred / user decisions

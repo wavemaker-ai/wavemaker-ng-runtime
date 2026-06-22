@@ -32,7 +32,7 @@ All product fixes go in **`wavemaker-ng-runtime`** and **`wavemaker-ng-codegen`*
 
 **Skip when running as upgrade Step 8.** Follow **Standalone workflow** in [`.cursor/skills/angular-upgrade/inputs.md`](.cursor/skills/angular-upgrade/inputs.md): show defaults, parse message, print effective config, block until `confirm` / `proceed with defaults`.
 
-For upgrade, use the canonical Start message in `inputs.md` — Step 0 collects all URLs and flags.
+For upgrade, use the canonical Start message in [`examples.md`](.cursor/skills/angular-upgrade/examples.md) — Step 0 collects all URLs and flags.
 
 ## Configuration — edit these values
 
