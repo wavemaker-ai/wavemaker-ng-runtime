@@ -123,8 +123,8 @@ export const getDataSource = (dataSetExpr: string): string => {
     if (parts[0] === 'Variables' || parts[0] === 'Widgets') {
         return `${parts[0]}.${parts[1]}`;
     }
-    if (parts[0] === 'App' && parts[1] === 'activePage' && parts[2] === 'Variables' && parts[3]) {
-        return `App.activePage.Variables.${parts[3]}`;
+    if (parts[0] === 'App' && parts[1] === 'activePage' && parts[2]?.includes('Variables') && parts[3]) {
+        return `App.activePage.${parts[2]}.${parts[3]}`;
     }
 };
 
