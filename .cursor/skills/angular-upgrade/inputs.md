@@ -1,98 +1,66 @@
-# User inputs (single source of truth)
+# User inputs
 
-Defaults live in **`repo.config.sh`**. User overrides come from the chat message. **Chat overrides always win** over repo.config. Agent prints **effective config**, waits for **`confirm`** or **`proceed with defaults`**, then runs.
+Defaults: [`repo.config.sh`](repo.config.sh). Chat overrides win. Print effective config → wait for **`confirm`** or **`proceed with defaults`**.
 
-**Who collects inputs:**
+Canonical messages: [`examples.md`](examples.md).
 
-| Invoke | Collector |
-|--------|-----------|
-| `@.cursor/skills/angular-upgrade` | Upgrade **Step 0** only |
-| `@.cursor/commands/local-angular-build` standalone | **This command** only |
-| Upgrade **Step 8** (local build) | **No re-prompt** — read `current-state.md` |
+| Invoke | Who collects |
+|--------|--------------|
+| `@.cursor/skills/angular-upgrade` | Step 0 only |
+| `@.cursor/commands/local-angular-build` | That command only |
+| Upgrade Step 8 | `current-state.md` — no re-prompt |
 
 ---
 
-## Parsing (upgrade + standalone)
+## Parsing
 
 | Input | Phrases | Default |
 |-------|---------|---------|
-| Base version | `base version <N>` | `ANGULAR_BASE_VERSION` |
-| Target version | `target version <N>` | `ANGULAR_TARGET_VERSION` |
-| Preview URL | `preview url <url>` | `PREVIEW_URL` |
-| Comparison URL | `comparison url <url>` | `COMPARISON_URL` |
-| Skip Tomcat/browser | `skip preview yes`, `skip step 8`, `skip tomcat` | `no` when URLs set |
-| Run Tomcat/browser | `skip preview no` | default |
-| Skip unit tests | `skip tests yes` / `no` | `DEFAULT_RUN_TESTS` |
-| Skip bundle verify | `skip verify yes` / `no` | `DEFAULT_RUN_BUNDLE_VERIFY` |
-| Project name (standalone) | `project name <Name>` | `PROJECT_NAME` in local-angular-build |
-| Confirm defaults | `confirm`, `proceed with defaults` | after agent shows table |
+| Base / target version | `base version <N>`, `target version <N>` | `ANGULAR_*` |
+| Preview / comparison URL | `preview url …`, `comparison url …` | `PREVIEW_*`, `COMPARISON_*` |
+| Skip preview | `skip preview yes`, `skip step 8`, `skip tomcat` | no when URLs set |
+| Skip tests / verify | `skip tests yes/no`, `skip verify yes/no` | `DEFAULT_RUN_*` |
+| Project name (standalone) | `project name <Name>` | local-angular-build |
+| Confirm | `confirm`, `proceed with defaults` | after config table |
 
-`skip preview yes` → effective `PREVIEW_URL=skip` (comparison URL not required).
+`skip preview yes` → `PREVIEW_URL=skip`.
 
-**Version overrides:** If the Start message sets `base version` / `target version` different from `repo.config.sh`, those values are **effective** for the run. Record under **Step 0 overrides** in `current-state.md`. Fresh Start with version mismatch resets `current-state.md` even on “resume”.
+Version overrides → **Step 0 overrides** in `current-state.md`. Version mismatch on Start/Resume → reset to start position.
 
-**Project name (standalone):** `project name Foo` sets `PROJECT_NAME=Foo` and derives paths (do not hand-edit each path):
+---
 
-| Variable | Formula |
-|----------|---------|
+## State reset
+
+See [`SKILL.md`](SKILL.md) § State reset. Step 10 or Step 0 Start → run:
+
+```bash
+sh .cursor/skills/angular-upgrade/scripts/reset-state.sh
+```
+
+---
+
+## Step 0 workflow
+
+1. If reset required (Step 10 `done`, user **Start**, or base/target mismatch) → `reset-state.sh`.
+2. Read `repo.config.sh`.
+3. Parse user message.
+4. Print effective config.
+5. Block Steps 1–10 until full Start message ([`examples.md`](examples.md)) or confirm.
+6. Write `current-state.md`; set `Inputs confirmed: yes`.
+
+---
+
+## Standalone path formulas
+
+Set `project name Foo`:
+
+| Variable | Path |
+|----------|------|
 | `PROJECT_WAR` | `$HOME/Desktop/${PROJECT_NAME}.war` |
 | `PROJECT_ZIP` | `$HOME/Desktop/${PROJECT_NAME}.zip` |
 | `UNZIPPED_PROJECT_PATH` | `$HOME/Desktop/${PROJECT_NAME}` |
-| `TEMP_FOLDER` | `$HOME/Desktop/local-${PROJECT_NAME}` — **output only**; never hand-edit |
-| `GENERATED_APP` | `$HOME/Desktop/local-${PROJECT_NAME}/${PROJECT_NAME}` — codegen target; never hand-edit `src/` |
+| `TEMP_FOLDER` | `$HOME/Desktop/local-${PROJECT_NAME}` — output only |
+| `GENERATED_APP` | `$TEMP_FOLDER/${PROJECT_NAME}` — never edit `src/` |
 | `TOMCAT_APP` | `${TOMCAT_WEBAPPS}/${PROJECT_NAME}` |
-| `APP_URL` | `http://localhost:${TOMCAT_PORT}/${PROJECT_NAME}/` |
 
-Update **preview/comparison URLs** when the project name changes (e.g. `http://localhost:8080/Foo/#/...`).
-
-**No Desktop local-folder edits:** `~/Desktop/local-${PROJECT_NAME}/` (e.g. `local-SearchWidgetScenarios`) is ephemeral codegen output. Agents must not patch files there — only regenerate (Step 4), `npm i`, build, and deploy `dist/`.
-
-**Browser comparison note:** preview and comparison URLs may be **different routes** (e.g. local `#/LiveForm_Autocomplete` vs stage `#/Main`). Stage URL is a **health baseline**; preview URL is the **primary pass/fail** target.
-
----
-
-## Upgrade — canonical Start message
-
-```text
-Start Angular upgrade.
-
-base version 20
-target version 21
-preview url http://localhost:8080/SearchWidgetScenarios/#/LiveForm_Autocomplete
-comparison url https://stage-platform.wavemaker.ai/run-jlqb2h631c/SearchWidgetScenarios_master/#/Main
-skip preview no
-skip tests no
-skip verify no
-```
-
-### Upgrade Step 0 workflow
-
-1. Read `repo.config.sh`.
-2. Parse user message (table above); chat overrides win.
-3. Print effective config (all rows).
-4. Block Steps 1–10 until full Start message **or** `confirm` / `proceed with defaults`.
-5. Write `current-state.md`; set `Inputs confirmed: yes`.
-
-Bare `Start Angular upgrade` → show this file + defaults → **stop** until confirm.
-
----
-
-## Standalone local build — canonical message
-
-```text
-@.cursor/commands/local-angular-build
-
-project name SearchWidgetScenarios
-preview url http://localhost:8080/SearchWidgetScenarios/#/LiveForm_Autocomplete
-comparison url https://stage-platform.wavemaker.ai/run-jlqb2h631c/SearchWidgetScenarios_master/#/Main
-skip preview no
-```
-
-### Standalone workflow
-
-1. Read `repo.config.sh` + path formulas in `local-angular-build.md` Configuration.
-2. Parse user message; derive `PROJECT_*` from `project name`; re-export URL overrides.
-3. Print effective config; block until confirm.
-4. Run prerequisites + Steps 1–7 + browser verify (skip Maven Step 1 when WAR + Tomcat app exist).
-
-**Upgrade Step 8:** skip this gate; use `current-state.md` from upgrade Step 0.
+Never edit `~/Desktop/local-*`. Preview URL is primary pass/fail; comparison URL is stage baseline.

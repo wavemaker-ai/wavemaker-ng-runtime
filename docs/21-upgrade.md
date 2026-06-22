@@ -1,62 +1,61 @@
 # Angular 21 Upgrade Summary
 
 **Branch:** WMS-31488  
-**Date:** 2026-06-16  
+**Date:** 2026-06-18 (validation re-run)  
 **Base → Target:** Angular 20 → 21
 
 ## Libraries upgraded
 
-| Package | Before | After |
-|---------|--------|-------|
-| `@angular/*` (animations, common, compiler, core, forms, platform-browser, platform-browser-dynamic, router, service-worker) | 21.2.14 | 21.2.17 |
-| `@angular/cli` | 21.2.13 | 21.2.15 |
-| `@angular-devkit/build-angular` | 21.2.13 | 21.2.15 |
-| `@angular/compiler-cli`, `@angular/language-service` | 21.2.14 | 21.2.17 |
-| `ngx-bootstrap` | 21.2.0 | 21.2.0 (unchanged; patch verified in bundle) |
-| `typescript` | 5.9.3 | 5.9.3 (unchanged) |
-| `zone.js` | 0.16.2 | 0.16.2 (unchanged) |
+| Package | Version |
+|---------|---------|
+| `@angular/*` (core packages) | 21.2.17 |
+| `@angular/cli`, `@angular-devkit/build-angular` | 21.2.15 |
+| `ngx-bootstrap` | 21.2.0 |
+| `typescript` | 5.9.3 |
+| `zone.js` | 0.16.2 |
+
+Runtime was already on Angular 21 before this run; no `package.json` version changes required.
 
 ## Compatibility changes
 
 ### wavemaker-ng-runtime
-- Runtime already on Angular 21; patch bump to 21.2.17 for security advisories.
-- Pattern review passed: tsconfig `moduleResolution: bundler`, app shell bootstrap guards, no legacy compiler APIs, ngx-bootstrap bundle patch present.
+- tsconfig `moduleResolution: bundler` aligned with `tsconfig.web-app.json`
+- App shell §11b/§11c guards; no legacy `compileModuleAndAllComponentsSync`
+- ngx-bootstrap bundle patch verified post-build
 
 ### wavemaker-ng-codegen
-- **`src/update-angular-json.js` (§20e):** Prism `foundation-css` path corrected from `dist/styles/foundation/foundation.css` to `foundation/foundation.css` (yalc package layout).
+- **`templates/app.config.ts.hbs` (§20b):** `NgCircleProgressModule` — bare module (no `.forRoot()`)
+- **`src/update-angular-json.js` (§20e):** Prism `foundation-css` path → `dist/styles/foundation/foundation.css`
 
 ## Patches and build hooks
 
-- **ngx-bootstrap DestroyRef patch** (`build-scripts/ngx-bootstrap-patch.mjs`) — verified post-build via `verify-ngx-bootstrap-bundle.sh`.
-- **yalc publish:** After bumping root `package.json`, run `sh bundle-angular-app-cli.sh` and `npm install` inside `.yalc/@wavemaker-ai/angular-app/` so the linked package does not retain stale nested `@angular/*` versions.
+- **ngx-bootstrap DestroyRef patch** — verified via `verify-ngx-bootstrap-bundle.sh`
+- **yalc:** refresh `.yalc/@wavemaker-ai/angular-app` after runtime bundle changes
 
 ## Validation completed
 
 | Step | Result | Notes |
 |------|--------|-------|
 | Install | pass | `install.sh` |
-| Security audit | pass (script) | 32 vulns reported; Angular runtime at 21.2.17; remaining highs in build toolchain (esbuild, webpack-dev-server) |
-| Pattern review | pass | `pattern-review.sh` |
-| Build | pass | `sh build.sh -f` (~7 min) |
+| Security audit | pass (script) | 34 vulns; 9 high in build toolchain; no `--force` |
+| Pattern review | pass | `pattern-review.sh` after codegen §20b/§20e fixes |
+| Build | pass | `build.sh -f` ~315s |
 | Post-build verify | pass | ngx-bootstrap bundle grep |
-| Local Tomcat — preview | pass | `#/LiveForm_Autocomplete` renders form, nav, employee list |
-| Local Tomcat — comparison | pass | Stage `#/Main` loads (nav, Department Details form, Employees list) — verified 2026-06-16 |
-| Unit tests | skipped | Step 0: `skip tests yes` |
+| Local Tomcat — preview | pass | HTTP 200 `#/LiveForm_Autocomplete` after codegen redeploy |
+| Local Tomcat — comparison | pass | HTTP 200 stage `#/Main` |
+| Unit tests | pass | 126 suites, 4265 tests |
 
 ## New platform features not adopted
 
-- Angular 22 `animate.enter` / `animate.leave` migration ( `@angular/animations` deprecation warning only).
-- Standalone-only bootstrap refactor beyond existing `app.config.ts` pattern.
-- Service worker / SSR hydration hardening beyond patch-level bumps.
+- Angular 22 `animate.enter` / `animate.leave` migration
+- Zoneless / standalone-only refactor beyond current `app.config.ts` pattern
 
 ## Known follow-ups
 
-1. **Tomcat deploy order** — Copy Angular `index.html` + `ng-bundle/` **after** WAR deploy; WAR default index overwrites Angular shell if copied first.
-2. **npm audit** — Residual moderate/high in dev/build deps (`@babel/core`, `esbuild`, `webpack-dev-server`, `jest` chain); evaluate on next Angular CLI bump.
-3. **Unit tests** — Run `npm test` when test gate is re-enabled.
+1. **npm audit** — Residual high in `piscina`, `undici`, `vite` (devkit chain); evaluate on next CLI bump
+2. **Browser smoke** — HTTP 200 only this run; full preview checklist (G1–G4, E1–E13) on demand
 
 ## Security notes
 
-- `npm audit fix` (no `--force`) applied during Step 5; no lockfile-breaking force fixes.
-- Root and yalc `@wavemaker-ai/angular-app` refreshed to `@angular/*@21.2.17`.
-- Transitive advisories in `.yalc/@wavemaker-ai/foundation-css` (`ajv`) remain moderate.
+- `npm audit fix` (no `--force`) in Step 5
+- Angular runtime at 21.2.17

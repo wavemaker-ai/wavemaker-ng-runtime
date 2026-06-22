@@ -1,21 +1,29 @@
 # WaveMaker runtime patterns (wavemaker-ng-runtime)
 
-Default entry in `PATTERNS_FILE` for this repo. Workflow and gates: `SKILL.md` + `repo.config.sh`.
+Default `PATTERNS_FILE`. Workflow: [`SKILL.md`](./SKILL.md). References: [`references.md`](./references.md) R12.
 
-Classify findings as `safe`, `needs-review`, `likely-breakage`, or `must-change`. **Block** on unresolved `must-change`.
+Classify findings: `safe` | `needs-review` | `likely-breakage` | `must-change` — **block** on unresolved `must-change`.
 
-**Automated blockers (keep in sync):** `scripts/pattern-review.sh` enforces a subset of this file. When adding a new **must-change** grep, update **both** the script and the matching section here:
+**Dual-repo:** Fix each `must-change` in the repo named in its section. §20 spans ng-runtime and/or ng-codegen — never `~/Desktop/local-*`. Step 2 → **Dual-repo change plan**; Step 6 → **Cross-repo changes**.
 
-| Script check | Pattern section |
-|--------------|-----------------|
-| tsconfig `moduleResolution` | §20a |
-| `startApp` + `cdr.detectChanges` | §11b |
-| spinner `@if (spinner.show)` | §11c |
-| ng-codegen `app.config.ts.hbs` no `.forRoot()` | §20b |
-| ng-codegen `update-angular-json.js` foundation path | §20e |
-| no `compileModuleAndAllComponentsSync` | §1 |
+### Automated blockers (`pattern-review.sh`)
 
-**WMS-29275 (Angular 18 → 20):** Sections with commit refs come from that upgrade branch. Re-check on every major bump — ngx-bootstrap modal APIs and patch regexes drift between majors.
+When adding a **must-change** grep, update **both** the script and the matching § below.
+
+| Check | Repo | § |
+|-------|------|---|
+| Branch match runtime ↔ codegen | both | §20 |
+| `tsconfig.json` ↔ `tsconfig.web-app.json` (`moduleResolution`, `module`, `lib`) | runtime | §20a |
+| `gen-tsconfig.js`, `app.config.ts.hbs`, `update-angular-json.js` present | codegen | §20 |
+| Codegen bootstrap ngx-bootstrap API | codegen | §20b |
+| Prism foundation-css path in `update-angular-json.js` | codegen | §20e |
+| `startApp` + `cdr.detectChanges` | runtime | §11b |
+| Spinner `@if (spinner.show)` | runtime | §11c |
+| No `compileModuleAndAllComponentsSync` | runtime | §1 |
+
+**Manual only (Step 6):** §2–§7, §9–§19 greps; §20c when codegen require fails; transpiler `imports.ts` when ngx-bootstrap API changes.
+
+**WMS-29275:** Sections with commit refs — re-check every major bump.
 
 ## Dependency classification (this repo)
 
@@ -809,35 +817,16 @@ When `@wavemaker-ai/angular-app/dependencies/` filenames use a `.cjs.js` suffix,
 
 **Step 8 iteration:** see `SKILL.md` Step 8 only.
 
-#### 20d. Cross-repo upgrade checklist (Step 6 blockers + Step 8 local build)
+#### 20d. Cross-repo flow
 
-After runtime Step 6 blockers pass, run upgrade **Step 7** then **Step 8** via `LOCAL_BUILD_DOC`. Build/bundle split and iteration table: **`SKILL.md` Step 7–8 only** (not duplicated here).
+| Phase | Action |
+|-------|--------|
+| Step 2 | Map §20 + R8/R12 → **Dual-repo change plan** |
+| Step 6 | Apply in both repos; **Cross-repo changes**; `pattern-review.sh` |
+| Step 7 | `BUILD_CMD` (runtime) |
+| Step 8 | Codegen `build.sh`; local build; Tomcat; preview checklist below |
 
-| # | Repo | Action |
-|---|------|--------|
-| 1 | `wavemaker-ng-runtime` | Step 7: `BUILD_CMD`; Step 8 local 2b: `RUNTIME_BUNDLE_CMD` |
-| 2 | `wavemaker-ng-codegen` | Templates + `update-angular-json.js`; `sh build.sh` |
-| 3 | Generated app | Codegen + `ng build` — no manual edits |
-| 4 | Tomcat | Deploy per `LOCAL_BUILD_DOC`; browser verify `PREVIEW_URL` |
-
-**Permanent fix** = merged source in both repos + fresh codegen + local Tomcat validation. Do **not** move §20b/§20e fixes to Step 10 follow-ups while `pattern-review.sh` fails.
-
-**Step 6 — mandatory automated greps:**
-
-```bash
-sh .cursor/skills/angular-upgrade/scripts/pattern-review.sh
-```
-
-**Step 6 classification (cross-repo):**
-
-| Finding | Label |
-|---------|--------|
-| `tsconfig.web-app.json` still `moduleResolution: "node"` while target is Angular 21+ | `must-change` |
-| `app.config.ts.hbs` still calls ngx-bootstrap `.forRoot()` | `must-change` — **blocks Step 6** |
-| `update-angular-json.js` wrong foundation-css path | `must-change` — **blocks Step 6** (§20e) |
-| `app.module.ts.hbs` still calls ngx-bootstrap `.forRoot()` | `needs-review` — legacy template, not emitted |
-| Codegen runtime error: `require('../dependencies/*.cjs')` not found | `likely-breakage` — apply §20c |
-| Hand-edits under `wavemaker-ng-codegen/dist/` | `needs-review` — revert; fix `templates/` and rebuild |
+Iteration table: `SKILL.md` Step 8 only.
 
 ---
 
@@ -852,13 +841,9 @@ sh .cursor/skills/angular-upgrade/scripts/pattern-review.sh
 
 ---
 
-## Preview validation checklist (Step 8)
+## Preview validation (Step 8)
 
-**Canonical browser pass/fail** — single source for Step 8 gate criteria. Referenced by `SKILL.md` Step 8 and `local-angular-build.md` browser verify; do not duplicate these lists elsewhere.
-
-**Setup:** Step 8 runs `.cursor/commands/local-angular-build.md`. URLs from upgrade Step 0 (`current-state.md`; defaults in `inputs.md` + `repo.config.sh`). Preview and comparison may be **different routes** — comparison is stage health baseline; preview is primary pass/fail.
-
-**Order:** Load **comparison** first, then **preview** (hard-refresh). On failure, iterate per `SKILL.md` Step 8 iteration table. Record in `current-state.md` → **Preview Validation**.
+**Canonical pass/fail** for Step 8 and `local-angular-build.md`. URLs from Step 0. Comparison = stage baseline; preview = primary gate. Order: comparison → preview (hard refresh). Failure → `SKILL.md` Step 8 fix loop.
 
 ### Gate (required — blocks Step 8 `done`)
 

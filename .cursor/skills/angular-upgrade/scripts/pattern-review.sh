@@ -1,10 +1,6 @@
 #!/bin/sh
-# Step 6 — mandatory pattern greps (wavemaker-runtime-patterns.md).
-# Keep in sync with "Automated blockers" table at top of wavemaker-runtime-patterns.md.
-# Exit 1 on any must-change finding. Run from repo root:
-#   sh .cursor/skills/angular-upgrade/scripts/pattern-review.sh
-#
-# Enforced sections: §1, §11b, §11c, §20a, §20b, §20e
+# Step 6 automated greps — sync with wavemaker-runtime-patterns.md "Automated blockers" table.
+# Usage: sh .cursor/skills/angular-upgrade/scripts/pattern-review.sh
 
 set -e
 
@@ -40,15 +36,36 @@ ok() {
   echo "OK: $1"
 }
 
+grep_tsconfig_field() {
+  field="$1"
+  file="$2"
+  grep -E "^\s*\"${field}\"" "$file" | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/'
+}
+
 echo "=== pattern-review (Step 6) ==="
 echo "repo: $REPO_ROOT"
 echo "ng-codegen: $NG_CODEGEN"
 echo ""
 
+# --- §20: branch alignment (both repos) ---
+RUNTIME_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+if [ ! -d "$NG_CODEGEN" ]; then
+  fail "§20 ng-codegen repo not found at $NG_CODEGEN — set NG_CODEGEN_PATH in repo.config.sh"
+elif [ ! -d "$NG_CODEGEN/.git" ]; then
+  fail "§20 ng-codegen path is not a git repo: $NG_CODEGEN"
+else
+  CODEGEN_BRANCH="$(cd "$NG_CODEGEN" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+  if [ "$RUNTIME_BRANCH" != "$CODEGEN_BRANCH" ]; then
+    fail "§20 branch mismatch (ng-runtime=$RUNTIME_BRANCH ng-codegen=$CODEGEN_BRANCH) — align branches before Step 6 done"
+  else
+    ok "§20 branch aligned ($RUNTIME_BRANCH)"
+  fi
+fi
+
 # --- This repo: tsconfig.web-app.json alignment (§20a) ---
 if [ -f tsconfig.json ] && [ -f tsconfig.web-app.json ]; then
-  MR_ROOT=$(grep -E '^\s*"moduleResolution"' tsconfig.json | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/')
-  MR_WEB=$(grep -E '^\s*"moduleResolution"' tsconfig.web-app.json | head -1 | sed 's/.*: *"\([^"]*\)".*/\1/')
+  MR_ROOT=$(grep_tsconfig_field moduleResolution tsconfig.json)
+  MR_WEB=$(grep_tsconfig_field moduleResolution tsconfig.web-app.json)
   if [ "$MR_ROOT" != "$MR_WEB" ]; then
     fail "§20a tsconfig moduleResolution mismatch (root=$MR_ROOT web-app=$MR_WEB)"
   else
@@ -58,6 +75,20 @@ if [ -f tsconfig.json ] && [ -f tsconfig.web-app.json ]; then
     if [ "$MR_WEB" != "bundler" ]; then
       fail "§20a tsconfig.web-app.json must use moduleResolution bundler on Angular 21+ (got $MR_WEB)"
     fi
+  fi
+  MOD_ROOT=$(grep_tsconfig_field module tsconfig.json)
+  MOD_WEB=$(grep_tsconfig_field module tsconfig.web-app.json)
+  if [ -n "$MOD_ROOT" ] && [ -n "$MOD_WEB" ] && [ "$MOD_ROOT" != "$MOD_WEB" ]; then
+    fail "§20a tsconfig module mismatch (root=$MOD_ROOT web-app=$MOD_WEB)"
+  else
+    ok "§20a tsconfig module aligned (${MOD_WEB:-n/a})"
+  fi
+  LIB_ROOT=$(grep -E '^\s*"lib"' tsconfig.json | head -1 | tr -d ' \t')
+  LIB_WEB=$(grep -E '^\s*"lib"' tsconfig.web-app.json | head -1 | tr -d ' \t')
+  if [ -n "$LIB_ROOT" ] && [ -n "$LIB_WEB" ] && [ "$LIB_ROOT" != "$LIB_WEB" ]; then
+    fail "§20a tsconfig lib mismatch between tsconfig.json and tsconfig.web-app.json"
+  else
+    ok "§20a tsconfig lib aligned (or absent)"
   fi
 else
   fail "§20a missing tsconfig.json or tsconfig.web-app.json"
@@ -83,16 +114,21 @@ if [ -f "$APP_HTML" ]; then
   fi
 fi
 
-# --- Cross-repo: ng-codegen ---
-if [ ! -d "$NG_CODEGEN" ]; then
-  fail "§20 ng-codegen repo not found at $NG_CODEGEN — set NG_CODEGEN_PATH in repo.config.sh"
-else
+# --- Cross-repo: ng-codegen required files + §20b / §20e ---
+if [ -d "$NG_CODEGEN" ]; then
+  GTJ="$NG_CODEGEN/src/gen-tsconfig.js"
+  if [ -f "$GTJ" ]; then
+    ok "§20a gen-tsconfig.js present"
+  else
+    fail "§20 missing $GTJ"
+  fi
+
   HBS="$NG_CODEGEN/templates/app.config.ts.hbs"
   if [ -f "$HBS" ]; then
-    if grep -qE 'ModalModule\.forRoot|BsDatepickerModule\.forRoot' "$HBS"; then
-      fail "§20b $HBS still calls ngx-bootstrap .forRoot() on ModalModule or BsDatepickerModule"
+    if grep -qE 'ModalModule\.forRoot|BsDatepickerModule\.forRoot|NgCircleProgressModule\.forRoot' "$HBS"; then
+      fail "§20b $HBS still calls ngx-bootstrap .forRoot() on ModalModule, BsDatepickerModule, or NgCircleProgressModule"
     else
-      ok "§20b app.config.ts.hbs — no Modal/BsDatepicker .forRoot()"
+      ok "§20b app.config.ts.hbs — no disallowed ngx-bootstrap .forRoot()"
     fi
   else
     fail "§20b missing $HBS"
@@ -125,9 +161,9 @@ fi
 
 echo ""
 if [ "$FAIL" -ne 0 ]; then
-  echo "=== pattern-review FAILED — fix blockers before Step 6 done ===" >&2
+  echo "=== pattern-review FAILED — fix blockers in ng-runtime and/or ng-codegen before Step 6 done ===" >&2
   exit 1
 fi
 
-echo "=== pattern-review PASSED ==="
+echo "=== pattern-review PASSED (automated) — complete manual § greps per SKILL.md Step 6 ==="
 exit 0

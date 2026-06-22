@@ -1,18 +1,12 @@
-# Repo-specific settings for the angular-upgrade skill.
-# User inputs: inputs.md. Workflow: SKILL.md. Browser pass/fail: wavemaker-runtime-patterns.md § Preview validation.
-#
-# ANGULAR_*     — major versions (Step 0 / inputs.md)
-# PREVIEW_*     — Step 8 local Tomcat URL; empty or skip → Step 8 skipped
-# COMPARISON_*  — stage baseline; required when preview runs
-# NG_CODEGEN_PATH — sibling codegen repo (Step 6 §20, Step 8 codegen)
-# LOCAL_BUILD_DOC — path to local-angular-build command
-# BUILD_CMD     — full rebuild; Step 7 only (not Step 8)
-# RUNTIME_BUNDLE_CMD — locale + CLI bundles; Step 8 Step 2b only
-# BUILD_CMD_INCREMENTAL — optional mid-upgrade check (scripts/build.sh --incremental)
-# POST_BUILD_VERIFY_* / DEFAULT_RUN_BUNDLE_VERIFY — Step 7 ngx-bootstrap verify
-# TEST_CMD / DEFAULT_RUN_TESTS — Step 9 unit tests
-# PATTERNS_FILE — comma-separated pattern markdown paths (Step 6)
-# UPGRADE_DOC_PATH — Step 10 summary doc (docs/{major}-upgrade.md)
+# Repo defaults — sourced by scripts/*.sh
+# Skill layout: SKILL.md (workflow) | inputs.md | examples.md | references.md | wavemaker-runtime-patterns.md
+# Step 0:  ANGULAR_* (overridable in chat)
+# Step 8:  PREVIEW_*, COMPARISON_* — empty or skip → Step 8 skipped
+# Step 6:  NG_CODEGEN_PATH, PATTERNS_FILE
+# Step 7:  BUILD_CMD, POST_BUILD_VERIFY_*, DEFAULT_RUN_BUNDLE_VERIFY
+# Step 8:  RUNTIME_BUNDLE_CMD (locale + CLI bundles only), LOCAL_BUILD_DOC
+# Step 9:  TEST_CMD, DEFAULT_RUN_TESTS
+# Step 10: UPGRADE_DOC_PATH
 
 # --- Angular version range (defaults — user may override in Start message) ---
 ANGULAR_BASE_VERSION="20"
