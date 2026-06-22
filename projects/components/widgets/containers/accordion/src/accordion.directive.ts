@@ -23,7 +23,7 @@ import {registerProps} from './accordion.props';
 import {AccordionPaneComponent} from './accordion-pane/accordion-pane.component';
 import {find, forEach, get, indexOf, isArray, isNumber} from "lodash-es";
 
-const DEFAULT_CLS = 'app-accordion panel-group';
+const DEFAULT_CLS = 'app-accordion accordion-group';
 const WIDGET_CONFIG: IWidgetConfig = {
     widgetType: 'wm-accordion',
     hostClass: DEFAULT_CLS

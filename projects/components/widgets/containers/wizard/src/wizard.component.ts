@@ -47,7 +47,7 @@ type WizardStepHeaderModel = {
     doneiconurl?: string;
 };
 
-const DEFAULT_CLS = 'app-wizard panel clearfix';
+const DEFAULT_CLS = 'app-wizard clearfix';
 const WIDGET_CONFIG: IWidgetConfig = {
     widgetType: 'wm-wizard',
     hostClass: DEFAULT_CLS
@@ -816,7 +816,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     ngAfterViewInit() {
         super.ngAfterViewInit();
         styler(
-            this.nativeElement.querySelector('.panel-body') as HTMLElement,
+            this.nativeElement.querySelector('.app-wizard-body') as HTMLElement,
             this,
             APPLY_STYLES_TYPE.INNER_SHELL
         );

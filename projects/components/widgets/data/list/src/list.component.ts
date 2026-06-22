@@ -90,7 +90,7 @@ import {
 
 declare const $;
 
-const DEFAULT_CLS = 'app-livelist app-panel';
+const DEFAULT_CLS = 'app-livelist';
 const WIDGET_CONFIG = {widgetType: 'wm-list', hostClass: DEFAULT_CLS};
 
 @AutoLayout({ targetSelector: 'ul' })

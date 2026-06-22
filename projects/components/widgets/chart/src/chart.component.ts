@@ -191,7 +191,7 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
     private _processedData: any[] = [];
     private _subsciptions: any = [];
 
-    @HostBinding('class.panel') title;
+    @HostBinding('class.app-chart') title;
 
     isGroupByEnabled() {
         return !!(this.groupby && this.groupby !== NONE);

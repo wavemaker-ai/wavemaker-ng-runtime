@@ -1,8 +1,8 @@
 @if (title) {
-  <div class="panel-heading">
-    <h3 class="panel-title">
+  <div class="chart-heading">
+    <h3 class="chart-title">
       <div class="pull-left">
-        <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" iconClasses="panel-icon" alt="Chart icon"></wm-app-icon>
+        <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [defaultIconClass]="'chart-icon'" alt="Chart icon"></wm-app-icon>
       </div>
       <div class="heading" [innerHTML]="title"></div>
       @if (subheading) {
@@ -11,7 +11,7 @@
     </h3>
   </div>
 }
-<div class="app-chart-inner" [ngClass]="{'loading':isLoadInProgress, 'panel-body': title}">
+<div class="app-chart-inner" [ngClass]="{'loading':isLoadInProgress, 'chart-body': title}">
   <svg></svg>
   @if (showContentLoadError && showNoDataMsg) {
     <div class="wm-content-info readonly-wrapper">

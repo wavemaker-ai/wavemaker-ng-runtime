@@ -47,7 +47,7 @@
   </ul>
 </div>
 @if (type !== 'dynamic') {
-<div class="app-wizard-body panel-body">
+<div class="app-wizard-body">
   @if (message.caption) {
     <p wmMessage caption.bind="message.caption" type.bind="message.type"></p>
   }
@@ -55,7 +55,7 @@
 </div>
 }
 @if (type === 'dynamic') {
-<div class="app-wizard-body panel-body">
+<div class="app-wizard-body">
     @if(!fieldDefs?.length) {
     <div>{{nodatamessage}}</div>
     }
