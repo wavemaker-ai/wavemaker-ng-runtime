@@ -114,7 +114,7 @@ const ROW_OPS_FIELD = 'rowOperations';
 const noop = () => {};
 
 const isInputBodyWrapper = target => {
-    const classes = ['.dropdown-menu', '.uib-typeahead-match', '.modal-dialog', '.toast', '.bs-datepicker-container'];
+    const classes = ['.dropdown-menu', '.uib-typeahead-match', '.modal-dialog', '.toast'];
     let isInput = false;
     classes.forEach(cls => {
         if (target.closest(cls).length) {
@@ -1393,9 +1393,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
         if (this.editmode === EDIT_MODE.QUICK_EDIT) {
             this.documentClickBind = this._documentClickBind.bind(this);
-            // Use capture phase so a click on another grid (which calls stopPropagation) still reaches this
-            // listener and lets the current grid save/close its editing row.
-            document.addEventListener('click', this.documentClickBind, true);
+            document.addEventListener('click', this.documentClickBind);
         }
     }
     private getConfiguredState() {
@@ -1635,7 +1633,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this._modelVarEditSoftRefreshActiveUntil = 0;
         this._isInlineEditSave = false;
         // MEMORY LEAK FIX: Remove document click listener
-        document.removeEventListener('click', this.documentClickBind, true);
+        document.removeEventListener('click', this.documentClickBind);
 
         // MEMORY LEAK FIX: Unsubscribe from navigator watches
         if (this.navigatorResultWatch) {
