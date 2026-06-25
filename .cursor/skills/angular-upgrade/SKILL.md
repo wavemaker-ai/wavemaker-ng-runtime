@@ -1,134 +1,396 @@
 ---
 name: angular-upgrade
 description: >-
-  Runs a resumable WaveMaker Angular major-version upgrade across wavemaker-ng-runtime
-  and wavemaker-ng-codegen: input gate, reference review, package bumps, security audit,
-  dual-repo pattern fixes, build gate, local Tomcat preview, unit tests, and upgrade summary.
-  Use when the user says Start Angular upgrade, Resume Angular upgrade, Angular upgrade,
-  bump Angular major, or asks to upgrade wavemaker-ng-runtime to a new Angular version.
-disable-model-invocation: true
+  Runs a resumable WaveMaker Angular major-version upgrade across both
+  wavemaker-ng-runtime and wavemaker-ng-codegen repos together. Handles the
+  full workflow: package bumps, install, security audit, pattern fixes in both
+  repos, ng-codegen build, runtime build, unit tests, and Tomcat preview
+  validation. Compatible changes only — no signal migrations or modernization.
+  TRIGGER when the user clearly intends to start or resume the upgrade workflow:
+  "start Angular upgrade", "resume Angular upgrade", "let's do the Angular 21
+  bump", "begin upgrading to Angular 21", "run the upgrade skill".
+  DO NOT trigger for planning or scoping questions like "what would it take to
+  upgrade?", "how long does an Angular upgrade take?", "what breaks in Angular
+  21?", or "should we upgrade?" — answer those inline without starting Step 0.
 ---
 
-# Angular upgrade
+# Angular Upgrade Skill
 
-Resumable workflow: one Angular major per run. State in gitignored `current-state.md`. Summary in `docs/{major}-upgrade.md`. **When Step 10 finishes, reset `current-state.md` to start position** (see below).
+One Angular major per run. **Both repos** (`wavemaker-ng-runtime` + `wavemaker-ng-codegen`) upgraded together on the same branch. State in `current-state.md` (gitignored). Summary written to `docs/{major}-upgrade.md` at Step 10.
 
-## Quick start
+**Sibling repo:** `../wavemaker-ng-codegen` (`NG_CODEGEN_PATH` in `repo.config.sh`). Both repos stay on the same branch throughout.
 
-1. Read [`inputs.md`](inputs.md) + [`repo.config.sh`](repo.config.sh). Do **not** install or build until `Inputs confirmed: yes`.
-2. Create todos `step-0` … `step-10`. Sync with `current-state.md` after each step.
-3. On `blocked`, post **Blocker alert** (see [`examples.md`](examples.md)) before other work.
-4. Step 2: complete [`references.md`](references.md) checklist + **Dual-repo change plan**.
-5. Step 6: apply plan in **ng-runtime** and **ng-codegen**; run `scripts/pattern-review.sh` after each repo’s edits.
-6. Never patch `~/Desktop/local-*` or generated app `src/` — fix source repos and re-run codegen.
+---
 
-**Dual-repo:** sibling `../wavemaker-ng-codegen` (`NG_CODEGEN_PATH`). Same branch on both repos. Repo→path map: [`references.md`](references.md).
+## Compatibility Policy
+
+**The test for every change:** "Would this be needed even if Angular hadn't released a new version?" If no — don't make it.
+
+Fix removed APIs, changed constructor signatures, and compile errors caused by the new Angular version. Leave everything else exactly as it is. The decorator-based component API, Zone.js, and existing patterns are all fine to keep — Angular supports them in every major version so far, and migrating them is its own separate project.
+
+Things like signals, `input()`/`output()`, zoneless change detection, and `inject()` as a style choice are opt-in modernizations that Angular recommends but does not require. Skip them here.
+
+When in doubt: keep the existing code.
+
+---
+
+## Step Overview
+
+| Step | Name | Gate |
+|------|------|------|
+| 0 | Config & Confirm | Inputs confirmed; both repo paths and branches recorded in `current-state.md` |
+| 1 | Inventory | Angular version ≈ base version; all inventory paths resolve |
+| 2 | Research & Plan | R1–R3, R5, R8–R12 reviewed; R4 dry-run checked; R5 confirms stable release; every breaking change traced to plan or [N/A]; R2 version pins recorded (incl. R9 jest-preset-angular, R10 ng-packagr) |
+| 3 | Bump Packages | `package.json` edited in **both repos**; R9/R10 pins applied; no install yet |
+| 4 | Install | `npm install` exit 0 in all applicable repos |
+| 5 | Security Audit | No critical/high vulns; Angular/TS packages unchanged by audit fix |
+| 6 | Apply Fixes | Plan applied in both repos; `pattern-review.sh` pass; ng-codegen `build.sh` exit 0 |
+| 7 | Build ng-runtime | `BUILD_CMD` exit 0; post-build bundle verify pass |
+| 8 | Unit Tests | `TEST_CMD` exit 0 (or skipped when disabled) |
+| 9 | Preview Validation | Preview URL renders identically to comparison URL |
+| 10 | Finalize & Reset | `docs/{major}-upgrade.md` written; `current-state.md` reset |
+
+**Resume:** start from first step not `done`. A `blocked` step stays blocked until the user clears it. A step in `in-progress` state means the previous session crashed mid-step — **treat `in-progress` as `pending` and restart that step from the beginning**; do not assume partial work is safe to build on. Re-read `repo.config.sh` before Step 7 — build flags may have changed mid-session. A completed round (Step 10 done) always resets; the next run starts at Step 0.
+
+**On resume, spot-check claimed-done steps before skipping:**
+- Step 3 — both `package.json` files contain the target Angular version
+- Step 4 — `node_modules/@angular/core/package.json` shows the target version
+- Step 6 — `pattern-review.sh` exits 0
+- Step 7 — build artifacts exist: `dist/bundles/wmapp/scripts/wm-libs.js` is present and newer than `package.json`
+- Step 8 — test run was not skipped; if skipped, confirm `DEFAULT_RUN_TESTS=no` is still the intent
+- Step 9 — `current-state.md` → **Preview Validation** contains explicit user-reported pass for G1–G7 (not AI self-reported)
+
+If a check fails, re-run that step rather than skipping it.
+
+**Step 6 partial-fix resume:** re-read the Dual-repo change plan from `current-state.md`, verify each row against the current source to confirm which fixes are already applied, then re-run `pattern-review.sh`. Apply only the rows not yet done — do not re-apply fixes that are already in place.
 
 ---
 
 ## Instructions
 
-Copy progress into todos and `current-state.md` **Step status**:
-
-```
-- [ ] Step 0 — Upgrade gate
-- [ ] Step 1 — Detect and inventory
-- [ ] Step 2 — Plan upgrade path
-- [ ] Step 3 — Apply package upgrades
-- [ ] Step 4 — Install
-- [ ] Step 5 — Security gate
-- [ ] Step 6 — Repo pattern review
-- [ ] Step 7 — Build gate
-- [ ] Step 8 — Local Tomcat validation
-- [ ] Step 9 — Unit tests
-- [ ] Step 10 — Finalize
-```
-
-| Step | Gate | Done when |
-|------|------|-----------|
-| 0 | Yes | Config confirmed; branches/path in `current-state.md`. See [`inputs.md`](inputs.md) **State reset** rules. |
-| 1 | Yes | Pattern paths resolve; Angular ≈ `ANGULAR_BASE_VERSION`. |
-| 2 | Yes | [`references.md`](references.md) R1–R4,R6–R12 reviewed; **Dual-repo change plan** filled. Block if R1,R2,R3,R8,R12 missing. |
-| 3 | Yes | `package.json` edited per repo plan; **no install**. |
-| 4 | Yes | `scripts/install.sh` exit 0. |
-| 5 | Yes | `scripts/audit.sh`; block critical/high. Re-install if lockfile changed. |
-| 6 | Yes | Plan applied in both repos; `pattern-review.sh` pass; no open `must-change`. See [`wavemaker-runtime-patterns.md`](wavemaker-runtime-patterns.md). |
-| 7 | Yes | Full `BUILD_CMD` (+ post-build verify if enabled). Step 8 uses `RUNTIME_BUNDLE_CMD` only. |
-| 8 | Yes | Skip if preview empty/`skip`; else [`local-angular-build.md`](../../commands/local-angular-build.md) upgrade mode + patterns § Preview validation. |
-| 9 | Optional | Skip if tests off or `TEST_CMD` empty. |
-| 10 | Yes | `docs/{major}-upgrade.md` complete; then **reset `current-state.md`** to start position. |
-
-**Resume:** First step not `done`. Never skip `blocked` without user clearing. Re-read `repo.config.sh` before Step 7. **Do not resume** a completed round — Step 10 reset clears in-progress state; next run always begins at Step 0.
-
-### State reset (required)
-
-**When Step 10 gate passes**, immediately after the upgrade summary doc is written:
-
-1. Tell the user the run is complete and where `docs/{major}-upgrade.md` was written.
-2. Run `sh .cursor/skills/angular-upgrade/scripts/reset-state.sh` — start position for the next major bump.
-3. Cancel or clear todos `step-0` … `step-10` (none in progress).
-
-**Step 0 also resets** (same start position) when opening an existing `current-state.md` and any of:
-
-- User says **Start Angular upgrade** (not resume)
-- Stored base/target ≠ effective base/target from message or `repo.config.sh`
-- Step 10 is still `done` in the file (e.g. reset was skipped in a prior session)
-
-**Resume** keeps `current-state.md` only while a run is **in progress** (Step 10 not `done`, base/target unchanged).
-
-### Step 6 — dual-repo edits
-
-| Repo | Edit | Rebuild when |
-|------|------|--------------|
-| ng-runtime | `projects/`, `tsconfig*.json`, transpiler, patches, `angular-app/dependencies/` | Transpiler or `tsconfig.web-app.json` changes |
-| ng-codegen | `templates/`, `src/` only — never `dist/` | `sh build.sh` in codegen |
-
-Record edits in **Cross-repo changes**. Run manual greps from patterns §1–§19.
-
-### Step 8 — fix loop
-
-| Fix in | Re-run |
-|--------|--------|
-| ng-runtime | Step 7 → local 2b→3→4→5→7 |
-| ng-codegen | local 3→4→5→7 |
-| Both | Step 7 → local 2b→3→4→5→7 |
-| Maven/backend only | local 1→6→7 (skip 1 if WAR exists) |
-| Locale/bundle only | local 2b→3→4→5→7 |
-
-Deferral → **Deferred / user decisions**. Block Step 10 if Step 8 blocked without deferral.
+Create todos `step-0` … `step-10` at start. Mark each done as you complete it. Update `current-state.md` after every step — whether done, blocked, or skipped.
 
 ---
 
-## Utility scripts
+### Step 0 — Config & Confirm
 
-Run from repo root:
+Run the pre-flight check first:
 
 ```bash
-sh .cursor/skills/angular-upgrade/scripts/install.sh          # Step 4
-sh .cursor/skills/angular-upgrade/scripts/audit.sh            # Step 5
-sh .cursor/skills/angular-upgrade/scripts/pattern-review.sh  # Step 6 — after each repo’s edits
-UPGRADE_BUILD_CMD="$BUILD_CMD" UPGRADE_BUNDLE_VERIFY=yes \
-  sh .cursor/skills/angular-upgrade/scripts/build.sh          # Step 7 full
-sh .cursor/skills/angular-upgrade/scripts/build.sh --incremental  # mid-upgrade only
-sh .cursor/skills/angular-upgrade/scripts/test.sh             # Step 9
-sh .cursor/skills/angular-upgrade/scripts/reset-state.sh     # Step 10 done / Step 0 fresh Start
+sh .cursor/skills/angular-upgrade/scripts/preflight.sh
 ```
 
-Config source: [`repo.config.sh`](repo.config.sh) (sourced by scripts).
+If exit 1 (dirty repo), show the listed files and block until the user either commits/stashes them **or** explicitly types "proceed with uncommitted changes". Dirty files unrelated to the upgrade (e.g., a README edit) are an acceptable reason to override — record it in `current-state.md` → **Step 0 Overrides**.
+
+Then read [`repo.config.sh`](repo.config.sh). Parse the user message using the table below. Print the effective config table (see [`examples.md`](examples.md)). Block Steps 1–10 until the user confirms.
+
+**Parsing rules:**
+
+| Input | Phrases in user message | Default (from `repo.config.sh`) |
+|-------|------------------------|----------------------------------|
+| Base version | `base version <N>` | `ANGULAR_BASE_VERSION` |
+| Target version | `target version <N>` | `ANGULAR_TARGET_VERSION` |
+| Preview URL | `preview url <url>` | `PREVIEW_URL` |
+| Comparison URL | `comparison url <url>` | `COMPARISON_URL` |
+| Skip preview | `skip preview yes`, `skip step 9`, `skip tomcat` | `no` when URLs set |
+| Skip tests | `skip tests yes/no` | `DEFAULT_RUN_TESTS` |
+| Skip verify | `skip verify yes/no` | `DEFAULT_RUN_BUNDLE_VERIFY` |
+| Confirm | `confirm`, `proceed with defaults` | — (always required) |
+
+`skip preview yes` sets `PREVIEW_URL=skip`. Chat overrides win over `repo.config.sh` defaults.
+
+Reset `current-state.md` (run `scripts/reset-state.sh`) when any of:
+- User says **Start Angular upgrade** (not Resume)
+- Stored base/target version ≠ effective base/target from message or `repo.config.sh`
+- Step 10 is still `done` in the file (prior run not fully reset)
+
+After confirmation, record in `current-state.md`:
+- ng-runtime branch (`git rev-parse --abbrev-ref HEAD`) — if result is `HEAD`, the repo is in detached state; block and ask the user to check out a named branch first
+- ng-codegen path (`NG_CODEGEN_PATH` resolved to absolute path)
+- ng-codegen branch (`cd $NG_CODEGEN_PATH && git rev-parse --abbrev-ref HEAD`) — same detached HEAD check applies
+- Both repos must be on the same branch — if not, guide the user:
+  ```bash
+  # Branch exists in ng-codegen:
+  cd $NG_CODEGEN_PATH && git checkout <ng-runtime-branch>
+  # Branch doesn't exist in ng-codegen yet:
+  cd $NG_CODEGEN_PATH && git checkout -b <ng-runtime-branch>
+  ```
+  Re-run Step 0 after alignment.
+
+Set `Inputs confirmed: yes` only after both paths exist and branches match.
+
+**Done when:** `Inputs confirmed: yes` in `current-state.md`; both branch names and paths recorded.
 
 ---
 
-## Additional resources
+### Step 1 — Inventory
+
+Read these files in ng-runtime and record their current state:
+
+- `package.json` — Angular, TypeScript, RxJS, zone.js versions
+- `package-lock.json` — lockfile generation number
+- `angular.json` — builders, projects
+- `tsconfig.json` and `tsconfig.web-app.json` — `moduleResolution`, `module`, `lib`
+- `build-scripts/ngx-bootstrap-patch.mjs` — current patch targets
+- `jest.config.js` and `src/setup-jest.js` — jest-preset-angular version
+
+Verify Angular version in `package.json` ≈ `ANGULAR_BASE_VERSION`.
+
+**Done when:** all paths resolve; Angular version confirmed; inventory written to `current-state.md`.
+
+---
+
+### Step 2 — Research & Plan
+
+Review references R1–R13 per [`references.md`](references.md). Block if R1, R2, R3, R5, R8, R9, R10, R11, or R12 are not reviewed.
+
+**Traceability (required):** for every breaking change found in R1 and R3, either:
+- Add a row to the **Dual-repo change plan** in `current-state.md`, or
+- Annotate inline: `[N/A: reason this doesn't apply to WaveMaker runtime]`
+
+No breaking change may be acknowledged without one of these two outcomes.
+
+**R1 and R3 are primary.** `wavemaker-runtime-patterns.md` reflects past upgrade experience. If R1 or R3 shows a breaking change that the pattern files (`patterns-runtime.md`, `patterns-codegen.md`, `wavemaker-runtime-patterns.md`) do not cover, treat it as `must-change` — official docs take precedence over historical patterns.
+
+**R2 version pins (required):** record the exact TypeScript, Node, RxJS, and zone.js versions for the target Angular in `current-state.md` → **R2 Version Pins**. Also record the compatible `jest-preset-angular` version (R9) and `ng-packagr` version (R10) in the same section — all five flow directly into Step 3 edits.
+
+**Undocumented target version:** if the pattern files have no §N entries for the target Angular major (i.e., you are upgrading to a version beyond what they cover), treat every plan item from R1/R3 as `must-review` until Step 9 confirms it. Add new §N entries to the appropriate file as you discover and fix issues:
+
+- ng-runtime source pattern → `patterns-runtime.md`
+- ng-codegen template/src pattern → `patterns-codegen.md`
+- Evergreen or meta check (applies to any Angular major) → `wavemaker-runtime-patterns.md` §21+
+
+See [`references.md`](references.md) for the full reference format and dual-repo file map.
+
+**Plan approval (required before Step 3):** after filling the dual-repo change plan, print it to the user and wait for explicit confirmation. Do not begin Step 3 until the user says "confirm", "proceed", or similar. The user may adjust the plan — record any changes before proceeding.
+
+**Done when:** all required references reviewed; every R1/R3 breaking change traced; R2 version pins recorded (including R9 jest-preset-angular and R10 ng-packagr); dual-repo change plan filled **and confirmed by user**.
+
+---
+
+### Step 3 — Bump Packages
+
+Edit `package.json` in **both repos** using:
+- R2 version pins from Step 2 (TypeScript, Node, RxJS, zone.js)
+- R9 pin from Step 2 (`jest-preset-angular` — major must match Angular target)
+- R10 pin from Step 2 (`ng-packagr` — must be compatible with Angular target)
+- Dual-repo change plan from Step 2
+- Dependency classification table in [`wavemaker-runtime-patterns.md`](wavemaker-runtime-patterns.md)
+
+Hold off on `npm install` — editing first lets you review the full version delta as a unit before anything is locked into `node_modules`.
+
+Record all before/after version changes in `current-state.md` → **Package Changes** (separate tables for ng-runtime and ng-codegen).
+
+**Done when:** `package.json` edits complete in all applicable repos; R9 (`jest-preset-angular`) and R10 (`ng-packagr`) pins applied; no install run yet.
+
+---
+
+### Step 4 — Install
+
+```bash
+sh .cursor/skills/angular-upgrade/scripts/install.sh
+```
+
+If ng-codegen has `package.json` version changes from Step 3, also run `npm install` in that repo.
+
+**If install fails:** common causes and fixes:
+- *Peer dependency conflict* — read the `npm error` line for which package conflicts; add an `overrides` entry in `package.json` to force the version, then retry.
+- *Lockfile divergence* — delete `package-lock.json` and retry; commit the regenerated lockfile.
+- *Version does not exist on registry* — verify the exact version string in `package.json` against `npm info <package> versions`.
+- *Registry timeout* — retry; if the registry is persistently down, unblock and resume later.
+
+**Done when:** install exit 0 in all repos; `node_modules` updated.
+
+---
+
+### Step 5 — Security Audit
+
+```bash
+sh .cursor/skills/angular-upgrade/scripts/audit.sh
+```
+
+The script audits, then runs `npm audit fix` (no `--force`), then audits again. Before running fix it checks that none of the Angular/TS packages pinned in Step 3 would change — those pins are intentional and audit fix shouldn't override them.
+
+Block on any remaining critical or high vulnerability that is not a verifiable false positive. If the lockfile changed, re-run `scripts/install.sh` before continuing.
+
+**Done when:** `npm audit` reports no critical/high; Step 3 package versions unchanged.
+
+---
+
+### Step 6 — Apply Fixes
+
+Apply changes to **both repos** — ng-runtime first, then ng-codegen. ng-codegen §20 templates reference ng-runtime APIs, so runtime fixes must be in place before reviewing codegen changes. Two sources drive what to change:
+
+1. **[`references.md`](references.md) findings** — the dual-repo change plan from Step 2. Each row names which repo(s) to edit.
+2. **Pattern file checks** — greps against both repos. [`patterns-runtime.md`](patterns-runtime.md) §1–§19 cover ng-runtime source; [`patterns-codegen.md`](patterns-codegen.md) §20 covers ng-codegen templates and src. [`wavemaker-runtime-patterns.md`](wavemaker-runtime-patterns.md) has the Automated blockers table, §21–§25, and the Classification guide.
+
+**Read pattern sections targeted to your Step 2 findings** — do not load all three files blindly:
+
+| If Step 2 plan includes | Read |
+|------------------------|------|
+| Always | Automated blockers (`wavemaker-runtime-patterns.md`), §20 (`patterns-codegen.md`) |
+| ngx-bootstrap version bump (R8) | §6, §8b, §12 (in `patterns-runtime.md`) |
+| tsconfig / moduleResolution change | §20a (in `patterns-codegen.md`) |
+| TypeScript major bump | §4, §19 (in `patterns-runtime.md`) |
+| RouterOutlet / bootstrap providers | §7, §11 (in `patterns-runtime.md`) |
+| DOM renderer changes | §13 (in `patterns-runtime.md`) |
+| Test failures expected | §9 (in `patterns-runtime.md`) |
+
+**`pattern-review.sh` covers §1, §2, §6, §9, §11–§14, §19, §19b (ParenthesizedExpression handler only), §20, §22, §23 automatically** (FAIL and WARN checks). The remaining sections — §3, §4, §5, §7, §8, §8b, §10, §13c, §15, §16, §19b (ASTCompiler node renames — separate from the automated check), §21, §24, §25 — require manual grep. The script prints the manual checklist at the end of every run. Do not assume `pattern-review.sh` exit 0 means all patterns are clear.
+
+Compatibility Policy applies to every edit — fix compile errors only, not modernization.
+
+**Editable paths:** ng-runtime: `projects/`, `tsconfig*.json`, `build-scripts/`, `angular-app/dependencies/`. ng-codegen: `templates/` and `src/` only — never `dist/`.
+
+Classify every finding using the Classification guide in [`wavemaker-runtime-patterns.md`](wavemaker-runtime-patterns.md) — block on any unresolved `must-change`.
+
+After edits, run the automated check:
+
+```bash
+sh .cursor/skills/angular-upgrade/scripts/pattern-review.sh
+```
+
+**Build ng-codegen after fixes** — Step 9's local angular build runs ng-codegen to generate the app, so codegen must compile cleanly before Step 9 can succeed:
+
+```bash
+# NG_CODEGEN_PATH from repo.config.sh (default: ../wavemaker-ng-codegen)
+cd <NG_CODEGEN_PATH> && sh build.sh
+```
+
+Record all edits in `current-state.md` → **Cross-repo Changes**.
+
+**Done when:** `pattern-review.sh` exit 0; every WARN item either fixed or explicitly deferred (record reason in `current-state.md` → **Pattern Findings**); no open `must-change`; ng-codegen `build.sh` exit 0; changes committed in both repos before proceeding to Step 7 (do not leave uncommitted upgrade changes).
+
+---
+
+### Step 7 — Build ng-runtime
+
+The script sources `repo.config.sh` at runtime — `BUILD_CMD` and bundle verify flags are always read fresh, so mid-session config changes take effect automatically.
+
+```bash
+sh .cursor/skills/angular-upgrade/scripts/build.sh
+```
+
+**Done when:** `BUILD_CMD` exit 0; `verify-ngx-bootstrap-bundle.sh` pass (or `POST_BUILD_VERIFY_SCRIPT` not configured).
+
+---
+
+### Step 8 — Unit Tests
+
+Skip if `DEFAULT_RUN_TESTS=no` or `TEST_CMD` is empty — record reason in Step Status table.
+
+```bash
+sh .cursor/skills/angular-upgrade/scripts/test.sh
+```
+
+Test failures mean something broke in the upgrade. Diagnose and fix in source — don't weaken assertions or skip specs. See [`patterns-runtime.md`](patterns-runtime.md) §9 for common jest-preset-angular issues.
+
+**Done when:** `TEST_CMD` exit 0; or skipped (record reason).
+
+---
+
+### Step 9 — Preview Validation
+
+Skip if `PREVIEW_URL` is empty or `skip`.
+
+**This step has two parts: AI deploys, human verifies.** The AI cannot open a browser or compare visual output — do not self-report G6/G7 as passed.
+
+**AI: build and deploy (automated)**
+
+Follow [`local-angular-build.md`](../../commands/local-angular-build.md) upgrade mode. When deploy completes, tell the user:
+
+> "Deployed to Tomcat. Please open both URLs, hard-refresh each, and verify G1–G7.
+> Preview: `<PREVIEW_URL>` | Comparison: `<COMPARISON_URL>`
+> Report back: 'preview pass' or describe what failed."
+
+Then wait for the user's response before recording a result.
+
+**User: visual verification (manual)**
+
+| Check | Pass condition |
+|-------|---------------|
+| G1 Comparison loads | Stage baseline route renders without errors |
+| G2 Preview loads | Preview route shows content — no blank page, no stuck spinner |
+| G3 Same widgets visible | Every widget on comparison is also on preview |
+| G4 No fatal errors | No `overrideRouterOutlet`, `__destroyRef`, `NG0201`, unresolved module errors |
+| G5 No extra errors | Preview has no console errors absent from comparison |
+| G6 Interactions match | Autocomplete, dropdowns, pickers, modals all behave the same as comparison |
+| G7 Data renders | Same data/UI state as comparison (excluding live-data freshness) |
+
+G4 is the only check the AI can verify from build/deploy logs. G1–G3 and G5–G7 require human eyes. See [`wavemaker-runtime-patterns.md`](wavemaker-runtime-patterns.md) preview section for extended checks E1–E13.
+
+**Fix loop (after user reports a failure):**
+
+Diagnose which check failed and which repo owns the code causing it. Fix the source there first — do not re-run the build before the source is corrected.
+
+local-angular-build step reference: 1=Maven build, 2b=ng-runtime bundles, 3=build ng-codegen, 4=generate Angular app, 5=install+build generated app, 6=deploy WAR to Tomcat, 7=copy Angular dist.
+
+| Fix needed in | Re-run |
+|---------------|--------|
+| ng-runtime | Step 7 → local-angular-build: 2b → 3 → 4 → 5 → 7 |
+| ng-codegen | `sh build.sh` in codegen → local-angular-build: 3 → 4 → 5 → 7 |
+| Both repos | Step 7 → local-angular-build: 2b → 3 → 4 → 5 → 7 |
+| Maven/backend only | local-angular-build: 1 → 6 → 7 |
+| Locale/bundle only | local-angular-build: 2b → 3 → 4 → 5 → 7 |
+
+Deferrals block Step 10 unless explicitly accepted by the user.
+
+**Done when:** user confirms G1–G7 pass.
+
+---
+
+### Step 10 — Finalize & Reset
+
+Write `docs/{major}-upgrade.md` covering: Angular versions, date, branch names, references reviewed, package changes in both repos, breaking changes fixed, preview validation result, deferred items.
+
+```bash
+sh .cursor/skills/angular-upgrade/scripts/reset-state.sh
+```
+
+Tell the user: _"Angular {target} upgrade complete. Upgrade doc: `docs/{major}-upgrade.md`."_ See [`examples.md`](examples.md) for the canonical completion message.
+
+**Post-merge checklist (share with user):**
+- [ ] Merge both `ng-runtime` and `ng-codegen` branches (coordinated — same PR window or back-to-back)
+- [ ] Update `repo.config.sh`: set `ANGULAR_BASE_VERSION` to the target just shipped and `ANGULAR_TARGET_VERSION` to the next major — so the next upgrade starts with correct defaults
+- [ ] If Node.js version changed: update CI pipeline node version (`.github/workflows/`, `Jenkinsfile`, or equivalent)
+- [ ] If Node.js version changed: notify any dependent packages/consumers to align `engines.node`
+- [ ] Share `docs/{major}-upgrade.md` with the team (PR description or channel)
+
+**Done when:** upgrade doc written; `current-state.md` reset; todos cleared.
+
+---
+
+## Utility Scripts
+
+```bash
+sh .cursor/skills/angular-upgrade/scripts/preflight.sh        # Step 0 — clean workspace check
+sh .cursor/skills/angular-upgrade/scripts/install.sh          # Step 4
+sh .cursor/skills/angular-upgrade/scripts/audit.sh            # Step 5
+sh .cursor/skills/angular-upgrade/scripts/pattern-review.sh  # Step 6
+sh .cursor/skills/angular-upgrade/scripts/build.sh              # Step 7 full (BUILD_CMD from repo.config.sh)
+sh .cursor/skills/angular-upgrade/scripts/build.sh --incremental  # mid-upgrade check only
+sh .cursor/skills/angular-upgrade/scripts/test.sh             # Step 8
+sh .cursor/skills/angular-upgrade/scripts/reset-state.sh     # Step 10 or Step 0 fresh start
+sh .cursor/skills/angular-upgrade/scripts/rollback.sh        # undo code changes in both repos (run before reset-state.sh when abandoning an upgrade)
+# NOTE: rollback.sh resets tracked source files but does NOT reverse node_modules.
+# After rollback, delete node_modules and re-run npm install to return to the pre-upgrade package state.
+```
+
+Config source: [`repo.config.sh`](repo.config.sh) (sourced by all scripts).
+
+---
+
+## Additional Resources
 
 | File | Read when |
 |------|-----------|
-| [`inputs.md`](inputs.md) | Step 0 parsing; who collects inputs |
-| [`examples.md`](examples.md) | Canonical Start/Resume messages |
-| [`references.md`](references.md) | Step 2 external links + dual-repo map |
-| [`wavemaker-runtime-patterns.md`](wavemaker-runtime-patterns.md) | Step 6 greps; Step 8 preview checklist |
-| [`current-state.example.md`](current-state.example.md) | Template for session state |
-| [`../../commands/local-angular-build.md`](../../commands/local-angular-build.md) | Step 8 Tomcat workflow |
+| [`examples.md`](examples.md) | Step 0/10 — config table, completion message, upgrade doc skeleton |
+| [`references.md`](references.md) | Step 2 — reference checklist + dual-repo file map |
+| [`patterns-runtime.md`](patterns-runtime.md) | Step 6 — ng-runtime §1–§19 greps |
+| [`patterns-codegen.md`](patterns-codegen.md) | Step 6 — ng-codegen §20 greps |
+| [`wavemaker-runtime-patterns.md`](wavemaker-runtime-patterns.md) | Step 3 — dependency classification table; Step 6 — automated blockers, §21–§25, classification guide; Step 9 — extended checks |
+| [`troubleshooting.md`](troubleshooting.md) | Any step — error message → §N quick lookup |
+| [`current-state.example.md`](current-state.example.md) | Template for `current-state.md` |
+| [`../../commands/local-angular-build.md`](../../commands/local-angular-build.md) | Step 9 — Tomcat build and deploy |
 
-**Port skill:** Copy `.cursor/skills/angular-upgrade/`; edit `repo.config.sh` (`ANGULAR_*`, URLs, `BUILD_CMD`, `PATTERNS_FILE`).
-
-**Session recap:** Todo state; blocker if any; steps done/next; build, verify, preview, test results.
+**Port this skill:** copy `.cursor/skills/angular-upgrade/`; edit `repo.config.sh`.

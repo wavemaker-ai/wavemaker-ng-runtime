@@ -7,12 +7,12 @@ Run this workflow **step by step, in order**. Execute each step fully before mov
 | Mode | Invoke | Inputs |
 |------|--------|--------|
 | **Standalone** | `@.cursor/commands/local-angular-build` | [`inputs.md`](.cursor/skills/angular-upgrade/inputs.md) — standalone gate |
-| **Upgrade Step 8** | `@.cursor/skills/angular-upgrade` (Steps 0–7 done) | `current-state.md` only — **no re-prompt** |
+| **Upgrade Step 9** | `@.cursor/skills/angular-upgrade` (Steps 0–7 done) | `current-state.md` only — **no re-prompt** |
 
 | Mode | ng-runtime build | Steps to run | Browser verify |
 |------|------------------|--------------|----------------|
 | **Standalone** | Step **2a** — `build.sh --force` + bundles | **Input gate → prerequisites → 1–7** → Browser verify | Per standalone inputs |
-| **Upgrade Step 8** | Step **2b** — `RUNTIME_BUNDLE_CMD` | **1, 2b, 3–7** → Browser verify (no input gate) | From `current-state.md` Step 0 |
+| **Upgrade Step 9** | Step **2b** — `RUNTIME_BUNDLE_CMD` | **1, 2b, 3–7** → Browser verify (no input gate) | From `current-state.md` Step 0 |
 
 **Shared rules:** never edit generated app source; fix `NG_RUNTIME` or `NG_CODEGEN` and re-run affected steps.
 
@@ -30,7 +30,7 @@ All product fixes go in **`wavemaker-ng-runtime`** and **`wavemaker-ng-codegen`*
 
 ## Standalone input gate
 
-**Skip when running as upgrade Step 8.** Follow **Standalone workflow** in [`.cursor/skills/angular-upgrade/inputs.md`](.cursor/skills/angular-upgrade/inputs.md): show defaults, parse message, print effective config, block until `confirm` / `proceed with defaults`.
+**Skip when running as upgrade Step 9.** Follow **Standalone workflow** in [`.cursor/skills/angular-upgrade/inputs.md`](.cursor/skills/angular-upgrade/inputs.md): show defaults, parse message, print effective config, block until `confirm` / `proceed with defaults`.
 
 For upgrade, use the canonical Start message in [`examples.md`](.cursor/skills/angular-upgrade/examples.md) — Step 0 collects all URLs and flags.
 
@@ -127,7 +127,7 @@ npm_config_registry="${NPM_REGISTRY}" \
 
 ### Step 2a — Full rebuild (standalone only)
 
-Use when this command is invoked **directly**, not from angular-upgrade Step 8:
+Use when this command is invoked **directly**, not from angular-upgrade Step 9:
 
 ```bash
 cd "${NG_RUNTIME}"
@@ -138,7 +138,7 @@ sh bundle-runtime-cli.sh
 sh bundle-angular-app-cli.sh
 ```
 
-### Step 2b — Bundles only (angular-upgrade Step 8)
+### Step 2b — Bundles only (angular-upgrade Step 9)
 
 Use when angular-upgrade **Step 7** already passed (`BUILD_CMD` = `sh build.sh -f`):
 
@@ -247,7 +247,7 @@ cp -R "${GENERATED_APP}/dist/ng-bundle" "${TOMCAT_APP}/"
 
 **With URLs:** load `${COMPARISON_URL}` then `${PREVIEW_URL}` (or `${APP_URL}`). Pass/fail: **Preview validation checklist** in [`wavemaker-runtime-patterns.md`](.cursor/skills/angular-upgrade/wavemaker-runtime-patterns.md) (gate G1–G4 required; extended E1–E13 where applicable).
 
-On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUNTIME` or `NG_CODEGEN`; re-run affected steps. **Upgrade:** `SKILL.md` Step 8 iteration table. **Standalone:** same matrix (runtime fix → 2a; codegen fix → 3→4→5→7; both → 2a→3→4→5→7).
+On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUNTIME` or `NG_CODEGEN`; re-run affected steps. **Upgrade:** `SKILL.md` Step 9 iteration table. **Standalone:** same matrix (runtime fix → 2a; codegen fix → 3→4→5→7; both → 2a→3→4→5→7).
 
 ---
 
@@ -258,7 +258,7 @@ On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUN
 | Signal | Mode |
 |--------|------|
 | User invoked `@.cursor/commands/local-angular-build` only | **Standalone** |
-| User running `@.cursor/skills/angular-upgrade` and upgrade Step 7 is `done` | **Upgrade Step 8** |
+| User running `@.cursor/skills/angular-upgrade` and upgrade Step 7 is `done` | **Upgrade Step 9** |
 
 ### Standalone
 
@@ -268,7 +268,7 @@ On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUN
 4. Run **prerequisites** + Steps **1–7** (Step **2a**; skip Step 1 when WAR + Tomcat app already exist).
 5. **Browser verify** per patterns § Preview validation checklist unless `skip preview yes`.
 
-### Upgrade Step 8
+### Upgrade Step 9
 
 1. **Do not** run standalone input gate.
 2. Read `current-state.md` — require `Inputs confirmed: yes`; use effective preview/comparison/skip preview from upgrade Step 0.
@@ -285,7 +285,7 @@ On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUN
 ## Quick reference (all repos)
 
 ```
-${NG_RUNTIME}/                  ← Step 2a (standalone) or 2b (upgrade Step 8)
+${NG_RUNTIME}/                  ← Step 2a (standalone) or 2b (upgrade Step 9)
 ${NG_CODEGEN}/                  ← Step 3 & 4
 ${CODEGEN_APP}/                 ← Step 4 (codegen CLI)
 

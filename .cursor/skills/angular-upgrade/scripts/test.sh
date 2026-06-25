@@ -1,5 +1,5 @@
 #!/bin/sh
-# Unit test gate (Step 9). Optional per repo — runs when Step 0 and TEST_CMD are set.
+# Unit test gate (Step 8). Optional per repo — runs when Step 0 and TEST_CMD are set.
 # Command from repo.config.sh TEST_CMD.
 # Usage: sh scripts/test.sh [-- <extra args passed to test runner>]
 
