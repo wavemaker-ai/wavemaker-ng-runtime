@@ -5,6 +5,8 @@ import { BsLocaleService } from 'ngx-bootstrap/datepicker';
 
 import {
     _WM_APP_PROJECT,
+    $appDigest,
+    $invokeWatchers,
     AbstractI18nService,
     AppDefaults,
     getSessionStorageItem,
@@ -191,10 +193,10 @@ export class I18nServiceImpl extends AbstractI18nService {
         } else {
             this.bundleLoaded.fullCalendar = true;
         }
-        const promises = [this.loadAngularLocaleBundle(libLocale.angular)];
-        if (libLocale.angular) {
-            promises.push(this.loadAppLocaleBundle());
-        }
+        const promises = [
+            this.loadAngularLocaleBundle(libLocale.angular),
+            this.loadAppLocaleBundle()
+        ];
         return Promise.all(promises);
     }
 
@@ -361,7 +363,10 @@ export class I18nServiceImpl extends AbstractI18nService {
 
     private notifyLocaleChanged() {
         if(this.bundleLoaded.moment && this.bundleLoaded.fullCalendar && this.bundleLoaded.angular && this.bundleLoaded.app) {
-            this.app.notify(  'locale-changed', this.bundleLoaded.libLocale);
+            // Re-evaluate bind: expressions (dataset, caption, placeholder, etc.) against the updated appLocale.
+            $invokeWatchers(true);
+            this.app.notify('locale-changed', this.bundleLoaded.libLocale);
+            $appDigest(true);
         }
     }
 

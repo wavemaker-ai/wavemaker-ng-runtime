@@ -98,7 +98,7 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
 
         this._debouncedInitDatasetItems = debounce(() => {
             this.initDatasetItems();
-            $appDigest();
+            $appDigest(true);
         }, 150);
         this.handleHeaderClick = noop;
 
