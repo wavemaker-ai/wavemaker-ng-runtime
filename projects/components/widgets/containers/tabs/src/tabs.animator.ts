@@ -18,7 +18,7 @@ export class TabsAnimator extends SwipeAnimation {
 
     public calibrate() {
         const activeTabIndex = this.tabs.getActiveTabIndex();
-        const panes = this._$el.find('div[wmTabPane]');
+        const panes = this._$el.find('>div[wmTabPane]');//fetch tab panes that are direct children of the tab content
         let activeTabVisibleIndex = 0;
         let noOfVisiblePanes = 0;
         let visiblePanes = [];
