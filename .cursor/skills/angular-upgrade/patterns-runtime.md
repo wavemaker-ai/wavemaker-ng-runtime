@@ -400,23 +400,24 @@ sh .cursor/skills/angular-upgrade/scripts/verify-ngx-bootstrap-bundle.sh
 
 **Origins:** CSP nonce `WMS-22503`; Angular 16 DOM API `WMS-25166`; Angular 18 `removeChild` `WMS-27103`; animation `@` props `WMS-29275` (`26ff7c6ee`, `bd406e2a7`).
 
-#### 13a. CSP pair — register **both** overrides
+#### 13a. CSP pair — NgModule only; do NOT add to `app.config.ts`
 
 `WMDomRendererFactory2` alone is not enough for CSP-compliant dynamic styles. **`WMDomSharedStylesHost`** adds `nonce` from `<meta name="CSP-NONCE">` (fallback `wm-csp-nonce`) when emulated/shadow styles are injected.
 
 ```typescript
-// runtime-base.module.ts — both required
+// runtime-base.module.ts — ONLY place to register ɵSharedStylesHost
 { provide: ɵSharedStylesHost, useClass: WMDomSharedStylesHost },
 { provide: ɵDomRendererFactory2, useClass: WMDomRendererFactory2 },
 
-// app.config.ts (standalone bootstrap) — verify BOTH tokens, not just RendererFactory2
+// app.config.ts (standalone bootstrap) — RendererFactory2 only; NOT ɵSharedStylesHost
 { provide: RendererFactory2, useClass: WMDomRendererFactory2 },
-{ provide: ɵSharedStylesHost, useClass: WMDomSharedStylesHost },  // easy to miss
 ```
 
-**Step 6 classification:** `RendererFactory2` overridden but `ɵSharedStylesHost` still default → `needs-review` (CSP violations / blocked dynamic styles in preview with strict CSP).
+**Do NOT add `ɵSharedStylesHost` to `app.config.ts`.** WaveMaker loads `RuntimeBaseModule` in lazy routes — this creates a child injector that also provides `ɵSharedStylesHost`. If the root injector (`app.config.ts`) also provides it, Angular creates two `WMDomSharedStylesHost` instances. The child instance's `ngOnDestroy()` removes all its tracked style nodes on navigation, stripping left-nav and widget styles from the DOM. Confirmed regression: WMS-31488 (2026-06-26).
 
-**Preview:** pages with emulated encapsulation components, table inline styles, runtime-compiled partials — check console for CSP `style-src` violations.
+The NgModule registration in `runtime-base.module.ts` covers all routes that import it. CSP nonce will not apply to styles injected through the standalone bootstrap path only — this is an accepted known gap until the NgModule boundary is removed.
+
+**Step 6 classification:** `ɵSharedStylesHost` absent from `app.config.ts` is expected and correct → `safe`. `pattern-review.sh` §13a WARN for missing `app.config.ts` registration is a known false alarm — dismiss it.
 
 #### 13b. Provider token drift (`RendererFactory2` vs `ɵDomRendererFactory2`)
 
@@ -439,7 +440,7 @@ Grep both tokens after upgrade — registering only one path leaves the other bo
 
 **Step 6 classification:** upstream `DomRendererFactory2` signature changed but fork untouched → `must-change`.
 
-**After syncing, re-verify §13a:** porting upstream API changes can rename or add constructor parameters in `WMDomRendererFactory2`. If the class name or constructor signature changed, ensure the provider registrations in `runtime-base.module.ts` (`ɵDomRendererFactory2` token) and `app.config.ts` (`RendererFactory2`, `ɵSharedStylesHost` tokens) still point to the updated class. A sync that compiles successfully but leaves a stale token registration causes CSP violations or wrong renderer in preview with no compile error.
+**After syncing, re-verify §13a:** porting upstream API changes can rename or add constructor parameters in `WMDomRendererFactory2`. If the class name or constructor signature changed, ensure the provider registrations in `runtime-base.module.ts` (`ɵDomRendererFactory2` + `ɵSharedStylesHost` tokens) and `app.config.ts` (`RendererFactory2` token only — see §13a for why `ɵSharedStylesHost` must NOT be in `app.config.ts`) still point to the updated class.
 
 #### 13d. Angular 16+ `listen()` / `DOCUMENT` (WMS-25166)
 
@@ -512,6 +513,8 @@ rg 'addGlobalEventListener|removeChild\(parent' projects/runtime-base/src/overri
 rg 'AT_CHARCODE|charCodeAt\(0\) === AT' projects/runtime-base/src/overrides/wm_dom_renderer.ts
 ```
 
+**Cross-section dependency:** §13 and §15 interact — `bd406e2a7` introduced an animation-event fix that broke page-param-driven variables on first load; `56f3b9ce6` reverted it. If §13 animation handling is re-attempted, re-validate §15 in preview before marking done.
+
 ### 14. Template `this.` context references
 
 **WMS-29275:** `d9a05f1be`
@@ -556,7 +559,9 @@ const subscription = this.route.queryParams.subscribe(params =>
 
 **Step 6 classification:** subscription-only `registerPageParams` → `likely-breakage`.
 
-**Note:** `bd406e2a7` was later reverted by `WMS-25708` (`56f3b9ce6`) on this branch — re-validate in preview if page-param-driven variables fail on first load.
+**Note:** `bd406e2a7` was later reverted by `WMS-25708` (`56f3b9ce6`) — re-validate in preview if page-param-driven variables fail on first load.
+
+**Cross-section dependency:** §15 and §7 were fixed together in `5442cebf0` (bootstrap providers + page query params). If §7 `APP_INITIALIZER` ordering changes, re-validate §15 query param timing in the same preview pass.
 
 ### 16. List / table embedded template context & DI
 
@@ -580,6 +585,8 @@ const subscription = this.route.queryParams.subscribe(params =>
 rg 'ngTemplateOutletContext.*item:' projects/components/widgets/data/list
 rg 'createEmbeddedView\(' projects/components/widgets/data/table/src/table.component.ts
 ```
+
+**Cross-section dependency:** §15 and §16 were fixed together in `80faec7f4` (query param timing + list/table injectors). If either regresses in preview, check the other in the same pass.
 
 ### 19. WaveMaker expression parser (`ASTCompiler` / `$parseExpr`)
 

@@ -25,7 +25,7 @@ Workflow: [`SKILL.md`](./SKILL.md). References: [`references.md`](./references.m
 | [Classification guide](#classification-guide) | Finding severity classification |
 | [Preview validation](#preview-validation-step-9) | Visual parity gate G1–G7, E1–E13 |
 
-> For commit history behind each fix, see [`history.md`](history.md).
+> For commit history behind each fix, use `git log --all -S <symbol>` — e.g. `git log --all -S takeUntilDestroyed`.
 
 > **Pattern currency:** these patterns reflect past Angular upgrade experience (primarily Angular 20). They are a starting point, not a complete list. R1/R3 from the official Angular docs take precedence — any breaking change found there that is not covered here is still `must-change`.
 
@@ -58,6 +58,8 @@ When adding a **must-change** grep, update **both** the script and the matching 
 | Upstream PositioningService needs `__destroyRef` → patch covers it | runtime | §12 |
 | No `addGlobalEventListener` in `wm_dom_renderer.ts` | runtime | §13d |
 | No `parent.removeChild()` in `wm_dom_renderer.ts` | runtime | §13e |
+| `ɵSharedStylesHost` missing from `runtime-base.module.ts` | runtime | §13a |
+| `ɵSharedStylesHost` present in `app.config.ts` (double instance → nav regression) | runtime | §13a |
 | No `this.` prefixes in widget HTML templates | runtime | §14 |
 | No old-style string placeholder in `parseBinding`/`parseAction` | runtime | §19a |
 | Branch match runtime ↔ codegen | both | §20 |
@@ -74,7 +76,6 @@ When adding a **must-change** grep, update **both** the script and the matching 
 | `jest-preset-angular` major != Angular target | §9 |
 | RouterOutlet `overrideRouterOutlet` without `@ViewChild` setter | §11 |
 | Missing `AT_CHARCODE` animation guard in `wm_dom_renderer.ts` | §13g |
-| `ɵSharedStylesHost` token missing from `runtime-base.module.ts` / `app.config.ts` | §13a |
 | `ParseSourceSpan` not found in `expression-parser.ts` | §19a |
 | `ParenthesizedExpression` not handled in `expression-parser.ts` | §19b |
 | `setPipeProvider` not called | §19c |

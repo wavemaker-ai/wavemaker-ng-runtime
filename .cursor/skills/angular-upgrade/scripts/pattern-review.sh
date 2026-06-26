@@ -142,7 +142,9 @@ else
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
-# §9  jest-preset-angular version vs Angular target
+# §9  jest-preset-angular — verify peer dep covers Angular target
+# jest-preset-angular uses its own version scheme (not aligned to Angular majors).
+# Check the installed package's peerDependencies range rather than comparing major numbers.
 # ─────────────────────────────────────────────────────────────────────────────
 if [ -f package.json ] && [ -n "${ANGULAR_TARGET_VERSION:-}" ]; then
   JPT_VER=$(node -e "
@@ -156,10 +158,32 @@ if [ -f package.json ] && [ -n "${ANGULAR_TARGET_VERSION:-}" ]; then
     info 9 "jest-preset-angular not in package.json"
   else
     JPT_MAJOR=$(echo "$JPT_VER" | tr -d '^~>= ' | cut -d. -f1)
-    if [ "$JPT_MAJOR" = "$ANGULAR_TARGET_VERSION" ]; then
-      ok 9 "jest-preset-angular major ($JPT_MAJOR) matches Angular target ($ANGULAR_TARGET_VERSION)"
+    # Read peer dep range from installed package (more accurate than major comparison)
+    JPT_PEER=$(node -e "
+      try {
+        const p = require('./node_modules/jest-preset-angular/package.json');
+        console.log((p.peerDependencies || {})['@angular/core'] || 'unknown');
+      } catch(e) { console.log('unknown'); }
+    " 2>/dev/null || echo "unknown")
+    # Check if Angular target falls within the peer dep range
+    JPT_COMPATIBLE=$(node -e "
+      try {
+        const peer = '$JPT_PEER';
+        const target = parseInt('$ANGULAR_TARGET_VERSION', 10);
+        const m = peer.match(/>=(\d+).*?<(\d+)/);
+        if (m) {
+          console.log(target >= parseInt(m[1]) && target < parseInt(m[2]) ? 'yes' : 'no');
+        } else {
+          console.log('unknown');
+        }
+      } catch(e) { console.log('unknown'); }
+    " 2>/dev/null || echo "unknown")
+    if [ "$JPT_COMPATIBLE" = "yes" ]; then
+      ok 9 "jest-preset-angular $JPT_MAJOR peer deps ($JPT_PEER) cover Angular $ANGULAR_TARGET_VERSION"
+    elif [ "$JPT_COMPATIBLE" = "no" ]; then
+      warn 9 "jest-preset-angular $JPT_MAJOR peer deps ($JPT_PEER) do not cover Angular $ANGULAR_TARGET_VERSION — update per §9"
     else
-      warn 9 "jest-preset-angular major ($JPT_MAJOR) != Angular target ($ANGULAR_TARGET_VERSION) — update per §9"
+      warn 9 "jest-preset-angular $JPT_MAJOR installed; peer dep range unknown ($JPT_PEER) — verify compatibility with Angular $ANGULAR_TARGET_VERSION per §9"
     fi
   fi
 fi
@@ -227,18 +251,25 @@ else
   warn 13 "wm_dom_renderer.ts not found at expected path"
 fi
 
-# §13a: both CSP tokens must be registered
+# §13a: ɵSharedStylesHost must be in runtime-base.module.ts ONLY
+# Do NOT add to app.config.ts — RuntimeBaseModule lazy routes create a child injector;
+# two instances cause ngOnDestroy to strip style nodes on navigation (WMS-31488).
 RUNTIME_MODULE="projects/runtime-base/src/runtime-base.module.ts"
 APP_CONFIG_TS="projects/runtime-dynamic/src/app/app.config.ts"
-for _csp_file in "$RUNTIME_MODULE" "$APP_CONFIG_TS"; do
-  if [ -f "$_csp_file" ]; then
-    if grep -q 'ɵSharedStylesHost\|WMDomSharedStylesHost' "$_csp_file"; then
-      ok "13a" "ɵSharedStylesHost token registered in $(basename "$_csp_file")"
-    else
-      warn "13a" "$(basename "$_csp_file") missing ɵSharedStylesHost token — CSP nonce won't apply to dynamic styles"
-    fi
+if [ -f "$RUNTIME_MODULE" ]; then
+  if grep -q 'ɵSharedStylesHost\|WMDomSharedStylesHost' "$RUNTIME_MODULE"; then
+    ok "13a" "ɵSharedStylesHost token registered in runtime-base.module.ts"
+  else
+    fail "13a" "runtime-base.module.ts missing ɵSharedStylesHost token — CSP nonce won't apply to dynamic styles"
   fi
-done
+fi
+if [ -f "$APP_CONFIG_TS" ]; then
+  if grep -q 'ɵSharedStylesHost\|WMDomSharedStylesHost' "$APP_CONFIG_TS"; then
+    fail "13a" "app.config.ts registers ɵSharedStylesHost — causes double WMDomSharedStylesHost instance in lazy routes; nav styles stripped on navigation. Remove from app.config.ts (see §13a)."
+  else
+    ok "13a" "app.config.ts correctly omits ɵSharedStylesHost (NgModule registration is sufficient)"
+  fi
+fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # §14  Template this. context references in widget HTML

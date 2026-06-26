@@ -38,9 +38,9 @@ When in doubt: keep the existing code.
 
 | Step | Name | Gate |
 |------|------|------|
-| 0 | Config & Confirm | Inputs confirmed; both repo paths and branches recorded in `current-state.md` |
+| 0 | Config & Confirm | Single summary table shown; user confirms once; `Inputs confirmed: yes` written — no further interruptions for the rest of the run |
 | 1 | Inventory | Angular version ≈ base version; all inventory paths resolve |
-| 2 | Research & Plan | R1–R3, R5, R8–R12 reviewed; R4 dry-run checked; R5 confirms stable release; every breaking change traced to plan or [N/A]; R2 version pins recorded (incl. R9 jest-preset-angular, R10 ng-packagr) |
+| 2 | Research & Plan | R1–R3, R5, R8–R12 reviewed; R4 dry-run checked; R5 confirms stable release; every breaking change traced to plan or [N/A]; R2 version pins recorded (incl. R9 jest-preset-angular, R10 ng-packagr); change plan printed and Step 3 begun |
 | 3 | Bump Packages | `package.json` edited in **both repos**; R9/R10 pins applied; no install yet |
 | 4 | Install | `npm install` exit 0 in all applicable repos |
 | 5 | Security Audit | No critical/high vulns; Angular/TS packages unchanged by audit fix |
@@ -74,15 +74,29 @@ Create todos `step-0` … `step-10` at start. Mark each done as you complete it.
 
 ### Step 0 — Config & Confirm
 
-Run the pre-flight check first:
+Step 0 is the **one and only confirmation point** for the entire run. After the user confirms here, Steps 1–10 run to completion without any further interruptions.
 
-```bash
-sh .cursor/skills/angular-upgrade/scripts/preflight.sh
-```
+**Do all of the following in a single pass before asking anything:**
 
-If exit 1 (dirty repo), show the listed files and block until the user either commits/stashes them **or** explicitly types "proceed with uncommitted changes". Dirty files unrelated to the upgrade (e.g., a README edit) are an acceptable reason to override — record it in `current-state.md` → **Step 0 Overrides**.
+1. Run preflight: `sh .cursor/skills/angular-upgrade/scripts/preflight.sh`
+2. Read `repo.config.sh` and parse the user trigger message (table below)
+3. Resolve ng-runtime branch (`git rev-parse --abbrev-ref HEAD`)
+4. Resolve ng-codegen path and branch (`cd $NG_CODEGEN_PATH && git rev-parse --abbrev-ref HEAD`)
 
-Then read [`repo.config.sh`](repo.config.sh). Parse the user message using the table below. Print the effective config table (see [`examples.md`](examples.md)). Block Steps 1–10 until the user confirms.
+**Then show ONE summary table** containing all of the following together:
+
+| Field | Value | Status |
+|-------|-------|--------|
+| Base → Target Angular | e.g. 20 → 21 | ok / ⚠ mismatch |
+| Skip preview / tests / verify | yes/no/no | ok |
+| ng-runtime branch | WMS-31488 | ok / ⚠ detached HEAD |
+| ng-codegen path | /abs/path | ok / ⚠ not found |
+| ng-codegen branch | WMS-31488 | ok / ⚠ mismatch |
+| Workspace clean | yes | ok / ⚠ dirty: file1, file2 |
+
+Below the table, add a single line for each ⚠ issue with the action needed (e.g. "dirty: commit or stash before confirming"). Then ask **once**: "Confirm to start, or fix the issues above first."
+
+The user's reply — "confirm", "yes", "go", or any affirmative — starts Steps 1–10. Do not interrupt again after this point regardless of what is found during the run. Unexpected findings (new pattern warnings, audit results, build warnings) are recorded in `current-state.md` and reported at the end of each step as informational — never as blocking prompts.
 
 **Parsing rules:**
 
@@ -95,7 +109,6 @@ Then read [`repo.config.sh`](repo.config.sh). Parse the user message using the t
 | Skip preview | `skip preview yes`, `skip step 9`, `skip tomcat` | `no` when URLs set |
 | Skip tests | `skip tests yes/no` | `DEFAULT_RUN_TESTS` |
 | Skip verify | `skip verify yes/no` | `DEFAULT_RUN_BUNDLE_VERIFY` |
-| Confirm | `confirm`, `proceed with defaults` | — (always required) |
 
 `skip preview yes` sets `PREVIEW_URL=skip`. Chat overrides win over `repo.config.sh` defaults.
 
@@ -104,20 +117,7 @@ Reset `current-state.md` (run `scripts/reset-state.sh`) when any of:
 - Stored base/target version ≠ effective base/target from message or `repo.config.sh`
 - Step 10 is still `done` in the file (prior run not fully reset)
 
-After confirmation, record in `current-state.md`:
-- ng-runtime branch (`git rev-parse --abbrev-ref HEAD`) — if result is `HEAD`, the repo is in detached state; block and ask the user to check out a named branch first
-- ng-codegen path (`NG_CODEGEN_PATH` resolved to absolute path)
-- ng-codegen branch (`cd $NG_CODEGEN_PATH && git rev-parse --abbrev-ref HEAD`) — same detached HEAD check applies
-- Both repos must be on the same branch — if not, guide the user:
-  ```bash
-  # Branch exists in ng-codegen:
-  cd $NG_CODEGEN_PATH && git checkout <ng-runtime-branch>
-  # Branch doesn't exist in ng-codegen yet:
-  cd $NG_CODEGEN_PATH && git checkout -b <ng-runtime-branch>
-  ```
-  Re-run Step 0 after alignment.
-
-Set `Inputs confirmed: yes` only after both paths exist and branches match.
+Write `current-state.md` and set `Inputs confirmed: yes` after the user confirms.
 
 **Done when:** `Inputs confirmed: yes` in `current-state.md`; both branch names and paths recorded.
 
@@ -144,13 +144,7 @@ Verify Angular version in `package.json` ≈ `ANGULAR_BASE_VERSION`.
 
 Review references R1–R13 per [`references.md`](references.md). Block if R1, R2, R3, R5, R8, R9, R10, R11, or R12 are not reviewed.
 
-**Traceability (required):** for every breaking change found in R1 and R3, either:
-- Add a row to the **Dual-repo change plan** in `current-state.md`, or
-- Annotate inline: `[N/A: reason this doesn't apply to WaveMaker runtime]`
-
-No breaking change may be acknowledged without one of these two outcomes.
-
-**R1 and R3 are primary.** `wavemaker-runtime-patterns.md` reflects past upgrade experience. If R1 or R3 shows a breaking change that the pattern files (`patterns-runtime.md`, `patterns-codegen.md`, `wavemaker-runtime-patterns.md`) do not cover, treat it as `must-change` — official docs take precedence over historical patterns.
+**Traceability (required):** every R1/R3 breaking change must have a plan row or `[N/A: reason]` — see [`references.md`](references.md) for the full traceability rule and N/A guidance. R1/R3 take precedence over pattern files; an uncovered breaking change is `must-change`.
 
 **R2 version pins (required):** record the exact TypeScript, Node, RxJS, and zone.js versions for the target Angular in `current-state.md` → **R2 Version Pins**. Also record the compatible `jest-preset-angular` version (R9) and `ng-packagr` version (R10) in the same section — all five flow directly into Step 3 edits.
 
@@ -162,9 +156,9 @@ No breaking change may be acknowledged without one of these two outcomes.
 
 See [`references.md`](references.md) for the full reference format and dual-repo file map.
 
-**Plan approval (required before Step 3):** after filling the dual-repo change plan, print it to the user and wait for explicit confirmation. Do not begin Step 3 until the user says "confirm", "proceed", or similar. The user may adjust the plan — record any changes before proceeding.
+**Plan summary:** after filling the dual-repo change plan, print it compactly and proceed to Step 3 immediately. Only pause if there is a genuine ambiguity — e.g., two valid approaches to the same breaking change where the right choice depends on user preference, or a breaking change in R1/R3 that the pattern files don't cover and you cannot determine the correct fix. In that case, call out the specific item and ask; don't gate the entire step.
 
-**Done when:** all required references reviewed; every R1/R3 breaking change traced; R2 version pins recorded (including R9 jest-preset-angular and R10 ng-packagr); dual-repo change plan filled **and confirmed by user**.
+**Done when:** all required references reviewed; every R1/R3 breaking change traced; R2 version pins recorded (including R9 jest-preset-angular and R10 ng-packagr); dual-repo change plan filled.
 
 ---
 

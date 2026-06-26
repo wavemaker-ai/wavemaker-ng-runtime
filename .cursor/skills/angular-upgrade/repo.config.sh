@@ -14,8 +14,8 @@
 # Step 10: UPGRADE_DOC_PATH
 
 # --- Angular version range (defaults — user may override in Start message) ---
-ANGULAR_BASE_VERSION="20"
-ANGULAR_TARGET_VERSION="21"
+ANGULAR_BASE_VERSION="21"
+ANGULAR_TARGET_VERSION="22"
 
 # --- Local Tomcat validation (Step 9 defaults) ---
 PREVIEW_URL="http://localhost:8080/SearchWidgetScenarios/#/LiveForm_Autocomplete"
