@@ -6,7 +6,6 @@ import {
     RendererFactory2,
     provideZoneChangeDetection
 } from "@angular/core";
-import { ɵSharedStylesHost } from "@angular/platform-browser";
 import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation } from "@angular/router";
 import {
     HTTP_INTERCEPTORS,
@@ -50,7 +49,6 @@ import {
     ToasterServiceImpl,
     WmRouteReuseStrategy,
     WMDomRendererFactory2,
-    WMDomSharedStylesHost,
     MAX_CACHE_SIZE,
     MAX_CACHE_AGE
 } from "@wm/runtime/base";
@@ -168,7 +166,6 @@ export const appConfig: ApplicationConfig = {
 
         // Custom renderer overrides (must be early)
         { provide: RendererFactory2, useClass: WMDomRendererFactory2 },
-        { provide: ɵSharedStylesHost, useClass: WMDomSharedStylesHost },
         // Provide HttpService EARLY (AppManagerService needs it)
         { provide: AbstractHttpService, useClass: HttpServiceImpl },
         // Provide base services (before APP_INITIALIZER that depends on them)
