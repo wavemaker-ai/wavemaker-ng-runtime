@@ -1,7 +1,7 @@
 # Angular 21 Upgrade Summary
 
 **Branch:** WMS-31488  
-**Date:** 2026-06-18 (validation re-run)  
+**Date:** 2026-06-18 (initial); 2026-06-26 (re-validation)  
 **Base → Target:** Angular 20 → 21
 
 ## Libraries upgraded
@@ -38,22 +38,22 @@ Runtime was already on Angular 21 before this run; no `package.json` version cha
 |------|--------|-------|
 | Install | pass | `install.sh` |
 | Security audit | pass (script) | 34 vulns; 9 high in build toolchain; no `--force` |
-| Pattern review | pass | `pattern-review.sh` after codegen §20b/§20e fixes |
-| Build | pass | `build.sh -f` ~315s |
+| Pattern review | pass | `pattern-review.sh` — §9 WARN is false positive (jest-preset-angular 16.x peer deps cover Angular 21); §13a WARN accepted as known gap (see below) |
+| Build | pass | `build.sh -f` 412s |
 | Post-build verify | pass | ngx-bootstrap bundle grep |
-| Local Tomcat — preview | pass | HTTP 200 `#/LiveForm_Autocomplete` after codegen redeploy |
-| Local Tomcat — comparison | pass | HTTP 200 stage `#/Main` |
-| Unit tests | pass | 126 suites, 4265 tests |
+| Local Tomcat — preview | pass | G1–G7 + E6–E9 visual parity checks (2026-06-26) |
+| Local Tomcat — comparison | pass | stage `#/Main` |
+| Unit tests | skipped | re-validation run |
 
 ## New platform features not adopted
 
 - Angular 22 `animate.enter` / `animate.leave` migration
 - Zoneless / standalone-only refactor beyond current `app.config.ts` pattern
 
-## Known follow-ups
+## Known gaps / follow-ups
 
 1. **npm audit** — Residual high in `piscina`, `undici`, `vite` (devkit chain); evaluate on next CLI bump
-2. **Browser smoke** — HTTP 200 only this run; full preview checklist (G1–G4, E1–E13) on demand
+2. **§13a ɵSharedStylesHost in app.config.ts** — Adding it to the standalone root causes a second `WMDomSharedStylesHost` instance in lazy-route child injectors (RuntimeBaseModule also provides it). On navigation the child instance calls `ngOnDestroy`, stripping style nodes and breaking left-nav rendering. NgModule registration in `runtime-base.module.ts` is sufficient for now; defer until standalone migration removes the NgModule boundary.
 
 ## Security notes
 

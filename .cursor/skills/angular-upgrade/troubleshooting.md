@@ -16,6 +16,7 @@ For the fix, open the file listed in **Section** and follow its instructions. Wo
 | `TS2339: Property 'forRoot' does not exist on type 'typeof BsDatepickerModule'` | §20b | Same — `BsDatepickerModule` |
 | `ReferenceError: __destroyRef is not defined` | §12 | ngx-bootstrap positioning patch missing or regex drifted after minor bump |
 | `TypeError: Cannot read properties of undefined (reading 'attach')` | §11 | `overrideRouterOutlet` fires before `RouterOutlet` created |
+| Nav labels / widget styles disappear after page navigation | §13a | Two `WMDomSharedStylesHost` instances — `ɵSharedStylesHost` added to both `app.config.ts` and `runtime-base.module.ts`; child injector `ngOnDestroy` strips style nodes. Remove from `app.config.ts`. |
 | `Error: Unexpected synthetic property @…` | §13g | `WMDomRenderer` not ignoring `@`-prefixed animation properties |
 | `TypeError: Cannot set properties of null` in `setProperty` | §13g | Null `el` guard missing in `WMDomRendererFactory2` |
 | `Error: Unsupported event target … for event …` | §13d | `addGlobalEventListener` reverted instead of `DOCUMENT`-based resolve |

@@ -4,7 +4,7 @@ Canonical messages for this skill.
 
 ---
 
-## Start Angular upgrade (full — implicit confirm)
+## Start Angular upgrade (full — all flags explicit)
 
 ```text
 Start Angular upgrade.
@@ -24,7 +24,7 @@ skip verify no
 Start Angular upgrade.
 ```
 
-Agent prints effective config → waits for `confirm` or the full message above before proceeding.
+Agent runs preflight + branch checks, prints the config table with a Status column, and asks for confirmation once. After confirmation, Steps 1–10 run without further interruption.
 
 ## Resume Angular upgrade
 
@@ -36,29 +36,33 @@ Valid only while a run is **in progress** (Step 10 not `done`, base/target uncha
 
 ## Effective config table (Step 0 output)
 
-```
-Angular:      20 → 21
-Preview URL:  http://localhost:8080/SearchWidgetScenarios/#/LiveForm_Autocomplete
-Compare URL:  https://stage-platform.wavemaker.ai/.../Main
-Skip preview: no
-Skip tests:   no
-Skip verify:  no
-Build cmd:    sh build.sh -f
-ng-runtime:   WMS-31488
-ng-codegen:   ../wavemaker-ng-codegen  (branch: WMS-31488)
-
-Confirm? → type "confirm" or "proceed with defaults"
-```
-
-## Blocker alert (Step N blocked)
+Shown once before asking for confirmation. Each row has a Status column — `ok` when resolved cleanly, `⚠` with inline action needed when not.
 
 ```
-⛔ BLOCKED — Step 6 — Apply Fixes
+| Field              | Value                                                  | Status          |
+|--------------------|--------------------------------------------------------|-----------------|
+| Angular            | 20 → 21                                                | ok              |
+| Skip preview/tests | no / no / no                                           | ok              |
+| ng-runtime branch  | WMS-31488                                              | ok              |
+| ng-codegen path    | /Users/.../wavemaker-ng-codegen                        | ok              |
+| ng-codegen branch  | WMS-31488                                              | ok              |
+| Workspace clean    | yes                                                    | ok              |
 
-  What:     pattern-review.sh exit 1 — branch mismatch
-  Evidence: ng-runtime=WMS-31488  ng-codegen=development
-  Fix:      checkout WMS-31488 on wavemaker-ng-codegen, then re-run pattern-review.sh
-  To continue: fix and type "continue" / "defer step 6" / "resume upgrade"
+Confirm to start, or fix the ⚠ issues above first.
+```
+
+## Blocker alert (Step N blocked — genuine exit-code failure)
+
+Used only when a step fails with a non-zero exit code (build, install) and cannot continue. After Step 0 confirmation, informational findings are recorded but do not block — only hard failures do.
+
+```
+⛔ BLOCKED — Step 7 — Build ng-runtime
+
+  What:     build.sh exit 1
+  Evidence: [last N lines of error output]
+  Fix:      [specific action — e.g. "check TS error in wm_dom_renderer.ts line 42"]
+
+  After fixing, say "resume upgrade" to continue from Step 7.
 ```
 
 ## Reference review bullet (Step 2)
