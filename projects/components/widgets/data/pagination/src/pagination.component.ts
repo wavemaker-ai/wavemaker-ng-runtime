@@ -627,6 +627,8 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         this.statehandler = statehandler;
         if (parts[0] === 'Variables' || parts[0] === 'Widgets') {
             bindPagingOptions = `${parts[0]}.${parts[1]}.pagination`;
+        } else if (parts[0] === 'App' && parts[1] === 'activePage' && parts[2]?.includes('Variables')&& parts[3]) {
+            bindPagingOptions = `App.activePage.${parts[2]}.${parts[3]}.pagination`;
         }
         if (!binddatasource && dataset && !datasetBoundExpr) {
             this.dataset = dataset;
