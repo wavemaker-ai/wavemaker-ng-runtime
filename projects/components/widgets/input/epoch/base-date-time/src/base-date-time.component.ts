@@ -378,7 +378,10 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                     $(obj).attr('aria-label', moment(newDate).format('dddd, MMMM Do YYYY'));
                     $('[bsdatepickerdaydecorator]').not('.is-other-month').attr('tabindex', '-1');
                     $(obj).attr('tabindex', '0');
-                    $(obj).focus();
+                    // Fix for [WMS-31235]:Focus shifts from current field when a datepicker is opened
+                    setTimeout(() => { 
+                        $(obj).focus();
+                    },10);
                     this.activeDate = newDate;
                 }
             });

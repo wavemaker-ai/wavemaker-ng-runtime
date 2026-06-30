@@ -2680,11 +2680,16 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     private _documentClickBind(event) {
         const $target = event.target;
-        // If click triggered from same grid or a dialog, do not save the row
+        // If the click is within this table, a dialog, or a date picker, do not save the row.
         if (this.$element[0].contains($target) || event.target.doctype || isInputBodyWrapper($($target))) {
             return;
         }
-        this.callDataGridMethod('saveRow');
+        // If click is inside another datatable, that table's edit handler saves this row — skip to avoid a duplicate save. [WMS-31104]
+        if ($($target).closest('.app-datagrid').length) {
+            return;
+        }
+        // Click is outside all tables — save the editing row without returning focus to this table. [WMS-31104]
+        this.callDataGridMethod('saveRow', undefined, true);
     }
 
     private _redraw(forceRender) {
