@@ -1373,6 +1373,18 @@ export const addForIdAttributes = (element: HTMLElement) => {
 };
 
 /**
+ * ngx-bootstrap 21+ dropdown refs may omit NgZone; fall back to a macrotask when onStable is unavailable.
+ */
+const runAfterStable = (ref: any, fn: () => void) => {
+    const zoneRef = ref?._ngZone || ref?.ngZone;
+    if (zoneRef?.onStable?.pipe) {
+        zoneRef.onStable.pipe(take(1)).subscribe(fn);
+    } else {
+        setTimeout(fn, 0);
+    }
+};
+
+/**
  * This method is used to adjust the container position
  * For example: 1. When datepicker control placed closed to the screen left edges, it is going to negative values which is  cutting the container.
  * To Fix the container overlapping issue changing the contrainer left translation to 0
@@ -1382,8 +1394,7 @@ export const addForIdAttributes = (element: HTMLElement) => {
  * @param ele - Child element(jquery). For some of the widgets(time, search) containerElem doesn't have height. The inner element(dropdown-menu) has height so passing it as optional.
  */
 export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) => {
-    const zoneRef = ref._ngZone || ref.ngZone;
-    zoneRef.onStable.pipe(take(1)).subscribe(() => {
+    runAfterStable(ref, () => {
         const containerEleTransformations = getWebkitTraslationMatrix(containerElem);
         if (containerEleTransformations && containerEleTransformations.m41 < 0) {
              containerEleTransformations.m41 = 0;
@@ -1407,8 +1418,7 @@ export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) =>
         const parentDimesion = parentElem.getBoundingClientRect();
         const parentRight = parentDimesion.right + window.scrollX;
         let newLeft;
-        const zoneRef = ref._ngZone || ref.ngZone;
-        zoneRef.onStable.pipe(take(1)).subscribe(() => {
+        runAfterStable(ref, () => {
             const containerEleTransformations = getWebkitTraslationMatrix(containerElem);
             if (!containerEleTransformations) {
                 return;

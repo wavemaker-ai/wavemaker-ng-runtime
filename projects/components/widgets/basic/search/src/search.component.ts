@@ -105,7 +105,6 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
 
     public tabindex: number;
     public startIndex: number;
-    public binddisplaylabel: string;
     public typeaheadContainer: TypeaheadContainerComponent;
     public containerTarget: string;
     public clearsearchiconclass: string;
@@ -156,7 +155,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
 
     constructor(
         inj: Injector,
-        app: App,
+        @Inject(App) app: App,
         @Attribute('datavalue.bind') public binddatavalue,
         @Attribute('dataset.bind') public binddataset,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
@@ -729,7 +728,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
 
                 // explicitly setting the optionslimit as the matches more than 20 will be ignored if optionslimit is not specified.
                 if (this.formattedDataset.length > 20 && !isDefined(this.limit)) {
-                    this.typeahead.typeaheadOptionsLimit = this.formattedDataset.length;
+                    this.limit = this.formattedDataset.length;
                 }
 
                 // In mobile, trigger the search by default until the results have height upto page height. Other results can be fetched by scrolling

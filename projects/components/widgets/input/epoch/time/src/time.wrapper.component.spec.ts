@@ -85,7 +85,7 @@ class TimeWrapperComponent {
 
 const dateComponentModuleDef: ITestModuleDef = {
     declarations: [TimeWrapperComponent],
-    imports: [BrowserAnimationsModule, TimeComponent, FormsModule, TimepickerModule.forRoot(), BsDropdownModule.forRoot()],
+    imports: [BrowserAnimationsModule, TimeComponent, FormsModule, TimepickerModule, BsDropdownModule],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: UserDefinedExecutionContext, useValue: UserDefinedExecutionContext },
@@ -445,7 +445,7 @@ describe("TimeComponent", () => {
 
 const dateComponentLocaleModuleDef: ITestModuleDef = {
     declarations: [TimeWrapperComponent],
-    imports: [BrowserAnimationsModule, TimeComponent, FormsModule, TimepickerModule.forRoot(), BsDropdownModule.forRoot()],
+    imports: [BrowserAnimationsModule, TimeComponent, FormsModule, TimepickerModule, BsDropdownModule],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: LOCALE_ID, useValue: 'de' },
@@ -512,7 +512,7 @@ describe('TimeComponent with localization', () => {
 
 const dateComponentROLocaleModuleDef: ITestModuleDef = {
     declarations: [TimeWrapperComponent],
-    imports: [BrowserAnimationsModule, TimeComponent, FormsModule, TimepickerModule.forRoot(), BsDropdownModule.forRoot()],
+    imports: [BrowserAnimationsModule, TimeComponent, FormsModule, TimepickerModule, BsDropdownModule],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: LOCALE_ID, useValue: 'ro' },

@@ -85,14 +85,30 @@ export class MenuDropdownItemComponent implements OnInit, OnDestroy {
         return KEY_MOVEMENTS;
     }
 
-    @HostListener('keydown.tab', ['$event', '"TAB"'])
-    @HostListener('keydown.shift.tab', ['$event', '"SHIFT-TAB"'])
-    @HostListener('keydown.escape', ['$event', '"ESC"'])
-    @HostListener('keydown.enter', ['$event', '"ENTER"'])
-    @HostListener('keydown.arrowup', ['$event', '"UP-ARROW"'])
-    @HostListener('keydown.arrowdown', ['$event', '"DOWN-ARROW"'])
-    @HostListener('keydown.arrowright', ['$event', '"RIGHT-ARROW"'])
-    @HostListener('keydown.arrowleft', ['$event', '"LEFT-ARROW"'])
+    @HostListener('keydown.tab', ['$event'])
+    onKeydownTab($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.ON_TAB); }
+
+    @HostListener('keydown.shift.tab', ['$event'])
+    onKeydownShiftTab($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.ON_SHIFT_TAB); }
+
+    @HostListener('keydown.escape', ['$event'])
+    onKeydownEscape($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.ON_ESCAPE); }
+
+    @HostListener('keydown.enter', ['$event'])
+    onKeydownEnter($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.ON_ENTER); }
+
+    @HostListener('keydown.arrowup', ['$event'])
+    onKeydownArrowUp($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.MOVE_UP); }
+
+    @HostListener('keydown.arrowdown', ['$event'])
+    onKeydownArrowDown($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.MOVE_DOWN); }
+
+    @HostListener('keydown.arrowright', ['$event'])
+    onKeydownArrowRight($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.MOVE_RIGHT); }
+
+    @HostListener('keydown.arrowleft', ['$event'])
+    onKeydownArrowLeft($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.MOVE_LEFT); }
+
     onKeyDown($event, eventAction) {
         const $li = $(this.nativeElement);
         const $ul = $(this.nativeElement).closest('ul.dropdown-menu');

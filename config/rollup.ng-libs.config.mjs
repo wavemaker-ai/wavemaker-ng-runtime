@@ -102,7 +102,7 @@ export default [
         external: ["@angular/core", "@angular/common", "rxjs", "rxjs/operators"],
     },
     {
-        input: 'node_modules/@angular/core/fesm2022/primitives/di.mjs',
+        input: 'node_modules/@angular/core/fesm2022/primitives-di.mjs',
         output: {
             file: 'node_modules/@angular/core/bundles/core-di.umd.js',
             format: 'umd',
@@ -112,7 +112,7 @@ export default [
         external: [],
     },
     {
-        input: 'node_modules/@angular/core/fesm2022/primitives/signals.mjs',
+        input: 'node_modules/@angular/core/fesm2022/primitives-signals.mjs',
         output: {
             file: 'node_modules/@angular/core/bundles/core-signals.umd.js',
             format: 'umd',
@@ -122,7 +122,7 @@ export default [
         external: [],
     },
     {
-        input: 'node_modules/@angular/core/fesm2022/primitives/event-dispatch.mjs',
+        input: 'node_modules/@angular/core/fesm2022/primitives-event-dispatch.mjs',
         output: {
             file: 'node_modules/@angular/core/bundles/core-event-dispatch.umd.js',
             format: 'umd',

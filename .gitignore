@@ -54,3 +54,6 @@ dependency-report.html
 
 .nx/cache
 .nx/workspace-data
+
+# angular-upgrade session state (template: .cursor/skills/angular-upgrade/current-state.example.md)
+.cursor/skills/angular-upgrade/current-state.md

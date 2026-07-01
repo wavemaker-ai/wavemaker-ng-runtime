@@ -36,22 +36,37 @@ const PATCHES = {
             let current = code;
             let anyChanged = false;
 
-            // DestroyRef injection fix
-            if (current.includes('takeUntilDestroyed()') && !current.includes('const __destroyRef = i0.inject(i0.DestroyRef)')) {
+            // DestroyRef injection fix (§12) — ngx-bootstrap 21+ uses takeUntilDestroyed() in constructor (injection context); leave that alone.
+            if (current.includes('takeUntilDestroyed(__destroyRef)') && !current.includes('const __destroyRef = i0.inject(i0.DestroyRef)')) {
+                const r1 = applyReplacement(
+                    current,
+                    /(constructor\s*\(\s*(?:ngZone\s*,\s*)?rendererFactory\s*,\s*platformId\s*\)\s*\{)/,
+                    '$1\n        const __destroyRef = i0.inject(i0.DestroyRef);',
+                    'Patched PositioningService: DestroyRef injection for __destroyRef'
+                );
+                current = r1.code;
+                anyChanged = r1.changed || anyChanged;
+            } else if (
+                current.includes('takeUntilDestroyed()') &&
+                !current.includes('const __destroyRef = i0.inject(i0.DestroyRef)') &&
+                /constructor\s*\(\s*ngZone\s*,\s*rendererFactory\s*,\s*platformId\s*\)/.test(current)
+            ) {
                 const r1 = applyReplacement(
                     current,
                     /(constructor\s*\(\s*ngZone\s*,\s*rendererFactory\s*,\s*platformId\s*\)\s*\{)/,
                     '$1\n        const __destroyRef = i0.inject(i0.DestroyRef);',
                     null
                 );
-                const r2 = applyReplacement(
-                    r1.code,
-                    /takeUntilDestroyed\(\)/g,
-                    'takeUntilDestroyed(__destroyRef)',
-                    'Patched PositioningService: DestroyRef injection'
-                );
-                current = r2.code;
-                anyChanged = r2.changed || anyChanged;
+                if (r1.changed) {
+                    const r2 = applyReplacement(
+                        r1.code,
+                        /takeUntilDestroyed\(\)/g,
+                        'takeUntilDestroyed(__destroyRef)',
+                        'Patched PositioningService: DestroyRef injection'
+                    );
+                    current = r2.code;
+                    anyChanged = r2.changed || anyChanged;
+                }
             }
 
             // Repair bad reopen line: a plain replacement string cannot contain literal $$ (see reopen fix below).

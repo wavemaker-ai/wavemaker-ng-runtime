@@ -82,7 +82,7 @@ class DateWrapperComponent {
 
 const dateComponentModuleDef: ITestModuleDef = {
     declarations: [DateWrapperComponent],
-    imports: [BrowserAnimationsModule, FormsModule, BsDatepickerModule.forRoot(), IMaskModule, DateComponent],
+    imports: [BrowserAnimationsModule, FormsModule, BsDatepickerModule, IMaskModule, DateComponent],
     providers: [
         { provide: Router, useValue: Router },
         { provide: App, useValue: mockApp },
@@ -479,7 +479,7 @@ describe('DateComponent', () => {
 
 const dateComponentLocaleModuleDef: ITestModuleDef = {
     declarations: [DateWrapperComponent],
-    imports: [FormsModule, BsDatepickerModule.forRoot(), IMaskModule, DateComponent],
+    imports: [FormsModule, BsDatepickerModule, IMaskModule, DateComponent],
     providers: [
         { provide: LOCALE_ID, useValue: 'de' },
         { provide: Router, useValue: Router },

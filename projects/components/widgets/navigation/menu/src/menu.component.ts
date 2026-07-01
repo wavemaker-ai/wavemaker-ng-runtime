@@ -139,13 +139,28 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
         $appDigest();
     }
 
-    @HostListener('keydown.arrowup', ['$event', '"UP-ARROW"'])
-    @HostListener('mouseenter', ['$event', '"MOUSE-ENTER"'])
-    @HostListener('mouseleave', ['$event', '"MOUSE-LEAVE"'])
-    @HostListener('keydown.arrowdown', ['$event', '"DOWN-ARROW"'])
-    @HostListener('keydown.arrowright', ['$event', '"RIGHT-ARROW"'])
-    @HostListener('keydown.arrowleft', ['$event', '"LEFT-ARROW"'])
-    @HostListener('keydown.enter', ['$event', '"ENTER"']) onKeyDown($event, eventAction) {
+    @HostListener('keydown.arrowup', ['$event'])
+    onKeydownArrowUp($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.MOVE_UP); }
+
+    @HostListener('mouseenter', ['$event'])
+    onMouseEnter($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.ON_MOUSE_ENTER); }
+
+    @HostListener('mouseleave', ['$event'])
+    onMouseLeave($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.ON_MOUSE_LEAVE); }
+
+    @HostListener('keydown.arrowdown', ['$event'])
+    onKeydownArrowDown($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.MOVE_DOWN); }
+
+    @HostListener('keydown.arrowright', ['$event'])
+    onKeydownArrowRight($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.MOVE_RIGHT); }
+
+    @HostListener('keydown.arrowleft', ['$event'])
+    onKeydownArrowLeft($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.MOVE_LEFT); }
+
+    @HostListener('keydown.enter', ['$event'])
+    onKeydownEnter($event) { this.onKeyDown($event, KEYBOARD_MOVEMENTS.ON_ENTER); }
+
+    onKeyDown($event, eventAction) {
         const KEY_MOVEMENTS = clone(KEYBOARD_MOVEMENTS);
         if (this.menuposition === MENU_POSITION.UP_RIGHT) {
             KEY_MOVEMENTS.MOVE_UP = 'DOWN-ARROW';
@@ -254,7 +269,8 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
         }
 
         if (key === 'autoclose') {
-            this.bsDropdown.autoClose = nv !== AUTOCLOSE_TYPE.DISABLED;
+            const autoClose = nv === AUTOCLOSE_TYPE.DISABLED ? false : nv;
+            (this.bsDropdown as any)._state.autoClose = autoClose;
             this.autoclose = nv;
         } else {
             super.onPropertyChange(key, nv, ov);
