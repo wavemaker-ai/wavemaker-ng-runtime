@@ -755,53 +755,19 @@ Date/time input stored as a Unix epoch (milliseconds) timestamp.
 
 These properties activate only when `App.isPrism` is `true`. They map directly to CSS flexbox via `AutoLayoutUtils`.
 
-| Property | Type | Default | CSS Effect |
+| Property | Type | Default | Description |
 |---|---|---|---|
 | `direction` | `'row' \| 'column'` | `'row'` | `flex-direction`; setting `column` forces `wrap: false` |
-| `alignment` | string | `'top-left'` | Maps to `justifyContent` + `alignItems` (see Alignment Matrix below) |
-| `wrap` | boolean | `false` | `flex-wrap: wrap/nowrap`; ignored when `direction` is `column` |
-| `gap` | string | — | Row gap between items (px value or `'auto'` for space-between) |
-| `columngap` | string | — | Column gap between items (px value or `'auto'`) |
-| `position` | string | — | `'sticky'` sticks the container at `top:0 / left:0` with `z-index`; any other value resets positioning |
-| `zindex` | string | — | `z-index` applied when `position` is `sticky` |
-| `clipcontent` | string | — | Controls `overflow` clipping (see Overflow Modes below) |
-| `overflow` | string | — | Style-level overflow (processed by `applyStyleChange`) |
+| `alignment` | string | `'top-left'` | Named position key — see [AutoLayout reference](./11-autolayout.md#4-alignment-matrix) |
+| `wrap` | boolean | `false` | `flex-wrap`; ignored when `direction` is `column` |
+| `gap` | string | — | Row gap in px, or `'auto'` for space-between |
+| `columngap` | string | — | Column gap in px, or `'auto'` |
+| `position` | string | — | `'sticky'` sticks container at `top:0 / left:0` |
+| `zindex` | string | — | z-index when `position` is `sticky` |
+| `clipcontent` | string | — | Controls overflow clipping |
+| `overflow` | string | — | Scroll mode — see [AutoLayout reference](./11-autolayout.md#6-overflow--clip-modes) |
 
-**Width / Height special values** (Prism mode):
-
-| Value | Effect |
-|---|---|
-| `'fill'` | Width → `100%`. Height → `align-self: stretch; flex-grow: 1` inside a flex parent, otherwise `100%` |
-| `'hug'` | `width/height: fit-content` |
-| *(any number)* | Fixed pixel size; sets `flex-shrink: 0` to prevent shrinking |
-
-**Alignment Matrix** — `alignment` property values and their flex translation:
-
-| Value | `justifyContent` | `alignItems` |
-|---|---|---|
-| `top-left` | `flex-start` | `flex-start` |
-| `top-center` | `center` | `flex-start` |
-| `top-right` | `flex-end` | `flex-start` |
-| `middle-left` | `flex-start` | `center` |
-| `middle-center` | `center` | `center` |
-| `middle-right` | `flex-end` | `center` |
-| `bottom-left` | `flex-start` | `flex-end` |
-| `bottom-center` | `center` | `flex-end` |
-| `bottom-right` | `flex-end` | `flex-end` |
-| `start` | `space-between` | `flex-start` |
-| `center` | `space-between` | `center` |
-| `end` | `space-between` | `flex-end` |
-
-> **Note**: When `direction` is `'column'`, `justifyContent` and `alignItems` values are swapped to remain semantically correct along the cross-axis.
-
-**Overflow / Clip Modes** (`overflow` style property):
-
-| Value | CSS result |
-|---|---|
-| `'vertical'` | `overflow-x: hidden; overflow-y: scroll` |
-| `'horizontal'` | `overflow-x: scroll; overflow-y: hidden` |
-| `'both directions'` | `overflow: scroll` |
-| `'no scrolling'` | `overflow: hidden` (if `clipcontent` is set), else clears overflow |
+`width` and `height` accept special values `'fill'`, `'hug'`, or a fixed px number — see [AutoLayout reference](./11-autolayout.md#5-width--height-special-values).
 
 #### Events
 
@@ -828,10 +794,6 @@ When `content` is set to a partial name instead of `'Inline Content'`, the Conta
   <div wmParam name="userId" value.bind="Variables.currentUser.dataSet.id"></div>
 </div>
 ```
-
-#### Nested Container Sizing (Prism mode)
-
-When a Container with `height: 'fill'` is nested inside another `[wmContainer]` or `[wmAutoLayout]` parent, `AutoLayoutUtils.applySize()` detects the flex parent and sets `align-self: stretch; flex-grow: 1` instead of `height: 100%`, which correctly fills available space within the flex row.
 
 #### Usage Example
 

@@ -376,7 +376,7 @@ styler($node, component, type, skipList?)
 
 **File:** `widgets/common/container/container.directive.ts`
 
-Generic block container. Supports **AutoLayout** in Prism (design-time preview) mode — applies flexbox-based layout properties (`direction`, `alignment`, `gap`, `wrap`) via `AutoLayoutUtils`.
+Generic block container. Supports **AutoLayout** in Prism (design-time preview) mode — applies flexbox-based layout properties (`direction`, `alignment`, `gap`, `wrap`) via `AutoLayoutUtils`. See [Section 10](#10-autolayout-architecture) for full details and the extension recipe.
 
 ### 7.2 PartialContainerDirective (`[partialContainer]`)
 
@@ -535,3 +535,12 @@ Used by all form input widgets to manage Angular reactive form validators.
 | `destroy()` | Clean up all validator references (memory leak prevention) |
 
 Handled validators: `required`, `maxlength`, `pattern`, `min`, `max`, `custom`.
+
+---
+---
+
+## 10. AutoLayout Architecture
+
+`AutoLayoutUtils` is the Prism-mode flexbox layout engine, currently used only by `ContainerDirective`.
+
+See **[`docs/11-autolayout.md`](./11-autolayout.md)** for the full reference: class API, alignment matrix, size special values (`fill`/`hug`), overflow modes, the `wmautolayout` parent-detection hook, and the anonymous inner class implementation pattern.

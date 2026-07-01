@@ -409,19 +409,9 @@ These hooks run for all HTTP requests including variable invocations, file uploa
 
 ## 15. AutoLayout Pattern (Prism / Design Mode)
 
-Containers in Prism mode (the WaveMaker Studio canvas) support a visual layout editor via `AutoLayoutUtils`:
+`AutoLayoutUtils` is the flexbox layout engine for containers in Prism mode (WaveMaker Studio's design canvas). Currently, only `ContainerDirective` uses it. `LinearLayoutDirective` and `ListComponent` each have independent, older layout mechanisms unrelated to this system.
 
-```typescript
-// Properties on ContainerDirective
-direction: 'row' | 'column'   // flex-direction
-hasWrap: boolean               // flex-wrap
-alignment: string              // e.g. 'middle-center' → justifyContent + alignItems
-gap: string                    // row-gap
-columngap: string              // column-gap
-clipContent: boolean           // overflow: hidden
-```
-
-`applyAlignment(key)` maps named positions (`top-left`, `middle-center`, `bottom-right`, etc.) to the appropriate `justifyContent` and `alignItems` CSS values based on the current flex direction.
+See **[`docs/11-autolayout.md`](./11-autolayout.md)** for the complete reference — class API, alignment matrix, size special values, overflow modes, and the implementation pattern.
 
 ---
 
