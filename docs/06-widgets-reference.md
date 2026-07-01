@@ -732,6 +732,123 @@ Date/time input stored as a Unix epoch (milliseconds) timestamp.
 
 ---
 
+### Container (`div[wmContainer]`)
+
+- **Selector**: `[wmContainer]`
+- **Transpiled host**: `<div wmContainer ...>`
+- **Host class**: `app-container`
+- **Purpose**: The fundamental layout building block for WaveMaker pages. Every structural section of a page is wrapped in a Container. In **Prism mode** (the modern layout engine), Container becomes a full flexbox layout manager via `AutoLayoutUtils`, supporting direction, alignment, wrap, gap, positioning, and overflow — replacing the need for manual CSS. In non-Prism mode it acts as a plain block wrapper.
+
+#### Core Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `name` | string | — | Widget identifier, used for `Page.Widgets.name` access |
+| `show` | boolean | `true` | Show/hide the container and all its children |
+| `content` | string | `'Inline Content'` | Either `'Inline Content'` (children dragged in) or the name of a partial to embed |
+| `class` | string | — | Static CSS class(es) |
+| `conditionalclass` | expression | — | Dynamically evaluated CSS class expression |
+| `conditionalstyle` | expression | — | Dynamically evaluated inline style expression |
+| `animation` | string | — | Entry animation class |
+
+#### AutoLayout Properties (Prism mode only)
+
+These properties activate only when `App.isPrism` is `true`. They map directly to CSS flexbox via `AutoLayoutUtils`.
+
+| Property | Type | Default | CSS Effect |
+|---|---|---|---|
+| `direction` | `'row' \| 'column'` | `'row'` | `flex-direction`; setting `column` forces `wrap: false` |
+| `alignment` | string | `'top-left'` | Maps to `justifyContent` + `alignItems` (see Alignment Matrix below) |
+| `wrap` | boolean | `false` | `flex-wrap: wrap/nowrap`; ignored when `direction` is `column` |
+| `gap` | string | — | Row gap between items (px value or `'auto'` for space-between) |
+| `columngap` | string | — | Column gap between items (px value or `'auto'`) |
+| `position` | string | — | `'sticky'` sticks the container at `top:0 / left:0` with `z-index`; any other value resets positioning |
+| `zindex` | string | — | `z-index` applied when `position` is `sticky` |
+| `clipcontent` | string | — | Controls `overflow` clipping (see Overflow Modes below) |
+| `overflow` | string | — | Style-level overflow (processed by `applyStyleChange`) |
+
+**Width / Height special values** (Prism mode):
+
+| Value | Effect |
+|---|---|
+| `'fill'` | Width → `100%`. Height → `align-self: stretch; flex-grow: 1` inside a flex parent, otherwise `100%` |
+| `'hug'` | `width/height: fit-content` |
+| *(any number)* | Fixed pixel size; sets `flex-shrink: 0` to prevent shrinking |
+
+**Alignment Matrix** — `alignment` property values and their flex translation:
+
+| Value | `justifyContent` | `alignItems` |
+|---|---|---|
+| `top-left` | `flex-start` | `flex-start` |
+| `top-center` | `center` | `flex-start` |
+| `top-right` | `flex-end` | `flex-start` |
+| `middle-left` | `flex-start` | `center` |
+| `middle-center` | `center` | `center` |
+| `middle-right` | `flex-end` | `center` |
+| `bottom-left` | `flex-start` | `flex-end` |
+| `bottom-center` | `center` | `flex-end` |
+| `bottom-right` | `flex-end` | `flex-end` |
+| `start` | `space-between` | `flex-start` |
+| `center` | `space-between` | `center` |
+| `end` | `space-between` | `flex-end` |
+
+> **Note**: When `direction` is `'column'`, `justifyContent` and `alignItems` values are swapped to remain semantically correct along the cross-axis.
+
+**Overflow / Clip Modes** (`overflow` style property):
+
+| Value | CSS result |
+|---|---|
+| `'vertical'` | `overflow-x: hidden; overflow-y: scroll` |
+| `'horizontal'` | `overflow-x: scroll; overflow-y: hidden` |
+| `'both directions'` | `overflow: scroll` |
+| `'no scrolling'` | `overflow: hidden` (if `clipcontent` is set), else clears overflow |
+
+#### Events
+
+| Event | Signature | Trigger |
+|---|---|---|
+| `onLoad` | `($event, widget)` | Container fully rendered |
+| `onClick` | `($event, widget)` | Mouse click |
+| `onDblclick` | `($event, widget)` | Double click |
+| `onMouseover` | `($event, widget)` | Mouse enters element |
+| `onMouseout` | `($event, widget)` | Mouse leaves element |
+| `onMouseenter` | `($event, widget)` | Mouse enters (no bubbling) |
+| `onMouseleave` | `($event, widget)` | Mouse leaves (no bubbling) |
+| `onTap` | `($event, widget)` | Touch tap |
+| `onDoubletap` | `($event, widget)` | Double touch tap |
+| `onSwipeup/down/left/right` | `($event, widget)` | Swipe gestures |
+| `onPinchin` / `onPinchout` | `($event, widget)` | Pinch gestures |
+
+#### Partial Content Mode
+
+When `content` is set to a partial name instead of `'Inline Content'`, the Container delegates rendering to `PartialContainerDirective`, which dynamically loads and renders the named partial inside the container. Parameters can be passed via child `[wmParam]` directives.
+
+```html
+<div wmContainer content="MyPartial">
+  <div wmParam name="userId" value.bind="Variables.currentUser.dataSet.id"></div>
+</div>
+```
+
+#### Nested Container Sizing (Prism mode)
+
+When a Container with `height: 'fill'` is nested inside another `[wmContainer]` or `[wmAutoLayout]` parent, `AutoLayoutUtils.applySize()` detects the flex parent and sets `align-self: stretch; flex-grow: 1` instead of `height: 100%`, which correctly fills available space within the flex row.
+
+#### Usage Example
+
+```html
+<!-- Row layout, center-aligned, 16px gap, wraps on overflow -->
+<div wmContainer name="cardRow" direction="row" alignment="middle-center" gap="16" wrap="true" width="fill">
+  <!-- child widgets here -->
+</div>
+
+<!-- Column layout, sticky header container -->
+<div wmContainer name="stickyHeader" direction="column" position="sticky" zindex="100" width="fill" height="hug">
+  <!-- header content -->
+</div>
+```
+
+---
+
 ### Accordion
 
 Collapsible sections — only one section open at a time.
