@@ -537,10 +537,11 @@ Used by all form input widgets to manage Angular reactive form validators.
 Handled validators: `required`, `maxlength`, `pattern`, `min`, `max`, `custom`.
 
 ---
----
 
 ## 10. AutoLayout Architecture
 
-`AutoLayoutUtils` is the Prism-mode flexbox layout engine, currently used only by `ContainerDirective`.
+AutoLayout is implemented as the `@AutoLayout()` TypeScript class decorator (exported from `@wm/components/base`). It patches `onPropertyChange`, `onStyleChange`, `ngAfterViewInit`, and `ngOnDestroy` on the target class prototype to inject Prism-mode flexbox layout behaviour. Current adopters: `ContainerDirective`, `PageContentComponent`, `TabPaneComponent`, `AccordionPaneComponent`, `ListComponent`, `ListItemDirective`.
 
-See **[`docs/11-autolayout.md`](./11-autolayout.md)** for the full reference: class API, alignment matrix, size special values (`fill`/`hug`), overflow modes, the `wmautolayout` parent-detection hook, and the anonymous inner class implementation pattern.
+`AUTO_LAYOUT_PROPS` is a shared props `Map` spread into each adopter's `registerProps()` to register all layout properties at once.
+
+See **[`docs/11-autolayout.md`](./11-autolayout.md)** for the full reference: decorator options (`targetSelector`, `bindParent`), property handling, alignment matrix, `fill`/`hug` size semantics, overflow modes, and List/ListItem-specific details.

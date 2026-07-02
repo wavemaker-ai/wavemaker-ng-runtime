@@ -409,9 +409,13 @@ These hooks run for all HTTP requests including variable invocations, file uploa
 
 ## 15. AutoLayout Pattern (Prism / Design Mode)
 
-`AutoLayoutUtils` is the flexbox layout engine for containers in Prism mode (WaveMaker Studio's design canvas). Currently, only `ContainerDirective` uses it. `LinearLayoutDirective` and `ListComponent` each have independent, older layout mechanisms unrelated to this system.
+AutoLayout is implemented via the `@AutoLayout()` TypeScript class decorator, exported from `@wm/components/base`. The decorator patches the widget prototype to inject Prism-mode flexbox behaviour without requiring inheritance. It is adopted by six widgets: `ContainerDirective`, `PageContentComponent`, `TabPaneComponent`, `AccordionPaneComponent`, `ListComponent`, and `ListItemDirective`.
 
-See **[`docs/11-autolayout.md`](./11-autolayout.md)** for the complete reference — class API, alignment matrix, size special values, overflow modes, and the implementation pattern.
+Key options: `targetSelector` applies flex/overflow to an inner element while size stays on the host; `bindParent` redirects bind-expression scope resolution (used by `ListItemDirective` to reach the page scope from inside `*ngFor`).
+
+`AUTO_LAYOUT_PROPS` is a shared props map that any widget spreads into its `registerProps()` to register all AutoLayout properties at once.
+
+See **[`docs/11-autolayout.md`](./11-autolayout.md)** for the complete reference.
 
 ---
 

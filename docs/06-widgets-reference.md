@@ -737,7 +737,7 @@ Date/time input stored as a Unix epoch (milliseconds) timestamp.
 - **Selector**: `[wmContainer]`
 - **Transpiled host**: `<div wmContainer ...>`
 - **Host class**: `app-container`
-- **Purpose**: The fundamental layout building block for WaveMaker pages. Every structural section of a page is wrapped in a Container. In **Prism mode** (the modern layout engine), Container becomes a full flexbox layout manager via `AutoLayoutUtils`, supporting direction, alignment, wrap, gap, positioning, and overflow — replacing the need for manual CSS. In non-Prism mode it acts as a plain block wrapper.
+- **Purpose**: The fundamental layout building block for WaveMaker pages. Every structural section of a page is wrapped in a Container. In **Prism mode** (the modern layout engine), Container becomes a full flexbox layout manager via the `@AutoLayout()` decorator, supporting direction, alignment, wrap, gap, positioning, and overflow — replacing the need for manual CSS. In non-Prism mode it acts as a plain block wrapper.
 
 #### Core Properties
 
