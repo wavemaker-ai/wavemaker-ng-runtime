@@ -293,7 +293,7 @@ $.widget('wm.datatable', {
                 field = value.field,
                 headerLabel = self.Utils.isDefined(value.displayName) ? value.displayName : (field || ''),
                 titleLabel = headerLabel,
-                sortEnabled = self.options.enableSort && (_.isUndefined(value.show) || value.show) && (_.isUndefined(value.sortable) || value.sortable),
+                sortEnabled = self.options.enableSort && (_.isUndefined(value.show) || value.show|| value.getAttr?.('show.bind')) && (_.isUndefined(value.sortable) || value.sortable),
                 headerClasses = self.options.cssClassNames.headerCell,
                 sortClass,
                 tl = '',
@@ -319,7 +319,7 @@ $.widget('wm.datatable', {
                 headerClasses += ' grid-col-small';
             }
             tl += '<th';
-            if ((_.isUndefined(value.resizable) || value.resizable) && (_.isUndefined(value.show) || value.show)) { //If show is false, do not add the resize option
+            if ((_.isUndefined(value.resizable) || value.resizable) && (_.isUndefined(value.show) || value.show|| value.getAttr?.('show.bind'))) { //If show is false, do not add the resize option
                 tl += ' data-col-resizable';
             }
             if (self.options.enableColumnSelection && (_.isUndefined(value.selectable) || value.selectable)) {
