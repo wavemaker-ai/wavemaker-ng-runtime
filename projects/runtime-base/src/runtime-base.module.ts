@@ -107,6 +107,7 @@ import { ButtonGroupDirective } from "@wm/components/input/button-group";
 import { CaptionPositionDirective } from "@wm/components/input/caption-position";
 import { CheckboxComponent } from "@wm/components/input/checkbox";
 import { CheckboxsetComponent } from "@wm/components/input/checkboxset";
+import { ChipsetComponent } from "@wm/components/input/chipset";
 import { CompositeDirective } from "@wm/components/input/composite";
 import { NumberComponent } from "@wm/components/input/number";
 import { RadiosetComponent } from "@wm/components/input/radioset";
@@ -329,6 +330,7 @@ export const REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS = [
     CaptionPositionDirective,
     CheckboxComponent,
     CheckboxsetComponent,
+    ChipsetComponent,
     CompositeDirective,
     NumberComponent,
     RadiosetComponent,

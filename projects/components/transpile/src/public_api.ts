@@ -56,6 +56,7 @@ export * as buttonGroupBuild from './input/default/button-group/button-group.bui
 export * as buttonBuild from './input/default/button/button.build';
 export * as checkboxBuild from './input/default/checkbox/checkbox.build';
 export * as checkboxSetBuild from './input/default/checkboxset/checkboxset.build';
+export * as chipsetBuild from './input/default/chipset/chipset.build';
 export * as compositeBuild from './input/default/composite/composite.build';
 export * as numberBuild from './input/default/number/number.build';
 export * as radiosetBuild from './input/default/radioset/radioset.build';

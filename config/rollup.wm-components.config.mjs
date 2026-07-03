@@ -173,6 +173,16 @@ export default [
         }
     },
     {
+        input: './libraries/components/input/chipset/fesm2022/index.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: './libraries/components/input/chipset/bundles/index.umd.js',
+            format: 'umd',
+            name: 'wm.components.input.chipset',
+            globals: rollupGlobals
+        }
+    },
+    {
         input: './libraries/components/input/composite/fesm2022/index.mjs',
         external: [ ...rollupExternals ],
         output: {

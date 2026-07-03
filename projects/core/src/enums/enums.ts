@@ -3,6 +3,7 @@ export enum FormWidgetType {
     CHECKBOX = 'checkbox',
     CHECKBOXSET = 'checkboxset',
     CHIPS = 'chips',
+    CHIPSET = 'chipset',
     COLORPICKER = 'colorpicker',
     CURRENCY = 'currency',
     CUSTOMWIDGET = 'custom-widget',

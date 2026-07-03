@@ -20,7 +20,7 @@ import {NavNode} from "../widgets/common/base/dataset-aware-nav.component";
 import {assignWith, forEach, get, includes, isArray, isNull, isObject, isString, join, split, union} from "lodash-es";
 
 const DATASET_WIDGETS = new Set([FormWidgetType.SELECT, FormWidgetType.CHECKBOXSET, FormWidgetType.RADIOSET,
-    FormWidgetType.SWITCH, FormWidgetType.AUTOCOMPLETE, FormWidgetType.CHIPS, FormWidgetType.TYPEAHEAD, FormWidgetType.RATING]);
+    FormWidgetType.SWITCH, FormWidgetType.AUTOCOMPLETE, FormWidgetType.CHIPS, FormWidgetType.CHIPSET, FormWidgetType.TYPEAHEAD, FormWidgetType.RATING]);
 /**
  * Returns the parsed, updated bound expression
  * if the expression is $[data[$i][firstName]] + '--' + $[lastName] + '--' + $['@ID@']

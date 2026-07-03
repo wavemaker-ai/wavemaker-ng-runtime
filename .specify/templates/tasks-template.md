@@ -9,7 +9,7 @@ description: "Task list template for feature implementation"
 
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
+**Tests**: The examples below include test tasks. Tests are OPTIONAL in general - include them if explicitly requested in the feature specification. **EXCEPTION (Constitution Principle VIII, HARD GATE):** if the feature adds a NEW widget/component to the runtime, test tasks are MANDATORY, not optional. You MUST generate tasks for co-located Jest unit tests (`*.spec.ts`) and markup/wrapper behavior tests (`*.wrapper.component.spec.ts`) under `projects/` covering the widget's public properties, events, and each behavioral variant, and a task asserting a green `npm test` before the widget is considered complete.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 

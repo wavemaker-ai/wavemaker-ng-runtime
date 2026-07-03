@@ -1,0 +1,45 @@
+import { PROP_ANY, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register, registerFormWidget } from '@wm/components/base';
+import { FormWidgetType } from '@wm/core';
+
+export const chipsetProps = new Map(
+    [
+        ['appearance', {value: 'outlined', ...PROP_STRING}],
+        ['class', PROP_STRING],
+        ['compareby', PROP_STRING],
+        ['datafield', PROP_STRING],
+        ['dataset', {value: 'Option 1, Option 2, Option 3', ...PROP_ANY}],
+        ['datavaluesource', PROP_ANY],
+        ['datavalue', PROP_ANY],
+        ['disableitem', PROP_BOOLEAN],
+        ['disabled', PROP_BOOLEAN],
+        ['displayexpression', PROP_STRING],
+        ['displayfield', PROP_STRING],
+        ['displayimagesrc', PROP_STRING],
+        ['displayValue', PROP_STRING],
+        ['groupby', PROP_STRING],
+        ['hint', PROP_STRING],
+        ['iconclass', PROP_STRING],
+        ['iconurl', PROP_STRING],
+        ['itemsperrow', {value: 'xs-1 sm-1 md-1 lg-1', ...PROP_STRING}],
+        ['name', PROP_STRING],
+        ['orderby', PROP_STRING],
+        ['readonly', PROP_BOOLEAN],
+        ['required', PROP_BOOLEAN],
+        ['selectionmode', {value: 'single', ...PROP_STRING}],
+        ['show', {value: true, ...PROP_BOOLEAN}],
+        ['showindevice', {displayType: 'inline-block', value: 'all', ...PROP_STRING}],
+        ['tabindex', {value: 0, ...PROP_NUMBER}],
+        ['usekeys', PROP_BOOLEAN]
+    ]
+);
+
+export const registerProps = () => {
+    register(
+        'wm-chipset',
+        chipsetProps
+    );
+    registerFormWidget(
+        FormWidgetType.CHIPSET,
+        new Map(chipsetProps)
+    );
+};

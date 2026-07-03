@@ -42,6 +42,14 @@
 
 [Gates determined based on constitution file]
 
+**Testing gate (Principle VIII)**: If this feature adds a NEW widget/component to the
+runtime, the plan MUST include co-located Jest unit tests (`*.spec.ts`) and markup/wrapper
+behavior tests (`*.wrapper.component.spec.ts`) under `projects/` that cover the widget's
+public properties, events, and each behavioral variant. A green `npm test` including this
+coverage is a HARD merge gate for new widgets and cannot be waived. For bug fixes,
+refactors, and narrowly-scoped/design-time-only changes, tests are strongly encouraged but
+adequacy is judged qualitatively (not a hard gate).
+
 ## Project Structure
 
 ### Documentation (this feature)

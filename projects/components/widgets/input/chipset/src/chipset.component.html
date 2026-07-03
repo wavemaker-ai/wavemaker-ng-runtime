@@ -1,0 +1,58 @@
+@if (!groupby) {
+  @for (item of datasetItems; track item) {
+    <li class="chip-item app-chip chipset-chip"
+      [ngClass]="{'active': item.selected, 'disabled': disabled || readonly || isChipDisabled(item)}"
+      [attr.role]="multiple ? 'checkbox' : 'radio'"
+      [attr.aria-checked]="item.selected"
+      [attr.aria-disabled]="(disabled || readonly || isChipDisabled(item)) ? true : null"
+      [attr.tabindex]="(disabled || readonly || isChipDisabled(item)) ? null : (isActiveChip(item) ? 0 : -1)"
+      [title]="item.label"
+      (click)="onChipActivate($event, item)"
+      (keydown)="onChipKeyDown($event, item)">
+      @if (item.imgSrc) {
+        <img data-identifier="img" alt="" class="chipset-chip-avatar" [src]="item.imgSrc"/>
+      } @else if (item.dataObject && (item.dataObject[iconclass] || item.dataObject[iconurl])) {
+        <wm-app-icon [iconclass]="item.dataObject[iconclass]" [iconurl]="item.dataObject[iconurl]"></wm-app-icon>
+      }
+      <span class="chipset-chip-label" [textContent]="item.label"></span>
+      @if (item.selected) {
+        <i class="app-icon wi wi-check chipset-chip-check" aria-hidden="true"></i>
+      }
+    </li>
+  }
+} @else {
+  @for (groupObj of groupedData; track groupObj; let groupindex = $index) {
+    <li class="app-list-item-group" role="presentation">
+      <ul class="item-group" [attr.aria-labelledby]="'group_' + widgetId + '_' + groupindex">
+        <li [id]="'group_' + widgetId + '_' + groupindex" aria-hidden="true" class="list-group-header" [title]="groupObj.key">
+          <h4 class="group-title" [attr.aria-label]="'Group '+groupObj.key">{{groupObj.key}}</h4>
+        </li>
+        @for (item of groupObj.data; track item) {
+          <li class="chip-item app-chip chipset-chip group-list-item"
+            [ngClass]="{'active': item.selected, 'disabled': disabled || readonly || isChipDisabled(item)}"
+            [attr.role]="multiple ? 'checkbox' : 'radio'"
+            [attr.aria-checked]="item.selected"
+            [attr.aria-disabled]="(disabled || readonly || isChipDisabled(item)) ? true : null"
+            [attr.tabindex]="(disabled || readonly || isChipDisabled(item)) ? null : (isActiveChip(item) ? 0 : -1)"
+            [title]="item.label"
+            (click)="onChipActivate($event, item)"
+            (keydown)="onChipKeyDown($event, item)">
+            @if (item.imgSrc) {
+              <img data-identifier="img" alt="" class="chipset-chip-avatar" [src]="item.imgSrc"/>
+            } @else if (item.dataObject && (item.dataObject[iconclass] || item.dataObject[iconurl])) {
+              <wm-app-icon [iconclass]="item.dataObject[iconclass]" [iconurl]="item.dataObject[iconurl]"></wm-app-icon>
+            }
+            <span class="chipset-chip-label" [textContent]="item.label"></span>
+            @if (item.selected) {
+              <i class="app-icon wi wi-check chipset-chip-check" aria-hidden="true"></i>
+            }
+          </li>
+        }
+      </ul>
+    </li>
+  }
+}
+<input [disabled]="disabled || readonly" hidden class="model-holder">
+@if (readonly || disabled) {
+  <div aria-hidden="true" class="readonly-wrapper"></div>
+}

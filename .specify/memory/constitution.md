@@ -1,3 +1,26 @@
+<!--
+SYNC IMPACT REPORT
+==================
+Version change: 3.0.0 → 3.1.0 (MINOR — materially expands a principle)
+
+Modified principles:
+- VIII. Test-Backed Changes (unchanged title; scope expanded to add a hard test
+  gate for NEW widgets/components while preserving the qualitative stance for
+  bug fixes, refactors, and narrowly-scoped/design-time-only changes)
+
+Added sections: none
+Removed sections: none
+
+Templates requiring updates:
+- ✅ .specify/templates/plan-template.md (Constitution Check gate now cites the
+  Principle VIII new-widget test gate)
+- ✅ .specify/templates/tasks-template.md (Tests note now marks widget/component
+  tests as MANDATORY per Principle VIII rather than always OPTIONAL)
+- ✅ .specify/memory/constitution.md (Development Workflow & Quality Gates + CI
+  bullet updated to reflect the new-widget hard gate)
+
+Deferred TODOs: none
+-->
 # WaveMaker Angular Runtime Constitution
 
 `wavemaker-ng-runtime` is the Angular runtime framework and component library that
@@ -92,14 +115,27 @@ accommodations (e.g. IE11 `Proxy` fallback requires pre-declared props —
 `docs/10-constraints.md` §9).
 
 ### VIII. Test-Backed Changes
-Unit tests use Jest (`jest-preset-angular`), co-located as `*.spec.ts` (widget markup
-tests as `*.wrapper.component.spec.ts`) under `projects/`. Tests are strongly encouraged:
-new behavior SHOULD ship with tests and bug fixes SHOULD add a regression test. `npm test`
-is run in CI and passing tests are the expected default, but a green `npm test` is NOT a
-hard merge gate — reviewers MAY approve a change without full (or any) new test coverage
-when there is a reasonable justification (e.g. design-time-only behavior, narrowly scoped
-or low-risk changes), judging test adequacy qualitatively. Existing tests SHOULD NOT be
-knowingly regressed. Coverage is collected but not threshold-enforced.
+Unit tests use Jest (`jest-preset-angular`), co-located as `*.spec.ts` (widget markup /
+wrapper behavior tests as `*.wrapper.component.spec.ts`) under `projects/`. The testing
+bar depends on the kind of change:
+
+- **New widgets/components (HARD GATE, NON-NEGOTIABLE):** Any NEW widget or component
+  added to the runtime MUST ship with tests in the same change set: Jest unit tests
+  co-located as `*.spec.ts`, and markup/wrapper behavior tests as
+  `*.wrapper.component.spec.ts` under `projects/`, following the existing patterns
+  (e.g. `chips.wrapper.component.spec.ts`). Those tests MUST cover the widget's public
+  properties, its events, and each behavioral variant. A green `npm test` including this
+  coverage IS a hard merge gate — a new widget MUST NOT merge without it, and this
+  requirement cannot be waived by qualitative reviewer judgment.
+- **Bug fixes, refactors, and narrowly-scoped/design-time-only changes (SOFT, qualitative):**
+  Tests are strongly encouraged — bug fixes SHOULD add a regression test and changed
+  behavior SHOULD ship with tests — but a green `npm test` is NOT a hard merge gate here.
+  Reviewers MAY approve such a change without full (or any) new test coverage when there
+  is a reasonable justification (e.g. design-time-only behavior, narrowly scoped or
+  low-risk changes), judging test adequacy qualitatively.
+
+Existing tests SHOULD NOT be knowingly regressed. Coverage is collected but not
+threshold-enforced.
 
 ## Technology & Toolchain Constraints
 
@@ -137,8 +173,12 @@ work MUST respect rather than "fix" without an explicit, coordinated decision:
   `@wavemaker-ai/app-ng-runtime` and `@wavemaker-ai/angular-app` (yalc in dev, tarball on
   release).
 - CI (GitLab, merge requests) builds sibling repos, yalc-links them, runs `build.sh`,
-  `bundle-runtime-cli.sh`, and `npm test`. A green build is the merge bar; passing tests
-  are strongly expected but are not a hard gate (see Principle VIII).
+  `bundle-runtime-cli.sh`, and `npm test`. A green build is the merge bar. For changes
+  that add a NEW widget/component, a green `npm test` covering the widget's public
+  properties, events, and each behavioral variant (co-located `*.spec.ts` +
+  `*.wrapper.component.spec.ts`) is ALSO a hard merge gate. For bug fixes, refactors, and
+  narrowly-scoped/design-time-only changes, passing tests are strongly expected but are
+  not a hard gate and reviewers judge adequacy qualitatively (see Principle VIII).
 - Bundle budgets (5mb prod / 2mb dev initial) are guardrails; regressions that blow the
   budget need justification.
 
@@ -154,4 +194,4 @@ description. Amendments are made via PR editing this file, bumping the version b
 - MINOR: adding a principle or a materially new section.
 - PATCH: clarifications and wording.
 
-**Version**: 3.0.0 | **Ratified**: 2026-07-01 | **Last Amended**: 2026-07-02
+**Version**: 3.1.0 | **Ratified**: 2026-07-01 | **Last Amended**: 2026-07-03

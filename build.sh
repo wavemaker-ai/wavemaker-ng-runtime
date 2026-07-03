@@ -171,6 +171,7 @@ bundleWeb() {
         ./libraries/components/input/button-group/bundles/index.umd.js \
         ./libraries/components/input/checkbox/bundles/index.umd.js \
         ./libraries/components/input/checkboxset/bundles/index.umd.js \
+        ./libraries/components/input/chipset/bundles/index.umd.js \
         ./libraries/components/input/composite/bundles/index.umd.js \
         ./libraries/components/input/radioset/bundles/index.umd.js \
         ./libraries/components/input/select/bundles/index.umd.js \
@@ -275,6 +276,7 @@ buildApp() {
     ngPackagrBuild components-input-caption-position projects/components/widgets/input/caption-position '@wm/components/input/caption-position'
     ngPackagrBuild components-input-checkbox projects/components/widgets/input/checkbox '@wm/components/input/checkbox'
     ngPackagrBuild components-input-checkboxset projects/components/widgets/input/checkboxset '@wm/components/input/checkboxset'
+    ngPackagrBuild components-input-chipset projects/components/widgets/input/chipset '@wm/components/input/chipset'
     ngPackagrBuild components-input-composite projects/components/widgets/input/composite '@wm/components/input/composite'
     ngPackagrBuild components-input-number projects/components/widgets/input/number '@wm/components/input/number'
     ngPackagrBuild components-input-radioset projects/components/widgets/input/radioset '@wm/components/input/radioset'
