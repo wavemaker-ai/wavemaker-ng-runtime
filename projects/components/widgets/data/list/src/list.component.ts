@@ -575,8 +575,13 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 this.$ulEle.removeAttr('aria-describedby');
                 this.$ulEle.sortable('disable');
             }
+        } else if (key === 'multiselect') {
+            // multiselect binding is evaluated after ngAfterViewInit, so initial value may be incorrect.
+            // Reassigning here to ensure selectedItemWidgets matches the updated multiselect value.
+            this.selectedItemWidgets = nv ? [] : {};
         } else if (key === 'allowpagesizechange') {
             this.allowpagesizechange = nv;
+            this.dataNavigator.allowpagesizechange = nv;
         } else if(key === 'pagesizeoptions') {
                 this.prevPagesizeoptions = this.sanitizeCommaSeparatedIntegers(ov);
                 this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);

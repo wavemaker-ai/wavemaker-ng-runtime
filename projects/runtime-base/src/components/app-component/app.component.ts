@@ -68,7 +68,11 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     private navigationEndSubscription!: Subscription;
     appLocale: any = {};
 
-    @ViewChild(RouterOutlet) routerOutlet: RouterOutlet;
+    @ViewChild(RouterOutlet) set routerOutlet(outlet: RouterOutlet | undefined) {
+        if (outlet) {
+            this.overrideRouterOutlet(outlet);
+        }
+    }
 
     @ViewChild('dynamicComponent', { read: ViewContainerRef }) dynamicComponentContainerRef: ViewContainerRef;
 
@@ -193,21 +197,30 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         });
         setTimeout(() => {
             this.app.dynamicComponentContainerRef = this.dynamicComponentContainerRef;
-            this.overrideRouterOutlet();
         }, 10);
     }
 
-    private overrideRouterOutlet() {
-        //override the attach/detach methods
-        const oAttach = this.routerOutlet.attach;
-        const oDetach = this.routerOutlet.detach;
-        this.routerOutlet.attach = (componentRef: any, activatedRoute:  ActivatedRoute) => {
-            oAttach.call(this.routerOutlet, componentRef, activatedRoute);
-            componentRef.instance.ngOnAttach();
+    private overrideRouterOutlet(outlet: RouterOutlet) {
+        if ((outlet as any).__isPatched) {
+            return;
+        }
+        (outlet as any).__isPatched = true;
+
+        const oAttach = outlet.attach;
+        const oDetach = outlet.detach;
+
+        outlet.attach = (componentRef: any, activatedRoute: ActivatedRoute) => {
+            oAttach.call(outlet, componentRef, activatedRoute);
+            if (componentRef?.instance?.ngOnAttach) {
+                componentRef.instance.ngOnAttach();
+            }
         };
-        this.routerOutlet.detach = () => {
-            this.app.activePage.ngOnDetach();
-            const componentRef = oDetach.call(this.routerOutlet);
+
+        outlet.detach = () => {
+            if (this.app?.activePage?.ngOnDetach) {
+                this.app.activePage.ngOnDetach();
+            }
+            const componentRef = oDetach.call(outlet);
             return componentRef;
         };
     }
@@ -257,3 +270,4 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         }
     }
 }
+

@@ -1510,9 +1510,13 @@ export const triggerItemAction = (scope, item) => {
 export const getDatasourceFromExpr = (expr, scope) => {
     const isBoundToVariable = startsWith(expr, 'Variables.');
     const isBoundToWidget = startsWith(expr, 'Widgets.');
+    const isBoundToActivePageVar = startsWith(expr, 'App.activePage.Variables.');
     const parts = expr.split('.');
     if (isBoundToVariable) {
         return get(scope.viewParent.Variables, parts[1]);
+    }
+    if (isBoundToActivePageVar) {
+        return get(scope.viewParent?.App?.activePage?.Variables, parts[3]);
     }
     if (isBoundToWidget) {
         const widgetScope = get(scope.viewParent.Widgets, parts[1]);
@@ -1654,6 +1658,33 @@ export const getFontConfig = () => {
     return _WM_APP_PROPERTIES.fontConfig || getPreviewProperties();
 }
 
+export const adjustVerticalPosition = (containerElem, parentElem: HTMLElement, ref, ele?): void => {
+    const zoneRef = ref._ngZone || ref.ngZone;
+
+    zoneRef.onStable.subscribe(() => {
+            const containerHeight = ele
+                ? parseInt(ele.css('height'), 10)
+                : parseInt(containerElem.css('height'), 10);
+
+            const rect = parentElem.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+
+            const spaceBelow = viewportHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            if (spaceBelow < containerHeight && spaceAbove >= containerHeight) {
+                const matrix = getWebkitTraslationMatrix(containerElem);
+
+                matrix.m42 = matrix.m42 - containerHeight - rect.height;
+
+                if (matrix.m42 < 0) {
+                    matrix.m42 = 0;
+                }
+
+                setTranslation3dPosition(containerElem, matrix);
+            }
+        });
+};
 /*export const getParent = (parent: any) => {
     if(parent.hasOwnProperty("isDynamicComponent") || parent.hasOwnProperty("isPageComponent")) {
         return parent

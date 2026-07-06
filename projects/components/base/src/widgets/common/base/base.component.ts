@@ -896,16 +896,5 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         this.propertyChange.complete();
         this.destroy.complete();
         this.isAttached = false;
-
-        // MEMORY LEAK FIX: Clear context to release references to parent scope data
-        // The context object holds references to repeater items, wizard steps, etc.
-        // which can retain large amounts of data even after component destruction
-        if (this.context) {
-            // Clear all properties from context
-            Object.keys(this.context).forEach(key => {
-                delete this.context[key];
-            });
-            this.context = null;
-        }
     }
 }

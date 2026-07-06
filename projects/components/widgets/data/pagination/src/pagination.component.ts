@@ -13,7 +13,17 @@ import {
     ViewChild
 } from '@angular/core';
 
-import {$appDigest, $watch, AppConstants, DataSource, debounce, isDefined, switchClass, triggerFn} from '@wm/core';
+import {
+    $appDigest,
+    $watch,
+    adjustVerticalPosition,
+    AppConstants,
+    DataSource,
+    debounce,
+    isDefined,
+    switchClass,
+    triggerFn
+} from '@wm/core';
 import {
     DEBOUNCE_TIMES,
     getOrderByExpr,
@@ -59,7 +69,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     @Output() resultEmitter: EventEmitter<any> = new EventEmitter();
     @Output() maxResultsEmitter: EventEmitter<any> = new EventEmitter();
     @ViewChild(BsDropdownDirective) protected bsDropdown;
-
+    private dropdownScrollHandler!: ($event:any) => void;
     datasource;
     maxResults;
     pageSizeOptions;
@@ -149,8 +159,38 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
             }
             this.allowpagesizechange = this.parent.allowpagesizechange;
             if(this.allowpagesizechange)
-                this.defaultPageSizeOptions = this.parent?.pagesizeoptions ? this.parent.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) : [];
+                this.defaultPageSizeOptions =this.normalizeToNumberArray(this.parent?.pagesizeoptions);
         }, 0);
+    }
+    normalizeToNumberArray(input) { // Handles all formats in one place: "10,20,30", [10,20,30], "[10,20,30]"
+        if (!input) return [];
+
+        let arr;
+
+        if (Array.isArray(input)) {
+            arr = input;
+        } else if (typeof input === "string") {
+            const trimmed = input.trim();
+
+            // handle "[1,2,3]"
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                try {
+                    arr = JSON.parse(trimmed);
+                } catch {
+                    arr = [];
+                }
+            } else {
+                // handle "1,2,3"
+                arr = trimmed.split(",");
+            }
+        } else {
+            return [];
+        }
+
+        return arr
+            .map(v => Number(v))
+            .filter(v => !isNaN(v))
+            .sort((a, b) => a - b);
     }
 
     setResult(result) {
@@ -244,6 +284,12 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         return this.datasource && this.datasource.execute(DataSource.Operation.IS_PAGEABLE);
     }
 
+
+    private getPaginationStartIndex(): number {
+        const startIndex = this.datasource?._paginationConfig?.paginationStartIndex;
+        return isDefined(startIndex) && this.datasource?._paginationConfig?.type === 'page' ? Number(startIndex) : 1;
+    }
+
     // this function returns an object which gives summary of the current page data (ex: In UI it is shown as  1 to 10 out of 50 records)
     getPageDetails(startIndex, endIndex, totalRecords) {
         this.rowSummary =  (isDefined(startIndex) && isDefined(endIndex) && isDefined(totalRecords)) ? {
@@ -308,7 +354,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     maxResults = this.pagination.size = Number(this.pagination.size) ? this.pagination.size : get(this.datasource.dataSet, this.pagination.size);
                     this.pagination.numberOfElements = Number(this.pagination.numberOfElements) ? this.pagination.numberOfElements : get(this.datasource.dataSet, this.pagination.numberOfElements)
                     if (this.pagination.numberOfElements > 0) {
-                        if (isDefined(this.pagination.number)) { // number is page number received from backend
+                        if (isDefined(this.pagination.number) && this.getPaginationStartIndex() === 1) { // number is page number received from backend
                             this.dn.currentPage = this.pagination.number + 1;
                         }
                         currentPage = this.dn.currentPage || 1;
@@ -419,7 +465,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                 pageIndex = this.parent.actionRowPage;
             }
             this.datasource.execute(DataSource.Operation.LIST_RECORDS, {
-                'page': pageIndex,
+                'page': (pageIndex - 1) + this.getPaginationStartIndex(),
                 'size': this.maxResults,
                 'filterFields': this.filterFields,
                 'orderBy': this.sortOptions,
@@ -581,6 +627,8 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         this.statehandler = statehandler;
         if (parts[0] === 'Variables' || parts[0] === 'Widgets') {
             bindPagingOptions = `${parts[0]}.${parts[1]}.pagination`;
+        } else if (parts[0] === 'App' && parts[1] === 'activePage' && parts[2] === 'Variables' && parts[3]) {
+            bindPagingOptions = `App.activePage.Variables.${parts[3]}.pagination`;
         }
         if (!binddatasource && dataset && !datasetBoundExpr) {
             this.dataset = dataset;
@@ -667,11 +715,13 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     }else{
                         this.pageSizeOptions = range(this.actualPageSize,  Math.max(this.actualPageSize + 1, this.actualPageSize + totalElements), this.actualPageSize); // here data has only that page data and pagesize has totalNoof Elements
                     }
-                    if (widgetState?.selectedItem && widgetState.actualpagesize !== widgetState.pagesize) {
+                    if (widgetState?.selectedItem && widgetState.actualpagesize !== widgetState.pagesize
+                        && +this.prevPageSize !== +(widgetState.pagesize || this.maxResults)) {
+                        const newPageSize = +(widgetState.pagesize || this.maxResults);
                         if (!this.prevPageSize) {
-                            this.prevPageSize = this.actualPageSize || data?.length;
+                            this.prevPageSize = widgetState.actualpagesize || this.actualPageSize || data?.length;
                         }
-                        const updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, this.prevPageSize, data?.length);
+                        const updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, this.prevPageSize,newPageSize);
                         if (updatedItems) {
                             this.parent.statePersistence.setWidgetState(this.parent, {
                                 pagination: 1,
@@ -679,8 +729,8 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                                 actualpagesize: this.actualPageSize || this.maxResults,
                                 selectedItem: updatedItems
                             })
-                            this.prevPageSize = undefined;
                         }
+                        this.prevPageSize = newPageSize;
                     }
                 } else {
                     pageSize = this.parent.getActualPageSize();
@@ -797,12 +847,14 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     }
     onPageSizeChange($event, newPageSize) {
         const widgetState = this.parent.statePersistence.getWidgetState(this.parent);
-            let updatedItems;
+        let updatedItems;
+        const oldPageSize = widgetState?.pagesize || this.maxResults;
         if (widgetState?.selectedItem) {
-            updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, this.maxResults, +newPageSize);
+            updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, oldPageSize, +newPageSize);
         }
-        this.actualPageSize = this.actualPageSize || this.maxResults;
+        this.actualPageSize = widgetState?.actualpagesize || this.actualPageSize || oldPageSize;
         this.maxResults = +newPageSize;
+        this.prevPageSize = +newPageSize;
         this.maxResultsEmitter.emit(this.maxResults);
         if (this.isDataSourceHasPaging() && this.datasource) {
             this.datasource.maxResults = this.maxResults;
@@ -828,6 +880,38 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
             this.bsDropdown.hide()
         }
     }
+
+    onDropDownShown($event: any) {
+
+        const container = $event?._element?.nativeElement as HTMLElement;
+        if(!container) return;
+
+        adjustVerticalPosition(
+            $(container),
+            this.nativeElement?.querySelector('.items-per-page div'),
+            this.bsDropdown._dropdown,
+            $(container?.querySelector('ul[id="dropdown-basic"]'))
+        );
+
+        this.dropdownScrollHandler = () => {
+            this.onDropdownScroll();
+        };
+
+        window.addEventListener('scroll', this.dropdownScrollHandler, true);
+    }
+
+    onDropdownScroll() {
+        // on scroll boostrap is applying 3d translation to prevent from that added this dummy function
+      return;
+    }
+
+    onDropdownHidden() {
+        if (this.dropdownScrollHandler) {
+            window.removeEventListener('scroll', this.dropdownScrollHandler, true);
+        }
+        this.dropdownScrollHandler = undefined!;
+    }
+
     ngAfterViewInit() {
         const paginationElem =  this.nativeElement as HTMLElement;
         paginationElem.onclick = (event) => {
@@ -836,6 +920,9 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     }
 
     ngOnDestroy() {
+        if (this.dropdownScrollHandler) {
+            window.removeEventListener('scroll', this.dropdownScrollHandler, true);
+        }
         // MEMORY LEAK FIX: Clear initialization timeout if still pending
         if (this._initTimeoutId) {
             clearTimeout(this._initTimeoutId);

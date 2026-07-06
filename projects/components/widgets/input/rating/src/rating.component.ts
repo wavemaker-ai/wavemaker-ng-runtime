@@ -37,6 +37,8 @@ export class RatingComponent extends DatasetAwareFormComponent implements OnDest
     public ratingsWidth;
     public ratingItems;
     private _id;
+    public starsArray;
+    public isDecimal=false;
 
     public iconsize: string;
     public iconcolor: string;
@@ -175,30 +177,34 @@ export class RatingComponent extends DatasetAwareFormComponent implements OnDest
             }
             this.ratingsWidth = this.calculateRatingsWidth(dataVal);
         }
+        if(this.readonly && !isNaN(dataVal) && !Number.isInteger(parseFloat(dataVal))) {
+            this._modelByKey = dataVal;
+            this._modelByValue=dataVal
+            this.isDecimal=true;
+            this.ratingsWidth = this.calculateRatingsWidth(this.getPrevDataValue());
+            this.caption = this.selectedRatingValue
+        }
     }
 
     calculateRatingsWidth(dataVal?: any) {
         const selectedRating = parseFloat(this.selectedRatingValue),
-            starWidth = 0.925,
             maxValue = parseInt(this.maxvalue || this.datasetItems.length, 10) || DEFAULT_RATING;
 
         dataVal = dataVal || this.datavalue;
-        if (dataVal === undefined || dataVal === '' || dataVal === null) {
+        if ((dataVal === undefined || dataVal === '' || dataVal === null)||selectedRating <= 0) {
             this.caption = '';
-            return 0;
+            return '0%';
         }
-        if (selectedRating <= maxValue && selectedRating >= 0) {
-            return selectedRating * starWidth + 'em';
-        }
-        if (selectedRating > maxValue) {
-            return maxValue * starWidth + 'em';
-        }
+        const safeRating = Math.min(selectedRating, maxValue);
+        return ( (safeRating / maxValue) * 100)+'%';
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
         if (key === 'readonly') {
+            this.isDecimal=false;
             if (nv) {
                 this.ratingsWidth = this.calculateRatingsWidth();
+                this.onDatavalueChange(this.getPrevDataValue())
             }
         } else if (key === 'maxvalue') {
             /** Storing the datavalue in temp variable and assiging back to datavalue
@@ -206,6 +212,7 @@ export class RatingComponent extends DatasetAwareFormComponent implements OnDest
              * as the datavalue property change is triggering first rather than maxvalue
              * in the rating widget is used inside a datatable
              */
+            this.starsArray = Array(this.maxvalue);
             let tempDataValue = this.datavalue;
             this.prepareRatingDataset();
             // reset all the items.

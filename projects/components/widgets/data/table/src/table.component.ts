@@ -17,6 +17,7 @@ import {
     Optional,
     QueryList,
     TemplateRef,
+    EmbeddedViewRef,
     ViewChild,
     ViewContainerRef
 } from '@angular/core';
@@ -110,6 +111,9 @@ const exportIconMapping = {
 
 const ROW_OPS_FIELD = 'rowOperations';
 
+/** Same default as `table.props.ts` — used when `pagesizeoptions` cannot be parsed to integers. */
+const DEFAULT_PAGE_SIZE_OPTIONS = '5,10,20,50,100';
+
 const noop = () => {};
 
 const isInputBodyWrapper = target => {
@@ -201,6 +205,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     viewlessmessage;
     showviewlessbutton = false;
     _triggeredByUser;
+    _isInlineEditSave;
+    /** Covers async navigator/dataset updates after inline/quickedit save (wm.Variable). */
+    private _modelVarEditSoftRefreshActiveUntil = 0;
     isGridEditMode;
     loadingdatamsg;
     multiselect;
@@ -375,10 +382,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         showviewlessbutton: false,
         ondemandmessage: '',
         allowpagesizechange: false,
-        pagesizeoptions: '',
+        pagesizeoptions: DEFAULT_PAGE_SIZE_OPTIONS,
         viewlessmessage: '',
         loadingdatamsg: '',
         isNextPageData: undefined,
+        enableSort: true,
+        multiselect: false,
+        showRadioColumn: false,
+        enableColumnSelection: false,
         multiselecttitle: '',
         multiselectarialabel: '',
         radioselecttitle: '',
@@ -634,10 +645,24 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.prevData = getClonedObject(row);
         },
         afterRowUpdate: (row, e, callBack, options) => {
+            const isModelVarInlineOrQuick = this.isModelVariableInlineOrQuickEdit();
+            if (isModelVarInlineOrQuick) {
+                this._isInlineEditSave = true;
+                // Inline save triggers navigatePage / dataset emit asynchronously; a
+                // microtask timeout cleared the flag before gridData ran → full rerender.
+                this._modelVarEditSoftRefreshActiveUntil = Date.now() + 550;
+            }
             muteWatchers();
-            this.updateRecord(extend({}, options, {row, 'prevData': options.rowindex?options.rowindex:this.prevData, 'event': e, 'callBack': callBack}));
+            const v = get(this.datasource, 'category') === 'wm.Variable' && options && options.rowindex != null;
+            this.updateRecord(extend({}, options, {row, prevData: v ? options.rowindex : this.prevData, event: e, callBack}));
             setTimeout(() => {
                 unMuteWatchers();
+                if (isModelVarInlineOrQuick) {
+                    setTimeout(() => {
+                        this._isInlineEditSave = false;
+                        this._modelVarEditSoftRefreshActiveUntil = 0;
+                    }, 520);
+                }
             }, 10);
         },
         onBeforeRowUpdate: (row, e, options) => {
@@ -709,10 +734,66 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.customExprCompiledTl = {};
             this.customExprCompiledSummaryTl = {};
         },
+        updateCustomExpressionContexts: (preparedData) => {
+            const viewCount = this.customExprViewRef.length;
+            for (let i = 0; i < viewCount; i++) {
+                const viewRef = this.customExprViewRef.get(i) as EmbeddedViewRef<any>;
+                if (!viewRef || !viewRef.context || !viewRef.context.row || viewRef.context.row.$index === undefined) {
+                    continue;
+                }
+                const existingRow = viewRef.context.row;
+                const rowIndex = existingRow.$index - 1;
+                const dataRow = preparedData[rowIndex];
+                if (!dataRow) {
+                    continue;
+                }
+                Object.keys(dataRow).forEach(key => {
+                    if (key !== '$$index' && key !== '$$pk') {
+                        existingRow[key] = dataRow[key];
+                    }
+                });
+                existingRow.$isFirst = existingRow.$index === 1;
+                existingRow.$isLast = this.gridData.length === existingRow.$index;
+                viewRef.markForCheck();
+            }
+        },
         clearRowDetailExpression: () => {
             this.rowDetailViewRef.clear();
             this.rowDefMap = {};
             this.rowDefInstances = {};
+        },
+        invalidateRowDetailCache: (preparedData) => {
+            this.rowDefMap = {};
+            this.rowDefInstances = {};
+            // Update existing row detail view contexts in-place so currently
+            // expanded partials pick up the new row data via change detection.
+            const viewCount = this.rowDetailViewRef.length;
+            for (let i = 0; i < viewCount; i++) {
+                const viewRef = this.rowDetailViewRef.get(i) as EmbeddedViewRef<any>;
+                if (!viewRef || !viewRef.context || !viewRef.context.row) {
+                    continue;
+                }
+                const existingRow = viewRef.context.row;
+                const rowIndex = existingRow.$index - 1;
+                const dataRow = preparedData[rowIndex];
+                if (!dataRow) {
+                    continue;
+                }
+                Object.keys(dataRow).forEach(key => {
+                    if (key !== '$$index' && key !== '$$pk') {
+                        existingRow[key] = dataRow[key];
+                    }
+                });
+                viewRef.markForCheck();
+            }
+        },
+        refreshSelectedItems: () => {
+            const selectedRows = this.callDataGridMethod('getSelectedRows');
+            if (selectedRows.length) {
+                this.items.length = 0;
+                selectedRows.forEach(row => this.items.push(row));
+                this.selectedItemChange.next(selectedRows);
+            }
         },
         generateCustomExpressions: (rowData, index, summaryRow?) => {
             const row = this.getClonedRowObject(rowData);
@@ -1023,6 +1104,21 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
     };
 
+    /** wm.Variable + inline or quickedit (editmode is string from markup; normalize case). */
+    private isModelVariableInlineOrQuickEdit(): boolean {
+        if (get(this.datasource, 'category') !== 'wm.Variable') {
+            return false;
+        }
+        const em = String(this.editmode || '').toLowerCase();
+        return em === 'quickedit' || em === 'inline';
+    }
+
+    /** True while an inline/quickedit row save is updating the grid (incl. delayed navigator emit). */
+    private shouldSoftRefreshAfterModelVarRowSave(): boolean {
+        return this.isModelVariableInlineOrQuickEdit()
+            && (this._isInlineEditSave || this._modelVarEditSoftRefreshActiveUntil > Date.now());
+    }
+
     private _gridData;
     private _selectedItemsExist = false;
     set gridData(newValue) {
@@ -1094,7 +1190,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     console.warn('Error in beforedatarender event callback, continuing with table rendering:', error);
                 }
             }
-            this.setDataGridOption('data', getClonedObject(this._gridData));
+            if (this.shouldSoftRefreshAfterModelVarRowSave()) {
+                const clonedData = getClonedObject(this._gridData);
+                this.gridOptions.data = clonedData;
+                this.callDataGridMethod('softRefreshData', clonedData);
+            } else {
+                this.setDataGridOption('data', getClonedObject(this._gridData));
+            }
         }
     }
 
@@ -1254,7 +1356,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.gridOptions.ondemandmessage = this.ondemandmessage;
         this.gridOptions.viewlessmessage = this.viewlessmessage;
         this.gridOptions.loadingdatamsg = this.loadingdatamsg;
-        this.gridOptions.pagesizeoptions = this.pagesizeoptions;
+        this.gridOptions.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(this.pagesizeoptions);
+        this.pagesizeoptions = this.gridOptions.pagesizeoptions;
         this.gridOptions.multiselecttitle = this.multiselecttitle;
         this.gridOptions.multiselectarialabel = this.multiselectarialabel;
         this.gridOptions.radioselecttitle = this.radioselecttitle;
@@ -1531,6 +1634,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
         if (newVal) {
             this.populateGridData(newVal);
+            this.refreshRowFilterDataFromDataset();
         }
         // when select widget options are loaded in search filter then initializing it
         const widgetState = this.statePersistence.getWidgetState(this);
@@ -1548,6 +1652,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     }
 
     ngOnDestroy() {
+        this._modelVarEditSoftRefreshActiveUntil = 0;
+        this._isInlineEditSave = false;
         // MEMORY LEAK FIX: Remove document click listener
         document.removeEventListener('click', this.documentClickBind);
 
@@ -1718,6 +1824,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         row.$isLast = this.gridData.length === row.$index;
         delete row.$$index;
         delete row.$$pk;
+        delete row.$$wmSourceListIndex;
         return row;
     }
 
@@ -1823,10 +1930,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     setDataGridOption(optionName, newVal, forceSet = false) {
         if (!this.datagridElement || !this.datagridElement.datatable || !this.datagridElement.datatable('instance')) {
+            // Bound properties can update before the jQuery widget is initialized.
+            // Keep gridOptions in sync so the initial datatable() call sees the latest value.
+            this.gridOptions[optionName] = newVal;
             return;
         }
         const option = {};
-        if (isDefined && (!isEqual(newVal, this.gridOptions[optionName]) || forceSet)) {
+        if (isDefined(newVal) && (!isEqual(newVal, this.gridOptions[optionName]) || forceSet)) {
             option[optionName] = newVal;
             this.datagridElement.datatable('option', option);
             this.gridOptions[optionName] = newVal;
@@ -1972,6 +2082,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         // Apply filter and sort, if data is refreshed through Refresh data method
         if (!this.isNavigationEnabled() && this._isClientSearch) {
             data = getClonedObject(serviceData);
+            if (isObject(data) && !isArray(data)) {
+                data = [data];
+            }
+            if (get(this.datasource, 'category') === 'wm.Variable' && isArray(data)) {
+                for (let i = 0; i < data.length; i++) {
+                    data[i].$$wmSourceListIndex = i;
+                }
+            }
             data = this.getSearchResult(data, this.filterInfo);
             data = this.getSortResult(data, this.sortInfo);
             this.serverData = data;
@@ -2280,12 +2398,48 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             case 'allowpagesizechange':
                 this.gridOptions.allowpagesizechange = nv;
                 this.allowpagesizechange = nv;
+                this.dataNavigator.allowpagesizechange = nv;
+                if (nv) {
+                    const pagesizeoptions = this.sanitizeCommaSeparatedIntegers(this.pagesizeoptions);
+                    this.gridOptions.pagesizeoptions = pagesizeoptions;
+                    this.pagesizeoptions = pagesizeoptions;
+                    this.prevPagesizeoptions = '';
+                    this.setDefaultPageSize(this.pagesize || this.actualPageSize || this.gridOptions.getPageSize());
+                }
                 break;
             case 'pagesizeoptions':
                 this.prevPagesizeoptions = this.sanitizeCommaSeparatedIntegers(ov);
                 this.gridOptions.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
-                this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
-                if(this.allowpagesizechange) this.setDefaultPageSize(nv);
+                this.pagesizeoptions = this.gridOptions.pagesizeoptions;
+                if (this.allowpagesizechange) {
+                    this.setDefaultPageSize(this.pagesize || this.actualPageSize || this.gridOptions.getPageSize());
+                    if (get(this.datasource, 'category') !== 'wm.Variable') {
+                        this.dataNavigator.onPageSizeChange(undefined, this.dataNavigator.pageSizeOptions[0] || this.pagesize);
+                    }
+                }
+                break;
+            case 'showheader':
+                this.setDataGridOption('showHeader', nv);
+                break;
+            case 'showheader':
+                this.setDataGridOption('showHeader', nv);
+                break;
+            case 'enablesort':
+                this.setDataGridOption('enableSort', nv);
+                break;
+            case 'enablecolumnselection':
+             //   this.enablecolumnselection = nv;
+                //this.gridOptions.enableColumnSelection = nv;
+                this.setDataGridOption('enableColumnSelection', nv);
+                break;
+            case 'isrowselectable':
+                this.setDataGridOption('isrowselectable', nv);
+                break;
+            case 'multiselect':
+                this.setDataGridOption('multiselect', nv);
+                break;
+            case 'radioselect':
+                this.setDataGridOption('showRadioColumn', nv);
                 break;
             case 'multiselecttitle':
                 this.setDataGridOption('multiselecttitle', nv);
@@ -2320,16 +2474,20 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     setDefaultPageSize(nv: any){
         let widgetState = this.statePersistence.getWidgetState(this);
         if (this.gridOptions.allowpagesizechange) {
-            if (get(widgetState, 'pagesize')) {
+            const normalizedPageSizeOptions = this.getNormalizedPageSizeOptionsArray(this.pagesizeoptions);
+            if (this.isPageSizeOptionsChanged() && normalizedPageSizeOptions.length) { // if pagesize options are changed, then update the pagesize without checking for statepersistence
+                nv = normalizedPageSizeOptions[0];
+                this.pagesize = nv;
+            } else if (get(widgetState, 'pagesize')) {
                 nv = get(widgetState, 'pagesize');
                 this.pagesize = nv; // updating the default pagesize to user selected pagesize
-            }else if (this.pagesizeoptions) {
-                nv = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b)[0]
+            }else if (this.pagesizeoptions && normalizedPageSizeOptions.length) {
+                nv = normalizedPageSizeOptions[0];
                 this.pagesize = nv;
             }
             this.updatedPageSize = nv;
             if(this.isPageSizeOptionsChanged()) {
-                this.dataNavigator.defaultPageSizeOptions = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) || [];
+                this.dataNavigator.defaultPageSizeOptions = normalizedPageSizeOptions;
                 this.dataNavigator.pageSizeOptions = [...this.dataNavigator.defaultPageSizeOptions];
             }
         }
@@ -2357,23 +2515,60 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.dataNavigator.onPageSizeChange(undefined, pagesize);
     }
 
-    sanitizeCommaSeparatedIntegers(input: string): string {
-        if (!input) return "";
+    sanitizeCommaSeparatedIntegers(input) {
+        if (input === null || input === undefined || input === '') {
+            return DEFAULT_PAGE_SIZE_OPTIONS;
+        }
+        let arr;
+        if (Array.isArray(input)) {
+            arr = input;
+        } else if (typeof input === "string") {
+            const trimmed = input.trim();
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                try {
+                    arr = JSON.parse(trimmed);
+                } catch {
+                    arr = [];
+                }
+            } else {
+                arr = trimmed.split(",");
+            }
+        } else {
+            return DEFAULT_PAGE_SIZE_OPTIONS;
+        }
+
         const uniqueNumbers = Array.from(
             new Set(
-                input
-                    .split(",")
-                    .map(v => v.trim())
+                arr
+                    .map(v => String(v).trim())
                     .filter(v => /^-?\d+$/.test(v))
                     .map(v => Math.abs(parseInt(v, 10)))
             )
         );
-        return uniqueNumbers.join(",");
+        const joined = uniqueNumbers.join(",");
+        return joined || DEFAULT_PAGE_SIZE_OPTIONS;
+    }
+
+    getNormalizedPageSizeOptionsArray(input) {
+        return this.sanitizeCommaSeparatedIntegers(input)
+            .split(',')
+            .map(Number)
+            .filter(v => !isNaN(v))
+            .sort((a, b) => a - b);
     }
 
     onDataSourceChange() {
         this.fieldDefs.forEach(col => {
            triggerFn(col.onDataSourceChange && col.onDataSourceChange.bind(col));
+        });
+    }
+
+    private refreshRowFilterDataFromDataset() {
+        if (this.filtermode !== 'multicolumn') {
+            return;
+        }
+        this.fieldDefs.forEach(col => {
+            triggerFn(col.loadFilterData && col.loadFilterData.bind(col));
         });
     }
 
@@ -2498,6 +2693,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             data = getClonedObject(this.__fullData);
             if (isObject(data) && !isArray(data)) {
                 data = [data];
+            }
+            if (get(this.datasource, 'category') === 'wm.Variable' && isArray(data)) {
+                for (let i = 0; i < data.length; i++) {
+                    data[i].$$wmSourceListIndex = i;
+                }
             }
             data = this.getSearchResult(data, this.filterInfo);
             data = this.getSortResult(data, this.sortInfo);

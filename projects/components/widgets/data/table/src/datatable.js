@@ -736,6 +736,10 @@ $.widget('wm.datatable', {
             colExpression = colDef.customExpression,
             styles = "text-align: " + colDef.textAlignment + ";position: relative;"
 
+        if (!_.isUndefined(colDef.show) && !colDef.show) {
+            styles += "display: none;";
+        }
+
         $htm = $('<td class="' + classes + '" data-col-id="' + colId + '" role="cell" tabindex="0"></td>');
         this._setStyles($htm, styles);
 
@@ -1130,6 +1134,144 @@ $.widget('wm.datatable', {
         this.addOrRemoveScroll();
         this._setGridEditMode(false);
         this.toggleNewRowActions(false);
+    },
+    /*
+     * Updates internal state (options.data, preparedData, custom expressions,
+     * conditional class watchers, and summary row) without a full DOM re-render.
+     * Used during quickedit inline save for model variables to avoid focus loss.
+     */
+    softRefreshData: function (newData) {
+        // With pagination, navigator / selection can emit the same page twice in one
+        // save cycle. Full refresh skipped duplicate data via isEqual on option set;
+        // soft refresh must do the same or onDataRender (datarender) fires twice.
+        if (this.options.data && newData && _.isEqual(this.options.data, newData)) {
+            return;
+        }
+
+        var self = this,
+            isScrollOrOnDemand = this.options.isNavTypeScrollOrOndemand(),
+            pageStartIndex = this.getPageStartIndex(),
+            startRowIndex = this.options.startRowIndex || 0,
+            selectedMap = {},
+            preparedData;
+
+        // Preserve _selected state before _prepareData rebuilds preparedData
+        this.preparedData.forEach(function (data, i) {
+            if (data._selected) {
+                selectedMap[i] = true;
+            }
+        });
+
+        this.options.data = newData;
+        this._prepareData();
+
+        // Restore _selected state on new preparedData
+        Object.keys(selectedMap).forEach(function (i) {
+            if (self.preparedData[i]) {
+                self.preparedData[i]._selected = true;
+            }
+        });
+
+        if (isScrollOrOnDemand) {
+            preparedData = this.preparedData.slice(pageStartIndex);
+        } else {
+            preparedData = this.preparedData;
+        }
+
+        // Update existing custom expression view contexts in-place
+        // so Angular change detection picks up new data without DOM manipulation.
+        if (_.isFunction(this.options.updateCustomExpressionContexts)) {
+            this.options.updateCustomExpressionContexts(preparedData);
+        }
+
+        // Update plain text cells with fresh data from preparedData.
+        // hideRowEditMode runs before softRefreshData and may restore cells
+        // before preparedData is updated, leaving them with stale values.
+        self.gridElement.find('tr.' + self.options.cssClassNames.tableRow + ':not(.always-new-row)').each(function () {
+            var $row = $(this),
+                rowId = +$row.attr('data-row-id'),
+                rowData = self.preparedData[rowId];
+            if (!rowData) return;
+
+            $row.find('td.' + self.options.cssClassNames.tableCell + ':not(.cell-editing)').each(function () {
+                var $cell = $(this),
+                    colId = +$cell.attr('data-col-id'),
+                    colDef = self.preparedHeaderData[colId],
+                    value;
+
+                if (colDef && !colDef.customExpression && colDef.type !== 'custom') {
+                    value = _.get(rowData, colDef.field);
+                    var newText;
+                    if (self.Utils.isDefined(value) && value !== null) {
+                        newText = '' + value;
+                    } else if (self.options.filterNullRecords && value === null) {
+                        newText = 'null';
+                    } else {
+                        newText = '';
+                    }
+                    if ($cell.text() !== newText) {
+                        $cell.text(newText);
+                        $cell.attr('title', newText);
+                    }
+                }
+            });
+        });
+
+        // Re-register conditional class watchers with fresh row clones
+        _.forEach(preparedData, function (row, index) {
+            var _row = _.clone(row),
+                rowIndex = isScrollOrOnDemand ? startRowIndex + index - 1 : index;
+            _row.$index = rowIndex + 1;
+
+            self.options.registerRowNgClassWatcher(_row, rowIndex);
+
+            self.preparedHeaderData.forEach(function (colDef, colId) {
+                self.options.registerColNgClassWatcher(_row, colDef, rowIndex, colId);
+            });
+        });
+
+        // Reset action state flags (mirrors _getGridTemplate cleanup)
+        if (!this.options.isdynamictable) {
+            this.options.setLastActionPerformed(this.options.ACTIONS.DEFAULT);
+            this.options.setIsDataUpdatedByUser(false);
+            this.options.clearActionRowIndex();
+        }
+
+        // Refresh row action buttons and expansion buttons with updated row data.
+        // Scope to data rows only — exclude always-new-row which has no backing data entry.
+        var $dataRows = self.gridElement.find('tr.' + self.options.cssClassNames.tableRow + ':not(.always-new-row)');
+        this.options.clearRowActions();
+        this._appendRowExpansionButtons($dataRows);
+        this._appendRowActions($dataRows);
+        // Regenerated action / expansion DOM — re-bind handlers (attachEventHandlers only runs on full render).
+        this._bindRowActionsAndExpansionClickHandlers($dataRows);
+
+        // Re-render summary row if present
+        if (this.options.summaryRow) {
+            var $summaryRowHtm = $(this._getSummaryRowTemplate());
+            this.tableContainer.find('tfoot').remove();
+            if (this.options.data.length) {
+                this.tableContainer.append($summaryRowHtm);
+            }
+            this.gridFooter = this.tableContainer.find('tfoot');
+        }
+
+        // Invalidate row detail (expansion) cache so collapse+re-expand
+        // creates fresh views with updated data.
+        if (_.isFunction(this.options.invalidateRowDetailCache)) {
+            this.options.invalidateRowDetailCache(preparedData);
+        }
+
+        // Refresh this.items with fresh data references from the updated dataset
+        // so that selecteditem / currentItem reflect the new values.
+        if (_.isFunction(this.options.refreshSelectedItems)) {
+            this.options.refreshSelectedItems();
+        }
+
+        // Fire datarender event callback
+        if (_.isFunction(this.options.onDataRender)) {
+            this.options.onDataRender();
+        }
     },
     //Populate row data with default data
     setDefaultRowData: function (rowData) {
@@ -1551,8 +1693,24 @@ $.widget('wm.datatable', {
 
     /* Sets the options for the grid. */
     _setOption: function (key, value) {
+        const isSortEnabled = v => v !== false && v !== 'false';
+        let prev;
+
+        if (key === 'enableSort') {
+            prev = isSortEnabled(this.options.enableSort);
+        }
         this._super(key, value);
         switch (key) {
+            case 'enableSort':
+                if (this.tableContainer?.length) {
+                    this.refreshSortHeader(); // Refresh the table header and update column widths when sort is enabled/disabled
+                }
+                break;
+            case 'enableColumnSelection':
+                if (this.tableContainer?.length) {
+                    this.refreshSortHeader(); // Refresh the table header and update column widths when column selection is enabled/disabled
+                }
+                break;
             case 'showHeader':
                 this._toggleHeader();
                 this._toggleSearch();
@@ -1635,6 +1793,17 @@ $.widget('wm.datatable', {
         return this.options;
     },
 
+    /** function to rebuild table header and update column widths. */
+    refreshSortHeader: function () {
+        this._prepareHeaderData();
+        if (this.options.showHeader) {
+            this._renderHeader();
+            this._attachHeaderEventHandlers();
+        }
+        this.setColGroupWidths();
+        this.addOrRemoveScroll();
+    },
+
     /* Toggles the table header visibility. */
     _toggleHeader: function () {
         if (this.gridHeaderElement) {
@@ -1647,6 +1816,7 @@ $.widget('wm.datatable', {
         this.setDefaultColsData();
         if (this.options.showHeader) {
             this._renderHeader();
+            this._attachHeaderEventHandlers(); // Attach all event handlers specifically for the table header
         }
     },
 
@@ -1729,11 +1899,14 @@ $.widget('wm.datatable', {
         if (this.options.showRadioColumn) {
             $radio = $row.find('td input[rowSelectInput]:radio:not(:disabled)');
             $radio.prop('checked', selected);
+            $radio.attr('checked', selected ? 'checked' : null); //
             this.preparedData[rowId]._checked = selected;
         }
         if (this.options.multiselect) {
             $checkbox = $row.find('td input[name="gridMultiSelect"]:checkbox:not(:disabled)');
             $checkbox.prop('checked', selected);
+            $checkbox.attr('checked', selected ? 'checked' : null);
+            $checkbox.closest('label').toggleClass('unchecked', !selected);
             $checkbox.siblings('span.sr-only').text(selected ? 'Row Selected' : 'Row Deselected');
             this.preparedData[rowId]._checked = selected;
             // if we check header checkbox(select/unselect all the records) then updating selectAll checkbox state is not required.
@@ -1767,6 +1940,7 @@ $.widget('wm.datatable', {
             $headerCheckbox.prop('checked', false);
         }
     },
+
     // triggered on capture phase of click listener.
     // sets the selected rowdata on click.
     rowClickHandlerOnCapture: function (e, $row, options) {
@@ -2155,6 +2329,10 @@ $.widget('wm.datatable', {
         var rowId = parseInt($row.attr('data-row-id'), 10);
         return rowId >= this.preparedData.length || $row.hasClass('always-new-row');
     },
+    _getWmVariableRowLocator: function (rowId) {
+        var liveRow = this.options.data[parseInt(rowId, 10)];
+        return (liveRow && liveRow.$$wmSourceListIndex != null) ? liveRow.$$wmSourceListIndex : (liveRow || parseInt(rowId, 10));
+    },
     /* Toggles the edit state of a row. */
     toggleEditRow: function (e, options) {
         if(e?.target && $(e.target).closest('.app-menu').length) {
@@ -2360,8 +2538,9 @@ $.widget('wm.datatable', {
                                 return;
                             }
                         }
-                        if(this.options?.getDataSource()?.category== "wm.Variable") {
-                            editOptions.rowindex = rowindex;
+                        var ds = this.options.getDataSource && this.options.getDataSource();
+                        if (ds && ds.category === 'wm.Variable') {
+                            editOptions.rowindex = self._getWmVariableRowLocator(rowindex);
                         }
                         this.options.afterRowUpdate(rowData, e, onSaveSuccess, editOptions);
                     }
@@ -2514,6 +2693,10 @@ $.widget('wm.datatable', {
                 return;
             }
         }
+        var deleteDs = this.options.getDataSource && this.options.getDataSource();
+        if (deleteDs && deleteDs.category === 'wm.Variable') {
+            options.rowindex = this._getWmVariableRowLocator(rowId);
+        }
         if (_.isFunction(this.options.onRowDelete)) {
             className = this.options.cssClassNames.deleteRow;
             isActiveRow = $row.attr('class').indexOf('active') !== -1;
@@ -2626,8 +2809,10 @@ $.widget('wm.datatable', {
     /* Handles table sorting. */
     sortHandler: function (e) {
           e.stopImmediatePropagation();
-        // If header span is clicked and column selection is enabled, call header click
+        // If header span is clicked and column selection is enabled, call header click hand
+        //Calling the column selection handler so that column selection works even when the bind exp changes later from false to true.
         if ($(e.target).hasClass('header-data') && this.options.enableColumnSelection) {
+            this.columnSelectionHandler(e);
             this.headerClickHandler(e);
         }
         var $e = $(e.target),
@@ -2892,10 +3077,31 @@ $.widget('wm.datatable', {
             this.sortHandler(event);
         }
     },
+    /**
+     * Binds jQuery handlers on save/cancel row-action buttons and row-expansion controls.
+     * Must run after DOM for those controls is replaced (e.g. softRefreshData).
+     */
+    _bindRowActionsAndExpansionClickHandlers: function ($scope) {
+        var self = this;
+        if (this.options.rowActions.length) {
+            $scope.find('.cancel-edit-row-button').off('click');
+            $scope.find('.save-edit-row-button').off('click');
+            $scope.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
+            $scope.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
+        }
+        $scope.find('[data-identifier="rowExpansionButtons"]').off('click');
+        $scope.find('[data-identifier="rowExpansionButtons"]').on('click', function (e) {
+            var $row = $(e.target).closest('tr.app-datagrid-row');
+            if ($(this).find('.app-button').attr('disabled')) {
+                return;
+            }
+            self.toggleExpandRow(+$row.attr('data-row-id'), undefined, e);
+        });
+    },
+
     /* Attaches all event handlers for the table. */
     attachEventHandlers: function ($htm) {
-        var $header = this.gridHeaderElement,
-            self = this;
+        var self = this;
 
         if (this.options.enableRowSelection) {
             $htm[0].removeEventListener('click', this.rowClickHandlerOnCapture.bind(this));
@@ -2917,40 +3123,15 @@ $.widget('wm.datatable', {
             $htm.on('keydown', this.onKeyDown.bind(this));
         }
 
-        if ($header) {
-            if (this.options.enableColumnSelection) {
-                $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
-                $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
-            } else {
-                $header.find('th[data-col-selectable]').off('click');
-            }
+        this._attachHeaderEventHandlers();
 
-            if (this.options.enableSort) {
-                if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
-                } else {
-                    $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
-                }
-            } else {
-                if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click');
-                } else {
-                    $header.find('th[data-col-sortable]').off('click');
-                }
-            }
-        }
         if (this.options.rowActions.length) {
             $htm.find('.cancel-edit-row-button').off('click');
             $htm.find('.save-edit-row-button').off('click');
             $htm.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
             $htm.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
         }
+        this._bindRowActionsAndExpansionClickHandlers($htm);
         if (self.options.editmode === self.CONSTANTS.QUICK_EDIT) {
             $htm.on('focus', 'tr.app-datagrid-row', function (e) {
                 var $row = $(e.currentTarget);
@@ -2971,13 +3152,23 @@ $.widget('wm.datatable', {
                     isRelatedTargetRowAction = $relatedTarget.closest('span.actions-column').length>0,
                     isTargetGridAction = $relatedTarget.closest('div.app-datagrid-actions').length>0,
                     isRelatedTargetGridAction = $relatedTarget.closest('div.app-datagrid-actions').length>0,
+                    currentGridId = $($target.closest('.app-grid'))?.attr('widget-id'),
+                    relatedGrid = $relatedTarget.closest('.app-grid')[0],
+                    relatedGridId = relatedGrid ? $(relatedGrid).attr('widget-id') : null,
+                    isRelatedGridDifferent = relatedGrid && relatedGridId !== currentGridId,
                     invalidTargets = '.row-editing:not(".always-new-row"), .row-action-button, .app-datagrid-cell, .caption, button.btn-time, button.btn-date';
 
                 //Check if the focus out element is outside the grid or some special elements
                 function isInvalidTarget() {
-                    if (!$relatedTarget.closest('.app-grid').length) {
+                    // If relatedTarget is not in any grid, it's invalid (outside all tables)
+                    if (!relatedGrid) {
                         return true;
                     }
+                    // If relatedTarget is in a different grid, allow save (return false)
+                    if (isRelatedGridDifferent) {
+                        return false;  // NOT invalid - we should save the grid
+                    }
+                    // If relatedTarget is in SAME grid, check if it's an invalid target within this grid
                     return $relatedTarget.is(invalidTargets);
                 }
 
@@ -2994,8 +3185,9 @@ $.widget('wm.datatable', {
                 }
                 // Save the Row if any button from Grid action is clicked / AddRow action is
                 // triggered from the Row Actions
-                if (!isTargetGridAction && !isTargetRowAction) {
-                    //Save the row on last column of the data table. Do not save the row if focus is out of input file.
+                if (!isTargetGridAction && !isTargetRowAction && !isRelatedGridDifferent) {
+                    // If focus moved to a DIFFERENT grid, allow save (skip isLastColumn check)
+                    // Otherwise Save the row on last column of the data table. Do not save the row if focus is out of input file.
                     if (!isLastColumn || (isLastColumn && (e.relatedTarget === null || $(e.target).is('tr.app-datagrid-row'))) || $target.hasClass("file-upload")) {
                         return;
                     }
@@ -3005,7 +3197,9 @@ $.widget('wm.datatable', {
                         'action': 'save',
                         'noMsg': true,
                         'success': function (skipFocus, error, isNewRow) {
-                            if (!isNewRow) {
+                            // Only navigate to next row if staying in SAME grid
+                            // If switching to DIFFERENT grid, let that grid's click handler take over
+                            if (!isNewRow && !isRelatedGridDifferent) {
                                 self.editSuccessHandler(skipFocus, error, e, $row,false);
                             }
                         }
@@ -3023,6 +3217,42 @@ $.widget('wm.datatable', {
             }
             self.toggleExpandRow(+$row.attr('data-row-id'), undefined, e);
         });
+    },
+    /**
+     * Function which attaches all event handlers specifically for the table header.
+     * Needed when table header is rebuilt (e.g. showHeader toggle) without a full _renderGrid
+     */
+    _attachHeaderEventHandlers: function () {
+        var $header = this.gridHeaderElement;
+        if (!$header || !$header.length) {
+            return;
+        }
+        if (this.options.enableColumnSelection) {
+            $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
+            $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
+        } else {
+            $header.find('th[data-col-selectable]').off('click');
+        }
+
+        if (!(this.options.enableSort === false || this.options.enableSort === 'false')) {
+            if (this.options.enableColumnSelection) {
+                $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+            } else {
+                $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+            }
+        } else {
+            if (this.options.enableColumnSelection) {
+                $header.find('th[data-col-sortable] .header-data').off('click');
+            } else {
+                $header.find('th[data-col-sortable]').off('click');
+            }
+        }
     },
     expandRow: function(rowId) {
         this.toggleExpandRow(rowId, true)
@@ -3209,11 +3439,19 @@ $.widget('wm.datatable', {
             self.gridHeaderElement.parent().prop('scrollLeft', this.scrollLeft);
         });
         if (!this.options.showHeader) {
+            this.tableContainer.find('colgroup').remove(); // Remove the colgroup from the table container when showHeader is false
             this.tableContainer.append($colgroup);
             this.gridHeaderElement.hide();
             //this.gridElement.prepend($colgroup.clone());
             return;
         } else {
+            /* _toggleHeader() removes thead from the DOM when toggling showHeader; gridHeaderElement
+             * still references the detached thead. Re-insert it before the tbody so the header
+             * is visible when bind changes from false to true. */
+            if (this.gridHeaderElement.length && this.tableContainer?.length &&
+                !this.tableContainer[0].contains(this.gridHeaderElement[0])) {
+                this.tableContainer.prepend(this.gridHeaderElement); // Re-insert the table header before the tbody when showHeader is true
+            }
             this.gridHeaderElement.show();
         }
         $header = headerTemplate.header;
@@ -3262,7 +3500,7 @@ $.widget('wm.datatable', {
                 $headerCol.hide();
             }
         });
-
+        this.tableContainer.find('colgroup').remove(); // Remove the colgroup from the table container when showHeader is false
         /*For mobile view, append header to the main table only*/
         if (this.options.isMobile) {
             this.tableContainer.append($colgroup);
@@ -3546,8 +3784,8 @@ $.widget('wm.datatable', {
             this.dataStatusContainer.hide();
         } else {
             // [WMS-23839] always show load more btn if show view less btn is true
-            if (this.options.isNavTypeScrollOrOndemand() && 
-                (state === 'nodata' || 
+            if (this.options.isNavTypeScrollOrOndemand() &&
+                (state === 'nodata' ||
                  (this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
                   this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
                   (this.options.getCurrentPage() == this.options.getPageCount()) && !this.options.showviewlessbutton))) {
@@ -3560,7 +3798,7 @@ $.widget('wm.datatable', {
                 if (state === 'nodata') {
                     this.dataStatusContainer.css('height', 'auto');
                     this.dataStatus.contentHeight = 0;
-                }  else if (this.options.isNavTypeScrollOrOndemand() && 
+                }  else if (this.options.isNavTypeScrollOrOndemand() &&
                            this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
                            this.options.getCurrentPage() > 1){
                     // showing the loading icon only for the first page
@@ -3572,7 +3810,7 @@ $.widget('wm.datatable', {
                     this.dataStatusContainer.css('height', this.dataStatus.height > this.dataStatus.contentHeight ? 'auto' : this.dataStatus.contentHeight);
                 }
             }
-            if (!isScrollOrOndemand || (isScrollOrOndemand && 
+            if (!isScrollOrOndemand || (isScrollOrOndemand &&
                 this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
                 this.options.getCurrentPage() === 1)) {
                 this.gridContainer.addClass("show-msg");
@@ -3698,7 +3936,7 @@ $.widget('wm.datatable', {
         //     this.gridElement[0].removeEventListener('click', this.boundRowClickHandlerOnCapture, true);
         //     this.boundRowClickHandlerOnCapture = null;
         // }
-        
+
         // MEMORY LEAK FIX: Remove all jQuery event handlers
         if (this.gridHeaderElement) {
             this.gridHeaderElement.off();
@@ -3715,12 +3953,12 @@ $.widget('wm.datatable', {
         if (this.gridContainer) {
             this.gridContainer.off();
         }
-        
+
         // MEMORY LEAK FIX: Clear all internal structures
         this.preparedData = [];
         this.preparedHeaderData = [];
         this.compiledCellTemplates = {};
-        
+
         this.element.text('');
         window.clearTimeout(this.refreshGridTimeout);
     }
