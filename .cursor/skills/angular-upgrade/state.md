@@ -1,6 +1,6 @@
 # Current State
 
-> Gitignored session file — updated after **every step**. Reset: `sh scripts/reset-state.sh`.
+> Gitignored session file — updated after **every step**. Reset: [`sh scripts/reset-state.sh`](scripts/reset-state.sh).
 
 ---
 
@@ -102,7 +102,7 @@ For R1 and R3: every breaking change must appear in the Dual-repo change plan be
 - R9: (jest-preset-angular version compatible with target Angular)
 - R10: (ng-packagr version for target)
 - R11: (Node LTS version for target — matches engines.node pin above)
-- R12: (wavemaker-runtime-patterns.md — must-change findings)
+- R12: (checklist.md — must-change findings)
 - R13: (prior upgrade doc — context only; do not copy non-compatibility patterns)
 
 ---

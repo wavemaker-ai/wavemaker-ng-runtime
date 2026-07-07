@@ -1,6 +1,6 @@
 # WaveMaker runtime patterns — ng-runtime §1–§19
 
-Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/`) in Step 6. For codegen patterns see [`patterns-codegen.md`](patterns-codegen.md). Workflow: [`SKILL.md`](./SKILL.md). References: [`references.md`](./references.md) R12.
+Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/`) in Step 6. For codegen patterns see [`patterns/codegen.md`](codegen.md). Workflow: [`SKILL.md`](../SKILL.md). References: [`research.md`](../research.md) R12.
 
 > **Pattern currency:** these patterns reflect past Angular upgrade experience (primarily Angular 20). R1/R3 from official Angular docs take precedence over anything here.
 

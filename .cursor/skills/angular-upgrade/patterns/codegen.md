@@ -1,6 +1,6 @@
 # WaveMaker codegen patterns — ng-codegen §20
 
-Applied to **ng-codegen** (`templates/`, `src/`) in Step 6. For ng-runtime source patterns see [`patterns-runtime.md`](patterns-runtime.md). Workflow: [`SKILL.md`](./SKILL.md). Never edit `dist/` in ng-codegen.
+Applied to **ng-codegen** (`templates/`, `src/`) in Step 6. For ng-runtime source patterns see [`patterns/runtime.md`](runtime.md). Workflow: [`SKILL.md`](../SKILL.md). Never edit `dist/` in ng-codegen.
 
 ---
 
@@ -110,6 +110,17 @@ When `@wavemaker-ai/angular-app/dependencies/` filenames use a `.cjs.js` suffix,
 
 **Note:** `@wavemaker-ai/angular-app/dependencies` ships **web** transpilation only — do not require `transpilation-mobile.cjs` unless the package adds it again. Match the suffix already used in `gen-components.js` (`custom-widgets-bundle.cjs.js`).
 
+#### 20d. Cross-repo flow
+
+| Phase | Action |
+|-------|--------|
+| Step 2 | Map §20 + R8/R12 → **Dual-repo change plan** |
+| Step 6 | Apply in both repos; **Cross-repo changes**; `pattern-review.sh` |
+| Step 7 | `BUILD_CMD` (runtime) |
+| Step 9 | Codegen `build.sh`; local build; Tomcat; preview checklist below |
+
+Iteration table: [`SKILL.md`](../SKILL.md) Step 9 only.
+
 #### 20e. Prism `foundation-css` path in `update-angular-json.js` — must-change
 
 **Repo:** `wavemaker-ng-codegen/src/update-angular-json.js`
@@ -138,15 +149,4 @@ When `@wavemaker-ai/angular-app/dependencies/` filenames use a `.cjs.js` suffix,
 
 **All fixes:** `wavemaker-ng-runtime` and/or `wavemaker-ng-codegen` → rebuild → re-run codegen (local-angular-build Steps 2–5).
 
-**Step 9 iteration:** see `SKILL.md` Step 9 only.
-
-#### 20d. Cross-repo flow
-
-| Phase | Action |
-|-------|--------|
-| Step 2 | Map §20 + R8/R12 → **Dual-repo change plan** |
-| Step 6 | Apply in both repos; **Cross-repo changes**; `pattern-review.sh` |
-| Step 7 | `BUILD_CMD` (runtime) |
-| Step 9 | Codegen `build.sh`; local build; Tomcat; preview checklist below |
-
-Iteration table: `SKILL.md` Step 9 only.
+**Step 9 iteration:** see [`SKILL.md`](../SKILL.md) Step 9 only.

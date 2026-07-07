@@ -1,4 +1,4 @@
-# Examples
+# Templates
 
 Canonical messages for this skill.
 
@@ -41,8 +41,8 @@ Shown once before asking for confirmation. Each row has a Status column — `ok`
 ```
 | Field              | Value                                                  | Status          |
 |--------------------|--------------------------------------------------------|-----------------|
-| Angular            | 20 → 21                                                | ok              |
-| Skip preview/tests | no / no / no                                           | ok              |
+| Base → Target Angular      | 20 → 21                                         | ok              |
+| Skip preview / tests / verify | no / no / no                               | ok              |
 | ng-runtime branch  | WMS-31488                                              | ok              |
 | ng-codegen path    | /Users/.../wavemaker-ng-codegen                        | ok              |
 | ng-codegen branch  | WMS-31488                                              | ok              |
@@ -125,7 +125,7 @@ Branch: <branch> (ng-runtime + ng-codegen)
 - R2: Version Compatibility — TS X.X, Node XX, RxJS X.X, zone.js X.X
 - R3: Changelog — <summary>
 - R8: ngx-bootstrap — <API changes found or "no breaking changes">
-- R12: wavemaker-runtime-patterns.md — <must-change items found>
+- R12: checklist.md — <must-change items found>
 
 ## Breaking Changes Applied
 

@@ -1,4 +1,4 @@
-# Troubleshooting — error-message quick lookup
+# Troubleshoot — error-message quick lookup
 
 Paste the error fragment into the table below to jump to the right pattern section. Full grep details are in the section itself.
 
@@ -37,6 +37,6 @@ For the fix, open the file listed in **Section** and follow its instructions. Wo
 ---
 
 **Where to find the sections:**
-- §1–§19 → [`patterns-runtime.md`](patterns-runtime.md)
-- §20 → [`patterns-codegen.md`](patterns-codegen.md)
-- §21–§25 → [`wavemaker-runtime-patterns.md`](wavemaker-runtime-patterns.md)
+- §1–§19 → [`patterns/runtime.md`](patterns/runtime.md)
+- §20 → [`patterns/codegen.md`](patterns/codegen.md)
+- §21–§25 → [`checklist.md`](checklist.md)

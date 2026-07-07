@@ -32,7 +32,7 @@ if grep -qF "$CS_REL" "$GITIGNORE" 2>/dev/null; then
   fi
 else
   echo "FIX    current-state.md is not in .gitignore — adding to $GITIGNORE"
-  printf '\n# angular-upgrade session state (template: .cursor/skills/angular-upgrade/current-state.example.md)\n%s\n' \
+  printf '\n# angular-upgrade session state (template: .cursor/skills/angular-upgrade/state.md)\n%s\n' \
     "$CS_REL" >> "$GITIGNORE"
   echo "       Added. Commit .gitignore before proceeding."
 fi
