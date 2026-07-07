@@ -2,21 +2,21 @@
 
 Meta file and entry point (`PATTERNS_FILE`). Contains automated blockers, dependency classification, error-message lookup, §21–§25, classification guide, and preview validation.
 
-- **Runtime patterns §1–§19** → [`patterns-runtime.md`](patterns-runtime.md)
-- **Codegen patterns §20** → [`patterns-codegen.md`](patterns-codegen.md)
+- **Runtime patterns §1–§19** → [`patterns/runtime.md`](patterns/runtime.md)
+- **Codegen patterns §20** → [`patterns/codegen.md`](patterns/codegen.md)
 
-Workflow: [`SKILL.md`](./SKILL.md). References: [`references.md`](./references.md) R12.
+Workflow: [`SKILL.md`](./SKILL.md). References: [`research.md`](./research.md) R12.
 
 ## Contents
 
 | Section | Topic |
 |---------|-------|
-| [Error-message lookup](#error-message-lookup-step-6--7-diagnostics) → [`troubleshooting.md`](troubleshooting.md) | Error code → section map |
+| [Error-message lookup](#error-message-lookup-step-6--7-diagnostics) → [`troubleshoot.md`](troubleshoot.md) | Error code → section map |
 | [Section version history](#section-version-history) | When each section first applied |
 | [Automated blockers](#automated-blockers-pattern-reviewsh) | What `pattern-review.sh` checks automatically |
 | [Dependency classification](#dependency-classification-this-repo) | What to upgrade / check / keep stable |
-| **[patterns-runtime.md](patterns-runtime.md)** | §1–§19 — ng-runtime source patterns |
-| **[patterns-codegen.md](patterns-codegen.md)** | §20 — ng-codegen template/src patterns |
+| **[patterns/runtime.md](patterns/runtime.md)** | §1–§19 — ng-runtime source patterns |
+| **[patterns/codegen.md](patterns/codegen.md)** | §20 — ng-codegen template/src patterns |
 | [§21 ng-packagr builds](#21-ng-packagr-library-build-failures) | Library build failures |
 | [§22 Yalc peer deps](#22-yalc-linked-package-peer-dependency-mismatch) | Peer dep mismatch after bump |
 | [§23 angular.json builders](#23-angularjson-builder-audit) | Builder rename / option changes |
@@ -27,15 +27,13 @@ Workflow: [`SKILL.md`](./SKILL.md). References: [`references.md`](./references.m
 
 > For commit history behind each fix, use `git log --all -S <symbol>` — e.g. `git log --all -S takeUntilDestroyed`.
 
-> **Pattern currency:** these patterns reflect past Angular upgrade experience (primarily Angular 20). They are a starting point, not a complete list. R1/R3 from the official Angular docs take precedence — any breaking change found there that is not covered here is still `must-change`.
+> **Pattern currency:** these patterns reflect the Angular 20→21 upgrade experience. They are a starting point, not a complete list. R1/R3 from the official Angular docs take precedence — any breaking change found there that is not covered here is still `must-change`.
 
 ---
 
 ## Compatibility Policy
 
-Every fix in this file exists because an API was removed or broke at runtime. The test: "Would this change be needed even if Angular hadn't released a new version?" If no — skip it.
-
-Fix the compile/runtime break. Keep the existing architecture — Zone.js, decorators, `@Component`, `@NgModule` where still used. Signals, zoneless, and new input/output APIs are opt-in modernizations; leave them for a dedicated migration.
+See [`SKILL.md § Compatibility Policy`](../SKILL.md#compatibility-policy) — applies to every edit in this file.
 
 ---
 
@@ -101,7 +99,7 @@ Record decisions in `current-state.md` → **Dependency Decisions**.
 
 ## Error-message lookup (Step 6 / 7 diagnostics)
 
-See [`troubleshooting.md`](troubleshooting.md) — single source of truth. Add new error entries there only.
+See [`troubleshoot.md`](troubleshoot.md) — single source of truth. Add new error entries there only.
 
 ---
 

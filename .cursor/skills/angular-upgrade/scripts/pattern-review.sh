@@ -1,5 +1,5 @@
 #!/bin/sh
-# Step 6 automated pattern review — wavemaker-runtime-patterns.md §1–§25.
+# Step 6 automated pattern review — checklist.md §1–§25.
 #
 # Automated (FAIL/WARN/OK):
 #   §1  legacy compiler   §2  createComponent   §6  ngx-bootstrap forRoot + patch

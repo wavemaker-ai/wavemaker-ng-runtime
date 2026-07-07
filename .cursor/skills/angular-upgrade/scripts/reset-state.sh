@@ -7,7 +7,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
-TEMPLATE="$SKILL_DIR/current-state.example.md"
+TEMPLATE="$SKILL_DIR/state.md"
 TARGET="$SKILL_DIR/current-state.md"
 
 if [ ! -f "$TEMPLATE" ]; then
@@ -16,4 +16,4 @@ if [ ! -f "$TEMPLATE" ]; then
 fi
 
 cp "$TEMPLATE" "$TARGET"
-echo "OK: reset $TARGET from current-state.example.md (start position)"
+echo "OK: reset $TARGET from state.md (start position)"

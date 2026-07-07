@@ -1,8 +1,8 @@
 # Repo defaults — sourced by scripts/*.sh
-# Skill layout: SKILL.md | examples.md | references.md | wavemaker-runtime-patterns.md (meta) | patterns-runtime.md (§1–§19) | patterns-codegen.md (§20)
+# Skill layout: SKILL.md | templates.md | research.md | checklist.md (meta) | patterns/runtime.md (§1–§19) | patterns/codegen.md (§20)
 #
 # PORTING TO ANOTHER REPO: edit this file + pattern files.
-# The pattern files (patterns-runtime.md, patterns-codegen.md, wavemaker-runtime-patterns.md) are
+# The pattern files (patterns/runtime.md, patterns/codegen.md, checklist.md) are
 # ng-runtime/ng-codegen-specific — file paths, WMS tickets, and commit refs will not apply to
 # other repos. Replace or supplement §1–§20 with patterns relevant to your codebase.
 # Step 0:  ANGULAR_* (overridable in chat)
@@ -35,5 +35,5 @@ DEFAULT_RUN_BUNDLE_VERIFY=yes
 TEST_CMD="npm test"
 DEFAULT_RUN_TESTS=yes
 
-PATTERNS_FILE="wavemaker-runtime-patterns.md"
+PATTERNS_FILE="checklist.md"
 UPGRADE_DOC_PATH="docs/{major}-upgrade.md"
