@@ -2200,7 +2200,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             return;
         }
         /* if new columns to be rendered, prepare default fieldDefs for the data provided*/
-        this.prepareColDefs(data);
+        const columnData = getClonedObject(data);
+        if (isArray(columnData)) {
+            columnData.forEach(row => delete row['$$wmSourceListIndex']);
+        } else if (isObject(columnData)) {
+            delete columnData['$$wmSourceListIndex'];
+        }
+        this.prepareColDefs(columnData);
 
         this.serverData = data;
         this.setGridData(this.serverData);
