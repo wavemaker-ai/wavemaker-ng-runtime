@@ -2331,7 +2331,7 @@ $.widget('wm.datatable', {
     },
     _getWmVariableRowLocator: function (rowId) {
         var liveRow = this.options.data[parseInt(rowId, 10)];
-        return (liveRow && liveRow.$$wmSourceListIndex != null) ? liveRow.$$wmSourceListIndex : (liveRow || parseInt(rowId, 10));
+        return (liveRow && liveRow.$$wmSourceListIndex != null) ? liveRow.$$wmSourceListIndex : parseInt(rowId, 10);
     },
     /* Toggles the edit state of a row. */
     toggleEditRow: function (e, options) {
