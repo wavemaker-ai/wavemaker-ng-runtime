@@ -10,10 +10,13 @@ import {
     LiteralArray,
     LiteralMap,
     LiteralPrimitive,
+    ParenthesizedExpression,
     Parser,
+    ParseLocation,
+    ParseSourceFile,
+    ParseSourceSpan,
     PrefixNot,
     PropertyRead,
-    PropertyWrite,
     Unary
 } from '@angular/compiler';
 import {get} from "lodash-es";
@@ -23,6 +26,14 @@ const ifDef = (v, d) => v === void 0 ? d : v;
 const plus = (a, b) => void 0 === a ? b : void 0 === b ? a : a + b;
 const minus = (a, b) => ifDef(a, 0) - ifDef(b, 0);
 const noop = () => {};
+
+// Angular 20 Parser.parseBinding/parseAction require a ParseSourceSpan (not a string) as the location arg.
+const createParseSourceSpan = (content: string): ParseSourceSpan => {
+    const sourceFile = new ParseSourceFile(content, '');
+    const start = new ParseLocation(sourceFile, 0, 0, 0);
+    const end = new ParseLocation(sourceFile, content.length, 0, content.length);
+    return new ParseSourceSpan(start, end);
+};
 
 export type ParseExprResult = (data?: any, locals?: any) => any;
 
@@ -328,21 +339,6 @@ class ASTCompiler {
         return ast.expressions.map(e => this.build(e)).join(';');
     }
 
-    processPropertyWrite() {
-        const ast = this.cAst;
-        const stmts = this.cStmts;
-        let receiver, lhs;
-        if (ast.receiver instanceof ImplicitReceiver) {
-            lhs = `_ctx.${ast.name}`;
-        } else {
-            receiver = this.build(ast.receiver, stmts);
-            lhs = `${receiver}${receiver.length ? '.' : ''}${ast.name}`;
-        }
-
-        const rhs = this.build(ast.value, stmts);
-        stmts.push(`${lhs}=${rhs}`);
-    }
-
     processPipe() {
         const ast = this.cAst;
         const stmts = this.cStmts;
@@ -383,8 +379,8 @@ class ASTCompiler {
             return this.processLiteralMap();
         } else if (ast instanceof PropertyRead) {
             return this.processPropertyRead();
-        } else if (ast instanceof PropertyWrite) {
-            return this.processPropertyWrite();
+        } else if (ast instanceof ParenthesizedExpression) {
+            return this.build(ast.expression, cStmts);
         } else if (ast instanceof KeyedRead) {
             return this.processKeyedRead();
         } else if (ast instanceof PrefixNot) {
@@ -538,7 +534,7 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
             };
         } else {
             const parser = new Parser(new Lexer);
-            const ast = parser.parseBinding(expr, '',0);
+            const ast = parser.parseBinding(expr, createParseSourceSpan(expr), 0);
 
             if (ast.errors.length) {
                 fn = noop;
@@ -637,7 +633,7 @@ export function $parseEvent(expr, defOnly?): ParseExprResult {
             fn = simpleFunctionEvaluator.bind(undefined, expr);
         } else {
             const parser = new Parser(new Lexer);
-            const ast = parser.parseAction(expr, '', 0);
+            const ast = parser.parseAction(expr, createParseSourceSpan(expr), 0);
 
             if (ast.errors.length) {
                 return noop;

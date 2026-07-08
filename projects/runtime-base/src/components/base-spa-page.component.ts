@@ -109,6 +109,7 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     }
 
     registerPageParams() {
+        this.pageParams = (this.App as any).pageParams = extend({}, this.route.snapshot.queryParams);
         const subscription = this.route.queryParams.subscribe(params => this.pageParams = (this.App as any).pageParams = extend({}, params));
         this.registerDestroyListener(() => subscription.unsubscribe());
     }
