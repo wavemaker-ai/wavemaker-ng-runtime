@@ -37,6 +37,7 @@ const markup = `<div
                  >
                 </div>`;
 @Component({
+    standalone: false,
     template: markup
 })
 class CalendarWrapperComponent {

@@ -190,6 +190,7 @@ const markup = `<form wmForm role="" #form_1 ngNativeValidate
                 </form>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 

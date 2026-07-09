@@ -42,6 +42,7 @@ jest.mock('jquery', () => jest.fn(() => ({
 })));
 
 @Component({
+    standalone: false,
     template: `
         <div wmList template="true" itemsperrow="xs-1 sm-1 md-1 lg-1" class="media-list" name="testlist"
              dataset.bind="testdata" navigation="Basic"

@@ -24,6 +24,7 @@ jest.mock('@wm/components/base', () => ({
 const markup = `<div wmFormField></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class TestComponent {

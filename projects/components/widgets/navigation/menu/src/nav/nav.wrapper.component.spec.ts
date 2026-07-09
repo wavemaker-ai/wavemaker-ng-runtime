@@ -16,6 +16,7 @@ const markup = ` <ul wmNav data-element-type="wmNav" data-role="page-header"  ty
 
 
 @Component({
+    standalone: false,
     template: markup
 })
 

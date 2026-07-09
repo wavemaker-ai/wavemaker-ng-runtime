@@ -20,6 +20,7 @@ const markup = `
 `;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class TreeSpec {

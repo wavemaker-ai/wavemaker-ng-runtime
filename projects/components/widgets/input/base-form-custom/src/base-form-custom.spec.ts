@@ -8,6 +8,7 @@ import { App } from '@wm/core';
 
 // Mock BaseFormComponent
 @Component({
+    standalone: false,
     template: ''
 })
 class MockBaseFormComponent {
@@ -24,6 +25,7 @@ class MockBaseFormComponent {
 
 // Create a testable version of BaseFormCustomComponent
 @Component({
+    standalone: false,
     template: ''
 })
 class TestableBaseFormCustomComponent extends MockBaseFormComponent implements Partial<BaseFormCustomComponent> {

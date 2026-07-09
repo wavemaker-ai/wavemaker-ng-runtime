@@ -1,9 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from "@angular/core";
+import { DebugElement, isStandalone } from "@angular/core";
+
+// Angular 20's TestBed rejects standalone components in `declarations` (previously tolerated) —
+// move them into `imports` so existing spec moduleDefs keep working unchanged.
+const splitStandaloneDeclarations = (moduleDef) => {
+    if (!moduleDef || !moduleDef.declarations) {
+        return moduleDef;
+    }
+    const declarations = [];
+    const standaloneDeclarations = [];
+    moduleDef.declarations.forEach(decl => {
+        (isStandalone(decl) ? standaloneDeclarations : declarations).push(decl);
+    });
+    if (!standaloneDeclarations.length) {
+        return moduleDef;
+    }
+    return {
+        ...moduleDef,
+        declarations,
+        imports: [...(moduleDef.imports || []), ...standaloneDeclarations]
+    };
+};
 
 export const compileTestComponent = (moduleDef, componentInstance): ComponentFixture<any> => {
-    TestBed.configureTestingModule(moduleDef)
+    TestBed.configureTestingModule(splitStandaloneDeclarations(moduleDef))
         .compileComponents();
 
     return TestBed.createComponent(componentInstance);

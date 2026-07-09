@@ -11,6 +11,7 @@ const markup = `<div wmComposite #wm_composite
 </div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class CompositeWrapperComponent {

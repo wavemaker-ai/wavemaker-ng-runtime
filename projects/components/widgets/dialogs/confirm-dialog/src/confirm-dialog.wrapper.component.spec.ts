@@ -34,6 +34,7 @@ class MockAbstractDialogService {
 const markup = `<div wmConfirmDialog></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class ConfirmDialogWrapperComponent {

@@ -9,6 +9,7 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 
 // Define a test component to host the directive
 @Component({
+    standalone: false,
     template: `<div wmPrefabContainer></div>`
 })
 class TestComponent { }

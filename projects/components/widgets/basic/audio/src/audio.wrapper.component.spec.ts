@@ -22,6 +22,7 @@ class MockTrustAsPipe implements PipeTransform {
 const markup = `<div wmAudio name="audio" hint="audio" [attr.aria-label]="'audio'" tabindex="0"></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class AudioWrapperComponent {
