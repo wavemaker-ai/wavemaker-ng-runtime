@@ -44,6 +44,7 @@ export class CameraComponent extends StylableComponent {
     public savetogallery: boolean;
     public iconsize: any;
     public iconclass: any;
+    public name: string;
 
     private _cameraOptions: any;
 
@@ -83,13 +84,74 @@ export class CameraComponent extends StylableComponent {
         }
     }
 
+    /**
+     * CA15: HTTPS WebView cannot show file:// in <img>/<video>.
+     * widgets bound to this camera's localFilePath.
+     */
+    private applyCapturePreview(dataUrl: string) {
+        const widgets = this.viewParent && (this.viewParent as any).Widgets;
+        if (!dataUrl || !widgets) {
+            return;
+        }
+        const name = this.name;
+        const fileUri = this.localFilePath;
+        Object.keys(widgets).forEach((key) => {
+            const w = widgets[key];
+            if (!w || !w.$attrs) {
+                return;
+            }
+            const picBind = w.$attrs.get('picturesource.bind') || '';
+            const vidBind = w.$attrs.get('mp4format.bind') || '';
+            const bound =
+                (name &&
+                    (picBind.indexOf(name + '.localFilePath') >= 0 ||
+                        vidBind.indexOf(name + '.localFilePath') >= 0)) ||
+                w.picturesource === fileUri ||
+                w.mp4format === fileUri;
+            if (!bound) {
+                return;
+            }
+            if (w.nativeElement && w.nativeElement.tagName === 'IMG') {
+                w.picturesource = dataUrl;
+                w.nativeElement.src = dataUrl;
+                return;
+            }
+            if (typeof w.mp4format !== 'undefined') {
+                w.mp4format = dataUrl;
+                const el =
+                    w.nativeElement &&
+                    (w.nativeElement.querySelector('video') || w.nativeElement);
+                if (el && el.tagName === 'VIDEO') {
+                    el.src = dataUrl;
+                }
+            }
+        });
+    }
+
     private updateModel($event, value) {
         value = (value.startsWith('file://') ? '' : 'file://') + value;
-        this.localFilePath = this.datavalue = value;
-        convertToBlob(value)
+        const fileUri = value;
+        this.localFilePath = this.datavalue = fileUri;
+        convertToBlob(fileUri)
             .then(result => {
                 this.localFile = result.blob;
-                this.invokeEventCallback('success', {$event, localFilePath: this.localFilePath, localFile: this.localFile});
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    this.applyCapturePreview(reader.result as string);
+                    this.invokeEventCallback('success', {
+                        $event,
+                        localFilePath: fileUri,
+                        localFile: this.localFile
+                    });
+                };
+                reader.onerror = () => {
+                    this.invokeEventCallback('success', {
+                        $event,
+                        localFilePath: fileUri,
+                        localFile: this.localFile
+                    });
+                };
+                reader.readAsDataURL(result.blob);
             }, () => {
                 this.localFile = undefined;
             });
