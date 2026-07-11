@@ -535,6 +535,7 @@ export const setFocusTrap = (container, allowOutsideClick, setReturnFocusElement
         onDeactivate: () => container.classList.remove('is-active'),
         allowOutsideClick: allowOutsideClick,
         setReturnFocus: setReturnFocusElement,
+        preventScroll: true,
     });
 }
 
