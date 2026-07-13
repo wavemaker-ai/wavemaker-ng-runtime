@@ -1,10 +1,8 @@
 import {
-    Compiler,
     Component,
     CUSTOM_ELEMENTS_SCHEMA, Inject,
     Injectable,
     Injector,
-    NgModule,
     NO_ERRORS_SCHEMA,
     ViewEncapsulation
 } from '@angular/core';
@@ -126,37 +124,32 @@ const imports = [
     PrefabContainerDirective,
 ]
 
-const getDynamicModule = (componentRef: any) => {
-    return NgModule({
-        declarations: [componentRef],
-        imports: [
-            ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
-            CommonModule,
-            FormsModule,
-            ReactiveFormsModule,
-            ...imports
-        ],
-        providers: [
-            PipeService,
-            DecimalPipe,
-            DatePipe,
-            AppManagerService,
-            PrefabManagerService,
-            AuthGuard,
-            RoleGuard,
-            PageNotFoundGuard,
-            CanDeactivatePageGuard,
-            AppJSResolve,
-            AppExtensionJSResolve,
-            I18nResolve,
-            SecurityService,
-            OAuthService,
-            VariablesService,
-            MetadataService,
-        ],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
-    })(class DynamicModule { });
-};
+const DYNAMIC_COMPONENT_IMPORTS = [
+    ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    ...imports
+];
+
+const DYNAMIC_COMPONENT_PROVIDERS = [
+    PipeService,
+    DecimalPipe,
+    DatePipe,
+    AppManagerService,
+    PrefabManagerService,
+    AuthGuard,
+    RoleGuard,
+    PageNotFoundGuard,
+    CanDeactivatePageGuard,
+    AppJSResolve,
+    AppExtensionJSResolve,
+    I18nResolve,
+    SecurityService,
+    OAuthService,
+    VariablesService,
+    MetadataService,
+];
 
 const getDynamicComponent = (
     componentName,
@@ -244,12 +237,16 @@ const getDynamicComponent = (
     const component = Component({
         ...componentDef,
         selector,
+        standalone: true,
+        imports: DYNAMIC_COMPONENT_IMPORTS,
         providers: [
+            ...DYNAMIC_COMPONENT_PROVIDERS,
             {
                 provide: UserDefinedExecutionContext,
                 useExisting: DynamicComponent
             }
-        ]
+        ],
+        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
     })(DynamicComponent)
     return component;
 };
@@ -292,8 +289,7 @@ export class ComponentRefProviderService extends ComponentRefProvider {
     constructor(
         private resouceMngr: AppResourceManagerService,
         private app: App,
-        private appManager: AppManagerService,
-        private compiler: Compiler
+        private appManager: AppManagerService
     ) {
         super();
     }
@@ -313,14 +309,7 @@ export class ComponentRefProviderService extends ComponentRefProvider {
 
         return this.loadResourcesOfFragment(componentName, componentType, options)
             .then(({ markup, script, styles, variables }) => {
-                const componentDef = getDynamicComponent(componentName, componentType, markup, styles, script, JSON.stringify(variables));
-                const moduleDef = getDynamicModule(componentDef);
-
-                componentFactoryRef = this.compiler
-                    .compileModuleAndAllComponentsSync(moduleDef)
-                    .componentFactories
-                    .filter(factory => // @ts-ignore
-                        factory.componentType === componentDef)[0];
+                componentFactoryRef = getDynamicComponent(componentName, componentType, markup, styles, script, JSON.stringify(variables));
                 const updatedComponentName = (options && options['prefab']) ? options['prefab'] + componentName : componentName;
                 componentFactoryRefCache.get(componentType).set(updatedComponentName, componentFactoryRef);
 

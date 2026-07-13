@@ -2,6 +2,7 @@ import {
     ApplicationRef,
     Component,
     ElementRef,
+    EnvironmentInjector,
     Injector,
     NgZone,
     OnDestroy,
@@ -31,6 +32,7 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private vcRef: ViewContainerRef,
         private appRef: ApplicationRef,
+        private envInjector: EnvironmentInjector,
         private metadataService: MetadataService,
         private securityService: SecurityService,
         private appManager: AppManagerService,
@@ -59,7 +61,11 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
             .then(async () => {
                 const pageComponentFactoryRef = await this.componentRefProvider.getComponentFactoryRef(pageName, ComponentType.PAGE);
                 if (pageComponentFactoryRef) {
-                    const componentRef = this.vcRef.createComponent(pageComponentFactoryRef, 0, this.injector);
+                    const componentRef = this.vcRef.createComponent(pageComponentFactoryRef, {
+                        index: 0,
+                        environmentInjector: this.envInjector,
+                        injector: this.injector
+                    });
                     this.instance = componentRef.instance;
                     $target.appendChild(componentRef.location.nativeElement);
                 } else {

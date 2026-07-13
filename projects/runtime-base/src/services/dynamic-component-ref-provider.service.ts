@@ -1,34 +1,25 @@
 import {
-    Compiler,
     Component,
     CUSTOM_ELEMENTS_SCHEMA,
+    EnvironmentInjector,
     Injectable,
-    NgModule,
     NO_ERRORS_SCHEMA,
     ViewEncapsulation
 } from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 
 import {App, extendProto, isDefined} from '@wm/core';
 import {transpile} from '@wm/transpiler';
 import {initComponentsBuildTask} from '@wm/build-task';
 
 import {AppManagerService} from './app.manager.service';
-import {RuntimeBaseModule} from '../runtime-base.module';
+import {REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS} from '../runtime-base.module';
 import {get} from "lodash-es";
 
 initComponentsBuildTask();
 
 const componentFactoryRefCache = new Map<string, any>();
-
-const getDynamicModule = (componentRef: any) => {
-    return NgModule({
-        declarations: [componentRef],
-        imports: [
-            RuntimeBaseModule,
-        ],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
-    })(class DynamicModule {});
-};
 
 const getDynamicComponent = (
     selector: any,
@@ -39,7 +30,12 @@ const getDynamicComponent = (
         template,
         styles: [css],
         encapsulation: ViewEncapsulation.None,
-        selector
+        selector,
+        standalone: true,
+        // Angular 17+/20: standalone dynamic components must import the standalone directives/components
+        // used inside the runtime-transpiled markup, or they're treated as unknown elements.
+        imports: [CommonModule, FormsModule, ReactiveFormsModule, ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS],
+        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
     })(class DynamicComponent {
         isDynamicComponent: boolean = true;
     });
@@ -52,7 +48,7 @@ export class DynamicComponentRefProviderService {
     constructor(
         private app: App,
         private appManager: AppManagerService,
-        private compiler: Compiler
+        private envInjector: EnvironmentInjector
     ) {}
 
     public async getComponentFactoryRef(selector: string, markup: string, options: any = {}): Promise<any> {
@@ -61,13 +57,7 @@ export class DynamicComponentRefProviderService {
 
         markup = options.transpile ? transpile(markup).markup : markup;
         if (!componentFactoryRef || options.noCache) {
-            const componentDef = getDynamicComponent(selector, markup, options.styles);
-            const moduleDef = getDynamicModule(componentDef);
-
-            componentFactoryRef = this.compiler
-                .compileModuleAndAllComponentsSync(moduleDef)
-                .componentFactories
-                .filter(factory => factory.componentType === componentDef)[0];
+            componentFactoryRef = getDynamicComponent(selector, markup, options.styles);
 
             componentFactoryRefCache.set(selector, componentFactoryRef);
         }
@@ -90,7 +80,11 @@ export class DynamicComponentRefProviderService {
         options.noCache = isDefined(options.noCache) ? options.noCache : true;
         options.selector = isDefined(options.selector) ? options.selector : 'wm-dynamic-component-' + this.counter++;
         const componentFactoryRef = await this.getComponentFactoryRef(options.selector, markup, options);
-        const component = this.app.dynamicComponentContainerRef.createComponent(componentFactoryRef, 0, get(options, 'inj'));
+        const component = this.app.dynamicComponentContainerRef.createComponent(componentFactoryRef, {
+            index: 0,
+            environmentInjector: this.envInjector,
+            injector: get(options, 'inj')
+        });
         extendProto(component.instance, context);
         target.appendChild(component.location.nativeElement);
         // MEMORY LEAK FIX: Return component reference so caller can destroy it

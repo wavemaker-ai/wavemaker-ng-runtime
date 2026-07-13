@@ -1,4 +1,4 @@
-import { Attribute, ComponentFactoryResolver, Directive, ElementRef, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
+import { Attribute, Directive, ElementRef, EnvironmentInjector, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
 import { App, $invokeWatchers, noop, ComponentType, CustomWidgetRefProvider } from '@wm/core';
 import { WidgetRef } from "../../framework/types";
 
@@ -18,12 +18,17 @@ export class CustomWidgetContainerDirective implements OnDestroy {
         public inj: Injector,
         private app: App,
         @Attribute('widgetname') widgetname: string,
+        private envInjector: EnvironmentInjector,
         private customWidgetRefProvider: CustomWidgetRefProvider
     ) {
         const widgetnames = this.componentInstance.widgetname;
         this.customWidgetRefProvider.getComponentFactoryRef(widgetname, ComponentType.WIDGET).then((componentFactory) => {
             if (componentFactory) {
-                const instanceRef = this.vcRef.createComponent(componentFactory, 0, this.inj);
+                const instanceRef = this.vcRef.createComponent(componentFactory, {
+                    index: 0,
+                    environmentInjector: this.envInjector,
+                    injector: this.inj
+                });
                 this.elRef.nativeElement.appendChild(instanceRef.location.nativeElement);
             }
         });

@@ -10,10 +10,13 @@ import {
     LiteralArray,
     LiteralMap,
     LiteralPrimitive,
+    ParenthesizedExpression,
+    ParseLocation,
     Parser,
+    ParseSourceFile,
+    ParseSourceSpan,
     PrefixNot,
     PropertyRead,
-    PropertyWrite,
     Unary
 } from '@angular/compiler';
 import {get} from "lodash-es";
@@ -111,6 +114,13 @@ const getPurePipeVal = (pipe, cache, identifier, ...args) => {
     lastResult = {args, result};
     cache.set(identifier, lastResult);
     return result;
+};
+
+const createParseSourceSpan = (content: string): ParseSourceSpan => {
+    const sourceFile = new ParseSourceFile(content, '');
+    const start = new ParseLocation(sourceFile, 0, 0, 0);
+    const end = new ParseLocation(sourceFile, content.length, 0, content.length);
+    return new ParseSourceSpan(start, end);
 };
 
 const STR_ESCAPE_REGEX = /[^ a-zA-Z0-9]/g;
@@ -383,8 +393,9 @@ class ASTCompiler {
             return this.processLiteralMap();
         } else if (ast instanceof PropertyRead) {
             return this.processPropertyRead();
-        } else if (ast instanceof PropertyWrite) {
-            return this.processPropertyWrite();
+        // PropertyWrite removed from @angular/compiler at Angular 20 — assignment AST path no longer reachable via this dispatch.
+        } else if (ast instanceof ParenthesizedExpression) {
+            return this.build(ast.expression, this.cStmts);
         } else if (ast instanceof KeyedRead) {
             return this.processKeyedRead();
         } else if (ast instanceof PrefixNot) {
@@ -538,7 +549,7 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
             };
         } else {
             const parser = new Parser(new Lexer);
-            const ast = parser.parseBinding(expr, '',0);
+            const ast = parser.parseBinding(expr, createParseSourceSpan(expr), 0);
 
             if (ast.errors.length) {
                 fn = noop;
@@ -637,7 +648,7 @@ export function $parseEvent(expr, defOnly?): ParseExprResult {
             fn = simpleFunctionEvaluator.bind(undefined, expr);
         } else {
             const parser = new Parser(new Lexer);
-            const ast = parser.parseAction(expr, '', 0);
+            const ast = parser.parseAction(expr, createParseSourceSpan(expr), 0);
 
             if (ast.errors.length) {
                 return noop;

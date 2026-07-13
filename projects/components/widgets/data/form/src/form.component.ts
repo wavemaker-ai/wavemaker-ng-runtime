@@ -7,6 +7,7 @@ import {
     Attribute,
     Component,
     ContentChildren,
+    EnvironmentInjector,
     HostBinding,
     HostListener,
     Inject,
@@ -319,6 +320,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         private app: App,
         private dialogService: AbstractDialogService,
         private dynamicComponentProvider: DynamicComponentRefProvider,
+        private envInjector: EnvironmentInjector,
         private ngZone: NgZone,
         @Optional() public parentList: ListComponent,
         @SkipSelf() @Optional() public parentForm: FormComponent,
@@ -1288,7 +1290,11 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 noCache: true,
                 transpile: true
             });
-        const component = this.dynamicFormRef.createComponent(componentFactoryRef, 0, this.inj);
+        const component = this.dynamicFormRef.createComponent(componentFactoryRef, {
+            index: 0,
+            environmentInjector: this.envInjector,
+            injector: this.inj
+        });
         extendProto(component.instance, this._dynamicContext);
         $gridLayout[0].appendChild(component.location.nativeElement);
         this.setFormData(this.formdata);

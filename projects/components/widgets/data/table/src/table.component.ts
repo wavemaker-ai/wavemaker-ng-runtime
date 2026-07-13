@@ -9,6 +9,7 @@ import {
     ContentChild,
     ContentChildren,
     ElementRef,
+    EnvironmentInjector,
     HostListener,
     Inject,
     Injector,
@@ -1231,6 +1232,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         public fb: FormBuilder,
         private app: App,
         private dynamicComponentProvider: DynamicComponentRefProvider,
+        private envInjector: EnvironmentInjector,
         private statePersistence: StatePersistence,
         private paginationService: PaginationService,
         private viewport: Viewport,
@@ -2171,7 +2173,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 noCache: true,
                 transpile: true
             });
-        const component = this.dynamicTableRef.createComponent(componentFactoryRef, 0, this.inj);
+        const component = this.dynamicTableRef.createComponent(componentFactoryRef, {
+            index: 0,
+            environmentInjector: this.envInjector,
+            injector: this.inj
+        });
         extendProto(component.instance, this._dynamicContext);
         this.$element.find('.dynamic-table-container')[0].appendChild(component.location.nativeElement);
     }

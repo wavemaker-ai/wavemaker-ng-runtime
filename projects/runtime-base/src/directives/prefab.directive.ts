@@ -1,7 +1,7 @@
 import {
-    ComponentFactoryResolver,
     Directive,
     ElementRef,
+    EnvironmentInjector,
     Inject,
     Injector,
     OnDestroy,
@@ -25,7 +25,7 @@ export class PrefabDirective implements OnDestroy {
         public vcRef: ViewContainerRef,
         public elRef: ElementRef,
         private prefabMngr: PrefabManagerService,
-        private resolver: ComponentFactoryResolver,
+        private envInjector: EnvironmentInjector,
         private injector: Injector,
         private componentRefProvider: ComponentRefProvider
     ) {
@@ -35,7 +35,11 @@ export class PrefabDirective implements OnDestroy {
             .then(async () => {
                 const componentFactory = await this.componentRefProvider.getComponentFactoryRef(prefabName, ComponentType.PREFAB);
                 if (componentFactory) {
-                    const instanceRef = this.vcRef.createComponent(componentFactory, 0, injector);
+                    const instanceRef = this.vcRef.createComponent(componentFactory, {
+                        index: 0,
+                        environmentInjector: envInjector,
+                        injector
+                    });
                     this.elRef.nativeElement.appendChild(instanceRef.location.nativeElement);
                 }
             });
