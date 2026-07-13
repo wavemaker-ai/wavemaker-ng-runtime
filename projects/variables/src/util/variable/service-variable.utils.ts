@@ -30,6 +30,25 @@ const isBodyTypeQueryOrProcedure = (variable) => {
     return (includes(['QueryExecution', 'ProcedureExecution'], variable.controller)) && (includes(['put', 'post'], variable.operationType));
 };
 
+const appendQueryParam = (queryParams, paramName, paramValue) => {
+    // Preserve literal commas in values (e.g. "fire,ice", "20,2"). encodeURIComponent turns a
+    // comma into %2C, which breaks APIs that expect a raw comma. Commas are valid sub-delims in
+    // the query component per RFC 3986, so restore them after encoding the rest of the value.
+    const encodedValue = encodeURIComponent(paramValue).replace(/%2C/g, ',');
+    const pair = `${paramName}=${encodedValue}`;
+    return queryParams ? `${queryParams}&${pair}` : `?${pair}`;
+};
+
+const getQueryParamValues = (param, paramValue) => {
+    if (isArray(paramValue)) {
+        if (param.collectionFormat === 'csv') {
+            return [join(paramValue, ',')];
+        }
+        return paramValue;
+    }
+    return [paramValue];
+};
+
 /**
  * returns true if the variable is a Query service variable
  * @param {string} controller
@@ -276,11 +295,12 @@ export class ServiceVariableUtils {
                         if (isNull(paramValue) && isQueryServiceVar(variable.controller, variable.serviceType)) {
                             break;
                         }
-                        if (!queryParams) {
-                            queryParams = '?' + param.name + '=' + encodeURIComponent(paramValue);
-                        } else {
-                            queryParams += '&' + param.name + '=' + encodeURIComponent(paramValue);
-                        }
+                        getQueryParamValues(param, paramValue).forEach((queryValue) => {
+                            if (isNull(queryValue) && isQueryServiceVar(variable.controller, variable.serviceType)) {
+                                return;
+                            }
+                            queryParams = appendQueryParam(queryParams, param.name, queryValue);
+                        });
                         break;
                     case 'PATH':
                         /* replacing the path param based on the regular expression in the relative path */

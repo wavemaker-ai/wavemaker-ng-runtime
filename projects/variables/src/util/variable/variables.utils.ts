@@ -541,7 +541,23 @@ const setValueToNode = (target, obj, root, variable, value, noUpdate?) => {
     value = !isUndefined(value) ? value : obj.value;
     /* sanity check, user can bind parent nodes to non-object values, so child node bindings may fail */
     if (targetObj) {
-        targetObj[targetNodeKey] = value;
+        // Multi query params: one slot per binding; rebinds replace that slot (not append).
+        if (obj.collectionFormat === 'multi') {
+            let values = targetObj[targetNodeKey];
+            if (!isArray(values)) {
+                values = targetObj[targetNodeKey] = isUndefined(values) ? [] : [values];
+            }
+            let slot = obj.multiIndex !== undefined ? obj.multiIndex : obj.__multiSlotIndex;
+            if (slot === undefined) {
+                slot = obj.__multiSlotIndex = values.length;
+                values.push(value);
+            } else {
+                obj.__multiSlotIndex = slot;
+                values[slot] = value;
+            }
+        } else {
+            targetObj[targetNodeKey] = value;
+        }
     }
     processVariablePostBindUpdate(targetNodeKey, value, obj.type, variable, noUpdate);
 };
@@ -669,7 +685,25 @@ export const processBinding = (variable: any, context: any, bindSource?: string,
     if (!bindMap || !isArray(bindMap)) {
         return;
     }
+    // Duplicate targets without collectionFormat are treated as multi (backward compat for older saves).
+    // Assign multiIndex so setValueToNode can replace by slot instead of appending on each update.
+    const targetOccurrences = {};
     bindMap.forEach(function (node) {
+        if (node && node.target) {
+            targetOccurrences[node.target] = (targetOccurrences[node.target] || 0) + 1;
+        }
+    });
+    const nextMultiIndex = {};
+    bindMap.forEach(function (node) {
+        if (node && node.target && targetOccurrences[node.target] > 1) {
+            if (!node.collectionFormat) {
+                node.collectionFormat = 'multi';
+            }
+            if (node.multiIndex === undefined) {
+                nextMultiIndex[node.target] = nextMultiIndex[node.target] || 0;
+                node.multiIndex = nextMultiIndex[node.target]++;
+            }
+        }
         /* for static variable change the binding with target 'dataBinding' to 'dataSet', as the results have to reflect directly in the dataSet */
         if (variable.category === 'wm.Variable' && node.target === 'dataBinding') {
             node.target = 'dataSet';

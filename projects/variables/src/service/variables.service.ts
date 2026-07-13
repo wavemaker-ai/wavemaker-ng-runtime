@@ -118,7 +118,25 @@ export class VariablesService {
         if (!bindMap || !isArray(bindMap)) {
             return;
         }
+        // Duplicate query params without collectionFormat are treated as multi (backward compat for older saves).
+        // Assign multiIndex so setValueToNode can replace by slot instead of appending on each update.
+        const targetOccurrences = {};
+        bindMap.forEach((node) => {
+            if (node && node.target) {
+                targetOccurrences[node.target] = (targetOccurrences[node.target] || 0) + 1;
+            }
+        });
+        const nextMultiIndex = {};
         bindMap.forEach( (node) => {
+            if (node && node.target && targetOccurrences[node.target] > 1) {
+                if (!node.collectionFormat) {
+                    node.collectionFormat = 'multi';
+                }
+                if (node.multiIndex === undefined) {
+                    nextMultiIndex[node.target] = nextMultiIndex[node.target] || 0;
+                    node.multiIndex = nextMultiIndex[node.target]++;
+                }
+            }
             /* for static variable change the binding with target 'dataBinding' to 'dataSet', as the results have to reflect directly in the dataSet */
             if (variable.category === 'wm.Variable' && node.target === 'dataBinding') {
                 node.target = 'dataSet';
