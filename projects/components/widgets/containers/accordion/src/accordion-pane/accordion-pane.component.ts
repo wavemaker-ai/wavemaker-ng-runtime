@@ -38,6 +38,8 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
     public badgevalue: string;
     public smoothscroll: any;
     private $lazyLoad = noop;
+    private _isOnLoadTriggered: boolean = false;
+    public content: string;
     private isdynamic: boolean;
     public tabindex;
     public name: string;
@@ -114,6 +116,10 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
         setTimeout(() => {
             if (this.reDrawableComponents) {
                 this.reDrawableComponents.forEach(c => c.redraw());
+            }
+            if (!this._isOnLoadTriggered && !this.content) {
+                this.invokeEventCallback('load');
+                this._isOnLoadTriggered = true;
             }
         }, 100);
     }
