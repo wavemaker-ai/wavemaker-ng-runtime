@@ -121,6 +121,32 @@ export default [
         external: [],
     },
     {
+        input: 'node_modules/@angular/core/fesm2022/primitives/di.mjs',
+        output: {
+            file: 'node_modules/@angular/core/bundles/core-primitives-di.umd.js',
+            format: 'umd',
+            name: 'ng.di',
+            globals: {}
+        },
+        external: [],
+    },
+    {
+        // ngx-bootstrap 20.x positioning imports this for DestroyRef-based unsubscription (takeUntilDestroyed).
+        input: 'node_modules/@angular/core/fesm2022/rxjs-interop.mjs',
+        output: {
+            file: 'node_modules/@angular/core/bundles/core-rxjs-interop.umd.js',
+            format: 'umd',
+            name: 'ng.rxjsInterop',
+            globals: {
+                '@angular/core/primitives/signals': 'ng.signals',
+                '@angular/core/primitives/di': 'ng.di',
+                'rxjs': 'rxjs',
+                'rxjs/operators': 'rxjs.operators',
+            }
+        },
+        external: ['@angular/core/primitives/signals', '@angular/core/primitives/di', 'rxjs', 'rxjs/operators'],
+    },
+    {
         input: "node_modules/@angular/forms/fesm2022/forms.mjs",
         output: {
             file: "node_modules/@angular/forms/bundles/forms.umd.js",
