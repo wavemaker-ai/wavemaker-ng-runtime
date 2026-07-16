@@ -57,3 +57,6 @@ dependency-report.html
 
 # angular-upgrade session state (template: .claude/skills/angular-upgrade/state.md)
 .claude/skills/angular-upgrade/current-state.md
+
+# local, machine/session-specific permission cache — not shared skill content
+.claude/settings.local.json
