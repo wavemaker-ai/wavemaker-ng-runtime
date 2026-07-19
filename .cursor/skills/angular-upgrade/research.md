@@ -33,6 +33,31 @@ A breaking change acknowledged only with a summary (no plan row, no N/A) fails t
 - `RouterOutlet` output or lifecycle changes — §11
 - `HttpClient` provider or interceptor API changes — §7
 - `NgModule` / `ApplicationConfig` bootstrap changes — §7, §8b, §20
+- **Any `inject()`-based/functional-DI API call in a third-party dependency you're bumping** (`inject()`, `takeUntilDestroyed()`, `DestroyRef`, etc.) — do not conclude it's safe because the call is textually inside a constructor; see [`patterns/runtime.md` §26](patterns/runtime.md#26-inject-based-api-called-across-a-zoneasync-boundary-any-angular-ecosystem-dependency) and the general principle below
+
+**A pattern file's own version-gate annotation (`First required: Angular N`, `[N/A: Angular N+1 only]`) is not, by itself, sufficient evidence for an N/A.** It's a hint inherited from whichever prior upgrade wrote it, not a guarantee for a different version delta. See [`checklist.md` → Verification Principle](checklist.md#verification-principle-pattern-gates-are-hints-not-guarantees).
+
+---
+
+## R1 retrieval protocol (generic, works for any base-to-target range)
+
+`angular.dev/update-guide` is a client-rendered SPA — a plain `WebFetch` on the bare URL returns only the version-picker UI, not the breaking-change content, regardless of query params. Work through this fallback chain until you have real breaking-change content, not just a UI description:
+
+1. `WebFetch` the URL with explicit version/level query params (e.g. `?v=<base>.0-<target>.0&l=3`, `l=3` = advanced/most-complete level). If this returns only navigation/picker text, move to step 2 — do not report it as "reviewed" on that basis alone.
+2. **If Base→Target spans more than one major, treat each intermediate major as its own independent search** — a two-major jump (e.g. 18→20) has two separate breaking-change sets (18→19 and 19→20), and a single "base to target" search commonly summarizes only the more recent one, silently dropping intermediate-only changes. Run one `WebSearch` per hop: `"Angular vN breaking changes" site:angular.dev OR site:github.com angular CHANGELOG` for every `N` from base+1 through target.
+3. Cross-check against the raw `angular/angular` `CHANGELOG.md` on GitHub for the full version range. Third-party summaries (blog posts, WebSearch synthesis) reliably omit internal-API changes — compiler AST renames, `Parser`/`Element` constructor signatures, `RendererFactory2` internals — that only matter to code that touches `@angular/compiler` or `@angular/platform-browser` internals directly (exactly the kind of thing WaveMaker's runtime fork depends on).
+4. **For anything not covered by public docs, the installed package's own `.d.ts`/`.mjs` source for the target version is the only real source of truth** — read it directly (e.g. `node_modules/@angular/compiler/index.d.ts`, `node_modules/@angular/platform-browser/fesm2022/dom_renderer.mjs`) and diff the actual exported signatures against what current source calls, rather than trusting any secondary source's description of "what changed."
+
+**Never summarize a multi-major jump as a single delta.** Confirm you have looked at breaking changes for every individual major version between base and target, not just the endpoints — an intermediate-only change (introduced at N+1, not superseded by N+2) is just as real a `must-change` as one introduced at the target version itself.
+
+## General principle for any dependency jumping multiple majors (not just ngx-bootstrap)
+
+R8 below is written for ngx-bootstrap because that's this repo's largest Angular-ecosystem dependency, but the same rigor applies to **any** package Step 3 bumps across more than one major — a future upgrade may find `ngx-toastr`, `ng-circle-progress`, `ngx-color-picker`, or a brand-new dependency in the same position:
+
+1. Read that dependency's own CHANGELOG for **every** major version in the jump, not just the diff between "latest known" and "currently installed." A version-numbering scheme can itself change mid-range (e.g. ngx-bootstrap synced its major version to Angular's starting at v18 — versions before that don't follow the same pattern).
+2. After Step 4 install, grep the dependency's own installed entry-point source for every `@angular/*` import it makes (`rg "^import" <path-to-fesm-bundle>`) and verify each import path is either (a) already present in the build's externals/globals map, or (b) resolves cleanly through your bundler. **A missing or misrouted external resolves to `undefined` at runtime with zero build-time signal** — not caught by `tsc`, ng-packagr, or a clean `build.sh -f` exit code. This exact failure mode (a new `@angular/core/rxjs-interop` subpath import, unmapped in the rollup globals config) shipped silently through a full green build during the Angular 18→20 upgrade (WMS-29275) and only surfaced in a live browser preview.
+3. For every `inject()`-based/functional-DI call the dependency makes, trace the *actual* runtime call chain from the enclosing constructor/factory down to that call, and check for any Zone.js or async boundary in between (`NgZone.runOutsideAngular`/`.run()`, `setTimeout`, `Promise.then`/`async`-`await`, `requestAnimationFrame`, an RxJS `subscribe()` callback). A call being textually inside a constructor is **not** sufficient evidence it executes in a valid injection context — see [`patterns/runtime.md` §26](patterns/runtime.md#26-inject-based-api-called-across-a-zoneasync-boundary-any-angular-ecosystem-dependency). Missing this exact distinction caused a second silent-build/runtime-only bug (`NG0203`) in the same upgrade, in ngx-bootstrap's `PositioningService`.
+4. Only classify a pattern-file entry as `[N/A: version gate]` after independently confirming points 2–3 against the actual installed source for the version THIS upgrade installs.
 
 ---
 
@@ -42,13 +67,13 @@ Base/target from Step 0. **Block Step 2** if R1, R2, R3, R5, R8, R9, R10, R11, o
 
 | # | Reference | Req | Steps | What to extract | Repo |
 |---|-----------|-----|-------|-----------------|------|
-| R1 | [Angular Update Guide](https://angular.dev/update-guide) (From=base, To=target, advanced) | **Y** | 2,3,6 | Breaking changes → plan row or [N/A] for each | per item → runtime and/or codegen |
+| R1 | [Angular Update Guide](https://angular.dev/update-guide) (From=base, To=target, advanced) — see **R1 Retrieval Protocol** below for how to actually get content out of this (it's an SPA) | **Y** | 2,3,6 | Breaking changes → plan row or [N/A] for each, **for every intermediate major in the range, not just the endpoints** | per item → runtime and/or codegen |
 | R2 | [Version Compatibility](https://angular.dev/reference/versions) | **Y** | 2,3 | Exact TS, Node, RxJS, zone.js versions for target → record in **R2 Version Pins** | `package.json` engines/deps |
 | R3 | [CHANGELOG](https://github.com/angular/angular/blob/main/CHANGELOG.md) | **Y** | 2,6 | Breaking changes base→target → plan row or [N/A] for each | runtime source; codegen templates if API changed |
 | R4 | [`ng update`](https://angular.dev/cli/update) | ref-only | 2 | **Run `ng update --dry-run` in Step 2** to list migrations Angular would apply — surfaces breaking changes the pattern files may not yet cover. `--dry-run` makes no changes. **Do not run `ng update` without `--dry-run`** — it overwrites `build.sh -f` and other custom pipeline files. Apply any listed migrations manually. | — |
 | R5 | [Releases](https://angular.dev/reference/releases) | Y | 2 | **Block if target is RC or pre-release** — RC APIs change between releases and break pattern assumptions. Only proceed with a stable release (e.g., `21.0.0`, not `21.0.0-rc.1`). | — |
 | R6 | [npm audit](https://docs.npmjs.com/cli/audit/) + [audit guide](https://docs.npmjs.com/auditing-package-dependencies-for-security-vulnerabilities/) | Y | 5 | **Block on critical/high** — run `scripts/audit.sh`; any remaining critical/high that is not a verifiable false positive blocks Step 5. Angular/TS packages must not change. | runtime lockfile |
-| R8 | [ngx-bootstrap](https://valor-software.com/ngx-bootstrap/documentation) | **Y** | 2,6 | API removals for target major (e.g., `.forRoot()` removed modules) → plan row for each | runtime: transpiler, widgets, patch; codegen: `app.config.ts.hbs` |
+| R8 | [ngx-bootstrap](https://valor-software.com/ngx-bootstrap/documentation) — apply the **General principle** above to ngx-bootstrap specifically, and to any other Angular-ecosystem dependency Step 3 bumps by more than one major | **Y** | 2,6 | API removals for target major (e.g., `.forRoot()` removed modules) → plan row for each; unmapped `@angular/*` subpath imports and `inject()`/Zone-boundary hazards → §26 | runtime: transpiler, widgets, patch; codegen: `app.config.ts.hbs` |
 | R9 | [jest-preset-angular](https://github.com/thymikee/jest-preset-angular) | Y | 2,8 | Compatible `jest-preset-angular` version for target Angular major → pin in Step 3 | runtime jest config |
 | R10 | [ng-packagr](https://github.com/ng-packagr/ng-packagr) | Y | 2,7 | Compatible `ng-packagr` version for target Angular → pin in Step 3 | runtime `projects/*` |
 | R11 | [Node releases](https://nodejs.org/en/about/previous-releases) | Y | 2,3 | LTS Node version for target Angular → pin in `engines.node` in Step 3 | `engines.node` in `package.json` |

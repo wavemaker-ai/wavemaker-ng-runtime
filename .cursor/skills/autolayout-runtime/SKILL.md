@@ -28,7 +28,7 @@ Treat the markup tag (`wm-foo`) as the canonical identifier. If the user gives a
 
 The ONLY exception: the user's prompt already contains an explicit override (e.g. "use defaults", "with no options", "targetSelector: 'ul'", "bindParent: '…'"). In that case, skip the question and use what they said.
 
-Use `AskQuestion` (preferred). Present this exact pair of questions:
+Use `AskUserQuestion` (preferred). Present this exact pair of questions:
 
 1. **Customize decorator options?**
    - `Use defaults — @AutoLayout()`
@@ -39,7 +39,7 @@ Use `AskQuestion` (preferred). Present this exact pair of questions:
 
 If the user picks `targetSelector` or `bindParent`, follow up with a free-text question for the value. Then echo back the resulting decorator call (e.g. `@AutoLayout({ targetSelector: 'ul' })`) and wait for confirmation before continuing.
 
-If `AskQuestion` is unavailable, ask conversationally and WAIT for an answer. Do not proceed.
+If `AskUserQuestion` is unavailable, ask conversationally and WAIT for an answer. Do not proceed.
 
 ### Decorator option reference
 
@@ -240,7 +240,7 @@ If the props Map already declares one of these (e.g. `width`/`height`), remove t
 
 ## Step 5 — Verify
 
-Run `ReadLints` on both edited files (component/directive AND props). Then:
+Check diagnostics on both edited files (component/directive AND props) via `mcp__ide__getDiagnostics`, or run the project linter (`npm run lint`) if that tool is unavailable. Then:
 
 - Confirm the constructor now declares `private app: App` and `App` is imported from `@wm/core`.
 - Open `projects/components/base/src/decorators/autolayout.decorator.ts` if you need to confirm what `targetSelector` / `bindParent` actually do.

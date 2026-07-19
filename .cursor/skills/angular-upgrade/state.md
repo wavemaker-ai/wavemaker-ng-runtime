@@ -11,9 +11,10 @@
 | Field | Legal values / format |
 |-------|-----------------------|
 | `Base → Target Angular` | `<N> → <N+1>` (integers) |
-| `Preview URL` | full URL or `skip` or empty |
-| `Comparison URL` | full URL or empty |
-| `Skip preview (9) / tests (8) / bundle verify (7)` | `yes / yes / yes` (each slot: `yes` or `no`) |
+| `Validation modes configured` | list of mode names from `VALIDATION_MODES`, each tagged `active` or `skipped` |
+| `Angular Deployment URL` / `Comparison URL` | full URL or `skip` or empty (`LOCAL_DEPLOYMENT_URL`/`WAVEMAKER_DEPLOYMENT_URL`) |
+| `WaveMaker Preview URL` / `Comparison URL` | full URL(s) (comma-separated if multiple comparison targets) or `skip` or empty (`LOCAL_PREVIEW_URL`/`WAVEMAKER_PREVIEW_URL`) |
+| `Skip tests (8) / bundle verify (7)` | `yes / yes` (each slot: `yes` or `no`) |
 | `Inputs confirmed` | `yes` or `no` |
 | `BUILD_CMD` | shell command string, e.g. `sh build.sh -f` |
 | `ng-runtime branch` | git branch name |
@@ -30,9 +31,12 @@
 ## Upgrade Config
 
 - Base → Target Angular:
-- Preview URL:
-- Comparison URL:
-- Skip preview (9) / tests (8) / bundle verify (7):
+- Validation modes configured:
+- Angular Deployment URL:
+- Angular Deployment Comparison URL:
+- WaveMaker Preview URL:
+- WaveMaker Preview Comparison URL:
+- Skip tests (8) / bundle verify (7):
 - Inputs confirmed: no
 - BUILD_CMD:
 - ng-runtime branch:
@@ -59,7 +63,7 @@
 | 6 | Apply Fixes | pending | both repos + ng-codegen build |
 | 7 | Build ng-runtime | pending | |
 | 8 | Unit Tests | pending | skip if tests off |
-| 9 | Preview Validation | pending | skip if preview skip/empty |
+| 9 | Preview Validation | pending | skip only if every validation mode's URL is skip/empty |
 | 10 | Finalize & Reset | pending | |
 
 ---
@@ -194,17 +198,16 @@ Record after each Step 7 build. **Keep every row** — do not overwrite earlier 
 
 ## Preview Validation (Step 9)
 
-### Comparison URL (stage baseline)
+One `### Mode:` subsection per entry in `VALIDATION_MODES` (`repo.config.sh`) — currently Angular Deployment and WaveMaker Preview. Both use the identical G1–G7/E1–E13 checklist; only the URLs and the "how the preview URL was produced" note differ. If a mode's URL was empty/`skip` at Step 0, write `Status: skipped — no URL configured` and leave the rest of its subsection blank rather than deleting the subsection.
 
-- URL:
-- Status:
+### Mode: Angular Deployment
 
-### Preview URL (local Tomcat)
-
-- URL:
+- Comparison URL(s):
+- Preview URL:
+- Status: pending / skipped / passed / failed
 - Iterations:
 
-### Visual Parity Checks
+#### Visual Parity Checks
 
 | Check | Comparison | Preview | Match? | Notes |
 |-------|------------|---------|--------|-------|
@@ -216,7 +219,7 @@ Record after each Step 7 build. **Keep every row** — do not overwrite earlier 
 | G6 Interactions work | | | | |
 | G7 Data renders | | | | |
 
-### Extended Checks (run where applicable)
+#### Extended Checks (run where applicable)
 
 | # | Check | Result | Notes |
 |---|-------|--------|-------|
@@ -234,7 +237,44 @@ Record after each Step 7 build. **Keep every row** — do not overwrite earlier 
 | E12 | Watch/bind with parenthesized expr + pipe | | |
 | E13 | ngx-bootstrap bundle patch (overlay) | | |
 
-### Regressions / Deferred Preview Issues
+### Mode: WaveMaker Preview
+
+- Comparison URL(s):
+- Preview URL:
+- Status: pending / skipped / passed / failed
+- Iterations:
+
+#### Visual Parity Checks
+
+| Check | Comparison | Preview | Match? | Notes |
+|-------|------------|---------|--------|-------|
+| G1 Comparison loads | | | | |
+| G2 Preview loads | | | | |
+| G3 Same widgets visible | | | | |
+| G4 No fatal console errors | | | | |
+| G5 No extra console errors | | | | |
+| G6 Interactions work | | | | |
+| G7 Data renders | | | | |
+
+#### Extended Checks (run where applicable)
+
+| # | Check | Result | Notes |
+|---|-------|--------|-------|
+| E1 | Page query params on first load | | |
+| E2 | Runtime-compiled page/partial | | |
+| E3 | Table row expand / actions / filter | | |
+| E4 | List + row menu | | |
+| E5 | Modal open/close | | |
+| E6 | Popover/dropdown positioning | | |
+| E7 | Popover + date/time picker inside | | |
+| E8 | Date/time picker reopen | | |
+| E9 | Typeahead not clipped | | |
+| E10 | File upload success/delete | | |
+| E11 | Table bound to variable (no datasource) | | |
+| E12 | Watch/bind with parenthesized expr + pipe | | |
+| E13 | ngx-bootstrap bundle patch (overlay) | | |
+
+### Regressions / Deferred Preview Issues (across all modes)
 
 ---
 

@@ -6,7 +6,9 @@
 # ng-runtime/ng-codegen-specific — file paths, WMS tickets, and commit refs will not apply to
 # other repos. Replace or supplement §1–§20 with patterns relevant to your codebase.
 # Step 0:  ANGULAR_* (overridable in chat)
-# Step 9:  PREVIEW_*, COMPARISON_* — empty or skip → Step 9 skipped
+# Step 9:  VALIDATION_MODES + each mode's <urlVar>/<comparisonVar> — a mode is
+#          skipped if its urlVar is empty or "skip"; Step 9 as a whole is
+#          skipped only when every configured mode is skipped
 # Step 6:  NG_CODEGEN_PATH, PATTERNS_FILE
 # Step 7:  BUILD_CMD, POST_BUILD_VERIFY_*, DEFAULT_RUN_BUNDLE_VERIFY
 # Step 9:  RUNTIME_BUNDLE_CMD (locale + CLI bundles only), LOCAL_BUILD_DOC
@@ -17,12 +19,33 @@
 ANGULAR_BASE_VERSION="21"
 ANGULAR_TARGET_VERSION="22"
 
-# --- Local Tomcat validation (Step 9 defaults) ---
-PREVIEW_URL="http://localhost:8080/SearchWidgetScenarios/#/LiveForm_Autocomplete"
-COMPARISON_URL="https://stage-platform.wavemaker.ai/run-jlqb2h631c/SearchWidgetScenarios_master/#/Main"
+# --- Validation modes (Step 9) ---
+# Space-separated list of "key:urlVar:comparisonVar" triples. Each urlVar/
+# comparisonVar named here MUST be defined below. comparisonVar may hold
+# multiple comma-separated URLs (Step 9 validates the mode's URL against each
+# in turn). A mode with an empty or "skip" urlVar is skipped independently of
+# every other mode.
+#
+# To add a new mode: add one "key:urlVar:comparisonVar" entry here, define its
+# two URL vars below, and — only if it needs its own automated build/deploy
+# step (unlike wavemaker_preview, whose URL is supplied directly) — add a short
+# subsection to SKILL.md Step 9 describing how to produce it. Nothing else in
+# the skill needs to change; Step 9's skip logic, gate table (G1-G7/E1-E13),
+# fix loop, and "done when" criterion are all mode-generic already.
+VALIDATION_MODES="angular_deployment:LOCAL_DEPLOYMENT_URL:WAVEMAKER_DEPLOYMENT_URL wavemaker_preview:LOCAL_PREVIEW_URL:WAVEMAKER_PREVIEW_URL"
+
+# --- Angular Deployment (Tomcat) validation — built/deployed by
+# local-angular-build.md; see LOCAL_BUILD_DOC below ---
+LOCAL_DEPLOYMENT_URL="http://localhost:8080/WMTheme/#/Main"
+WAVEMAKER_DEPLOYMENT_URL="https://cloud.wavemakeronline.com/pkcq1975w401/WMTheme/#/Main"
+
+# --- WaveMaker Preview validation — supplied directly (like the pair above);
+# not built by this skill's automation. Leave empty to skip this mode. ---
+LOCAL_PREVIEW_URL="https://proxy-studio.wmdev.com/run-xnhzlbk1jd/ent12663d4a370d/WMTheme_master/#/Main"
+WAVEMAKER_PREVIEW_URL="https://www.wavemakeronline.com/run-xnhzlbk1jd/ent12663d4a370d/WMTheme_master/#/Main"
 
 NG_CODEGEN_PATH="../wavemaker-ng-codegen"
-LOCAL_BUILD_DOC=".cursor/commands/local-angular-build.md"
+LOCAL_BUILD_DOC="../../commands/local-angular-build.md"
 
 INSTALL_CMD="npm install"
 BUILD_CMD="sh build.sh -f"

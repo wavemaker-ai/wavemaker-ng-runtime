@@ -10,7 +10,7 @@
 # if you need to go back to the pre-upgrade node_modules).
 #
 # After running this script, also run:
-#   sh .cursor/skills/angular-upgrade/scripts/reset-state.sh
+#   sh scripts/reset-state.sh (from the skill directory)
 # to clear current-state.md.
 
 set -e
@@ -59,4 +59,4 @@ else
 fi
 
 echo ""
-echo "Rollback complete. Next: sh .cursor/skills/angular-upgrade/scripts/reset-state.sh"
+echo "Rollback complete. Next: sh $SCRIPT_DIR/reset-state.sh"

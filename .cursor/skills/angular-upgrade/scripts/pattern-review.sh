@@ -15,7 +15,7 @@
 #
 # Exit codes: 0 = all FAIL checks pass (WARNs do not block); 1 = at least one FAIL
 #
-# Usage: sh .cursor/skills/angular-upgrade/scripts/pattern-review.sh
+# Usage: sh scripts/pattern-review.sh (from the skill directory)
 
 set -e
 
