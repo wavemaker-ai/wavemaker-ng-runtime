@@ -350,10 +350,12 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
             return;
         }
 
-        this.setFormWidget(key, nv);
+        if (key !== 'show') {
+            this.setFormWidget(key, nv);
+        }
 
         // Placeholder should not be setup on max widget
-        if (key !== 'placeholder') {
+        if (key !== 'placeholder' && key !== 'show') {
             this.setMaxFormWidget(key, nv);
         }
 
