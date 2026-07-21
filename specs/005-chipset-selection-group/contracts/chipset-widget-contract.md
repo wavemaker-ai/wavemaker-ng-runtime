@@ -34,17 +34,17 @@ itemsperrow, required, readonly, disabled, name, show, tabindex, usekeys, hint, 
 New (this feature):
 selectionmode ('single' | 'multiple', default 'single')
 disableitem (boolean, default false) + disableitem.bind (expression, per-record)
-appearance ('elevated' | 'outlined', default 'outlined')
 displayimagesrc (string, per-record field name/expression) + displayimagesrc.bind
 iconclass (string, per-record field name) — icon glyph pointer
 iconurl (string, per-record field name) — icon/image/SVG URL pointer
 ```
 
+> **Amendment (2026-07-17)**: `appearance` was removed as a distinct runtime-registered property (FR-009 below is superseded). Appearance is now driven entirely by the studio-side `variant` mechanism (`tokenFileName: "chipset"`, generic `variant` property, `syncAppearanceVariantClasses`), which resolves a `class` string onto the widget from `chipset.json`. The runtime widget has no appearance-specific code at all — it just renders whatever `class` attribute the page markup carries, same as any other class. `DEFAULT_CLS`/`hostClass` changed from `'app-chipset chipset-outlined'` to `'app-chipset'` so the default appearance no longer permanently coexists with an alternate variant selection.
+
 - `selectionmode` determines both the shape of `datavalue` (scalar vs. array) and the default
   ARIA role/interaction model. (Maps to FR-002.)
 - `disableitem`/`disableitem.bind` resolves per dataset record, mirroring `wm-list`'s
   `disableitem`/`binddisableitem`. (Maps to FR-008.)
-- `appearance` is a single widget-level value applied uniformly to every chip. (Maps to FR-009.)
 - `displayimagesrc`/`iconclass`/`iconurl` each optionally resolve a per-chip leading visual
   (avatar image or icon) from the bound data; none of the three is required for a chip to render
   or function — a chip with none set renders with no leading visual and remains fully
@@ -102,16 +102,18 @@ resolved per-item disabled flag from both the static property and a `.bind` expr
 
 ---
 
-## C5. Appearance contract
+## C5. Appearance contract (superseded — see amendment above)
 
-**Given** `appearance = 'elevated'` vs. `'outlined'`, **Then** the host/chip elements carry a
-distinguishing CSS class (e.g. `chipset-elevated` / `chipset-outlined`) applied to every chip in
-the widget uniformly; selection behavior is identical regardless of `appearance`. (Maps to
-FR-009.) Exact visual tokens are a `wavemaker-foundation-css` follow-up (research.md, Decision 5)
-— this contract only covers the class-toggle behavior, not the resulting pixels.
+**Given** a widget-level `class` of `chipset-elevated` vs. `chipset-outlined` (set via the studio
+Variant control, not a runtime `appearance` property), **Then** the host element carries that
+class and every chip's styling responds to it uniformly via `chipset.json`'s token selectors;
+selection behavior is identical regardless of which class is present. The runtime widget performs
+no class-toggling logic of its own — it only renders `class` as given, same as it would for any
+widget. Exact visual tokens live in `wavemaker-foundation-css`'s `chipset.json` `appearances` map.
 
-**Verify**: assert the expected class is present on the host/chip elements for each `appearance`
-value; assert click/keyboard selection behavior is unaffected by the value.
+**Verify**: assert the expected class is present on the host element when a given variant is
+selected in studio and the page is saved/rendered; assert click/keyboard selection behavior is
+unaffected by which class is present.
 
 ---
 

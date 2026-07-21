@@ -37,6 +37,10 @@ event."
 - Q: When keyboard focus is on the first/last chip and the user presses Arrow further in that direction, what should happen? → A: Wrap around to the opposite end (last→first, first→last), per the ARIA APG roving-tabindex pattern.
 - Q: Is the elevated-vs-outlined chip appearance a single widget-level setting for all chips, or configurable per chip from bound data? → A: A single widget-level property applied uniformly to all chips.
 
+### Session 2026-07-17 (amendment)
+
+- Q: The dedicated runtime `appearance` property (added per the 2026-07-03 clarification above) duplicated the standard studio variant/token mechanism used by every other widget, and its host-class handling had an initialization-order bug. Should it stay a bespoke runtime property, or be removed in favor of the standard mechanism? → A: Remove `appearance` from the runtime widget entirely (`chipset.props.ts`, `chipset.component.ts`). Appearance switching moves fully to `wavemaker-ng-studio`'s generic `variant` property + `tokenFileName: "chipset"`, which resolves classes from `chipset.json` via `syncAppearanceVariantClasses` and writes them onto the widget's existing `class` property. The runtime widget needs zero appearance-specific code — it already supported arbitrary `class` values. `DEFAULT_CLS`/`hostClass` changed from `'app-chipset chipset-outlined'` to `'app-chipset'` so the default appearance doesn't permanently coexist with an alternate variant. Every "elevated vs outlined" requirement below (FR-009, C5 in the contract) is superseded by this: the *capability* (two selectable appearance styles) is unchanged, only *how a builder selects it* changed (Styles-tab Variant control instead of a Properties-tab dropdown).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Pick exactly one option from a set of chips (Priority: P1)
@@ -310,10 +314,12 @@ underlying selection state from changing.
   (evaluated against each dataset record, mirroring the existing per-record `disableitem`
   pattern used elsewhere in the framework) that disables an individual chip's selection
   interaction while leaving the rest of the widget interactive.
-- **FR-009**: The widget MUST support at least two chip appearance styles — elevated and
-  outlined — as a single widget-level setting applied uniformly to every chip in the group;
-  the two styles MUST be visually distinguishable from one another while exposing identical
-  selection behavior.
+- **FR-009** (superseded 2026-07-17 — see amendment above): The widget MUST support at least two
+  chip appearance styles — elevated and outlined — as a single widget-level setting applied
+  uniformly to every chip in the group; the two styles MUST be visually distinguishable from one
+  another while exposing identical selection behavior. This is now satisfied via the studio
+  `variant` mechanism resolving a `class` from `chipset.json`, not a runtime `appearance`
+  property.
 - **FR-010**: The widget MUST support an optional leading icon or avatar per chip, driven from
   the bound data, without this being a requirement for the chip to render or function.
 - **FR-011**: The widget MUST integrate as a WaveMaker form widget: it MUST be usable inside a
@@ -359,7 +365,8 @@ underlying selection state from changing.
   selection mode (single-select/multi-select), bound dataset and field configuration
   (datafield, displayfield, displayexpression, compareby, groupby, orderby, itemsperrow), data
   value (scalar or collection depending on mode), required/readonly/disabled state, and chip
-  appearance (elevated/outlined).
+  appearance (elevated/outlined — set via studio's Variant control, not a runtime property; see
+  2026-07-17 amendment).
 - **Chip (option)**: A single selectable option rendered within the group, generated from one
   dataset record. Key attributes: label (from displayfield/displayexpression), underlying
   data value, selected state, a per-record disabled flag (resolved from the widget's

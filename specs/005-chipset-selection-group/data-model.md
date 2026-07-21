@@ -37,7 +37,7 @@ Registered via `register('wm-chipset', Map)` + `registerFormWidget(FormWidgetTyp
 | `selectionmode` | `PROP_STRING` | `'single'` | `'single'` (radiogroup semantics) or `'multiple'` (group/checkbox semantics); drives `this.multiple` | FR-002, FR-003, FR-004 |
 | `disableitem` | `PROP_BOOLEAN` | `false` | Static per-record disable flag (used when no `.bind` expression is supplied) | FR-008 |
 | `disableitem.bind` (via `@Attribute('disableitem.bind') binddisableitem`) | attribute | — | Expression evaluated per record (item scope); overrides static `disableitem` when present | FR-008 |
-| `appearance` | `PROP_STRING` | `'outlined'` | `'elevated'` \| `'outlined'`; single widget-level chip look, applied to all chips uniformly | FR-009 |
+| ~~`appearance`~~ | ~~`PROP_STRING`~~ | ~~`'outlined'`~~ | **Removed 2026-07-17** — appearance is now set via studio's `variant` control, which writes directly to the existing `class` property below. No runtime-registered `appearance` prop exists. | FR-009 (superseded) |
 | `displayimagesrc` (+ `.bind` via `binddisplayimagesrc`) | `PROP_STRING` | — | Optional per-chip avatar image; field name/expression resolved per record into `DataSetItem.imgSrc` via the inherited `DatasetAwareFormComponent.initDatasetItems()` pipeline (identical mechanism/property name to `wm-chips`, no new resolution code) | FR-010 |
 | `iconclass` | `PROP_STRING` | — | Optional per-chip leading icon; value is a dataset field name resolved per record as `item.dataObject[iconclass]` and rendered via `<wm-app-icon>`, mirroring `wm-switch` | FR-010 |
 | `iconurl` | `PROP_STRING` | — | Optional per-chip leading icon/image/SVG; value is a dataset field name resolved per record as `item.dataObject[iconurl]` and rendered via `<wm-app-icon>`, mirroring `wm-switch` | FR-010 |
@@ -62,8 +62,9 @@ Registered via `register('wm-chipset', Map)` + `registerFormWidget(FormWidgetTyp
 - A chip whose resolved `disableitem` (static or `.bind`-evaluated) is `true` can never
   transition `selected`, regardless of `selectionmode`, and is excluded from the roving-tabindex
   focus order (FR-008, FR-015).
-- `appearance` affects only host/chip CSS classes; it has no effect on `datavalue` shape or
-  selection behavior (FR-009).
+- Appearance (elevated/outlined) affects only host/chip CSS classes, applied via the studio
+  `variant` control writing to `class`; it has no effect on `datavalue` shape or selection
+  behavior (FR-009, superseded).
 - A chip's leading visual, if any, resolves in priority order: `displayimagesrc`'s resolved
   `imgSrc` (avatar image) takes precedence when present; otherwise `iconclass`/`iconurl` (icon,
   via `<wm-app-icon>`) renders if either resolves for that record; if none of the three resolve,

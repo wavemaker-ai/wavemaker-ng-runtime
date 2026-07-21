@@ -134,6 +134,22 @@ item scope — the same pattern as `wm-list`.
 
 ## Decision 5 — `appearance` (elevated/outlined): new widget-level `PROP_STRING`, styling deferred to foundation-css
 
+> **Amendment (2026-07-17) — superseded**: The coordinated studio/foundation-css follow-up this
+> decision anticipated is now done, and it changed the approach: rather than keeping a bespoke
+> runtime `appearance` property alongside the new studio wiring, `appearance` was **removed**
+> from the runtime widget entirely. `wavemaker-ng-studio` now registers `tokenFileName: "chipset"`
+> on the widget config, so the generic `variant` property (already used by every other widget,
+> e.g. `wm-button`) resolves its options from `chipset.json`'s existing `appearances` map and
+> applies the resulting class via `BaseComponent.syncAppearanceVariantClasses`. The runtime side
+> needed no new code for this — it already accepted arbitrary `class` values — only a change to
+> `hostClass`/`DEFAULT_CLS` (`'app-chipset chipset-outlined'` → `'app-chipset'`) so the default
+> appearance class doesn't permanently coexist with a later variant selection. `chipset.json`
+> itself needed **no changes** — its existing `appearances.outlined`/`appearances.elevated`
+> blocks (each with a `meta.appearances.<name>.mapping.selector` and per-appearance `mapping`)
+> already matched the shape the studio variant-resolution pipeline (`WidgetStylingService.
+> getAppearanceVariantSelectors`) expects for a plain (non-`variantGroups`) appearance. The
+> original decision below is preserved as historical record of the pre-migration design.
+
 **Decision**: Add `appearance` (`PROP_STRING`, values `'elevated' | 'outlined'`, default
 `'outlined'`) that toggles a single host-level class (e.g. `chipset-elevated` /
 `chipset-outlined`) applied uniformly to all chips (spec Clarification 5). This plan defines
@@ -312,7 +328,7 @@ property names:
 | Mode-switch datavalue handling | Always clear to the new mode's empty default (no conversion) |
 | Chip DOM/ARIA | Custom `role="radio"`/`role="checkbox"` + roving tabindex, uniform across both modes (not native inputs) |
 | Per-chip disable | `disableitem`/`disableitem.bind`, mirroring `wm-list`'s `ListItemDirective` pattern |
-| Appearance | New `appearance` (`elevated`/`outlined`) widget-level `PROP_STRING`; tokens deferred to foundation-css |
+| Appearance | ~~New `appearance` (`elevated`/`outlined`) widget-level `PROP_STRING`~~ — superseded 2026-07-17: no runtime property; studio's `variant` + `tokenFileName: "chipset"` resolves classes from the existing `chipset.json` `appearances` map |
 | Leading icon/avatar per chip | `displayimagesrc` (free via inherited `DatasetAwareFormComponent` `imgSrc` pipeline, mirrors `wm-chips`) + `iconclass`/`iconurl` field-pointers + `<wm-app-icon>` (mirrors `wm-switch`) |
 | `onchange` on programmatic sets | Already free via `DatasetAwareFormComponent.datavalue` setter |
 | `onselect`/`ondeselect` | New, diffed against previous selected-keys set on every `datavalue`/`modelByKey` change |

@@ -9,6 +9,8 @@ Principle VIII (HARD GATE) and the feature's own FR-019/SC-007, co-located Jest 
 (`chipset.wrapper.component.spec.ts`) covering every public property, event, and behavioral
 variant are MANDATORY, not optional.
 
+> **Amendment (2026-07-17)**: Tasks/tests below that reference an `appearance` runtime property are historical — that property was removed and replaced by studio's `variant` + `tokenFileName: "chipset"` mechanism (see spec.md's 2026-07-17 clarification). Any remaining unit/wrapper test coverage for appearance-switching behavior should target the resolved `class` output instead of an `appearance` input.
+
 **Organization**: Tasks are grouped by user story (P1–P5 from spec.md) to enable independent
 implementation and testing of each story, following the existing `wm-radioset`/`wm-checkboxset`
 package structure as the structural reference (confirmed against

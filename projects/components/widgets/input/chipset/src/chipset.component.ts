@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostBinding, Inject, Injector, OnDestroy, Optional, Attribute } from '@angular/core';
+import { Component, HostBinding, Inject, Injector, OnDestroy, OnInit, Optional, Attribute } from '@angular/core';
 import { NG_VALUE_ACCESSOR, NG_VALIDATORS } from '@angular/forms';
 
 import { $unwatch, $watch, isDefined, setListClass, toBoolean } from '@wm/core';
@@ -18,7 +18,7 @@ import { isEqual, toString } from 'lodash-es';
 
 declare const $;
 
-const DEFAULT_CLS = 'app-chipset chipset-outlined';
+const DEFAULT_CLS = 'app-chipset';
 const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-chipset', hostClass: DEFAULT_CLS };
 
 @Component({
@@ -33,7 +33,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-chipset', hostClass: DEFA
         provideAsWidgetRef(ChipsetComponent)
     ]
 })
-export class ChipsetComponent extends DatasetAwareFormComponent implements OnDestroy {
+export class ChipsetComponent extends DatasetAwareFormComponent implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     public disabled: boolean;
@@ -73,6 +73,14 @@ export class ChipsetComponent extends DatasetAwareFormComponent implements OnDes
             this.updateActiveItem();
         });
         this.registerDestroyListener(() => datasetSubscription.unsubscribe());
+    }
+
+    ngOnInit() {
+        super.ngOnInit();
+        // the constructor-time dataset$ subscription fires before Angular sets @Input-bound
+        // properties, so a statically-bound 'disableitem' is still undefined when it first runs.
+        this.setupDisableItemWatchers();
+        this.updateActiveItem();
     }
 
     // @ts-ignore
@@ -153,18 +161,11 @@ export class ChipsetComponent extends DatasetAwareFormComponent implements OnDes
             this.datavalue = this.multiple ? [] : undefined;
         } else if (key === 'itemsperrow') {
             setListClass(this);
-        } else if (key === 'appearance') {
-            this.updateAppearanceClass(nv);
         } else if (key === 'disableitem') {
             this.setupDisableItemWatchers();
             this.updateActiveItem();
         }
         super.onPropertyChange(key, nv, ov);
-    }
-
-    private updateAppearanceClass(appearance: string) {
-        this.$element.removeClass('chipset-elevated chipset-outlined');
-        this.$element.addClass(appearance === 'elevated' ? 'chipset-elevated' : 'chipset-outlined');
     }
 
     private getSelectedKeysSet(): Set<any> {
@@ -290,7 +291,9 @@ export class ChipsetComponent extends DatasetAwareFormComponent implements OnDes
                 this.disableItemWatchDestroyers.push(destroyer);
                 this.registerDestroyListener(destroyer);
             } else {
-                this.chipDisabledMap.set(item, !!this.disableitem);
+                // 'disableitem' (unbound) names one dataset item to disable, not a blanket flag —
+                // match it against the item's key so only that item is disabled.
+                this.chipDisabledMap.set(item, isDefined(this.disableitem) && toString(item.key) === toString(this.disableitem));
             }
         });
     }

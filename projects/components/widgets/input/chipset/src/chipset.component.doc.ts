@@ -6,14 +6,10 @@ import { Input } from '@angular/core';
 
 export class Chipset {
     /**
-     * This property defines the visual style of the chips.
-     * <p><em>Allowed Values: </em><code>outlined, elevated</code></p>
+     * Class of the widget. The visual style of the chips (e.g. outlined vs elevated) is controlled
+     * through the widget's Variant setting in Studio, which resolves to a class here at design time.
      */
-    @Input() appearance: string = 'outlined';
-    /**
-     * Class of the widget.
-     */
-    @Input() class: string;
+    @Input() class: string = 'chipset-outlined';
     /**
      * This property sets the dataValue to be returned by the chipset widget when the list is populated using the dataSet property. <br>
      */

@@ -29,7 +29,7 @@ pass, covering:
 - Multi-select mode: independent toggles, zero-selected valid, pre-set collection `datavalue`, required-invalid-when-empty (C3, C8).
 - `selectionmode` runtime switch clearing `datavalue` (C3).
 - `disableitem` static and `.bind` per-record disabling (C4).
-- `appearance` class-toggle for both values (C5).
+- Widget-level `class` reflects whichever appearance class (`chipset-elevated`/`chipset-outlined`) is set on the markup — no runtime `appearance` property exists; set via studio's Variant control (C5, amended 2026-07-17).
 - Keyboard: Tab single-stop, Arrow wrap-around skipping disabled chips, Enter/Space activation, ARIA role/state per mode (C6).
 - Events: `onbeforechange` (including a cancelling handler), `onchange` (user + programmatic), `onselect`/`ondeselect` diffing (C7).
 - Registration: `isDataSetWidget(FormWidgetType.CHIPSET)` is `true` (C9).
@@ -80,8 +80,12 @@ widget libraries; no errors from the new `chipset.build.ts` transpiler registrat
 
 ## 5. Non-goals for this quickstart
 
-- Visual/pixel validation of `elevated`/`outlined` appearance — depends on the separate
-  `wavemaker-foundation-css` token work (research.md, Decision 5); this guide only validates
-  that the correct CSS class is toggled (covered by automated tests, C5).
+- Visual/pixel validation of `elevated`/`outlined` appearance — the `wavemaker-foundation-css`
+  tokens (research.md, Decision 5) needed no changes; the coordinated studio work is done (see
+  the 2026-07-17 amendment) and appearance is now set via studio's Variant control rather than a
+  runtime property. This guide still only validates that the correct CSS class ends up on the
+  widget (covered by automated tests, C5) — pixel-level verification is a studio/foundation-css
+  concern, not this runtime quickstart's.
 - Studio canvas drag-and-drop / property-panel validation — depends on the separate
-  `wavemaker-ng-studio` metadata work (research.md, Decision 8).
+  `wavemaker-ng-studio` metadata work (research.md, Decision 8); see `wavemaker-ng-studio`'s own
+  `specs/001-chipset-widget-support/quickstart.md` for that widget's canvas-side validation.

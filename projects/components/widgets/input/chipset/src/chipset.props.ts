@@ -3,7 +3,6 @@ import { FormWidgetType } from '@wm/core';
 
 export const chipsetProps = new Map(
     [
-        ['appearance', {value: 'outlined', ...PROP_STRING}],
         ['class', PROP_STRING],
         ['compareby', PROP_STRING],
         ['datafield', PROP_STRING],
