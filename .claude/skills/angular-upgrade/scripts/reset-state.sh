@@ -1,6 +1,6 @@
 #!/bin/sh
 # Reset current-state.md to start position (Step 10 done or Step 0 fresh Start).
-# Usage: sh .cursor/skills/angular-upgrade/scripts/reset-state.sh
+# Usage: sh scripts/reset-state.sh (from the skill directory)
 
 set -e
 

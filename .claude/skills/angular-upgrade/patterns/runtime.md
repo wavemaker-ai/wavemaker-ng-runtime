@@ -2,7 +2,7 @@
 
 Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/`) in Step 6. For codegen patterns see [`patterns/codegen.md`](codegen.md). Workflow: [`SKILL.md`](../SKILL.md). References: [`research.md`](../research.md) R12.
 
-> **Pattern currency:** these patterns reflect past Angular upgrade experience (primarily Angular 20). R1/R3 from official Angular docs take precedence over anything here.
+> **Pattern currency:** §1–§19 and §12's fix (but not its original version-gate) reflect past Angular upgrade experience (primarily Angular 20/21). §26 is deliberately generic/version-agnostic — see its own note. R1/R3 from official Angular docs take precedence over anything here, and no §N's version-gate should be trusted without independent verification for the current upgrade — see [`checklist.md` → Verification Principle](../checklist.md#verification-principle-pattern-gates-are-hints-not-guarantees).
 
 **Compatibility Policy:** fix removed APIs and compile errors caused by the new Angular version only. Do not add signals, zoneless, `inject()` style changes, or any modernization. "Would this change be needed even if Angular hadn't released a new version?" — if no, skip it.
 
@@ -27,6 +27,7 @@ Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/
 | [§15](#15-page-query-params-timing-angular-20) | Page query params — snapshot + subscribe pattern |
 | [§16](#16-list--table-embedded-template-context--di) | List/table — `ngTemplateOutletContext`, row DI |
 | [§19](#19-wavemaker-expression-parser-astcompiler--parseexpr) | Expression parser — `ParseSourceSpan`, AST renames |
+| [§26](#26-inject-based-api-called-across-a-zoneasync-boundary-any-angular-ecosystem-dependency) | **Generic** — `inject()`-based API vs Zone/async boundary, any dependency |
 
 ---
 
@@ -350,14 +351,21 @@ TypeError: Cannot read properties of undefined (reading 'attach')
 
 **Where:** `build-scripts/ngx-bootstrap-patch.mjs` (positioning patch), `config/rollup.ngxBootstrap.config.mjs` (`ngxBootstrapPatchPlugin` on full `sh build.sh -f`).
 
-**Known preview error:**
+**Known preview errors (two distinct symptoms across ngx-bootstrap versions — same root defect class, different upstream implementation):**
 
 ```text
 ReferenceError: __destroyRef is not defined
   at new PositioningService (wm-libs.js:…)
 ```
 
-**Root cause:** ngx-bootstrap 21+ ships `takeUntilDestroyed(__destroyRef)` in `PositioningService` without declaring `__destroyRef`. The Rollup patch must inject `const __destroyRef = i0.inject(i0.DestroyRef)` in the constructor. If the patch **regex no longer matches** the upstream constructor (ngx-bootstrap minor bump) or **`sh build.sh -f` was skipped** / preview uses stale `wm-libs.js`, the bundle ships broken positioning — dropdown, popover, modal, datetime fail at runtime.
+```text
+RuntimeError: NG0203 (inject() must be called from an injection context)
+  at ... Object.takeUntilDestroyed ... at new PositioningService (wm-libs.js:…)
+```
+
+**Confirmed at ngx-bootstrap 20.0.2 (WMS-29275, 18→20 upgrade, 2026-07):** upstream's actual source is `this.triggerEvent$.pipe(takeUntilDestroyed()).subscribe(...)` called **inside** `ngZone.runOutsideAngular(() => {...})`. This is syntactically valid (no `ReferenceError`) — `takeUntilDestroyed()` with no arg relies on an implicit `inject(DestroyRef)`, and Angular's injection-context tracking does not survive the Zone.js task boundary created by `runOutsideAngular`, so it throws **NG0203** instead. Do not assume this bug is 21+-only just because `takeUntilDestroyed()` is called syntactically "in the constructor" — check whether it's nested inside `runOutsideAngular` (or any other Zone/task-scheduling wrapper) before concluding the patch isn't needed.
+
+**Root cause (general):** across the versions checked, ngx-bootstrap's `PositioningService` calls `takeUntilDestroyed()` (bare, or referencing an undeclared `__destroyRef`) in a context where implicit DI resolution is unreliable. The Rollup patch must inject `const __destroyRef = i0.inject(i0.DestroyRef)` **before** the `runOutsideAngular` call (still in a valid injection context) and pass it explicitly: `takeUntilDestroyed(__destroyRef)`. If the patch **regex no longer matches** the upstream constructor (ngx-bootstrap minor bump) or **`sh build.sh -f` was skipped** / preview uses stale `wm-libs.js`, the bundle ships broken positioning — dropdown, popover, modal, datetime fail at runtime.
 
 **Step 6 — source checks:**
 
@@ -375,9 +383,9 @@ Compare `PositioningService` constructor in `node_modules/ngx-bootstrap/position
 
 ```bash
 UPGRADE_BUILD_CMD='<BUILD_CMD from repo.config>' UPGRADE_BUNDLE_VERIFY=yes \
-sh .cursor/skills/angular-upgrade/scripts/build.sh
+sh scripts/build.sh
 # or verify alone after build:
-sh .cursor/skills/angular-upgrade/scripts/verify-ngx-bootstrap-bundle.sh
+sh scripts/verify-ngx-bootstrap-bundle.sh
 ```
 
 **Step 6 classification:**
@@ -680,3 +688,61 @@ rg 'registerFnByExpr|setPipeProvider|\$parseExpr' projects/runtime-base projects
 | `setPipeProvider` not called before first `$parseExpr` | `likely-breakage` |
 
 **Preview:** page with **watch** on parenthesized expression; bind with **pipe**; **on-click** action calling page method with args.
+
+### 26. `inject()`-based API called across a Zone/async boundary (any Angular-ecosystem dependency)
+
+**This section is intentionally generic — not tied to any specific dependency.** Unlike §1–§19/§12, which document a fix already found in a specific library, this section documents a *category* of bug so it can be recognized in a dependency nobody has patched before. When you find a concrete instance in a new dependency, add its own dedicated §N entry (with dependency name, version, exact call chain, and commit ref) — a future upgrade benefits far more from a named precedent than from re-deriving this general pattern from scratch. §12 (ngx-bootstrap `PositioningService`) is the first confirmed instance; treat it as a worked example of applying this section, not the only place it can occur.
+
+**Applies to:** any third-party Angular library — ngx-bootstrap, ngx-toastr, ng-circle-progress, ngx-color-picker, or a dependency added after this was written — that calls Angular's functional/`inject()`-based APIs: `inject()` itself, `takeUntilDestroyed()`, or any other API documented as "must be called within an injection context."
+
+**The hazard:** Angular's injection-context tracking is tied to the synchronous call stack of component/service construction (or an explicit `runInInjectionContext()` call). It does **not** survive:
+
+- `NgZone.runOutsideAngular(() => {...})` / `NgZone.run(() => {...})`
+- `setTimeout(...)` / `setInterval(...)` / `requestAnimationFrame(...)`
+- `Promise.then(...)` / `async`/`await` continuations
+- An RxJS `subscribe()` callback (the callback body executes later, asynchronously, regardless of where `.subscribe()` was textually written)
+
+A call to an `inject()`-based API **inside** any of the above throws `NG0203` at runtime — even when the enclosing function is textually defined inside a constructor. **This is invisible to `tsc`, ng-packagr, and a fully green `build.sh -f`** — it only manifests when the code path actually executes in a browser, which is exactly why it survives a full build+audit cycle when Step 9 preview is skipped.
+
+**Do not conclude "this call site is fine" just because it reads `constructor() { ... someInjectFn() ... }`.** Trace whether that specific line sits inside any of the four boundary types above before accepting it. This is the check that was skipped for §12 during the Angular 18→20 upgrade (WMS-29275) — `takeUntilDestroyed()` was confirmed present "in the constructor," which was treated as sufficient, without noticing it was nested inside `ngZone.runOutsideAngular(...)`.
+
+```typescript
+// WRONG — throws NG0203 at runtime; compiles and builds cleanly
+constructor(zone: NgZone) {
+  zone.runOutsideAngular(() => {
+    this.sub = this.source$.pipe(takeUntilDestroyed()).subscribe(...);
+  });
+}
+
+// RIGHT — capture the injected value while still in a valid (synchronous) injection context,
+// then reference the captured local inside the callback instead of calling inject() there.
+constructor(zone: NgZone) {
+  const destroyRef = inject(DestroyRef);   // valid here — still synchronous constructor scope
+  zone.runOutsideAngular(() => {
+    this.sub = this.source$.pipe(takeUntilDestroyed(destroyRef)).subscribe(...);
+  });
+}
+```
+
+**Where to look:** any dependency whose version you bumped by more than a patch/minor — check its main entry-point source (`node_modules/<dep>/**/fesm2022/*.mjs`) for `inject(` or `takeUntilDestroyed(` (or grep for `from '@angular/core/rxjs-interop'`, the module that hosts `takeUntilDestroyed`).
+
+**Step 6 grep (generic — run against every dependency Step 3 bumped, not just ngx-bootstrap):**
+
+```bash
+# Find inject()-based calls, then check if any are inside a Zone/async boundary
+for f in node_modules/<dep>/**/fesm2022/*.mjs; do
+  rg -l 'inject\(|takeUntilDestroyed\(' "$f" 2>/dev/null
+done
+# For each match, read the surrounding function and check for:
+rg -B8 'inject\(|takeUntilDestroyed\(\)' <matched-file> | rg -B6 'runOutsideAngular|\.run\(|setTimeout|setInterval|requestAnimationFrame|\.then\(|subscribe\('
+```
+
+**If a patch is needed:** write a build-time source patch (a rollup `transform` hook, applied to that dependency's bundle entry — see `build-scripts/ngx-bootstrap-patch.mjs` for the pattern) rather than editing `node_modules` directly, so the fix survives `npm install`. Verify the patch actually applied by grepping the *built* bundle output, not just the patch script's own logic.
+
+**Step 6 classification:**
+
+| Finding | Label |
+|---------|-------|
+| `inject()`-based call reachable from inside a Zone/async boundary, no value captured beforehand | `must-change` |
+| `inject()`-based call present but only reachable synchronously from the constructor (no boundary in between) | `safe` |
+| Dependency version bumped by more than one major/minor and not yet checked for this pattern at all | `needs-review` — check before marking `safe`

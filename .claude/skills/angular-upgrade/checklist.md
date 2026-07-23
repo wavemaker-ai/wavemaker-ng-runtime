@@ -15,8 +15,9 @@ Workflow: [`SKILL.md`](./SKILL.md). References: [`research.md`](./research.md) R
 | [Section version history](#section-version-history) | When each section first applied |
 | [Automated blockers](#automated-blockers-pattern-reviewsh) | What `pattern-review.sh` checks automatically |
 | [Dependency classification](#dependency-classification-this-repo) | What to upgrade / check / keep stable |
-| **[patterns/runtime.md](patterns/runtime.md)** | §1–§19 — ng-runtime source patterns |
+| **[patterns/runtime.md](patterns/runtime.md)** | §1–§19, §26 — ng-runtime source patterns |
 | **[patterns/codegen.md](patterns/codegen.md)** | §20 — ng-codegen template/src patterns |
+| [Verification Principle](#verification-principle-pattern-gates-are-hints-not-guarantees) | Pattern version-gates are hints, not guarantees — how to verify before marking N/A |
 | [§21 ng-packagr builds](#21-ng-packagr-library-build-failures) | Library build failures |
 | [§22 Yalc peer deps](#22-yalc-linked-package-peer-dependency-mismatch) | Peer dep mismatch after bump |
 | [§23 angular.json builders](#23-angularjson-builder-audit) | Builder rename / option changes |
@@ -27,13 +28,28 @@ Workflow: [`SKILL.md`](./SKILL.md). References: [`research.md`](./research.md) R
 
 > For commit history behind each fix, use `git log --all -S <symbol>` — e.g. `git log --all -S takeUntilDestroyed`.
 
-> **Pattern currency:** these patterns reflect the Angular 20→21 upgrade experience. They are a starting point, not a complete list. R1/R3 from the official Angular docs take precedence — any breaking change found there that is not covered here is still `must-change`.
+> **Pattern currency:** these patterns reflect the Angular 20→21 upgrade experience. They are a starting point, not a complete list, and their version-gates are hints, not guarantees — see **Verification Principle** below before trusting any of them at face value. R1/R3 from the official Angular docs take precedence — any breaking change found there that is not covered here is still `must-change`.
 
 ---
 
 ## Compatibility Policy
 
 See [`SKILL.md § Compatibility Policy`](../SKILL.md#compatibility-policy) — applies to every edit in this file.
+
+---
+
+## Verification Principle: Pattern Gates Are Hints, Not Guarantees
+
+Every §N section's version-gate annotation (`First required: Angular N`, `[N/A: Angular N+1 only]`, the Section Version History table) was written from the experience of **one specific upgrade run**. It records when a fix was last confirmed needed — it is not a guarantee about when it will be needed again, for a different version delta, a different dependency version jump, or a codebase that has changed since.
+
+Before marking any pattern item `[N/A: version gate]`, you must:
+
+1. **Independently reproduce the check** — run the exact "Known preview error" / "Step 6 grep" the section describes against the *actual installed source* for the version this upgrade installs. Do not accept "the table says Angular N+1" as a substitute for running the grep yourself.
+2. **If the check involves an `inject()`-based/functional-DI API**, trace the real runtime call chain (constructor → the actual call site) and check for a Zone/async boundary in between — see [`patterns/runtime.md` §26](patterns/runtime.md#26-inject-based-api-called-across-a-zoneasync-boundary-any-angular-ecosystem-dependency) and [`research.md`'s general dependency-jump principle](research.md#general-principle-for-any-dependency-jumping-multiple-majors-not-just-ngx-bootstrap). A call being textually "inside the constructor" is not sufficient evidence it runs in a valid injection context.
+3. **Record the specific evidence** you used to conclude N/A (grep output, a `.d.ts` signature, a file:line reference) in `current-state.md` — not just a citation of the version-gate table. A bare "table says N/A" with no independent check is not a defensible N/A and will not survive review.
+4. **Update the section's version-gate annotation** (and "Last verified" column) with what you actually found for this upgrade — whether it confirms the existing gate or corrects it. Pattern files only stay accurate if every upgrade run feeds its findings back in, not just its fixes.
+
+**Why this matters (concrete precedent):** during the Angular 18→20 upgrade (WMS-29275), §12 was marked N/A on the strength of its version-gate table alone ("first required Angular 21"), despite `takeUntilDestroyed()` appearing directly in the installed ngx-bootstrap 20.0.2 source. The actual bug — `NG0203`, not the documented `ReferenceError` — was invisible to `pattern-review.sh`, `tsc --noEmit`, and a fully green `build.sh -f`, and only surfaced when the upgraded app actually ran in a browser. §12's gate has since been corrected to reflect that it applies starting at ngx-bootstrap 20.0.2. Treat every other §N's gate with the same skepticism until you've checked it yourself for the version you're actually installing.
 
 ---
 
@@ -80,7 +96,7 @@ When adding a **must-change** grep, update **both** the script and the matching 
 | Yalc package declares old Angular major peer dep | §22 |
 | Deprecated `@angular-devkit/build-angular:browser` builder in `angular.json` | §23 |
 
-**Manual only (automation cannot cover):** §3, §4, §5, §7, §8, §8b, §10 (including §10a/§10b), §13c, §15, §16, §19b (ASTCompiler node renames only — the ParenthesizedExpression handler check is automated as a WARN), §20c (codegen require paths), §21, §24, §25.
+**Manual only (automation cannot cover):** §3, §4, §5, §7, §8, §8b, §10 (including §10a/§10b), §13c, §15, §16, §19b (ASTCompiler node renames only — the ParenthesizedExpression handler check is automated as a WARN), §20c (codegen require paths), §21, §24, §25, **§26 (which dependency and which call site is different every upgrade — cannot be grepped for generically ahead of time; run its Step 6 grep against every dependency Step 3 bumped)**.
 
 **Product baseline (WMS-31488, `dae9a74fc`):** Do **not** re-add `ChangeDetectorRef.detectChanges`, `@if (spinner.show)` wrapper, or `scheduleOverrideRouterOutlet` polling unless Step 9 preview proves a defect. Keep `@ViewChild(RouterOutlet)` setter + `[show]="spinner.show"` + `setTimeout(10)` in `base-layout.component.ts`.
 
@@ -135,6 +151,7 @@ When each section was first required. **Update "Last verified" when you confirm 
 | §23 | Check every major | Angular 21 | Builder renames; deprecated option removal |
 | §24 | Populated at Step 10 | Angular 21 | Forward-looking deprecations found during R1/R3 review |
 | §25 | Every TS major | Angular 21 | TypeScript strictness ratchet; re-check on each Angular/TS bump |
+| §26 | Generic — any dependency major bump | Angular 21 (first instance: ngx-bootstrap 20.0.2, WMS-29275) | Not version-gated to a specific Angular major — check on every dependency Step 3 bumps by more than a patch/minor. `inject()`-based API vs Zone/async boundary; see Verification Principle above |
 
 ---
 
@@ -342,14 +359,15 @@ npx tsc --noEmit 2>&1 | grep 'error TS' | grep -v 'node_modules' | head -40
 
 ## Preview validation (Step 9)
 
-**Gate G1–G7:** see `SKILL.md` Step 9 — all required, source of truth is there.
+**Gate G1–G7:** see `SKILL.md` Step 9 — all required, source of truth is there. Both this table and the extended checks below apply identically to **every configured validation mode** (`VALIDATION_MODES` in `repo.config.sh` — currently Angular Deployment and WaveMaker Preview) — there is one shared checklist, not a checklist per mode.
 
-URLs from Step 0. Order: comparison first → note all visible elements → preview → compare element by element (hard refresh both). Fix loop: `SKILL.md` Step 9.
+URLs from Step 0, per mode. Order: comparison first → note all visible elements → preview → compare element by element (hard refresh both). Repeat for each configured mode. Fix loop: `SKILL.md` Step 9 (a fix found via one mode should be re-verified against every other already-passed mode too, since they share the same underlying build).
 
-### Extended checks (run on preview URL — compare against comparison URL)
+### Extended checks (run on each mode's preview URL — compare against that mode's comparison URL)
 
 | # | Check |
 |---|--------|
+| E1 | **Page with query params** — variables see params on first load |
 | E1 | **Page with query params** — variables see params on first load |
 | E2 | Runtime-compiled page or partial renders |
 | E3 | Table **row expand**, row **actions**, **filter row** widgets |
@@ -364,4 +382,4 @@ URLs from Step 0. Order: comparison first → note all visible elements → prev
 | E12 | **Watch / bind expressions** — parenthesized expr and piped bind (§19) |
 | E13 | Menu / typeahead / overlay widget (ngx-bootstrap bundle patch when Step 7 verify = yes) |
 
-Record pass/fail per gate check (G1–G7), extended items tried, comparison baseline notes, and any regression vs comparison in `current-state.md` → **Preview Validation**.
+Record pass/fail per gate check (G1–G7), extended items tried, comparison baseline notes, and any regression vs comparison in `current-state.md` → **Preview Validation** → the matching mode's subsection.

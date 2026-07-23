@@ -13,10 +13,14 @@ base version 20
 target version 21
 preview url http://localhost:8080/SearchWidgetScenarios/#/LiveForm_Autocomplete
 comparison url https://stage-platform.wavemaker.ai/run-jlqb2h631c/SearchWidgetScenarios_master/#/Main
+wavemaker preview url https://<studio-host>/preview.html?project-id=<id>#/?app_url=<deployedUrl>/%23/
+wavemaker preview comparison url https://stage-platform.wavemaker.ai/run-jlqb2h631c/SearchWidgetScenarios_master/#/Main
 skip preview no
 skip tests no
 skip verify no
 ```
+
+Both `preview url`/`comparison url` (Angular Deployment) and `wavemaker preview url`/`wavemaker preview comparison url` (WaveMaker Preview) are independent — set either pair alone to validate only that mode, or both to validate both (the default once both are configured). Omit a pair entirely (or use `skip <mode name> yes`) to skip just that mode.
 
 ## Start Angular upgrade (minimal — defaults from repo.config.sh)
 
@@ -42,7 +46,9 @@ Shown once before asking for confirmation. Each row has a Status column — `ok`
 | Field              | Value                                                  | Status          |
 |--------------------|--------------------------------------------------------|-----------------|
 | Base → Target Angular      | 20 → 21                                         | ok              |
-| Skip preview / tests / verify | no / no / no                               | ok              |
+| Angular Deployment URL / Comparison | http://localhost:8080/.../#/Main / https://stage.../#/Main | ok |
+| WaveMaker Preview URL / Comparison  | https://.../preview.html?... / https://stage.../#/Main    | ok |
+| Skip tests / verify | no / no                                                    | ok              |
 | ng-runtime branch  | WMS-31488                                              | ok              |
 | ng-codegen path    | /Users/.../wavemaker-ng-codegen                        | ok              |
 | ng-codegen branch  | WMS-31488                                              | ok              |
@@ -50,6 +56,8 @@ Shown once before asking for confirmation. Each row has a Status column — `ok`
 
 Confirm to start, or fix the ⚠ issues above first.
 ```
+
+A validation-mode row reads `⚠ not configured (mode skipped)` when its URL is empty/`skip` — informational, not a blocker. The table shows one row per entry in `VALIDATION_MODES` (`repo.config.sh`); adding a third mode there adds a third row here automatically, no template change needed.
 
 ## Blocker alert (Step N blocked — genuine exit-code failure)
 
@@ -86,19 +94,22 @@ Used only when a step fails with a non-zero exit code (build, install) and canno
 ```
 Angular 21 upgrade complete.
 
-Upgrade doc:   docs/21-upgrade.md
-Branch:        WMS-31488  (ng-runtime + ng-codegen)
-Preview:       http://localhost:8080/SearchWidgetScenarios/#/LiveForm_Autocomplete — PASSED
-Tests:         npm test — PASSED
+Upgrade doc:          docs/21-upgrade.md
+Branch:               WMS-31488  (ng-runtime + ng-codegen)
+Angular Deployment:   http://localhost:8080/SearchWidgetScenarios/#/LiveForm_Autocomplete — PASSED
+WaveMaker Preview:    https://<studio-host>/preview.html?... — PASSED
+Tests:                npm test — PASSED
 
 Reset state:
-sh .cursor/skills/angular-upgrade/scripts/reset-state.sh
+sh scripts/reset-state.sh
 ```
+
+Omit a mode's line entirely if it was skipped (no URL configured) rather than showing it as failed/blank.
 
 After showing this, run:
 
 ```bash
-sh .cursor/skills/angular-upgrade/scripts/reset-state.sh
+sh scripts/reset-state.sh
 ```
 
 ## Upgrade doc skeleton (Step 10 — `docs/{major}-upgrade.md`)
@@ -134,8 +145,19 @@ Branch: <branch> (ng-runtime + ng-codegen)
 
 ## Preview Validation
 
+One subsection per configured validation mode (`VALIDATION_MODES` in `repo.config.sh`). Omit a mode's subsection entirely if it was skipped (no URL configured) — do not show it as failed.
+
+### Angular Deployment
+
 - Preview URL: <url> — PASSED / FAILED
-- Comparison URL: <url>
+- Comparison URL(s): <url>
+- G1–G7: all passed
+- Extended checks run: <list E1–E13 items verified>
+
+### WaveMaker Preview
+
+- Preview URL: <url> — PASSED / FAILED
+- Comparison URL(s): <url>
 - G1–G7: all passed
 - Extended checks run: <list E1–E13 items verified>
 
@@ -148,4 +170,4 @@ Branch: <branch> (ng-runtime + ng-codegen)
 
 ## Standalone local build (not this skill's Step 9)
 
-Use `@.cursor/commands/local-angular-build` — see that command's doc for path formulas.
+Use `/local-angular-build` — see that command's doc for path formulas.

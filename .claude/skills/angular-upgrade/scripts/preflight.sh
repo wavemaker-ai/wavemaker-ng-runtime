@@ -5,7 +5,7 @@
 #
 # Exit codes: 0 = all checks pass; 1 = one or more checks failed
 #
-# Usage: sh .cursor/skills/angular-upgrade/scripts/preflight.sh
+# Usage: sh scripts/preflight.sh (from the skill directory)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -17,7 +17,7 @@ REPO_ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
 DIRTY=0
 
 # ─── current-state.md gitignore ──────────────────────────────────────────────
-CS_REL=".cursor/skills/angular-upgrade/current-state.md"
+CS_REL="${SKILL_DIR#"$REPO_ROOT"/}/current-state.md"
 GITIGNORE="$REPO_ROOT/.gitignore"
 if grep -qF "$CS_REL" "$GITIGNORE" 2>/dev/null; then
   # Entry is in .gitignore — but git ignores .gitignore for already-tracked files.
@@ -32,7 +32,8 @@ if grep -qF "$CS_REL" "$GITIGNORE" 2>/dev/null; then
   fi
 else
   echo "FIX    current-state.md is not in .gitignore — adding to $GITIGNORE"
-  printf '\n# angular-upgrade session state (template: .cursor/skills/angular-upgrade/state.md)\n%s\n' \
+  printf '\n# angular-upgrade session state (template: %s/state.md)\n%s\n' \
+    "${SKILL_DIR#"$REPO_ROOT"/}" \
     "$CS_REL" >> "$GITIGNORE"
   echo "       Added. Commit .gitignore before proceeding."
 fi

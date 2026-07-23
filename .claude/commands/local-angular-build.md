@@ -1,13 +1,19 @@
+---
+description: Build wavemaker-ng-runtime + wavemaker-ng-codegen, generate an Angular app, and deploy it to local Tomcat for preview
+---
+
 # Local Angular Build & Tomcat Deploy
 
 Run this workflow **step by step, in order**. Execute each step fully before moving to the next. Stop and report errors if any step fails.
+
+**Scope note:** this workflow only ever produces the **Angular Deployment** validation target (Tomcat WAR + Angular dist). It has no automation for **WaveMaker Preview** — that mode's URL is supplied directly via `LOCAL_PREVIEW_URL`/`WAVEMAKER_PREVIEW_URL` in `repo.config.sh` (see angular-upgrade `SKILL.md` Step 9) and does not need this command to run at all. Both are first-class validation modes in Step 9; this file is the automation for exactly one of them.
 
 ## Invocation modes & who collects inputs
 
 | Mode | Invoke | Inputs |
 |------|--------|--------|
-| **Standalone** | `@.cursor/commands/local-angular-build` | [`inputs.md`](.cursor/skills/angular-upgrade/inputs.md) — standalone gate |
-| **Upgrade Step 9** | `@.cursor/skills/angular-upgrade` (Steps 0–7 done) | `current-state.md` only — **no re-prompt** |
+| **Standalone** | `/local-angular-build` | [`inputs.md`](../skills/angular-upgrade/inputs.md) — standalone gate |
+| **Upgrade Step 9** | invoked from the `angular-upgrade` skill (Steps 0–7 done) | `current-state.md` only — **no re-prompt** |
 
 | Mode | ng-runtime build | Steps to run | Browser verify |
 |------|------------------|--------------|----------------|
@@ -30,9 +36,9 @@ All product fixes go in **`wavemaker-ng-runtime`** and **`wavemaker-ng-codegen`*
 
 ## Standalone input gate
 
-**Skip when running as upgrade Step 9.** Follow **Standalone workflow** in [`.cursor/skills/angular-upgrade/inputs.md`](.cursor/skills/angular-upgrade/inputs.md): show defaults, parse message, print effective config, block until `confirm` / `proceed with defaults`.
+**Skip when running as upgrade Step 9.** Follow **Standalone workflow** in [`inputs.md`](../skills/angular-upgrade/inputs.md): show defaults, parse message, print effective config, block until `confirm` / `proceed with defaults`.
 
-For upgrade, use the canonical Start message in [`examples.md`](.cursor/skills/angular-upgrade/examples.md) — Step 0 collects all URLs and flags.
+For upgrade, use the canonical Start message in [`examples.md`](../skills/angular-upgrade/examples.md) — Step 0 collects all URLs and flags.
 
 ## Configuration — edit these values
 
@@ -57,8 +63,8 @@ Set **`PROJECT_NAME`** (or `project name` in chat). Other `PROJECT_*` paths **de
 | `NPM_REGISTRY` | `https://repository.wavemaker.com/repository/wavemaker-npm-repo/` |
 | `TOMCAT_PORT` | `8080` |
 | `APP_URL` | `http://localhost:${TOMCAT_PORT}/${PROJECT_NAME}/` |
-| `PREVIEW_URL` | from `repo.config.sh` or chat override (see `inputs.md`) |
-| `COMPARISON_URL` | from `repo.config.sh` or chat override |
+| `LOCAL_DEPLOYMENT_URL` | from `repo.config.sh` or chat override (see `inputs.md`) |
+| `WAVEMAKER_DEPLOYMENT_URL` | from `repo.config.sh` or chat override |
 
 Tomcat is running locally on **port `${TOMCAT_PORT}`**.
 
@@ -68,8 +74,10 @@ Before running any step, export from the ng-runtime repo root (re-export in a ne
 
 ```bash
 export NG_RUNTIME="."
+SKILL_ROOT="${NG_RUNTIME}/.claude/skills/angular-upgrade"
+[ -d "$SKILL_ROOT" ] || SKILL_ROOT="${NG_RUNTIME}/.cursor/skills/angular-upgrade"
 # shellcheck source=/dev/null
-. "${NG_RUNTIME}/.cursor/skills/angular-upgrade/repo.config.sh"
+. "${SKILL_ROOT}/repo.config.sh"
 
 export PROJECT_NAME="${PROJECT_NAME:-SearchWidgetScenarios}"
 export PROJECT_WAR="${PROJECT_WAR:-$HOME/Desktop/${PROJECT_NAME}.war}"
@@ -88,7 +96,7 @@ export MAVEN_SETTINGS="${MAVEN_SETTINGS:-$HOME/.m2/settings-nexus.xml}"
 export NPM_REGISTRY=https://repository.wavemaker.com/repository/wavemaker-npm-repo/
 export TOMCAT_PORT=8080
 export APP_URL="http://localhost:${TOMCAT_PORT}/${PROJECT_NAME}/"
-# PREVIEW_URL / COMPARISON_URL come from repo.config.sh above.
+# LOCAL_DEPLOYMENT_URL / WAVEMAKER_DEPLOYMENT_URL come from repo.config.sh above.
 # After input gate: re-export if chat overrides differ from repo.config defaults.
 ```
 
@@ -243,9 +251,9 @@ cp -R "${GENERATED_APP}/dist/ng-bundle" "${TOMCAT_APP}/"
 
 ## Browser verify (after Step 7 deploy)
 
-**Standalone:** if effective `PREVIEW_URL` is `skip` or empty, smoke-check `${APP_URL}` only and stop.
+**Standalone:** if effective `LOCAL_DEPLOYMENT_URL` is `skip` or empty, smoke-check `${APP_URL}` only and stop.
 
-**With URLs:** load `${COMPARISON_URL}` then `${PREVIEW_URL}` (or `${APP_URL}`). Pass/fail: **Preview validation checklist** in [`wavemaker-runtime-patterns.md`](.cursor/skills/angular-upgrade/wavemaker-runtime-patterns.md) (gate G1–G4 required; extended E1–E13 where applicable).
+**With URLs:** load `${WAVEMAKER_DEPLOYMENT_URL}` then `${LOCAL_DEPLOYMENT_URL}` (or `${APP_URL}`). Pass/fail: **Preview validation checklist** in [`wavemaker-runtime-patterns.md`](../skills/angular-upgrade/wavemaker-runtime-patterns.md) (gate G1–G4 required; extended E1–E13 where applicable).
 
 On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUNTIME` or `NG_CODEGEN`; re-run affected steps. **Upgrade:** `SKILL.md` Step 9 iteration table. **Standalone:** same matrix (runtime fix → 2a; codegen fix → 3→4→5→7; both → 2a→3→4→5→7).
 
@@ -257,13 +265,13 @@ On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUN
 
 | Signal | Mode |
 |--------|------|
-| User invoked `@.cursor/commands/local-angular-build` only | **Standalone** |
-| User running `@.cursor/skills/angular-upgrade` and upgrade Step 7 is `done` | **Upgrade Step 9** |
+| User invoked `/local-angular-build` only | **Standalone** |
+| The `angular-upgrade` skill is running and upgrade Step 7 is `done` | **Upgrade Step 9** |
 
 ### Standalone
 
-1. Run standalone gate per [`inputs.md`](.cursor/skills/angular-upgrade/inputs.md).
-2. Source `repo.config.sh`; set `PROJECT_NAME` from chat if given; derive `PROJECT_*` paths per export block; re-export `PREVIEW_URL` / `COMPARISON_URL` if chat overrides differ from repo.config.
+1. Run standalone gate per [`inputs.md`](../skills/angular-upgrade/inputs.md).
+2. Source `repo.config.sh`; set `PROJECT_NAME` from chat if given; derive `PROJECT_*` paths per export block; re-export `LOCAL_DEPLOYMENT_URL` / `WAVEMAKER_DEPLOYMENT_URL` if chat overrides differ from repo.config.
 3. Run the export block (Configuration table formulas).
 4. Run **prerequisites** + Steps **1–7** (Step **2a**; skip Step 1 when WAR + Tomcat app already exist).
 5. **Browser verify** per patterns § Preview validation checklist unless `skip preview yes`.
