@@ -349,25 +349,34 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
             const element = target[0];
             const parent = element?.parentElement;
             const parentStyle = parent ? getComputedStyle(parent) : null;
-            const isParentFlex = parentStyle && ['flex', 'inline-flex'].includes(parentStyle.display);
+            const isLayoutWrapper = parent && (parent.classList.contains('app-page-content') || parent.classList.contains('app-content-column'));
+            const isParentFlex = !isLayoutWrapper && parentStyle && ['flex', 'inline-flex'].includes(parentStyle.display);
 
-            let isMainAxis = false;
+         
+            let isWidthMainAxis = false;   
+            let isHeightMainAxis = false; 
             if (isParentFlex) {
                 const flexDir = parentStyle.flexDirection;
                 const isRow = ['row', 'row-reverse'].includes(flexDir);
-                isMainAxis = (key === 'width' && isRow) || (key === 'height' && !isRow);
+                isWidthMainAxis = (key === 'width' && isRow);  // Parent is a row, so width is the main axis
+                isHeightMainAxis = (key === 'height' && !isRow);  // Parent is a column, so height is the main axis
             }
 
             if (nv === 'fill') {
                 if (!isParentFlex) {
+                    // Not a flex parent: just take the full size.
                     styles[key] = '100%';
                 } else {
                     styles[key] = '';
-                    if (isMainAxis) {
+                    // flex properties are set based on the main axis which is determined by the parent's direction
+                    if (isWidthMainAxis || isHeightMainAxis) {
                         styles['flex-grow'] = '1';
-                        styles['flex-shrink'] = '';
+                        styles['flex-shrink'] = '0';
+                         // flex-basis applies only when width is the main axis (row layout) and width is set to fill
+                        styles['flex-basis'] = isHeightMainAxis ? '' : '0';
                         styles[minKey] = '0';
                     } else {
+                        // Fill in the other direction: just stretch to the parent's size.
                         styles['align-self'] = 'stretch';
                     }
                 }
@@ -375,8 +384,9 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 if (nv === 'hug') styles[key] = 'fit-content';
 
                 if (isParentFlex) {
-                    if (isMainAxis) {
-                        styles['flex-grow'] = '';
+                    if (isWidthMainAxis || isHeightMainAxis) {
+                        // Reset flex properties when width or height is configured as hug.
+                        styles['flex-basis'] = '';
                         styles['flex-shrink'] = '0';  // intentional — don't shrink fixed sizes
                         styles[minKey] = ''; // Need this because flex items default to min-height: auto, meaning they won't shrink smaller than their content.
                     } else {
@@ -385,6 +395,8 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 } else {
                     styles['flex-grow'] = '';
                     styles['flex-shrink'] = '0';
+                    styles['flex-basis'] = '';
+                    styles['flex-basis'] = '';
                     styles['align-self'] = '';
                     styles[minKey] = '';
                 }
