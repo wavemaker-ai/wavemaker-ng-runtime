@@ -121,11 +121,21 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 setAutolayoutStore(this, { isViewInitialized: true });
 
                 // When a targetSelector is used the host carries outer dimensions and the
-                // inner element carries flex/overflow/padding. Stretch the inner element to
-                // fill the host so that 100% / flex math always resolves against the host.
+                // inner element carries flex/overflow/padding. Make the host a flex column
+                // so siblings (e.g. panel-footer / load-more) get their natural height and
+                // the inner target fills the remaining space via flex-grow instead of a
+                // fixed 100% height that would push siblings outside the host.
+
                 if (options.targetSelector) {
                     const inner = getTargetElement(this);
-                    if (inner) inner.css({ width: '100%', height: '100%', 'box-sizing': 'border-box' });
+                    if (inner) {
+                        const host = this.$element;
+                        const hostDisplay = host.css('display');
+                        if (!['flex', 'inline-flex'].includes(hostDisplay)) {
+                            host.css({ display: 'flex', 'flex-direction': 'column' });
+                        }
+                        inner.css({ width: '100%', 'flex-grow': '1' });
+                    }
                 }
 
                 // Sync all stored values to DOM now that target exists
