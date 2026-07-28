@@ -632,10 +632,12 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         }
         if (!binddatasource && dataset && !datasetBoundExpr) {
             this.dataset = dataset;
-            if (this._debouncedApplyDataset) {
-                this._debouncedApplyDataset();
+            if (!binddataset.includes('pageParams')) {
+                if (this._debouncedApplyDataset) {
+                    this._debouncedApplyDataset();
+                }
+                return;
             }
-            return;
         }
         this.binddataset = binddataset;
         setTimeout(() => {
