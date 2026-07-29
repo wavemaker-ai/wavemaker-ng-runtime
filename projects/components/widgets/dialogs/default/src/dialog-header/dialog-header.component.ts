@@ -1,5 +1,5 @@
 import {CommonModule} from '@angular/common';
-import {DialogRef, ImagePipe, TextContentDirective,WmAppIconComponent} from "@wm/components/base";
+import {DialogRef, TextContentDirective, WmAppIconComponent} from "@wm/components/base";
 import {Component, ElementRef, Inject, Input} from '@angular/core';
 
 import {addClass, App, toBoolean} from '@wm/core';

@@ -293,7 +293,7 @@ $.widget('wm.datatable', {
                 field = value.field,
                 headerLabel = self.Utils.isDefined(value.displayName) ? value.displayName : (field || ''),
                 titleLabel = headerLabel,
-                sortEnabled = self.options.enableSort && (_.isUndefined(value.show) || value.show) && (_.isUndefined(value.sortable) || value.sortable),
+                sortEnabled = self.options.enableSort && (_.isUndefined(value.show) || value.show|| value.getAttr?.('show.bind')) && (_.isUndefined(value.sortable) || value.sortable),
                 headerClasses = self.options.cssClassNames.headerCell,
                 sortClass,
                 tl = '',
@@ -319,7 +319,7 @@ $.widget('wm.datatable', {
                 headerClasses += ' grid-col-small';
             }
             tl += '<th';
-            if ((_.isUndefined(value.resizable) || value.resizable) && (_.isUndefined(value.show) || value.show)) { //If show is false, do not add the resize option
+            if ((_.isUndefined(value.resizable) || value.resizable) && (_.isUndefined(value.show) || value.show|| value.getAttr?.('show.bind'))) { //If show is false, do not add the resize option
                 tl += ' data-col-resizable';
             }
             if (self.options.enableColumnSelection && (_.isUndefined(value.selectable) || value.selectable)) {
@@ -2185,7 +2185,7 @@ $.widget('wm.datatable', {
     },
     _getWmVariableRowLocator: function (rowId) {
         var liveRow = this.options.data[parseInt(rowId, 10)];
-        return (liveRow && liveRow.$$wmSourceListIndex != null) ? liveRow.$$wmSourceListIndex : (liveRow || parseInt(rowId, 10));
+        return (liveRow && liveRow.$$wmSourceListIndex != null) ? liveRow.$$wmSourceListIndex : parseInt(rowId, 10);
     },
     /* Toggles the edit state of a row. */
     toggleEditRow: function (e, options) {
@@ -3645,9 +3645,16 @@ $.widget('wm.datatable', {
                 this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
                 this.options.getCurrentPage() === 1)) {
                 this.gridContainer.addClass("show-msg");
+
+                if (state === 'loading' && !isScrollOrOndemand &&
+                    this.options.lastActionPerformed !== this.options.ACTIONS.EDIT &&
+                    this.options.lastActionPerformed !== this.options.ACTIONS.DELETE) {
+                    this.gridElement.addClass('hidden');
+                }
             }
         } else {
             this.gridContainer.removeClass('show-msg');
+            this.gridElement.removeClass('hidden');
 
             // In case of quickeditmode, if active row is found, focus the row and bind the event listeners to the row
             if (this.options.editmode === this.CONSTANTS.QUICK_EDIT) {

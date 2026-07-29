@@ -41,12 +41,12 @@ import { SvgIconDirective, isSvgIconUrl } from '../../../directives/svg-icon.dir
                aria-hidden="true"
                data-identifier="svg"
                [ngStyle]="iconStyle"
-               [iconUrl]="iconurl"></i>
+               [iconUrl]="_effectiveIconurl"></i>
         } @else if (_isImage) {
             <img [ngClass]="_imageClasses"
                  data-identifier="img"
                  [attr.alt]="alt || ''"
-                 [src]="iconurl | image"
+                 [src]="_effectiveIconurl | image"
                  [ngStyle]="iconStyle"/>
         } @else if (_fontClass) {
             <i [ngClass]="_fontClasses"
@@ -56,6 +56,7 @@ import { SvgIconDirective, isSvgIconUrl } from '../../../directives/svg-icon.dir
     `
 })
 export class WmAppIconComponent {
+    @Input() icon: string | null | undefined;
     /** Font-icon CSS class (e.g. `wi wi-user`). Lowest priority. */
     @Input() iconclass: string | null | undefined;
     /** Icon URL. `.svg` -> inline SVG, anything else -> `<img>`. Wins over `iconclass`. */
@@ -69,15 +70,30 @@ export class WmAppIconComponent {
     /** `alt` text for the `<img>` branch. */
     @Input() alt: string | null | undefined;
 
+
+    get _effectiveIconurl(): string | null | undefined {
+        if (this.iconurl) {
+            return this.iconurl;
+        }
+        return isSvgIconUrl(this.icon) ? this.icon : null;
+    }
+  
+    get _effectiveIconclass(): string | null | undefined {
+        if (this.iconclass) {
+            return this.iconclass;
+        }
+        return this.icon && !isSvgIconUrl(this.icon) ? this.icon : null;
+    }
+
     get _isSvg(): boolean {
-        return isSvgIconUrl(this.iconurl);
+        return isSvgIconUrl(this._effectiveIconurl);
     }
     get _isImage(): boolean {
-        return !!this.iconurl && !this._isSvg;
+        return !!this._effectiveIconurl && !this._isSvg;
     }
 
     get _fontClass(): string {
-        return [this.defaultIconClass, this.iconclass]
+        return [this.defaultIconClass, this._effectiveIconclass]
             .filter(Boolean)
             .join(' ');
     }
@@ -97,7 +113,7 @@ export class WmAppIconComponent {
         return ['app-icon app-icon-svg', ...this._extras()];
     }
     get _imageClasses(): string[] {
-        return [...this._extras()];
+        return ['app-icon', ...this._extras()];
     }
     get _fontClasses(): string[] {
         return ['app-icon', ...this._extras(), ...this._fontClass.split(/\s+/).filter(Boolean)];

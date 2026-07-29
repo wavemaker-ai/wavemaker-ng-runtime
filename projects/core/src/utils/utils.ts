@@ -1450,11 +1450,11 @@ export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) =>
         }
         const computedStyle = window.getComputedStyle(containerElem[0]);
         const transformValue = computedStyle.transform || computedStyle.webkitTransform;
-        
+
         // If transform is 'none' or not set, create an identity matrix
         // This allows positioning adjustments to work even when no transform is initially applied
         const matrixValue = (!transformValue || transformValue === 'none') ? 'matrix(1, 0, 0, 1, 0, 0)' : transformValue;
-        
+
         if (typeof WebKitCSSMatrix === 'undefined') {
             return new MSCSSMatrix(matrixValue);
         }
@@ -1520,10 +1520,12 @@ export const triggerItemAction = (scope, item) => {
 export const getDatasourceFromExpr = (expr, scope) => {
     const isBoundToVariable = startsWith(expr, 'Variables.');
     const isBoundToWidget = startsWith(expr, 'Widgets.');
+
     const parts = expr.split('.');
     if (isBoundToVariable) {
         return get(scope.viewParent.Variables, parts[1]);
     }
+
     if (isBoundToWidget) {
         const widgetScope = get(scope.viewParent.Widgets, parts[1]);
         const widgetDatasetBoundExpr = widgetScope.$attrs.get('datasetboundexpr');
