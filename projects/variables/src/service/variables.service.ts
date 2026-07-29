@@ -183,7 +183,7 @@ export class VariablesService {
 
            }
 
-           if (this.isVariableSeperated(variablesJson, variableName) || variablesJson[variableName].category === 'wm.TimerVariable') {
+           if (this.isVariableSeperated(variablesJson, variableName) || variablesJson[variableName].category === 'wm.TimerAction') {
                for (const e in VARIABLE_CONSTANTS.EVENT) {
                    if (varInstance[VARIABLE_CONSTANTS.EVENT[e]]) {
                        varInstance[VARIABLE_CONSTANTS.EVENT[e]] = $parseEvent(varInstance[VARIABLE_CONSTANTS.EVENT[e]]);
