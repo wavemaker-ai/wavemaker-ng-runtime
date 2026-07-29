@@ -62,6 +62,8 @@ export abstract class DatasetAwareNavComponent extends StylableComponent impleme
     protected binditemid: string | null;
     protected nodes$ = new Subject();
 
+    private cancelLocaleChangeSubscription;
+
     constructor(inj: Injector, WIDGET_CONFIG, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         this.securityService = this.inj.get(SecurityService);
@@ -76,6 +78,10 @@ export abstract class DatasetAwareNavComponent extends StylableComponent impleme
         this.binditemtarget = this.nativeElement.getAttribute('itemtarget.bind');
         this.binduserrole = this.nativeElement.getAttribute('userrole.bind');
         this.bindisactive = this.nativeElement.getAttribute('isactive.bind');
+
+        this.cancelLocaleChangeSubscription = this.getAppInstance().subscribe('locale-changed', () => {
+            this._resetNodes();
+        });
     }
 
     /**
@@ -229,6 +235,10 @@ export abstract class DatasetAwareNavComponent extends StylableComponent impleme
     }
 
     ngOnDestroy() {
+        if (this.cancelLocaleChangeSubscription) {
+            this.cancelLocaleChangeSubscription();
+        }
+
         // MEMORY LEAK FIX: Cancel debounced function
         if (this._resetNodes && (this._resetNodes as any).cancel) {
             (this._resetNodes as any).cancel();

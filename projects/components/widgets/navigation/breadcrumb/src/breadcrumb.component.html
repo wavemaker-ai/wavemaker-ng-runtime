@@ -1,6 +1,8 @@
 @for (item of nodes; track item; let last = $last; let index = $index) {
   <li [class.active]="last" class="{{item.class}}">
-    <i class="{{item.icon}}"></i>
+    @if (item.icon) {
+      <wm-app-icon [icon]="item.icon"></wm-app-icon>
+    }
     @if (!last) {
       <a [title]="item.label" href="javascript:void(0)" [wmNavigationControl]="item.link" [disableMenuContext]="disableMenuContext || !!item.action" (click)="onItemClick($event, item)" [textContent]="item.label"></a>
     }
