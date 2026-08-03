@@ -14,6 +14,7 @@ import {
     AfterContentInit,
     AfterViewChecked,
     AfterViewInit,
+    ChangeDetectorRef,
     Component,
     ContentChild,
     ContentChildren,
@@ -28,6 +29,7 @@ import {
 } from '@angular/core';
 
 import {DynamicComponentRefProvider, isDefined, noop} from '@wm/core';
+import {StepperHeaderComponent} from '@wm/components/containers/stepperheader';
 
 import {registerProps} from './wizard.props';
 
@@ -55,7 +57,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, TextContentDirective, WmAppIconComponent],
+  imports: [CommonModule, TextContentDirective, WmAppIconComponent, StepperHeaderComponent],
     selector: 'div[wmWizard]',
     templateUrl: './wizard.component.html',
     providers: [
@@ -69,6 +71,13 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
 
     @ContentChildren(WizardStepComponent) steps: QueryList<WizardStepComponent>;
     @ContentChild('wizardAction', { read: TemplateRef, descendants: false }) wizardAction: TemplateRef<any>;
+    /**
+     * Explicitly authored `<wm-stepperheader>` child, if the page markup has one (mirrors how
+     * `wm-wizardstep`/`wm-wizardaction` are authored, projected, and selectable on canvas).
+     * When absent, the wizard falls back to auto-embedding one for backward compatibility with
+     * markup saved before this widget existed (002-stepper-header-widget, FR-018/FR-019).
+     */
+    @ContentChild(StepperHeaderComponent, { descendants: false }) explicitHeader: StepperHeaderComponent;
 
     public message: {caption: string, type: string};
     public currentStep: WizardStepComponent;
@@ -745,11 +754,49 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         this.wizContext.disablePrevious = () => !this.enablePrev;
         this.wizContext.disableDone = () => !this.enableDone;
 
+        // Stepper-header decoupling seam (002-stepper-header-widget): the header reads the live
+        // `steps` QueryList reference (mutations via `.reset()` on the same instance stay visible)
+        // and proxies through these functions instead of importing WizardComponent directly,
+        // so `@wm/components/containers/stepperheader` has no dependency on this package.
+        this.wizContext.steps = this.steps;
+        this.wizContext.getWizardClass = () => this.class;
+        this.wizContext.getStepClass = () => this.stepClass;
+        this.wizContext.onHeaderClick = (event: Event, step: WizardStepComponent) => this.onWizardHeaderClick(event, step);
+        this.wizContext.onHeaderKeyDown = (event: KeyboardEvent) => this.onkeydown(event);
+        this.wizContext.shouldRenderStepNumberSpan = (step: WizardStepHeaderModel) => this.shouldRenderWizardStepNumberSpan(step);
+        this.wizContext.shouldShowPrimaryStepIcon = (step: WizardStepHeaderModel) => this.shouldShowPrimaryStepIcon(step);
+        this.wizContext.hasNonEmptyDoneIconClass = (step: WizardStepHeaderModel) => this.hasNonEmptyDoneIconClass(step);
+        this.wizContext.stepIconClassOrDefault = (step: WizardStepHeaderModel) => this.stepIconClassOrDefault(step);
+        this.wizContext.showWizardStepIcons = () => this.showWizardStepIcons;
+        this.wizContext.isTabStepperWizard = () => this.isTabStepperWizard;
+        this.wizContext.readMoreSubtitle = () => this.readMoreSubtitle();
+
         // MEMORY LEAK FIX: Store subscription for cleanup
         this.stepsSubscription = this.steps.changes.subscribe( () => {
             if (this.steps.length > 1 && this.type === 'dynamic' && this._isFirstLoad) {
                 this.setDefaultStep(this.getStepRefByIndex(this.defaultstepindex));
                 this._isFirstLoad = false;
+            }
+        });
+
+        // Standalone-by-reference headers (US2/T037/T040): `this.name` and this wizard's entry
+        // in `viewParent.Widgets` are populated by the `initPromise`-deferred `setInitProps()`/
+        // `initWidget()` call (see the constructor and `base.component.ts`), which resolves via
+        // a MICROTASK scheduled by `this.promiseResolverFn()` just above — i.e., strictly AFTER
+        // this synchronous `detectChanges()` pass returns, not during it. Angular does not
+        // automatically re-check bindings just because a value changed after the fact, so
+        // WITHOUT this, `hasExternalHeader` below (and a standalone header's own `wizContext`
+        // read elsewhere) would be evaluated against a `name`/registry that hasn't landed yet on
+        // the very first render, in an environment with no automatic subsequent CD tick (a bare
+        // TestBed harness, or possibly Studio's canvas pipeline — an ordinary bootstrapped
+        // Angular app self-corrects via its own zone-driven `ApplicationRef.tick()`, but this
+        // must not depend on that). A `setTimeout` macrotask is guaranteed by the JS event loop
+        // to run only after ALL pending microtasks (including the one above) have drained,
+        // so forcing one more check here is sufficient regardless of the host environment.
+        setTimeout(() => {
+            const cdr = this.inj.get(ChangeDetectorRef, null);
+            if (cdr && !(cdr as any).destroyed) {
+                cdr.detectChanges();
             }
         });
     }
@@ -897,6 +944,35 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         const index = this.steps.toArray().findIndex(step =>
             this.nativeElement.querySelector(`li[data-stepid="${step.widgetId}"]`)?.classList.contains("active"));
         return index >= 0 ? index : this.getActiveStepIndex();
+    }
+
+    /**
+     * Standalone-by-reference headers (002-stepper-header-widget, US2): whether some
+     * `wm-stepperheader` elsewhere on the page has its `wizardname` pointing at this wizard —
+     * used to suppress the auto-embedded fallback header so an externally-bound header doesn't
+     * produce a duplicate.
+     *
+     * Deliberately a stateless getter that scans the shared `Widgets` registry on every read,
+     * rather than an imperative register/unregister handshake: this component's OWN
+     * registration into `viewParent.Widgets` is itself DEFERRED (see the `initPromise` passed to
+     * `super()` above — registration only completes once `ngAfterContentInit` resolves it),
+     * which fires strictly after `ngOnInit`. A header's one-shot `ngOnInit`-time "register with
+     * my wizard" call would therefore always run before this wizard exists in the registry,
+     * regardless of which one is declared first in markup — and there is no reliable later hook
+     * to retry from. Scanning at READ time sidesteps the ordering question entirely: whatever
+     * has registered into `Widgets` by the time this getter is actually evaluated is correct,
+     * the same principle already relied on for `wizContext` resolution in
+     * `stepperheader.component.ts`.
+     */
+    get hasExternalHeader(): boolean {
+        const widgets = (this.viewParent as any)?.Widgets;
+        if (!widgets) {
+            return false;
+        }
+        return Object.keys(widgets).some(key => {
+            const w = widgets[key];
+            return w && w.widgetType === 'wm-stepperheader' && w.wizardname === this.name;
+        });
     }
 
     ngOnDestroy() {
