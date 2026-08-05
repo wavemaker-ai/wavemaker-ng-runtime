@@ -6,7 +6,7 @@ import { Attribute, ChangeDetectorRef, Component, forwardRef, Inject, Injector, 
 import { Router } from '@angular/router';
 
 import { addClass, App, triggerItemAction, UserDefinedExecutionContext } from '@wm/core';
-import { APPLY_STYLES_TYPE, DatasetAwareNavComponent, provideAsWidgetRef, styler } from '@wm/components/base';
+import { APPLY_STYLES_TYPE, AutoLayout, DatasetAwareNavComponent, provideAsWidgetRef, styler } from '@wm/components/base';
 
 import { registerProps } from './nav.props';
 import { find, forEach, isEmpty, omit } from "lodash-es";
@@ -21,6 +21,7 @@ const NavClassMap = {
     navbar: 'navbar-nav'
 };
 
+@AutoLayout()
 @Component({
     standalone: true,
     imports: [CommonModule, BsDropdownModule, AnchorComponent, forwardRef(() => MenuComponent), NavItemDirective, ],

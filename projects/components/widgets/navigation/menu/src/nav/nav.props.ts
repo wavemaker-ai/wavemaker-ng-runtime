@@ -1,4 +1,4 @@
-import {PROP_ANY, PROP_BOOLEAN, PROP_STRING, register} from '@wm/components/base';
+import {AUTO_LAYOUT_PROPS, PROP_ANY, PROP_BOOLEAN, PROP_STRING, register} from '@wm/components/base';
 
 export const registerProps = () => {
     register(
@@ -26,7 +26,8 @@ export const registerProps = () => {
                 ['show', {value: true, ...PROP_BOOLEAN}],
                 ['showonhover', {value: false, ...PROP_BOOLEAN}],
                 ['type', PROP_STRING],
-                ['userrole', PROP_STRING]
+                ['userrole', PROP_STRING],
+                ...AUTO_LAYOUT_PROPS
             ]
         )
     );
