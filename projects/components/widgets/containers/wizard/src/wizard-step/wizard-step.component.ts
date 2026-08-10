@@ -19,7 +19,7 @@ import {
 } from "@wm/components/base";
 import {NgForm} from "@angular/forms";
 import {registerProps} from "./wizard-step.props";
-import {noop} from "@wm/core";
+import {App, noop} from "@wm/core";
 import {WizardComponent} from "../wizard.component";
 
 const DEFAULT_CLS = 'app-wizard-step-content';
@@ -67,8 +67,18 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
 
     // reference to the components which needs a redraw(eg, grid, chart) when the height of this component changes
     @ContentChildren(RedrawableDirective, {descendants: true}) reDrawableComponents;
+    public isPrism: boolean = false;
 
     @HostBinding('class.active')
+    get activeClass() {
+        return this.isPrism && this.active;
+    }
+
+    @HostBinding('class.current')
+    get currentClass() {
+        return !this.isPrism && this.active;
+    }
+    
     get isCurrent() {
         return this.active;
     }
@@ -147,6 +157,7 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
         super(inj, WIDGET_CONFIG, explicitContext);
         // If we inject directly as a param in the constructor, getting circular dependency error in unit testcases
         this.wizardComponent = this.inj.get(WizardComponent);
+        this.isPrism = !!this.inj.get(App, null)?.isPrism;
     }
 
     public invokeNextCB(index: number): boolean | Promise<boolean> {
