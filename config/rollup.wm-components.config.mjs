@@ -824,6 +824,16 @@ export default [
         }
     },
     {
+        input: './libraries/components/containers/stepperheader/fesm2022/index.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: './libraries/components/containers/stepperheader/bundles/index.umd.js',
+            format: 'umd',
+            name: 'wm.components.containers.stepperheader',
+            globals: rollupGlobals
+        }
+    },
+    {
         input: './libraries/components/containers/tile/fesm2022/index.mjs',
         external: [ ...rollupExternals ],
         output: {
