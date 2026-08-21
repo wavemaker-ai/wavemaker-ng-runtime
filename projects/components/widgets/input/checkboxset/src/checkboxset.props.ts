@@ -16,6 +16,7 @@ export const checkboxsetProps = new Map(
         ['displayfield', PROP_STRING],
         ['displayValue', PROP_STRING],
         ['groupby', PROP_STRING],
+        ['hint', PROP_STRING],
         ['itemclass', {value: '', ...PROP_STRING}],
         ['itemsperrow', {value: 'xs-1 sm-1 md-1 lg-1', ...PROP_STRING}],
         ['listclass', {value: '', ...PROP_STRING}],

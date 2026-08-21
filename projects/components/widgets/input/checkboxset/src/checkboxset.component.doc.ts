@@ -54,6 +54,11 @@ export class Checkboxset {
      */
     @Input() groupby: string;
     /**
+     * Hint text is shown for the checkboxset on hover. <br>
+     * <p><em>Bindable: </em><code>true</code></p>
+     */
+    @Input() hint: string;
+    /**
      * This property allows user to select a pre-defined list class name from the view-list drop down on the right.
      * <p><em>Default Options: </em><code>list-group, media-list</code></p>
      */
