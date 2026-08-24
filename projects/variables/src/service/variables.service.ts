@@ -127,6 +127,29 @@ export class VariablesService {
         if (!bindMap || !isArray(bindMap)) {
             return;
         }
+        // Backward compatibility for older REST/Swagger service variables: treat duplicate query params
+        // without collectionFormat as multi-value by assigning multiIndex, so updates replace values
+        // instead of appending. Applies only to wm.ServiceVariable.
+        if (variable.category === VARIABLE_CONSTANTS.CATEGORY.SERVICE) {
+            const targetOccurrences = {};
+            bindMap.forEach((node) => {
+                if (node && node.target) {
+                    targetOccurrences[node.target] = (targetOccurrences[node.target] || 0) + 1;
+                }
+            });
+            const nextMultiIndex = {};
+            bindMap.forEach((node) => {
+                if (node && node.target && targetOccurrences[node.target] > 1) {
+                    if (!node.collectionFormat) {
+                        node.collectionFormat = 'multi';
+                    }
+                    if (node.multiIndex === undefined) {
+                        nextMultiIndex[node.target] = nextMultiIndex[node.target] || 0;
+                        node.multiIndex = nextMultiIndex[node.target]++;
+                    }
+                }
+            });
+        }
         bindMap.forEach( (node) => {
             /* for static variable change the binding with target 'dataBinding' to 'dataSet', as the results have to reflect directly in the dataSet */
             if (variable.category === 'wm.Variable' && node.target === 'dataBinding') {
