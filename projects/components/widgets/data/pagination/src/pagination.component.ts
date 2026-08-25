@@ -65,7 +65,7 @@ const sizeClasses = {
     ]
 })
 export class PaginationComponent extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     @Output() resultEmitter: EventEmitter<any> = new EventEmitter();
     @Output() maxResultsEmitter: EventEmitter<any> = new EventEmitter();
     @ViewChild(BsDropdownDirective) protected bsDropdown;
@@ -117,7 +117,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     private _initTimeoutId: any; // Store timeout ID for cleanup
     private _debouncedApplyDataset = debounce(() => this.widget.dataset = this.dataset, DEBOUNCE_TIMES.PAGINATION_DEBOUNCE_TIME);
     private _debouncedPageChanged = debounce(event => {
-        const currentPage = event && event.page;
+        const currentPage = event?.page;
         const maxResults = event && (event.pagesize || event.itemsPerPage) || this.maxResults;
 
         // Do not call goToPage if page has not changed
@@ -274,14 +274,14 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         }
         this.isDisableCurrent = isCurrentPageFirst && isCurrentPageLast;
         // In case of client side pagination, when load more reaches last page hide the on-demand grid ele
-        if (this.dataset && this.dataset.length && this.isDisableNext && this.parent.onDemandLoad && this.parent.widgetType === 'wm-table') {
+        if (this.dataset?.length && this.isDisableNext && this.parent.onDemandLoad && this.parent.widgetType === 'wm-table') {
             this.parent.callDataGridMethod('hideLoadingIndicator', this.isDisableNext, this.parent.infScroll);
         }
     }
 
     /*Function to check if the variable bound to the data-navigator has paging.*/
     isDataSourceHasPaging() {
-        return this.datasource && this.datasource.execute(DataSource.Operation.IS_PAGEABLE);
+        return this.datasource?.execute(DataSource.Operation.IS_PAGEABLE);
     }
 
 
@@ -306,7 +306,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
             currentPage,
             startIndex;
         dataSize = isArray(newVal) ? newVal.length : (isEmpty(newVal) ? 0 : 1);
-        maxResults = (this.options && this.options.maxResults) || dataSize;
+        maxResults = (this.options?.maxResults) || dataSize;
 
         if (this.allowpagesizechange) { // when default page size is not given then use maxResults instead of options.maxResults
             maxResults = this.maxResults;
@@ -378,11 +378,11 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
             if (this.navigation === 'Basic') {
                 this._setAriaForBasicNavigation();
             }
-        } else {
+        } else 
             if (newVal && !isString(newVal)) {
                 this.setNonPageableData(newVal);
             }
-        }
+        
     }
 
     /*Function to check if the current page is the first page*/
@@ -424,7 +424,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
             this.parent._selectedItemsExist = true;
             if (this.isFirstPage() && !allowpagesizechange) {
                 this.parent.statePersistence.removeWidgetState(this.parent, 'pagination');
-            } else {
+            } else 
                 if (unsupportedStatePersistenceTypes.indexOf(this.parent.navigation) < 0) {
                     const state: { pagination: number; pagesize?: number } = { pagination: this.dn.currentPage };
                     if (allowpagesizechange) {
@@ -434,7 +434,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                 } else if (this.parent.widgetType === 'wm-list' || this.parent.widgetType === 'wm-table') {
                     console.warn('Retain State handling on Widget ' + this.parent.name + ' is not supported for current pagination type.');
                 }
-            }
+            
             this.parent.currentpage = this.dn.currentPage;
             this.parent.nativeElement?.setAttribute('currentpage', this.dn.currentPage);
         }
@@ -472,7 +472,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                 'logicalOp': this.logicalOp,
                 'matchMode': 'anywhereignorecase'
             }).then(response => {
-                this.onPageDataReady(event, response && response.data, callback);
+                this.onPageDataReady(event, response?.data, callback);
                 startIndex = (this.dn.currentPage - 1) * this.maxResults;
                 this.getPageDetails(startIndex + 1 , startIndex + Number(this.pagination?.numberOfElements), this.pagination?.totalElements);
                 $appDigest();
@@ -696,7 +696,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         let pageSize, prevPageSize;
         if (key === 'dataset') {
             let data;
-            if (this.parent && this.parent.onDataNavigatorDataSetChange) {
+            if (this.parent?.onDataNavigatorDataSetChange) {
                 data = this.parent.onDataNavigatorDataSetChange(nv);
             } else {
                 data = nv;

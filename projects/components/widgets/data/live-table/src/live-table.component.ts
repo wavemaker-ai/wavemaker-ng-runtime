@@ -20,7 +20,7 @@ import {TableComponent} from '@wm/components/data/table';
 
 import {registerProps} from './live-table.props';
 
-declare var $: any;
+declare const $: any;
 
 const DEFAULT_CLS = 'app-livegrid';
 const WIDGET_CONFIG = {widgetType: 'wm-livetable', hostClass: DEFAULT_CLS};
@@ -34,17 +34,17 @@ const WIDGET_CONFIG = {widgetType: 'wm-livetable', hostClass: DEFAULT_CLS};
     ]
 })
 export class LiveTableComponent extends StylableComponent implements AfterContentInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     @ContentChild(TableComponent) table: TableComponent;
 
     form;
     isLayoutDialog: boolean;
 
-    private dialogId;
+    private readonly dialogId;
     private $queue = [];
     private selectedItemChangeSubscription: Subscription;
 
-    private tableOptions: any = {
+    private readonly tableOptions: any = {
         'multiselect': false,
         'setGridEditMode': ''
     };
@@ -53,8 +53,8 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
         inj: Injector,
         elRef: ElementRef,
         cdr: ChangeDetectorRef,
-        private dialogService: AbstractDialogService,
-        private app: App,
+        private readonly dialogService: AbstractDialogService,
+        private readonly app: App,
         @Attribute('formlayout') layoutType: string,
         @Attribute('dialogid') dialogId: string,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any

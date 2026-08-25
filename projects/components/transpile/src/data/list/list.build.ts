@@ -41,7 +41,7 @@ register(wmListTag, (): IBuildTaskDef => {
         },
         pre: (attrs, shared, parentForm, parentLiveForm) => {
             const parent = parentForm || parentLiveForm;
-            shared.set('form_reference', parent && parent.get('form_reference'));
+            shared.set('form_reference', parent?.get('form_reference'));
 
             const listTemplateAttrsJson = shared.get('listTemplateAttrs');
             if (listTemplateAttrsJson) {
@@ -78,8 +78,6 @@ function copyAttribute(from: Element, fromAttrName: string, to: Element, toAttrN
 register('wm-list-action-template', (): IBuildTaskDef => {
     return {
         template: (node: Element) => {
-
-            const position = node.attrs.find(attr => attr.name === 'position').value;
 
             const btns = <Element[]> node.children
                 .filter(e => e instanceof Element && (<Element> e).name === 'wm-button');

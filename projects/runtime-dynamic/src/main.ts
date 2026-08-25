@@ -2,10 +2,9 @@ import { ApplicationRef, enableProdMode } from '@angular/core';
 
 import { isEmpty } from "lodash-es";
 import { bootstrapApplication } from '@angular/platform-browser';
-import {setPreviewProperties} from '@wm/core';
+import { setPreviewProperties, CustomIconsLoaderService } from '@wm/core';
 import { AppComponent } from '@wm/runtime/base';
 import { appConfig } from './app/app.config';
-import {CustomIconsLoaderService} from '@wm/core'
 
 const DEBUG_MODE = 'debugMode';
 
@@ -21,14 +20,13 @@ fetch('./font.config.js')
     })
 console.time('bootstrap');
 
-
 document.addEventListener('DOMContentLoaded', () => {
   new Promise<Event | void>(resolve => {
       resolve();
   }).then(() => bootstrapApplication(AppComponent, appConfig))
     .then((appRef: ApplicationRef) => { 
       window.addEventListener('unload', () => {
-        appRef.components.map(c => c?.destroy());
+        appRef.components.forEach(c => c?.destroy());
       });
     })
     .catch(err => console.error('Error bootstrapping app:', err));

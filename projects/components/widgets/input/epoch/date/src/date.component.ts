@@ -1,5 +1,5 @@
 import {IMaskDirective, IMaskModule} from 'angular-imask';
-import {ChangeDetectorRef, Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, Inject, Injector, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {BsDatepickerDirective, BsDatepickerModule} from 'ngx-bootstrap/datepicker';
 import {
@@ -42,11 +42,11 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class DateComponent extends BaseDateTimeComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public bsDataValue;
     public showdropdownon: string;
-    private dateContainerCls: string;
+    private readonly dateContainerCls: string;
     public isOpen: boolean = false;
     private isEnterPressedOnDateInput = false;
     private _bsDefaultLoadCheck: boolean;
@@ -109,8 +109,8 @@ export class DateComponent extends BaseDateTimeComponent {
     // TODO use BsLocaleService to set the current user's locale to see the localized labels
     constructor(
         inj: Injector,
-        private cdRef: ChangeDetectorRef,
-        private appDefaults: AppDefaults,
+        private readonly cdRef: ChangeDetectorRef,
+        private readonly appDefaults: AppDefaults,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);

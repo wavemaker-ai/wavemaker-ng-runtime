@@ -20,13 +20,13 @@ const WIDGET_CONFIG = {widgetType: 'wm-breadcrumb', hostClass: DEFAULT_CLS};
     ]
 })
 export class BreadcrumbComponent extends DatasetAwareNavComponent {
-    static initializeProps = registerProps();
-    private disableMenuContext: boolean;
+    static readonly initializeProps = registerProps();
+    private readonly disableMenuContext: boolean;
 
     constructor(
         inj: Injector,
-        private route: Router,
-        private location: Location,
+        private readonly route: Router,
+        private readonly location: Location,
         @Attribute('beforenavigate.event') beforeNavigateCB: string,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {

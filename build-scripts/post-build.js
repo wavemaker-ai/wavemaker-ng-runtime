@@ -38,8 +38,8 @@ const addPrintStylesPath = (print_styles_path) => {
  */
 const getArgs = (customArgs) => {
     const args = {};
-    let arguments = customArgs || process.argv;
-    arguments.slice(2, process.argv.length)
+    let argsArray = customArgs || process.argv;
+    argsArray.slice(2, process.argv.length)
         .forEach(arg => {
             if (arg.slice(0, 2) === '--') {
                 const longArg = arg.split('=');
@@ -100,7 +100,7 @@ const getUpdatedFileHashes = (url, oldHash, updatedFileHashes) => {
  * @returns {string} path of the icon without '/ng-bundle'
  */
 const getIconPath = (iconPath) => {
-    var index = iconPath.indexOf("/", iconPath.indexOf("/") + 1);
+    const index = iconPath.indexOf("/", iconPath.indexOf("/") + 1);
     return iconPath.substring(index + 1);
 }
 

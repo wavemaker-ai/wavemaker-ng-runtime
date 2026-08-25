@@ -29,7 +29,7 @@ const CAPTION_POSITION = {
     ]
 })
 export class CompositeDirective extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     // this is the reference to the component refs inside the form-group
     @ContentChildren(WidgetRef, {descendants: true}) componentRefs;

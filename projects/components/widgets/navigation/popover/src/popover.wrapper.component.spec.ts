@@ -3,7 +3,7 @@ import { addClass, adjustContainerPosition, adjustContainerRightEdges, App, find
 import { Component, ViewChild } from '@angular/core';
 import { PopoverComponent } from './popover.component';
 import { PopoverConfig, PopoverModule } from 'ngx-bootstrap/popover';
-import { compileTestComponent, getHtmlSelectorElement, mockApp } from '../../../../base/src/test/util/component-test-util';
+import { compileTestComponent, mockApp } from '../../../../base/src/test/util/component-test-util';
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
 import { AnchorComponent } from '../../../basic/anchor/src/anchor.component';
 import { AUTOCLOSE_TYPE } from '@wm/components/base';
@@ -612,7 +612,6 @@ describe('PopoverComponent', () => {
 
     describe('hidePopover', () => {
         let appMock: any;
-        let cancelSubscriptionMock: any;
         let invokeEventCallbackSpy: any;
 
         beforeEach(() => {
@@ -623,7 +622,6 @@ describe('PopoverComponent', () => {
             appMock = {
                 subscribe: jest.fn()
             };
-            cancelSubscriptionMock = jest.fn();
             (wmComponent as any).app = appMock;
 
             // Spy on the invokeEventCallback

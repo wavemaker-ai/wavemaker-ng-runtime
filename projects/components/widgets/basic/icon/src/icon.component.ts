@@ -19,7 +19,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class IconComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public iconclass: any;
     public caption: string;

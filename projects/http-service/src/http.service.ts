@@ -28,7 +28,7 @@ export class HttpServiceImpl extends AbstractHttpService implements HttpClientSe
     localeObject: any;
     private sessionTimeoutSubscriptions: Subscription[] = []; // MEMORY LEAK FIX: Track subscriptions
 
-    constructor(private httpClient: HttpClient) {
+    constructor(private readonly httpClient: HttpClient) {
         super();
     }
 
@@ -86,7 +86,7 @@ export class HttpServiceImpl extends AbstractHttpService implements HttpClientSe
             withCredentials: withCredentials
         };
         // Even if method is not expecting request body, if body is passed in request, pass it on.
-        if (includes(this.nonBodyTypeMethods, options.method && options.method.toUpperCase()) && options.data === undefined) {
+        if (includes(this.nonBodyTypeMethods, options.method?.toUpperCase()) && options.data === undefined) {
             third = reqOptions;
             fourth = null;
         } else {
@@ -109,7 +109,7 @@ export class HttpServiceImpl extends AbstractHttpService implements HttpClientSe
     sendCall(requestParams, variable, params?) {
         return new Promise((resolve, reject) => {
             variable._observable = this.sendCallAsObservable(requestParams, params).subscribe((response: any) => {
-                if (response && response.type) {
+                if (response?.type) {
                     resolve(response);
                 }
             }, (err: any) => {
@@ -150,7 +150,7 @@ export class HttpServiceImpl extends AbstractHttpService implements HttpClientSe
         if (variable._observable) {
             variable._observable.unsubscribe();
         }
-        if ($file && $file._uploadProgress) {
+        if ($file?._uploadProgress) {
             $file._uploadProgress.unsubscribe();
         }
     }

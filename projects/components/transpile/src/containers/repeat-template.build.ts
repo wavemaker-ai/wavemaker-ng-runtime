@@ -9,7 +9,7 @@ register('wm-repeat-template', (): IBuildTaskDef => {
     return {
         requires: ['wm-accordion', 'wm-tabs', 'wm-wizard'],
         pre: (attrs, shared, parentAccordion, parentTab, parentWizard) => {
-            const widgetRef = (parentAccordion && parentAccordion.get('accordion_ref')) || (parentTab && parentTab.get('tabs_ref')) || (parentWizard && parentWizard.get('wizard_ref'));
+            const widgetRef = (parentAccordion?.get('accordion_ref')) || (parentTab?.get('tabs_ref')) || (parentWizard?.get('wizard_ref'));
             if (widgetRef) {
                 return `@if(${widgetRef}.fieldDefs && !${widgetRef}.fieldDefs.length){<div>{{${widgetRef}.nodatamessage}}</div>}
                 @for (item of ${widgetRef}.fieldDefs; track item; let i = $index) {

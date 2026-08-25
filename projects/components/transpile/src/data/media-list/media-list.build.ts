@@ -39,7 +39,7 @@ register('wm-media-list', (): IBuildTaskDef => {
                         }
                     });
                 };
-            if (attrObj && attrObj.value.startsWith('bind:')) {
+            if (attrObj?.value.startsWith('bind:')) {
                 bindDataset = attrObj.value.replace('bind:', '');
             }
             if (bindDataset) {

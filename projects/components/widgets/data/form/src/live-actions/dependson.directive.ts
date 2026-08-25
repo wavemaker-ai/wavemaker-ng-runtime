@@ -12,21 +12,21 @@ export class DependsonDirective implements AfterContentInit, OnDestroy {
 
     @ContentChildren(FormComponent, {descendants: true}) formChildren;
 
-    private dialogId;
-    private dependson;
-    private isLayoutDialog;
+    private readonly dialogId;
+    private readonly dependson;
+    private readonly isLayoutDialog;
     private form;
     private editMode;
     private currentOp;
     private currentFormData;
     private formSubscription;
-    private eventSubscription;
+    private readonly eventSubscription;
 
     constructor(
         @Attribute('dialogid') dialogId: string,
         @Attribute('dependson') dependson: string,
-        private dialogService: AbstractDialogService,
-        private app: App
+        private readonly dialogService: AbstractDialogService,
+        private readonly app: App
     ) {
         // If dialogId is present, form is in dialog mode
         if (dialogId) {

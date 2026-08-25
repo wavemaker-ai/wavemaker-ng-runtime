@@ -13,7 +13,6 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 class TestComponent { }
 
 describe('FormActionDirective', () => {
-    let component: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let directive: FormActionDirective;
     let mockFormComponent: jest.Mocked<FormComponent>;
@@ -33,7 +32,6 @@ describe('FormActionDirective', () => {
         });
 
         fixture = TestBed.createComponent(TestComponent);
-        component = fixture.componentInstance;
         directive = fixture.debugElement.query(By.directive(FormActionDirective)).injector.get(FormActionDirective);
     });
 

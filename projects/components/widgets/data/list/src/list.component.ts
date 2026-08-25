@@ -104,7 +104,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-list', hostClass: DEFAULT_CLS};
     ]
 })
 export class ListComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     @ContentChild('listTemplate') listTemplate: TemplateRef<ElementRef>;
 
@@ -166,7 +166,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     public updatedPageSize;
     public actualPageSize;
     _isDependent;
-    private itemsPerRowClass: string;
+    private readonly itemsPerRowClass: string;
     private firstSelectedItem: ListItemDirective;
     private navigatorMaxResultWatch: Subscription;
     private navigatorResultWatch: Subscription;
@@ -178,19 +178,19 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     private showNavigation: boolean;
     private reorderProps: any;
     private app: any;
-    private appDefaults: any;
-    private ngZone: NgZone;
-    private statePersistence: StatePersistence;
-    private paginationService: PaginationService;
-    private binddatasource: string;
-    private listClickHandler;
-    private addItemClickHandler;
-    private match: string;
-    private dateformat: string;
+    private readonly appDefaults: any;
+    private readonly ngZone: NgZone;
+    private readonly statePersistence: StatePersistence;
+    private readonly paginationService: PaginationService;
+    private readonly binddatasource: string;
+    private readonly listClickHandler;
+    private readonly addItemClickHandler;
+    private readonly match: string;
+    private readonly dateformat: string;
     private groupedData: any;
     private cdRef: ChangeDetectorRef;
-    private promiseResolverFn: Function;
-    private propsInitPromise: Promise<any>;
+    private readonly promiseResolverFn: Function;
+    private readonly propsInitPromise: Promise<any>;
     private $ulEle: any;
     private _listAnimator: ListAnimator;
     private _listenerDestroyers: Array<any>;
@@ -205,8 +205,8 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     public itemAttrsMap: { [k: string]: string } = {};
     public hasAutolayout: boolean = false;
 
-    private touching;
-    private touched;
+    private readonly touching;
+    private readonly touched;
 
     constructor(
         inj: Injector,
@@ -388,7 +388,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
 
     handleLoading(data) {
         const dataSource = this.datasource;
-        if (dataSource && dataSource.execute(DataSource.Operation.IS_API_AWARE) && isDataSourceEqual(data.variable, dataSource)) {
+        if (dataSource?.execute(DataSource.Operation.IS_API_AWARE) && isDataSourceEqual(data.variable, dataSource)) {
             this.ngZone.run(() => {
                 this.handleStateParams(data);
                 this.variableInflight = data.active;
@@ -404,7 +404,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     }
 
     public triggerListItemSelection($el: JQuery<HTMLElement>, $event: Event) {
-        if ($el && $el[0]) {
+        if ($el?.[0]) {
             const listItemContext = $el.data('listItemContext');
             // Trigger click event only if the list item is from the corresponding list.
             if (listItemContext.listComponent === this) {
@@ -699,13 +699,13 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                     this.invokeEventCallback('selectionlimitexceed', {$event: evt});
                 }
 
-            } else {
+            } else 
                 if (!$listItem.isActive || selectCount > 1) {
                     this.clearSelectedItems();
                     this.toggleListItemSelection($listItem);
                     this.firstSelectedItem = this.lastSelectedItem = $listItem;
                 }
-            }
+            
             $appDigest();
         }
     }
@@ -721,7 +721,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
      */
     public deselectItem(val: any) {
         const listItem = this.getItemRefByIndexOrModel(val);
-        if (listItem && listItem.isActive) {
+        if (listItem?.isActive) {
             this.toggleListItemSelection(listItem);
         }
     }
@@ -768,7 +768,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             super.ngAfterViewInit();
             this.setUpCUDHandlers();
             this.selectedItemWidgets = this.multiselect ? [] : {};
-            var ele = $(this.nativeElement).find('.app-livelist-container');
+            const ele = $(this.nativeElement).find('.app-livelist-container');
 
             if (this.enablereorder && !this.groupby) {
                 if (ele) {
@@ -805,14 +805,14 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     }
 
     ngOnDestroy() {
-        if (this._listAnimator && this._listAnimator.$btnSubscription) {
+        if (this._listAnimator?.$btnSubscription) {
             this._listAnimator.$btnSubscription.unsubscribe();
             this._listAnimator = null;
         }
         
         // MEMORY LEAK FIX: Unsubscribe from all app subscriptions
         if (this._listenerDestroyers) {
-            this._listenerDestroyers.forEach(d => d && d());
+            this._listenerDestroyers.forEach(d => d?.());
             this._listenerDestroyers = [];
         }
 
@@ -844,7 +844,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         }
 
         // MEMORY LEAK FIX: Destroy jQuery sortable widget
-        if (this.$ulEle && this.$ulEle.sortable) {
+        if (this.$ulEle?.sortable) {
             try {
                 this.$ulEle.sortable('destroy');
             } catch (e) {
@@ -927,7 +927,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
 
     private getConfiguredState() {
         const mode = this.statePersistence.computeMode(this.statehandler);
-        return mode && mode.toLowerCase();
+        return mode?.toLowerCase();
     }
 
     private handleStateParams(options) {
@@ -1060,7 +1060,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
             this.noDataFound = false;
             this.isDataChanged = true;
 
-            if (this.datasource && this.datasource.execute(DataSource.Operation.IS_API_AWARE)) {
+            if (this.datasource?.execute(DataSource.Operation.IS_API_AWARE)) {
                 // clone the the data in case of live and service variables to prevent the two-way binding for these variables.
                 newVal = cloneDeep(newVal);
             }
@@ -1141,11 +1141,11 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 if (get(widgetState, 'pagination') || get(widgetState, 'pagesize')) {
                     this.dataNavigator.pageChanged({page: widgetState.pagination || 1, pagesize: widgetState.pagesize}, true);
                 }
-            } else {
+            } else 
                 if (get(widgetState, 'pagination')) {
                     this.dataNavigator.pageChanged({page: widgetState.pagination}, true);
                 }
-            }
+            
             if (get(widgetState, 'selectedItem')) {
                 this._selectedItemsExist = true;
             }
@@ -1335,7 +1335,6 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         }
 
         if (this.fieldDefs.length && this.infScroll) {
-            const smoothScrollEl = this.$element.closest('[wmsmoothscroll]');
             // In case of mobile app when modal exists, and list items height is greater than the modal content provide ccontainer a scrollable height
             const modalBody = this.$element.closest('.modal-body');
             const listHt = this.$element.find('ul').height();
@@ -1496,7 +1495,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
     // Invoke the datasource variable by default when pulltorefresh event is not specified.
     private subscribeToPullToRefresh() {
         this._listenerDestroyers.push(this.app.subscribe('pulltorefresh', () => {
-            if (this.datasource && this.datasource.listRecords) {
+            if (this.datasource?.listRecords) {
                 this.datasource.listRecords();
             }
         }));

@@ -23,7 +23,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     exportAs: 'wmButton'
 })
 export class ButtonComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public iconurl: string;
     public iconclass: string;

@@ -9,7 +9,7 @@ import {find, remove} from "lodash-es";
 
 @Injectable()
 export class OAuthService implements OnDestroy {
-    constructor(private httpService: AbstractHttpService) {}
+    constructor(private readonly httpService: AbstractHttpService) {}
 
     providers = new Subject();
 

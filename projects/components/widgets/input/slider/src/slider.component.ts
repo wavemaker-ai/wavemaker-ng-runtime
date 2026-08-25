@@ -12,7 +12,7 @@ import {Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angu
 import {BaseFormCustomComponent} from '@wm/components/input/base-form-custom';
 
 import {registerProps} from './slider.props';
-import {App, isDefined, switchClass} from "@wm/core";
+import {App, switchClass} from "@wm/core";
 import { CommonModule } from "@angular/common";
 
 
@@ -37,7 +37,7 @@ const RANGE_LABEL_POSITION: {[key: string]: string} = {
     ]
 })
 export class SliderComponent extends BaseFormCustomComponent implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public minvalue: number;
     public maxvalue: number;

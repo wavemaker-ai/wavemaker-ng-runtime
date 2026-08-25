@@ -207,7 +207,8 @@ describe('LRUCache', () => {
 
     test('should warn when maxAge is less than 30 seconds', () => {
         const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
-        new LRUCache<string>(100, 15);
+        const cache = new LRUCache<string>(100, 15);
+        expect(cache).toBeDefined();
         expect(consoleSpy).toHaveBeenCalledWith('Cache age 15s is very less. Keep it atleast 30s.');
         consoleSpy.mockRestore();
     });
@@ -721,13 +722,15 @@ describe('EventNotifier', () => {
     describe('constructor', () => {
         it('should start the notifier if start is true', () => {
             const startSpy = jest.spyOn(EventNotifier.prototype, 'start');
-            new EventNotifier(true);
+            const notifier = new EventNotifier(true);
+            expect(notifier).toBeDefined();
             expect(startSpy).toHaveBeenCalled();
         });
 
         it('should not start the notifier if start is false', () => {
             const startSpy = jest.spyOn(EventNotifier.prototype, 'start');
-            new EventNotifier(false);
+            const notifier = new EventNotifier(false);
+            expect(notifier).toBeDefined();
             expect(startSpy).not.toHaveBeenCalled();
         });
     });

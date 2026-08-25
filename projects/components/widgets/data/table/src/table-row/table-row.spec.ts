@@ -13,7 +13,6 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 class TestComponent { }
 
 describe('TableRowDirective', () => {
-    let component: TestComponent;
     let directive: TableRowDirective;
     let tableMock: jest.Mocked<TableComponent>;
 
@@ -33,7 +32,6 @@ describe('TableRowDirective', () => {
         });
 
         const fixture = TestBed.createComponent(TestComponent);
-        component = fixture.componentInstance;
         directive = fixture.debugElement.children[0].injector.get(TableRowDirective);
     });
 

@@ -17,7 +17,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-layout', hostClass: DEFAULT_CLS};
     exportAs: 'wmLayout'
 })
 export class LayoutDirective extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     private _eventNotifier = new EventNotifier(false);
 
@@ -33,7 +33,7 @@ export class LayoutDirective extends StylableComponent implements AfterViewInit,
      * @param data
      */
     public notify(eventName: string, ...data: Array<any>) {
-        this._eventNotifier.notify.apply(this._eventNotifier, arguments);
+        this._eventNotifier.notify.call(this._eventNotifier, ...arguments);
     }
 
     public ngAfterViewInit() {

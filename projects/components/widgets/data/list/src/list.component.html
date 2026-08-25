@@ -76,7 +76,9 @@
     @for (groupObj of groupedData; track groupObj; let groupIndex = $index) {
       <li class="app-list-item-group clearfix">
         <ul [attr.tabindex]="tabindex" class="list-group item-group" [ngClass]="listclass" [class.list-group-autolayout]="hasAutolayout">
-          <li class="app-list-item-header list-item list-group-header" (click)="handleHeaderClick($event)" [ngClass]="{'collapsible-content': collapsible}">
+          <li class="app-list-item-header list-item list-group-header" (click)="handleHeaderClick($event)"
+            (keydown.enter)="handleHeaderClick($event)" (keydown.space)="$event.preventDefault(); handleHeaderClick($event)"
+            tabindex="0" role="button" [ngClass]="{'collapsible-content': collapsible}">
             <h4>{{groupObj.key}}
               <div class="header-action">
                 @if (collapsible) {

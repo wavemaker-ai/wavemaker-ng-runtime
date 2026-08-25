@@ -44,8 +44,8 @@ export class DataProvider implements IDataProvider {
     public isPaginatedData: boolean;
     public updateDataset: boolean;
 
-    static remoteDataProvider = new RemoteDataProvider();
-    static localDataProvider = new LocalDataProvider();
+    static readonly remoteDataProvider = new RemoteDataProvider();
+    static readonly localDataProvider = new LocalDataProvider();
 
     public filter(config: IDataProviderConfig): Promise<any> {
 
@@ -57,8 +57,8 @@ export class DataProvider implements IDataProvider {
          * If datasource is a serviceVariable with no input params, then perform local search.
          * when there is no dataset on the datasource when first time make a remote call to set the dataset for service variable.
          */
-        const hasNoVariableDataset = config.datasource && config.datasource.execute(DataSource.Operation.IS_UPDATE_REQUIRED, config.hasData);
-        if (!config.isLocalFilter && (config.dataoptions || ((config.datasource && config.datasource.execute(DataSource.Operation.IS_API_AWARE))
+        const hasNoVariableDataset = config.datasource?.execute(DataSource.Operation.IS_UPDATE_REQUIRED, config.hasData);
+        if (!config.isLocalFilter && (config.dataoptions || ((config.datasource?.execute(DataSource.Operation.IS_API_AWARE))
             && config.searchKey
             && hasNoVariableDataset))) {
             promise = DataProvider.remoteDataProvider.filter(config);

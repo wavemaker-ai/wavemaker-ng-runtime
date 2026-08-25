@@ -1,5 +1,5 @@
 import { waitForAsync, ComponentFixture, fakeAsync, tick, discardPeriodicTasks } from '@angular/core/testing';
-import { App, AppDefaults, DynamicComponentRefProvider, AbstractI18nService, UserDefinedExecutionContext, Viewport, $appDigest, isElementInViewport, scrollToElement, $invokeWatchers, getValidJSON, extendProto, $parseEvent } from '@wm/core';
+import { App, AppDefaults, DynamicComponentRefProvider, AbstractI18nService, UserDefinedExecutionContext, Viewport, isElementInViewport, scrollToElement, $invokeWatchers, getValidJSON, extendProto, VALIDATOR } from '@wm/core';
 import { FormComponent } from './form.component';
 import { FormWidgetDirective } from './form-widget.directive';
 import { InputTextComponent } from '@wm/components/input';
@@ -13,7 +13,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
 import { performDataOperation } from '@wm/components/base';
 import { LayoutGridRowDirective } from '@wm/components/containers/layout-grid';
-import { VALIDATOR } from '@wm/core';
 import { DatePipe, CommonModule, DecimalPipe } from '@angular/common';
 import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
@@ -724,7 +723,6 @@ describe('FormComponent', () => {
         expect(formField._control.valid).toBeTruthy();
         discardPeriodicTasks();
     }));
-
 
     describe('onDataSourceChange', () => {
         it('should update isDataSourceUpdated when formFields exist and bindformdata is false', () => {

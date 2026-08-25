@@ -8,7 +8,7 @@ const cache = new Map<string, any>();
 @Injectable()
 export class PrefabConfigProviderService extends PrefabConfigProvider {
 
-    constructor(private resourceMngr: AppResourceManagerService) {
+    constructor(private readonly resourceMngr: AppResourceManagerService) {
         super();
     }
 

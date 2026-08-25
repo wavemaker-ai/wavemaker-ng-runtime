@@ -10,14 +10,14 @@ interface Scripts {
 
 export const ScriptStore: Scripts[] = [];
 
-declare var document: any;
+declare const document: any;
 
 @Injectable({providedIn: 'root'})
 export class ScriptLoaderService {
 
     private scripts: any = {};
 
-    constructor(private http: HttpClient) {
+    constructor(private readonly http: HttpClient) {
         ScriptStore.forEach((script: any) => {
             this.scripts[script.name] = {
                 loaded: false,
@@ -27,7 +27,7 @@ export class ScriptLoaderService {
     }
 
     load(...scripts: string[]): Promise<any> {
-        if (scripts && scripts.length) {
+        if (scripts?.length) {
             return Promise.all(scripts.map( s => {
                 return this.loadScript(s);
             }));
@@ -37,7 +37,7 @@ export class ScriptLoaderService {
 
     private loadScript(name: string) {
         return new Promise((resolve, reject) => {
-            if (this.scripts[name] && this.scripts[name].loaded) {
+            if (this.scripts[name]?.loaded) {
                 resolve({ script: name, loaded: true });
                 return;
             } else if (!this.scripts[name]) {

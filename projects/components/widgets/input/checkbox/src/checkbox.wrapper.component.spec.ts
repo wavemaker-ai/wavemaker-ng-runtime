@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from "@angular/core";
+import { Component, ViewChild } from "@angular/core";
 import { CheckboxComponent, unStringify } from "./checkbox.component";
 import { waitForAsync, ComponentFixture } from "@angular/core/testing";
 import { compileTestComponent, getHtmlSelectorElement, mockApp } from "../../../../base/src/test/util/component-test-util";

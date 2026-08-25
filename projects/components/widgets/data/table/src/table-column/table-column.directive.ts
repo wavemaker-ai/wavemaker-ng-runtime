@@ -85,7 +85,7 @@ class FieldDef {
     ]
 })
 export class TableColumnDirective extends BaseComponent implements OnInit, AfterContentInit, AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     @ContentChildren('filterWidget', { descendants: true }) _filterInstances;
     @ContentChildren('inlineWidget', { descendants: true }) _inlineInstances;
@@ -178,7 +178,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     constructor(
         inj: Injector,
-        private appDefaults: AppDefaults,
+        private readonly appDefaults: AppDefaults,
         @Optional() public table: TableComponent,
         @Optional() public group: TableColumnGroupDirective,
         @Attribute('filterdataset.bind') public bindfilterdataset,
@@ -214,7 +214,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
         // when column is inside a group then consider the col index and not header index.
         const colIndex = parseInt(this.getAttr('index'), 10);
         const headerIndex = parseInt(this.getAttr('headerIndex'), 10);
-        const fieldName = this.group && this.group.name;
+        const fieldName = this.group?.name;
         // Register column with header config to create group structure
         setHeaderConfigForTable(this.table.headerConfig, {
             field: this.field,
@@ -255,7 +255,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
         if (this._isRowFilter) {
             // Listen on the inner row filter widget and setup the widget
             const s1 = this._filterInstances.changes.subscribe((val) => {
-                this.filterInstance = val.first && val.first.widget;
+                this.filterInstance = val.first?.widget;
                 this.setUpFilterWidget();
             });
             this.registerDestroyListener(() => s1.unsubscribe());
@@ -264,7 +264,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
         if (this._isInlineEditable) {
             const s2 = this._inlineInstances.changes.subscribe((val) => {
                 // Listen on the inner inline widget and setup the widget
-                this.inlineInstance = val.first && val.first.widget;
+                this.inlineInstance = val.first?.widget;
                 this.fieldValidations.formwidget = val.first;
                 this.table.registerFormField(this.binding, new FieldDef(this.inlineInstance));
                 this.setUpInlineWidget('inlineInstance');
@@ -274,7 +274,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             if (this._isNewEditableRow) {
                 const s3 = this._inlineInstancesNew.changes.subscribe((val) => {
                     // Listen on the inner inline widget and setup the widget
-                    this.inlineInstanceNew = val.first && val.first.widget;
+                    this.inlineInstanceNew = val.first?.widget;
                     this.fieldValidations_new.formwidget = val.first;
                     this.setUpInlineWidget('inlineInstanceNew');
                 });
@@ -317,7 +317,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
     // Remove validators for the inline widget and set form to untouched
     removeValidations() {
         // Guard against component destruction or table/ngform being null
-        if (this.isDestroyed || !this.table || !this.table.ngform) {
+        if (this.isDestroyed || !this.table?.ngform) {
             return;
         }
         this.table.ngform.markAsUntouched();
@@ -333,7 +333,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
     // Apply default|sync|async|prop validators for QuickEdit new row form control
     applyNewRowValidations() {
         // Guard against component destruction or table/ngform being null
-        if (this.isDestroyed || !this.table || !this.table.ngform) {
+        if (this.isDestroyed || !this.table?.ngform) {
             return;
         }
         if (!this._checkNewEditableRowControl()) {
@@ -354,7 +354,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
     // Remove validators for the QuickEdit new row widget and set form to untouched
     removeNewRowValidations() {
         // Guard against component destruction or table/ngform being null
-        if (this.isDestroyed || !this.table || !this.table.ngform) {
+        if (this.isDestroyed || !this.table?.ngform) {
             return;
         }
         this.table.ngform.markAsUntouched();
@@ -372,7 +372,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     addFormControl(suffix?: string) {
         // Guard against component destruction or table/ngform being null
-        if (this.isDestroyed || !this.table || !this.table.ngform) {
+        if (this.isDestroyed || !this.table?.ngform) {
             return;
         }
         const ctrlName = suffix ? (this.binding + suffix) : this.binding;
@@ -381,7 +381,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     getFormControl(suffix?: string) {
         // Guard against component destruction or table/ngform being null
-        if (this.isDestroyed || !this.table || !this.table.ngform) {
+        if (this.isDestroyed || !this.table?.ngform) {
             return null;
         }
         const ctrlName = suffix ? (this.binding + suffix) : this.binding;
@@ -446,7 +446,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
         // When a row-filter widget value changes (multi-column filter),
         // apply cascading filter so dependent filter widgets update their datasets.
         // Example: filtering City should narrow down Street filter options.
-        if (this.isDestroyed || !this.table || !this.table.datasource) {
+        if (this.isDestroyed || !this.table?.datasource) {
             return;
         }
         // Don't cascade on null/undefined; clearing a filter should reset dependent datasets via their own refresh.
@@ -459,7 +459,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
 
     // Get of the active from control
     get datavalue() {
-        return this[this.activeControlType] && this[this.activeControlType].datavalue;
+        return this[this.activeControlType]?.datavalue;
     }
 
     set datavalue(val) {
@@ -491,7 +491,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
                 widget: 'edit-widget-type'
             });
         }
-        if (this.table.ngform && this.table.ngform.touched) {
+        if (this.table.ngform?.touched) {
             this.activeControlType = widget;
             if (widget === 'inlineInstance') {
                 this.notifyChanges();
@@ -737,7 +737,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
         this.ngclass =  this['col-ng-class'];
         this.formatpattern =  this.formatpattern === 'toNumber' ? 'numberToString'  :  this.formatpattern;
         this.searchable =  (this.type === 'blob' || this.type === 'clob') ? false  :  this.searchable;
-        this.showinfilter = (this.nativeElement.hasAttribute('showinfilter') && !((this as any).table && (this as any).table.isdynamictable)) ? this.nativeElement.getAttribute('showinfilter') : (this.show);
+        this.showinfilter = (this.nativeElement.hasAttribute('showinfilter') && !((this as any).table?.isdynamictable)) ? this.nativeElement.getAttribute('showinfilter') : (this.show);
         this.limit =  this.limit ? +this.limit  :  undefined;
         this.editWidgetType = this['edit-widget-type'] =  this['edit-widget-type'] || getEditModeWidget(this);
         this.filterOn =  this['filter-on'];
@@ -771,7 +771,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
                 this.setProperty('displayName', this.displayName);
                 // Fix for [WMS-25934]: update the headerConfig list when there is change in display name
                 // when column is inside a group then consider the col index and not header index.
-                const fieldName = this.group && this.group.name;
+                const fieldName = this.group?.name;
                 const index: number = fieldName ? parseInt(this.getAttr('index'), 10) : parseInt(this.getAttr('headerIndex'), 10);
                 // Register column with header config to create group structure
                 if (!this.table.headerConfig.some(value => this.field == value.field)) {

@@ -119,7 +119,7 @@ export class PipeProvider {
         throw Error(`The pipe '${name}' could not be found`);
     }
 
-    constructor(private compiler: Compiler, private injector: Injector, private domSanitizer:DomSanitizer, private i18service: AbstractI18nService) {
+    constructor(private readonly compiler: Compiler, private readonly injector: Injector, private readonly domSanitizer:DomSanitizer, private readonly i18service: AbstractI18nService) {
         this._pipeMeta = new Map();
         this.setPipeData();
         this._pipeData.forEach(v => {

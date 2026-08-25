@@ -17,8 +17,8 @@ const WIDGET_CONFIG = {widgetType: 'wm-partial', hostClass: DEFAULT_CLS};
     ]
 })
 export class PartialDirective extends StylableComponent implements OnDestroy {
-    static initializeProps = registerProps();
-    constructor(inj: Injector, private viewport: Viewport, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    static readonly initializeProps = registerProps();
+    constructor(inj: Injector, private readonly viewport: Viewport, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
 
         this.registerDestroyListener(this.viewport.subscribe(ViewportEvent.RESIZE, data => this.callback('resize', data)));

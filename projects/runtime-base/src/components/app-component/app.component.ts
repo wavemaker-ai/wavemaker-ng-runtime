@@ -80,15 +80,15 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     constructor(
         _pipeProvider: PipeProvider,
         _appRef: ApplicationRef,
-        private elRef: ElementRef,
-        private oAuthService: OAuthService,
-        private dialogService: AbstractDialogService,
-        private spinnerService: AbstractSpinnerService,
+        private readonly elRef: ElementRef,
+        private readonly oAuthService: OAuthService,
+        private readonly dialogService: AbstractDialogService,
+        private readonly spinnerService: AbstractSpinnerService,
         ngZone: NgZone,
-        private router: Router,
+        private readonly router: Router,
         public app: App,
-        private appManager: AppManagerService,
-        private customIconsLoaderService: CustomIconsLoaderService
+        private readonly appManager: AppManagerService,
+        private readonly customIconsLoaderService: CustomIconsLoaderService
     ) {
         setPipeProvider(_pipeProvider);
         setNgZone(ngZone);
@@ -137,7 +137,7 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
                     this.app.activeLayoutName = '';
                     this.app.layoutPages = [];
                 }
-                if (this.app.activeLayoutName && this.app.layoutPages && this.app.layoutPages.length && this.app.layoutPages.includes(page)) {
+                if (this.app.activeLayoutName && this.app.layoutPages?.length && this.app.layoutPages.includes(page)) {
                     spinnerId = this.spinnerService.show('', 'wmRouterOutlet', '', 'wmRouterOutlet');
                 } else {
                     spinnerId = this.spinnerService.show('', 'globalSpinner');

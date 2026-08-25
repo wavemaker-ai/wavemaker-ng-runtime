@@ -108,7 +108,7 @@ const dateFormat = 'YYYY/MM/DD';
     encapsulation: ViewEncapsulation.None
 })
 export class CalendarComponent extends StylableComponent implements AfterContentInit, AfterViewInit, OnInit, OnDestroy, IRedrawableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     // The calendar element reference
     @ViewChild('calendar') _calendar: ElementRef;
     @ViewChild('datepicker') _datepicker: ElementRef;
@@ -126,9 +126,9 @@ export class CalendarComponent extends StylableComponent implements AfterContent
     public eventallday;
     public eventclass;
 
-    private eventSources: Array<any> = [];
+    private readonly eventSources: Array<any> = [];
 
-    private dataSetEvents = {
+    private readonly dataSetEvents = {
         events: []
     };
     private oldData;
@@ -136,12 +136,12 @@ export class CalendarComponent extends StylableComponent implements AfterContent
     private $fullCalendar;
     // model to the mobile calendar
     private proxyModel;
-    private eventData;
-    private events;
-    private changesStack = [];
+    private readonly eventData;
+    private readonly events;
+    private readonly changesStack = [];
 
     // calendarOptions to the calendar
-    private calendarOptions: any = {
+    private readonly calendarOptions: any = {
         calendar: {
             height: 600,
             eventSources: this.eventSources,
@@ -170,8 +170,8 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         }
     };
     public view: string;
-    private dayClass: Array<any> = [];
-    private cancelLocaleChangeSubscription;
+    private readonly dayClass: Array<any> = [];
+    private readonly cancelLocaleChangeSubscription;
 
     // this function selects the default date given for the calendar
     selectDate() {
@@ -476,7 +476,6 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                 break;
             case 'dataset':
                 let dataSet;
-                const self = this;
                 this.dataset = nv;
                 dataSet = createArrayFrom(getClonedObject(nv));
                 dataSet = this.constructCalendarDataset(dataSet);
@@ -603,7 +602,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
      */
     overrideDefaults(options) {
         if (isObject(options)) {
-            Object.entries(options).map(option => this.$fullCalendar.setOption(option[0], option[1]));
+            Object.entries(options).forEach(option => this.$fullCalendar.setOption(option[0], option[1]));
         }
     }
 

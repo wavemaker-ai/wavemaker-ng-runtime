@@ -8,9 +8,9 @@ declare const $;
 
 export class TabsAnimator extends SwipeAnimation {
 
-    private _$el;
+    private readonly _$el;
 
-    public constructor(private tabs: TabsComponent) {
+    public constructor(private readonly tabs: TabsComponent) {
         super();
         this._$el = $(this.tabs.getNativeElement()).find('>.tab-content');
         this.init(this._$el);

@@ -76,7 +76,6 @@ describe('wm-button: Component specific tests: ', () => {
     let wmComponent: ButtonComponent;
     let fixture: ComponentFixture<TestComponent>;
     let btnEl: HTMLElement;
-    let captionEl: HTMLElement;
     let iconEl: HTMLElement;
     let badgeEl: HTMLElement;
 
@@ -102,7 +101,6 @@ describe('wm-button: Component specific tests: ', () => {
     beforeEach(waitForAsync(() => {
         fixture = compileTestComponent(testModuleDef, TestComponent);
         wrapperComponent = fixture.componentInstance;
-        captionEl = fixture.nativeElement.querySelector('.btn-caption');
         wmComponent = wrapperComponent.wmComponent;
         fixture.detectChanges();
     }));

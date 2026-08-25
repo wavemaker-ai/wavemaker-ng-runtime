@@ -313,7 +313,7 @@ describe("TimeComponent", () => {
                     let foundDisabled = false;
                     for (let i = 0; i < Math.min(timePickerElements.length, 3); i++) {
                         const elem = timePickerElements[i];
-                        if (elem && elem.classList && elem.classList.contains('disabled')) {
+                        if (elem?.classList?.contains('disabled')) {
                             foundDisabled = true;
                             break;
                         }
@@ -474,7 +474,7 @@ describe('TimeComponent with localization', () => {
     }));
 
     afterEach(() => {
-        if (fixture && fixture.nativeElement) {
+        if (fixture?.nativeElement) {
             // Remove the component from the DOM to trigger ngOnDestroy
             document.body.removeChild(fixture.nativeElement);
         }
@@ -502,7 +502,7 @@ describe('TimeComponent with localization', () => {
 
 
     it('should update the datavalue without error when we type "de" format time in inputbox with "24H" format', fakeAsync(() => {
-        const time = '15:15:00', timepattern = 'HH:mm:ss';
+        const timepattern = 'HH:mm:ss';
         wmComponent.getWidget().timepattern = timepattern;
         wmComponent.getWidget().minTime = '';
         wmComponent.getWidget().maxTime = '';

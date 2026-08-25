@@ -63,7 +63,7 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
     public titleId: string = 'wmdialog-' + generateGUId();
     public sheet: string | boolean;
     public sheetPosition: string;
-    private dialogOriginFocusStack: HTMLElement[] = [];
+    private readonly dialogOriginFocusStack: HTMLElement[] = [];
 
     protected constructor(
         inj: Injector,

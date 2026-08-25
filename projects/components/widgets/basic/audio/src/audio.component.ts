@@ -20,7 +20,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class AudioComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public mp3format: string;
     public muted: boolean;

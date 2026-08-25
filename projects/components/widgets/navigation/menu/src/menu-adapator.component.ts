@@ -10,14 +10,14 @@ export class MenuAdapterComponent extends BaseContainerComponent implements Afte
 
     private itemlabel;
     private menuRef;
-    private pageScope;
+    private readonly pageScope;
 
     private binditemlabel;
     private binditemicon;
-    private binditemaction;
-    private binditemchildren;
-    private binditemlink;
-    private binduserrole;
+    private readonly binditemaction;
+    private readonly binditemchildren;
+    private readonly binditemlink;
+    private readonly binduserrole;
 
     @ViewChildren(MenuComponent) private menuRefQL: QueryList<MenuComponent>;
     private menuRefQLSubscription: any;

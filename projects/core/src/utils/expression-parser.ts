@@ -622,7 +622,7 @@ function simpleFunctionEvaluator(expr, ctx, locals) {
         args = args.split(',');
         let computedArgs = [];
         args.forEach((arg)=> {
-            arg = arg && arg.trim();
+            arg = arg?.trim();
             computedArgs.push(get(_ctx, arg));
         });
         return computedFn.bind(_ctx)(...computedArgs);
@@ -719,11 +719,11 @@ const fnExecutor = (expr, exprType) => {
 
         pipeArgs.unshift(hasPurePipe ? new Map() : undefined);
         fn = fn.bind(undefined, ...pipeArgs);
-    } else {
+    } else 
         if (exprType === ExpressionType.Binding) {
             fn = fn.bind(undefined, undefined);
         }
-    }
+    
 
     return fn;
 }

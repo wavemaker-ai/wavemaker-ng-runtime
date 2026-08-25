@@ -56,7 +56,7 @@ const setDefaultPlaceholder = (attrs, widgetType, index) => {
     if (placeholder || placeholder === '') {
         return;
     }
-    placeholder = DEFAULT_PLACEHOLDERS.get(widgetType) && DEFAULT_PLACEHOLDERS.get(widgetType)[index];
+    placeholder = DEFAULT_PLACEHOLDERS.get(widgetType)?.[index];
     if (placeholder) {
         attrs.set(prop, placeholder);
     }
@@ -127,7 +127,7 @@ const registerFormField = (isFormField): IBuildTaskDef => {
         pre: (attrs, shared, parentForm, parentLiveForm, parentFilter, parentList) => {
             const counter = idGen.nextUid();
             const parent = parentForm || parentLiveForm || parentFilter;
-            const pCounter = (parent && parent.get('form_reference')) || 'form';
+            const pCounter = (parent?.get('form_reference')) || 'form';
             const widgetType = attrs.get('widget') || FormWidgetType.TEXT;
             const dataRole = isFormField ? 'form-field' : 'filter-field';
             const formFieldErrorMsgId = 'wmform-field-error-' + generateGUId();
@@ -137,7 +137,7 @@ const registerFormField = (isFormField): IBuildTaskDef => {
                                                   </p>}`;
             const eventsTmpl = widgetType === FormWidgetType.UPLOAD ? '' : getEventsTemplate(attrs);
             const controlLayout = 'col-sm-12';
-            const isInList = pCounter === (parentList && parentList.get('parent_form_reference'));
+            const isInList = pCounter === (parentList?.get('parent_form_reference'));
             attrs.set('__validationId', formFieldErrorMsgId);
             attrs.set('__widgetType', widgetType);
             attrs.delete('widget');

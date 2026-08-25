@@ -20,7 +20,7 @@ declare const $;
     ]
 })
 export class NavbarComponent extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public menuiconclass: any;
     public menuiconurl: string;

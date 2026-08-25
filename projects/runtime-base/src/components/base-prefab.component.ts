@@ -161,7 +161,7 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
                             this.containerWidget[key] = (...args) => {
                                 try {
                                     if (this[key]) {
-                                        return this[key].apply(this, args);
+                                        return this[key].call(this, ...args);
                                     }
                                 } catch (e) {
                                     console.warn(`error in executing prefab-${this.prefabName} method-${key}`);
@@ -242,14 +242,14 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
     mute() {
-        const m = o => { o && o.mute && o.mute(); };
+        const m = o => { o?.mute?.(); };
         each(this.Widgets, m);
         each(this.Variables, m);
         each(this.Actions, m);
     }
 
     unmute() {
-        const um = o => { o && o.unmute && o.unmute(); };
+        const um = o => { o?.unmute?.(); };
         each(this.Widgets, um);
         each(this.Variables, um);
         each(this.Actions, um);
@@ -258,16 +258,16 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     ngOnAttach(refreshData) {
         this.unmute();
         if(refreshData) {
-            const refresh = v => { v && v.startUpdate && v.invoke && v.invoke(); };
+            const refresh = v => { v?.startUpdate && v?.invoke?.(); };
             each(this.Variables, refresh);
             each(this.Actions, refresh);
         }
-        each(this.Widgets, w => w && w.ngOnAttach && w.ngOnAttach());
+        each(this.Widgets, w => w?.ngOnAttach?.());
     }
 
     ngOnDetach() {
         this.mute();
-        each(this.Widgets, w => w && w.ngOnDetach && w.ngOnDetach());
+        each(this.Widgets, w => w?.ngOnDetach?.());
     }
 
     ngAfterViewChecked(): void {

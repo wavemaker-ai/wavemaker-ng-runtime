@@ -19,7 +19,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     exportAs: 'wmHeader'
 })
 export class HeaderComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     protected isInlineContent: boolean = true;
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {

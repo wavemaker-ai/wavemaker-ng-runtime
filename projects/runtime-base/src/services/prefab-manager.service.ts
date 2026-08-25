@@ -23,8 +23,8 @@ const getPrefabResourceUrl = (resourcePath, resourceBasePath) => {
 export class PrefabManagerService {
 
     constructor(
-        private $metadata: MetadataService,
-        private prefabConfigProvider: PrefabConfigProvider
+        private readonly $metadata: MetadataService,
+        private readonly prefabConfigProvider: PrefabConfigProvider
     ) {}
 
     public getConfig(prefabName): Promise<any> {
@@ -79,6 +79,13 @@ export class PrefabManagerService {
         }
     }
 
+    private rejectInProgress(prefabName: string, error?: any) {
+        if (inProgress.get(prefabName)) {
+            (inProgress.get(prefabName) as any).reject(error);
+            inProgress.delete(prefabName);
+        }
+    }
+
     public loadDependencies(prefabName): Promise<void> {
 
         if (resolvedPrefabs.has(prefabName)) {
@@ -105,6 +112,11 @@ export class PrefabManagerService {
                     this.resolveInProgress(prefabName);
                     resolvedPrefabs.add(prefabName);
                 });
+            })
+            .catch(error => {
+                prefabsWithError.add(prefabName);
+                this.rejectInProgress(prefabName, error);
+                throw error;
             });
     }
 }

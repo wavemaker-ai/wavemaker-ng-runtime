@@ -12,8 +12,8 @@ let appVariablesLoaded = false;
 export class AppVariablesResolve {
 
     constructor(
-        private appManager: AppManagerService,
-        private appVariablesProvider: AppVariablesProvider
+        private readonly appManager: AppManagerService,
+        private readonly appVariablesProvider: AppVariablesProvider
     ) {}
 
     resolve() {

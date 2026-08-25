@@ -19,13 +19,13 @@ export class AccessrolesDirective implements OnDestroy {
     private readonly isUserAuthenticated;
     private readonly userRoles;
     private context: any = {}; // Changed from readonly to allow cleanup
-    private securityEnabled: boolean;
+    private readonly securityEnabled: boolean;
 
     constructor(
-        private templateRef: TemplateRef<any>,
-        private viewContainerRef: ViewContainerRef,
-        private securityService: SecurityService,
-        private inj: Injector,
+        private readonly templateRef: TemplateRef<any>,
+        private readonly viewContainerRef: ViewContainerRef,
+        private readonly securityService: SecurityService,
+        private readonly inj: Injector,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         const securityConfig = this.securityService.get();

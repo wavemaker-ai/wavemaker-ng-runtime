@@ -1,5 +1,4 @@
 import { updateDeviceView } from './deviceview';
-import { isMobile, setCSS } from '@wm/core';
 
 declare const $: jest.Mock;
 

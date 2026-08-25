@@ -2,10 +2,9 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { PrefabDirective } from './prefab.directive';
-import { App } from '@wm/core';
+import { App, setCSS } from '@wm/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 import { PROP_TYPE } from '@wm/components/base';
-import { setCSS } from '@wm/core';
 
 jest.mock('@wm/core', () => ({
     ...jest.requireActual('@wm/core'),

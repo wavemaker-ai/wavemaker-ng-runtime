@@ -26,7 +26,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-switch', hostClass: DEFAULT_CLS};
     exportAs: 'wmSwitch'
 })
 export class SwitchComponent extends DatasetAwareFormComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     options = [];
     selectedItem: DataSetItem;

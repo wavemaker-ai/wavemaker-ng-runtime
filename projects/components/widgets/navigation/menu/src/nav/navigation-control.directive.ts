@@ -12,7 +12,7 @@ export const disableContextMenu = ($event: Event) => {
 })
 export class NavigationControlDirective implements OnDestroy {
 
-    private nativeElement: HTMLElement;
+    private readonly nativeElement: HTMLElement;
     private _link: string;
     private boundContextMenuHandler: (event: Event) => void;
 

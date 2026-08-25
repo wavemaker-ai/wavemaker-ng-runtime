@@ -55,15 +55,15 @@ const getFormData = (formData, param, paramValue) => {
                 paramValue = JSON.stringify(paramValue);
             }
             formData.append(param.name, paramValue);
-        } else {
+        } else 
             if (isArray(paramValue) && paramType === 'file') {
                 forEach(paramValue, function (fileObject) {
-                    formData.append(param.name, (fileObject && fileObject.content) || getBlob(fileObject), fileObject.name);
+                    formData.append(param.name, (fileObject?.content) || getBlob(fileObject), fileObject.name);
                 });
             } else {
-                formData.append(param.name, getBlob(paramValue, paramContentType), paramValue && paramValue.name);
+                formData.append(param.name, getBlob(paramValue, paramContentType), paramValue?.name);
             }
-        }
+        
         return formData;
     }
 };
@@ -148,7 +148,7 @@ export class ServiceVariableUtils {
                     'field': '_wmServiceOperationInfo'
                 }
             };
-        } else if (operationInfo && operationInfo.invalid) {
+        } else if (operationInfo?.invalid) {
             return {
                 'error' : {
                     'type': VARIABLE_CONSTANTS.REST_SERVICE.ERR_TYPE.CRUD_OPERATION_MISSING,
@@ -334,7 +334,7 @@ export class ServiceVariableUtils {
         if (!includes(WS_CONSTANTS.NON_BODY_HTTP_METHODS, toUpper(method))) {
             /*Based on the formData browser will automatically set the content type to 'multipart/form-data' and webkit boundary*/
             if (!(operationInfo.consumes && (operationInfo.consumes[0] === WS_CONSTANTS.CONTENT_TYPES.MULTIPART_FORMDATA))) {
-                headers['Content-Type'] = (operationInfo.consumes && operationInfo.consumes[0]) || 'application/json';
+                headers['Content-Type'] = (operationInfo.consumes?.[0]) || 'application/json';
             }
         }
 

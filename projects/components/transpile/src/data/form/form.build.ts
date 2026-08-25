@@ -38,11 +38,11 @@ const addFormControlName = (children = []) => {
         }
         if (formWidgets.has(childNode.name)) {
             let key = childNode.attrs.find((attr) => attr.name === 'key' || attr.name === 'name');
-            key = key && key.value;
+            key = key?.value;
             if (!key) {
                 // for checkbox inside table inside form, key and name attrs are not available. Using datavalue to construct formControlName instead.
                 let dataValue = childNode.attrs.find((attr) => attr.name === 'datavalue');
-                if (dataValue && dataValue.value) {
+                if (dataValue?.value) {
                     const regex = /\((.*)\)/;
                     dataValue = dataValue.value.match(regex);
                     if (dataValue && dataValue.length > 1) {
@@ -76,7 +76,7 @@ const buildTask = (directiveAttr = ''): IBuildTaskDef => {
         pre: (attrs, shared, parentLiveTable, parentLoginWidget) => {
             let tmpl;
             let dialogId;
-            const role = parentLoginWidget && parentLoginWidget.get('isLogin') ? 'app-login' : '';
+            const role = parentLoginWidget?.get('isLogin') ? 'app-login' : '';
             const counter = idGen.nextUid();
             const dependsOn = attrs.get('dependson') ? `dependson="${attrs.get('dependson')}"` : '';
             if(dependsOn) {

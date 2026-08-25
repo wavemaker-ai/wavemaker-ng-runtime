@@ -15,7 +15,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-table-row', hostClass: ''};
     ]
 })
 export class TableRowDirective extends BaseComponent implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     config;
     columnwidth;

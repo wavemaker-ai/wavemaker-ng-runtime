@@ -40,14 +40,14 @@ export class Formatter implements DateFormatter {
 export class VariablesService {
 
     constructor(
-        private httpService: AbstractHttpService,
-        private metadataService: MetadataService,
-        private navigationService: AbstractNavigationService,
-        private routerService: Router,
-        private toasterService: AbstractToasterService,
-        private oAuthService: OAuthService,
-        private securityService: SecurityService,
-        private dialogService: AbstractDialogService
+        private readonly httpService: AbstractHttpService,
+        private readonly metadataService: MetadataService,
+        private readonly navigationService: AbstractNavigationService,
+        private readonly routerService: Router,
+        private readonly toasterService: AbstractToasterService,
+        private readonly oAuthService: OAuthService,
+        private readonly securityService: SecurityService,
+        private readonly dialogService: AbstractDialogService
     ) {
         // set external dependencies, to be used across variable classes, managers and utils
         setDependency('http', this.httpService);
@@ -97,7 +97,7 @@ export class VariablesService {
             runMode = true;
         let v = isArray(d.value) ? d.value[0] : d.value;
         if (v) {
-            if (v.startsWith && v.startsWith('bind:')) {
+            if (v.startsWith?.('bind:')) {
                 const watchExpression = $watch(v.replace('bind:', ''), scope, {}, variable.invokeOnParamChange.bind(variable, d), undefined, undefined, d, () => variable.isMuted);
                 v = scope.registerDestroyListener ? scope.registerDestroyListener(watchExpression) : watchExpression;
             } else if (!isUndefined(d.value)) {
@@ -127,7 +127,6 @@ export class VariablesService {
 
     processBinding(variable: any, context: any, bindSource?: string, bindTarget?: string) {
         bindSource = bindSource || 'dataBinding';
-        bindTarget = bindTarget || 'dataBinding';
 
         const bindMap = variable[bindSource];
         variable[bindSource] = {};

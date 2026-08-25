@@ -16,7 +16,7 @@ const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-content', hostClass: DEFAU
     ]
 })
 export class ContentComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);

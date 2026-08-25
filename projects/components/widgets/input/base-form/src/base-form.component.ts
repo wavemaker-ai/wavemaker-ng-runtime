@@ -39,7 +39,7 @@ export abstract class BaseFormComponent extends StylableComponent implements Aft
         let binddatavalue = this.binddatavalue;
 
         // return if the variable bound is not static.
-        if (this.datavaluesource && this.datavaluesource.execute(DataSource.Operation.IS_API_AWARE)) {
+        if (this.datavaluesource?.execute(DataSource.Operation.IS_API_AWARE)) {
             return;
         } else if (this.datavaluesource && !this.datavaluesource.twoWayBinding) {
                 return;

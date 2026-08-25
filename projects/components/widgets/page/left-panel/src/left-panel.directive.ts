@@ -28,7 +28,7 @@ export enum AnimationType {
     exportAs: 'wmLeftPanel'
 })
 export class LeftPanelDirective extends StylableComponent implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public animation: AnimationType;
     public columnwidth: number;
@@ -43,11 +43,11 @@ export class LeftPanelDirective extends StylableComponent implements OnDestroy {
     private _leftPanelAnimator;
 
     //If "spa" attribute is set LayoutDirective will present and PageDirective is undefined else PageDirective will present and LayoutDirective is undefined
-    constructor(public app: App, @Optional() private page: PageDirective, @Optional() private layout: LayoutDirective, inj: Injector, router: Router, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, @Attribute('navtype') navtype: string, @Attribute('navheight') navHeight: string) {
+    constructor(public app: App, @Optional() private readonly page: PageDirective, @Optional() private readonly layout: LayoutDirective, inj: Injector, router: Router, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, @Attribute('navtype') navtype: string, @Attribute('navheight') navHeight: string) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER);
         this.$ele = this.$element;
-        this.$page = this.getAttr('spa') && layout && layout.$element || page && page.$element;
+        this.$page = this.getAttr('spa') && layout?.$element || page?.$element;
         addClass(this.$page[0], 'left-panel-collapsed-container');
         if (this.columnwidth) {
             this.setLeftPanelWidth(['md', 'sm'], this.columnwidth);

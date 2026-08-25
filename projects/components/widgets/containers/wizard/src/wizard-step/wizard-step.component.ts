@@ -46,7 +46,7 @@ const enum STEP_STATUS {
     exportAs: 'wmWizardStep'
 })
 export class WizardStepComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public show: boolean;
     public name: string;
@@ -55,7 +55,7 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
     public disabledone: boolean;
     public disableprevious: boolean;
     public isInitialized: boolean;
-    private isdynamic: boolean;
+    private readonly isdynamic: boolean;
     public $lazyLoad = noop;
     isDone: boolean = false;
     nextCBInProgress: boolean = false;
@@ -63,7 +63,7 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
 
     private status: STEP_STATUS = STEP_STATUS.DISABLED;
     private wizardComponent: WizardComponent;
-    private _currentWizardWidgets ={}
+    private readonly _currentWizardWidgets ={}
 
     // reference to the components which needs a redraw(eg, grid, chart) when the height of this component changes
     @ContentChildren(RedrawableDirective, {descendants: true}) reDrawableComponents;
@@ -98,7 +98,7 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
      */
     private areEmbeddedFormsValid() {
         for (const form of this.getAllEmbeddedForms()) {
-            if (form.widget && form.widget.ngform && !form.widget.ngform.valid) {
+            if (form.widget?.ngform && !form.widget.ngform.valid) {
                 return false;
             }
         }
@@ -153,7 +153,7 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
         return this.status === STEP_STATUS.DISABLED;
     }
 
-    constructor(inj: Injector, @Self() private ngForm: NgForm, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, @Self() private readonly ngForm: NgForm, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         // If we inject directly as a param in the constructor, getting circular dependency error in unit testcases
         this.wizardComponent = this.inj.get(WizardComponent);

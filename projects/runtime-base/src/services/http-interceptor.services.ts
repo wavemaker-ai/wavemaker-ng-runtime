@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
+import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 
 import {from, Observable, Subject, switchMap} from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -46,7 +46,7 @@ export class HttpCallInterceptor implements HttpInterceptor {
 
         return from(
             Promise.resolve().then(() => {
-                if (appManager && appManager.appOnBeforeServiceCall) {
+                if (appManager?.appOnBeforeServiceCall) {
                     const wmReq = this.wmHttpRequest.angularToWmRequest(request);
                     return appManager.appOnBeforeServiceCall(wmReq);
                 }
@@ -60,7 +60,7 @@ export class HttpCallInterceptor implements HttpInterceptor {
                     return next.handle(request);
                  }),
                 tap((response: any) => {
-                        if (response && response.type === 4 && appManager &&  appManager.appOnServiceSuccess) {
+                        if (response?.type === 4 && appManager?.appOnServiceSuccess) {
                             // Convert the angular HttpResponse to wm HttpResponse
                             const resp = this.wmHttpResponse.angularToWmResponse(response);
                             // trigger the common success handler present in app.js
@@ -77,7 +77,7 @@ export class HttpCallInterceptor implements HttpInterceptor {
                         if (httpService.isPlatformSessionTimeout(error)) {
                             httpService.handleSessionTimeout(request, error._401Subscriber);
                         }
-                        if (appManager && appManager.appOnServiceError) {
+                        if (appManager?.appOnServiceError) {
                             // Convert the angular HttpResponse to wm HttpResponse
                             const err = this.wmHttpResponse.angularToWmResponse(error);
                             // trigger the common error handler present in app.js

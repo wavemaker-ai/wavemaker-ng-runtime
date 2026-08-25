@@ -33,7 +33,7 @@ const WIDGET_INFO = { widgetType: 'wm-partialdialog' };
     ]
 })
 export class PartialDialogComponent extends BaseDialog implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate: TemplateRef<any>;
     @ContentChild(TemplateRef) dialogContent: TemplateRef<any>;
     @ContentChild('partial') partialRef;
@@ -69,7 +69,7 @@ export class PartialDialogComponent extends BaseDialog implements OnInit, OnDest
             {
                 class: `${DIALOG_CLS} ${dialogClass || ''}`,
                 backdrop,
-                keyboard: !toBoolean(modal)
+                keyboard: toBoolean(closable) ? true : !toBoolean(modal)
             },
             explicitContext
         );

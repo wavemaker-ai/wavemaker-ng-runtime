@@ -13,9 +13,9 @@ export class ShowInDeviceDirective implements OnDestroy {
     private boundOnResize: () => void; // MEMORY LEAK FIX: Store bound function for proper cleanup
     
     constructor(
-        private viewContainerRef: ViewContainerRef,
+        private readonly viewContainerRef: ViewContainerRef,
         inj: Injector,
-        private templateRef: TemplateRef<any>,
+        private readonly templateRef: TemplateRef<any>,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         extend(this.context, (inj as any)._lView[8], explicitContext);

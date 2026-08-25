@@ -36,13 +36,13 @@ export class BaseFieldValidations {
     // Inline form widget
     public formwidget;
     // Widget type
-    private widgettype;
+    private readonly widgettype;
     // From control
     private widgetControl;
     // Parent widget context Table, Form..
     private widgetContext;
     // Optional table column type quickedit newrow/ inline edit
-    private tableFieldType;
+    private readonly tableFieldType;
 
     private defaultValidatorMessages: any;
     private _syncValidators: any;
@@ -291,7 +291,7 @@ export class BaseFieldValidations {
     }
 
     setCustomValidationMessage() {
-        const fieldErrors = this.widgetControl && this.widgetControl.errors;
+        const fieldErrors = this.widgetControl?.errors;
 
         if (!fieldErrors) {
             return;

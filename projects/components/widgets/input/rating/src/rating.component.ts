@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
-import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import {generateGUId, noop} from '@wm/core';
 import { getOrderedDataset, provideAs, provideAsWidgetRef, styler, WmAppIconComponent } from '@wm/components/base';
@@ -27,7 +26,7 @@ const DEFAULT_RATING = 5;
     ]
 })
 export class RatingComponent extends DatasetAwareFormComponent implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public caption: string;
     public showcaptions: boolean;
@@ -36,7 +35,7 @@ export class RatingComponent extends DatasetAwareFormComponent implements OnDest
     private _selectedRatingValue;
     public ratingsWidth;
     public ratingItems;
-    private _id;
+    private readonly _id;
     public starsArray;
     public isDecimal=false;
 
@@ -111,7 +110,7 @@ export class RatingComponent extends DatasetAwareFormComponent implements OnDest
         for (let i = maxValue; i > 0; i--) {
             if (!data.length) {
                 ratingItems.push({key: i, value: i, index: i, label: i});
-            } else {
+            } else 
                 if (i > data.length) {
                     ratingItems.push({key: i, value: i, index: i, label: i});
                 } else {
@@ -119,7 +118,7 @@ export class RatingComponent extends DatasetAwareFormComponent implements OnDest
                     ratingItems = ratingItems.concat(data);
                     break;
                 }
-            }
+            
         }
 
         this.ratingItems = ratingItems;

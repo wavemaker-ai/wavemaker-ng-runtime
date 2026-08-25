@@ -1,7 +1,7 @@
 import { Attribute, Element, Text } from '@angular/compiler';
 
 import { DataType, FormWidgetType, getFormWidgetTemplate, getRequiredFormWidget, IDGenerator, isDateTimeType, checkIsCustomPipeExpression } from '@wm/core';
-import {getAttrMarkup, getDataSource, IBuildTaskDef, ImportDef, register} from '@wm/transpiler';
+import {getAttrMarkup, getDataSource, IBuildTaskDef, register} from '@wm/transpiler';
 
 import { EDIT_MODE, getDataTableFilterWidget, getEditModeWidget } from '../../../utils/utils';
 

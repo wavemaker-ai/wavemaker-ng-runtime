@@ -6,7 +6,7 @@ function* idGenerator(token) {
 }
 
 export class IDGenerator {
-    private generator: Iterator<any>;
+    private readonly generator: Iterator<any>;
 
     constructor(key: string) {
         this.generator = idGenerator(key);

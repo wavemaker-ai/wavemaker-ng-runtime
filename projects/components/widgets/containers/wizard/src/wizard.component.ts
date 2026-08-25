@@ -65,7 +65,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     exportAs: 'wmWizard'
 })
 export class WizardComponent extends StylableComponent implements OnInit, AfterContentInit, AfterViewInit, AfterViewChecked, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     @ContentChildren(WizardStepComponent) steps: QueryList<WizardStepComponent>;
     @ContentChild('wizardAction', { read: TemplateRef, descendants: false }) wizardAction: TemplateRef<any>;
@@ -89,7 +89,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     public fieldDefs;
     public type;
     public nodatamessage;
-    private dynamicComponentProvider;
+    private readonly dynamicComponentProvider;
     private _dynamicContext;
     private dynamicStepIndex;
     public dynamicWizard;
@@ -108,21 +108,21 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
 
     get showDoneBtn(): boolean {
         if (!this.currentStep) {
-            return;
+            return false;
         }
         return !this.hasNextStep && this.currentStep.enableDone;
     }
 
     get enablePrev(): boolean {
         if (!this.currentStep) {
-            return;
+            return false;
         }
         return this.currentStep.enablePrev;
     }
 
     get enableNext(): boolean {
         if (!this.currentStep) {
-            return;
+            return false;
         }
         return this.enablenext ? true : (this.currentStep.enableNext && this.currentStep.isValid);
     }
@@ -219,7 +219,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
 
     get enableDone(): boolean {
         if (!this.currentStep) {
-            return;
+            return false;
         }
         return this.currentStep.enableDone && this.currentStep.isValid;
     }
@@ -417,7 +417,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
      */
     private setDefaultStep(step: WizardStepComponent) {
         // If the default step has show true then only update the currentStep
-        if (step && step.show) {
+        if (step?.show) {
             this.currentStep = step;
             step.active = true;
             step.isInitialized = true;
@@ -464,7 +464,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         }
     }
 
-    private isPromise = (obj) => obj instanceof Promise || (obj !== null && typeof obj === 'object' && typeof obj.then === 'function' && typeof obj.catch === 'function');
+    private readonly isPromise = (obj) => obj instanceof Promise || (obj !== null && typeof obj === 'object' && typeof obj.then === 'function' && typeof obj.catch === 'function');
 
     // Method to navigate to next step
 
@@ -653,10 +653,10 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         setTimeout(() => {
 
 
-        var newWindowWidth = $(window).width();
+        const newWindowWidth = $(window).width();
         if(newWindowWidth < 768){
         $(".app-wizard-step.active .subtitle-wrapper .step-title").css({"height":"auto","display":"block"});
-        var subtitleTextLength = $(".app-wizard-step.active .subtitle-wrapper .step-title").height();
+        const subtitleTextLength = $(".app-wizard-step.active .subtitle-wrapper .step-title").height();
         $(".read_more").css("display","none");
         $(".app-wizard-step.active .subtitle-wrapper").removeClass("readmore_subtitle");
 
@@ -676,7 +676,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         $(".app-wizard-step.active .read_more").css("display","none");
         $(document).on("mouseup",function(e:any)
         {
-            var container = $(".subtitle-wrapper");
+            const container = $(".subtitle-wrapper");
             // if the target of the click isn't the container nor a descendant of the container
             if (!container.is(e.target) && container.has(e.target).length === 0)
             {

@@ -43,16 +43,16 @@ export class AppManagerService implements OnDestroy {
     private sessionTimeoutUnsubscribe: () => void; // MEMORY LEAK FIX: Store unsubscribe function
 
     constructor(
-        private $http: AbstractHttpService,
-        private $security: SecurityService,
-        private $dialog: AbstractDialogService,
-        private $router: Router,
-        private $app: App,
-        private $variables: VariablesService,
-        private $metadata: MetadataService,
-        private $spinner: AbstractSpinnerService,
-        private $i18n: AbstractI18nService,
-        private $datePipe: DatePipe,
+        private readonly $http: AbstractHttpService,
+        private readonly $security: SecurityService,
+        private readonly $dialog: AbstractDialogService,
+        private readonly $router: Router,
+        private readonly $app: App,
+        private readonly $variables: VariablesService,
+        private readonly $metadata: MetadataService,
+        private readonly $spinner: AbstractSpinnerService,
+        private readonly $i18n: AbstractI18nService,
+        private readonly $datePipe: DatePipe,
     ) {
         // register method to invoke on session timeout
         // MEMORY LEAK FIX: Store unsubscribe function for cleanup
@@ -68,9 +68,9 @@ export class AppManagerService implements OnDestroy {
                 if (active) {
                     let spinnerExists;
                     // WMS-21117 : Do not trigger spinner, if the current variable is same as spinner which is in context
-                    if (variable._spinnerId && variable._spinnerId.length) {
+                    if (variable._spinnerId?.length) {
                         forEach(variable._spinnerId, (item) => {
-                            if (item.slice(0, item.lastIndexOf('_')) === variable._id && (this.$spinner as any).messagesByContext && (this.$spinner as any).messagesByContext[variable.spinnerContext] &&
+                            if (item.slice(0, item.lastIndexOf('_')) === variable._id && (this.$spinner as any).messagesByContext?.[variable.spinnerContext] &&
                                 (variable.spinnerMessage === (this.$spinner as any).messagesByContext[variable.spinnerContext]["finalMessage"] || variable.spinnerMessage === (this.$spinner as any).messagesByContext[variable.spinnerContext][item])) {
                                 spinnerExists = true;
                                 return;
@@ -195,7 +195,7 @@ export class AppManagerService implements OnDestroy {
         }
         return this.$security.load().then(() => {
             const securityConfig = this.$security.get();
-            if (securityConfig && securityConfig.securityEnabled && securityConfig.authenticated) {
+            if (securityConfig?.securityEnabled && securityConfig.authenticated) {
                 loggedInUser.isAuthenticated = securityConfig.authenticated;
                 loggedInUser.roles           = securityConfig.userInfo.userRoles;
                 loggedInUser.name            = securityConfig.userInfo.userName;
@@ -204,7 +204,7 @@ export class AppManagerService implements OnDestroy {
                 loggedInUser.userAttributes  = securityConfig.userInfo.userAttributes; // assign the extra userAttributes for custom usage.
             } else {
                 this.clearLoggedInUserVariable(loggedInUser);
-                loggedInUser.isSecurityEnabled = securityConfig && securityConfig.securityEnabled;
+                loggedInUser.isSecurityEnabled = securityConfig?.securityEnabled;
                 throw null;
             }
             return securityConfig;
@@ -243,7 +243,7 @@ export class AppManagerService implements OnDestroy {
              * For preview, this.$security.getRedirectedRouteQueryParams() gets the queryparams form the activated route(pagewrappercomponent)
              * For deployed app, canactivate guard resolved to false and gets the queryparams from the canactivate gurard(no active route component)
              */
-            queryParams = (options && options.queryParams) || this.$security.getRedirectedRouteQueryParams();
+            queryParams = (options?.queryParams) || this.$security.getRedirectedRouteQueryParams();
             queryParams = this.$security.getQueryString(queryParams);
             queryParams = queryParams ? '?' + queryParams : '';
 
@@ -304,9 +304,9 @@ export class AppManagerService implements OnDestroy {
         const config = this.$security.get();
         let queryParamsObj = {};
         loginConfig = config.loginConfig;
-        this.lastLoggedUserId = config.userInfo && config.userInfo.userId;
+        this.lastLoggedUserId = config.userInfo?.userId;
         // if user found, 401 was thrown after session time
-        if (config.userInfo && config.userInfo.userName) {
+        if (config.userInfo?.userName) {
             config.authenticated = false;
             sessionTimeoutConfig = loginConfig.sessionTimeout || {'type': LOGIN_METHOD.DIALOG};
             sessionTimeoutMethod = sessionTimeoutConfig.type.toUpperCase();
@@ -346,7 +346,7 @@ export class AppManagerService implements OnDestroy {
                     // on app load, by default Home page is loaded
                     page = this.$security.getRedirectPage(config, page);
                     queryParamsObj['redirectTo'] = page;
-                    const extraQueryParams = (options && options.queryParams) || this.$security.getRedirectedRouteQueryParams();
+                    const extraQueryParams = (options?.queryParams) || this.$security.getRedirectedRouteQueryParams();
                     queryParamsObj = merge(queryParamsObj, extraQueryParams);
                     this.$router.navigate([loginConfig.pageName], {queryParams: queryParamsObj});
                     this.$app.landingPageName = loginConfig.pageName;

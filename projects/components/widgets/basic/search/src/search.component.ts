@@ -78,7 +78,7 @@ const WIDGET_CONFIG = { widgetType: 'wm-search', hostClass: 'input-group' };
     ]
 })
 export class SearchComponent extends DatasetAwareFormComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     public casesensitive: boolean;
     public searchkey: string;
     public queryModel: Array<DataSetItem> | string;
@@ -98,16 +98,16 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     public hint: string;
     public arialabel: string;
 
-    private app: App;
-    private typeaheadDataSource: Observable<any>;
-    private pagesize: any;
+    private readonly app: App;
+    private readonly typeaheadDataSource: Observable<any>;
+    private readonly pagesize: any;
     private page = 1;
     public _loadingItems: boolean;
     private dataProvider: IDataProvider;
     private result: Array<any>; // contains the search result i.e. matches
     private formattedDataset: any;
-    private isformfield: boolean;
-    private $typeaheadEvent: Event;
+    private readonly isformfield: boolean;
+    private readonly $typeaheadEvent: Event;
 
     public tabindex: number;
     public startIndex: number;
@@ -125,8 +125,8 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     @ViewChild('ulElement') ulElement: ElementRef;
     @ViewChildren('liElements') liElements: QueryList<ElementRef>;
 
-    private allowonlyselect: boolean;
-    private class: string;
+    private readonly allowonlyselect: boolean;
+    private readonly class: string;
 
     private lastSelectedIndex: number;
     private dataoptions: any;
@@ -139,12 +139,12 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
     private _datasource: any;
     private isScrolled: boolean;
     private parentEl: any;
-    private position: string;
+    private readonly position: string;
     private elIndex: number;
     private listenQuery: boolean;
     private _domUpdated: boolean;
-    private searchon: string;
-    private showclear: boolean;
+    private readonly searchon: string;
+    private readonly showclear: boolean;
     public matchmode: string;
     private clearData: boolean;
 
@@ -480,7 +480,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
         // WMS-22533: Before adding active typeahead el, check if the entered query matches with the active el or not
         const isQueryMatch = this.typeaheadContainer?.active?.value === this.query;
 
-        if (this.typeaheadContainer && this.typeaheadContainer.active && isQueryMatch) {
+        if (this.typeaheadContainer?.active && isQueryMatch) {
             item = this.typeaheadContainer.active.item;
         }
         $event = this.eventData($event, item || {});
@@ -653,14 +653,14 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
             this.queryModel = [selectedItem];
         } else if (this.datafield === ALLFIELDS && isObject(data)) {
             this.queryModel = this.getTransformedData(extractDataAsArray(data));
-        } else {
+        } else 
             // resetting the queryModel only when prevDatavalue is equal to data
             if ((this as any).prevDatavalue !== data) {
                 this.queryModel = undefined;
                 this.query = '';
                 return;
             }
-        }
+        
         this.updateDatavalueFromQueryModel();
 
         // Show the label value on input.
@@ -696,7 +696,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
             binddataset: this.binddataset,
             datasource: this.datasource,
             datafield: this.datafield,
-            hasData: this.dataset && this.dataset.length,
+            hasData: this.dataset?.length,
             query: query,
             isLocalFilter: !this.searchkey,
             searchKey: searchOnDataField ? this.datafield : this.searchkey,
@@ -727,7 +727,7 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
                     this.dataset = response;
                 }
 
-                if (this.dataProvider && this.dataProvider.hasMoreData) {
+                if (this.dataProvider?.hasMoreData) {
                     this.formattedDataset = this.formattedDataset.concat(response);
                 } else {
                     this.formattedDataset = response;

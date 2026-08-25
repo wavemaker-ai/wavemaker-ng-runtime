@@ -1,7 +1,7 @@
 import { Component, ViewChild } from "@angular/core";
 import { TextareaComponent } from "./textarea.component";
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from "../../../../base/src/test/common-widget.specs";
-import { FormsModule, NgModel } from "@angular/forms";
+import { FormsModule } from "@angular/forms";
 import { App, AppDefaults } from "@wm/core";
 import { ToDatePipe } from "@wm/components/base";
 import { DatePipe } from "@angular/common";

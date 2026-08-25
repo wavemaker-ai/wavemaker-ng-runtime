@@ -11,7 +11,7 @@ import {
     triggerFn
 } from '@wm/core';
 
-import {CONSTANTS, VARIABLE_CONSTANTS, WS_CONSTANTS} from '../../constants/variables.constants';
+import {VARIABLE_CONSTANTS, WS_CONSTANTS} from '../../constants/variables.constants';
 import {
     debounce, filter,
     forEach,
@@ -377,7 +377,7 @@ const downloadThroughIframe = (requestParams, success, dataBinding,error) => {
         iFrameElement.on("load", function () {
             if (completed) return;
             const text = iFrameElement.contents().find('body').text();
-            if (text && text.trim()) {
+            if (text?.trim()) {
                 completed = true;
                 let message;
                 try {
@@ -528,7 +528,7 @@ const getTargetNodeKey = (target) => {
      */
     let targetNodeKey;
     if (DOT_EXPR_REX.test(target)) {
-        targetNodeKey = target.replace(/^(\[["'])|(["']\])$/g, '');
+        targetNodeKey = target.replace(/(^\[["'])|(["']\]$)/g, '');
     } else {
         targetNodeKey = target.split('.').pop();
     }

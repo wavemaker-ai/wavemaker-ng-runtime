@@ -18,7 +18,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class CardContentComponent extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     @ViewChild('cardContentContainer') private cardContentContainerElRef: ElementRef;
 

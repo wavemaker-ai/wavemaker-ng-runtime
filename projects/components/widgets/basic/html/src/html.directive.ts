@@ -20,14 +20,14 @@ const WIDGET_CONFIG: IWidgetConfig = {
     exportAs: 'wmHtml'
 })
 export class HtmlDirective extends StylableComponent implements OnInit {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     public content: string;
 
     constructor(
         inj: Injector,
         @Attribute('height') height: string,
-        @Attribute('content.bind') private boundContent: string,
-        private sanitizePipe:SanitizePipe,
+        @Attribute('content.bind') private readonly boundContent: string,
+        private readonly sanitizePipe:SanitizePipe,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);
@@ -63,7 +63,7 @@ export class HtmlDirective extends StylableComponent implements OnInit {
             let safeValue = bindContent ? nv && bindContent.includes('trustAs:') : false;
             if (typeof nv === 'object' && safeValue) {
                 setProperty(this.nativeElement, 'innerHTML', nv[Object.keys(nv)[0]]);
-            }  else {
+            }  else 
                 // Guard against sanitizePipe being null/undefined
                 if (this.sanitizePipe) {
                     setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(nv, SecurityContext.HTML));
@@ -71,7 +71,7 @@ export class HtmlDirective extends StylableComponent implements OnInit {
                     // Fallback to textContent if sanitizePipe is not available
                     setProperty(this.nativeElement, 'textContent', nv);
                 }
-            }
+            
         } else {
             super.onPropertyChange(key, nv, ov);
         }

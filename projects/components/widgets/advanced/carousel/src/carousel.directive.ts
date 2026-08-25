@@ -33,7 +33,7 @@ const navigationClassMap = {
     exportAs: 'wmCarousel'
 })
 export class CarouselDirective extends StylableComponent implements AfterContentInit, OnDestroy, OnInit {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     private animator;
     private navigationClass;
@@ -49,7 +49,7 @@ export class CarouselDirective extends StylableComponent implements AfterContent
 
     @ContentChildren(SlideComponent) slides: QueryList<SlideComponent>;
 
-    constructor(public component: CarouselComponent, inj: Injector, private ngZone: NgZone, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(public component: CarouselComponent, inj: Injector, private readonly ngZone: NgZone, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
     }
@@ -73,7 +73,7 @@ export class CarouselDirective extends StylableComponent implements AfterContent
 
     private onSlidesRender(slides) {
         // if dynamic carousel, initialize the 'currentslide' property as the first object
-        if (this.fieldDefs && this.fieldDefs.length) {
+        if (this.fieldDefs?.length) {
             this.currentslide = this.fieldDefs[0];
         }
         if (slides.length) {
@@ -93,8 +93,8 @@ export class CarouselDirective extends StylableComponent implements AfterContent
 
     public onChangeCB(newIndex, oldIndex) {
         // assign current and previous slides on widget. In case of static carousel, fieldDefs will be undefined, hence the check
-        this.currentslide = this.fieldDefs && this.fieldDefs[newIndex];
-        this.previousslide = this.fieldDefs && this.fieldDefs[oldIndex];
+        this.currentslide = this.fieldDefs?.[newIndex];
+        this.previousslide = this.fieldDefs?.[oldIndex];
         this.invokeEventCallback('change', {newIndex: newIndex, oldIndex: oldIndex});
     }
 

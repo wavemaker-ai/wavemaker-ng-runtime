@@ -34,9 +34,9 @@ export class SharedStylesHost {
 @Injectable()
 export class WMDomSharedStylesHost extends SharedStylesHost implements OnDestroy {
   // Maps all registered host nodes to a list of style nodes that have been added to the host node.
-  private _hostNodes = new Map<Node, Node[]>();
+  private readonly _hostNodes = new Map<Node, Node[]>();
 
-  constructor(@Inject(DOCUMENT) private _doc: any) {
+  constructor(@Inject(DOCUMENT) private readonly _doc: any) {
     super();
     this._hostNodes.set(_doc.head, []);
   }

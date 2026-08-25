@@ -372,7 +372,7 @@ describe('PaginationComponent', () => {
             const mockError = 'Test error';
             mockDataSource.execute.mockRejectedValue(mockError);
             jest.spyOn(component, 'isDataSourceHasPaging').mockReturnValue(true);
-            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+            jest.spyOn(console, 'error').mockImplementation();
 
             component.getPageData({}, jest.fn());
 
@@ -771,7 +771,7 @@ describe('PaginationComponent', () => {
 
             // We need to recreate the debounced function to skip the actual debounce in tests
             component['_debouncedPageChanged'] = (event) => {
-                const currentPage = event && event.page;
+                const currentPage = event?.page;
                 if (currentPage !== component.dn.currentPage) {
                     const inst = component.parent || component;
                     component.dn.currentPage = currentPage;

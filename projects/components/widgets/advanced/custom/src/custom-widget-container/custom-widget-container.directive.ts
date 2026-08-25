@@ -1,7 +1,7 @@
 import {Attribute, Directive, ElementRef, Inject, Injector, OnInit, Optional} from '@angular/core';
 
 import { addClass, noop } from '@wm/core';
-import {PROP_TYPE, provideAs, provideAsWidgetRef, register, StylableComponent, styler} from '@wm/components/base';
+import {PROP_TYPE, provideAs, provideAsWidgetRef, register, styler} from '@wm/components/base';
 
 import { customWidgetProps } from './custom-widget.props';
 import { registerProps } from "../custom-widget-container/custom-widget.props";
@@ -29,7 +29,7 @@ declare const _;
     exportAs: 'wmWidgetContainer'
 })
 export class CustomWidgetContainerDirective extends DatasetAwareFormComponent implements OnInit {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     widgetType: string;
     name: string;
@@ -82,6 +82,7 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
             this.updateDataValue(value);
             return value;
         }
+        return undefined;
     }
 
     set datavalue(value) {
@@ -110,7 +111,7 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
         this.baseWidget = (this.nativeElement.children[0].children[0].querySelector(`[name=${this.baseWidgetName}]`) as any)?.widget;
         // if(this.asAttr)
         //     this.setBaseWidgetName(config.widgetType);
-        if (!config || !config.properties) {
+        if (!config?.properties) {
             return;
         }
         if (!registeredPropsSet.has(this.widgetType)) {
@@ -147,7 +148,7 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
     }
 
     updateDataValue(value) {
-        if(this.formControl && this.formControl.control && value !== this.formControl.control.value) {
+        if(this.formControl?.control && value !== this.formControl.control.value) {
             this.formControl.control.setValue(value);
             if (this.formControl.control.invalid) {
                 this.onErroSubject.next(null);

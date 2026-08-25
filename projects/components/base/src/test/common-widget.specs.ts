@@ -25,7 +25,7 @@ export interface ITestComponentDef {
 }
 
 export class ComponentTestBase {
-    private widgetDef: ITestComponentDef;
+    private readonly widgetDef: ITestComponentDef;
 
     constructor(widgetDef: ITestComponentDef) {
         this.widgetDef = widgetDef;
@@ -265,13 +265,11 @@ export class ComponentTestBase {
         describe(this.widgetDef.type + ': Styles verification :', () => {
 
             let component,
-                fixture,
-                widgetProps;
+                fixture;
 
             beforeEach(waitForAsync(() => {
                 fixture = compileTestComponent(this.widgetDef.testModuleDef, this.widgetDef.testComponent);
                 component = fixture.componentInstance.wmComponent;
-                widgetProps = component.widgetProps;
                 fixture.detectChanges();
             }));
 
@@ -340,9 +338,8 @@ export class ComponentTestBase {
                     // console.log(cssValue, 'vss*****');
                     if (initValue) {
                         if (cssName === 'backgroundimage') {
-                            initValue = initValue
                             // Normalize cssValue to ensure it matches the format of initValue
-                            const normalizeUrl = (url) => url.replace(/^url\("?|"?\)$/g, 'url("').replace('")', '")');
+                            const normalizeUrl = (url) => url.replace(/(^url\("?)|("?\)$)/g, 'url("').replace('")', '")');
                             expect(normalizeUrl(cssValue)).toBe(normalizeUrl(initValue));
                         } else if (cssName === 'fontsize') {
                             initValue = +(initValue);
@@ -351,7 +348,7 @@ export class ComponentTestBase {
                             expect(cssValue + fontUnit).toBe(initValue);
                         } else if (cssName === 'fontfamily') {
                             // Strip quotes from initValue for comparison
-                            initValue = initValue.replace(/^"|"$/g, '');
+                            initValue = initValue.replace(/(^")|("$)/g, '');
                             expect(cssValue).toBe(initValue);
                         } else if (cssName === 'color' || cssName === 'backgroundcolor' || cssName === 'bordercolor') {
                             initValue = initValue ? initValue.toLowerCase() : '';
@@ -385,14 +382,12 @@ export class ComponentTestBase {
            }
             let component,
                 fixture,
-                widgetProps,
                 $element,
                 $inputEl;
 
             beforeEach((() => {
                 fixture = compileTestComponent(this.widgetDef.testModuleDef, this.widgetDef.testComponent);
                 component = fixture.componentInstance.wmComponent;
-                widgetProps = component.widgetProps;
                 fixture.detectChanges();
             }));
 

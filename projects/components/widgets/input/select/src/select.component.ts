@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {AfterViewInit, Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
-import {NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {DataSource, isIos, removeAttr, setAttr, isSafari} from '@wm/core';
 import {provideAs, provideAsWidgetRef, styler, TextContentDirective} from '@wm/components/base';
 import {DatasetAwareFormComponent} from '@wm/components/input/dataset-aware-form';
@@ -22,7 +21,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-select', hostClass: 'app-select-wrapper'}
     ]
 })
 export class SelectComponent extends DatasetAwareFormComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public readonly: boolean;
     public placeholder: string;
@@ -40,7 +39,7 @@ export class SelectComponent extends DatasetAwareFormComponent implements AfterV
     @ViewChild('select', { static: true, read: ElementRef }) selectEl: ElementRef;
 
     set datasource(ds) {
-        if (ds && ds.execute && ds.execute(DataSource.Operation.IS_BOUND_TO_LOCALE)) {
+        if (ds?.execute?.(DataSource.Operation.IS_BOUND_TO_LOCALE)) {
             this.datavalue = ds.execute(DataSource.Operation.GET_DEFAULT_LOCALE);
         }
     }

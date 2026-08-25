@@ -12,11 +12,11 @@ import {intersection} from "lodash-es";
 export class RoleGuard {
 
     constructor(
-        private securityService: SecurityService,
-        private authGuard: AuthGuard,
-        private toasterService: AbstractToasterService,
-        private app: App,
-        private appManager: AppManagerService
+        private readonly securityService: SecurityService,
+        private readonly authGuard: AuthGuard,
+        private readonly toasterService: AbstractToasterService,
+        private readonly app: App,
+        private readonly appManager: AppManagerService
     ) {}
 
     canActivate(route: ActivatedRouteSnapshot): Promise<boolean> {

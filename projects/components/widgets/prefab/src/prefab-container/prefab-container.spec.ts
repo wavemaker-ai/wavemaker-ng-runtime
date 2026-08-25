@@ -15,7 +15,6 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 class TestComponent { }
 
 describe('PrefabContainerDirective', () => {
-    let component: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let directiveElement: DebugElement;
     let directive: PrefabContainerDirective;
@@ -54,7 +53,6 @@ describe('PrefabContainerDirective', () => {
 
         // Create the test fixture and component instance
         fixture = TestBed.createComponent(TestComponent);
-        component = fixture.componentInstance;
 
         // Find the element with the directive applied
         directiveElement = fixture.debugElement.query(By.directive(PrefabContainerDirective));

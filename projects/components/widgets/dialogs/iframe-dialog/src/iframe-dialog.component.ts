@@ -32,7 +32,7 @@ const WIDGET_INFO = {widgetType: 'wm-iframedialog'};
     ]
 })
 export class IframeDialogComponent extends BaseDialog implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     @ViewChild('dialogTemplate' , { static: true }) dialogTemplate: TemplateRef<any>;
 
@@ -60,7 +60,7 @@ export class IframeDialogComponent extends BaseDialog implements OnInit, OnDestr
             {
                 class: `${DIALOG_CLS} ${dialogClass || ''}`,
                 backdrop,
-                keyboard: !toBoolean(modal)
+                keyboard: toBoolean(closable) ? true : !toBoolean(modal)
             },
             explicitContext
         );

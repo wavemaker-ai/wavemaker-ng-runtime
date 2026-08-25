@@ -27,8 +27,9 @@
 		if (!rootNodes) return;
 
 		var focusSelectedNode = function () {
-			if ((selectedNodes = zTree.getSelectedNodes()) && selectedNodes.length) {
-				$("#" + selectedNodes[0].tId).focus();
+			var currentSelectedNodes = zTree.getSelectedNodes();
+			if (currentSelectedNodes && currentSelectedNodes.length) {
+				$("#" + currentSelectedNodes[0].tId).focus();
 			}
 		}
 

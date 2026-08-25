@@ -154,7 +154,7 @@ export class LoginActionManager extends BaseActionManager {
                                 // simply reset the URL, route handling will take care of page redirection
                                 routerService.navigate([`/`]);
                             }
-                        } else {
+                        } else 
                         // login after a session timeout
                             // if redirect page found and same user logs in again, just navigate to redirect page
                             if (!isEmpty(redirectPage)) {
@@ -174,7 +174,7 @@ export class LoginActionManager extends BaseActionManager {
                                 }
                             }
 
-                        }
+                        
                     }
                     // EVENT: ON_CAN_UPDATE
                     initiateCallback(VARIABLE_CONSTANTS.EVENT.CAN_UPDATE, variable, get(config, 'userInfo'));

@@ -69,7 +69,7 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
 
     private isTimeOpen = false;
 
-    private appLocale: any;
+    private readonly appLocale: any;
 
     @ViewChild('datetimepickerTemplate' , { static: true }) datetimepickerTemplate: TemplateRef<any>;
 
@@ -104,7 +104,7 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
 
     constructor(
         protected inj: Injector,
-        private bsModalService: BsModalService) {
+        private readonly bsModalService: BsModalService) {
         this.appLocale = inj.get(App).appLocale || {};
     }
 
@@ -174,6 +174,7 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
         if (this._displayFormat) {
             return this._displayFormat;
         }
+        return undefined;
     }
     /**
      * This method is used to highlight the current date

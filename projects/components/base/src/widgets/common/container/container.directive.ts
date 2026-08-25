@@ -7,7 +7,6 @@ import { IWidgetConfig } from '../../framework/types';
 import { registerProps } from './container.props';
 import { provideAsWidgetRef } from '../../../utils/widget-utils';
 import {BaseContainerComponent} from "../base/base-container.component";
-import { AutoLayoutUtils } from '../../../utils/autolayout-utils';
 import { AutoLayout } from '../../../decorators/autolayout.decorator';
 
 const DEFAULT_CLS = 'app-container';
@@ -25,7 +24,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class ContainerDirective extends BaseContainerComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     isPrism: boolean = false;
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext?: any, public app?: App) {

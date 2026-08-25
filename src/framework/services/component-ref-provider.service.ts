@@ -28,7 +28,7 @@ export class ComponentRefProviderService extends ComponentRefProvider {
         componentCache.get(type).set(name, { ref, componentFactory });
     }
 
-    constructor(@Inject(LazyComponentRefProviderService) private lazyComponentLoader: LazyComponentRefProviderService) {
+    constructor(@Inject(LazyComponentRefProviderService) private readonly lazyComponentLoader: LazyComponentRefProviderService) {
         super();
     }
 

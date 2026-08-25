@@ -9,7 +9,7 @@ export const fullNameValidator = (field, form) => {
 export const registerFullNameValidator = (field, form) => {
     if (field.value) {
         return new Promise<void>(function (resolve, reject) {
-            var emailExists = ['test'].filter(function (data) {
+            const emailExists = ['test'].filter(function (data) {
                 if (data === field.value) {
                     return true;
                 }

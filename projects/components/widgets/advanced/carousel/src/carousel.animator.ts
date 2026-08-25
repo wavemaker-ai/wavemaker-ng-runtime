@@ -9,7 +9,7 @@ declare const $;
 
 export class CarouselAnimator extends SwipeAnimation {
 
-    private _$el;
+    private readonly _$el;
     private _activeIndex = 0;
     private _animationPaused = false;
     private _indicators;
@@ -20,7 +20,7 @@ export class CarouselAnimator extends SwipeAnimation {
     private _width;
     private _oldIndex = 0;
 
-    public constructor(private carousel: CarouselDirective, private interval: number, private ngZone: NgZone) {
+    public constructor(private readonly carousel: CarouselDirective, private readonly interval: number, private readonly ngZone: NgZone) {
         super();
         const self = this;
         this._$el = $(this.carousel.getNativeElement()).find('>.carousel');

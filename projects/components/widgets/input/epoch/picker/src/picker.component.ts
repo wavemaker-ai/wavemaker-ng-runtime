@@ -104,7 +104,7 @@ export class PickerComponent implements AfterViewInit {
 
 class PickerAnimator {
 
-    constructor(private picker: PickerComponent) {
+    constructor(private readonly picker: PickerComponent) {
         let lastSelectedIndex = picker.selectedIndex + picker.noOfEmptyElements;
         const computeIndex = (d: number) => lastSelectedIndex + Math.floor(d / 16);
         this.select(lastSelectedIndex);

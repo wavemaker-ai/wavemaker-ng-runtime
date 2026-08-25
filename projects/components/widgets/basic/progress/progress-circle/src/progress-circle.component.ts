@@ -1,7 +1,5 @@
-import { NgCircleProgressModule } from 'ng-circle-progress';
+import { NgCircleProgressModule, CircleProgressComponent, CircleProgressOptionsInterface } from 'ng-circle-progress';
 import {AfterViewInit, Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
-import {CircleProgressComponent, CircleProgressOptionsInterface} from 'ng-circle-progress';
-
 
 import {IRedrawableComponent, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
 import {registerProps} from './progress-circle.props';
@@ -35,8 +33,6 @@ export const TYPE_CLASS_MAP_PC = {
     'danger': 'progress-circle-danger',
 };
 
-
-
 @Component({
     standalone: true,
     imports: [NgCircleProgressModule],
@@ -48,7 +44,7 @@ export const TYPE_CLASS_MAP_PC = {
     exportAs: 'wmProgressCircle'
 })
 export class ProgressCircleComponent extends StylableComponent implements AfterViewInit, OnDestroy, IRedrawableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public displayformat: string;
     public datavalue: string;
@@ -66,7 +62,6 @@ export class ProgressCircleComponent extends StylableComponent implements AfterV
     public displayValue: string;
 
     @ViewChild(CircleProgressComponent, { static: true }) circleRef: CircleProgressComponent;
-
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);

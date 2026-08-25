@@ -65,17 +65,17 @@ const FILE_TYPES = {
     ]
 })
 export class FormFieldDirective extends StylableComponent implements OnInit, AfterContentInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     @ContentChild('formWidget', {static: true}) formWidget;
     @ContentChild('formWidgetMax') formWidgetMax;
 
-    private fb;
-    private viewport;
+    private readonly fb;
+    private readonly viewport;
 
     // excludeProps is used to store the props that should not be applied on inner widget
-    private excludeProps;
-    private _validators;
+    private readonly excludeProps;
+    private readonly _validators;
     private _oldUploadVal;
 
     ngform: FormGroup;
@@ -122,15 +122,15 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
     public _fieldName;
 
     private _debounceSetUpValidators;
-    private _initPropsRes;
-    private parentList;
+    private readonly _initPropsRes;
+    private readonly parentList;
     private showPendingSpinner: boolean;
     private _activeField: boolean;
     private notifyForFields: any;
     private fieldValidations;
     private _triggeredByUser: boolean;
     private _clicktriggeredByUser: boolean;
-    private app: App;
+    private readonly app: App;
 
     @HostListener('keydown', ['$event']) onKeydownHandler(event: KeyboardEvent) {
         this._triggeredByUser = true;
@@ -140,7 +140,7 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
         this._clicktriggeredByUser = true;
     }
 
-    private isFocused;
+    private readonly isFocused;
     constructor(
         inj: Injector,
         form: FormComponent,
@@ -234,7 +234,6 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
 
     _onBlurField($evt) {
         $($evt.target).closest('.live-field').removeClass('active');
-        const ele = this.nativeElement.querySelector('p.text-danger');
         // Fix for [WMS-23959]: ADA issue - adding aria-describedby, aria-invalid, __errormsg attributes only when the form field is invalid , else removing the attributes
         this.setAriaAttributes();
         this._activeField = false;
@@ -311,7 +310,7 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
 
     // Method to set the properties on inner form widget
     setFormWidget(key, val) {
-        if (this.formWidget && this.formWidget.widget) {
+        if (this.formWidget?.widget) {
             if(key === 'inputtype' && this.widgettype === FormWidgetType.TEXT) {
                 key = 'type';
             }
@@ -407,7 +406,7 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
     }
 
     get datavalue() {
-        return this.formWidget && this.formWidget.datavalue;
+        return this.formWidget?.datavalue;
     }
 
     set datavalue(val) {
@@ -425,7 +424,7 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
     }
 
     get maxValue() {
-        return this.formWidgetMax && this.formWidgetMax.datavalue;
+        return this.formWidgetMax?.datavalue;
     }
 
     set maxValue(val) {
@@ -444,27 +443,27 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
 
     // Get the reactive form control
     get _control() {
-        return this.ngform && this.ngform.controls[this._fieldName];
+        return this.ngform?.controls[this._fieldName];
     }
 
     // Get the reactive max form control
     get _maxControl() {
-        return this.ngform && this.ngform.controls[this._fieldName + '_max'];
+        return this.ngform?.controls[this._fieldName + '_max'];
     }
 
     // Get the displayValue
     get displayValue() {
-        return this.formWidget && this.formWidget.displayValue;
+        return this.formWidget?.displayValue;
     }
 
     //Get the timestamp
     get timestamp(){
-        return this.formWidget && this.formWidget.timestamp;
+        return this.formWidget?.timestamp;
     }
 
     //Get the charlength
     get charlength(){
-        return this.formWidget && this.formWidget.charlength;
+        return this.formWidget?.charlength;
     }
 
     // Create the reactive form control
@@ -488,7 +487,7 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
                 this.app.notify('captionPositionAnimate', {
                     displayVal: hasValue,
                     nativeEl: captionEl,
-                    isSelectMultiple: this.formWidget && this.formWidget.multiple,
+                    isSelectMultiple: this.formWidget?.multiple,
                     isFocused: this._activeField
                 });
             }
@@ -552,7 +551,7 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
 
     resetDisplayInput() {
         if ((!isDefined(this.value) || this.value === '')) {
-            this.formWidget && this.formWidget.resetDisplayInput && this.formWidget.resetDisplayInput();
+            this.formWidget?.resetDisplayInput?.();
         }
     }
 
@@ -645,11 +644,11 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
                 if (!this['tablet-display']) {
                     this.widget.show = false;
                 }
-            } else {
+            } else 
                 if (!this['pc-display']) {
                     this.widget.show = false;
                 }
-            }
+            
 
             this.fieldDefConfig.displaname = this.displayname;
             this.fieldDefConfig.show = this.show;

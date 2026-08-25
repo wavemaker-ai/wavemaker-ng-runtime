@@ -59,7 +59,7 @@ export class PrefabDirective extends StylableComponent implements OnDestroy {
     }
 
     public setProps(config) {
-        if (!config || !config.properties) {
+        if (!config?.properties) {
             return;
         }
 
