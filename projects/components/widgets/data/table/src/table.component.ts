@@ -2469,6 +2469,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             case 'show':
                 if (nv) {
                     this.invokeEventCallback('show');
+                    // recompute layout now that the table is visible again
+                    if (this.datagridElement) {
+                        this.redraw(false);
+                    }
                 } else {
                     this.invokeEventCallback('hide');
                 }
@@ -2781,7 +2785,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.datagridElement.datatable(this.gridOptions);
         } else {
             setTimeout(() => {
-                this.callDataGridMethod('setColGroupWidths');
+                this.callDataGridMethod(forceRender === false ? 'refreshColumnWidths' : 'setColGroupWidths');
                 this.callDataGridMethod('addOrRemoveScroll');
             });
         }
