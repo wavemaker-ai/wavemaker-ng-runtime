@@ -107,6 +107,15 @@ export class VariablesService {
             value: v
         };
     }
+    processSpinnerMessageBinding(variable: any, scope: any) {
+        if (!variable.spinnerMessage?.startsWith?.('bind:')) {
+            return;
+        }
+        const expr = variable.spinnerMessage.replace('bind:', '');
+        variable.spinnerMessage = '';
+        const watchExpression = $watch(expr, scope, {}, nv => variable.spinnerMessage = nv ?? '');
+        scope.registerDestroyListener?.(watchExpression);
+    }
 
     processBinding(variable: any, context: any, bindSource?: string, bindTarget?: string) {
         bindSource = bindSource || 'dataBinding';
@@ -163,6 +172,7 @@ export class VariablesService {
             const params: any = {};
             varInstance = VariableFactory.create(variablesJson[variableName], scope);
             varInstance.init();
+            this.processSpinnerMessageBinding(varInstance, scope);
            if (this.isVariableSeperated(variablesJson, variableName)) {
                this.processBinding(varInstance, scope, 'dataBinding', this.getBindSourceTarget(varInstance));
                varInstance.httpService = this.httpService;
@@ -183,7 +193,7 @@ export class VariablesService {
 
            }
 
-           if (this.isVariableSeperated(variablesJson, variableName) || variablesJson[variableName].category === 'wm.TimerVariable') {
+           if (this.isVariableSeperated(variablesJson, variableName) || variablesJson[variableName].category === 'wm.TimerAction') {
                for (const e in VARIABLE_CONSTANTS.EVENT) {
                    if (varInstance[VARIABLE_CONSTANTS.EVENT[e]]) {
                        varInstance[VARIABLE_CONSTANTS.EVENT[e]] = $parseEvent(varInstance[VARIABLE_CONSTANTS.EVENT[e]]);

@@ -2331,7 +2331,7 @@ $.widget('wm.datatable', {
     },
     _getWmVariableRowLocator: function (rowId) {
         var liveRow = this.options.data[parseInt(rowId, 10)];
-        return (liveRow && liveRow.$$wmSourceListIndex != null) ? liveRow.$$wmSourceListIndex : (liveRow || parseInt(rowId, 10));
+        return (liveRow && liveRow.$$wmSourceListIndex != null) ? liveRow.$$wmSourceListIndex : parseInt(rowId, 10);
     },
     /* Toggles the edit state of a row. */
     toggleEditRow: function (e, options) {
@@ -3814,9 +3814,16 @@ $.widget('wm.datatable', {
                 this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
                 this.options.getCurrentPage() === 1)) {
                 this.gridContainer.addClass("show-msg");
+
+                if (state === 'loading' && !isScrollOrOndemand &&
+                    this.options.lastActionPerformed !== this.options.ACTIONS.EDIT &&
+                    this.options.lastActionPerformed !== this.options.ACTIONS.DELETE) {
+                    this.gridElement.addClass('hidden');
+                }
             }
         } else {
             this.gridContainer.removeClass('show-msg');
+            this.gridElement.removeClass('hidden');
 
             // In case of quickeditmode, if active row is found, focus the row and bind the event listeners to the row
             if (this.options.editmode === this.CONSTANTS.QUICK_EDIT) {

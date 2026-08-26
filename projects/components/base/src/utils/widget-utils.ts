@@ -521,13 +521,12 @@ export const extractDataSourceName = (bindDataSource) => {
     if (!bindDataSource) {
         return;
     }
+    let dataSourceName;
     const parts = bindDataSource.split('.');
     if (parts.length > 1 && parts[0] === 'Variables') {
-        return parts[1];
+        dataSourceName = parts[1];
     }
-    if (parts[0] === 'App' && parts[1] === 'activePage' && parts[2] === 'Variables' && parts[3]) {
-        return parts[3];
-    }
+    return dataSourceName;
 }
 
 export const setFocusTrap = (container, allowOutsideClick, setReturnFocusElement?) => {
@@ -536,6 +535,7 @@ export const setFocusTrap = (container, allowOutsideClick, setReturnFocusElement
         onDeactivate: () => container.classList.remove('is-active'),
         allowOutsideClick: allowOutsideClick,
         setReturnFocus: setReturnFocusElement,
+        preventScroll: true,
     });
 }
 
