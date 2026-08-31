@@ -22,7 +22,6 @@ import {
     compileTestComponent,
     getHtmlSelectorElement,
     checkElementClass,
-    notHavingTheAttribute,
     hasAttributeCheck,
     onClickCheckTaglengthOnBody,
     mockApp
@@ -105,7 +104,7 @@ class DatetimeWrapperComponent {
 
 const dateComponentModuleDef: ITestModuleDef = {
     declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule, TimepickerModule, BsDatepickerModule],
     providers: [
         { provide: Router, useValue: Router },
         { provide: App, useValue: mockApp },
@@ -188,8 +187,11 @@ describe("DatetimeComponent", () => {
 
 
     /************************* Properties starts ****************************************** **/
-    it('should not add the hidden property, element always visible', fakeAsync(async () => {
-        await notHavingTheAttribute(fixture, '.app-datetime', 'hidden');
+    it('should not add the hidden property, element always visible', fakeAsync(() => {
+        fixture.detectChanges();
+        tick();
+        const element = getHtmlSelectorElement(fixture, dateComponentDef.widgetSelector);
+        expect(element.nativeElement.hasAttribute('hidden')).toBe(false);
     }));
 
     it("should not show the calendar panel on click the input control (show date picker on only button click) ", waitForAsync(() => {
@@ -379,7 +381,7 @@ describe("DatetimeComponent", () => {
 
 const dateComponentLocaleModuleDef: ITestModuleDef = {
     declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule, TimepickerModule, BsDatepickerModule],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: LOCALE_ID, useValue: 'de' },
@@ -1024,7 +1026,7 @@ describe(('Datetime Component with Localization'), () => {
 
 const dateComponentROLocaleModuleDef: ITestModuleDef = {
     declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule, TimepickerModule, BsDatepickerModule],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: LOCALE_ID, useValue: 'ro' },

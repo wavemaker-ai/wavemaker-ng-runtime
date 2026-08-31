@@ -38,7 +38,7 @@ class ChipsWrapperComponent implements OnInit {
 const testModuleDef: ITestModuleDef = {
     imports: [
         FormsModule,
-        TypeaheadModule.forRoot(),
+        TypeaheadModule,
         ChipsComponent, SearchComponent
     ],
     declarations: [ChipsWrapperComponent],

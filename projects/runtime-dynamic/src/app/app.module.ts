@@ -1,4 +1,4 @@
-import { Injector, ModuleWithProviders, NgModule } from '@angular/core';
+import { Injector, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { RouteReuseStrategy, RouterModule } from '@angular/router';
@@ -187,18 +187,6 @@ if (xsrfHeaderName) {
 }
 export const httpClientXsrfModule = HttpClientXsrfModule.withOptions(xsrfOptions);
 
-export const modalModule: ModuleWithProviders<ModalModule> = ModalModule.forRoot();
-export const bsDatePickerModule: ModuleWithProviders<BsDatepickerModule> = BsDatepickerModule.forRoot();
-export const timepickerModule: ModuleWithProviders<ngxTimepickerModule> = ngxTimepickerModule.forRoot();
-export const bsDropdownModule: ModuleWithProviders<BsDropdownModule> = BsDropdownModule.forRoot();
-export const paginationModule: ModuleWithProviders<ngxPaginationModule> = ngxPaginationModule.forRoot();
-export const typeaheadModule: ModuleWithProviders<TypeaheadModule> = TypeaheadModule.forRoot();
-export const progressbarModule: ModuleWithProviders<ProgressbarModule> = ProgressbarModule.forRoot();
-export const carouselModule: ModuleWithProviders<ngxCarouselModule> = ngxCarouselModule.forRoot();
-export const popoverModule: ModuleWithProviders<ngxPopoverModule> = ngxPopoverModule.forRoot();
-export const ngCircleProgressModule: ModuleWithProviders<NgCircleProgressModule> = NgCircleProgressModule.forRoot({});
-export const tooltipModule: ModuleWithProviders<TooltipModule> = TooltipModule.forRoot();
-
 const componentsModule = [
     // NGX Bootstrap
     BsDatepickerModule,
@@ -343,17 +331,17 @@ REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule as any, ReactiveFormsMo
         RouterModule,
         HttpClientModule,
 
-        modalModule,
-        bsDatePickerModule,
-        timepickerModule,
-        bsDropdownModule,
-        paginationModule,
-        typeaheadModule,
-        tooltipModule,
-        progressbarModule,
-        carouselModule,
-        popoverModule,
-        ngCircleProgressModule,
+        ModalModule,
+        BsDatepickerModule,
+        ngxTimepickerModule,
+        BsDropdownModule,
+        ngxPaginationModule,
+        TypeaheadModule,
+        TooltipModule,
+        ProgressbarModule,
+        ngxCarouselModule,
+        ngxPopoverModule,
+        NgCircleProgressModule,
 
         routerModule,
         toastrModule,
