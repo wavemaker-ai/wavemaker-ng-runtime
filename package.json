@@ -13,7 +13,6 @@
         "lint": "eslint src/",
         "e2e": "./node_modules/.bin/ng e2e",
         "generate-deps": "node generate-dependency-report.js",
-        "postinstall": "if [ -d .yalc/@wavemaker-ai/angular-app ]; then npm install --prefix .yalc/@wavemaker-ai/angular-app --no-audit --no-fund; fi",
         "optimizecss": "gulp --gulpfile build-scripts/optimize-css.gulpfile.js",
         "owasp": "owasp-dependency-check --project \"wavemaker-ng-runtime\" -f \"ALL\""
     },
@@ -67,7 +66,7 @@
     },
     "devDependencies": {
         "@ampproject/rollup-plugin-closure-compiler": "0.27.0",
-        "@angular-builders/custom-webpack": "21.0.3",
+        "@angular-builders/custom-webpack": "^8.4.1",
         "@angular-devkit/build-angular": "21.2.20",
         "@angular-eslint/builder": "21.4.0",
         "@angular-eslint/eslint-plugin": "21.4.0",
@@ -102,7 +101,7 @@
         "license-checker": "25.0.1",
         "moment-locales-webpack-plugin": "1.2.0",
         "ng-packagr": "21.2.3",
-        "owasp-dependency-check": "0.0.25",
+        "owasp-dependency-check": "^0.0.3",
         "rimraf": "6.0.1",
         "rollup": "4.60.1",
         "sonarqube-scanner": "5.0.0",
