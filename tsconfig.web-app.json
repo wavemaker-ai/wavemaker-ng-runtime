@@ -7,15 +7,16 @@
         "sourceMap": true,
         "declaration": false,
         "target": "es2022",
-        "module": "es2020",
-        "moduleResolution": "node",
+        "module": "es2022",
+        "moduleResolution": "bundler",
+        "esModuleInterop": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "typeRoots": [
             "node_modules/@types"
         ],
         "lib": [
-            "es2018",
+            "es2022",
             "dom"
         ],
         "paths": {
@@ -33,6 +34,17 @@
             ],
             "@wm/core": [
                 "libraries/core"
+            ],
+            "@wavemaker-ai/variables": [
+                ".yalc/@wavemaker-ai/variables/dist/es2015/index",
+                "node_modules/@wavemaker-ai/variables/dist/es2015/index",
+                ".yalc/@wavemaker-ai/variables/index"
+            ],
+            "@wavemaker-ai/custom-widgets-m3": [
+                "node_modules/@wavemaker-ai/custom-widgets-m3/"
+            ],
+            "@wm/components/base": [
+                "libraries/components/base"
             ],
             "@wm/components/basic/*": [
                 "libraries/components/basic/*"
@@ -73,9 +85,12 @@
             "@wm/runtime/dynamic": [
                 "libraries/runtime/dynamic"
             ]
-        }
+        },
+        "useDefineForClassFields": false
     },
-    "angularCompilerOptions":{
-        "compilationMode": "full"
+    "angularCompilerOptions": {
+        "compilationMode": "full",
+        "strictMetadataEmit": false,
+        "strictTemplates": false
     }
 }

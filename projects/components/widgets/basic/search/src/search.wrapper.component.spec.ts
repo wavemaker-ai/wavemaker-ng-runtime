@@ -78,7 +78,7 @@ class SearchWrapperComponent {
 const testModuleDef: ITestModuleDef = {
     imports: [
         FormsModule,
-        TypeaheadModule.forRoot(),
+        TypeaheadModule,
         SearchComponent, ScrollableDirective, InputTextComponent
     ],
     declarations: [SearchWrapperComponent],

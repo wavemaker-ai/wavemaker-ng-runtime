@@ -54,3 +54,7 @@ dependency-report.html
 
 .nx/cache
 .nx/workspace-data
+
+# Local Cursor AI rules (personal, not committed)
+.cursor/rules/karpathy-guidelines.mdc
+
