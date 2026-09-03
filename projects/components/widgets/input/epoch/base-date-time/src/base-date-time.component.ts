@@ -292,21 +292,24 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
     /**
      * This method is used to highlight the current date
      */
-    protected hightlightToday(newDate) {
-        if(this.datavalue) return;
-        const activeMonth = $(`.bs-datepicker-head .current`).first().text();
-        const activeYear =  $(".bs-datepicker-head .current").eq(1).text();
-        const month = new Date(newDate).toLocaleString('default', { month: 'long' });
-        const year = newDate.getFullYear().toString();
-        if(activeMonth == month && activeYear == new Date().getFullYear() && newDate.getDate() === new Date().getDate() && newDate.getMonth() === new Date().getMonth() && newDate.getFullYear() === new Date().getFullYear()) {
-            const toDay = new Date().getDate().toString();
-            filter($(`span:contains(${toDay})`).not('.is-other-month'), (obj) => {
-                if ($(obj).text() === toDay) {
-                    $(obj).addClass('current-date text-info');
-                }
-            });
-        }
-    }
+    // protected hightlightToday(newDate) {
+    //     if(this.datavalue) return;
+    //     const activeMonth = $(`.bs-datepicker-head .current span`).first().text().trim();
+    //     const activeYear =  $(".bs-datepicker-head .current").eq(1).text();
+    //     const month = new Date(newDate).toLocaleString('default', { month: 'long' });
+    //     const year = newDate.getFullYear().toString();
+    //     if(activeMonth == month && activeYear == new Date().getFullYear() && newDate.getDate() === new Date().getDate() && newDate.getMonth() === new Date().getMonth() && newDate.getFullYear() === new Date().getFullYear()) {
+    //         const toDay = new Date().getDate().toString();
+    //         filter($(`span:contains(${toDay})`).not('.is-other-month'), (obj) => {
+    //             if ($(obj).text() === toDay) {
+    //                 $(obj).addClass('current-date text-info');
+    //                 $(obj).off('mouseenter.dateHover').on('mouseenter.dateHover', () => {
+    //                   setTimeout(()=>{ this.hightlightToday(new Date())})
+    //                 });
+    //             }
+    //         });
+    //     }
+    // }
 
     /**
      * This method is used to find the new date is from another year or not
@@ -378,13 +381,14 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                     $(obj).attr('aria-label', moment(newDate).format('dddd, MMMM Do YYYY'));
                     $('[bsdatepickerdaydecorator]').not('.is-other-month').attr('tabindex', '-1');
                     $(obj).attr('tabindex', '0');
-                    $(obj).focus();
+                    setTimeout(()=>{ $(obj).focus();},10)
+                    // $(obj).focus();
                     this.activeDate = newDate;
                 }
             });
-            if (newDate.getDate() === new Date().getDate() && newDate.getMonth() === new Date().getMonth() && newDate.getFullYear() === new Date().getFullYear()) {
-                this.hightlightToday(newDate);
-            }
+            // if (newDate.getMonth() === new Date().getMonth() && newDate.getFullYear() === new Date().getFullYear()) {
+            //     this.hightlightToday(new Date());
+            // }
         });
 
     }
@@ -705,8 +709,9 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         // setTimeout is used so that by then time input has the updated value. focus is setting back to the input field
         this.elementScope.ngZone.runOutsideAngular(() => {
             setTimeout(() => {
-                $('timepicker .form-group').first().find('> input.form-control').focus();
-            });
+                const hoursInput = $('timepicker .form-group').first().find('> input.form-control')[0] as HTMLElement;
+                hoursInput?.focus({ preventScroll: true });
+            },10);
         });
 
 
@@ -927,10 +932,10 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                 this.setFocusForDate(-1);
             }
             var prevMon = this.getMonth(this.activeDate, -1);
-            const current = new Date();
-            if(prevMon.date.getMonth()===current.getMonth() && prevMon.date.getFullYear()===current.getFullYear()) {
-                this.hightlightToday(new Date());
-            }
+            // const current = new Date();
+            // if(prevMon.date.getMonth()===current.getMonth() && prevMon.date.getFullYear()===current.getFullYear()) {
+            //     this.hightlightToday(new Date());
+            // }
             setTimeout(() => {
                 $(".bs-datepicker-head .previous span").attr("aria-hidden", 'true');
                 $(".bs-datepicker-head .next span").attr("aria-hidden", 'true');
@@ -954,10 +959,10 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                 this.setFocusForDate(1);
             }
             var nextMon = this.getMonth(this.activeDate, 1);
-            const current = new Date();
-            if (nextMon.date.getMonth() === current.getMonth() && nextMon.date.getFullYear() === current.getFullYear()) {
-                this.hightlightToday(current);
-            }
+            // const current = new Date();
+            // if (nextMon.date.getMonth() === current.getMonth() && nextMon.date.getFullYear() === current.getFullYear()) {
+            //     this.hightlightToday(current);
+            // }
             setTimeout(() => {
                 $(".bs-datepicker-head .previous span").attr("aria-hidden", 'true');
                 $(".bs-datepicker-head .next span").attr("aria-hidden", 'true');
@@ -1024,7 +1029,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
     }
 
     onPropertyChange(key, nv, ov?) {
-
+        const isPristine=this.formControl?.pristine;
         if (key === 'tabindex') {
             return;
         }
@@ -1080,7 +1085,9 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         } else {
             super.onPropertyChange(key, nv, ov);
         }
-
+        if((key === 'mindate'||key === 'maxdate'||key === 'excludedates'|| key === 'excludedays') && isPristine) {
+            this.formControl?.control?.markAsPristine()
+        }
     }
 
     ngAfterViewInit() {

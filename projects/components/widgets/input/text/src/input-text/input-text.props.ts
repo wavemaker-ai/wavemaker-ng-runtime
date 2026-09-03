@@ -32,7 +32,11 @@ export const inputTextTypeProps = new Map(
         ['type', {value: 'text', ...PROP_STRING}],
         ['updateon', PROP_STRING],
         ['conditionalclass', PROP_ANY],
-        ['conditionalstyle', PROP_ANY]
+        ['conditionalstyle', PROP_ANY],
+        ['trailingiconclass', PROP_STRING],
+        ['leadingiconclass', PROP_STRING],
+        ['leadingiconurl', PROP_STRING],
+        ['trailingiconurl', PROP_STRING]
     ]
 );
 

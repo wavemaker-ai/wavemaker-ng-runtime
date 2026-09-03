@@ -9,6 +9,7 @@ import {
     ContentChild,
     ContentChildren,
     ElementRef,
+    EnvironmentInjector,
     HostListener,
     Inject,
     Injector,
@@ -63,7 +64,8 @@ import {
     styler,
     transformData,
     TrustAsPipe,
-    unsupportedStatePersistenceTypes
+    unsupportedStatePersistenceTypes,
+    WmAppIconComponent
 } from '@wm/components/base';
 import {PaginationComponent} from '@wm/components/data/pagination';
 
@@ -111,6 +113,9 @@ const exportIconMapping = {
 
 const ROW_OPS_FIELD = 'rowOperations';
 
+/** Same default as `table.props.ts` — used when `pagesizeoptions` cannot be parsed to integers. */
+const DEFAULT_PAGE_SIZE_OPTIONS = '5,10,20,50,100';
+
 const noop = () => {};
 
 const isInputBodyWrapper = target => {
@@ -136,7 +141,7 @@ const isInputBodyWrapper = target => {
 
 @Component({
       standalone: true,
-      imports: [CommonModule, AnchorComponent, PaginationComponent, ButtonComponent, BsDropdownModule, MenuComponent],
+      imports: [CommonModule, AnchorComponent, PaginationComponent, ButtonComponent, BsDropdownModule, MenuComponent, WmAppIconComponent],
     selector: '[wmTable]',
     templateUrl: './table.component.html',
     providers: [
@@ -197,6 +202,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     gridclass;
     gridfirstrowselect;
     iconclass;
+    iconurl: string;
     ondemandmessage;
     allowpagesizechange;
     viewlessmessage;
@@ -240,6 +246,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     statehandler;
     selectedItemChange = new Subject();
     selectedItemChange$: Observable<any> = this.selectedItemChange.asObservable();
+    selectedItemChangeSubscription;
 
     actions = [];
     _actions = {
@@ -379,10 +386,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         showviewlessbutton: false,
         ondemandmessage: '',
         allowpagesizechange: false,
-        pagesizeoptions: '',
+        pagesizeoptions: DEFAULT_PAGE_SIZE_OPTIONS,
         viewlessmessage: '',
         loadingdatamsg: '',
         isNextPageData: undefined,
+        enableSort: true,
+        multiselect: false,
+        showRadioColumn: false,
+        enableColumnSelection: false,
         multiselecttitle: '',
         multiselectarialabel: '',
         radioselecttitle: '',
@@ -850,16 +861,21 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             $target.hide();
             $overlay.show();
             const context = {
-                    row,
-                    rowDef,
-                    containerLoad: (widget) => {
-                        setTimeout(() => {
-                            $overlay.hide();
-                            $target.show();
-                            this.rowDefInstances[rowId] = widget;
-                            this.rowInstance.invokeEventCallback('rowexpand', {$event, row, $data: widget});
-                        }, 500);
-                    }};
+                // Provide multiple aliases for row data to keep older templates working.
+                // Some templates expect `row`, others use `$implicit` or `item`.
+                row,
+                item: row,
+                $implicit: row,
+                rowDef,
+                containerLoad: (widget) => {
+                    setTimeout(() => {
+                        $overlay.hide();
+                        $target.show();
+                        this.rowDefInstances[rowId] = widget;
+                        this.rowInstance.invokeEventCallback('rowexpand', {$event, row, $data: widget});
+                    }, 500);
+                }
+            };
             const rootNode = this.rowDetailViewRef.createEmbeddedView(this.rowExpansionTmpl, context).rootNodes[0];
             $target[0].appendChild(rootNode);
             $appDigest();
@@ -997,12 +1013,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.rowFilterCompliedTl = {};
             // For all the columns inside the table, generate the compiled filter template
             this.filterTmpl.forEach((tmpl) => {
-                const rootNode = this.filterViewRef.createEmbeddedView(tmpl, {
+                const context = {
                     changeFn: this.onRowFilterChange.bind(this),
                     isDisabled: (fieldName) => {
                         return this.emptyMatchModes.indexOf(this.rowFilter[fieldName] && this.rowFilter[fieldName].matchMode) > -1;
                     }
-                }).rootNodes[0];
+                };
+                const rootNode = this.filterViewRef.createEmbeddedView(tmpl, context).rootNodes[0];
                 this.rowFilterCompliedTl[rootNode.getAttribute('data-col-identifier')] = rootNode;
             });
         },
@@ -1040,7 +1057,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
         },
         noChangesDetected: () => {
-            this.toggleMessage(true, 'info', 'No Changes Detected', '');
+            this.toggleMessage(true, 'info', this.appLocale.MESSAGE_NO_CHANGES, '');
         },
         // Function to redraw the widgets on resize of columns
         redrawWidgets: () => {
@@ -1221,6 +1238,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     constructor(
         public inj: Injector,
+        private envInjector: EnvironmentInjector,
         public fb: FormBuilder,
         private app: App,
         private dynamicComponentProvider: DynamicComponentRefProvider,
@@ -1283,7 +1301,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     return;
                 }
                 this._isDependent = true;
-                this.selectedItemChange$
+                // Unsubscribe previous subscription if exists to prevent memory leak
+                if (this.selectedItemChangeSubscription) {
+                    this.selectedItemChangeSubscription.unsubscribe();
+                }
+                this.selectedItemChangeSubscription = this.selectedItemChange$
                     .pipe(debounceTime(250))
                     .subscribe(this.triggerWMEvent.bind(this));
             })
@@ -1349,7 +1371,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.gridOptions.ondemandmessage = this.ondemandmessage;
         this.gridOptions.viewlessmessage = this.viewlessmessage;
         this.gridOptions.loadingdatamsg = this.loadingdatamsg;
-        this.gridOptions.pagesizeoptions = this.pagesizeoptions;
+        this.gridOptions.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(this.pagesizeoptions);
+        this.pagesizeoptions = this.gridOptions.pagesizeoptions;
         this.gridOptions.multiselecttitle = this.multiselecttitle;
         this.gridOptions.multiselectarialabel = this.multiselectarialabel;
         this.gridOptions.radioselecttitle = this.radioselecttitle;
@@ -1626,6 +1649,20 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
         if (newVal) {
             this.populateGridData(newVal);
+            this.refreshRowFilterDataFromDataset();
+        }
+        // when select widget options are loaded in search filter then initializing it
+        const widgetState = this.statePersistence.getWidgetState(this);
+        if (get(widgetState, 'search')) {
+            if (isArray(widgetState.search)) {
+                forEach(widgetState.search, (filterObj) => {
+                    const widget=$(this.rowFilterCompliedTl[filterObj.field])?.find('[widget-id]')?.prop("tagName")?.toLowerCase();
+                    if(widget==='wm-select' && filterObj.value){
+                        const select = $(this.rowFilterCompliedTl[filterObj.field]).find("select");
+                        select?.find("option")?.filter((_, o) => o.textContent.trim() === filterObj.value)?.prop("selected", true)
+                    }
+                });
+            }
         }
     }
 
@@ -1708,31 +1745,12 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
         }
 
-        // MEMORY LEAK FIX: Clear gridOptions to release all function closures and data
-        // gridOptions holds many closures that capture 'this' and prevent GC
-        if (this.gridOptions) {
-            // Clear data array
-            if (this.gridOptions.data) {
-                this.gridOptions.data = [];
-            }
-            // Clear column definitions
-            if (this.gridOptions.colDefs) {
-                this.gridOptions.colDefs = [];
-            }
-            // Clear row actions
-            if (this.gridOptions.rowActions) {
-                this.gridOptions.rowActions = [];
-            }
-            // Clear header config
-            if (this.gridOptions.headerConfig) {
-                this.gridOptions.headerConfig = [];
-            }
-            // Nullify all function references to break closures
-            Object.keys(this.gridOptions).forEach(key => {
-                if (typeof this.gridOptions[key] === 'function') {
-                    this.gridOptions[key] = null;
-                }
+        // MEMORY LEAK FIX: Clear dynamic context
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
             });
+            this._dynamicContext = null;
         }
 
         // MEMORY LEAK FIX: Clear other data structures
@@ -1927,10 +1945,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     setDataGridOption(optionName, newVal, forceSet = false) {
         if (!this.datagridElement || !this.datagridElement.datatable || !this.datagridElement.datatable('instance')) {
+            // Bound properties can update before the jQuery widget is initialized.
+            // Keep gridOptions in sync so the initial datatable() call sees the latest value.
+            this.gridOptions[optionName] = newVal;
             return;
         }
         const option = {};
-        if (isDefined && (!isEqual(newVal, this.gridOptions[optionName]) || forceSet)) {
+        if (isDefined(newVal) && (!isEqual(newVal, this.gridOptions[optionName]) || forceSet)) {
             option[optionName] = newVal;
             this.datagridElement.datatable('option', option);
             this.gridOptions[optionName] = newVal;
@@ -2153,21 +2174,55 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             tmpl += `<wm-table-column ${attrsTmpl} tableName="${this.name}${(this as any).$attrs.get('table_reference')}">${customTmpl}</wm-table-column>`;
         });
         this.dynamicTableRef.clear();
+
+        // Setup dynamic context for the table component
         if (!this._dynamicContext) {
             this._dynamicContext = Object.create(this.viewParent);
             this._dynamicContext[this.getAttr('wmTable')] = this;
         }
+
         this.noOfColumns = columns.length;
-        const componentFactoryRef = await this.dynamicComponentProvider.getComponentFactoryRef(
-            'app-table-dynamic-' + this.widgetId,
-            tmpl,
-            {
-                noCache: true,
-                transpile: true
+
+        try {
+            // Generate unique component selector for this dynamic table instance
+            const componentSelector = `app-table-dynamic-${this.widgetId}`;
+
+            // Get the dynamically compiled table component class
+            const DynamicTableComponentClass = await this.dynamicComponentProvider.getComponentFactoryRef(
+                componentSelector,
+                tmpl,
+                {
+                    noCache: true,
+                    transpile: true
+                }
+            );
+
+            if (!DynamicTableComponentClass) {
+                console.error(`Failed to create dynamic table component: ${componentSelector}`);
+                return;
+            }
+
+            // Create component with both environmentInjector (for standalone imports/providers)
+            // and injector (for element-level dependencies)
+            const componentRef = this.dynamicTableRef.createComponent(DynamicTableComponentClass, {
+                index: 0,
+                environmentInjector: this.envInjector,
+                injector: this.inj
             });
-        const component = this.dynamicTableRef.createComponent(componentFactoryRef, 0, this.inj);
-        extendProto(component.instance, this._dynamicContext);
-        this.$element.find('.dynamic-table-container')[0].appendChild(component.location.nativeElement);
+
+            // Extend component instance with dynamic context
+            extendProto(componentRef.instance, this._dynamicContext);
+
+            // Append to DOM
+            const containerElement = this.$element.find('.dynamic-table-container')[0];
+            if (containerElement) {
+                containerElement.appendChild(componentRef.location.nativeElement);
+            } else {
+                console.error('Dynamic table container element not found');
+            }
+        } catch (error) {
+            console.error('Error creating dynamic table component:', error);
+        }
     }
 
     prepareColDefs(data) {
@@ -2241,7 +2296,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             return;
         }
         /* if new columns to be rendered, prepare default fieldDefs for the data provided*/
-        this.prepareColDefs(data);
+        const columnData = getClonedObject(data);
+        if (isArray(columnData)) {
+            columnData.forEach(row => delete row['$$wmSourceListIndex']);
+        } else if (isObject(columnData)) {
+            delete columnData['$$wmSourceListIndex'];
+        }
+        this.prepareColDefs(columnData);
 
         this.serverData = data;
         this.setGridData(this.serverData);
@@ -2387,17 +2448,48 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 if (nv) {
                     this.$element.find('.on-demand-datagrid > a').text(nv);
                 }
+                this.setDataGridOption('ondemandmessage', nv);
                 this.gridOptions.ondemandmessage = nv;
                 break;
             case 'allowpagesizechange':
                 this.gridOptions.allowpagesizechange = nv;
                 this.allowpagesizechange = nv;
+                this.dataNavigator.allowpagesizechange = nv;
+                if (nv) {
+                    const pagesizeoptions = this.sanitizeCommaSeparatedIntegers(this.pagesizeoptions);
+                    this.gridOptions.pagesizeoptions = pagesizeoptions;
+                    this.pagesizeoptions = pagesizeoptions;
+                    this.prevPagesizeoptions = '';
+                    this.setDefaultPageSize(this.pagesize || this.actualPageSize || this.gridOptions.getPageSize());
+                }
                 break;
             case 'pagesizeoptions':
                 this.prevPagesizeoptions = this.sanitizeCommaSeparatedIntegers(ov);
                 this.gridOptions.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
-                this.pagesizeoptions = this.sanitizeCommaSeparatedIntegers(nv);
-                if(this.allowpagesizechange) this.setDefaultPageSize(nv);
+                this.pagesizeoptions = this.gridOptions.pagesizeoptions;
+                if (this.allowpagesizechange) {
+                    this.setDefaultPageSize(this.pagesize || this.actualPageSize || this.gridOptions.getPageSize());
+                }
+                break;
+            case 'showheader':
+                this.setDataGridOption('showHeader', nv);
+                break;
+            case 'enablesort':
+                this.setDataGridOption('enableSort', nv);
+                break;
+            case 'enablecolumnselection':
+             //   this.enablecolumnselection = nv;
+                //this.gridOptions.enableColumnSelection = nv;
+                this.setDataGridOption('enableColumnSelection', nv);
+                break;
+            case 'isrowselectable':
+                this.setDataGridOption('isrowselectable', nv);
+                break;
+            case 'multiselect':
+                this.setDataGridOption('multiselect', nv);
+                break;
+            case 'radioselect':
+                this.setDataGridOption('showRadioColumn', nv);
                 break;
             case 'multiselecttitle':
                 this.setDataGridOption('multiselecttitle', nv);
@@ -2416,6 +2508,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 this.gridOptions.radioselectarialabel = nv;
                 break;
             case 'viewlessmessage':
+                this.setDataGridOption('viewlessmessage', nv);
                 this.gridOptions.viewlessmessage = nv;
                 break;
             case 'show':
@@ -2432,16 +2525,17 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     setDefaultPageSize(nv: any){
         let widgetState = this.statePersistence.getWidgetState(this);
         if (this.gridOptions.allowpagesizechange) {
+            const normalizedPageSizeOptions = this.getNormalizedPageSizeOptionsArray(this.pagesizeoptions);
             if (get(widgetState, 'pagesize')) {
                 nv = get(widgetState, 'pagesize');
                 this.pagesize = nv; // updating the default pagesize to user selected pagesize
-            }else if (this.pagesizeoptions) {
-                nv = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b)[0]
+            }else if (this.pagesizeoptions && normalizedPageSizeOptions.length) {
+                nv = normalizedPageSizeOptions[0];
                 this.pagesize = nv;
             }
             this.updatedPageSize = nv;
             if(this.isPageSizeOptionsChanged()) {
-                this.dataNavigator.defaultPageSizeOptions = this.pagesizeoptions?.split(',').map(Number).sort((a, b) => a - b) || [];
+                this.dataNavigator.defaultPageSizeOptions = normalizedPageSizeOptions;
                 this.dataNavigator.pageSizeOptions = [...this.dataNavigator.defaultPageSizeOptions];
             }
         }
@@ -2469,23 +2563,60 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         this.dataNavigator.onPageSizeChange(undefined, pagesize);
     }
 
-    sanitizeCommaSeparatedIntegers(input: string): string {
-        if (!input) return "";
+    sanitizeCommaSeparatedIntegers(input) {
+        if (input === null || input === undefined || input === '') {
+            return DEFAULT_PAGE_SIZE_OPTIONS;
+        }
+        let arr;
+        if (Array.isArray(input)) {
+            arr = input;
+        } else if (typeof input === "string") {
+            const trimmed = input.trim();
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                try {
+                    arr = JSON.parse(trimmed);
+                } catch {
+                    arr = [];
+                }
+            } else {
+                arr = trimmed.split(",");
+            }
+        } else {
+            return DEFAULT_PAGE_SIZE_OPTIONS;
+        }
+
         const uniqueNumbers = Array.from(
             new Set(
-                input
-                    .split(",")
-                    .map(v => v.trim())
+                arr
+                    .map(v => String(v).trim())
                     .filter(v => /^-?\d+$/.test(v))
                     .map(v => Math.abs(parseInt(v, 10)))
             )
         );
-        return uniqueNumbers.join(",");
+        const joined = uniqueNumbers.join(",");
+        return joined || DEFAULT_PAGE_SIZE_OPTIONS;
+    }
+
+    getNormalizedPageSizeOptionsArray(input) {
+        return this.sanitizeCommaSeparatedIntegers(input)
+            .split(',')
+            .map(Number)
+            .filter(v => !isNaN(v))
+            .sort((a, b) => a - b);
     }
 
     onDataSourceChange() {
         this.fieldDefs.forEach(col => {
            triggerFn(col.onDataSourceChange && col.onDataSourceChange.bind(col));
+        });
+    }
+
+    private refreshRowFilterDataFromDataset() {
+        if (this.filtermode !== 'multicolumn') {
+            return;
+        }
+        this.fieldDefs.forEach(col => {
+            triggerFn(col.loadFilterData && col.loadFilterData.bind(col));
         });
     }
 

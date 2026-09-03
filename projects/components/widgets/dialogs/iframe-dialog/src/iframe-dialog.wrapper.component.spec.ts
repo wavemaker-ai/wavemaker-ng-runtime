@@ -34,6 +34,7 @@ class MockAbstractDialogService {
 const markup = `<div wmIframeDialog></div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class IframeDialogWrapperComponent {

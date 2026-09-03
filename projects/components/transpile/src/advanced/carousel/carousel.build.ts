@@ -13,11 +13,14 @@ register('wm-carousel', (): IBuildTaskDef => {
         pre: (attrs, shared) => {
             // generating unique Id for the carousel
             const counter = idGen.nextUid();
-            let style;
+            let style ='';
             if(attrs?.get('height')?.endsWith('%'))
             {
                 style=`height:${parseInt(attrs.get('height'),10)}vh`;
                 attrs.set('height', '100%');
+            }
+            if(attrs?.get('width'))    {
+                style += style ? `;` : '' + `width:${attrs.get('width')}`;
             }
             shared.set('carousel_ref', counter);
             return `<div class="app-carousel carousel" style="${style}"><${carouselTagName} wmCarousel #${counter}="wmCarousel"  ${getAttrMarkup(attrs)} interval="0" [ngClass]="${counter}.navigationClass">`;

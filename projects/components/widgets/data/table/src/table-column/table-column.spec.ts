@@ -16,6 +16,7 @@ jest.mock('@wm/components/base', () => ({
 }));
 
 @Component({
+    standalone: false,
     template: '<div wmTableColumn></div>'
 })
 class TestComponent { }

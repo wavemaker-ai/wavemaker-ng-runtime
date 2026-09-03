@@ -3,11 +3,11 @@ import { Component, ViewChild } from '@angular/core';
 
 import { TreeComponent } from "./tree.component";
 import { PipeProvider } from "../../../../../runtime-base/src/services/pipe-provider.service";
-import { App, setPipeProvider, AbstractI18nService } from "@wm/core";
+import { App, setPipeProvider, AbstractI18nService, StatePersistence } from "@wm/core";
 import { TrustAsPipe } from '../../../../base';
 import { MockAbstractI18nService } from 'projects/components/base/src/test/util/date-test-util';
 import '@ztree/ztree_v3/js/jquery.ztree.all.js';
-import "libraries/scripts/tree-keyboard-navigation/keyboard-navigation.js";
+import "./keyboard-navigation.js";
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 
 
@@ -20,6 +20,7 @@ const markup = `
 `;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class TreeSpec {
@@ -68,7 +69,18 @@ describe('wm-tree: Widget specific test cases', () => {
             providers: [
                 { provide: App, useValue: mockApp },
                 { provide: TrustAsPipe, useClass: TrustAsPipe },
-                { provide: AbstractI18nService, useClass: MockAbstractI18nService }
+                { provide: AbstractI18nService, useClass: MockAbstractI18nService },
+                {
+                    provide: StatePersistence,
+                    useValue: {
+                        getWidgetState: jest.fn(),
+                        setWidgetState: jest.fn(),
+                        removeWidgetState: jest.fn(),
+                        computeMode: jest.fn((sh?: string) =>
+                            sh && String(sh).toLowerCase() === 'none' ? undefined : (sh ? String(sh).toLowerCase() : 'url')
+                        )
+                    }
+                }
             ]
         })
             .compileComponents();

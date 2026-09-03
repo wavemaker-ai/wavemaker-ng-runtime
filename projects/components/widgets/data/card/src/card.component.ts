@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { TextContentDirective } from "@wm/components/base";
+import { TextContentDirective, WmAppIconComponent } from "@wm/components/base";
 import { PictureDirective } from '@wm/components/basic/picture';
 import { MenuComponent } from '@wm/components/navigation/menu';
 import {
@@ -8,6 +8,7 @@ import {
     ElementRef,
     Injector,
     OnInit,
+    OnDestroy,
     Renderer2,
     Optional,
     ViewChild,
@@ -28,14 +29,14 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective, PictureDirective, MenuComponent],
+    imports: [CommonModule, TextContentDirective, PictureDirective, MenuComponent, WmAppIconComponent],
     selector: '[wmCard]',
     templateUrl: './card.component.html',
     providers: [
         provideAsWidgetRef(CardComponent)
     ]
 })
-export class CardComponent extends MenuAdapterComponent implements OnInit, AfterViewInit {
+export class CardComponent extends MenuAdapterComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public showHeader: boolean;
@@ -47,6 +48,7 @@ export class CardComponent extends MenuAdapterComponent implements OnInit, After
     public picturesource;
 
     @ViewChild('cardContainerWrapper', { static: true }) private cardContainerElRef: ElementRef;
+    private keydownListener: () => void;
 
     constructor(inj: Injector, private render2: Renderer2, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
@@ -61,7 +63,9 @@ export class CardComponent extends MenuAdapterComponent implements OnInit, After
         super.ngOnInit();
         removeAttr(this.nativeElement.parentElement, 'tabindex');
         setAttr(this.nativeElement, 'tabindex', 0);
-        this.render2.listen(this.nativeElement, 'keydown.Enter', (e) => {
+        
+        // MEMORY LEAK FIX: Store listener reference for cleanup
+        this.keydownListener = this.render2.listen(this.nativeElement, 'keydown.Enter', (e) => {
             e.preventDefault();
             this.nativeElement.click();
         });
@@ -73,6 +77,19 @@ export class CardComponent extends MenuAdapterComponent implements OnInit, After
         } else {
             super.onPropertyChange(key, nv, ov);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Remove event listener
+        if (this.keydownListener) {
+            this.keydownListener();
+            this.keydownListener = null;
+        }
+
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.cardContainerElRef = null;
+
+        super.ngOnDestroy();
     }
 }
 

@@ -67,6 +67,7 @@ const markup = `
     `;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class PopoverwrapperComponent {
@@ -209,7 +210,7 @@ describe('PopoverComponent', () => {
     /************************ Scenarios end **************************************** */
 
     it('should call showPopover when open() is called', () => {
-        const showPopoverSpy = jest.spyOn((wmComponent as any), 'showPopover');
+        const showPopoverSpy = jest.spyOn((wmComponent as any), 'showPopover').mockImplementation(() => {});
         wmComponent.open();
         expect(showPopoverSpy).toHaveBeenCalled();
     });
@@ -254,7 +255,7 @@ describe('PopoverComponent', () => {
 
         it('should show popover when Enter key is pressed and canPopoverOpen is true', () => {
             wmComponent.canPopoverOpen = true;
-            jest.spyOn((wmComponent as any), 'showPopover');
+            jest.spyOn((wmComponent as any), 'showPopover').mockImplementation(() => {});
             const event = new KeyboardEvent('keydown', { key: 'Enter' });
             jest.spyOn(event, 'stopPropagation');
             jest.spyOn(event, 'preventDefault');

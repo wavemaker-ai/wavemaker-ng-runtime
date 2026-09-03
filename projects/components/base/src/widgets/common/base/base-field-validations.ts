@@ -68,7 +68,9 @@ export class BaseFieldValidations {
         if(this.widgettype!== FormWidgetType.DATE && this.widgettype!==FormWidgetType.TIME && this.widgettype!==FormWidgetType.DATETIME) {
             if (this.instance.required) {
                 // For checkbox/toggle widget, required validation should consider true value only
-                if (this.widgettype === FormWidgetType.CHECKBOX || this.widgettype === FormWidgetType.TOGGLE) {
+                if((this.widgettype === FormWidgetType.CHECKBOX) && (this.instance.checkedvalue!=true)){
+                    _validator.push(Validators.pattern(this.instance.checkedvalue));
+                } else if(this.widgettype === FormWidgetType.CHECKBOX || this.widgettype === FormWidgetType.TOGGLE) {
                     _validator.push(Validators.requiredTrue);
                 } else {
                     _validator.push(Validators.required);
@@ -312,6 +314,26 @@ export class BaseFieldValidations {
                 // fallback when there is no validationmessage for fields other than default validators.
                 this.instance.validationmessage = '';
             }
+        }
+    }
+
+    // MEMORY LEAK FIX: Cleanup method to release all references
+    destroy() {
+        // Clear all references to prevent memory leaks
+        this.instance = null;
+        this.formwidget = null;
+        this.widgetControl = null;
+        this.widgetContext = null;
+        
+        // Clear validators array and async validator function
+        if (this._syncValidators) {
+            this._syncValidators = [];
+        }
+        this._asyncValidatorFn = null;
+        
+        // Clear default validator messages
+        if (this.defaultValidatorMessages) {
+            this.defaultValidatorMessages = [];
         }
     }
 }

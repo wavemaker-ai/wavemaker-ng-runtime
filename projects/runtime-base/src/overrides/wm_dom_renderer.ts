@@ -296,8 +296,16 @@ class WMDefaultDomRenderer2 implements Renderer2 {
   }
 
   setProperty(el: any, name: string, value: any): void {
+    // Animation properties (starting with @) are handled by Angular's animation engine,
+    // not the DOM renderer. Since WMDomRendererFactory2 overrides the AnimationRendererFactory,
+    // we must silently ignore them here to avoid crashes from ngx-bootstrap etc.
+    if (name && name.charCodeAt(0) === AT_CHARCODE) {
+      return;
+    }
     NG_DEV_MODE && checkNoSyntheticProp(name, 'property');
-    el[name] = value;
+    if (el != null) {
+      el[name] = value;
+    }
   }
 
   setValue(node: any, value: string): void {
@@ -306,6 +314,11 @@ class WMDefaultDomRenderer2 implements Renderer2 {
 
   listen(target: 'window'|'document'|'body'|any, event: string, callback: (event: any) => boolean):
       () => void {
+      // Animation events (starting with @) are handled by the animation engine.
+      // Since WMDomRendererFactory2 overrides AnimationRendererFactory, ignore them here.
+      if (event && event.charCodeAt(0) === AT_CHARCODE) {
+          return () => {};
+      }
       (typeof NG_DEV_MODE === 'undefined' || NG_DEV_MODE) && checkNoSyntheticProp(event, 'listener');
       if (typeof target === 'string') {
           target = getDOM().getGlobalEventTarget(this.doc, target);

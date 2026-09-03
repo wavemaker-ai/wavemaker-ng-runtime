@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 
 import { Subject } from 'rxjs';
 
@@ -17,7 +17,7 @@ const spinnerTemplate = `<div class="app-spinner">
                          </div>`;
 
 @Injectable()
-export class SpinnerServiceImpl extends AbstractSpinnerService {
+export class SpinnerServiceImpl extends AbstractSpinnerService implements OnDestroy {
     spinnerId = 0;
     messageSource = new Subject();
     messagesByContext = {};
@@ -134,6 +134,22 @@ export class SpinnerServiceImpl extends AbstractSpinnerService {
             });
         } else {
             this.messagesByContext[ctx] = {};
+        }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Complete Subject to release subscriptions
+        if (this.messageSource) {
+            this.messageSource.complete();
+            this.messageSource = null;
+        }
+
+        // MEMORY LEAK FIX: Clear messages by context
+        if (this.messagesByContext) {
+            Object.keys(this.messagesByContext).forEach(key => {
+                delete this.messagesByContext[key];
+            });
+            this.messagesByContext = null;
         }
     }
 }

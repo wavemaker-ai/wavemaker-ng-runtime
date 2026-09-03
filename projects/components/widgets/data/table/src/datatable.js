@@ -68,6 +68,8 @@ $.widget('wm.datatable', {
             'selectField': 'Select Field'
         },
         loadingicon: '',
+        ondemandmessage: '',
+        viewlessmessage: '',
         startRowIndex: 1,
         editmode: '',
         actionsEnabled: {
@@ -291,7 +293,7 @@ $.widget('wm.datatable', {
                 field = value.field,
                 headerLabel = self.Utils.isDefined(value.displayName) ? value.displayName : (field || ''),
                 titleLabel = headerLabel,
-                sortEnabled = self.options.enableSort && (_.isUndefined(value.show) || value.show) && (_.isUndefined(value.sortable) || value.sortable),
+                sortEnabled = self.options.enableSort && (_.isUndefined(value.show) || value.show|| value.getAttr?.('show.bind')) && (_.isUndefined(value.sortable) || value.sortable),
                 headerClasses = self.options.cssClassNames.headerCell,
                 sortClass,
                 tl = '',
@@ -317,7 +319,7 @@ $.widget('wm.datatable', {
                 headerClasses += ' grid-col-small';
             }
             tl += '<th';
-            if ((_.isUndefined(value.resizable) || value.resizable) && (_.isUndefined(value.show) || value.show)) { //If show is false, do not add the resize option
+            if ((_.isUndefined(value.resizable) || value.resizable) && (_.isUndefined(value.show) || value.show|| value.getAttr?.('show.bind'))) { //If show is false, do not add the resize option
                 tl += ' data-col-resizable';
             }
             if (self.options.enableColumnSelection && (_.isUndefined(value.selectable) || value.selectable)) {
@@ -1695,6 +1697,16 @@ $.widget('wm.datatable', {
     _setOption: function (key, value) {
         this._super(key, value);
         switch (key) {
+            case 'enableSort':
+                if (this.tableContainer?.length) {
+                    this.refreshSortHeader(); // Refresh the table header and update column widths when sort is enabled/disabled
+                }
+                break;
+            case 'enableColumnSelection':
+                if (this.tableContainer?.length) {
+                    this.refreshSortHeader(); // Refresh the table header and update column widths when column selection is enabled/disabled
+                }
+                break;
             case 'showHeader':
                 this._toggleHeader();
                 this._toggleSearch();
@@ -1777,6 +1789,17 @@ $.widget('wm.datatable', {
         return this.options;
     },
 
+    /** function to rebuild table header and update column widths. */
+    refreshSortHeader: function () {
+        this._prepareHeaderData();
+        if (this.options.showHeader) {
+            this._renderHeader();
+            this._attachHeaderEventHandlers();
+        }
+        this.setColGroupWidths();
+        this.addOrRemoveScroll();
+    },
+
     /* Toggles the table header visibility. */
     _toggleHeader: function () {
         if (this.gridHeaderElement) {
@@ -1789,6 +1812,7 @@ $.widget('wm.datatable', {
         this.setDefaultColsData();
         if (this.options.showHeader) {
             this._renderHeader();
+            this._attachHeaderEventHandlers(); // Attach all event handlers specifically for the table header
         }
     },
 
@@ -1871,11 +1895,14 @@ $.widget('wm.datatable', {
         if (this.options.showRadioColumn) {
             $radio = $row.find('td input[rowSelectInput]:radio:not(:disabled)');
             $radio.prop('checked', selected);
+            $radio.attr('checked', selected ? 'checked' : null); //
             this.preparedData[rowId]._checked = selected;
         }
         if (this.options.multiselect) {
             $checkbox = $row.find('td input[name="gridMultiSelect"]:checkbox:not(:disabled)');
             $checkbox.prop('checked', selected);
+            $checkbox.attr('checked', selected ? 'checked' : null);
+            $checkbox.closest('label').toggleClass('unchecked', !selected);
             $checkbox.siblings('span.sr-only').text(selected ? 'Row Selected' : 'Row Deselected');
             this.preparedData[rowId]._checked = selected;
             // if we check header checkbox(select/unselect all the records) then updating selectAll checkbox state is not required.
@@ -1909,6 +1936,7 @@ $.widget('wm.datatable', {
             $headerCheckbox.prop('checked', false);
         }
     },
+
     // triggered on capture phase of click listener.
     // sets the selected rowdata on click.
     rowClickHandlerOnCapture: function (e, $row, options) {
@@ -2299,11 +2327,11 @@ $.widget('wm.datatable', {
     },
     _getWmVariableRowLocator: function (rowId) {
         var liveRow = this.options.data[parseInt(rowId, 10)];
-        return (liveRow && liveRow.$$wmSourceListIndex != null) ? liveRow.$$wmSourceListIndex : (liveRow || parseInt(rowId, 10));
+        return (liveRow && liveRow.$$wmSourceListIndex != null) ? liveRow.$$wmSourceListIndex : parseInt(rowId, 10);
     },
     /* Toggles the edit state of a row. */
     toggleEditRow: function (e, options) {
-        if($(e.target).closest('.app-menu').length) {
+        if(e?.target && $(e.target).closest('.app-menu').length) {
             return;
         }
         options = options || {};
@@ -2777,8 +2805,10 @@ $.widget('wm.datatable', {
     /* Handles table sorting. */
     sortHandler: function (e) {
           e.stopImmediatePropagation();
-        // If header span is clicked and column selection is enabled, call header click
+        // If header span is clicked and column selection is enabled, call header click hand
+        //Calling the column selection handler so that column selection works even when the bind exp changes later from false to true.
         if ($(e.target).hasClass('header-data') && this.options.enableColumnSelection) {
+            this.columnSelectionHandler(e);
             this.headerClickHandler(e);
         }
         var $e = $(e.target),
@@ -3067,8 +3097,7 @@ $.widget('wm.datatable', {
 
     /* Attaches all event handlers for the table. */
     attachEventHandlers: function ($htm) {
-        var $header = this.gridHeaderElement,
-            self = this;
+        var self = this;
 
         if (this.options.enableRowSelection) {
             $htm[0].removeEventListener('click', this.rowClickHandlerOnCapture.bind(this));
@@ -3090,35 +3119,14 @@ $.widget('wm.datatable', {
             $htm.on('keydown', this.onKeyDown.bind(this));
         }
 
-        if ($header) {
-            if (this.options.enableColumnSelection) {
-                $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
-                $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
-            } else {
-                $header.find('th[data-col-selectable]').off('click');
-            }
+        this._attachHeaderEventHandlers();
 
-            if (this.options.enableSort) {
-                if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
-                } else {
-                    $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
-                    $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
-                    $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
-                }
-            } else {
-                if (this.options.enableColumnSelection) {
-                    $header.find('th[data-col-sortable] .header-data').off('click');
-                } else {
-                    $header.find('th[data-col-sortable]').off('click');
-                }
-            }
+        if (this.options.rowActions.length) {
+            $htm.find('.cancel-edit-row-button').off('click');
+            $htm.find('.save-edit-row-button').off('click');
+            $htm.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
+            $htm.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
         }
-        this._bindRowActionsAndExpansionClickHandlers($htm);
         if (self.options.editmode === self.CONSTANTS.QUICK_EDIT) {
             $htm.on('focus', 'tr.app-datagrid-row', function (e) {
                 var $row = $(e.currentTarget);
@@ -3139,13 +3147,23 @@ $.widget('wm.datatable', {
                     isRelatedTargetRowAction = $relatedTarget.closest('span.actions-column').length>0,
                     isTargetGridAction = $relatedTarget.closest('div.app-datagrid-actions').length>0,
                     isRelatedTargetGridAction = $relatedTarget.closest('div.app-datagrid-actions').length>0,
+                    currentGridId = $($target.closest('.app-grid'))?.attr('widget-id'),
+                    relatedGrid = $relatedTarget.closest('.app-grid')[0],
+                    relatedGridId = relatedGrid ? $(relatedGrid).attr('widget-id') : null,
+                    isRelatedGridDifferent = relatedGrid && relatedGridId !== currentGridId,
                     invalidTargets = '.row-editing:not(".always-new-row"), .row-action-button, .app-datagrid-cell, .caption, button.btn-time, button.btn-date';
 
                 //Check if the focus out element is outside the grid or some special elements
                 function isInvalidTarget() {
-                    if (!$relatedTarget.closest('.app-grid').length) {
+                    // If relatedTarget is not in any grid, it's invalid (outside all tables)
+                    if (!relatedGrid) {
                         return true;
                     }
+                    // If relatedTarget is in a different grid, allow save (return false)
+                    if (isRelatedGridDifferent) {
+                        return false;  // NOT invalid - we should save the grid
+                    }
+                    // If relatedTarget is in SAME grid, check if it's an invalid target within this grid
                     return $relatedTarget.is(invalidTargets);
                 }
 
@@ -3162,10 +3180,11 @@ $.widget('wm.datatable', {
                 }
                 // Save the Row if any button from Grid action is clicked / AddRow action is
                 // triggered from the Row Actions
-                if (!isTargetGridAction && !isTargetRowAction) {
-                    //Save the row on last column of the data table. Do not save the row if focus is out of input file.
+                if (!isTargetGridAction && !isTargetRowAction && !isRelatedGridDifferent) {
+                    // If focus moved to a DIFFERENT grid, allow save (skip isLastColumn check)
+                    // Otherwise Save the row on last column of the data table. Do not save the row if focus is out of input file.
                     if (!isLastColumn || (isLastColumn && (e.relatedTarget === null || $(e.target).is('tr.app-datagrid-row'))) || $target.hasClass("file-upload")) {
-                        return;
+                            return;
                     }
                 }
                 self.options.timeoutCall(function () {
@@ -3173,7 +3192,9 @@ $.widget('wm.datatable', {
                         'action': 'save',
                         'noMsg': true,
                         'success': function (skipFocus, error, isNewRow) {
-                            if (!isNewRow) {
+                            // Only navigate to next row if staying in SAME grid
+                            // If switching to DIFFERENT grid, let that grid's click handler take over
+                            if (!isNewRow && !isRelatedGridDifferent) {
                                 self.editSuccessHandler(skipFocus, error, e, $row,false);
                             }
                         }
@@ -3182,6 +3203,42 @@ $.widget('wm.datatable', {
             });
         }
 
+    },
+    /**
+     * Function which attaches all event handlers specifically for the table header.
+     * Needed when table header is rebuilt (e.g. showHeader toggle) without a full _renderGrid
+     */
+    _attachHeaderEventHandlers: function () {
+        var $header = this.gridHeaderElement;
+        if (!$header || !$header.length) {
+            return;
+        }
+        if (this.options.enableColumnSelection) {
+            $header.find('th[data-col-selectable]').off('click', this.columnSelectionHandler.bind(this));
+            $header.find('th[data-col-selectable]').on('click', this.columnSelectionHandler.bind(this));
+        } else {
+            $header.find('th[data-col-selectable]').off('click');
+        }
+
+        if (!(this.options.enableSort === false || this.options.enableSort === 'false')) {
+            if (this.options.enableColumnSelection) {
+                $header.find('th[data-col-sortable] .header-data').off('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable] .header-data').on('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+            } else {
+                $header.find('th[data-col-sortable]').off('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('click', this.sortHandler.bind(this));
+                $header.find('th[data-col-sortable]').off('keydown', this.keydownHandler.bind(this));
+                $header.find('th[data-col-sortable]').on('keydown', this.keydownHandler.bind(this));
+            }
+        } else {
+            if (this.options.enableColumnSelection) {
+                $header.find('th[data-col-sortable] .header-data').off('click');
+            } else {
+                $header.find('th[data-col-sortable]').off('click');
+            }
+        }
     },
     expandRow: function(rowId) {
         this.toggleExpandRow(rowId, true)
@@ -3368,11 +3425,19 @@ $.widget('wm.datatable', {
             self.gridHeaderElement.parent().prop('scrollLeft', this.scrollLeft);
         });
         if (!this.options.showHeader) {
+            this.tableContainer.find('colgroup').remove(); // Remove the colgroup from the table container when showHeader is false
             this.tableContainer.append($colgroup);
             this.gridHeaderElement.hide();
             //this.gridElement.prepend($colgroup.clone());
             return;
         } else {
+            /* _toggleHeader() removes thead from the DOM when toggling showHeader; gridHeaderElement
+             * still references the detached thead. Re-insert it before the tbody so the header
+             * is visible when bind changes from false to true. */
+            if (this.gridHeaderElement.length && this.tableContainer?.length &&
+                !this.tableContainer[0].contains(this.gridHeaderElement[0])) {
+                this.tableContainer.prepend(this.gridHeaderElement); // Re-insert the table header before the tbody when showHeader is true
+            }
             this.gridHeaderElement.show();
         }
         $header = headerTemplate.header;
@@ -3421,7 +3486,7 @@ $.widget('wm.datatable', {
                 $headerCol.hide();
             }
         });
-
+        this.tableContainer.find('colgroup').remove(); // Remove the colgroup from the table container when showHeader is false
         /*For mobile view, append header to the main table only*/
         if (this.options.isMobile) {
             this.tableContainer.append($colgroup);
@@ -3735,9 +3800,16 @@ $.widget('wm.datatable', {
                 this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
                 this.options.getCurrentPage() === 1)) {
                 this.gridContainer.addClass("show-msg");
+
+                if (state === 'loading' && !isScrollOrOndemand &&
+                    this.options.lastActionPerformed !== this.options.ACTIONS.EDIT &&
+                    this.options.lastActionPerformed !== this.options.ACTIONS.DELETE) {
+                    this.gridElement.addClass('hidden');
+                }
             }
         } else {
             this.gridContainer.removeClass('show-msg');
+            this.gridElement.removeClass('hidden');
 
             // In case of quickeditmode, if active row is found, focus the row and bind the event listeners to the row
             if (this.options.editmode === this.CONSTANTS.QUICK_EDIT) {

@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IMaskModule } from 'angular-imask';
-import {Component, ElementRef, Inject, Injector, OnInit, Optional, ViewChild} from '@angular/core';
+import {Component, ElementRef, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
-import {IWidgetConfig, provideAs, provideAsWidgetRef} from '@wm/components/base';
+import {IWidgetConfig, provideAs, provideAsWidgetRef, WmAppIconComponent} from '@wm/components/base';
 import {registerProps} from './input-text.props';
 import {BaseInput} from '../base-input/base-input';
 import {IMaskDirective} from 'angular-imask';
@@ -16,7 +16,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, IMaskModule],
+  imports: [CommonModule, FormsModule, IMaskModule, WmAppIconComponent],
     selector: 'wm-input[type="text"], wm-input:not([type]), wm-input[type="password"], wm-input[type="search"], wm-input[type="tel"], wm-input[type="url"]',
     templateUrl: './input-text.component.html',
     providers: [
@@ -25,7 +25,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
         provideAsWidgetRef(InputTextComponent)
     ]
 })
-export class InputTextComponent extends BaseInput implements OnInit{
+export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     public required: boolean;
@@ -48,6 +48,10 @@ export class InputTextComponent extends BaseInput implements OnInit{
     private lazy: boolean = false;
     public hint: string;
     public arialabel: string;
+    public trailingiconclass: string;
+    public leadingiconclass: string;
+    public leadingiconurl: string;
+    public trailingiconurl: string;
 
     @ViewChild('input', {static: true}) inputEl: ElementRef;
     @ViewChild(NgModel) ngModel: NgModel;
@@ -71,6 +75,10 @@ export class InputTextComponent extends BaseInput implements OnInit{
             default:
                 super.onPropertyChange(key, nv, ov);
         }
+    }
+    get computedClasses() {
+        return {'with-leading-icon': this.leadingiconclass || this.leadingiconurl, 'with-trailing-icon': this.trailingiconclass || this.trailingiconurl,
+            ...(typeof this.conditionalclass === 'string' ? { [this.conditionalclass]: true } : this.conditionalclass || {})};
     }
 
     get mask() {
@@ -124,5 +132,19 @@ export class InputTextComponent extends BaseInput implements OnInit{
     ngOnInit() {
         super.ngOnInit();
         this.isFocused = !!this.datavalue;
+    }
+
+    iconClickEvent($event, type: string){
+        this.invokeEventCallback(type, { $event })
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear all ViewChild references
+        this.inputEl = null;
+        this.ngModel = null;
+        this.imask = null;
+
+        // Call parent ngOnDestroy (BaseInput → BaseFormCustomComponent → StylableComponent → BaseComponent)
+        super.ngOnDestroy();
     }
 }

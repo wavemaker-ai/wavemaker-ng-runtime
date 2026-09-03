@@ -8,6 +8,7 @@ import { App, EventNotifier } from '@wm/core';
 const markup = `<a wmAnchor data-identifier="anchor" #wm_anchor1="wmAnchor" [attr.aria-label]="wm_anchor1.arialabel || wm_anchor1.caption || 'Link'" hint="Link" hyperlink="http://www.google.com/doodle4google/images/splashes/featured.png" tabindex="0" badgevalue="1" name="anchor1"></a>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class AnchorWrapperComponent {

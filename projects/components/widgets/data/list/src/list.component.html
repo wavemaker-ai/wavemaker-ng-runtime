@@ -1,8 +1,8 @@
-@if (title || subheading || iconclass) {
+@if (title || subheading || iconclass || iconurl) {
   <div class="panel-heading">
     <h3 class="panel-title">
       <div class="pull-left">
-        <i class="app-icon panel-icon {{iconclass}}" aria-hidden="true" [hidden]="!iconclass"></i>
+        <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [defaultClasses]="'panel-icon'" alt="List icon"></wm-app-icon>
       </div>
       <div class="pull-left">
         <div class="heading" [innerHTML]="title"></div>
@@ -43,7 +43,8 @@
   }
 </div>
 
-<ul [attr.tabindex]="tabindex"  class="app-livelist-container clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}} {{listclass}}" role="list"
+<ul [attr.tabindex]="tabindex"  class="list-group app-livelist-container clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}} {{listclass}}" role="list"
+  [class.list-group-autolayout]="hasAutolayout"
   (keydown.enter)="handleKeyDown($event, 'select')"
 
   (keydown.space)="handleKeyDown($event, 'space')"
@@ -67,14 +68,14 @@
         [attr.tabindex]="tabindex"
         role="listitem">
         <ng-container [ngTemplateOutlet]="listTemplate"
-          [ngTemplateOutletInjector]="createCustomInjector('falt_' + listItemRef.trackId, {item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"
-        [ngTemplateOutletContext]="{item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets}"></ng-container>
+          [ngTemplateOutletInjector]="createCustomInjector('falt_' + listItemRef.trackId, {item: item, row: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"
+        [ngTemplateOutletContext]="{item: item, row: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets}"></ng-container>
       </li>
     }
   } @else {
     @for (groupObj of groupedData; track groupObj; let groupIndex = $index) {
       <li class="app-list-item-group clearfix">
-        <ul [attr.tabindex]="tabindex" class="list-group item-group" [ngClass]="listclass">
+        <ul [attr.tabindex]="tabindex" class="list-group item-group" [ngClass]="listclass" [class.list-group-autolayout]="hasAutolayout">
           <li class="app-list-item-header list-item list-group-header" (click)="handleHeaderClick($event)" [ngClass]="{'collapsible-content': collapsible}">
             <h4>{{groupObj.key}}
               <div class="header-action">
@@ -88,15 +89,15 @@
             </h4>
           </li>
           <li class="list-group-container">
-            <ul class="list-group clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}}">
+            <ul class="list-group clearfix {{direction === 'horizontal' ? 'app-horizontal-list': ''}}" [class.list-group-autolayout]="hasAutolayout">
               @for (item of groupObj.data; track trackByFn($index, item)) {
                 <li [attr.tabindex]="tabindex"
                   class="app-list-item group-list-item {{itemsPerRowClass}}"
                   [ngClass]="listItemRef.itemClass"
                   [wmListItem]="item" #listItemRef="listItemRef">
                   <ng-container [ngTemplateOutlet]="listTemplate"
-                    [ngTemplateOutletInjector]="createCustomInjector('group_' + listItemRef.trackId, {item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"
-                  [ngTemplateOutletContext]="{item: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets}"></ng-container>
+                    [ngTemplateOutletInjector]="createCustomInjector('group_' + listItemRef.trackId, {item: item, row: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets})"
+                  [ngTemplateOutletContext]="{item: item, row: item, $index: $index, itemRef: listItemRef, $first: $first, $last: $last, currentItemWidgets: listItemRef.currentItemWidgets}"></ng-container>
                 </li>
               }
             </ul>
@@ -116,7 +117,7 @@
 @if (variableInflight && !pulltorefresh) {
   <div class="loading-data-msg">
     <span>
-      <i class="app-icon panel-icon fa-spin" aria-hidden="true" [ngClass]="loadingicon"></i>
+      <wm-app-icon [iconclass]="loadingicon" [iconurl]="loadingiconurl" [defaultClasses]="'panel-icon'" alt="loading icon"></wm-app-icon>
       <span class="sr-only">Loading</span>
       <span class="loading-text" [textContent]="loadingdatamsg"></span>
     </span>

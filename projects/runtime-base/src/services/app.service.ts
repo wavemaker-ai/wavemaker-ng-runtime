@@ -1,4 +1,4 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable, Injector, OnDestroy } from '@angular/core';
 import { RouteReuseStrategy } from '@angular/router';
 
 import {
@@ -7,25 +7,26 @@ import {
     AbstractI18nService,
     AbstractSpinnerService,
     AbstractToasterService,
+    ConstantService,
+    DynamicComponentRefProvider,
     EventNotifier,
     FieldTypeService,
     FieldWidgetService,
     getWmProjectProperties,
     isDefined,
-    ConstantService,
-    UtilsService,
-    DynamicComponentRefProvider,
+    registerFnByExpr,
     StatePersistence,
-    Viewport,
-    registerFnByExpr
+    UtilsService,
+    Viewport
 } from '@wm/core';
-import { SecurityService } from '@wm/security';
+import {SecurityService} from '@wm/security';
 
-import { WmDefaultRouteReuseStrategy } from '../util/wm-route-reuse-strategy';
-import { PipeService } from "./pipe.service";
-import { each, get, isEmpty, isObject, isString } from "lodash-es";
+import {WmDefaultRouteReuseStrategy} from '../util/wm-route-reuse-strategy';
+import {PipeService} from "./pipe.service";
+import {each, get, isEmpty, isObject, isString} from "lodash-es";
 import * as momentLib from 'moment-timezone/moment-timezone';
-import { MODE_CONSTANTS } from '@wm/variables';
+import {MODE_CONSTANTS} from '@wm/variables';
+
 const moment = momentLib.default || window['moment'];
 
 const injectorMap = {
@@ -67,7 +68,7 @@ const getHttpDependency = function () {
 };
 
 @Injectable()
-export class AppRef {
+export class AppRef implements OnDestroy {
     Variables: any = {};
     Actions: any = {};
     onAppVariablesReady = noop;
@@ -98,6 +99,7 @@ export class AppRef {
     setwidgetLocale = this.i18nService.setwidgetLocale.bind(this.i18nService);
 
     private _eventNotifier = new EventNotifier();
+    private sessionTimeoutUnsubscribe: () => void; // MEMORY LEAK FIX: Store unsubscribe function
 
     landingPageName = getWmProjectProperties().homePage;
 
@@ -124,7 +126,8 @@ export class AppRef {
         this.isPrism = wmProjectProperties.template === "PRISM";
 
 
-        this.httpService.registerOnSessionTimeout(this.on401.bind(this));
+        // MEMORY LEAK FIX: Store unsubscribe function for cleanup
+        this.sessionTimeoutUnsubscribe = this.httpService.registerOnSessionTimeout(this.on401.bind(this));
 
         this.appLocale = this.i18nService.getAppLocale();
         this.httpService.setLocale(this.appLocale);
@@ -220,6 +223,20 @@ export class AppRef {
         });
     }
 
+    /**
+     * Utility method to check if an object has a property
+     * This is commonly used in expressions to check object properties
+     * @param obj The object to check
+     * @param prop The property name to check
+     * @returns true if the object has the property, false otherwise
+     */
+    hasOwnObjectProperty(obj: any, prop: string): boolean {
+        if (!obj || typeof obj !== 'object') {
+            return false;
+        }
+        return Object.prototype.hasOwnProperty.call(obj, prop);
+    }
+
     setMode(modes: Record<string, string>, shouldPersist = false) {
         const htmlEl = document.getElementsByTagName('html')[0];
         //html element sanity check
@@ -248,4 +265,25 @@ export class AppRef {
         //if shoudlPersist is true, set the modes object in the localStorage
         if (shouldPersist) localStorage.setItem('wm-app-modes', JSON.stringify(modes));
     };
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Destroy EventNotifier to release subscribers
+        if (this._eventNotifier) {
+            this._eventNotifier.destroy();
+            this._eventNotifier = null;
+        }
+
+        // MEMORY LEAK FIX: Unsubscribe from session timeout
+        if (this.sessionTimeoutUnsubscribe) {
+            this.sessionTimeoutUnsubscribe();
+            this.sessionTimeoutUnsubscribe = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references
+        this.Variables = null;
+        this.Actions = null;
+        this.appLocale = null;
+        this.modes = null;
+        this.dynamicComponentContainerRef = null;
+    }
 }

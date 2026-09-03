@@ -1,7 +1,7 @@
 import {Component, Inject, Injector, Optional} from '@angular/core';
 
-import { APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
-import { registerProps } from './header.props';
+import {APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
+import {registerProps} from './header.props';
 
 const DEFAULT_CLS = 'app-header clearfix';
 const WIDGET_CONFIG: IWidgetConfig = {
@@ -10,7 +10,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
-    standalone: true, 
+    standalone: true,
     selector: '[wmHeader]',
     templateUrl: './header.component.html',
     providers: [
@@ -20,6 +20,8 @@ const WIDGET_CONFIG: IWidgetConfig = {
 })
 export class HeaderComponent extends StylableComponent {
     static initializeProps = registerProps();
+
+    protected isInlineContent: boolean = true;
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
 

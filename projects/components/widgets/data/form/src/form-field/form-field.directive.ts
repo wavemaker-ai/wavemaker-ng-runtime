@@ -6,6 +6,7 @@ import {
     HostListener,
     Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional,
     Self
@@ -63,7 +64,7 @@ const FILE_TYPES = {
         {provide: Context, useFactory: () => { return {} }, multi: true}
     ]
 })
-export class FormFieldDirective extends StylableComponent implements OnInit, AfterContentInit {
+export class FormFieldDirective extends StylableComponent implements OnInit, AfterContentInit, OnDestroy {
     static initializeProps = registerProps();
 
     @ContentChild('formWidget', {static: true}) formWidget;
@@ -311,6 +312,9 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
     // Method to set the properties on inner form widget
     setFormWidget(key, val) {
         if (this.formWidget && this.formWidget.widget) {
+            if(key === 'inputtype' && this.widgettype === FormWidgetType.TEXT) {
+                key = 'type';
+            }
             this.formWidget.widget[key] = val;
         }
     }
@@ -346,10 +350,12 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
             return;
         }
 
-        this.setFormWidget(key, nv);
+        if (key !== 'show') {
+            this.setFormWidget(key, nv);
+        }
 
         // Placeholder should not be setup on max widget
-        if (key !== 'placeholder') {
+        if (key !== 'placeholder' && key !== 'show') {
             this.setMaxFormWidget(key, nv);
         }
 
@@ -392,6 +398,9 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
     }
 
     onStyleChange(key, nv, ov?) {
+        if (key === "width") {
+            this.$element.css("width", nv);
+        }
         this.setFormWidget(key, nv);
         this.setMaxFormWidget(key, nv);
         super.onStyleChange(key, nv, ov);
@@ -684,5 +693,37 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
                 this.prepareFormWidget();
             }
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Destroy BaseFieldValidations instance
+        if (this.fieldValidations) {
+            try {
+                this.fieldValidations.destroy();
+            } catch (e) {
+                // Silently handle cleanup errors
+            }
+            this.fieldValidations = null;
+        }
+
+        // MEMORY LEAK FIX: Clear notifyForFields array
+        if (this.notifyForFields) {
+            this.notifyForFields = [];
+        }
+
+        // MEMORY LEAK FIX: Nullify debounced function closure
+        this._debounceSetUpValidators = null;
+
+        // MEMORY LEAK FIX: Clear form widget references
+        this.formWidget = null;
+        this.formWidgetMax = null;
+
+        // MEMORY LEAK FIX: Clear field definition config
+        if (this.fieldDefConfig) {
+            this.fieldDefConfig = {};
+        }
+
+        // Call parent ngOnDestroy (StylableComponent extends BaseComponent which has cleanup)
+        super.ngOnDestroy();
     }
 }

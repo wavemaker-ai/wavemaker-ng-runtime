@@ -54,7 +54,9 @@ export const addClass = (node: HTMLElement, nv: string, sync?: boolean) => {
 export const switchClass = (node: HTMLElement, toAdd: string = '', toRemove: string = '', sync?: boolean) => {
     // After NG15 upgrade ng-invalid class is added even the field is valid, so we are removing the ng-invalid manually
     const isNgUntouchedValid = node.classList.contains('ng-untouched') && node.classList.contains('ng-valid');
-    if(isNgUntouchedValid && toAdd.includes('ng-untouched') && toAdd.includes('ng-invalid')) {
+    // Detect Angular's initial form state where the field has 'ng-invalid', 'ng-pristine', and 'ng-untouched' before user interaction.
+    const isInitialInvalidState = toAdd.includes('ng-untouched') && toAdd.includes('ng-pristine') && toAdd.includes('ng-invalid');
+    if((isNgUntouchedValid && toAdd.includes('ng-untouched') && toAdd.includes('ng-invalid')) || isInitialInvalidState) {
         toAdd = toAdd.replace('ng-invalid', '');
     }
     removeClass(node, toRemove, sync);
@@ -85,7 +87,21 @@ export const setProperty = (node: HTMLElement, propName: string, val: any, sync?
 };
 
 export const setAttr = (node: HTMLElement, attrName: string, val: any, sync?: boolean) => {
-    const task = () => node instanceof Element && node.setAttribute(attrName, val);
+    const task = () => {
+        if (node instanceof Element) {
+            // Handle tabindex specifically - ensure it's a valid string representation
+            if (attrName === 'tabindex') {
+                // Convert to string, handling 0, null, undefined, and NaN
+                if (val === null || val === undefined || (typeof val === 'number' && isNaN(val))) {
+                    node.removeAttribute(attrName);
+                } else {
+                    node.setAttribute(attrName, String(val));
+                }
+            } else {
+                node.setAttribute(attrName, val);
+            }
+        }
+    };
     sync ? task() : invokeLater(task);
 };
 

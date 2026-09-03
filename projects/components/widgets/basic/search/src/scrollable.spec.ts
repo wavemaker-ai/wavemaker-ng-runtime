@@ -1,11 +1,12 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement } from '@angular/core';
-import { By } from '@angular/platform-browser';
-import { ScrollableDirective } from './scrollable.directive';
-import { SearchComponent } from './search.component';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {Component, DebugElement} from '@angular/core';
+import {By} from '@angular/platform-browser';
+import {ScrollableDirective} from './scrollable.directive';
+import {SearchComponent} from './search.component';
 
 @Component({
-    template: '<div scrollable></div>'
+    standalone: false,
+    template: '<div scrollableHandler></div>'
 })
 class TestComponent { }
 

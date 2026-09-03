@@ -1,24 +1,28 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ContentChildren, Inject, Injector, Optional } from '@angular/core';
-import { noop, removeAttr } from '@wm/core';
+import {CommonModule} from '@angular/common';
+import {AfterViewInit, Component, ContentChildren, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import {App, noop, removeAttr} from '@wm/core';
 import {
     APPLY_STYLES_TYPE,
+    AutoLayout,
+    getCurrentWidgets,
     IWidgetConfig,
     provideAsWidgetRef,
     RedrawableDirective,
     StylableComponent,
     styler,
+    WmAppIconComponent,
 } from '@wm/components/base';
 
-import { registerProps } from './accordion-pane.props';
-import { AccordionDirective } from '../accordion.directive';
+import {registerProps} from './accordion-pane.props';
+import {AccordionDirective} from '../accordion.directive';
 
 const DEFAULT_CLS = 'app-accordion-panel panel';
 const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-accordionpane', hostClass: DEFAULT_CLS };
 
+@AutoLayout({ targetSelector: '.panel-body' })
 @Component({
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, WmAppIconComponent],
     selector: 'div[wmAccordionPane]',
     templateUrl: './accordion-pane.component.html',
     providers: [
@@ -26,25 +30,29 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-accordionpane', hostClass
     ],
     exportAs: 'wmAccordionPane'
 })
-export class AccordionPaneComponent extends StylableComponent implements AfterViewInit {
+export class AccordionPaneComponent extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public isActive = false;
     public iconclass: string;
+    public iconurl: string;
     public title: any;
     public subheading: string;
     public badgetype: any;
     public badgevalue: string;
     public smoothscroll: any;
     private $lazyLoad = noop;
+    private _isOnLoadTriggered: boolean = false;
+    public content: string;
     private isdynamic: boolean;
     public tabindex;
     public name: string;
+    private _currentAccordionWidgets = {};
 
     // reference to the components which needs a redraw(eg, grid, chart) when the height of this component changes
     @ContentChildren(RedrawableDirective, { descendants: true }) reDrawableComponents;
 
-    constructor(inj: Injector, private accordionRef: AccordionDirective, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private accordionRef: AccordionDirective, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, private app: App) {
         super(inj, WIDGET_CONFIG, explicitContext);
 
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.SHELL);
@@ -113,11 +121,19 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
             if (this.reDrawableComponents) {
                 this.reDrawableComponents.forEach(c => c.redraw());
             }
+            if (!this._isOnLoadTriggered && !this.content) {
+                this.invokeEventCallback('load');
+                this._isOnLoadTriggered = true;
+            }
         }, 100);
     }
 
     private notifyParent(isExpand: boolean, evt: Event) {
         this.accordionRef.notifyChange(this, isExpand, evt);
+    }
+
+    get currentAccordionWidgets() {
+        return getCurrentWidgets(this.nativeElement, this._currentAccordionWidgets);
     }
 
     onPropertyChange(key, nv, ov) {
@@ -142,5 +158,17 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
         if (this.isdynamic) {
             this.accordionRef.registerDynamicPane(this);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ContentChildren QueryList reference
+        if (this.reDrawableComponents) {
+            this.reDrawableComponents = null;
+        }
+
+        // MEMORY LEAK FIX: Clear lazy load function reference
+        this.$lazyLoad = null;
+
+        super.ngOnDestroy();
     }
 }

@@ -3,17 +3,29 @@ import {
     Attribute,
     Component,
     ContentChildren,
-    HostBinding, inject, Inject,
+    HostBinding,
+    inject,
+    Inject,
     Injector,
+    OnDestroy,
     OnInit,
     Optional
 } from '@angular/core';
 
-import {noop, removeAttr} from '@wm/core';
+import {App, noop, removeAttr} from '@wm/core';
 
-import { APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, RedrawableDirective, styler, StylableComponent } from '@wm/components/base';
-import { registerProps } from './tab-pane.props';
-import { TabsComponent } from '../tabs.component';
+import {
+    APPLY_STYLES_TYPE,
+    AutoLayout,
+    getCurrentWidgets,
+    IWidgetConfig,
+    provideAsWidgetRef,
+    RedrawableDirective,
+    StylableComponent,
+    styler
+} from '@wm/components/base';
+import {registerProps} from './tab-pane.props';
+import {TabsComponent} from '../tabs.component';
 
 const DEFAULT_CLS = 'tab-pane';
 const WIDGET_CONFIG: IWidgetConfig = {
@@ -21,15 +33,16 @@ const WIDGET_CONFIG: IWidgetConfig = {
     hostClass: DEFAULT_CLS
 };
 
+@AutoLayout({ targetSelector: '.tab-body' })
 @Component({
-    standalone: true, 
+    standalone: true,
     selector: 'div[wmTabPane]',
     templateUrl: './tab-pane.component.html',
     providers: [
         provideAsWidgetRef(TabPaneComponent)
     ]
 })
-export class TabPaneComponent extends StylableComponent implements OnInit, AfterViewInit {
+export class TabPaneComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     private _isFirstLoad: boolean = true;
@@ -40,6 +53,7 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
     public smoothscroll: any;
     private isdynamic: boolean;
     public content: string;
+    private _currentTabWidgets = {};
 
     @HostBinding('class.active') isActive = false;
     @HostBinding('class.disabled') disabled = false;
@@ -52,7 +66,8 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
         inj: Injector,
         @Attribute('heading') public heading,
         @Attribute('title') public title,
-        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
+        @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any,
+        private app: App
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);
 
@@ -134,6 +149,9 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
             super.handleEvent(this.nativeElement, eventName, callback, locals);
         }
     }
+    get currentTabWidgets () {
+        return getCurrentWidgets(this.nativeElement, this._currentTabWidgets);
+    }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
         if (key === 'content') {
@@ -172,5 +190,17 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
         if (this.isdynamic) {
             this.tabsRef.registerDynamicTab(this);
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ContentChildren QueryList reference
+        if (this.reDrawableComponents) {
+            this.reDrawableComponents = null;
+        }
+
+        // MEMORY LEAK FIX: Clear lazy load function reference
+        this.$lazyLoad = null;
+
+        super.ngOnDestroy();
     }
 }

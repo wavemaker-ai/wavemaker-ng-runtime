@@ -11,7 +11,7 @@ import {
     removeClass,
     setAttr
 } from '@wm/core';
-import {DISPLAY_TYPE, ImagePipe, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective} from '@wm/components/base';
+import {DISPLAY_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective, WmAppIconComponent} from '@wm/components/base';
 
 import {registerProps} from './anchor.props'; 
 
@@ -29,7 +29,7 @@ export const disableContextMenu = ($event: Event) => {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, ImagePipe, TextContentDirective],
+    imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: 'a[wmAnchor]',
     templateUrl: './anchor.component.html',
     providers: [
@@ -49,6 +49,7 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
     public hyperlink;
     public iconheight: string;
     public iconwidth: string;
+    public iconmargin: string;
     public iconurl: string;
     public iconclass: string;
     public caption: any;
@@ -148,6 +149,12 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
         super.ngAfterViewInit();
         this.init();
         if(this.hasGoToPageExpr) {
+            // Clean up any existing subscription before creating a new one
+            if (this.cancelSubscription) {
+                this.cancelSubscription();
+                this.cancelSubscription = null;
+            }
+            
             // In SPA, it highlights active page link when we navigate within the same layout
             this.cancelSubscription = this.app.subscribe("highlightActiveLink", (data) => {
                 if(this.hasNavigationToCurrentPageExpr && this.goToPageName !== this.app.activePageName) {
@@ -170,9 +177,18 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
     }
 
     public ngOnDestroy() {
-        this._eventNotifier.destroy();
+        // Unsubscribe from app event first to prevent any callbacks during destruction
         if(this.cancelSubscription) {
             this.cancelSubscription();
+            this.cancelSubscription = null;
+        }
+        
+        // Destroy local event notifier
+        this._eventNotifier.destroy();
+        
+        // Remove event listener if it exists
+        if (this.nativeElement) {
+            this.nativeElement.removeEventListener('contextmenu', disableContextMenu);
         }
         super.ngOnDestroy();
     }

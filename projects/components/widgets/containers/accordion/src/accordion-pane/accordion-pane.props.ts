@@ -1,4 +1,4 @@
-import { PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register } from '@wm/components/base';
+import { AUTO_LAYOUT_PROPS, PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register } from '@wm/components/base';
 
 export const registerProps = () => {
     register(
@@ -12,6 +12,7 @@ export const registerProps = () => {
                 ['content', PROP_STRING],
                 ['dynamicPaneIndex', PROP_NUMBER], // internal property
                 ['iconclass', PROP_STRING],
+                ['iconurl', PROP_STRING],
                 ['isdefaultpane', PROP_BOOLEAN],
                 ['isdynamic', PROP_STRING], // internal property
                 ['name', PROP_STRING],
@@ -19,7 +20,8 @@ export const registerProps = () => {
                 ['smoothscroll', {value: false, ...PROP_BOOLEAN}],
                 ['subheading', PROP_STRING],
                 ['tabindex', {value: 0, ...PROP_NUMBER}],
-                ['title', {value: 'Title', ...PROP_STRING}]
+                ['title', {value: 'Title', ...PROP_STRING}],
+                ...AUTO_LAYOUT_PROPS
             ]
         )
     );

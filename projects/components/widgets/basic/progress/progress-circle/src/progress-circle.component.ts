@@ -1,5 +1,5 @@
 import { NgCircleProgressModule } from 'ng-circle-progress';
-import {AfterViewInit, Component, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {CircleProgressComponent, CircleProgressOptionsInterface} from 'ng-circle-progress';
 
 
@@ -47,7 +47,7 @@ export const TYPE_CLASS_MAP_PC = {
     ],
     exportAs: 'wmProgressCircle'
 })
-export class ProgressCircleComponent extends StylableComponent implements AfterViewInit, IRedrawableComponent {
+export class ProgressCircleComponent extends StylableComponent implements AfterViewInit, OnDestroy, IRedrawableComponent {
     static initializeProps = registerProps();
 
     public displayformat: string;
@@ -139,5 +139,18 @@ export class ProgressCircleComponent extends StylableComponent implements AfterV
                 break;
         }
         super.onPropertyChange(key, nv, ov);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.circleRef = null;
+
+        // MEMORY LEAK FIX: Clear debounced function reference
+        if (this.redraw && typeof (this.redraw as any).cancel === 'function') {
+            (this.redraw as any).cancel();
+        }
+        this.redraw = null;
+
+        super.ngOnDestroy();
     }
 }

@@ -22,7 +22,7 @@ import {
     removeAttr,
     triggerFn,
 } from '@wm/core';
-import { APPLY_STYLES_TYPE, IRedrawableComponent, provideAsWidgetRef, StylableComponent, styler,  } from '@wm/components/base';
+import { APPLY_STYLES_TYPE, IRedrawableComponent, provideAsWidgetRef, StylableComponent, styler, WmAppIconComponent } from '@wm/components/base';
 
 import { registerProps } from './chart.props';
 import { allShapes, getDateList, getSampleData, initChart, isAreaChart, isAxisDomainValid, isBarChart, isBubbleChart, isChartDataArray, isChartDataJSON, isLineTypeChart, isPieType, postPlotChartProcess } from './chart.utils';
@@ -129,7 +129,7 @@ const angle = d => {
 
 @Component({
     standalone: true,
-    imports: [CommonModule, SpinnerComponent],
+    imports: [CommonModule, SpinnerComponent, WmAppIconComponent],
     selector: 'div[wmChart]',
     templateUrl: './chart.component.html',
     styleUrls: ['../../../../../node_modules/@wavemaker/nvd3/build/nv.d3.min.css'],
@@ -149,6 +149,8 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
     isVisuallyGrouped;
     orderby;
     iconclass = '';
+    iconurl: string;
+
     type: string;
     showContentLoadError;
     invalidConfig;
@@ -1163,9 +1165,32 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
     ngOnDestroy() {
         // destroy all subscriptions to prevent memory leak.
         this.hideTooltip();
-        this._subsciptions.forEach((subscription)=>{
-            subscription();
-        });
+
+        // MEMORY LEAK FIX: Unsubscribe from all subscriptions
+        if (this._subsciptions) {
+            this._subsciptions.forEach((subscription)=>{
+                subscription();
+            });
+            this._subsciptions = [];
+        }
+
+        // MEMORY LEAK FIX: Clear chart instance
+        if (this.chart) {
+            this.chart = null;
+        }
+
+        // MEMORY LEAK FIX: Remove resize handler if exists
+        if (this._resizeFn) {
+            this._resizeFn = null;
+        }
+
+        // MEMORY LEAK FIX: Clear array references
+        this.chartData = [];
+        this._processedData = [];
+        this.sampleData = [];
+        this.xDataKeyArr = [];
+        this.nonPrimaryColumns = [];
+
         super.ngOnDestroy();
     }
     redraw = this._plotChartProxy.bind(this);

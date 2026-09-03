@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 
 import { getRouteNameFromLink, getUrlParams, openLink } from '@wm/core';
-import { APPLY_STYLES_TYPE, provideAsWidgetRef, DatasetAwareNavComponent, NavNode, styler, TextContentDirective  } from '@wm/components/base';
+import { APPLY_STYLES_TYPE, provideAsWidgetRef, DatasetAwareNavComponent, NavNode, styler, TextContentDirective, WmAppIconComponent  } from '@wm/components/base';
 
 import { registerProps } from './breadcrumb.props';
 
@@ -12,7 +12,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-breadcrumb', hostClass: DEFAULT_CLS};
 
 @Component({
     standalone: true,
-    imports: [TextContentDirective],
+    imports: [TextContentDirective, WmAppIconComponent],
     selector: '[wmBreadcrumb]',
     templateUrl: './breadcrumb.component.html',
     providers: [

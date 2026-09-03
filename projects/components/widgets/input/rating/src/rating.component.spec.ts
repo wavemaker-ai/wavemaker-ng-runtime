@@ -16,6 +16,7 @@ import { MockAbstractI18nService } from '../../../../base/src/test/util/date-tes
 
 const markup = `<div tabindex="1"  wmRating  name="rating1"></div>`;
 @Component({
+    standalone: false,
     template: markup
 })
 class TestComponent {
@@ -155,7 +156,7 @@ describe("wm-rating: Component Specific tests", () => {
             wmComponent.maxvalue = 5;
             wmComponent.onDatavalueChange(4);
             expect(wmComponent.selectedRatingValue).toBe(4);
-            expect(wmComponent.ratingsWidth).toBe('3.7em');
+            expect(wmComponent.ratingsWidth).toBe('80%');
         });
     });
 
@@ -167,27 +168,27 @@ describe("wm-rating: Component Specific tests", () => {
 
         it('should return 0 for undefined datavalue', () => {
             const result = wmComponent.calculateRatingsWidth();
-            expect(result).toBe(0);
+            expect(result).toBe('0%');
             expect(wmComponent.caption).toBe('');
         });
 
         it('should calculate correct width for valid rating', () => {
             wmComponent.selectedRatingValue = 3;
             const result = wmComponent.calculateRatingsWidth(3);
-            expect(parseFloat(result as string)).toBeCloseTo(parseFloat('2.775em'));
+            expect(parseFloat(result as string)).toBeCloseTo(parseFloat('60%'));
         });
 
         it('should cap width at maxvalue when selected rating exceeds maxvalue', () => {
             wmComponent.selectedRatingValue = 7;
             const result = wmComponent.calculateRatingsWidth(7);
-            expect(parseFloat(result as string)).toBe(parseFloat('4.625em')); // 5 (maxvalue) * 0.925 (starWidth)
+            expect(parseFloat(result as string)).toBe(parseFloat('100%')); // 5 (maxvalue) * 0.925 (starWidth)
         });
 
         it('should handle edge case when maxvalue is 0', () => {
             wmComponent.maxvalue = 0;
             wmComponent.selectedRatingValue = 0;
             const result = wmComponent.calculateRatingsWidth(0);
-            expect(result).toBe(0);
+            expect(result).toBe('0%');
         });
     });
 

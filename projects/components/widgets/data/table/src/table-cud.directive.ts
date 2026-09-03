@@ -1,9 +1,17 @@
 import { Directive, Inject, OnDestroy, Self } from '@angular/core';
 
-import { $invokeWatchers, $appDigest, AbstractDialogService, App, DataSource, extractCurrentItemExpr, triggerFn } from '@wm/core';
-import { refreshDataSource } from '@wm/components/base';
+import {
+    $appDigest,
+    $invokeWatchers,
+    AbstractDialogService,
+    App,
+    DataSource,
+    extractCurrentItemExpr,
+    triggerFn
+} from '@wm/core';
+import {refreshDataSource} from '@wm/components/base';
 
-import { TableComponent } from './table.component';
+import {TableComponent} from './table.component';
 import {last, map, parseInt, startsWith} from "lodash-es";
 
 declare const $;

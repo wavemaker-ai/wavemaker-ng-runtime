@@ -1,3 +1,6 @@
+<button class="btn-leading-icon" type="button" name="leadingIcon" *ngIf="leadingiconclass || leadingiconurl" (click)="iconClickEvent($event, 'leadingiconclick')">
+     <wm-app-icon [iconclass]="leadingiconclass" [iconurl]="leadingiconurl"></wm-app-icon>
+</button>
 <input class="form-control app-textbox"
        focus-target
        [type]="type"
@@ -16,7 +19,7 @@
        [attr.placeholder]="placeholder"
        [attr.accesskey]="shortcutkey"
        [autofocus]="autofocus"
-       [ngClass]="conditionalclass"
+       [ngClass]="computedClasses"
        [ngStyle]="conditionalstyle"
        (ngModelChange)="handleChange($event)"
        (blur)="handleBlur($event); checkForDisplayFormat($event)"
@@ -24,3 +27,6 @@
        [autocomplete]="autocomplete ? 'on' : 'off'"
        (keyup.enter)="flushViewChanges(input.value)"
        #input>
+<button class="btn-trailing-icon" type="button" name="trailingIcon" *ngIf="trailingiconclass || trailingiconurl" (click)="iconClickEvent($event, 'trailingiconclick')">
+       <wm-app-icon [iconclass]="trailingiconclass" [iconurl]="trailingiconurl"></wm-app-icon>
+</button>

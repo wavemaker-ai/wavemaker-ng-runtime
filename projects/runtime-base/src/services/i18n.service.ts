@@ -5,6 +5,8 @@ import { BsLocaleService } from 'ngx-bootstrap/datepicker';
 
 import {
     _WM_APP_PROJECT,
+    $appDigest,
+    $invokeWatchers,
     AbstractI18nService,
     AppDefaults,
     getSessionStorageItem,
@@ -117,7 +119,7 @@ export class I18nServiceImpl extends AbstractI18nService {
 
     protected loadAppLocaleBundle() {
         const basePath = _WM_APP_PROJECT.isPreview || _WM_APP_PROPERTIES?.languageBundleSources === 'DYNAMIC' ? '' :  _WM_APP_PROJECT.cdnUrl
-        this.loadResource( basePath + `${APP_LOCALE_ROOT_PATH}/${this.selectedLocale}.json`)
+        return this.loadResource( basePath + `${APP_LOCALE_ROOT_PATH}/${this.selectedLocale}.json`)
             .then(bundle => {
                 this.extendMessages(bundle.messages);
                 this.extendPrefabMessages(bundle);
@@ -191,10 +193,11 @@ export class I18nServiceImpl extends AbstractI18nService {
         } else {
             this.bundleLoaded.fullCalendar = true;
         }
-        if (libLocale.angular) {
-            this.loadAppLocaleBundle();
-        }
-        return this.loadAngularLocaleBundle(libLocale.angular);
+        const promises = [
+            this.loadAngularLocaleBundle(libLocale.angular),
+            this.loadAppLocaleBundle()
+        ];
+        return Promise.all(promises);
     }
 
     public setTimezone(locale, compInstance?) {
@@ -360,7 +363,10 @@ export class I18nServiceImpl extends AbstractI18nService {
 
     private notifyLocaleChanged() {
         if(this.bundleLoaded.moment && this.bundleLoaded.fullCalendar && this.bundleLoaded.angular && this.bundleLoaded.app) {
-            this.app.notify(  'locale-changed', this.bundleLoaded.libLocale);
+            // Re-evaluate bind: expressions (dataset, caption, placeholder, etc.) against the updated appLocale.
+            $invokeWatchers(true);
+            this.app.notify('locale-changed', this.bundleLoaded.libLocale);
+            $appDigest(true);
         }
     }
 

@@ -160,6 +160,7 @@ const LIVE_ACTION_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/form', 
 const DEPENDS_ON_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/form', name: 'DependsonDirective' }];
 const LIVE_FILTER_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/form', name: 'LiveFilterDirective' }];
 const LIVE_FORM_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/data/form', name: 'LiveFormDirective' }];
+const CAPTION_POSITION_DIRECTIVE: ImportDef[] = [{ from: '@wm/components/input/caption-position', name: 'CaptionPositionDirective'}];
 const FORM_COMPONENT: ImportDef[] = [
     ...NG_FORM_MODULE,
     ...NG_REACTIVE_FORM_MODULE,
@@ -170,6 +171,7 @@ const FORM_COMPONENT: ImportDef[] = [
     ...DEPENDS_ON_DIRECTIVE,
     ...LIVE_FILTER_DIRECTIVE,
     ...LIVE_FORM_DIRECTIVE,
+    ...CAPTION_POSITION_DIRECTIVE,
     { from: '@wm/components/data/form', name: 'FormComponent' }];
 const COMPOSITE_DIRECTIVE = [{ from: '@wm/components/input/composite', name: 'CompositeDirective' }, { from: '@wm/components/input/caption-position', name: 'CaptionPositionDirective' }]
 
@@ -198,6 +200,7 @@ const TREE_COMPONENT: ImportDef[] = [{ from: '@wm/components/basic/tree', name: 
 const ACCESSROLES_DIRECTIVE = [{from: '@wm/runtime/base', name: 'AccessrolesDirective'}];
 const SHOW_IN_DEVICE_DIRECTIVE: ImportDef[] = [{from: '@wm/components/base', name: 'ShowInDeviceDirective'}];
 const LAZY_LOAD_DIRECTIVE: ImportDef[] = [{from: '@wm/components/base', name: 'LazyLoadDirective'}];
+const SVG_ICON_DIRECTIVE: ImportDef[] = [{from: '@wm/components/base', name: 'SvgIconDirective'}];
 // Pipes
 const TO_DATE_PIPE: ImportDef[] = [{ from: '@wm/components/base', name: 'ToDatePipe' }];
 const TO_CURRENCY_PIPE: ImportDef[] = [{ from: '@wm/components/base', name: 'ToCurrencyPipe' }];
@@ -311,6 +314,7 @@ export const WIDGET_IMPORTS: Map<string, ImportDef[]> = new Map([
     ['accessroles', ACCESSROLES_DIRECTIVE],
     ['showindevice', SHOW_IN_DEVICE_DIRECTIVE],
     ['lazyload', LAZY_LOAD_DIRECTIVE],
+    ['svg-icon', SVG_ICON_DIRECTIVE],
 
     ['toDate', TO_DATE_PIPE],
     ['toCurrency', TO_CURRENCY_PIPE],

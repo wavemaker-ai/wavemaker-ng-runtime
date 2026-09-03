@@ -35,11 +35,11 @@
             "@wm/core": [
                 "libraries/core"
             ],
-            "@wavemaker/variables": [
-                "node_modules/@wavemaker/variables/"
+            "@wavemaker-ai/variables": [
+                "node_modules/@wavemaker-ai/variables/"
             ],
-            "@wavemaker/custom-widgets-m3": [
-                "node_modules/@wavemaker/custom-widgets-m3/"
+            "@wavemaker-ai/custom-widgets-m3": [
+                "node_modules/@wavemaker-ai/custom-widgets-m3/"
             ],
             "@wm/components/base": [
                 "libraries/components/base"
@@ -89,6 +89,6 @@
     "angularCompilerOptions": {
         "compilationMode": "full",
         "strictMetadataEmit": false,
-        "fullTemplateTypeCheck": false
+        "strictTemplates": false
     }
 }

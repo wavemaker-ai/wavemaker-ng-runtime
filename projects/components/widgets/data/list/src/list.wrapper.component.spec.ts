@@ -42,6 +42,7 @@ jest.mock('jquery', () => jest.fn(() => ({
 })));
 
 @Component({
+    standalone: false,
     template: `
         <div wmList template="true" itemsperrow="xs-1 sm-1 md-1 lg-1" class="media-list" name="testlist"
              dataset.bind="testdata" navigation="Basic"
@@ -107,6 +108,13 @@ describe('ListComponent', () => {
 
         listAnimator = new ListAnimator(listComponent);
     }));
+
+    afterEach(() => {
+        if (fixture) {
+            fixture.destroy();
+            fixture = null;
+        }
+    });
 
     it('should create the List Component', () => {
         fixture.detectChanges();
@@ -1869,8 +1877,10 @@ describe('ListComponent', () => {
         });
 
         const mockAddEventListener = jest.fn();
+        const mockRemoveEventListener = jest.fn();
         const mockQuerySelector = jest.fn().mockReturnValue({
-            addEventListener: mockAddEventListener
+            addEventListener: mockAddEventListener,
+            removeEventListener: mockRemoveEventListener
         });
         Object.defineProperty(listComponent, 'nativeElement', {
             value: {

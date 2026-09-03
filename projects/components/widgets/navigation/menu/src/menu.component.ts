@@ -32,7 +32,8 @@ import {
     hasLinkToCurrentPage,
     provideAsWidgetRef,
     styler,
-    TextContentDirective
+    TextContentDirective,
+    WmAppIconComponent
 } from '@wm/components/base';
 import {NavComponent} from './nav/nav.component';
 
@@ -86,7 +87,7 @@ const AUTO_OPEN = {
 const WIDGET_CONFIG = { widgetType: 'wm-menu', hostClass: 'dropdown app-menu' };
 @Component({
     standalone: true,
-    imports: [BsDropdownModule, CommonModule, TextContentDirective, AnchorComponent, ButtonComponent, MenuDropdownComponent],
+    imports: [BsDropdownModule, CommonModule, TextContentDirective, AnchorComponent, ButtonComponent, MenuDropdownComponent, WmAppIconComponent],
     selector: '[wmMenu]',
     templateUrl: './menu.component.html',
     providers: [
@@ -103,7 +104,9 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
     public menuclass: string;
     public linktarget: string;
     public iconclass: string;
+    public iconurl: string;
     public animateitems: string;
+
     public disableMenuContext: boolean;
     public showonhover: boolean;
     public autoclose: string;
@@ -245,6 +248,8 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
     onPropertyChange(key: string, nv: any, ov?: any) {
 
         if (key === 'tabindex') {
+            // Let the base class handle tabindex setting via setAttr
+            super.onPropertyChange(key, nv, ov);
             return;
         }
 

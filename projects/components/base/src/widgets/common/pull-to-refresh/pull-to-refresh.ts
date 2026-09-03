@@ -9,7 +9,7 @@ export class PullToRefresh extends SwipeAnimation {
     private runAnimation: boolean;
     private count = 0;
     private spinner: Spinner;
-    public cancelSubscription: Function;
+    public cancelSubscription: () => void;
     private animationInProgress: boolean;
 
     constructor(private $el: JQuery<HTMLElement>, private app: App, private onPullToRefresh: () => void) {
@@ -72,7 +72,7 @@ export class PullToRefresh extends SwipeAnimation {
         };
     }
 
-    public context(): Object {
+    public context(): object {
         this.infoContainer.show();
         if (isIos()) {
             this.infoContainer.addClass('entry');
@@ -137,6 +137,31 @@ export class PullToRefresh extends SwipeAnimation {
     public wait() {
         this.runAnimation = true;
     }
+
+    public destroy() {
+        // Unsubscribe from app events
+        if (this.cancelSubscription) {
+            this.cancelSubscription();
+            this.cancelSubscription = null;
+        }
+        
+        // Stop any running animation
+        if (this.animationInProgress) {
+            this.stopAnimation();
+        }
+        
+        // Clean up spinner
+        if (this.spinner) {
+            this.spinner.stop();
+            this.spinner = null;
+        }
+        
+        // Remove DOM elements
+        if (this.infoContainer) {
+            this.infoContainer.remove();
+            this.infoContainer = null;
+        }
+    }
 }
 
 // Interface for Spinner
@@ -148,21 +173,21 @@ interface Spinner {
 
 // Android Spinner implementation
 class AndroidSpinner implements Spinner {
-    private options: Object;
-    private initialized: any;
+    private options: object;
+    private initialized: boolean;
     private cx: number;
     private cy: number;
     private r: number;
-    private path: any;
+    private path: JQuery<SVGPathElement>;
     private intervalId;
-    private container: any;
+    private container: JQuery<HTMLElement>;
 
-    constructor(private $el: JQuery<HTMLElement>, options?: any) {
+    constructor(private $el: JQuery<HTMLElement>, options?: object) {
         this.options = options || {};
     }
 
 
-    private polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number): any {
+    private polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number): { x: number, y: number } {
         const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
         return {
             x: centerX + (radius * Math.cos(angleInRadians)),
@@ -211,7 +236,7 @@ class AndroidSpinner implements Spinner {
     public start() {
         this.init();
         const self = this,
-            totalTime = (this.options as any).time || 1800,
+            totalTime = (this.options as { time?: number }).time || 1800,
             degreesToTraverse = 10;
         let i = 0;
         this.container.addClass('spin');
@@ -241,7 +266,7 @@ class AndroidSpinner implements Spinner {
 
 // iOS spinner implementation
 class IOSSpinner implements Spinner {
-    private svg: any;
+    private svg: JQuery<SVGElement>;
     private intervalId: any;
 
     constructor(private $el) {}

@@ -1,3 +1,4 @@
+import { AUTO_LAYOUT_PROPS } from '../../../decorators/autolayout.props';
 import { PROP_ANY, PROP_BOOLEAN, PROP_STRING, register } from '../../framework/widget-props';
 
 export const registerProps = () => {
@@ -12,11 +13,7 @@ export const registerProps = () => {
                 ['content', PROP_STRING],
                 ['name', PROP_STRING],
                 ['show', {value: true, ...PROP_BOOLEAN}],
-                ['direction', PROP_STRING],
-                ['alignment', PROP_STRING],
-                ['gap', PROP_STRING],
-                ['wrap', PROP_BOOLEAN],
-                ['columngap', PROP_STRING]
+                ...AUTO_LAYOUT_PROPS
             ]
         )
     );

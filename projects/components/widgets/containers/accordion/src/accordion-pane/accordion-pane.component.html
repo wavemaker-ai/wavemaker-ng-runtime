@@ -4,7 +4,7 @@
            class="accordion-toggle clearfix"
            href="javascript:void(0);" role="button">
             <div class="pull-left">
-                <i class="app-icon panel-icon {{iconclass}}" [hidden]="!iconclass"></i>
+                <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" iconClasses="panel-icon" alt="Accordion icon"></wm-app-icon>
             </div>
             <div class="pull-left">
                 <div class="heading" [innerHTML]="title"></div>

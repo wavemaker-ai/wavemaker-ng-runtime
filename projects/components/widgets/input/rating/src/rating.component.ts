@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import {generateGUId, noop} from '@wm/core';
-import { getOrderedDataset, provideAs, provideAsWidgetRef, styler, TextContentDirective } from '@wm/components/base';
+import { getOrderedDataset, provideAs, provideAsWidgetRef, styler, WmAppIconComponent } from '@wm/components/base';
 import { DatasetAwareFormComponent } from '@wm/components/input/dataset-aware-form';
 
 import { registerProps } from './rating.props';
@@ -18,7 +18,7 @@ const DEFAULT_RATING = 5;
 
 @Component({
   standalone: true,
-  imports: [CommonModule, TextContentDirective, FormsModule],
+  imports: [CommonModule, FormsModule, WmAppIconComponent],
     selector: '[wmRating]',
     templateUrl: './rating.component.html',
     providers: [
@@ -26,7 +26,7 @@ const DEFAULT_RATING = 5;
         provideAsWidgetRef(RatingComponent)
     ]
 })
-export class RatingComponent extends DatasetAwareFormComponent {
+export class RatingComponent extends DatasetAwareFormComponent implements OnDestroy {
     static initializeProps = registerProps();
 
     public caption: string;
@@ -37,6 +37,8 @@ export class RatingComponent extends DatasetAwareFormComponent {
     public ratingsWidth;
     public ratingItems;
     private _id;
+    public starsArray;
+    public isDecimal=false;
 
     public iconsize: string;
     public iconcolor: string;
@@ -44,7 +46,14 @@ export class RatingComponent extends DatasetAwareFormComponent {
     private touchEnabled:boolean;
     public activeiconclass: string = '';
     public inactiveiconclass: string = '';
+    public activeiconurl: string;
+    public inactiveiconurl: string;
     @ViewChild('ratingInput', /* TODO: add static flag */ { read: ElementRef }) ratingEl: ElementRef;
+
+    public static readonly DEFAULT_ACTIVE_ICON_CLASS = 'wi wi-star';
+    public static readonly DEFAULT_INACTIVE_ICON_CLASS = 'wi wi-star-border';
+    public readonly defaultActiveIconClass = RatingComponent.DEFAULT_ACTIVE_ICON_CLASS;
+    public readonly defaultInactiveIconClass = RatingComponent.DEFAULT_INACTIVE_ICON_CLASS;
 
     get selectedRatingValue() {
         return this._selectedRatingValue;
@@ -175,30 +184,34 @@ export class RatingComponent extends DatasetAwareFormComponent {
             }
             this.ratingsWidth = this.calculateRatingsWidth(dataVal);
         }
+        if(this.readonly && !isNaN(dataVal) && !Number.isInteger(parseFloat(dataVal))) {
+            this._modelByKey = dataVal;
+            this._modelByValue=dataVal
+            this.isDecimal=true;
+            this.ratingsWidth = this.calculateRatingsWidth(this.getPrevDataValue());
+            this.caption = this.selectedRatingValue
+        }
     }
 
     calculateRatingsWidth(dataVal?: any) {
         const selectedRating = parseFloat(this.selectedRatingValue),
-            starWidth = 0.925,
             maxValue = parseInt(this.maxvalue || this.datasetItems.length, 10) || DEFAULT_RATING;
 
         dataVal = dataVal || this.datavalue;
-        if (dataVal === undefined || dataVal === '' || dataVal === null) {
+        if ((dataVal === undefined || dataVal === '' || dataVal === null)||selectedRating <= 0) {
             this.caption = '';
-            return 0;
+            return '0%';
         }
-        if (selectedRating <= maxValue && selectedRating >= 0) {
-            return selectedRating * starWidth + 'em';
-        }
-        if (selectedRating > maxValue) {
-            return maxValue * starWidth + 'em';
-        }
+        const safeRating = Math.min(selectedRating, maxValue);
+        return ( (safeRating / maxValue) * 100)+'%';
     }
 
     onPropertyChange(key: string, nv: any, ov?: any) {
         if (key === 'readonly') {
+            this.isDecimal=false;
             if (nv) {
                 this.ratingsWidth = this.calculateRatingsWidth();
+                this.onDatavalueChange(this.getPrevDataValue())
             }
         } else if (key === 'maxvalue') {
             /** Storing the datavalue in temp variable and assiging back to datavalue
@@ -206,6 +219,7 @@ export class RatingComponent extends DatasetAwareFormComponent {
              * as the datavalue property change is triggering first rather than maxvalue
              * in the rating widget is used inside a datatable
              */
+            this.starsArray = Array(this.maxvalue);
             let tempDataValue = this.datavalue;
             this.prepareRatingDataset();
             // reset all the items.
@@ -230,5 +244,18 @@ export class RatingComponent extends DatasetAwareFormComponent {
     onMouseOver($event, rate) {
         this.caption = rate.label;
         !this.touchEnabled && !$event.target.classList.contains('rating-label-hover') && $event.target.classList.add('rating-label-hover');
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.ratingEl = null;
+
+        // MEMORY LEAK FIX: Clear rating items array
+        if (this.ratingItems) {
+            this.ratingItems = [];
+        }
+
+        // Call parent ngOnDestroy (DatasetAwareFormComponent has cleanup)
+        super.ngOnDestroy();
     }
 }

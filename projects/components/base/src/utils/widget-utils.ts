@@ -209,7 +209,7 @@ export const getImageUrl = (urlString, shouldEncode?, defaultUrl?) => {
             urlString =   ( defaultUrl || 'resources/images/imagelists/default-image.png' );
         }
     }
-    if (urlString && !_WM_APP_PROJECT.isPreview && !isValidImageUrl(urlString) && !urlString.startsWith(_WM_APP_PROJECT.cdnUrl) && !urlString.startsWith('services')) {
+    if (urlString && !_WM_APP_PROJECT.isPreview && !isValidImageUrl(urlString) && !urlString.startsWith(_WM_APP_PROJECT.cdnUrl) && !urlString.startsWith('services')  && !urlString.startsWith('/') ) {
         urlString = (_WM_APP_PROJECT.cdnUrl || '') + urlString;
     }
 
@@ -535,6 +535,7 @@ export const setFocusTrap = (container, allowOutsideClick, setReturnFocusElement
         onDeactivate: () => container.classList.remove('is-active'),
         allowOutsideClick: allowOutsideClick,
         setReturnFocus: setReturnFocusElement,
+        preventScroll: true,
     });
 }
 
@@ -550,4 +551,12 @@ export const getKeyboardFocusableElements = (element: HTMLElement) => {
         return (!el.hasAttribute('disabled') && !el.hasAttribute('hidden')
             && (!el.hasAttribute('tabindex') || (el.hasAttribute('tabindex') && !el.getAttribute("tabindex").startsWith('-'))));
     });
+}
+
+export const getCurrentWidgets = (element, widgets) => {
+    const componentElements = Array.from(element.querySelectorAll('[widget-id]'));
+    return Object.assign(widgets, componentElements.reduce((result, comp: any,) => {
+        result[comp.widget.name] = comp.widget;
+        return result;
+    }, {}));
 }

@@ -1,4 +1,5 @@
 import {Subject} from 'rxjs';
+import {take} from 'rxjs/operators';
 
 import {getPreviewProperties} from './wm-project-properties';
 import {$appDigest, $watch} from './watcher';
@@ -1382,14 +1383,12 @@ export const addForIdAttributes = (element: HTMLElement) => {
  */
 export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) => {
     const zoneRef = ref._ngZone || ref.ngZone;
-    zoneRef.onStable.subscribe(() => {
+    zoneRef.onStable.pipe(take(1)).subscribe(() => {
         const containerEleTransformations = getWebkitTraslationMatrix(containerElem);
-        if (containerEleTransformations.m41 < 0) {
+        if (containerEleTransformations && containerEleTransformations.m41 < 0) {
              containerEleTransformations.m41 = 0;
-         } else {
-             return;
+             setTranslation3dPosition(containerElem, containerEleTransformations);
          }
-         setTranslation3dPosition(containerElem, containerEleTransformations);
      });
    };
 
@@ -1409,8 +1408,11 @@ export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) =>
         const parentRight = parentDimesion.right + window.scrollX;
         let newLeft;
         const zoneRef = ref._ngZone || ref.ngZone;
-        zoneRef.onStable.subscribe(() => {
+        zoneRef.onStable.pipe(take(1)).subscribe(() => {
             const containerEleTransformations = getWebkitTraslationMatrix(containerElem);
+            if (!containerEleTransformations) {
+                return;
+            }
 
             if (viewPortWidth - (parentRight + parentDimesion.width) < containerWidth) {
                 newLeft = parentRight - containerWidth;
@@ -1418,10 +1420,8 @@ export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) =>
                     newLeft = 0;
                 }
                 containerEleTransformations.m41 = newLeft;
-            } else {
-                return;
+                setTranslation3dPosition(containerElem, containerEleTransformations);
             }
-            setTranslation3dPosition(containerElem, containerEleTransformations);
         });
    };
 
@@ -1445,10 +1445,20 @@ export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) =>
     * @param containerElem elemet for the WebKitCSSMatrix
     */
     export const getWebkitTraslationMatrix = (containerElem) => {
-        if (typeof WebKitCSSMatrix === 'undefined') {
-            return new MSCSSMatrix(window.getComputedStyle(containerElem[0]).transform);
+        if (!containerElem || !containerElem[0]) {
+            return null;
         }
-        return new WebKitCSSMatrix(window.getComputedStyle(containerElem[0]).webkitTransform);
+        const computedStyle = window.getComputedStyle(containerElem[0]);
+        const transformValue = computedStyle.transform || computedStyle.webkitTransform;
+
+        // If transform is 'none' or not set, create an identity matrix
+        // This allows positioning adjustments to work even when no transform is initially applied
+        const matrixValue = (!transformValue || transformValue === 'none') ? 'matrix(1, 0, 0, 1, 0, 0)' : transformValue;
+
+        if (typeof WebKitCSSMatrix === 'undefined') {
+            return new MSCSSMatrix(matrixValue);
+        }
+        return new WebKitCSSMatrix(matrixValue);
     }
 
 // close all the popovers.
@@ -1510,10 +1520,12 @@ export const triggerItemAction = (scope, item) => {
 export const getDatasourceFromExpr = (expr, scope) => {
     const isBoundToVariable = startsWith(expr, 'Variables.');
     const isBoundToWidget = startsWith(expr, 'Widgets.');
+
     const parts = expr.split('.');
     if (isBoundToVariable) {
         return get(scope.viewParent.Variables, parts[1]);
     }
+
     if (isBoundToWidget) {
         const widgetScope = get(scope.viewParent.Widgets, parts[1]);
         const widgetDatasetBoundExpr = widgetScope.$attrs.get('datasetboundexpr');
@@ -1603,7 +1615,9 @@ export const getAppSetting = (key, defaultValue) => {
 export const setListClass = (scope) => {
     let temp = '';
     if (scope.itemsperrow) {
-        if (isNaN(parseInt(scope.itemsperrow, 10))) {
+        if(scope.itemsperrow === "auto") {
+            scope.itemsPerRowClass = "";
+        } else if (isNaN(parseInt(scope.itemsperrow, 10))) {
             // handling itemsperrow containing string of classes
             split(scope.itemsperrow, ' ').forEach((cls: string) => {
                 const keys = split(cls, '-');
@@ -1652,6 +1666,33 @@ export const getFontConfig = () => {
     return _WM_APP_PROPERTIES.fontConfig || getPreviewProperties();
 }
 
+export const adjustVerticalPosition = (containerElem, parentElem: HTMLElement, ref, ele?): void => {
+    const zoneRef = ref._ngZone || ref.ngZone;
+
+    zoneRef.onStable.subscribe(() => {
+            const containerHeight = ele
+                ? parseInt(ele.css('height'), 10)
+                : parseInt(containerElem.css('height'), 10);
+
+            const rect = parentElem.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+
+            const spaceBelow = viewportHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            if (spaceBelow < containerHeight && spaceAbove >= containerHeight) {
+                const matrix = getWebkitTraslationMatrix(containerElem);
+
+                matrix.m42 = matrix.m42 - containerHeight - rect.height;
+
+                if (matrix.m42 < 0) {
+                    matrix.m42 = 0;
+                }
+
+                setTranslation3dPosition(containerElem, matrix);
+            }
+        });
+};
 /*export const getParent = (parent: any) => {
     if(parent.hasOwnProperty("isDynamicComponent") || parent.hasOwnProperty("isPageComponent")) {
         return parent

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild, OnDestroy} from '@angular/core';
 
-import { APPLY_STYLES_TYPE, styler, StylableComponent, provideAsWidgetRef, TextContentDirective ,TrustAsPipe} from '@wm/components/base';
+import { APPLY_STYLES_TYPE, ImagePipe, styler, StylableComponent, provideAsWidgetRef, TextContentDirective, TrustAsPipe, WmAppIconComponent } from '@wm/components/base';
 
 import { registerProps } from './navbar.props';
 
@@ -12,17 +12,18 @@ declare const $;
 
 @Component({
     standalone: true,
-    imports: [CommonModule, TextContentDirective,TrustAsPipe],
+    imports: [CommonModule, TextContentDirective, TrustAsPipe, ImagePipe, WmAppIconComponent],
     selector: '[wmNavbar]',
     templateUrl: './navbar.component.html',
     providers: [
         provideAsWidgetRef(NavbarComponent)
     ]
 })
-export class NavbarComponent extends StylableComponent implements AfterViewInit {
+export class NavbarComponent extends StylableComponent implements AfterViewInit, OnDestroy {
     static initializeProps = registerProps();
 
     public menuiconclass: any;
+    public menuiconurl: string;
     public title: string;
     public imgsrc: string;
     @ViewChild('navContent', {static: true}) private navContent: ElementRef;
@@ -44,5 +45,12 @@ export class NavbarComponent extends StylableComponent implements AfterViewInit 
 
     private toggleNavCollapse() {
         this.navContent.nativeElement.classList.toggle('in');
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Clear ViewChild reference
+        this.navContent = null;
+
+        super.ngOnDestroy();
     }
 }

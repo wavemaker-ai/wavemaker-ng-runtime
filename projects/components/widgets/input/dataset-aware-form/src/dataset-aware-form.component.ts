@@ -46,7 +46,7 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
 
     // this field contains the initial datavalue which needs to be processed once the dataset is available
     public toBeProcessedDatavalue: any;
-    private readonly _debouncedInitDatasetItems: Function;
+    private readonly _debouncedInitDatasetItems: Function | null = null;
     protected allowempty = true;
     public compareby: any;
 
@@ -98,12 +98,14 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
 
         this._debouncedInitDatasetItems = debounce(() => {
             this.initDatasetItems();
-            $appDigest();
+            $appDigest(true);
         }, 150);
         this.handleHeaderClick = noop;
 
         this.cancelLocaleChangeSubscription = this.getAppInstance().subscribe("locale-changed", () => {
-            this._debouncedInitDatasetItems();
+            if (this._debouncedInitDatasetItems) {
+                this._debouncedInitDatasetItems();
+            }
         });
     }
 
@@ -284,8 +286,10 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
     // Once the datasetItems are ready, set the proxyModel by using datavalue.
     protected postDatasetItemsInit() {
         if (this.datasetItems.length && !this._defaultQueryInvoked) {
-            // use the latest of toBeProcessedDatavalue, datavalue
-            const _datavalue = isEmpty(this.toBeProcessedDatavalue) ? this.datavalue : this.toBeProcessedDatavalue;
+            // Use the latest of toBeProcessedDatavalue, datavalue.
+            // IMPORTANT: lodash isEmpty treats 0/false as "empty", which breaks default values that legitimately evaluate to 0/false.
+            // Only fall back to datavalue when toBeProcessedDatavalue is actually undefined/null.
+            const _datavalue = isDefined(this.toBeProcessedDatavalue) ? this.toBeProcessedDatavalue : this.datavalue;
             this.selectByValue(_datavalue);
         }
         // notify the dataset listeners
@@ -333,7 +337,9 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
             case 'displayexpression':
             case 'orderby':
             case 'usekeys':
-                this._debouncedInitDatasetItems();
+                if (this._debouncedInitDatasetItems) {
+                    this._debouncedInitDatasetItems();
+                }
                 break;
             case 'required':
             case 'datavalue':
@@ -364,5 +370,29 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
         if(this.cancelLocaleChangeSubscription) {
             this.cancelLocaleChangeSubscription();
         }
+
+        // MEMORY LEAK FIX: Complete and clear Subject observables
+        if (this.dataset$) {
+            this.dataset$.complete();
+        }
+        if (this.datavalue$) {
+            this.datavalue$.complete();
+        }
+
+        // MEMORY LEAK FIX: Clear datasetItems array
+        this.datasetItems = [];
+
+        // MEMORY LEAK FIX: Clear grouped data
+        if (this.groupedData) {
+            this.groupedData = [];
+        }
+
+        // MEMORY LEAK FIX: Clear model references
+        this._modelByKey = null;
+        this._modelByValue = null;
+        this.toBeProcessedDatavalue = null;
+
+        // Call parent ngOnDestroy
+        super.ngOnDestroy();
     }
 }

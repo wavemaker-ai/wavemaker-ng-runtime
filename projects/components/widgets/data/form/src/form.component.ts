@@ -7,6 +7,7 @@ import {
     Attribute,
     Component,
     ContentChildren,
+    EnvironmentInjector,
     HostBinding,
     HostListener,
     Inject,
@@ -39,6 +40,7 @@ import {
     removeAttr,
     removeClass,
     scrollToElement,
+    setListClass,
 } from '@wm/core';
 import {
     FilterPipe,
@@ -51,7 +53,8 @@ import {
     provideAsWidgetRef,
     StylableComponent,
     styler,
-    WidgetRef
+    WidgetRef,
+    WmAppIconComponent
 } from '@wm/components/base';
 import {PrefabDirective} from '@wm/components/prefab';
 import {ListComponent} from '@wm/components/data/list';
@@ -158,7 +161,7 @@ const setTouchedState = (self, ngForm, fieldName) => {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FilterPipe, AnchorComponent, ButtonComponent, MessageComponent],
+  imports: [CommonModule, FilterPipe, AnchorComponent, ButtonComponent, MessageComponent, WmAppIconComponent],
     selector: 'form[wmForm]',
     templateUrl: './form.component.html',
     providers: [
@@ -175,6 +178,8 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     autoupdate;
     public formlayout: any;
     public isDataSourceUpdated: boolean;
+    public iconclass: string;
+    public iconurl: string;
     captionAlignClass: string;
     validationtype: string;
     captionalign: string;
@@ -235,6 +240,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     onMaxDefaultValueChange: Function;
     numberOfFields: number;
     readonly :boolean;
+    itemsPerRowClass: string;
 
     private _debouncedUpdateFieldSource: Function = _debounce(this.updateFieldSource, 350);
     private operationType;
@@ -313,6 +319,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
 
     constructor(
         inj: Injector,
+        private envInjector: EnvironmentInjector,
         private fb: FormBuilder,
         private app: App,
         private dialogService: AbstractDialogService,
@@ -376,7 +383,10 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             this.formArrayIndex = this.parentFormArray.length - 1;
         }
         this.addInnerNgFormToForm(this.bindingValue);
-    }
+        setTimeout(() => {
+            $(this.nativeElement).find('div[data-role="form-field"], div[data-role="filter-field"]').addClass(this.itemsPerRowClass)
+        }); 
+   }
 
     findOperationType() {}
 
@@ -668,6 +678,10 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                     });
                 }
                 break;
+            case 'itemsperrow':
+                setListClass(this);
+                break;
+
             default:
                 super.onPropertyChange(key, nv, ov);
         }
@@ -833,7 +847,12 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         // as it can contain default value which will again be overridden by undefined.
         const fd = innerFormdata ? innerFormdata : data;
         if (fd) {
-            if (fd.hasOwnProperty(key)) {
+            // Fix for [WMS-31245]: when child form has no formdata and if its field has default value,
+            // then use default value instead of parent data
+            const isInnerFormField = field.form.parentForm?.name == this.name;
+            if (isInnerFormField && isEmpty(innerFormdata)) {
+                field.value = field.defaultvalue;
+            } else if (fd.hasOwnProperty(key)) {
                 field.value = get(fd, key);
             } else if (includes(key, '.')) {
                 // key contains '.' when mapping the fields to child reference i.e. childCol is having key as "parent.childCol"
@@ -890,11 +909,21 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             field.value = '';
             if (field.widgettype === 'upload' || field.type === DataType.BLOB) {
                 this.resetFileUploadWidget(field, true);
+            }else if(field.widgettype === 'slider'){
+                this.resetSliderWidget(field);
             }
             field.nativeElement.querySelector('input')?.removeAttribute('aria-invalid');
         });
         this.constructDataObject();
         this.clearMessage();
+    }
+
+    resetSliderWidget(field){
+        const $formEle = this.$element;
+        const slider =  $formEle.find('[name="' + field.key + '_formWidget"]').closest('.slider-control');
+         if (slider.length) {
+            slider.css('--end', `50%`);
+        }
     }
 
     savePrevformFields() {
@@ -1247,21 +1276,54 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
 
         this.dynamicFormRef.clear();
 
+        // Setup dynamic context for the form component
         if (!this._dynamicContext) {
             this._dynamicContext = Object.create(this.viewParent);
             this._dynamicContext.form = this;
         }
-        const componentFactoryRef = await this.dynamicComponentProvider.getComponentFactoryRef(
-            'app-form-dynamic-' + this.widgetId,
-            fieldTemplate,
-            {
-                noCache: true,
-                transpile: true
+        
+        try {
+            // Generate unique component selector for this dynamic form instance
+            const componentSelector = `app-form-dynamic-${this.widgetId}`;
+            
+            // Get the dynamically compiled form component class
+            const DynamicFormComponentClass = await this.dynamicComponentProvider.getComponentFactoryRef(
+                componentSelector,
+                fieldTemplate,
+                {
+                    noCache: true,
+                    transpile: true
+                }
+            );
+            
+            if (!DynamicFormComponentClass) {
+                console.error(`Failed to create dynamic form component: ${componentSelector}`);
+                return;
+            }
+
+            // Create component with both environmentInjector (for standalone imports/providers)
+            // and injector (for element-level dependencies)
+            const componentRef = this.dynamicFormRef.createComponent(DynamicFormComponentClass, {
+                index: 0,
+                environmentInjector: this.envInjector,
+                injector: this.inj
             });
-        const component = this.dynamicFormRef.createComponent(componentFactoryRef, 0, this.inj);
-        extendProto(component.instance, this._dynamicContext);
-        $gridLayout[0].appendChild(component.location.nativeElement);
-        this.setFormData(this.formdata);
+            
+            // Extend component instance with dynamic context
+            extendProto(componentRef.instance, this._dynamicContext);
+            
+            // Append to DOM
+            if ($gridLayout[0]) {
+                $gridLayout[0].appendChild(componentRef.location.nativeElement);
+            } else {
+                console.error('Form grid layout element not found');
+            }
+            
+            // Set form data after component creation
+            this.setFormData(this.formdata);
+        } catch (error) {
+            console.error('Error creating dynamic form component:', error);
+        }
     }
 
     get mode() {
@@ -1346,6 +1408,37 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 this.parentForm.ngform.removeControl(this.name);
             }
         }
+
+        // MEMORY LEAK FIX: Clear ViewContainerRef for dynamically generated form fields
+        if (this.dynamicFormRef) {
+            this.dynamicFormRef.clear();
+        }
+
+        // MEMORY LEAK FIX: Clear dynamic context object
+        if (this._dynamicContext) {
+            Object.keys(this._dynamicContext).forEach(key => {
+                delete this._dynamicContext[key];
+            });
+            this._dynamicContext = null;
+        }
+
+        // MEMORY LEAK FIX: Clear all data arrays and objects
+        this.formFields = [];
+        this.formWidgets = {};
+        this.filterWidgets = {};
+        this.buttonArray = [];
+        this.validationMessages = [];
+        this.formdata = {};
+        this.dataoutput = {};
+        this.formfields = {};
+        this.prevDataValues = null;
+        this.prevDataObject = null;
+        this.prevformFields = null;
+
+        // MEMORY LEAK FIX: Nullify debounced function closures
+        this._debouncedUpdateFieldSource = null;
+        this._debouncedSubmitForm = null;
+
         super.ngOnDestroy();
     }
 }

@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { TextContentDirective } from "@wm/components/base";
-import {Component, Inject, Injector, OnInit, Optional} from '@angular/core';
+import {Component, Inject, Injector, OnInit, OnDestroy, Optional} from '@angular/core';
 
 import {DataSource, validateDataSourceCtx} from '@wm/core';
-import { IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, ImagePipe } from '@wm/components/base';
+import { IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, ImagePipe, WmAppIconComponent } from '@wm/components/base';
 
 import { registerProps } from './spinner.props';
 import {includes, isEmpty, split} from "lodash-es";
@@ -13,7 +13,7 @@ const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-spinner', hostClass: DEFAU
 
 @Component({
   standalone: true,
-  imports: [CommonModule, TextContentDirective],
+  imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: '[wmSpinner]',
     templateUrl: './spinner.component.html',
     providers: [
@@ -21,10 +21,11 @@ const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-spinner', hostClass: DEFAU
     ],
     exportAs: 'wmSpinner'
 })
-export class SpinnerComponent extends StylableComponent implements OnInit {
+export class SpinnerComponent extends StylableComponent implements OnInit, OnDestroy {
     static initializeProps = registerProps();
 
     public iconclass = '';
+    public iconurl = '';
     public animation = '';
     public imagewidth;
     public imageheight;
@@ -44,9 +45,11 @@ export class SpinnerComponent extends StylableComponent implements OnInit {
         this._spinnerMessages = newVal;
     }
 
+    private toggleVariableStateSubscription: any;
+
     private listenOnDataSource() {
         const variables = split(this.servicevariabletotrack, ',');
-        this.getAppInstance().subscribe('toggle-variable-state', data => {
+        this.toggleVariableStateSubscription = this.getAppInstance().subscribe('toggle-variable-state', data => {
             const name = data.variable.execute(DataSource.Operation.GET_NAME);
             if (includes(variables, name) && validateDataSourceCtx(data.variable, this.getViewParent())) {
                 this.widget.show = data.active;
@@ -80,5 +83,15 @@ export class SpinnerComponent extends StylableComponent implements OnInit {
             this.widget.show = false;
             this.listenOnDataSource();
         }
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from toggle-variable-state event
+        if (this.toggleVariableStateSubscription) {
+            this.toggleVariableStateSubscription();
+            this.toggleVariableStateSubscription = null;
+        }
+
+        super.ngOnDestroy();
     }
 }

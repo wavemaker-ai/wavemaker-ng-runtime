@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, OnDestroy} from '@angular/core';
 import {Router} from '@angular/router';
 import {DatePipe} from '@angular/common';
 
@@ -17,7 +17,7 @@ import {
 import {SecurityService} from '@wm/security';
 import {$rootScope, MetadataService, VariablesService} from '@wm/variables';
 import {extend, forEach, get, isEmpty, isObject, isUndefined, merge, trim} from "lodash-es";
-import { getModesFromLocalStorage } from '../public_api';
+import {getModesFromLocalStorage} from '../public_api';
 
 enum POST_MESSAGES {
     HIDE_TEMPLATES_SHOW_CASE = 'hide-templates-show-case',
@@ -30,7 +30,7 @@ enum POST_MESSAGES {
 
 
 @Injectable()
-export class AppManagerService {
+export class AppManagerService implements OnDestroy {
     static readonly SERVICE_NAME = 'AppManagerService';
 
     private appVariablesLoaded = false;
@@ -38,6 +38,9 @@ export class AppManagerService {
     private _noRedirect = false;
     private templates: Array<any>;
     private lastLoggedUserId;
+    private appSubscriptions: Array<() => void> = []; // MEMORY LEAK FIX: Track subscriptions
+    private windowMessageListener: (event: MessageEvent) => void; // MEMORY LEAK FIX: Store listener reference
+    private sessionTimeoutUnsubscribe: () => void; // MEMORY LEAK FIX: Store unsubscribe function
 
     constructor(
         private $http: AbstractHttpService,
@@ -52,11 +55,13 @@ export class AppManagerService {
         private $datePipe: DatePipe,
     ) {
         // register method to invoke on session timeout
-        this.$http.registerOnSessionTimeout(this.handle401.bind(this));
+        // MEMORY LEAK FIX: Store unsubscribe function for cleanup
+        this.sessionTimeoutUnsubscribe = this.$http.registerOnSessionTimeout(this.handle401.bind(this));
 
         this.$variables.registerDependency('appManager', this);
 
-        this.$app.subscribe('toggle-variable-state', (data) => {
+        // MEMORY LEAK FIX: Store subscription unsubscribe functions
+        this.appSubscriptions.push(this.$app.subscribe('toggle-variable-state', (data) => {
             const variable = data.variable,
                 active = data.active;
             if (!isEmpty(trim(variable.spinnerContext))) {
@@ -84,8 +89,8 @@ export class AppManagerService {
                     this.$spinner.hide(variable._spinnerId.shift());
                 }
             }
-        });
-        this.$app.subscribe('userLoggedIn', () => {
+        }));
+        this.appSubscriptions.push(this.$app.subscribe('userLoggedIn', () => {
             this.setLandingPage();
             if (this.lastLoggedUserId) {
                 this.$security.getConfig(config => {
@@ -94,11 +99,11 @@ export class AppManagerService {
                     }
                 }, null);
             }
-        });
-        this.$app.subscribe('userLoggedOut', () => this.setLandingPage().then(() => {
-            this.$app.clearPageCache();
         }));
-        this.$app.subscribe('http401', (d = {}) => this.handle401(d.page, d.options));
+        this.appSubscriptions.push(this.$app.subscribe('userLoggedOut', () => this.setLandingPage().then(() => {
+            this.$app.clearPageCache();
+        })));
+        this.appSubscriptions.push(this.$app.subscribe('http401', (d = {}) => this.handle401(d.page, d.options)));
     }
 
     /**
@@ -331,7 +336,7 @@ export class AppManagerService {
             loginMethod = loginConfig.type.toUpperCase();
             switch (loginMethod) {
                 case LOGIN_METHOD.DIALOG:
-                    // Through loginDialog, user will remain in the current state and failed calls will be executed post login through LoginVariableService.
+                    // Through loginDialog, user will remain in the current state and failed calls will be executed post login through LoginActionService.
                     // NOTE: user will be redirected to respective landing page only if dialog is opened manually(not through a failed 401 call).
                     this.noRedirect(true);
                     this.showLoginDialog();
@@ -362,9 +367,10 @@ export class AppManagerService {
     reloadAppData() {
         return this.loadSecurityConfig(true).then(() => {
             return this.loadMetadata().then(() => {
-               return this.updateLoggedInUserVariable().then(() => {
-                return this.beforeAppReady();
-               })
+                return this.updateLoggedInUserVariable().then((config) => {
+                    return Promise.resolve(this.beforeAppReady())
+                        .then(() => Promise.resolve(config));
+                })
             });
         });
     }
@@ -424,6 +430,29 @@ export class AppManagerService {
 
     notifyApp(template, type, title?) {
         this.$app.notifyApp(template, type, title);
+    }
+
+    /**
+     * Notifies access denied for a page (e.g. RoleGuard) and invokes App.onServiceError
+     * with a 403-shaped response.
+     */
+    notifyAccessDenied(pageName?: string, message?: string) {
+        const errorMessage = message
+            || get(this.getAppLocale(), 'LABEL_ACCESS_DENIED')
+            || this.$app.appLocale?.LABEL_ACCESS_DENIED
+            || 'Access Denied';
+        const pagePath = pageName || this.$security.getCurrentRoutePage();
+        const errorResponse = {
+            message: errorMessage,
+            status: 403,
+            statusText: 'Forbidden',
+            ok: false,
+            url: pagePath ? `./pages/${pagePath}/page.min.json` : '',
+            body: null,
+            error: errorMessage
+        };
+        this.appOnServiceError(errorMessage, errorResponse);
+        this.notifyApp(errorMessage, 'error');
     }
 
     /**
@@ -546,19 +575,47 @@ export class AppManagerService {
         }
     }
 
-    initAppModes(): void {    
+    initAppModes(): void {
         // get modes from local storage
         let storedModes = getModesFromLocalStorage();
-        
+
         // Apply restored modes
         this.$app.setMode(storedModes);
-    
+
         // Listener for postMessage-based mode changes
-        window.addEventListener('message', (event) => {
+        // MEMORY LEAK FIX: Store bound function reference for cleanup
+        this.windowMessageListener = (event) => {
             const { key, modes, shouldPersist } = event.data || {};
             if (key === 'switch-mode' && modes) {
                 this.$app.setMode(modes, !shouldPersist);
             }
+        };
+        window.addEventListener('message', this.windowMessageListener);
+    }
+
+    ngOnDestroy() {
+        // MEMORY LEAK FIX: Unsubscribe from all app subscriptions
+        this.appSubscriptions.forEach(unsubscribe => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
         });
+        this.appSubscriptions = [];
+
+        // MEMORY LEAK FIX: Unsubscribe from session timeout
+        if (this.sessionTimeoutUnsubscribe) {
+            this.sessionTimeoutUnsubscribe();
+            this.sessionTimeoutUnsubscribe = null;
+        }
+
+        // MEMORY LEAK FIX: Remove window message listener
+        if (this.windowMessageListener) {
+            window.removeEventListener('message', this.windowMessageListener);
+            this.windowMessageListener = null;
+        }
+
+        // MEMORY LEAK FIX: Clear references
+        this.templates = null;
+        this.lastLoggedUserId = null;
     }
 }

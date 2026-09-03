@@ -60,6 +60,12 @@ export abstract class BaseLayoutComponent implements AfterViewInit, OnDestroy {
 
     //TODO: To work cache properly need to implement the below methods and WmRouteReuseStrategy
     ngOnDestroy(): void {
+        // MEMORY LEAK FIX: Clear references to prevent memory leaks
+        this.App = null;
+        this.routerOutlet = null;
+        this.pageDirective = null;
+        this.layoutPages = null;
+        this.layoutName = null;
     }
 
     canReuse() {
