@@ -1,7 +1,7 @@
 import {Directive, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 
-import { IWidgetConfig, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
-import {Viewport, ViewportEvent} from '@wm/core';
+import { AutoLayout, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
+import {App, Viewport, ViewportEvent} from '@wm/core';
 import { registerProps } from './prefab-container.props';
 import {assign} from "lodash-es";
 
@@ -11,6 +11,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     hostClass: DEFAULT_CLS
 };
 
+@AutoLayout()
 @Directive({
   standalone: true,
     selector: '[wmPrefabContainer]',
@@ -21,7 +22,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 export class PrefabContainerDirective extends StylableComponent  implements OnDestroy {
     static initializeProps = registerProps();
 
-    constructor(inj: Injector, private viewport: Viewport, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private app: App, private viewport: Viewport, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
 

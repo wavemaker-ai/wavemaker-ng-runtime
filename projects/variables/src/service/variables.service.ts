@@ -24,7 +24,7 @@ import {
     setValueToNode,
     wmSetDependency
 } from '@wavemaker-ai/variables';
-import {appManager, setDependency, simulateFileDownload} from '../util/variable/variables.utils';
+import {appManager, applyMultiIndexForDuplicateBindings, setDependency, simulateFileDownload} from '../util/variable/variables.utils';
 import {MetadataService} from './metadata-service/metadata.service';
 import {VARIABLE_CONSTANTS} from '../constants/variables.constants';
 import {isArray, isFunction, isUndefined, set} from "lodash-es";
@@ -134,6 +134,9 @@ export class VariablesService {
         variable['_bind' + bindSource] = bindMap;
         if (!bindMap || !isArray(bindMap)) {
             return;
+        }
+        if (variable.category === VARIABLE_CONSTANTS.CATEGORY.SERVICE) {
+            applyMultiIndexForDuplicateBindings(bindMap);
         }
         bindMap.forEach( (node) => {
             /* for static variable change the binding with target 'dataBinding' to 'dataSet', as the results have to reflect directly in the dataSet */

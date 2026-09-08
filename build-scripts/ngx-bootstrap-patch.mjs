@@ -36,11 +36,26 @@ const PATCHES = {
             let current = code;
             let anyChanged = false;
 
-            // DestroyRef injection fix
-            if (current.includes('takeUntilDestroyed()') && !current.includes('const __destroyRef = i0.inject(i0.DestroyRef)')) {
+            // DestroyRef injection fix (ngx-bootstrap 21: takeUntilDestroyed(__destroyRef) without declaration)
+            if (
+                current.includes('takeUntilDestroyed(__destroyRef)') &&
+                !current.includes('const __destroyRef = i0.inject(i0.DestroyRef)')
+            ) {
                 const r1 = applyReplacement(
                     current,
-                    /(constructor\s*\(\s*ngZone\s*,\s*rendererFactory\s*,\s*platformId\s*\)\s*\{)/,
+                    /(constructor\s*\(\s*(?:ngZone\s*,\s*)?rendererFactory\s*,\s*platformId\s*\)\s*\{)/,
+                    '$1\n        const __destroyRef = i0.inject(i0.DestroyRef);',
+                    'Patched PositioningService: DestroyRef injection'
+                );
+                current = r1.code;
+                anyChanged = r1.changed || anyChanged;
+            } else if (
+                current.includes('takeUntilDestroyed()') &&
+                !current.includes('const __destroyRef = i0.inject(i0.DestroyRef)')
+            ) {
+                const r1 = applyReplacement(
+                    current,
+                    /(constructor\s*\(\s*(?:ngZone\s*,\s*)?rendererFactory\s*,\s*platformId\s*\)\s*\{)/,
                     '$1\n        const __destroyRef = i0.inject(i0.DestroyRef);',
                     null
                 );
