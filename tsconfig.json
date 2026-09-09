@@ -8,7 +8,7 @@
         "declaration": false,
         "target": "es2022",
         "module": "es2022",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "esModuleInterop": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
@@ -36,7 +36,9 @@
                 "libraries/core"
             ],
             "@wavemaker-ai/variables": [
-                "node_modules/@wavemaker-ai/variables/"
+                ".yalc/@wavemaker-ai/variables/dist/es2015/index",
+                "node_modules/@wavemaker-ai/variables/dist/es2015/index",
+                ".yalc/@wavemaker-ai/variables/index"
             ],
             "@wavemaker-ai/custom-widgets-m3": [
                 "node_modules/@wavemaker-ai/custom-widgets-m3/"

@@ -229,9 +229,9 @@ const testModuleDef: ITestModuleDef = {
         LayoutGridRowDirective,
         LabelDirective,
         CommonModule,
-        BsDatepickerModule.forRoot(),
-        TimepickerModule.forRoot(),
-        BsDropdownModule.forRoot()
+        BsDatepickerModule,
+        TimepickerModule,
+        BsDropdownModule
     ],
     declarations: [
         FormWrapperComponent,

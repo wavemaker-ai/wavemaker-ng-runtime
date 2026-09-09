@@ -16,6 +16,12 @@ const ALIGN_MAP: any = {
     'end':           { jc: 'space-between', ai: 'flex-end' }
 };
 
+/* Auto Layout runs in PRISM apps, and in prefabs - a prefab is authored with Auto Layout so the
+   PRISM app consuming it lays out correctly, and its own standalone preview has to render the
+   same way. Inside a host app the App instance is the host's, so a prefab dropped into a PRISM
+   app is covered by isPrism. */
+const isAutoLayoutEnabled = (app: App) => !!(app?.isPrism || app?.isPrefabType);
+
 export function AutoLayout(options: { targetSelector?: string, bindParent?: string } = {}) {
     return function (constructor: Function) {
         const proto = constructor.prototype;
@@ -110,7 +116,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
 
         proto.ngAfterViewInit = function () {
             const app = this['app'] || this['injector']?.get(App);
-            if (app?.isPrism) {
+            if (isAutoLayoutEnabled(app)) {
                 const store = getAutolayoutStore(this);
                 setAutolayoutStore(this, { isViewInitialized: true });
 
@@ -418,7 +424,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
 
         proto.onPropertyChange = function (key: string, nv: any, ov?: any) {
             const app = this['app'] || this['injector']?.get(App);
-            if (app?.isPrism) {
+            if (isAutoLayoutEnabled(app)) {
                 const store = getAutolayoutStore(this);
 
                 // Set watcher on the binded props
@@ -479,7 +485,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
 
         proto.onStyleChange = function (key: string, nv: any, ov?: any) {
             const app = this['app'] || this['injector']?.get(App);
-            if (app?.isPrism) {
+            if (isAutoLayoutEnabled(app)) {
                 const store = getAutolayoutStore(this);
                 const isReady = store.isViewInitialized;
 

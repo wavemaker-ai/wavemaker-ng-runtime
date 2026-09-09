@@ -1,6 +1,6 @@
 /*global describe, it, WM, beforeEach, expect, module, inject, _, parseInt, document, Hammer*/
 
-import {waitForAsync} from '@angular/core/testing';
+import {fakeAsync, tick, waitForAsync} from '@angular/core/testing';
 import {isBooleanAttr, isDimensionProp} from '../widgets/framework/constants';
 import {toDimension} from '../../../../core/src/utils/dom';
 import {compileTestComponent, getHtmlSelectorElement} from './util/component-test-util';
@@ -419,13 +419,13 @@ export class ComponentTestBase {
                         });
                     }));
                 } else if (evtObj.eventTrigger) {
-                    it('Should trigger the ' + evtObj.eventName + ' event', waitForAsync(() => {
-                        fixture.whenStable().then(() => {
-                            jest.spyOn(fixture.componentInstance, evtObj.callbackMethod);
-                            let eleControl = getHtmlSelectorElement(fixture, evtObj.eventTrigger);
-                            eleControl.triggerEventHandler(evtObj.eventName, {});
-                            expect(fixture.componentInstance[evtObj.callbackMethod]).toHaveBeenCalledTimes(1);
-                        });
+                    it('Should trigger the ' + evtObj.eventName + ' event', fakeAsync(() => {
+                        jest.spyOn(fixture.componentInstance, evtObj.callbackMethod);
+                        const eleControl = getHtmlSelectorElement(fixture, evtObj.eventTrigger);
+                        eleControl.triggerEventHandler(evtObj.eventName, {});
+                        fixture.detectChanges();
+                        tick();
+                        expect(fixture.componentInstance[evtObj.callbackMethod]).toHaveBeenCalledTimes(1);
                     }));
                 }
 

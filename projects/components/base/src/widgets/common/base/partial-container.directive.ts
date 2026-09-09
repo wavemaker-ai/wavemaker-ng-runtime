@@ -2,7 +2,7 @@ import { Attribute, Directive, ElementRef, EnvironmentInjector, Inject, Injector
 
 import { debounceTime, filter } from 'rxjs/operators';
 
-import { $invokeWatchers, App, ComponentType, noop, PartialRefProvider } from '@wm/core';
+import { $appDigest, $invokeWatchers, App, ComponentType, noop, PartialRefProvider } from '@wm/core';
 
 import { WidgetRef } from "../../framework/types";
 import { debounce } from "lodash-es";
@@ -15,6 +15,7 @@ export class PartialContainerDirective implements OnDestroy {
 
     private contentInitialized = false;
     private $target;
+    private instanceRef;
 
     get name() {
         return this.componentInstance.name;
@@ -28,6 +29,7 @@ export class PartialContainerDirective implements OnDestroy {
         try {
             // Destroy the existing partial before creating new one
             this.vcRef.clear();
+            this.instanceRef = null;
 
             // Trigger watchers for container-target query
             $invokeWatchers(true);
@@ -54,6 +56,8 @@ export class PartialContainerDirective implements OnDestroy {
                 environmentInjector: this.envInjector,
                 injector: this.inj
             });
+
+            this.instanceRef = componentRef;
 
             // Set prefab context on the partial instance if applicable
             if (componentRef.instance && prefabName) {
@@ -136,8 +140,17 @@ export class PartialContainerDirective implements OnDestroy {
                 filter(() => this.contentInitialized),
                 debounceTime(200)
             )
-            .subscribe(() => this.renderPartial(componentInstance.content));
-        // reload the partial content on partial param change
+            .subscribe(() => {
+                // A param value changed, not the partial itself — digest the live instance
+                // in place instead of destroying and recreating it (that used to cause a
+                // visible flicker on every param change). Fall back to a full render only if
+                // there's no live instance yet to refresh.
+                if (this.instanceRef && this.instanceRef.instance) {
+                    $appDigest(true);
+                } else {
+                    this.renderPartial(componentInstance.content);
+                }
+            });
         componentInstance.registerDestroyListener(() => subscription.unsubscribe());
     }
 
@@ -156,6 +169,7 @@ export class PartialContainerDirective implements OnDestroy {
 
         // MEMORY LEAK FIX: Clear DOM reference
         this.$target = null;
+        this.instanceRef = null;
 
         // MEMORY LEAK FIX: Clear component instance reference
         // Note: We don't null componentInstance as it's injected and managed by Angular
