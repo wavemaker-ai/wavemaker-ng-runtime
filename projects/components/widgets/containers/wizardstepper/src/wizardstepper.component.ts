@@ -9,24 +9,24 @@ import {
     TextContentDirective,
     WmAppIconComponent
 } from '@wm/components/base';
-import {ChangeDetectorRef, Component, Inject, Injector, Optional} from '@angular/core';
+import {ChangeDetectorRef, Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
 
-import {registerProps} from './stepperheader.props';
+import {registerProps} from './wizardstepper.props';
 
-const DEFAULT_CLS = 'app-stepperheader';
+const DEFAULT_CLS = 'app-wizardstepper';
 const WIDGET_CONFIG: IWidgetConfig = {
-    widgetType: 'wm-stepperheader',
+    widgetType: 'wm-wizardstepper',
     hostClass: DEFAULT_CLS
 };
 
 /**
- * Standalone stepper-header widget, extracted from the wizard's inline header.
+ * Standalone wizard-header widget, extracted from the wizard's inline header.
  *
  * Association seam #1 (nested): an ancestor `WizardComponent` provides a shared `Context`
  * object (`wizContext`) via its own `providers` array. This component injects that SAME
  * token WITHOUT `@Self()` so it resolves the nearest ancestor wizard's context when nested —
  * this mirrors the existing wizard-action seam and avoids a circular package dependency
- * between `@wm/components/containers/stepperheader` and `@wm/components/containers/wizard`
+ * between `@wm/components/containers/wizardstepper` and `@wm/components/containers/wizard`
  * (neither package imports the other's component class).
  *
  * Association seam #2 (standalone-by-reference, 002-stepper-header-widget US2): when there is
@@ -37,21 +37,21 @@ const WIDGET_CONFIG: IWidgetConfig = {
  * template read), it is immune to component-construction-order races between the header and
  * its wizard — including the wizard's OWN registration into `Widgets` being deliberately
  * deferred to its `ngAfterContentInit` (see `wizard.component.ts`'s `initPromise`). The wizard's
- * own `hasExternalHeader` getter does the mirror-image scan to suppress its auto-embedded
- * fallback header when an external header is bound to it — see `wizard.component.ts` for why
- * that is ALSO a stateless read-time scan rather than an imperative register/unregister call.
+ * own `hasExternalHeader` getter does the mirror-image scan to distinguish an externally-bound
+ * header from its own nested one — see `wizard.component.ts` for why that is ALSO a stateless
+ * read-time scan rather than an imperative register/unregister call.
  */
 @Component({
     standalone: true,
     imports: [CommonModule, TextContentDirective, WmAppIconComponent],
-    selector: 'div[wmStepperHeader]',
-    templateUrl: './stepperheader.component.html',
+    selector: 'div[wmWizardStepper]',
+    templateUrl: './wizardstepper.component.html',
     providers: [
-        provideAsWidgetRef(StepperHeaderComponent)
+        provideAsWidgetRef(WizardStepperComponent)
     ],
-    exportAs: 'wmStepperHeader'
+    exportAs: 'wmWizardStepper'
 })
-export class StepperHeaderComponent extends StylableComponent {
+export class WizardStepperComponent extends StylableComponent {
     static initializeProps = registerProps();
 
     public class;
@@ -87,6 +87,28 @@ export class StepperHeaderComponent extends StylableComponent {
                 }
             });
         }
+    }
+
+    /**
+     * Whether this header is nested inside an ancestor `wm-wizard` (as opposed to a
+     * standalone-by-reference header elsewhere on the page, associated only via `wizardname`).
+     * Mirrors `wavemaker-react-runtime`'s `WmWizardstepper`, which computes
+     * `isNested = !!context` (a React context provided by the ancestor wizard) and applies
+     * `app-wizard-heading` only in that case.
+     */
+    @HostBinding('class.app-wizard-heading')
+    get isNested(): boolean {
+        return !!this.nestedWizContext;
+    }
+
+    /**
+     * Legacy accessibility parity: the pre-002 auto-embedded header markup rendered
+     * `<div class="app-wizard-heading" role="tab">` for a nested header. A standalone-by-
+     * reference header has no such role, since it never was the wizard's own inline markup.
+     */
+    @HostBinding('attr.role')
+    get role(): string | null {
+        return this.isNested ? 'tab' : null;
     }
 
     get wizContext(): any {

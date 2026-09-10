@@ -7,17 +7,17 @@ import { compileTestComponent, mockApp } from '../../../../base/src/test/util/co
 import { ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
 import { WizardComponent } from './wizard.component';
 import { WizardStepComponent } from './wizard-step/wizard-step.component';
-import { StepperHeaderComponent } from '../../stepperheader/src/stepperheader.component';
+import { WizardStepperComponent } from '../../wizardstepper/src/wizardstepper.component';
 
 /**
  * 003-stepper-header-layout-compat: verifies the `isNestedHeaderVertical` host-class binding
  * (contracts/wizard-header-class-hook.md) — the wizard's own `.app-wizard` host element must
- * reflect a NESTED header's `wizard-vertical` class token, and only a nested header's, without
+ * reflect a NESTED header's `wizardstepper-vertical` class token, and only a nested header's, without
  * ever mutating the wizard's own authored `class` prop (R7).
  */
 const nestedMarkup = `
         <div wmWizard name="wizard3" class="wizard-number" show="true">
-            <div wmStepperHeader name="stepperheader3" class="wizard-number wizard-vertical"></div>
+            <div wmWizardStepper name="wizardstepper3" class="wizard-number wizardstepper-vertical"></div>
             <form wmWizardStep #wizard_step_id_1="wmWizardStep" name="wizardstep1">
                 <ng-template [ngIf]="wizard_step_id_1.isInitialized"></ng-template>
             </form>
@@ -30,13 +30,13 @@ const nestedMarkup = `
 })
 class WizardWithNestedVerticalHeaderWrapperComponent {
     @ViewChild(WizardComponent, { static: true }) wmComponent: WizardComponent;
-    @ViewChild(StepperHeaderComponent, { static: true }) headerComponent: StepperHeaderComponent;
+    @ViewChild(WizardStepperComponent, { static: true }) headerComponent: WizardStepperComponent;
 }
 
 const nestedTestModuleDef: ITestModuleDef = {
     imports: [
         FormsModule, TextContentDirective,
-        WizardComponent, WizardStepComponent, StepperHeaderComponent
+        WizardComponent, WizardStepComponent, WizardStepperComponent
     ],
     declarations: [WizardWithNestedVerticalHeaderWrapperComponent],
     providers: [
@@ -47,7 +47,7 @@ const nestedTestModuleDef: ITestModuleDef = {
 
 describe('wm-wizard: nested header vertical-class host reflection (US1, FR-001-FR-004/FR-007/FR-009/FR-010)', () => {
     let wmComponent: WizardComponent;
-    let headerComponent: StepperHeaderComponent;
+    let headerComponent: WizardStepperComponent;
     let fixture: ComponentFixture<WizardWithNestedVerticalHeaderWrapperComponent>;
 
     beforeEach(waitForAsync(() => {
@@ -57,89 +57,30 @@ describe('wm-wizard: nested header vertical-class host reflection (US1, FR-001-F
         fixture.detectChanges();
     }));
 
-    it('should reflect the nested header\'s wizard-vertical class onto the wizard host element', () => {
-        expect(wmComponent.nativeElement.classList.contains('wizard-vertical')).toBe(true);
+    it('should reflect the nested header\'s wizardstepper-vertical class onto the wizard host element', () => {
+        expect(wmComponent.nativeElement.classList.contains('wizardstepper-vertical')).toBe(true);
     });
 
     it('should leave the wizard\'s own authored class prop untouched (R7 public-contract stability)', () => {
         expect(wmComponent.class).toBe('wizard-number');
     });
 
-    it('should remove the host class once the nested header\'s class no longer contains wizard-vertical', () => {
+    it('should remove the host class once the nested header\'s class no longer contains wizardstepper-vertical', () => {
         headerComponent.class = 'wizard-number';
         fixture.detectChanges();
 
-        expect(wmComponent.nativeElement.classList.contains('wizard-vertical')).toBe(false);
+        expect(wmComponent.nativeElement.classList.contains('wizardstepper-vertical')).toBe(false);
         expect(wmComponent.class).toBe('wizard-number');
-    });
-});
-
-/**
- * Legacy auto-embedded header (no `wm-stepperheader` authored at all, no external header
- * targeting this wizard): pre-002 the header rendered inline inside `.app-wizard`, so the
- * wizard's own `class` was the only copy of `wizard-vertical` that ever existed. Before the fix
- * that added this fallback, `isNestedHeaderVertical`'s `!!this.explicitHeader` short-circuit
- * caused `syncNestedHeaderVerticalClass`'s `classList.toggle` to actively strip `wizard-vertical`
- * back off the host even though it was present in the wizard's own authored `class` — a
- * regression against "look and behave identically to the pre-change wizard" for exactly the
- * markup FR-003/FR-013 exist to protect.
- */
-const legacyMarkup = `
-        <div wmWizard name="wizard5" class="wizard-number wizard-vertical" show="true">
-            <form wmWizardStep #wizard_step_id_1="wmWizardStep" name="wizardstep1">
-                <ng-template [ngIf]="wizard_step_id_1.isInitialized"></ng-template>
-            </form>
-        </div>
-    `;
-
-@Component({
-    standalone: false,
-    template: legacyMarkup
-})
-class WizardWithLegacyAutoEmbeddedVerticalHeaderWrapperComponent {
-    @ViewChild(WizardComponent, { static: true }) wmComponent: WizardComponent;
-}
-
-const legacyTestModuleDef: ITestModuleDef = {
-    imports: [
-        FormsModule, TextContentDirective,
-        WizardComponent, WizardStepComponent, StepperHeaderComponent
-    ],
-    declarations: [WizardWithLegacyAutoEmbeddedVerticalHeaderWrapperComponent],
-    providers: [
-        { provide: App, useValue: mockApp },
-        DynamicComponentRefProvider
-    ]
-};
-
-describe('wm-wizard: legacy auto-embedded header vertical-class host reflection (backward compat, FR-003/FR-013)', () => {
-    let wmComponent: WizardComponent;
-    let fixture: ComponentFixture<WizardWithLegacyAutoEmbeddedVerticalHeaderWrapperComponent>;
-
-    beforeEach(waitForAsync(() => {
-        fixture = compileTestComponent(legacyTestModuleDef, WizardWithLegacyAutoEmbeddedVerticalHeaderWrapperComponent);
-        wmComponent = fixture.componentInstance.wmComponent;
-        fixture.detectChanges();
-    }));
-
-    it('should reflect the wizard\'s own wizard-vertical class onto its host when no separate header is authored', () => {
-        expect(wmComponent.explicitHeader).toBeFalsy();
-        expect(wmComponent.hasExternalHeader).toBe(false);
-        expect(wmComponent.nativeElement.classList.contains('wizard-vertical')).toBe(true);
-    });
-
-    it('should leave the wizard\'s own authored class prop untouched (R7 public-contract stability)', () => {
-        expect(wmComponent.class).toBe('wizard-number wizard-vertical');
     });
 });
 
 /**
  * Standalone header (US2/T037/T040): the `hasExternalHeader` short-circuit in
- * `isNestedHeaderVertical` must keep the wizard host from ever gaining `wizard-vertical` as a
+ * `isNestedHeaderVertical` must keep the wizard host from ever gaining `wizardstepper-vertical` as a
  * result of ANY header's orientation (FR-005/FR-006).
  */
 const standaloneMarkup = `
-        <div wmStepperHeader name="header4" wizardname="wizard4" class="wizard-vertical"></div>
+        <div wmWizardStepper name="header4" wizardname="wizard4" class="wizardstepper-vertical"></div>
         <div wmWizard name="wizard4" class="wizard-number" show="true">
             <form wmWizardStep #wizard_step_id_1="wmWizardStep" name="wizardstep1">
                 <ng-template [ngIf]="wizard_step_id_1.isInitialized"></ng-template>
@@ -159,7 +100,7 @@ class WizardWithStandaloneVerticalHeaderWrapperComponent {
 const standaloneTestModuleDef: ITestModuleDef = {
     imports: [
         FormsModule, TextContentDirective,
-        WizardComponent, WizardStepComponent, StepperHeaderComponent
+        WizardComponent, WizardStepComponent, WizardStepperComponent
     ],
     declarations: [WizardWithStandaloneVerticalHeaderWrapperComponent],
     providers: [
@@ -178,9 +119,9 @@ describe('wm-wizard: standalone header never triggers wizard repositioning (US2,
         fixture.detectChanges();
     }));
 
-    it('should NOT reflect wizard-vertical onto the wizard host when the associated header is standalone', () => {
+    it('should NOT reflect wizardstepper-vertical onto the wizard host when the associated header is standalone', () => {
         expect(wmComponent.explicitHeader).toBeFalsy();
-        expect(wmComponent.nativeElement.classList.contains('wizard-vertical')).toBe(false);
+        expect(wmComponent.nativeElement.classList.contains('wizardstepper-vertical')).toBe(false);
     });
 });
 
@@ -194,7 +135,7 @@ describe('wm-wizard: standalone header never triggers wizard repositioning (US2,
  */
 const nestedWithSelfWizardnameMarkup = `
         <div wmWizard name="wizard6" class="wizard-number" show="true">
-            <div wmStepperHeader name="stepperheader6" wizardname="wizard6" class="wizard-number wizard-vertical"></div>
+            <div wmWizardStepper name="wizardstepper6" wizardname="wizard6" class="wizard-number wizardstepper-vertical"></div>
             <form wmWizardStep #wizard_step_id_1="wmWizardStep" name="wizardstep1">
                 <ng-template [ngIf]="wizard_step_id_1.isInitialized"></ng-template>
             </form>
@@ -213,7 +154,7 @@ class WizardWithNestedSelfReferencingHeaderWrapperComponent {
 const nestedWithSelfWizardnameTestModuleDef: ITestModuleDef = {
     imports: [
         FormsModule, TextContentDirective,
-        WizardComponent, WizardStepComponent, StepperHeaderComponent
+        WizardComponent, WizardStepComponent, WizardStepperComponent
     ],
     declarations: [WizardWithNestedSelfReferencingHeaderWrapperComponent],
     providers: [
@@ -237,7 +178,7 @@ describe('wm-wizard: nested header with a self-referencing wizardname is not mis
         expect(wmComponent.hasExternalHeader).toBe(false);
     });
 
-    it('should still reflect wizard-vertical onto the wizard host', () => {
-        expect(wmComponent.nativeElement.classList.contains('wizard-vertical')).toBe(true);
+    it('should still reflect wizardstepper-vertical onto the wizard host', () => {
+        expect(wmComponent.nativeElement.classList.contains('wizardstepper-vertical')).toBe(true);
     });
 });

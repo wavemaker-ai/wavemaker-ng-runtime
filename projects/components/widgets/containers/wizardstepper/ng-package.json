@@ -1,6 +1,6 @@
 {
     "$schema": "../../../../../node_modules/ng-packagr/ng-package.schema.json",
-    "dest": "../../../../../libraries/components/containers/stepperheader",
+    "dest": "../../../../../libraries/components/containers/wizardstepper",
     "lib": {
         "flatModuleFile": "index",
         "entryFile": "./src/public_api.ts"

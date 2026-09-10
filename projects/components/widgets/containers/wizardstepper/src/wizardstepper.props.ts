@@ -2,7 +2,7 @@ import {PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register} from '@wm/components/b
 
 export const registerProps = () => {
     register(
-        'wm-stepperheader',
+        'wm-wizardstepper',
         new Map(
             [
                 ['class', PROP_STRING],

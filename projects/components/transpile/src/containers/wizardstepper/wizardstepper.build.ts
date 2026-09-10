@@ -2,13 +2,13 @@ import {getAttrMarkup, IBuildTaskDef, register} from '@wm/transpiler';
 import {IDGenerator} from "@wm/core";
 
 const tagName = 'div';
-const idGen = new IDGenerator('wm_stepperheader_ref_');
+const idGen = new IDGenerator('wm_wizardstepper_ref_');
 
-register('wm-stepperheader', (): IBuildTaskDef => {
+register('wm-wizardstepper', (): IBuildTaskDef => {
     return {
         pre: (attrs) => {
             const counter = idGen.nextUid();
-            return `<${tagName} wmStepperHeader #${counter}="wmStepperHeader" ${getAttrMarkup(attrs)}>`;
+            return `<${tagName} wmWizardStepper #${counter}="wmWizardStepper" ${getAttrMarkup(attrs)}>`;
         },
         post: () => `</${tagName}>`
     };

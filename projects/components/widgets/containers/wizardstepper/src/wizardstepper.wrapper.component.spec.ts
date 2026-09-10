@@ -7,16 +7,17 @@ import { compileTestComponent, mockApp } from '../../../../base/src/test/util/co
 import { ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
 import { WizardComponent } from '../../wizard/src/wizard.component';
 import { WizardStepComponent } from '../../wizard/src/wizard-step/wizard-step.component';
-import { StepperHeaderComponent } from './stepperheader.component';
+import { WizardStepperComponent } from './wizardstepper.component';
 
 /**
- * Integration spec: the header is auto-embedded by the real, unmodified-markup WizardComponent
- * (User Story 1 — nested, backward-compatible). This proves the wizContext handshake resolves
- * through Angular's real injector tree and that the verified runtime click rule (only completed
- * steps navigate) is preserved end-to-end through the new StepperHeaderComponent.
+ * Integration spec: a real, explicitly authored `<div wmWizardStepper>` nested inside the
+ * WizardComponent (User Story 1). This proves the wizContext handshake resolves through
+ * Angular's real injector tree and that the verified runtime click rule (only completed steps
+ * navigate) is preserved end-to-end through the new WizardStepperComponent.
  */
 const markup = `
         <div wmWizard name="wizard1" class="wizard-number" show="true">
+            <div wmWizardStepper name="wizardstepper0" class="wizard-number"></div>
             <form wmWizardStep #wizard_step_id_1="wmWizardStep" name="wizardstep1">
                 <ng-template [ngIf]="wizard_step_id_1.isInitialized"></ng-template>
             </form>
@@ -33,42 +34,43 @@ const markup = `
     standalone: false,
     template: markup
 })
-class WizardWithStepperHeaderWrapperComponent {
+class WizardWithWizardStepperWrapperComponent {
     @ViewChild(WizardComponent, { static: true }) wmComponent: WizardComponent;
 }
 
 const testModuleDef: ITestModuleDef = {
     imports: [
         FormsModule, TextContentDirective,
-        WizardComponent, WizardStepComponent, StepperHeaderComponent
+        WizardComponent, WizardStepComponent, WizardStepperComponent
     ],
-    declarations: [WizardWithStepperHeaderWrapperComponent],
+    declarations: [WizardWithWizardStepperWrapperComponent],
     providers: [
         { provide: App, useValue: mockApp },
         DynamicComponentRefProvider
     ]
 };
 
-describe('wm-stepperheader: nested inside wm-wizard (US1, FR-004/FR-009/FR-018)', () => {
-    let wrapperComponent: WizardWithStepperHeaderWrapperComponent;
+describe('wm-wizardstepper: nested inside wm-wizard (US1, FR-004/FR-009/FR-018)', () => {
+    let wrapperComponent: WizardWithWizardStepperWrapperComponent;
     let wmComponent: WizardComponent;
-    let fixture: ComponentFixture<WizardWithStepperHeaderWrapperComponent>;
+    let fixture: ComponentFixture<WizardWithWizardStepperWrapperComponent>;
 
     beforeEach(waitForAsync(() => {
-        fixture = compileTestComponent(testModuleDef, WizardWithStepperHeaderWrapperComponent);
+        fixture = compileTestComponent(testModuleDef, WizardWithWizardStepperWrapperComponent);
         wrapperComponent = fixture.componentInstance;
         wmComponent = wrapperComponent.wmComponent;
         fixture.detectChanges();
     }));
 
     it('should render exactly one header for the wizard', () => {
-        const headers = fixture.nativeElement.querySelectorAll('[wmStepperHeader], div.app-stepperheader');
+        const headers = fixture.nativeElement.querySelectorAll('[wmWizardStepper], div.app-wizardstepper');
         expect(headers.length).toBe(1);
     });
 
-    it('should carry the legacy app-wizard-heading compatibility class when nested', () => {
-        const header = fixture.nativeElement.querySelector('[wmStepperHeader]');
+    it('should carry the app-wizard-heading class and role="tab" on a real nested header (FR-016)', () => {
+        const header = fixture.nativeElement.querySelector('[wmWizardStepper]');
         expect(header.classList.contains('app-wizard-heading')).toBe(true);
+        expect(header.getAttribute('role')).toBe('tab');
     });
 
     it('should render one step indicator per wizard step', () => {
@@ -111,13 +113,13 @@ describe('wm-stepperheader: nested inside wm-wizard (US1, FR-004/FR-009/FR-018)'
 });
 
 /**
- * Explicitly authored `<wm-stepperheader>` markup (mirrors how wm-wizardstep/wm-wizardaction are
- * authored) — the widget must be projected as its own selectable/movable instance, NOT replaced
- * by the auto-embedded fallback, and exactly one header must still render (FR-002/FR-018).
+ * Explicitly authored `<wm-wizardstepper>` markup (mirrors how wm-wizardstep/wm-wizardaction are
+ * authored) — the widget must be projected as its own selectable/movable instance, and exactly
+ * one header must render (FR-002/FR-018).
  */
 const explicitHeaderMarkup = `
         <div wmWizard name="wizard2" class="wizard-number" show="true">
-            <div wmStepperHeader name="stepperheader1" class="wizard-number"></div>
+            <div wmWizardStepper name="wizardstepper1" class="wizard-number"></div>
             <form wmWizardStep #wizard_step_id_1="wmWizardStep" name="wizardstep1">
                 <ng-template [ngIf]="wizard_step_id_1.isInitialized"></ng-template>
             </form>
@@ -131,52 +133,47 @@ const explicitHeaderMarkup = `
     standalone: false,
     template: explicitHeaderMarkup
 })
-class WizardWithExplicitStepperHeaderWrapperComponent {
+class WizardWithExplicitWizardStepperWrapperComponent {
     @ViewChild(WizardComponent, { static: true }) wmComponent: WizardComponent;
-    @ViewChild(StepperHeaderComponent, { static: true }) headerComponent: StepperHeaderComponent;
+    @ViewChild(WizardStepperComponent, { static: true }) headerComponent: WizardStepperComponent;
 }
 
 const explicitHeaderTestModuleDef: ITestModuleDef = {
     imports: [
         FormsModule, TextContentDirective,
-        WizardComponent, WizardStepComponent, StepperHeaderComponent
+        WizardComponent, WizardStepComponent, WizardStepperComponent
     ],
-    declarations: [WizardWithExplicitStepperHeaderWrapperComponent],
+    declarations: [WizardWithExplicitWizardStepperWrapperComponent],
     providers: [
         { provide: App, useValue: mockApp },
         DynamicComponentRefProvider
     ]
 };
 
-describe('wm-stepperheader: explicitly authored as a wizard child (FR-002 selectability)', () => {
+describe('wm-wizardstepper: explicitly authored as a wizard child (FR-002 selectability)', () => {
     let wmComponent: WizardComponent;
-    let headerComponent: StepperHeaderComponent;
-    let fixture: ComponentFixture<WizardWithExplicitStepperHeaderWrapperComponent>;
+    let headerComponent: WizardStepperComponent;
+    let fixture: ComponentFixture<WizardWithExplicitWizardStepperWrapperComponent>;
 
     beforeEach(waitForAsync(() => {
-        fixture = compileTestComponent(explicitHeaderTestModuleDef, WizardWithExplicitStepperHeaderWrapperComponent);
+        fixture = compileTestComponent(explicitHeaderTestModuleDef, WizardWithExplicitWizardStepperWrapperComponent);
         wmComponent = fixture.componentInstance.wmComponent;
         headerComponent = fixture.componentInstance.headerComponent;
         fixture.detectChanges();
     }));
 
-    it('should resolve the explicit header as the wizard ContentChild (not the auto-embedded fallback)', () => {
+    it('should resolve the explicit header as the wizard ContentChild', () => {
         expect(wmComponent.explicitHeader).toBe(headerComponent);
     });
 
     it('should render exactly one header even though one was explicitly authored', () => {
-        const headers = fixture.nativeElement.querySelectorAll('[wmStepperHeader]');
+        const headers = fixture.nativeElement.querySelectorAll('[wmWizardStepper]');
         expect(headers.length).toBe(1);
     });
 
     it('should render the explicit header with its own authored name attribute (selectable/movable identity)', () => {
-        const header = fixture.nativeElement.querySelector('[wmStepperHeader]');
-        expect(header.getAttribute('name')).toBe('stepperheader1');
-    });
-
-    it('should NOT carry the legacy compatibility class on an explicitly authored header (only the auto-fallback does)', () => {
-        const header = fixture.nativeElement.querySelector('[wmStepperHeader]');
-        expect(header.classList.contains('app-wizard-heading')).toBe(false);
+        const header = fixture.nativeElement.querySelector('[wmWizardStepper]');
+        expect(header.getAttribute('name')).toBe('wizardstepper1');
     });
 
     it('should still render step indicators and stay in sync with the wizard via the explicit header', () => {

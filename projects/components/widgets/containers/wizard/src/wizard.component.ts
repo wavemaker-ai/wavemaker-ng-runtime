@@ -30,7 +30,7 @@ import {
 } from '@angular/core';
 
 import {DynamicComponentRefProvider, isDefined, noop} from '@wm/core';
-import {StepperHeaderComponent} from '@wm/components/containers/stepperheader';
+import {WizardStepperComponent} from '@wm/components/containers/wizardstepper';
 
 import {registerProps} from './wizard.props';
 
@@ -58,7 +58,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, TextContentDirective, WmAppIconComponent, StepperHeaderComponent],
+  imports: [CommonModule, TextContentDirective, WmAppIconComponent, WizardStepperComponent],
     selector: 'div[wmWizard]',
     templateUrl: './wizard.component.html',
     providers: [
@@ -73,12 +73,10 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     @ContentChildren(WizardStepComponent) steps: QueryList<WizardStepComponent>;
     @ContentChild('wizardAction', { read: TemplateRef, descendants: false }) wizardAction: TemplateRef<any>;
     /**
-     * Explicitly authored `<wm-stepperheader>` child, if the page markup has one (mirrors how
+     * Explicitly authored `<wm-wizardstepper>` child, if the page markup has one (mirrors how
      * `wm-wizardstep`/`wm-wizardaction` are authored, projected, and selectable on canvas).
-     * When absent, the wizard falls back to auto-embedding one for backward compatibility with
-     * markup saved before this widget existed (002-stepper-header-widget, FR-018/FR-019).
      */
-    @ContentChild(StepperHeaderComponent, { descendants: false }) explicitHeader: StepperHeaderComponent;
+    @ContentChild(WizardStepperComponent, { descendants: false }) explicitHeader: WizardStepperComponent;
 
     public message: {caption: string, type: string};
     public currentStep: WizardStepComponent;
@@ -143,7 +141,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
      * so preview stays correct when the DOM is updated before the bound property.
      *
      * Since 002-stepper-header-widget, the appearance variant (number/iconstepper/dottedstepper/
-     * ...) is set on the standalone `wm-stepperheader`'s OWN class, not this wizard's — but this
+     * ...) is set on the standalone `wm-wizardstepper`'s OWN class, not this wizard's — but this
      * string still gates the template conditionals (`showWizardStepIcons`, `isTabStepperWizard`,
      * `shouldRenderWizardStepNumberSpan`) and `wizContext.getWizardClass()` that decide which
      * per-variant content (digit/dot/icon) the header renders. When a header widget is bound
@@ -153,31 +151,21 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
      * `wizard-*` class directly onto the wizard element itself; if that stale token were merged in
      * alongside the header's current one, switching the header's appearance (e.g. number ->
      * dottedstepper) would leave both substrings present and fire BOTH variants' content
-     * conditionals at once. The wizard's own class is only consulted as a fallback for the
-     * pre-002 embedded-header case (no separate `wm-stepperheader` widget at all — see
-     * `!explicitHeader && !hasExternalHeader` in wizard.component.html), where the wizard IS its
-     * own header and there is no other source of truth for the appearance token.
+     * conditionals at once.
      */
     private wizardHostClassString(): string {
         const header = this.explicitHeader || this.resolveStandaloneHeader();
-        if (header) {
-            return typeof header.class === 'string' ? header.class : '';
-        }
-        const fromProp = typeof this.class === 'string' ? this.class : '';
-        const rawDom = this.nativeElement?.className;
-        const fromDom =
-            typeof rawDom === 'string' ? rawDom : (rawDom as { baseVal?: string })?.baseVal || '';
-        return `${fromProp} ${fromDom}`.trim();
+        return header && typeof header.class === 'string' ? header.class : '';
     }
 
-    private resolveStandaloneHeader(): StepperHeaderComponent | undefined {
+    private resolveStandaloneHeader(): WizardStepperComponent | undefined {
         const widgets = (this.viewParent as any)?.Widgets;
         if (!widgets) {
             return undefined;
         }
         return Object.keys(widgets)
             .map(key => widgets[key])
-            .find(w => w && w.widgetType === 'wm-stepperheader' && w.wizardname === this.name);
+            .find(w => w && w.widgetType === 'wm-wizardstepper' && w.wizardname === this.name);
     }
 
     get showWizardStepIcons(): boolean {
@@ -480,11 +468,11 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     }
 
     /**
-     * Selects the associated step when the wizard header is clicked.
+     * Selects the associated step when the wizard stepper is clicked.
      * @param $event
      * @param {WizardStepComponent} currentStep
      */
-    private onWizardHeaderClick($event: Event, currentStep: WizardStepComponent) {
+    private onWizardStepperClick($event: Event, currentStep: WizardStepComponent) {
         // select the step if it's status is done
         if (currentStep.done) {
             // set all the next steps status as disabled and previous steps as done
@@ -674,7 +662,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         const gotoStep: WizardStepComponent = this.getStepRefByIndex(gotoStepIndex);
 
         if (gotoStep?.show) {
-            this.onWizardHeaderClick(event, gotoStep);
+            this.onWizardStepperClick(event, gotoStep);
         } else {
             console.error("The gotoStep function cannot navigate to hidden steps");
         }
@@ -794,14 +782,14 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         this.wizContext.disablePrevious = () => !this.enablePrev;
         this.wizContext.disableDone = () => !this.enableDone;
 
-        // Stepper-header decoupling seam (002-stepper-header-widget): the header reads the live
+        // Wizard-header decoupling seam (002-stepper-header-widget): the header reads the live
         // `steps` QueryList reference (mutations via `.reset()` on the same instance stay visible)
         // and proxies through these functions instead of importing WizardComponent directly,
-        // so `@wm/components/containers/stepperheader` has no dependency on this package.
+        // so `@wm/components/containers/wizardstepper` has no dependency on this package.
         this.wizContext.steps = this.steps;
         this.wizContext.getWizardClass = () => this.wizardHostClassString();
         this.wizContext.getStepClass = () => this.stepClass;
-        this.wizContext.onHeaderClick = (event: Event, step: WizardStepComponent) => this.onWizardHeaderClick(event, step);
+        this.wizContext.onHeaderClick = (event: Event, step: WizardStepComponent) => this.onWizardStepperClick(event, step);
         this.wizContext.onHeaderKeyDown = (event: KeyboardEvent) => this.onkeydown(event);
         this.wizContext.shouldRenderStepNumberSpan = (step: WizardStepHeaderModel) => this.shouldRenderWizardStepNumberSpan(step);
         this.wizContext.shouldShowPrimaryStepIcon = (step: WizardStepHeaderModel) => this.shouldShowPrimaryStepIcon(step);
@@ -939,16 +927,16 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
                 event.preventDefault();
                 setTimeout(() => {
                     const activeElement  = this.nativeElement.querySelector('li.active');
-                    const stepLi = activeElement.closest('li[data-stepid]');
-                    const isInWizardHeader = activeElement.closest('.app-wizard-heading');
+                    const stepLi = activeElement?.closest('li[data-stepid]');
+                    const isInWizardStepper = activeElement?.closest('.app-wizard-heading');
 
-                    if (stepLi && isInWizardHeader) {
+                    if (stepLi && isInWizardStepper) {
                     const stepId = stepLi.getAttribute('data-stepid');
                     const stepIndex = this.steps.toArray().findIndex(step => step.widgetId === stepId);
                     const currentStep = this.steps.toArray()[stepIndex];
 
                         if (currentStep && currentStep !== this.currentStep) {
-                            this.onWizardHeaderClick(event, currentStep);
+                            this.onWizardStepperClick(event, currentStep);
 
                             // Update tabindex for accessibility
                             const allStepItems = this.nativeElement.querySelectorAll('li[data-stepid]');
@@ -976,7 +964,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
              allStepItems.forEach((el: Element) => {
                 (el as HTMLElement).setAttribute('tabindex', '-1');
              });
-            (stepLi).setAttribute('tabindex', '0');
+            stepLi?.setAttribute('tabindex', '0');
             stepLi?.focus();
         }
     }
@@ -988,9 +976,9 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
 
     /**
      * Standalone-by-reference headers (002-stepper-header-widget, US2): whether some
-     * `wm-stepperheader` elsewhere on the page has its `wizardname` pointing at this wizard —
-     * used to suppress the auto-embedded fallback header so an externally-bound header doesn't
-     * produce a duplicate.
+     * `wm-wizardstepper` elsewhere on the page has its `wizardname` pointing at this wizard —
+     * distinguishes an externally-bound header from a nested one (`explicitHeader`), so this
+     * wizard's own class/state helpers know which header is authoritative.
      *
      * Deliberately a stateless getter that scans the shared `Widgets` registry on every read,
      * rather than an imperative register/unregister handshake: this component's OWN
@@ -1002,7 +990,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
      * to retry from. Scanning at READ time sidesteps the ordering question entirely: whatever
      * has registered into `Widgets` by the time this getter is actually evaluated is correct,
      * the same principle already relied on for `wizContext` resolution in
-     * `stepperheader.component.ts`.
+     * `wizardstepper.component.ts`.
      */
     get hasExternalHeader(): boolean {
         const widgets = (this.viewParent as any)?.Widgets;
@@ -1020,37 +1008,28 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         const explicitHeaderName = this.explicitHeader?.name;
         return Object.keys(widgets).some(key => {
             const w = widgets[key];
-            return w && (!explicitHeaderName || w.name !== explicitHeaderName) && w.widgetType === 'wm-stepperheader' && w.wizardname === this.name;
+            return w && (!explicitHeaderName || w.name !== explicitHeaderName) && w.widgetType === 'wm-wizardstepper' && w.wizardname === this.name;
         });
     }
 
     /**
-     * Restores the pre-002 vertical layout for a nested/auto-embedded header (contracts/wizard-
-     * header-class-hook.md): reflects the active header's `wizard-vertical` class token onto this
-     * wizard's host so `wizard.less`'s `.app-wizard.wizard-vertical` grid rule fires again.
+     * Restores the pre-002 vertical layout for a nested header (contracts/wizard-
+     * header-class-hook.md): reflects the active header's `wizardstepper-vertical` class token onto
+     * this wizard's host so `wizard.less`'s `.app-wizard.wizardstepper-vertical` grid rule fires
+     * again. The token is `wizardstepper-`-prefixed because direction is a wizardstepper-only token
+     * (wizard.json defines no variantGroups); it pairs with `wizardstepper-horizontal`.
      *
-     * Covers two cases, matching `wizard.component.html`'s own `!explicitHeader &&
-     * !hasExternalHeader` fallback condition:
-     * - An explicitly-authored nested header (`explicitHeader` set) — reads that header's own
-     *   `class`, exactly as before.
-     * - Legacy markup with NO `wm-stepperheader` at all (`explicitHeader` unset, no external
-     *   header targeting this wizard) — reads this wizard's OWN `class` instead, since pre-002
-     *   the header rendered inline inside `.app-wizard` and the wizard's own `class` was the only
-     *   copy of `wizard-vertical` that ever existed. Before this fix, a legacy wizard authored
-     *   with `class="wizard-number wizard-vertical"` (and no separate header) had this token
-     *   actively stripped by `syncNestedHeaderVerticalClass`'s `classList.toggle` below — a real
-     *   regression against "look and behave identically to the pre-change wizard" for exactly the
-     *   markup this feature exists to protect.
+     * Reads the explicitly-authored nested header's (`explicitHeader`) own `class`.
      *
-     * Still never derived from a STANDALONE header — the explicit `hasExternalHeader` check
-     * structurally guarantees FR-005/FR-006 regardless of which of the two cases above applies.
+     * Never derived from a STANDALONE header — the explicit `hasExternalHeader` check
+     * structurally guarantees FR-005/FR-006.
      */
     get isNestedHeaderVertical(): boolean {
         if (this.hasExternalHeader) {
             return false;
         }
-        const headerClass = this.explicitHeader ? this.explicitHeader.class : this.class;
-        return !!headerClass?.includes('wizard-vertical');
+        const headerClass = this.explicitHeader?.class;
+        return !!headerClass?.includes('wizardstepper-vertical');
     }
 
     /**
@@ -1064,7 +1043,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
      * synchronously even on an already-resolved promise. A `@HostBinding`, or any synchronous
      * mutation of this same attribute from `ngAfterContentInit`/`ngAfterContentChecked`, would
      * therefore land BEFORE that one-time read on the very first change-detection pass,
-     * permanently baking `wizard-vertical` into `this.class` whenever a nested header starts out
+     * permanently baking `wizardstepper-vertical` into `this.class` whenever a nested header starts out
      * vertical on first render -- a direct R7 violation. `nestedHeaderVerticalClassReady` gates
      * `ngAfterContentChecked` until the microtask queued alongside `promiseResolverFn()` (FIFO
      * order guarantees it runs after `initWidget()`'s) has actually flipped it, so the very first
@@ -1074,7 +1053,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     private nestedHeaderVerticalClassReady = false;
 
     private syncNestedHeaderVerticalClass(): void {
-        this.nativeElement.classList.toggle('wizard-vertical', this.isNestedHeaderVertical);
+        this.nativeElement.classList.toggle('wizardstepper-vertical', this.isNestedHeaderVertical);
     }
 
     ngAfterContentChecked() {

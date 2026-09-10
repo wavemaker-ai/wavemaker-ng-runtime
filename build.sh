@@ -236,7 +236,7 @@ bundleWeb() {
         ./libraries/components/containers/panel/bundles/index.umd.js \
         ./libraries/components/containers/tabs/bundles/index.umd.js \
         ./libraries/components/containers/tile/bundles/index.umd.js \
-        ./libraries/components/containers/stepperheader/bundles/index.umd.js \
+        ./libraries/components/containers/wizardstepper/bundles/index.umd.js \
         ./libraries/components/containers/wizard/bundles/index.umd.js \
         ./libraries/components/advanced/carousel/bundles/index.umd.js \
         ./libraries/components/advanced/marquee/bundles/index.umd.js \
@@ -325,7 +325,7 @@ buildApp() {
     ngPackagrBuild components-containers-panel projects/components/widgets/containers/panel '@wm/components/containers/panel'
     ngPackagrBuild components-containers-tabs projects/components/widgets/containers/tabs '@wm/components/containers/tabs'
     ngPackagrBuild components-containers-tile projects/components/widgets/containers/tile '@wm/components/containers/tile'
-    ngPackagrBuild components-containers-stepperheader projects/components/widgets/containers/stepperheader '@wm/components/containers/stepperheader'
+    ngPackagrBuild components-containers-wizardstepper projects/components/widgets/containers/wizardstepper '@wm/components/containers/wizardstepper'
     ngPackagrBuild components-containers-wizard projects/components/widgets/containers/wizard '@wm/components/containers/wizard'
 
     ngPackagrBuild components-dialogs projects/components/widgets/dialogs/default '@wm/components/dialogs'
@@ -523,8 +523,8 @@ bundleJS() {
         ./projects/components/widgets/data/table/src/datatable.js \
         ./projects/swipey/src/swipey.jquery.plugin.js \
         ./projects/jquery.ui.touch-punch/jquery.ui.touch-punch.min.js \
-        ../wavemaker-ui-variables/dist/umd/index.js \
-        ../custom-widgets-m3/dist/umd/index.js \
+        ../../../wavemaker-ui-variables/dist/umd/index.js \
+        ../../../custom-widgets-m3/dist/umd/index.js \
         ./node_modules/imask/dist/imask.min.js \
         ./node_modules/angular-imask/bundles/angular-imask.umd.js \
         ./node_modules/@metrichor/jmespath/dist/jmespath.umd.js \

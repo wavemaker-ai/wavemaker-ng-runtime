@@ -4,13 +4,13 @@ import { App, DynamicComponentRefProvider } from '@wm/core';
 import { Context } from '@wm/components/base';
 import { compileTestComponent, mockApp } from '../../../../base/src/test/util/component-test-util';
 import { ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
-import { StepperHeaderComponent } from './stepperheader.component';
+import { WizardStepperComponent } from './wizardstepper.component';
 
 /**
- * Isolated unit spec: exercises StepperHeaderComponent against a hand-rolled `wizContext`
+ * Isolated unit spec: exercises WizardStepperComponent against a hand-rolled `wizContext`
  * (the same shape WizardComponent populates in ngAfterContentInit), without depending on the
  * real wizard. Nested integration through the real wizard is covered by
- * stepperheader.wrapper.component.spec.ts.
+ * wizardstepper.wrapper.component.spec.ts.
  */
 function makeStep(overrides: Partial<any> = {}) {
     return {
@@ -46,31 +46,31 @@ function makeWizContext(steps: any[], wizardClass = 'wizard-number') {
     };
 }
 
-const BOUND_CONTEXT_TOKEN = 'STEPPERHEADER_TEST_CONTEXT';
+const BOUND_CONTEXT_TOKEN = 'WIZARDSTEPPER_TEST_CONTEXT';
 
 @Component({
     standalone: false,
-    template: `<div wmStepperHeader name="header1"></div>`,
+    template: `<div wmWizardStepper name="header1"></div>`,
     providers: [
         { provide: Context, useFactory: (ctx) => ctx, deps: [BOUND_CONTEXT_TOKEN], multi: true }
     ]
 })
-class BoundStepperHeaderWrapperComponent {
-    @ViewChild(StepperHeaderComponent, { static: true }) wmComponent: StepperHeaderComponent;
+class BoundWizardStepperWrapperComponent {
+    @ViewChild(WizardStepperComponent, { static: true }) wmComponent: WizardStepperComponent;
 }
 
 @Component({
     standalone: false,
-    template: `<div wmStepperHeader name="header1"></div>`
+    template: `<div wmWizardStepper name="header1"></div>`
 })
-class UnboundStepperHeaderWrapperComponent {
-    @ViewChild(StepperHeaderComponent, { static: true }) wmComponent: StepperHeaderComponent;
+class UnboundWizardStepperWrapperComponent {
+    @ViewChild(WizardStepperComponent, { static: true }) wmComponent: WizardStepperComponent;
 }
 
-describe('wm-stepperheader: bound to a wizContext', () => {
-    let wrapperComponent: BoundStepperHeaderWrapperComponent;
-    let wmComponent: StepperHeaderComponent;
-    let fixture: ComponentFixture<BoundStepperHeaderWrapperComponent>;
+describe('wm-wizardstepper: bound to a wizContext', () => {
+    let wrapperComponent: BoundWizardStepperWrapperComponent;
+    let wmComponent: WizardStepperComponent;
+    let fixture: ComponentFixture<BoundWizardStepperWrapperComponent>;
     let steps: any[];
     let wizContext: any;
 
@@ -79,8 +79,8 @@ describe('wm-stepperheader: bound to a wizContext', () => {
         wizContext = makeWizContext(steps);
 
         const testModuleDef: ITestModuleDef = {
-            imports: [StepperHeaderComponent],
-            declarations: [BoundStepperHeaderWrapperComponent],
+            imports: [WizardStepperComponent],
+            declarations: [BoundWizardStepperWrapperComponent],
             providers: [
                 { provide: App, useValue: mockApp },
                 DynamicComponentRefProvider,
@@ -88,7 +88,7 @@ describe('wm-stepperheader: bound to a wizContext', () => {
             ]
         };
 
-        fixture = compileTestComponent(testModuleDef, BoundStepperHeaderWrapperComponent);
+        fixture = compileTestComponent(testModuleDef, BoundWizardStepperWrapperComponent);
         wrapperComponent = fixture.componentInstance;
         wmComponent = wrapperComponent.wmComponent;
         fixture.detectChanges();
@@ -125,6 +125,12 @@ describe('wm-stepperheader: bound to a wizContext', () => {
         anchor.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
         expect(wizContext.onHeaderKeyDown).toHaveBeenCalledTimes(1);
     });
+
+    it('should carry the app-wizard-heading class and role="tab" when nested (FR-016)', () => {
+        const hostEl = fixture.nativeElement.querySelector('[wmWizardStepper]');
+        expect(hostEl.classList.contains('app-wizard-heading')).toBe(true);
+        expect(hostEl.getAttribute('role')).toBe('tab');
+    });
 });
 
 /**
@@ -136,16 +142,16 @@ describe('wm-stepperheader: bound to a wizContext', () => {
  */
 @Component({
     standalone: false,
-    template: `<div wmStepperHeader name="header1" wizardname="wizard1"></div>`
+    template: `<div wmWizardStepper name="header1" wizardname="wizard1"></div>`
 })
-class StandaloneStepperHeaderWrapperComponent {
-    @ViewChild(StepperHeaderComponent, { static: true }) wmComponent: StepperHeaderComponent;
+class StandaloneWizardStepperWrapperComponent {
+    @ViewChild(WizardStepperComponent, { static: true }) wmComponent: WizardStepperComponent;
     Widgets: any = {};
 }
 
-describe('wm-stepperheader: standalone-by-reference (wizardname -> Widgets[name], US2/T037)', () => {
-    let wmComponent: StepperHeaderComponent;
-    let fixture: ComponentFixture<StandaloneStepperHeaderWrapperComponent>;
+describe('wm-wizardstepper: standalone-by-reference (wizardname -> Widgets[name], US2/T037)', () => {
+    let wmComponent: WizardStepperComponent;
+    let fixture: ComponentFixture<StandaloneWizardStepperWrapperComponent>;
     let steps: any[];
     let wizContext: any;
     let fakeWizard: any;
@@ -156,15 +162,15 @@ describe('wm-stepperheader: standalone-by-reference (wizardname -> Widgets[name]
         fakeWizard = { wizContext };
 
         const testModuleDef: ITestModuleDef = {
-            imports: [StepperHeaderComponent],
-            declarations: [StandaloneStepperHeaderWrapperComponent],
+            imports: [WizardStepperComponent],
+            declarations: [StandaloneWizardStepperWrapperComponent],
             providers: [
                 { provide: App, useValue: mockApp },
                 DynamicComponentRefProvider
             ]
         };
 
-        fixture = compileTestComponent(testModuleDef, StandaloneStepperHeaderWrapperComponent);
+        fixture = compileTestComponent(testModuleDef, StandaloneWizardStepperWrapperComponent);
         fixture.componentInstance.Widgets.wizard1 = fakeWizard;
         wmComponent = fixture.componentInstance.wmComponent;
         fixture.detectChanges();
@@ -174,22 +180,28 @@ describe('wm-stepperheader: standalone-by-reference (wizardname -> Widgets[name]
         expect(wmComponent.wizContext).toBe(wizContext);
         expect(fixture.nativeElement.querySelectorAll('li.app-wizard-step').length).toBe(1);
     });
+
+    it('should NOT carry the app-wizard-heading class or role="tab" (standalone-by-reference, FR-016)', () => {
+        const hostEl = fixture.nativeElement.querySelector('[wmWizardStepper]');
+        expect(hostEl.classList.contains('app-wizard-heading')).toBe(false);
+        expect(hostEl.getAttribute('role')).toBeNull();
+    });
 });
 
-describe('wm-stepperheader: standalone with an unresolvable wizardname (FR-015 safe-empty)', () => {
+describe('wm-wizardstepper: standalone with an unresolvable wizardname (FR-015 safe-empty)', () => {
     @Component({
         standalone: false,
-        template: `<div wmStepperHeader name="header1" wizardname="doesNotExist"></div>`
+        template: `<div wmWizardStepper name="header1" wizardname="doesNotExist"></div>`
     })
     class UnresolvableStandaloneWrapperComponent {
-        @ViewChild(StepperHeaderComponent, { static: true }) wmComponent: StepperHeaderComponent;
+        @ViewChild(WizardStepperComponent, { static: true }) wmComponent: WizardStepperComponent;
     }
 
     let fixture: ComponentFixture<UnresolvableStandaloneWrapperComponent>;
 
     beforeEach(waitForAsync(() => {
         const testModuleDef: ITestModuleDef = {
-            imports: [StepperHeaderComponent],
+            imports: [WizardStepperComponent],
             declarations: [UnresolvableStandaloneWrapperComponent],
             providers: [
                 { provide: App, useValue: { ...mockApp, Widgets: {} } },
@@ -206,20 +218,20 @@ describe('wm-stepperheader: standalone with an unresolvable wizardname (FR-015 s
     });
 });
 
-describe('wm-stepperheader: unbound (no ancestor wizard, FR-015 safe-empty)', () => {
-    let fixture: ComponentFixture<UnboundStepperHeaderWrapperComponent>;
+describe('wm-wizardstepper: unbound (no ancestor wizard, FR-015 safe-empty)', () => {
+    let fixture: ComponentFixture<UnboundWizardStepperWrapperComponent>;
 
     beforeEach(waitForAsync(() => {
         const testModuleDef: ITestModuleDef = {
-            imports: [StepperHeaderComponent],
-            declarations: [UnboundStepperHeaderWrapperComponent],
+            imports: [WizardStepperComponent],
+            declarations: [UnboundWizardStepperWrapperComponent],
             providers: [
                 { provide: App, useValue: mockApp },
                 DynamicComponentRefProvider
             ]
         };
 
-        fixture = compileTestComponent(testModuleDef, UnboundStepperHeaderWrapperComponent);
+        fixture = compileTestComponent(testModuleDef, UnboundWizardStepperWrapperComponent);
     }));
 
     it('should not throw and should render no step indicators when no wizContext resolves', () => {

@@ -1,18 +1,10 @@
 <!--
-  002-stepper-header-widget: the header is now the standalone `wm-stepperheader` widget. If the
-  page markup authors one explicitly (as a child, same as wm-wizardstep/wm-wizardaction), it is
-  projected here and is selectable/movable on canvas like any other widget. Legacy markup saved
-  before this widget existed has no such child, so the wizard falls back to auto-embedding one
-  for backward compatibility (FR-018/FR-019) — that fallback instance has no `name`/markup
-  identity of its own and is not independently selectable, which is expected: it only exists to
-  keep old pages looking correct. The `app-wizard-heading` class is a compatibility hook so
-  nested CSS selectors that targeted it before extraction keep matching (contract §9). See
-  wizard.component.ts ngAfterContentInit for the wizContext handshake this component reads from.
+  002-stepper-header-widget: the header is the standalone `wm-wizardstepper` widget. The page
+  markup authors one explicitly (as a child, same as wm-wizardstep/wm-wizardaction), and it is
+  projected here, selectable/movable on canvas like any other widget. See wizard.component.ts
+  ngAfterContentInit for the wizContext handshake this component reads from.
 -->
-<ng-content select="div[wmStepperHeader]"></ng-content>
-@if (!explicitHeader && !hasExternalHeader) {
-  <div wmStepperHeader [attr.class]="'app-wizard-heading ' + (class || '')"></div>
-}
+<ng-content select="div[wmWizardStepper]"></ng-content>
 @if (type !== 'dynamic') {
 <div class="app-wizard-body">
   @if (message.caption) {
