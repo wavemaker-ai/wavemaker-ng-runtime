@@ -58,3 +58,12 @@ dependency-report.html
 # Local Cursor AI rules (personal, not committed)
 .cursor/rules/karpathy-guidelines.mdc
 
+
+# angular-upgrade session state (template: .claude/skills/angular-upgrade/state.md)
+.claude/skills/angular-upgrade/current-state.md
+
+# wm-app-profiler tool (nested package: its own deps/build output/generated reports)
+tools/wm-app-profiler/node_modules
+tools/wm-app-profiler/dist
+tools/wm-app-profiler/final.md
+tools/wm-app-profiler/report.md
