@@ -188,7 +188,8 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
             forEach(partialParams, (value, key) => {
                 paramMarkup = `${paramMarkup} <wm-param name="${key}" value="${value}"></wm-param>`;
             });
-            const markup = `<wm-tabpane dynamicPaneIndex="${this.dynamicPaneIndex - 1}" isdynamic="true" name="${name}" ${propsTmpl}>
+            const paneIndexForCleanup = this.dynamicPaneIndex - 1;
+            const markup = `<wm-tabpane dynamicPaneIndex="${paneIndexForCleanup}" isdynamic="true" name="${name}" ${propsTmpl}>
                             ${paramMarkup}
                         </wm-tabpane>`;
 
@@ -197,16 +198,37 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
                 this._dynamicContext[this.getAttr('wmTab')] = this;
             }
 
-            // MEMORY LEAK FIX: Store component reference for cleanup
+            // MEMORY LEAK FIX: Store component reference (tagged with its pane index) for cleanup.
+            // Tagging by index lets an individual pane be destroyed when its tab is closed
+            // (see destroyDynamicPane / TabPaneComponent.remove), not only in bulk at ngOnDestroy.
             this.dynamicComponentProvider.addComponent(this.getNativeElement().querySelector('.tab-content'), markup, this._dynamicContext, {inj: this.inj})
                 .then(componentRef => {
                     if (componentRef) {
-                        this.dynamicComponentRefs.push(componentRef);
+                        this.dynamicComponentRefs.push({dynamicPaneIndex: paneIndexForCleanup, componentRef});
                     }
                 });
 
         });
         return paneNamesList;
+    }
+
+    /**
+     * MEMORY LEAK FIX: destroys the dynamically-created component instance for one pane (its
+     * variables, watchers and change-detection subscriptions) when its tab is closed. Without
+     * this, TabPaneComponent.remove() only detaches the pane's DOM node — the Angular component
+     * behind it, and everything it's still holding onto, stays alive for the lifetime of the
+     * page, accumulating with every dynamic tab a user opens and closes.
+     * @param dynamicPaneIndex - the closed pane's dynamicPaneIndex
+     */
+    public destroyDynamicPane(dynamicPaneIndex) {
+        const entryIndex = findIndex(this.dynamicComponentRefs, {dynamicPaneIndex});
+        if (entryIndex === -1) {
+            return;
+        }
+        const [entry] = this.dynamicComponentRefs.splice(entryIndex, 1);
+        if (entry.componentRef && entry.componentRef.destroy) {
+            entry.componentRef.destroy();
+        }
     }
 
     /**
@@ -550,11 +572,13 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
             this.panesChangesSubscription = null;
         }
 
-        // MEMORY LEAK FIX: Destroy all dynamically created component instances
+        // MEMORY LEAK FIX: Destroy all dynamically created component instances still open when
+        // the tabs widget itself is destroyed (individually-closed panes are already destroyed
+        // via destroyDynamicPane by this point, so this only catches whatever's still open).
         if (this.dynamicComponentRefs && this.dynamicComponentRefs.length) {
-            this.dynamicComponentRefs.forEach(componentRef => {
-                if (componentRef && componentRef.destroy) {
-                    componentRef.destroy();
+            this.dynamicComponentRefs.forEach(entry => {
+                if (entry && entry.componentRef && entry.componentRef.destroy) {
+                    entry.componentRef.destroy();
                 }
             });
             this.dynamicComponentRefs = [];

@@ -213,8 +213,20 @@ class WMDefaultDomRenderer2 implements Renderer2 {
     return node.nextSibling;
   }
 
+  // 'style' is deliberately NOT set via the native `el.setAttribute('style', value)` that every
+  // other attribute uses below — setting the `style` HTML *attribute* is what a strict CSP
+  // `style-src` policy (without `'unsafe-inline'`) blocks. Assigning individual CSSOM properties
+  // (`element.style.foo = value`) is a separate mechanism that CSP's inline-style check does not
+  // cover, so resetStyles()/applyStyles() apply each declaration one at a time instead. This is
+  // the actual reason this renderer is forked from Angular's own (unforked) DefaultDomRenderer2,
+  // which has no such special case and would violate a strict style-src CSP policy here.
   resetStyles(element: any): void {
-    const styleList = [].slice.call(element);
+    // Must iterate `element.style` (the live CSSStyleDeclaration, which is array-like — a numeric
+    // `.length` plus indexed access to each currently-set property name), NOT `element` itself.
+    // `[].slice.call(element)` on the plain DOM node always returns `[]` (no numeric `.length`),
+    // which silently no-oped this for every call — confirmed directly, and confirmed it does
+    // return the right property names once given `element.style` instead.
+    const styleList = [].slice.call(element.style);
     styleList.forEach(function (propertyName) {
       element.style.removeProperty(propertyName);
     });

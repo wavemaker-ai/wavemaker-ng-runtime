@@ -47,6 +47,14 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
 
     private _isFirstLoad: boolean = true;
     private _isOnLoadTriggered: boolean = false;
+    // DEAD CODE WARNING: this is never reassigned anywhere in the codebase (confirmed via a
+    // repo-wide search for `.$lazyLoad =`) — it is permanently `noop`, so every call site below
+    // is currently a no-op. 'deferload' on a tab-pane does NOT defer this component's content via
+    // this hook; the only mechanism that genuinely defers a pane's compilation is the transpiler's
+    // generic show.bind + deferload -> `*lazyLoad` structural-directive conversion (applies to any
+    // widget, not tab-pane-specific), which most panes never trigger since they're driven by
+    // active state rather than a show.bind expression. Do not assume setting `deferload="true"`
+    // on a tab-pane does anything until this is actually wired up.
     public $lazyLoad = noop;
     public name: string;
     public show: boolean;
@@ -114,6 +122,12 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
         this.tabsRef.panes.reset([...availablePanes]);
         this.nativeElement.remove();
         this.tabsRef.$element.find(`.tab-header[data-paneid='${this.$element.attr('widget-id')}'] a`).remove();
+        // MEMORY LEAK FIX: closing a dynamic tab only detached its DOM node above — the Angular
+        // component behind it (its variables, watchers, change-detection) was never destroyed,
+        // so it kept running and accumulating for every dynamic tab a user opened and closed.
+        if (this.isdynamic) {
+            this.tabsRef.destroyDynamicPane((this as any).dynamicPaneIndex);
+        }
     }
 
     private redrawChildren() {

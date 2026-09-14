@@ -62,12 +62,32 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent implements O
             return;
         }
 
-        // construct the _model from the checked elements.
-        const inputElements = this.nativeElement.querySelectorAll('input:checked');
+        // Previously this re-derived the full checked set via a live DOM query
+        // (`querySelectorAll('input:checked')`) on every single click — cost scales with total
+        // checkbox count on the page, since it has to walk every rendered <input>. The click
+        // event's target already tells us exactly which item just toggled and to what state;
+        // every other item's `.selected` flag is already correct (DatasetAwareFormComponent's
+        // `modelByKey` setter resets and re-marks it from the full keys array on every change),
+        // so the same result — checked keys, in the same order the widget itself renders them —
+        // can be derived from data already held in memory, with no DOM query at all.
+        //
+        // Render order (and therefore the required output order, since selectByKey's
+        // datavalue-building loop preserves the order of the keys array it's given) differs
+        // between modes: the default template iterates `datasetItems` directly, while groupby
+        // mode iterates `groupedData` (each group's own `.data` array), which `orderby` can
+        // reorder relative to `datasetItems`. Deriving from whichever array the template itself
+        // renders from keeps this correct in both modes by construction, instead of assuming one
+        // order.
+        const isChecked = ($event.target as HTMLInputElement).checked;
+        const orderedItems: any[] = this.groupby
+            ? (this.groupedData || []).flatMap((group: any) => group.data)
+            : this.datasetItems;
+
         const keys = [];
-        forEach(inputElements, ($el) => {
-            // @ts-ignore
-            keys.push($el.value);
+        forEach(orderedItems, (item: any) => {
+            if (item.key === key ? isChecked : item.selected) {
+                keys.push(item.key);
+            }
         });
 
         this.triggerInvokeOnChange(keys, $event);

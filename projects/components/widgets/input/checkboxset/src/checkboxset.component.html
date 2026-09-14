@@ -47,7 +47,7 @@
             [ngClass]="['checkbox', 'app-checkbox', 'group-list-item', itemclass, itemsPerRowClass]"
             [class.active]="item.selected"
             [wmItemTemplate]="content" [userComponentParams]="item" partialContainer
-            (click)="onCheckboxLabelClick($event, item)">
+            (click)="onCheckboxLabelClick($event, item.key)">
             <!-- Default item template -->
             @if (!content) {
               <label class="app-checkboxset-label" [ngClass]="{'disabled':disabled || readonly}" [title]="item.label">

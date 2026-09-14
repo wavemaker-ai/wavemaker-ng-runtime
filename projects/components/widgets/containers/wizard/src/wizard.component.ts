@@ -92,6 +92,7 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
     private dynamicComponentProvider;
     private _dynamicContext;
     private dynamicStepIndex;
+    private dynamicComponentRefs: any[] = [];
     public dynamicWizard;
     public defaultstepindex;
     private _isFirstLoad: boolean = true;
@@ -322,7 +323,8 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
             forEach(partialParams, (value, key) => {
                 paramMarkup = `${paramMarkup} <wm-param name="${key}" value="${value}"></wm-param>`;
             });
-            const markup = `<wm-wizardstep dynamicStepIndex="${this.dynamicStepIndex - 1}" isdynamic="true" name="${name}" ${propsTmpl}>
+            const stepIndexForCleanup = this.dynamicStepIndex - 1;
+            const markup = `<wm-wizardstep dynamicStepIndex="${stepIndexForCleanup}" isdynamic="true" name="${name}" ${propsTmpl}>
                             ${paramMarkup}
                         </wm-wizardstep>`;
 
@@ -331,7 +333,16 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
                 this._dynamicContext[this.getAttr('wmWizard')] = this;
             }
 
-            this.dynamicComponentProvider.addComponent(this.getNativeElement().querySelector('.app-wizard-body'), markup, this._dynamicContext, {inj: this.inj});
+            // MEMORY LEAK FIX: Store component reference (tagged with its step index) for
+            // cleanup — previously this promise result wasn't captured at all, so a dynamic
+            // wizard step's component was never destroyed, not even when the wizard itself was
+            // destroyed. Mirrors the identical fix in TabsComponent/AccordionDirective.
+            this.dynamicComponentProvider.addComponent(this.getNativeElement().querySelector('.app-wizard-body'), markup, this._dynamicContext, {inj: this.inj})
+                .then(componentRef => {
+                    if (componentRef) {
+                        this.dynamicComponentRefs.push({dynamicStepIndex: stepIndexForCleanup, componentRef});
+                    }
+                });
 
         });
         return stepNamesList;
@@ -345,6 +356,25 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
         const stepRef = isString(step) ? this.getStepRefByName(step) : isNumber(step)
             ? this.getStepRefByIndex(step) : null;
         stepRef ? stepRef.remove() : console.warn(`Could not find step with name or index '${step}' to remove`);
+    }
+
+    /**
+     * MEMORY LEAK FIX: destroys the dynamically-created component instance for one step (its
+     * variables, watchers and change-detection subscriptions) when its step is closed. Without
+     * this, WizardStepComponent.remove() only detaches the step's DOM node — the Angular
+     * component behind it, and everything it's still holding onto, stays alive for the lifetime
+     * of the page, accumulating with every dynamic step a user opens and closes.
+     * @param dynamicStepIndex - the closed step's dynamicStepIndex
+     */
+    public destroyDynamicStep(dynamicStepIndex) {
+        const entryIndex = findIndex(this.dynamicComponentRefs, {dynamicStepIndex});
+        if (entryIndex === -1) {
+            return;
+        }
+        const [entry] = this.dynamicComponentRefs.splice(entryIndex, 1);
+        if (entry.componentRef && entry.componentRef.destroy) {
+            entry.componentRef.destroy();
+        }
     }
 
     /**
@@ -923,6 +953,18 @@ export class WizardComponent extends StylableComponent implements OnInit, AfterC
                 delete this._dynamicContext[key];
             });
             this._dynamicContext = null;
+        }
+
+        // MEMORY LEAK FIX: Destroy all dynamically created component instances still open when
+        // the wizard widget itself is destroyed (individually-closed steps are already
+        // destroyed via destroyDynamicStep by this point, so this only catches whatever's left).
+        if (this.dynamicComponentRefs && this.dynamicComponentRefs.length) {
+            this.dynamicComponentRefs.forEach(entry => {
+                if (entry && entry.componentRef && entry.componentRef.destroy) {
+                    entry.componentRef.destroy();
+                }
+            });
+            this.dynamicComponentRefs = [];
         }
 
         // MEMORY LEAK FIX: Clear dynamic wizard array

@@ -116,6 +116,68 @@ describe('CheckboxSet component', () => {
             );
         });
 
+        // Regression coverage for the O(N) DOM query fix: onCheckboxLabelClick used to re-derive
+        // the full checked set via `nativeElement.querySelectorAll('input:checked')` on every
+        // click. It now derives the same result from datasetItems/groupedData already held in
+        // memory, with no DOM query at all — these tests pin down the one thing that fix could
+        // plausibly get wrong: the ORDER of keys in the resulting datavalue, which selectByKey
+        // preserves exactly as given (not re-sorted), so it must match render order, not click
+        // order.
+        it('should order datavalue by dataset order, not click order, when a later-clicked item precedes an earlier-clicked one', () => {
+            checkboxsetComponent.datasetItems = [
+                { key: 'a', value: 'A', selected: false },
+                { key: 'b', value: 'B', selected: false },
+                { key: 'c', value: 'C', selected: false }
+            ] as any;
+
+            const cInput = document.createElement('input');
+            cInput.type = 'checkbox';
+            cInput.checked = true;
+            checkboxsetComponent.onCheckboxLabelClick({ target: cInput }, 'c');
+            expect(checkboxsetComponent.datavalue).toEqual(['C']);
+
+            // 'a' comes before 'c' in dataset order, even though 'c' was checked first.
+            const aInput = document.createElement('input');
+            aInput.type = 'checkbox';
+            aInput.checked = true;
+            checkboxsetComponent.onCheckboxLabelClick({ target: aInput }, 'a');
+            expect(checkboxsetComponent.datavalue).toEqual(['A', 'C']);
+        });
+
+        it('should remove a key from datavalue when its checkbox is unchecked', () => {
+            const itemA = { key: 'a', value: 'A', selected: true };
+            const itemB = { key: 'b', value: 'B', selected: false };
+            checkboxsetComponent.datasetItems = [itemA, itemB] as any;
+
+            const aInput = document.createElement('input');
+            aInput.type = 'checkbox';
+            aInput.checked = false;
+            checkboxsetComponent.onCheckboxLabelClick({ target: aInput }, 'a');
+            expect(checkboxsetComponent.datavalue).toEqual([]);
+        });
+
+        it('should order datavalue by groupedData order (not datasetItems order) when groupby is set', () => {
+            const itemX = { key: 'x', value: 'X', selected: false };
+            const itemY = { key: 'y', value: 'Y', selected: false };
+            checkboxsetComponent.datasetItems = [itemX, itemY] as any;
+            (checkboxsetComponent as any).groupby = 'category';
+            // Deliberately the reverse of datasetItems' order, simulating an `orderby` that
+            // reorders groups/items relative to the raw dataset — groupedData is what's actually
+            // rendered under groupby, so it must win.
+            checkboxsetComponent.groupedData = [{ key: 'group1', data: [itemY, itemX] }] as any;
+
+            const yInput = document.createElement('input');
+            yInput.type = 'checkbox';
+            yInput.checked = true;
+            checkboxsetComponent.onCheckboxLabelClick({ target: yInput }, 'y');
+            expect(checkboxsetComponent.datavalue).toEqual(['Y']);
+
+            const xInput = document.createElement('input');
+            xInput.type = 'checkbox';
+            xInput.checked = true;
+            checkboxsetComponent.onCheckboxLabelClick({ target: xInput }, 'x');
+            expect(checkboxsetComponent.datavalue).toEqual(['Y', 'X']);
+        });
     });
 
     describe('handleEvent', () => {

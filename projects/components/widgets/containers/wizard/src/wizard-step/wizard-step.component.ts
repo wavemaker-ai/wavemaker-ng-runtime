@@ -56,6 +56,10 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
     public disableprevious: boolean;
     public isInitialized: boolean;
     private isdynamic: boolean;
+    // DEAD CODE WARNING: never reassigned anywhere in the codebase (confirmed via a repo-wide
+    // search for `.$lazyLoad =`) — permanently `noop`, so the call site below is a no-op.
+    // 'deferload' does NOT defer this step's content via this hook; see tab-pane.component.ts's
+    // $lazyLoad comment for the actual (much narrower) mechanism that does anything at all.
     public $lazyLoad = noop;
     isDone: boolean = false;
     nextCBInProgress: boolean = false;
@@ -193,6 +197,12 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
         availablePanes.splice((this as any).wizardComponent.getStepIndexByRef(this), 1);
         this.wizardComponent.steps.reset([...availablePanes]);
         this.nativeElement.remove();
+        // MEMORY LEAK FIX: closing a dynamic step only detached its DOM node above — the Angular
+        // component behind it (its variables, watchers, change-detection) was never destroyed,
+        // so it kept running and accumulating for every dynamic step a user opened and closed.
+        if (this.isdynamic) {
+            (this.wizardComponent as any).destroyDynamicStep((this as any).dynamicStepIndex);
+        }
     }
 
     get currentWizardWidgets() {

@@ -37,6 +37,10 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAUL
 export class PanelComponent extends MenuAdapterComponent implements OnInit, AfterContentInit, OnDestroy {
     static initializeProps = registerProps();
 
+    // DEAD CODE WARNING: never reassigned anywhere in the codebase (confirmed via a repo-wide
+    // search for `.$lazyLoad =`) — permanently `noop`, so every call site below is a no-op.
+    // 'deferload' does NOT defer this panel's content via this hook; see tab-pane.component.ts's
+    // $lazyLoad comment for the actual (much narrower) mechanism that does anything at all.
     public $lazyLoad = noop;
     public iconurl: string;
     public iconclass: string;

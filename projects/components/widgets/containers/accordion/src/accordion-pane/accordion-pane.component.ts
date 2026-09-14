@@ -41,6 +41,10 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
     public badgetype: any;
     public badgevalue: string;
     public smoothscroll: any;
+    // DEAD CODE WARNING: never reassigned anywhere in the codebase (confirmed via a repo-wide
+    // search for `.$lazyLoad =`) — permanently `noop`, so every call site below is a no-op.
+    // 'deferload' does NOT defer this pane's content via this hook; see tab-pane.component.ts's
+    // $lazyLoad comment for the actual (much narrower) mechanism that does anything at all.
     private $lazyLoad = noop;
     private _isOnLoadTriggered: boolean = false;
     public content: string;
@@ -105,6 +109,12 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
         availablePanes.splice((this as any).accordionRef.getPaneIndexByRef(this), 1);
         this.accordionRef.panes.reset([...availablePanes]);
         this.nativeElement.remove();
+        // MEMORY LEAK FIX: closing a dynamic pane only detached its DOM node above — the Angular
+        // component behind it (its variables, watchers, change-detection) was never destroyed,
+        // so it kept running and accumulating for every dynamic pane a user opened and closed.
+        if (this.isdynamic) {
+            (this as any).accordionRef.destroyDynamicPane((this as any).dynamicPaneIndex);
+        }
     }
 
     public toggle(evt: Event) {
