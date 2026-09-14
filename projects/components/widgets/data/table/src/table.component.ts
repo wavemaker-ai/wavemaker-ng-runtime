@@ -294,6 +294,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     private readonly isdynamictable;
     private _dynamicContext;
     private noOfColumns;
+    private _generatedColumnsTmpl = '';
     public onDemandLoad;
     public infScroll;
     private isDataLoading;
@@ -1614,6 +1615,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
 
         // MEMORY LEAK FIX: Clear compiled template caches
+        this._generatedColumnsTmpl = '';
         this.rowActionsCompiledTl = {};
         this.rowFilterCompliedTl = {};
         this.inlineCompliedTl = {};
@@ -2050,17 +2052,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
         }
     }
-
-    // Function to generate and compile the form fields from the metadata
-    async generateDynamicColumns(columns) {
-        this.fieldDefs = []; // empty the form fields
-        // empty the filter field template refs.
-        (this.filterTmpl as any)._results = [];
-
-        if (isEmpty(columns)) {
-            return;
-        }
-
+    private getDynamicColumnsTmpl(columns) {
         let tmpl = '';
         columns.forEach(col => {
             let attrsTmpl = '';
@@ -2077,6 +2069,19 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             });
             tmpl += `<wm-table-column ${attrsTmpl} tableName="${this.name}${(this as any).$attrs.get('table_reference')}">${customTmpl}</wm-table-column>`;
         });
+        return tmpl;
+    }
+
+    // Function to generate and compile the form fields from the metadata
+    async generateDynamicColumns(columns) {
+        this.fieldDefs = []; // empty the form fields
+        // empty the filter field template refs.
+        (this.filterTmpl as any)._results = [];
+
+        if (isEmpty(columns)) {
+            return;
+        }
+        const tmpl = this._generatedColumnsTmpl = this.getDynamicColumnsTmpl(columns);
         this.dynamicTableRef.clear();
 
         // Setup dynamic context for the table component
@@ -2134,7 +2139,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         let properties;
         let columnIndex = 0;
         let headerIndex = 0;
-
+        const renderedColumns = this.columns;
+        const renderedFieldDefs = this.fieldDefs;
+        const renderedHeaderConfig = this.headerConfig;
         this.fieldDefs = [];
         this.headerConfig = [];
         this.columns = {};
@@ -2179,6 +2186,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             defaultFieldDefs.push(val);
         });
 
+        const tmpl = this.getDynamicColumnsTmpl(defaultFieldDefs);
+        if (tmpl && tmpl === this._generatedColumnsTmpl && renderedFieldDefs.length
+            && !this.gridOptions.isNavTypeScrollOrOndemand()) {
+            this.fieldDefs = renderedFieldDefs;
+            this.headerConfig = renderedHeaderConfig;
+            Object.assign(this.columns, renderedColumns);
+            return;
+        }
         this.generateDynamicColumns(defaultFieldDefs);
     }
 
@@ -2727,7 +2742,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.datagridElement.datatable(this.gridOptions);
         } else {
             setTimeout(() => {
-                this.callDataGridMethod('setColGroupWidths');
+                this.callDataGridMethod(forceRender === false ? 'refreshColumnWidths' : 'setColGroupWidths');
                 this.callDataGridMethod('addOrRemoveScroll');
             });
         }

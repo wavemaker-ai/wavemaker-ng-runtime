@@ -1352,6 +1352,12 @@ $.widget('wm.datatable', {
             }
         }
     },
+    refreshColumnWidths: function () {
+        if (this.gridContainer.width() > 0) {
+            this.tableContainer.children('colgroup').children('col').css('width', '');
+        }
+        this.setColGroupWidths();
+    },
     /*Set the default widths for the colgroup*/
     setColGroupWidths: function () {
         const self = this,

@@ -36,7 +36,6 @@
         "@fullcalendar/list": "6.1.18",
         "@fullcalendar/timegrid": "6.1.18",
         "@metrichor/jmespath": "0.3.1",
-        "@wavemaker-ai/angular-app": "file:.yalc/@wavemaker-ai/angular-app",
         "@wavemaker-ai/custom-widgets-m3": "file:.yalc/@wavemaker-ai/custom-widgets-m3",
         "@wavemaker-ai/foundation-css": "file:.yalc/@wavemaker-ai/foundation-css",
         "@wavemaker-ai/variables": "file:.yalc/@wavemaker-ai/variables",
@@ -66,7 +65,7 @@
     },
     "devDependencies": {
         "@ampproject/rollup-plugin-closure-compiler": "0.27.0",
-        "@angular-builders/custom-webpack": "21.0.3",
+        "@angular-builders/custom-webpack": "21.1.0",
         "@angular-devkit/build-angular": "21.2.21",
         "@angular-eslint/builder": "21.4.0",
         "@angular-eslint/eslint-plugin": "21.4.0",
@@ -122,7 +121,12 @@
     },
     "overrides": {
         "@babel/core": "7.29.7",
-        "ajv": "8.18.0",
+        "adm-zip": "0.6.1",
+        "@compodoc/compodoc": {
+            "@angular-devkit/core": {
+                "ajv": "8.18.0"
+            }
+        },
         "esbuild": "0.28.2",
         "http-proxy-middleware": "3.0.7",
         "less": "4.9.0",

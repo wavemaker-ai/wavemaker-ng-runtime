@@ -541,7 +541,26 @@ const setValueToNode = (target, obj, root, variable, value, noUpdate?) => {
     value = !isUndefined(value) ? value : obj.value;
     /* sanity check, user can bind parent nodes to non-object values, so child node bindings may fail */
     if (targetObj) {
-        targetObj[targetNodeKey] = value;
+        // Multi query params: one slot per binding; rebinds replace that slot (not append).
+        // Exception: if the bind expression itself resolved to the complete array
+        // (e.g. `bind:['fire', 'water']`), assign it directly instead of treating it
+        // as a single slot's value — same as the non-multi assignment below.
+        if (obj.collectionFormat === 'multi' && !isArray(value)) {
+            let values = targetObj[targetNodeKey];
+            if (!isArray(values)) {
+                values = targetObj[targetNodeKey] = isUndefined(values) ? [] : [values];
+            }
+            let slot = obj.multiIndex !== undefined ? obj.multiIndex : obj.__multiSlotIndex;
+            if (slot === undefined) {
+                slot = obj.__multiSlotIndex = values.length;
+                values.push(value);
+            } else {
+                obj.__multiSlotIndex = slot;
+                values[slot] = value;
+            }
+        } else {
+            targetObj[targetNodeKey] = value;
+        }
     }
     processVariablePostBindUpdate(targetNodeKey, value, obj.type, variable, noUpdate);
 };
@@ -659,6 +678,33 @@ const processBindObject = (obj, scope, root, variable) => {
  *                              for some it can be 'dataSet' and hence will be passed as param
  * @param {string} bindTarget, the object field in variable where the computed bindings will be set
  */
+/**
+ * In older saved REST/Swagger service variables, duplicate query parameters may not have a
+ * collectionFormat, so they are treated as multi-value parameters for backward compatibility:
+ * each duplicate target is tagged collectionFormat 'multi' and given a stable multiIndex.
+ * Shared by both processBinding implementations (this file and VariablesService).
+ */
+export const applyMultiIndexForDuplicateBindings = (bindMap: any[]) => {
+    const targetOccurrences = {};
+    bindMap.forEach(function (node) {
+        if (node && node.target) {
+            targetOccurrences[node.target] = (targetOccurrences[node.target] || 0) + 1;
+        }
+    });
+    const nextMultiIndex = {};
+    bindMap.forEach(function (node) {
+        if (node && node.target && targetOccurrences[node.target] > 1) {
+            if (!node.collectionFormat) {
+                node.collectionFormat = 'multi';
+            }
+            if (node.multiIndex === undefined) {
+                nextMultiIndex[node.target] = nextMultiIndex[node.target] || 0;
+                node.multiIndex = nextMultiIndex[node.target]++;
+            }
+        }
+    });
+};
+
 export const processBinding = (variable: any, context: any, bindSource?: string, bindTarget?: string) => {
     bindSource = bindSource || 'dataBinding';
     bindTarget = bindTarget || 'dataBinding';
@@ -668,6 +714,9 @@ export const processBinding = (variable: any, context: any, bindSource?: string,
     variable['_bind' + bindSource] = bindMap;
     if (!bindMap || !isArray(bindMap)) {
         return;
+    }
+    if (variable.category === VARIABLE_CONSTANTS.CATEGORY.SERVICE) {
+        applyMultiIndexForDuplicateBindings(bindMap);
     }
     bindMap.forEach(function (node) {
         /* for static variable change the binding with target 'dataBinding' to 'dataSet', as the results have to reflect directly in the dataSet */

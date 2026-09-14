@@ -1,4 +1,4 @@
-import { NgCircleProgressModule, CircleProgressComponent, CircleProgressOptionsInterface } from 'ng-circle-progress';
+import { NgCircleProgressModule, CircleProgressComponent, CircleProgressOptions, CircleProgressOptionsInterface } from 'ng-circle-progress';
 import {AfterViewInit, Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 
 import {IRedrawableComponent, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
@@ -39,7 +39,8 @@ export const TYPE_CLASS_MAP_PC = {
     selector: '[wmProgressCircle]',
     templateUrl: './progress-circle.component.html',
     providers: [
-        provideAsWidgetRef(ProgressCircleComponent)
+        provideAsWidgetRef(ProgressCircleComponent),
+        { provide: CircleProgressOptions, useValue: {} }
     ],
     exportAs: 'wmProgressCircle'
 })

@@ -2,7 +2,6 @@ import { ApplicationRef, enableProdMode } from '@angular/core';
 
 import { isEmpty } from "lodash-es";
 import { bootstrapApplication } from '@angular/platform-browser';
-import { setPreviewProperties, CustomIconsLoaderService } from '@wm/core';
 import { AppComponent } from '@wm/runtime/base';
 import { appConfig } from './app/app.config';
 
@@ -11,13 +10,6 @@ const DEBUG_MODE = 'debugMode';
 if (sessionStorage.getItem(DEBUG_MODE) !== 'true') {
     enableProdMode();
 }
-fetch('./font.config.js')
-    .then(response => response.text())
-    .then((fontConfig) => {
-        setPreviewProperties({ fontConfig });
-        const iconLoader = new CustomIconsLoaderService();
-        iconLoader.load();
-    })
 console.time('bootstrap');
 
 document.addEventListener('DOMContentLoaded', () => {

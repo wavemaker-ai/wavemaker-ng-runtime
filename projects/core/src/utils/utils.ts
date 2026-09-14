@@ -1,7 +1,7 @@
 import {Subject} from 'rxjs';
 import {take} from 'rxjs/operators';
 
-import {getPreviewProperties} from './wm-project-properties';
+import {getPreviewProperties, getWmProjectProperties} from './wm-project-properties';
 import {$appDigest, $watch} from './watcher';
 import {DataType} from '../enums/enums';
 import {DataSource} from '../types/types';
@@ -1670,7 +1670,7 @@ export const findViewParent = (lView: any) => {
 }
 
 export const getFontConfig = () => {
-    return _WM_APP_PROPERTIES.fontConfig || getPreviewProperties();
+    return getWmProjectProperties()?.fontConfig || getPreviewProperties();
 }
 
 export const adjustVerticalPosition = (containerElem, parentElem: HTMLElement, ref, ele?): void => {
