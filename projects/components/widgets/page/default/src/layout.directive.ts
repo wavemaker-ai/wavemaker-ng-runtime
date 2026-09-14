@@ -33,7 +33,7 @@ export class LayoutDirective extends StylableComponent implements AfterViewInit,
      * @param data
      */
     public notify(eventName: string, ...data: Array<any>) {
-        this._eventNotifier.notify.call(this._eventNotifier, ...arguments);
+        this._eventNotifier.notify(eventName, ...data);
     }
 
     public ngAfterViewInit() {

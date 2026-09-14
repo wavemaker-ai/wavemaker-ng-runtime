@@ -58,7 +58,7 @@ const getHttpDependency = function () {
     const httpService = this.httpService;
     const fn = function (key, options?) {
         const args = Array.from(arguments).slice(1);
-        return Promise.resolve(httpService[key].call(httpService, ...args));
+        return Promise.resolve(httpService[key](...args));
     };
     const $http = function () {
         return fn.apply(undefined, ['send', ...Array.from(arguments)]);
@@ -140,7 +140,7 @@ export class AppRef implements OnDestroy {
     }
 
     public notify(eventName: string, ...data: Array<any>) {
-        this._eventNotifier.notify.call(this._eventNotifier, ...arguments);
+        this._eventNotifier.notify(eventName, ...data);
     }
 
     public importModule(moduleName: string) {

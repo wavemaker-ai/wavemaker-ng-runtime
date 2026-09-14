@@ -1629,7 +1629,7 @@ $.widget('wm.datatable', {
             case 'showRowIndex':
                 this.refreshGrid();
                 break;
-            case 'cssClassNames':
+            case 'cssClassNames': {
                 let gridClass = this.options.cssClassNames.gridDefault + ' ' + this.options.cssClassNames.grid;
                 if (this.options.rowExpansionEnabled) {
                     gridClass =  gridClass + ' ' + this.options.cssClassNames.gridRowExpansionClass;
@@ -1640,6 +1640,7 @@ $.widget('wm.datatable', {
                     this._toggleSpacingClasses('condensed');
                 }
                 break;
+            }
             case 'spacing':
                 this._toggleSpacingClasses(value);
                 break;
@@ -3273,7 +3274,6 @@ $.widget('wm.datatable', {
             this.tableContainer.find('colgroup').remove(); // Remove the colgroup from the table container when showHeader is false
             this.tableContainer.append($colgroup);
             this.gridHeaderElement.hide();
-            //this.gridElement.prepend($colgroup.clone());
             return;
         } else {
             /* _toggleHeader() removes thead from the DOM when toggling showHeader; gridHeaderElement
@@ -3454,11 +3454,10 @@ $.widget('wm.datatable', {
             });
         }
     },
-    /* Renders the table body. */
-    _renderGrid: function (isCreated) {
-        let $htm, isScrollorOnDemand = this.options.isNavTypeScrollOrOndemand();
-        $('table.table-bordered').parents('.app-grid-header-inner').addClass('table_border');
-        if(isScrollorOnDemand) {
+    /* Builds the grid body markup for the current navigation mode. */
+    _buildGridMarkup: function (isScrollorOnDemand) {
+        let $htm;
+        if (isScrollorOnDemand) {
             const $tbody = this.gridElement;
             // get markup for new rows and append it to tbod
             const template = this._getGridTemplate();
@@ -3467,23 +3466,30 @@ $.widget('wm.datatable', {
                 // initally append tbody to gridElement
                 this.gridElement.append($htm);
             }
-
         } else {
             const templates = this._getGridTemplate();
             $htm = $(templates);
-            if(templates) {
+            if (templates) {
                 this.gridElement.append($htm);
             }
         }
+        return $htm;
+    },
 
-        if (this.options.summaryRow) {
-            const $summaryRowHtm = $(this._getSummaryRowTemplate());
-            this.tableContainer.find('tfoot').remove();
-            if (this.options.data.length){
-                this.tableContainer.append($summaryRowHtm);
-            }
+    /* Renders the summary row (tfoot) when the summaryRow option is enabled. */
+    _renderSummaryRowIfNeeded: function () {
+        if (!this.options.summaryRow) {
+            return;
         }
-        // Set proper data status messages after the grid is rendered.
+        const $summaryRowHtm = $(this._getSummaryRowTemplate());
+        this.tableContainer.find('tfoot').remove();
+        if (this.options.data.length) {
+            this.tableContainer.append($summaryRowHtm);
+        }
+    },
+
+    /* Sets the proper data status messages after the grid is rendered. */
+    _updateStatusAfterRender: function (isCreated) {
         if (!this.options.data.length && this.dataStatus.state === 'nodata') {
             this.setStatus('nodata');
         } else {
@@ -3491,6 +3497,29 @@ $.widget('wm.datatable', {
             this.dataStatus.message = this.dataStatus.message || this.options.dataStates.loading;
             this.setStatus(this.dataStatus.state, this.dataStatus.message, isCreated);
         }
+    },
+
+    /* Selects the first row after render, when selectFirstRow is enabled. */
+    _selectFirstRowAfterRender: function () {
+        if (this.options.multiselect) {
+            //Set selectFirstRow to false, to prevent first item being selected in next page
+            this.options.selectFirstRow = false;
+        }
+        if (this.gridElement.find('tr.app-datagrid-row.active').length <= 0) {
+            this.selectFirstRow(true, true);
+        }
+    },
+
+    /* Renders the table body. */
+    _renderGrid: function (isCreated) {
+        const isScrollorOnDemand = this.options.isNavTypeScrollOrOndemand();
+        $('table.table-bordered').parents('.app-grid-header-inner').addClass('table_border');
+        const $htm = this._buildGridMarkup(isScrollorOnDemand);
+
+        this._renderSummaryRowIfNeeded();
+        // Set proper data status messages after the grid is rendered.
+        this._updateStatusAfterRender(isCreated);
+
         this.gridBody = this.gridElement.find('tbody');
         this.gridFooter = this.tableContainer.find('tfoot');
         this._findAndReplaceCompiledTemplates();
@@ -3511,13 +3540,7 @@ $.widget('wm.datatable', {
             this.options.onDataRender();
         }
         if (!isCreated && this.options.selectFirstRow) {
-            if (this.options.multiselect) {
-                //Set selectFirstRow to false, to prevent first item being selected in next page
-                this.options.selectFirstRow = false;
-            }
-            if (this.gridElement.find('tr.app-datagrid-row.active').length <= 0) {
-                this.selectFirstRow(true, true);
-            }
+            this._selectFirstRowAfterRender();
         }
     },
 
@@ -3595,6 +3618,72 @@ $.widget('wm.datatable', {
             }
         }
     },
+    /* Shows/hides the data status container and the on-demand "load more" link for the given state. */
+    _updateDataStatusContainerVisibility: function (state) {
+        if (state === 'ready') {
+            this.dataStatusContainer.hide();
+        } else {
+            // [WMS-23839] always show load more btn if show view less btn is true
+            if (this.options.isNavTypeScrollOrOndemand() &&
+                (state === 'nodata' ||
+                 (this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                  this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
+                  (this.options.getCurrentPage() == this.options.getPageCount()) && !this.options.showviewlessbutton))) {
+                this.element.find('.on-demand-datagrid a').hide();
+            }
+            this.dataStatusContainer.show();
+        }
+    },
+
+    /* Adjusts the status container height for the nodata/loading/error states, when applicable. */
+    _updateStatusContainerHeightIfNeeded: function (state) {
+        if (this.options.height === '100%' || this.options.height === 'auto') { //If height is auto or 100%, Set the loading overlay height as present grid content height
+            if (state === 'nodata') {
+                this.dataStatusContainer.css('height', 'auto');
+                this.dataStatus.contentHeight = 0;
+            }  else if (this.options.isNavTypeScrollOrOndemand() &&
+                       this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                       this.options.getCurrentPage() > 1){
+                // showing the loading icon only for the first page
+                // from second page there is another loader which is being shown instead of LoadMore btn
+                this.dataStatusContainer.hide();
+            } else {
+                this.dataStatus.height = this.dataStatus.height || this.dataStatusContainer.outerHeight();
+                this.dataStatus.contentHeight = this.gridElement.outerHeight() || this.dataStatus.contentHeight;
+                this.dataStatusContainer.css('height', this.dataStatus.height > this.dataStatus.contentHeight ? 'auto' : this.dataStatus.contentHeight);
+            }
+        }
+    },
+
+    /* Toggles the "show-msg"/"hidden" classes on the grid for the nodata/loading/error states. */
+    _toggleGridContentVisibilityForStatus: function (state, isScrollOrOndemand) {
+        if (!isScrollOrOndemand || (isScrollOrOndemand &&
+            this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+            this.options.getCurrentPage() === 1)) {
+            this.gridContainer.addClass("show-msg");
+
+            if (state === 'loading' && !isScrollOrOndemand &&
+                this.options.lastActionPerformed !== this.options.ACTIONS.EDIT &&
+                this.options.lastActionPerformed !== this.options.ACTIONS.DELETE) {
+                this.gridElement.addClass('hidden');
+            }
+        }
+    },
+
+    /* Restores normal grid display once the status leaves nodata/loading/error. */
+    _clearStatusStateForReadyGrid: function () {
+        this.gridContainer.removeClass('show-msg');
+        this.gridElement.removeClass('hidden');
+
+        // In case of quickeditmode, if active row is found, focus the row and bind the event listeners to the row
+        if (this.options.editmode === this.CONSTANTS.QUICK_EDIT) {
+            if (this.options.activeRow) {
+                this.attachHandlersToActiveRow(this.options.activeRow);
+            }
+            this.options.activeRow = undefined;
+        }
+    },
+
     __setStatus: function (isCreated) {
         const loadingIndicator = this.dataStatusContainer.find('i'),
             state = this.dataStatus.state,
@@ -3605,58 +3694,12 @@ $.widget('wm.datatable', {
         } else {
             loadingIndicator.addClass('hidden');
         }
-        if (state === 'ready') {
-            this.dataStatusContainer.hide();
-        } else {
-            // [WMS-23839] always show load more btn if show view less btn is true
-            if (this.options.isNavTypeScrollOrOndemand() && 
-                (state === 'nodata' || 
-                 (this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
-                  this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
-                  (this.options.getCurrentPage() == this.options.getPageCount()) && !this.options.showviewlessbutton))) {
-                this.element.find('.on-demand-datagrid a').hide();
-            }
-            this.dataStatusContainer.show();
-        }
+        this._updateDataStatusContainerVisibility(state);
         if (state === 'nodata' || state === 'loading' || state === 'error') {
-            if (this.options.height === '100%' || this.options.height === 'auto') { //If height is auto or 100%, Set the loading overlay height as present grid content height
-                if (state === 'nodata') {
-                    this.dataStatusContainer.css('height', 'auto');
-                    this.dataStatus.contentHeight = 0;
-                }  else if (this.options.isNavTypeScrollOrOndemand() && 
-                           this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
-                           this.options.getCurrentPage() > 1){
-                    // showing the loading icon only for the first page
-                    // from second page there is another loader which is being shown instead of LoadMore btn
-                    this.dataStatusContainer.hide();
-                } else {
-                    this.dataStatus.height = this.dataStatus.height || this.dataStatusContainer.outerHeight();
-                    this.dataStatus.contentHeight = this.gridElement.outerHeight() || this.dataStatus.contentHeight;
-                    this.dataStatusContainer.css('height', this.dataStatus.height > this.dataStatus.contentHeight ? 'auto' : this.dataStatus.contentHeight);
-                }
-            }
-            if (!isScrollOrOndemand || (isScrollOrOndemand && 
-                this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
-                this.options.getCurrentPage() === 1)) {
-                this.gridContainer.addClass("show-msg");
-
-                if (state === 'loading' && !isScrollOrOndemand &&
-                    this.options.lastActionPerformed !== this.options.ACTIONS.EDIT &&
-                    this.options.lastActionPerformed !== this.options.ACTIONS.DELETE) {
-                    this.gridElement.addClass('hidden');
-                }
-            }
+            this._updateStatusContainerHeightIfNeeded(state);
+            this._toggleGridContentVisibilityForStatus(state, isScrollOrOndemand);
         } else {
-            this.gridContainer.removeClass('show-msg');
-            this.gridElement.removeClass('hidden');
-
-            // In case of quickeditmode, if active row is found, focus the row and bind the event listeners to the row
-            if (this.options.editmode === this.CONSTANTS.QUICK_EDIT) {
-                if (this.options.activeRow) {
-                    this.attachHandlersToActiveRow(this.options.activeRow);
-                }
-                this.options.activeRow = undefined;
-            }
+            this._clearStatusStateForReadyGrid();
         }
         if (!isCreated) {
             this.setColGroupWidths();
@@ -3711,15 +3754,7 @@ $.widget('wm.datatable', {
         }
         this.options[key] = value;
         if (key === 'height') {
-            //  if(this.dataStatus.state != 'loading') {
-            // this._setStyles(this.tableContainer, 'border-collapse: separate;');
-
-            // for (var i = 0; i < elements.length; i += 1) {
-            //     this._setStyles($(elements[i]), 'border: 1px solid #eee');
-            // }
-            //}
             this.gridContainer.find('.app-grid-header-inner').css(key, value);
-            // this.gridContainer.find('.app-grid-header-inner').css('border', '1px solid #eee');
             if (this.options.isNavTypeScrollOrOndemand() && (this.options.height != '100%' && this.options.height != 'auto')) {
                 this.gridContainer.find('.app-grid-header-inner').css('overflow', 'auto');
             }

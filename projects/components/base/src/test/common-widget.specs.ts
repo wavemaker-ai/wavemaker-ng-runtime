@@ -35,6 +35,26 @@ export class ComponentTestBase {
      * util function to convert rgb color code to hex
      * @param rgbColor, rgb color expression
      */
+    private normalizeBackgroundImageUrl(url: string): string {
+        return url.replace(/(^url\("?)|("?\)$)/g, 'url("').replace('")', '")');
+    }
+
+    private assertCallbackAfterStable(fixture: any, callbackMethod: string): () => void {
+        return () => {
+            jest.spyOn(fixture.componentInstance, callbackMethod);
+            expect(fixture.componentInstance[callbackMethod]).toHaveBeenCalledTimes(1);
+        };
+    }
+
+    private assertCallbackAfterMouseEvent(fixture: any, eventName: string, mouseSelectionEle: string, callbackMethod: string): () => void {
+        return () => {
+            jest.spyOn(fixture.componentInstance, callbackMethod);
+            const eleControl = getHtmlSelectorElement(fixture, mouseSelectionEle);
+            eleControl.nativeElement.dispatchEvent(new MouseEvent(eventName));
+            expect(fixture.componentInstance[callbackMethod]).toHaveBeenCalledTimes(1);
+        };
+    }
+
     private rgbToHex(rgbColor: string) {
         // Check if the input is already in hex format
         if (rgbColor.match(/^#[0-9a-fA-F]{6}$/)) {
@@ -339,8 +359,7 @@ export class ComponentTestBase {
                     if (initValue) {
                         if (cssName === 'backgroundimage') {
                             // Normalize cssValue to ensure it matches the format of initValue
-                            const normalizeUrl = (url) => url.replace(/(^url\("?)|("?\)$)/g, 'url("').replace('")', '")');
-                            expect(normalizeUrl(cssValue)).toBe(normalizeUrl(initValue));
+                            expect(this.normalizeBackgroundImageUrl(cssValue)).toBe(this.normalizeBackgroundImageUrl(initValue));
                         } else if (cssName === 'fontsize') {
                             initValue = +(initValue);
                             let fontUnit = this.widgetDef.$unCompiled.attr('fontunit') || 'px';
@@ -380,14 +399,12 @@ export class ComponentTestBase {
            if(this.widgetDef.type == 'wm-date') {
                return;
            }
-            let component,
-                fixture,
+            let fixture,
                 $element,
                 $inputEl;
 
             beforeEach((() => {
                 fixture = compileTestComponent(this.widgetDef.testModuleDef, this.widgetDef.testComponent);
-                component = fixture.componentInstance.wmComponent;
                 fixture.detectChanges();
             }));
 
@@ -395,23 +412,13 @@ export class ComponentTestBase {
 
                 if (evtObj.clickableEle) {
                     it('Should trigger the ' + evtObj.eventName + ' event', waitForAsync(() => {
-                        // fixture.whenStable().then(() => {
                         let eleControl = getHtmlSelectorElement(fixture, evtObj.clickableEle);
                         eleControl.nativeElement.click();
-                        fixture.whenStable().then(() => {
-                            jest.spyOn(fixture.componentInstance, evtObj.callbackMethod);
-                            expect(fixture.componentInstance[evtObj.callbackMethod]).toHaveBeenCalledTimes(1);
-                        });
-                        // });
+                        fixture.whenStable().then(this.assertCallbackAfterStable(fixture, evtObj.callbackMethod));
                     }))
                 } else if (evtObj.mouseSelectionEle) {
                     xit('Should trigger the ' + evtObj.eventName + ' event', (() => {
-                        fixture.whenStable().then(() => {
-                            jest.spyOn(fixture.componentInstance, evtObj.callbackMethod);
-                            let eleControl = getHtmlSelectorElement(fixture, evtObj.mouseSelectionEle);
-                            eleControl.nativeElement.dispatchEvent(new MouseEvent(evtObj.eventName));
-                            expect(fixture.componentInstance[evtObj.callbackMethod]).toHaveBeenCalledTimes(1);
-                        });
+                        fixture.whenStable().then(this.assertCallbackAfterMouseEvent(fixture, evtObj.eventName, evtObj.mouseSelectionEle, evtObj.callbackMethod));
                     }));
                 } else if (evtObj.eventTrigger) {
                     it('Should trigger the ' + evtObj.eventName + ' event', fakeAsync(() => {

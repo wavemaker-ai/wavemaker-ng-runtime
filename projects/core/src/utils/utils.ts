@@ -384,7 +384,7 @@ export function triggerFn(fn, ...argmnts) {
     }
 
     if (isFunction(fn)) {
-        return fn.call(null, ...args);
+        return fn(...args);
     }
 }
 

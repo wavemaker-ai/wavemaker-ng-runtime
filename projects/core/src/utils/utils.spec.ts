@@ -2069,10 +2069,6 @@ describe('openLink', () => {
         originalWindowOpen = window.open;
         originalLocationHash = location.hash;
         (window as any).open = jest.fn();
-        // Object.defineProperty(window, 'location', {
-        //     value: { hash: '' },
-        //     writable: true
-        // });
     });
 
     afterEach(() => {

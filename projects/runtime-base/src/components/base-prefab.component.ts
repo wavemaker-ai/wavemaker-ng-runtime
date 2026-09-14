@@ -161,7 +161,7 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
                             this.containerWidget[key] = (...args) => {
                                 try {
                                     if (this[key]) {
-                                        return this[key].call(this, ...args);
+                                        return this[key](...args);
                                     }
                                 } catch (e) {
                                     console.warn(`error in executing prefab-${this.prefabName} method-${key}`);

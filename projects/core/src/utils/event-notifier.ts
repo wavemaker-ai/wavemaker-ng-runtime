@@ -57,7 +57,7 @@ export class EventNotifier {
             eventListener = this._subject
                 .subscribe((event: any) => {
                     if (event && isObject(event) && event.name === eventName) {
-                        callback.call(undefined, ...event.data);
+                        callback(...event.data);
                     }
                 });
             return () => {

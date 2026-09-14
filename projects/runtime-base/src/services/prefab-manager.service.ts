@@ -80,7 +80,7 @@ export class PrefabManagerService {
     }
 
     private rejectInProgress(prefabName: string, error?: any) {
-        if (inProgress.get(prefabName)) {
+        if (inProgress.has(prefabName)) {
             (inProgress.get(prefabName) as any).reject(error);
             inProgress.delete(prefabName);
         }
@@ -93,10 +93,10 @@ export class PrefabManagerService {
         }
 
         if (prefabsWithError.has(prefabName)) {
-            return Promise.reject('');
+            return Promise.reject(new Error(`Prefab '${prefabName}' failed to load previously`));
         }
 
-        if (inProgress.get(prefabName)) {
+        if (inProgress.has(prefabName)) {
             return inProgress.get(prefabName);
         }
 

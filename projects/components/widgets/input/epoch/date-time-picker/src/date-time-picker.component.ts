@@ -63,7 +63,7 @@ const moment = momentLib.default || window['moment'];
     </ng-template>
     `
 })
-export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
+export class DateTimePickerComponent implements OnDestroy {
 
     private isDateOpen = true;
 
@@ -283,10 +283,6 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    ngAfterViewInit(): void {
-
-    }
-
     ngOnDestroy(): void {
         this.hideModal();
     }
@@ -330,10 +326,10 @@ export class TimePickerComponent implements AfterViewInit {
     private value = new Date();
 
     @Input()
-    private min: Date = null;
+    private readonly min: Date = null;
 
     @Input()
-    private max: Date = null;
+    private readonly max: Date = null;
 
     @Output() change = new EventEmitter<Date>();
 
@@ -395,7 +391,7 @@ export class TimePickerComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-
+        // Intentional no-op, kept so ngAfterViewInit is a stable, testable hook on this component.
     }
 
 }

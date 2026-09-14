@@ -263,24 +263,19 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
         Object.entries(variableCollection.Actions).forEach(([name, action]) => this.Actions[name] = action);
 
 
-        this.viewInit$.subscribe(noop, noop, () => {
-            // TEMP: triggering watchers so variables watching over params are updated
-            $invokeWatchers(true, true);
-            variableCollection.callback(variableCollection.Variables).catch(noop);
-            variableCollection.callback(variableCollection.Actions);
+        this.viewInit$.subscribe({
+            complete: () => {
+                // TEMP: triggering watchers so variables watching over params are updated
+                $invokeWatchers(true, true);
+                variableCollection.callback(variableCollection.Variables).catch(noop);
+                variableCollection.callback(variableCollection.Actions);
+            }
         });
     }
 
-    /**
-     * function to register bind expressions generated in this partial instance
-     * getExpressions function is defined in the generated page.comp.ts file
-     * @param expressions, map of bind expression vs generated function
-     */
     registerExpressions() {
-        // const expressions = this.getExpressions();
-        // _.each(expressions, (fn, expr)=>{
-        //     registerFnByExpr(expr, fn[0], fn[1]);
-        // });
+        // Intentional no-op: M3 custom widgets don't generate a getExpressions() function like pages/prefabs/partials do;
+        // bind expressions for custom widget props are instead watched in registerPropsInContainerWidget().
     }
 
     registerProps() {
@@ -302,18 +297,6 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
         }
     }
 
-    private loadScripts() {
-        // return new Promise<void>((resolve) => {
-        //     const scriptsRequired = this.partialDirective.$element.attr('scripts-to-load');
-        //     if (scriptsRequired) {
-        //         this.scriptLoaderService
-        //             .load(...scriptsRequired.split(','))
-        //             .then(resolve);
-        //     } else {
-        //         resolve();
-        //     }
-        // });
-    }
     registerPropsInContainerWidget(resolveFn: Function) {
         this.customwidgetConfigProvider.getConfig(this.customWidgetName).then((config) => {
             if (config) {
@@ -370,7 +353,7 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
         this.registerBaseWidget();
             setTimeout(() => {
                 this.viewInit$.complete();
-                this.fragmentsLoaded$.subscribe(noop, noop, () => this.invokeOnReady());
+                this.fragmentsLoaded$.subscribe({ complete: () => this.invokeOnReady() });
             }, 100);
     }
 

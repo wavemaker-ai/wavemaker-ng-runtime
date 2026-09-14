@@ -309,8 +309,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     matchModeTypesMap;
     matchModeMsgs;
     emptyMatchModes;
-    _searchSortHandler = noop;
-    searchSortHandler = (...args) => { this._searchSortHandler.call(this, ...args); };
+    _searchSortHandler: (...args: any[]) => any = noop;
+    searchSortHandler = (...args) => { this._searchSortHandler(...args); };
     _isPageSearch;
     _isClientSearch;
     checkFiltersApplied: Function;
@@ -1869,7 +1869,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.applyProps.set(args[1], args);
             return; // If datagrid is not initiliazed or destroyed, return here
         }
-        return this.datagridElement.datatable.call(this.datagridElement, ...args);
+        return this.datagridElement.datatable(...args);
     }
 
     renderOperationColumns() {

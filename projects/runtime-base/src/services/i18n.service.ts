@@ -293,7 +293,7 @@ export class I18nServiceImpl extends AbstractI18nService {
         if (!preferBrowserLang) { // when preferBrowserLang is not defined, set to its default value
             preferBrowserLang  = true;
         } else { // convert stringified boolean values recieved from BE to booleans
-            preferBrowserLang= (preferBrowserLang === 'true' || preferBrowserLang === true) ? true : false;
+            preferBrowserLang = (preferBrowserLang === 'true' || preferBrowserLang === true);
         }
 
         let _supportedLang = Object.keys(getWmProjectProperties().supportedLanguages) || [this.defaultSupportedLocale];

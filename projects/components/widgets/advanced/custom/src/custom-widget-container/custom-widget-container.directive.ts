@@ -109,8 +109,6 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
         this.asAttr = this.nativeElement.children[0].children[0].hasAttribute('as');
 
         this.baseWidget = (this.nativeElement.children[0].children[0].querySelector(`[name=${this.baseWidgetName}]`) as any)?.widget;
-        // if(this.asAttr)
-        //     this.setBaseWidgetName(config.widgetType);
         if (!config?.properties) {
             return;
         }
