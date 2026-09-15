@@ -243,12 +243,12 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
 
     // Expression to be evaluated in view mode of form field
     evaluateExpr(object, displayField, displayExpr) {
-        if (!displayExpr || !displayField) {
+        // If dataset is not ready, object will be empty; nothing to evaluate yet
+        if (!object || !Object.keys(object).length) {
+            return;
+        }
+        if (!displayExpr && !displayField) { // update the display Field to first key of the object if displayField and displayExpr are not provided
             displayField = Object.keys(object)[0];
-            // If dataset is not ready, display expression will not be defined
-            if (!displayField) {
-                return;
-            }
         }
         return getEvaluatedData(object, {
             field: displayField,
