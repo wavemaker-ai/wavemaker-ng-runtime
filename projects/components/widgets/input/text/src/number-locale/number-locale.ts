@@ -306,11 +306,11 @@ export abstract class NumberLocale extends BaseInput implements Validator {
                     if (!((prevDataValue == undefined && this.datavalue == null) || (prevDataValue == this.datavalue))) {
                         this.handleChange(value);
                     }
-                } else 
+                } else
                     if (!(prevDataValue == undefined && this.datavalue == null)) {
                         this.handleChange(value);
                     }
-                
+
             } else { // currency widget
                 this.handleChange(value);
             }
@@ -433,14 +433,14 @@ export abstract class NumberLocale extends BaseInput implements Validator {
                 proxyModel = inputValue;
                 this.resetValidations();
             }
-        } else 
+        } else
             if (isUndefined(proxyModel) || isNull(proxyModel)) {
                 proxyModel = value = this.getValueInRange((this.minvalue || 0));
                 this.resetValidations();
             } else {
                 value = this.getValueInRange(proxyModel + (key === 'UP' ? this.step : -this.step));
             }
-        
+
         if ((key === 'UP' && proxyModel <= value) || (key === 'DOWN' && proxyModel >= value)) {
             const decimalRoundValue = Math.max(this.countDecimals(proxyModel), this.countDecimals(this.step));
 
@@ -497,6 +497,9 @@ export abstract class NumberLocale extends BaseInput implements Validator {
 
         const validity = new RegExp(`^[\\d\\s-,.e+${this.GROUP}${this.DECIMAL}]$`, 'i');
         const inputValue = $event.target?.value||"";
+
+        // when input mode is financial, do not restrict user on entering the value when step value limit is reached.
+        // const skipStepValidation = this.inputmode === INPUTMODE.FINANCIAL;
 
         // Validates if user eneters more than 16 digits
         if (inputValue) {

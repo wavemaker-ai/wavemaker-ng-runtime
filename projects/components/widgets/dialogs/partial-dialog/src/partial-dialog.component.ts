@@ -69,7 +69,7 @@ export class PartialDialogComponent extends BaseDialog implements OnInit, OnDest
             {
                 class: `${DIALOG_CLS} ${dialogClass || ''}`,
                 backdrop,
-                keyboard: toBoolean(closable) ? true : !toBoolean(modal)
+                keyboard: !toBoolean(modal)
             },
             explicitContext
         );

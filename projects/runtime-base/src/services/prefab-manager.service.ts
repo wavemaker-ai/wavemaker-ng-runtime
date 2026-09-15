@@ -79,13 +79,6 @@ export class PrefabManagerService {
         }
     }
 
-    private rejectInProgress(prefabName: string, error?: any) {
-        if (inProgress.has(prefabName)) {
-            (inProgress.get(prefabName) as any).reject(error);
-            inProgress.delete(prefabName);
-        }
-    }
-
     public loadDependencies(prefabName): Promise<void> {
 
         if (resolvedPrefabs.has(prefabName)) {
@@ -93,10 +86,10 @@ export class PrefabManagerService {
         }
 
         if (prefabsWithError.has(prefabName)) {
-            return Promise.reject(new Error(`Prefab '${prefabName}' failed to load previously`));
+            return Promise.reject('');
         }
 
-        if (inProgress.has(prefabName)) {
+        if (inProgress.get(prefabName)) {
             return inProgress.get(prefabName);
         }
 
@@ -112,11 +105,6 @@ export class PrefabManagerService {
                     this.resolveInProgress(prefabName);
                     resolvedPrefabs.add(prefabName);
                 });
-            })
-            .catch(error => {
-                prefabsWithError.add(prefabName);
-                this.rejectInProgress(prefabName, error);
-                throw error;
             });
     }
 }

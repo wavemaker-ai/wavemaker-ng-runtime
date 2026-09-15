@@ -1249,13 +1249,13 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         if (this.readonlygrid || !this.editmode) {
             if (this.readonlygrid === 'true') {
                 this.editmode = '';
-            } else 
+            } else
                 if (this.isPartOfLiveGrid) {
                     this.editmode = this.isPartOfLiveGrid.formlayout === 'inline' ? EDIT_MODE.FORM : EDIT_MODE.DIALOG;
                 } else {
                     this.editmode = this.readonlygrid ? EDIT_MODE.INLINE : '';
                 }
-            
+
         }
 
         this.gridOptions.colDefs = this.fullFieldDefs;
@@ -1390,8 +1390,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     this.rowFilter[filterObj.field].matchMode = filterObj.matchMode;
                     this.rowFilter[filterObj.field].type = filterObj.type;
                     if ($(this.rowFilterCompliedTl[filterObj.field]).length) {
-                        const val = filterObj.type === 'integer' ? parseInt(filterObj.value) : filterObj.value;
-                        $(this.rowFilterCompliedTl[filterObj.field]).find('input').val(val);
+                        //const val = filterObj.type === 'integer' ? parseInt(filterObj.value) : filterObj.value;
+                        $(this.rowFilterCompliedTl[filterObj.field]).find('input').val(filterObj.value);
                     }
                 }
             });
@@ -1475,11 +1475,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 if (get(widgetState, 'pagination') || get(widgetState, 'pagesize')) {
                     this.dataNavigator.pageChanged({page: widgetState.pagination || 1, pagesize: widgetState.pagesize}, true);
                 }
-            } else 
+            } else
                 if (get(widgetState, 'pagination')) {
                     this.dataNavigator.pageChanged({page: widgetState.pagination}, true);
                 }
-            
+
         }
         // After the setting the watch on navigator, dataset is triggered with undefined. In this case, return here.
         if (this.dataNavigatorWatched && isUndefined(newVal) && this.__fullData) {
@@ -1754,14 +1754,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         // based on the active state and response toggling the 'loading data...' and 'no data found' messages.
         if (data.active) {
             this.callDataGridMethod('setStatus', 'loading', this.loadingdatamsg);
-        } else 
+        } else
             // If grid is in edit mode or grid has data, dont show the no data message
             if (!this.isGridEditMode && isEmpty(this.dataset)) {
                 this.callDataGridMethod('setStatus', 'nodata', this.nodatamessage);
             } else {
                 this.callDataGridMethod('setStatus', 'ready');
             }
-        
+
     }
 
     setDisabledOnField(operation, colDef, widgetType) {
@@ -1935,7 +1935,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     // This happens in case, if dataset is directly updated.
                     if (isEqual(this.dataset, newVal)) {
                         this.watchVariableDataSet(newVal);
-                    } else 
+                    } else
                         if (isArray(newVal)) {
                             this.widget.dataset = [].concat(newVal);
                         } else if (isObject(newVal)) {
@@ -1943,7 +1943,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                         } else {
                             this.widget.dataset = newVal;
                         }
-                    
+
                 } else {
                     this.widget.dataset = undefined;
                 }
@@ -2589,11 +2589,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             if (!tableColumn.tabletDisplay) {
                 return;
             }
-        } else 
+        } else
             if (!tableColumn.pcDisplay) {
                 return;
             }
-        
+
         if (tableColumn['primary-key']) {
             this.primaryKey.push(tableColumn.field);
         }

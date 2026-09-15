@@ -70,7 +70,7 @@ export class AlertDialogComponent extends BaseDialog implements OnInit, OnDestro
             {
                 class: `${DIALOG_CLS} ${dialogClass || ''}`,
                 backdrop,
-                keyboard: toBoolean(closable) ? true : !toBoolean(modal)
+                keyboard: !toBoolean(modal)
             },
             explicitContext
         );

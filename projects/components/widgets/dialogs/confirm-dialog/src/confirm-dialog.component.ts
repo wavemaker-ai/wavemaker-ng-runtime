@@ -7,7 +7,7 @@ import {
     TemplateRef,
     ViewChild,
     HostListener,
-    Optional, 
+    Optional,
     Inject
 } from '@angular/core';
 
@@ -59,7 +59,7 @@ export class ConfirmDialogComponent extends BaseDialog implements OnInit, OnDest
             {
                 class: `${DIALOG_CLS} ${dialogClass || ''}`,
                 backdrop,
-                keyboard: toBoolean(closable) ? true : !toBoolean(modal)
+                keyboard: !toBoolean(modal)
             },
             explicitContext
         );

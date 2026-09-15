@@ -60,7 +60,7 @@ export class IframeDialogComponent extends BaseDialog implements OnInit, OnDestr
             {
                 class: `${DIALOG_CLS} ${dialogClass || ''}`,
                 backdrop,
-                keyboard: toBoolean(closable) ? true : !toBoolean(modal)
+                keyboard: !toBoolean(modal)
             },
             explicitContext
         );

@@ -80,10 +80,9 @@
     [tabindex]="tabindex"
     [attr.name]="name"
     [attr.aria-label]="arialabel || 'Search field'"/>
-  <i class="btn-close wi wi-cancel" [hidden]="!showClosebtn" tabindex="0" role="button" [attr.aria-label]="'Clear search'"
-    (click)="clearSearch($event);" (keydown.enter)="clearSearch($event);" (keydown.space)="$event.preventDefault(); clearSearch($event);"></i>
+  <i class="btn-close wi wi-cancel" [hidden]="!showClosebtn" (click)="clearSearch($event);"></i>
 } @else {
-  <button type="button" class="btn btn-icon form-control-feedback back-btn" (click)="closeSearch()">
+  <button type="button" class="btn btn-icon form-control-feedback back-btn" aria-hidden="true" (click)="closeSearch()">
     <wm-app-icon [iconclass]="backsearchiconclass" [iconurl]="backsearchiconurl" alt="Back"></wm-app-icon>
   </button>
   <span class="sr-only">Back button</span>

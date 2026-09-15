@@ -60,8 +60,6 @@
   <div class="mobile-input mobile-datepicker-container"
     tabindex="1000000"
     (click)="!(disabled || readonly) && showDatePickerModal(bsTimeValue)"
-    (keydown.enter)="!(disabled || readonly) && showDatePickerModal(bsTimeValue)"
-    (keydown.space)="$event.preventDefault(); !(disabled || readonly) && showDatePickerModal(bsTimeValue)"
     [attr.aria-label]="displayValue ? 'Change time  ' + displayValue : arialabel || 'Select time'"
     (focus)="onDateTimeInputFocus(true); invokeOnFocus($event); assignModel()"
     (blur)="onDateTimeInputBlur(); invokeOnTouched($event)"

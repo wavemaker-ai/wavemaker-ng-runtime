@@ -11,7 +11,6 @@
       [ngClass]="{'selected': opt.selected, 'disabled': disabled}"
       [attr.aria-pressed]="opt.selected ? true : false"
       (click)="selectOpt($event, $index, opt)"
-      (keydown.space)="$event.preventDefault(); selectOpt($event, $index, opt)"
       >
       @if (opt.dataObject && (opt.dataObject[iconclass] || opt.dataObject[iconurl]) && (!opt.selected || !checkediconclass)) {
         <wm-app-icon [iconclass]="opt.dataObject[iconclass] || opt['icon']" [iconurl]="opt.dataObject[iconurl] || opt['icon']"></wm-app-icon>
