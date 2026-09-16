@@ -318,6 +318,35 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
         }
     }
 
+    // Falls back to the inner form widget (formfields.<key>) for any member not defined on the
+    // field directive itself, so eg. formfields.employeeByManagerId.setTemplate(...) works the
+    // same as formFields[i].formWidget.setTemplate(...), for every widget method/property, not
+    // just the ones the directive explicitly forwards (setFormWidget/setMaxFormWidget/etc).
+    protected createProxy(): any {
+        const baseProxy = super.createProxy();
+        const directive = this;
+        return new Proxy(baseProxy, {
+            get: (target, key: string | symbol) => {
+                if (typeof key === 'symbol' || key in directive) {
+                    return target[key];
+                }
+                const widget = directive.formWidget?.widget;
+                return widget ? widget[key] : undefined;
+            },
+            set: (target, key: string | symbol, value) => {
+                if (typeof key !== 'symbol' && !(key in directive)) {
+                    const widget = directive.formWidget?.widget;
+                    if (widget) {
+                        widget[key] = value;
+                        return true;
+                    }
+                }
+                target[key] = value;
+                return true;
+            }
+        });
+    }
+
     boundFn(fn) {
         return fn();
     }
