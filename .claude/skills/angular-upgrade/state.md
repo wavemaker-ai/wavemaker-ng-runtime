@@ -198,7 +198,7 @@ Record after each Step 7 build. **Keep every row** — do not overwrite earlier 
 
 ## Preview Validation (Step 9)
 
-One `### Mode:` subsection per entry in `VALIDATION_MODES` (`repo.config.sh`) — currently Angular Deployment and WaveMaker Preview. Both use the identical G1–G7/E1–E13 checklist; only the URLs and the "how the preview URL was produced" note differ. If a mode's URL was empty/`skip` at Step 0, write `Status: skipped — no URL configured` and leave the rest of its subsection blank rather than deleting the subsection.
+One `### Mode:` subsection per entry in `VALIDATION_MODES` (`repo.config.sh`) — currently Angular Deployment and WaveMaker Preview. Both use the identical G1–G7/E1–E13 checklist; only the URLs and the "how the preview URL was produced" note differ. If a mode's URL was empty/`skip` at Step 0, write `Status: skipped — no URL configured` and leave the rest of its subsection blank rather than deleting the subsection. This differs deliberately from the Step 10 completion message / upgrade doc, which omit a skipped mode entirely (see `templates.md`) — this file is the resume/audit record, so it always keeps both subsections regardless of skip status.
 
 ### Mode: Angular Deployment
 
