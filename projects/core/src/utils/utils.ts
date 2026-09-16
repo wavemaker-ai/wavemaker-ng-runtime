@@ -784,13 +784,13 @@ export const getValidDateObject = (val, options?) => {
     /*if the value is a timestamp string, convert it to a number*/
     if (!isNaN(val)) {
         val = parseInt(val, 10);
-    } else 
+    } else
         /*if the value is in HH:mm:ss format, it returns a wrong date. So append the date to the given value to get date*/
         if (!(new Date(val).getTime())) {
             val = moment((moment().format('YYYY-MM-DD') + ' ' + val), 'YYYY-MM-DD HH:mm:ss A');
 
         }
-    
+
     return new Date(moment(val).valueOf());
 };
 
@@ -1674,31 +1674,29 @@ export const getFontConfig = () => {
 }
 
 export const adjustVerticalPosition = (containerElem, parentElem: HTMLElement, ref, ele?): void => {
-    const zoneRef = ref._ngZone || ref.ngZone;
+    runAfterStable(ref, () => {
+        const containerHeight = ele
+            ? parseInt(ele.css('height'), 10)
+            : parseInt(containerElem.css('height'), 10);
 
-    zoneRef.onStable.subscribe(() => {
-            const containerHeight = ele
-                ? parseInt(ele.css('height'), 10)
-                : parseInt(containerElem.css('height'), 10);
+        const rect = parentElem.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
 
-            const rect = parentElem.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
+        const spaceBelow = viewportHeight - rect.bottom;
+        const spaceAbove = rect.top;
 
-            const spaceBelow = viewportHeight - rect.bottom;
-            const spaceAbove = rect.top;
+        if (spaceBelow < containerHeight && spaceAbove >= containerHeight) {
+            const matrix = getWebkitTraslationMatrix(containerElem);
 
-            if (spaceBelow < containerHeight && spaceAbove >= containerHeight) {
-                const matrix = getWebkitTraslationMatrix(containerElem);
+            matrix.m42 = matrix.m42 - containerHeight - rect.height;
 
-                matrix.m42 = matrix.m42 - containerHeight - rect.height;
-
-                if (matrix.m42 < 0) {
-                    matrix.m42 = 0;
-                }
-
-                setTranslation3dPosition(containerElem, matrix);
+            if (matrix.m42 < 0) {
+                matrix.m42 = 0;
             }
-        });
+
+            setTranslation3dPosition(containerElem, matrix);
+        }
+    });
 };
 /*export const getParent = (parent: any) => {
     if(parent.hasOwnProperty("isDynamicComponent") || parent.hasOwnProperty("isPageComponent")) {

@@ -366,7 +366,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     this.disableNavigation();
                     this.checkDataSize(dataSize, this.pagination.numberOfElements, this.pagination.size);
                     startIndex = (currentPage - 1) * this.maxResults;
-                    this.getPageDetails(startIndex + 1, startIndex + Number(this.pagination.numberOfElements), dataSize);
+                    this.getPageDetails(startIndex + 1, Math.min(startIndex + Number(this.pagination.numberOfElements), dataSize), dataSize);
                     this.setResult(newVal);
                 } else if (!isString(newVal)) {
                     this.setNonPageableData(newVal);
@@ -474,7 +474,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
             }).then(response => {
                 this.onPageDataReady(event, response?.data, callback);
                 startIndex = (this.dn.currentPage - 1) * this.maxResults;
-                this.getPageDetails(startIndex + 1 , startIndex + Number(this.pagination?.numberOfElements), this.pagination?.totalElements);
+                this.getPageDetails(startIndex + 1 , Math.min(startIndex + Number(this.pagination?.numberOfElements), this.pagination?.totalElements), this.pagination?.totalElements);
                 $appDigest();
             }, error => {
                 // If error is undefined, do not show any message as this may be discarded request

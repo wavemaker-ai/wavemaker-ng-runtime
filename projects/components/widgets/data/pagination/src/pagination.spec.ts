@@ -264,6 +264,58 @@ describe('PaginationComponent', () => {
 
             expect(component['setNonPageableData']).toHaveBeenCalledWith([{ id: 1, name: 'John' }]);
         });
+
+        it('should cap endIndex to totalElements on the last page instead of overshooting it', () => {
+            // 541 total records, page size 5, last page (109) has only 1 record but the
+            // backend-reported numberOfElements is (incorrectly) still the full page size.
+            component.binddataset = true;
+            component.dn.currentPage = 109;
+            component.datasource = {
+                execute: jest.fn().mockReturnValue({
+                    totalElements: 541,
+                    size: 5,
+                    number: 108,
+                    numberOfElements: 5
+                }),
+                _options: {}
+            };
+            component['isDataSourceHasPaging'] = jest.fn().mockReturnValue(true);
+            component['setResult'] = jest.fn();
+            component['_setAriaForBasicNavigation'] = jest.fn();
+
+            component['setPagingValues']([{ id: 541 }]);
+
+            expect(component.rowSummary).toEqual({
+                startIndex: 541,
+                endIndex: 541,
+                totalRecords: 541
+            });
+        });
+
+        it('should not cap endIndex when the page is fully populated', () => {
+            component.binddataset = true;
+            component.dn.currentPage = 2;
+            component.datasource = {
+                execute: jest.fn().mockReturnValue({
+                    totalElements: 541,
+                    size: 5,
+                    number: 1,
+                    numberOfElements: 5
+                }),
+                _options: {}
+            };
+            component['isDataSourceHasPaging'] = jest.fn().mockReturnValue(true);
+            component['setResult'] = jest.fn();
+            component['_setAriaForBasicNavigation'] = jest.fn();
+
+            component['setPagingValues']([{ id: 6 }]);
+
+            expect(component.rowSummary).toEqual({
+                startIndex: 6,
+                endIndex: 10,
+                totalRecords: 541
+            });
+        });
     });
 
     describe('goToPage', () => {
@@ -367,6 +419,25 @@ describe('PaginationComponent', () => {
             expect(component.onPageDataReady).toHaveBeenCalledWith({}, mockResponse.data, expect.any(Function));
         });
 
+        it('should cap rowSummary.endIndex to totalElements on the last page of server-side pagination', async () => {
+            // Last page (109) of 541 records with page size 5: only 1 record on the page,
+            // but the backend-reported numberOfElements is (incorrectly) still the full page size.
+            const mockResponse = { data: [{ id: 541 }] };
+            mockDataSource.execute.mockResolvedValue(mockResponse);
+            jest.spyOn(component, 'isDataSourceHasPaging').mockReturnValue(true);
+            jest.spyOn(component, 'onPageDataReady').mockImplementation();
+            component.dn.currentPage = 109;
+            component.maxResults = 5;
+            component.pagination = { numberOfElements: 5, totalElements: 541 } as any;
+
+            await component.getPageData({}, jest.fn());
+
+            expect(component.rowSummary).toEqual({
+                startIndex: 541,
+                endIndex: 541,
+                totalRecords: 541
+            });
+        });
 
         it('should handle error when datasource execution fails', async () => {
             const mockError = 'Test error';
