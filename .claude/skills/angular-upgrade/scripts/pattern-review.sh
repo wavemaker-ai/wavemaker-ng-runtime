@@ -36,6 +36,15 @@ if ! cd "$REPO_ROOT" 2>/dev/null; then
   exit 1
 fi
 
+# Activate the Node version pinned in repo.config.sh (NODE_VERSION), if nvm is available.
+# A fresh shell's active `node` reflects this machine's PATH snapshot, not necessarily
+# this pin, and `nvm use` from a prior command does not persist to this one.
+if [ -n "$NODE_VERSION" ] && [ -s "$HOME/.nvm/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$HOME/.nvm/nvm.sh"
+  nvm use "$NODE_VERSION" >/dev/null 2>&1 || echo "warn: nvm could not activate Node $NODE_VERSION (not installed?) — run: nvm install $NODE_VERSION" >&2
+fi
+
 NG_CODEGEN_PATH="${NG_CODEGEN_PATH:-../wavemaker-ng-codegen}"
 if [ "${NG_CODEGEN_PATH#/}" = "$NG_CODEGEN_PATH" ]; then
   NG_CODEGEN="$(cd "$REPO_ROOT" && cd "$NG_CODEGEN_PATH" 2>/dev/null && pwd || echo "")"

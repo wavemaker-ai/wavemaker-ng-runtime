@@ -19,6 +19,15 @@
 ANGULAR_BASE_VERSION="21"
 ANGULAR_TARGET_VERSION="22"
 
+# --- Node.js version pin (R11 — set per upgrade; drives engines.node in Step 3) ---
+# Scripts source this and, if nvm is available, auto-activate this exact version
+# before running install/build/audit/test/pattern-review — the active `node` in a
+# fresh shell is whatever this machine's PATH snapshot points to (not necessarily
+# this pin), and `nvm use` from a prior command does not persist to the next one.
+# Update this whenever Step 2/R11 picks a different Node version for the target
+# Angular major. If unset, scripts skip activation and use whatever `node` is on PATH.
+NODE_VERSION="24.15.0"
+
 # --- Validation modes (Step 9) ---
 # Space-separated list of "key:urlVar:comparisonVar" triples. Each urlVar/
 # comparisonVar named here MUST be defined below. comparisonVar may hold
