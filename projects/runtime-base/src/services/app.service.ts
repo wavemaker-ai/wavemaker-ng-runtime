@@ -181,15 +181,6 @@ export class AppRef {
         }
     }
 
-    /**
-     * true if the app has overridden onSessionTimeout, meaning it fully owns the
-     * session-timeout UX (see AppManagerService.handle401, which skips its own
-     * dialog/page handling in that case to avoid running both at once).
-     */
-    get isSessionTimeoutOverridden(): boolean {
-        return this.onSessionTimeout !== noop;
-    }
-
     public subscribe(eventName, callback: (data: any) => void): () => void {
         return this._eventNotifier.subscribe(eventName, callback);
     }
