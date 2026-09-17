@@ -274,7 +274,7 @@ describe("FormFieldDirective", () => {
 
             const result = wmComponent.getDisplayExpr();
             expect(result).toBe('Evaluated: {"key":"value"}');
-            expect(wmComponent.evaluateExpr).toHaveBeenCalledWith(mockObject, 'displayField', 'displayExpr');
+            expect(wmComponent.evaluateExpr).toHaveBeenCalledWith(mockObject, 'displayField', 'displayExpr', null);
         });
 
         it('should handle array of objects', () => {
@@ -286,8 +286,8 @@ describe("FormFieldDirective", () => {
             const result = wmComponent.getDisplayExpr();
             expect(result).toBe('Evaluated: {"key1":"value1"},Evaluated: {"key2":"value2"}');
             expect(wmComponent.evaluateExpr).toHaveBeenCalledTimes(2);
-            expect(wmComponent.evaluateExpr).toHaveBeenCalledWith(mockArray[0], 'displayField', 'displayExpr');
-            expect(wmComponent.evaluateExpr).toHaveBeenCalledWith(mockArray[1], 'displayField', 'displayExpr');
+            expect(wmComponent.evaluateExpr).toHaveBeenCalledWith(mockArray[0], 'displayField', 'displayExpr', null);
+            expect(wmComponent.evaluateExpr).toHaveBeenCalledWith(mockArray[1], 'displayField', 'displayExpr', null);
         });
 
         it('should use displaylabel if displayfield is not provided', () => {
@@ -298,7 +298,7 @@ describe("FormFieldDirective", () => {
 
             const result = wmComponent.getDisplayExpr();
             expect(result).toBe('Evaluated: {"key":"value"}');
-            expect(wmComponent.evaluateExpr).toHaveBeenCalledWith(mockObject, 'displayLabel', 'displayExpr');
+            expect(wmComponent.evaluateExpr).toHaveBeenCalledWith(mockObject, 'displayLabel', 'displayExpr', null);
         });
 
         it('should handle getter returning undefined initially and then a value', () => {
