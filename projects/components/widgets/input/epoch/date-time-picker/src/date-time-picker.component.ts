@@ -80,7 +80,6 @@ export class DateTimePickerComponent implements OnDestroy {
     @Input()
     private placement: 'MODAL' | 'INLINE' = 'MODAL';
 
-    @Input("config")
     private _bsDatepickerConfig: BsDatepickerConfig;
 
     @Input()
