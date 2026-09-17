@@ -243,17 +243,18 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
     }
 
     // Expression to be evaluated in view mode of form field
-    evaluateExpr(object, displayField, displayExpr) {
+    evaluateExpr(object, displayField, displayExpr, bindExpr?) {
         // If dataset is not ready, object will be empty; nothing to evaluate yet
         if (!object || !Object.keys(object).length) {
             return;
         }
-        if (!displayExpr && !displayField) { // update the display Field to first key of the object if displayField and displayExpr are not provided
+        if (!displayExpr && !displayField && !bindExpr) { // update the display Field to first key of the object if displayField, displayExpr and bindExpr are not provided
             displayField = Object.keys(object)[0];
         }
         return getEvaluatedData(object, {
             field: displayField,
-            expression: displayExpr
+            expression: displayExpr,
+            bindExpression: bindExpr
         }, this.viewParent);
     }
 
@@ -263,15 +264,16 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
         const value = this.value;
         const displayField = this.displayfield || this.displaylabel
         const displayExpr = this.displayexpression;
+        const bindExpr = this.binddisplayexpression;
         if (isObject(value)) {
             if (isArray(value)) {
                 forEach(value, obj => {
                     if (isObject(obj)) {
-                        caption.push(this.evaluateExpr(obj, displayField, displayExpr));
+                        caption.push(this.evaluateExpr(obj, displayField, displayExpr, bindExpr));
                     }
                 });
             } else {
-                caption.push(this.evaluateExpr(value, displayField, displayExpr));
+                caption.push(this.evaluateExpr(value, displayField, displayExpr, bindExpr));
             }
             return join(caption, ',');
         }
