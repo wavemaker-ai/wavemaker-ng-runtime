@@ -23,6 +23,8 @@ import {
     getPrefabMinJsonUrl,
     getPrefabPartialJsonUrl,
     REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
+    AccessrolesDirective, AppSpinnerComponent, CustomToasterComponent, AppComponent,
+    PrefabPreviewComponent, EmptyPageComponent, PrefabDirective as PrefabLoader
 } from '@wm/runtime/base';
 import { AppResourceManagerService } from './app-resource-manager.service';
 import { isString, isUndefined } from "lodash-es";
@@ -31,10 +33,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 // All the directive/component imports
-import {
-    AccessrolesDirective, AppSpinnerComponent, CustomToasterComponent, AppComponent,
-    PrefabPreviewComponent, EmptyPageComponent, PrefabDirective as PrefabLoader
-} from '@wm/runtime/base';
 import {
     ContentComponent, LayoutDirective, PageContentComponent, PageDirective,
     RouterOutletDirective, SpaPageDirective

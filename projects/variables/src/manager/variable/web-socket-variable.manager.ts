@@ -3,7 +3,7 @@ import { getValidJSON, isDefined, isInsecureContentRequest, isObject, triggerFn,
 import { BaseVariableManager } from './base-variable.manager';
 import { WebSocketVariable } from '../../model/variable/web-socket-variable';
 import { initiateCallback, metadataService } from '../../util/variable/variables.utils';
-import { CONSTANTS, VARIABLE_CONSTANTS } from '../../constants/variables.constants';
+import { VARIABLE_CONSTANTS } from '../../constants/variables.constants';
 import { ServiceVariableUtils } from '../../util/variable/service-variable.utils';
 import { forEach, get } from "lodash-es";
 
@@ -73,7 +73,7 @@ export class WebSocketVariableManager extends BaseVariableManager {
         // call common method to prepare config for the service operation info.
         const config = ServiceVariableUtils.constructRequestParams(variable, opInfo, inputFields);
         /* if error found, return */
-        if (config.error && config.error.message) {
+        if (config.error?.message) {
             this._onSocketError(variable, {data: config.error.message});
             return;
         }

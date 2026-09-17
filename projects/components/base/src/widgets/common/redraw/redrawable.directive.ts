@@ -23,7 +23,7 @@ export class RedrawableDirective implements IRedrawableComponent {
                 });
                 return
             } else {
-            return widget.redraw && widget.redraw();
+            return widget.redraw?.();
             }
         }
     }

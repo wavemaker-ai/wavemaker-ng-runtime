@@ -25,8 +25,8 @@ export class LazyLoadDirective implements OnDestroy {
 
     constructor(
         inj: Injector,
-        private templateRef: TemplateRef<any>,
-        private viewContainer: ViewContainerRef,
+        private readonly templateRef: TemplateRef<any>,
+        private readonly viewContainer: ViewContainerRef,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any = {}
     ) {
         let viewParentApp = inj ? inj.get(App) : inject(App);

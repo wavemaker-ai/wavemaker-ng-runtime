@@ -1,4 +1,3 @@
-import { Directive } from '@angular/core';
 
 /**
  * The `wmPartial` directive defines a partial.

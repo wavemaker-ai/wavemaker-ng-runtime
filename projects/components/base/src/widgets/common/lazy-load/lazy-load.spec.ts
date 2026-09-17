@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, TemplateRef, ViewContainerRef, ViewChild } from '@angular/core';
+import { Component, ViewContainerRef, ViewChild } from '@angular/core';
 import { LazyLoadDirective } from './lazy-load.directive';
 import { App } from '@wm/core';
 

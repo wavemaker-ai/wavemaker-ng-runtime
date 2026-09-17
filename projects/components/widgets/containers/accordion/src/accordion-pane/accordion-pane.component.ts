@@ -31,7 +31,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-accordionpane', hostClass
     exportAs: 'wmAccordionPane'
 })
 export class AccordionPaneComponent extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public isActive = false;
     public iconclass: string;
@@ -44,15 +44,15 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
     private $lazyLoad = noop;
     private _isOnLoadTriggered: boolean = false;
     public content: string;
-    private isdynamic: boolean;
+    private readonly isdynamic: boolean;
     public tabindex;
     public name: string;
-    private _currentAccordionWidgets = {};
+    private readonly _currentAccordionWidgets = {};
 
     // reference to the components which needs a redraw(eg, grid, chart) when the height of this component changes
     @ContentChildren(RedrawableDirective, { descendants: true }) reDrawableComponents;
 
-    constructor(inj: Injector, private accordionRef: AccordionDirective, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, private app: App) {
+    constructor(inj: Injector, private readonly accordionRef: AccordionDirective, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, private readonly app: App) {
         super(inj, WIDGET_CONFIG, explicitContext);
 
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.SHELL);

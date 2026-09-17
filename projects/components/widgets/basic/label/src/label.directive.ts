@@ -29,7 +29,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     exportAs: 'wmLabel'
 })
 export class LabelDirective extends StylableComponent implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     constructor(inj: Injector, private sanitizePipe:SanitizePipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
@@ -57,7 +57,7 @@ export class LabelDirective extends StylableComponent implements OnDestroy {
                 setProperty(this.nativeElement, 'textContent', JSON.stringify(nv));
             } else if (isObject(nv) && safeValue) {
                 setProperty(this.nativeElement, 'innerHTML', nv[Object.keys(nv)[0]]);
-            }  else {
+            }  else 
                 // Guard against sanitizePipe being null/undefined (e.g., after ngOnDestroy)
                 if (this.sanitizePipe) {
                     setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(insertZWSP(nv), SecurityContext.HTML));
@@ -65,7 +65,7 @@ export class LabelDirective extends StylableComponent implements OnDestroy {
                     // Fallback to textContent if sanitizePipe is not available
                     setProperty(this.nativeElement, 'textContent', insertZWSP(nv));
                 }
-            }
+            
 
         } else if (key === 'required') {
             toggleClass(this.nativeElement, 'required', nv);

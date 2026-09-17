@@ -105,7 +105,7 @@ export class AutoLayoutUtils {
         }
 
         // ————— WRAP LOGIC —————
-        else {
+        else 
             if (gapValue === 'auto' && colValue === 'auto') {
                 this.$element.css({
                     'justify-content': justifyContent,
@@ -125,7 +125,7 @@ export class AutoLayoutUtils {
                     'column-gap': `${colVal}px`
                 });
             }
-            else {
+            else 
                 if (colVal && rowVal) {
                     if (colVal === rowVal) {
                         this.$element.css({
@@ -141,8 +141,8 @@ export class AutoLayoutUtils {
                         });
                     }
                 }
-            }
-        }
+            
+        
 
         this.gap = gapValue?.toString();
         this.columngap = colValue?.toString();

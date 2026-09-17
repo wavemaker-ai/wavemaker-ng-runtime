@@ -21,7 +21,6 @@ class TestComponent {
 }
 
 describe('ListItemDirective', () => {
-    let component: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let directiveElement: DebugElement;
     let directive: ListItemDirective;
@@ -48,7 +47,6 @@ describe('ListItemDirective', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(TestComponent);
-        component = fixture.componentInstance;
         directiveElement = fixture.debugElement.query(By.directive(ListItemDirective));
         directive = directiveElement.injector.get(ListItemDirective);
         fixture.detectChanges();

@@ -67,10 +67,10 @@ const getUpdatedWatcInfo = (expr, acceptsArray, listener) => {
 
     // listener accepts array
     // replace all except the last `[$i]` with `[0]` and return the expression.
-    var index           = expr.lastIndexOf($I),
+    const index           = expr.lastIndexOf($I),
         _expr           = expr.substr(0, index).replace($I, $0),
-        restExpr        = expr.substr(index + 5),
-        arrayConsumerFn = listener;
+        restExpr        = expr.substr(index + 5);
+    let arrayConsumerFn = listener;
 
     if (restExpr) {
         arrayConsumerFn = arrayConsumer.bind(undefined, listener, restExpr);
@@ -123,7 +123,7 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
     do {
         changeDetected = false;
         registry.forEach(watchInfo => {
-            if(watchInfo.isMuted && watchInfo.isMuted()) {
+            if(watchInfo.isMuted?.()) {
                 return;
             }
             const fn = watchInfo.fn;
@@ -235,7 +235,7 @@ function executeWatchers(ignoreMuted: boolean) {
             log(`-------executeWatchers (run #${consecutiveReruns + 1})--------- `);
 
             registry.forEach(watchInfo => {
-                if(watchInfo.isMuted && watchInfo.isMuted()) {
+                if(watchInfo.isMuted?.()) {
                     return;
                 }
                 const fn = watchInfo.fn;
@@ -325,7 +325,7 @@ export const $appDigest = (() => {
         if (force) {
             ngZone.run(() => appRef.tick());
             queued = false;
-        } else {
+        } else 
             if (queued) {
                 return;
             } else {
@@ -335,7 +335,7 @@ export const $appDigest = (() => {
                     queued = false;
                 });
             }
-        }
+        
     };
 })();
 

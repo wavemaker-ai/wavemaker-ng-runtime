@@ -23,8 +23,8 @@ const getPrefabResourceUrl = (resourcePath, resourceBasePath) => {
 export class PrefabManagerService {
 
     constructor(
-        private $metadata: MetadataService,
-        private prefabConfigProvider: PrefabConfigProvider
+        private readonly $metadata: MetadataService,
+        private readonly prefabConfigProvider: PrefabConfigProvider
     ) {}
 
     public getConfig(prefabName): Promise<any> {

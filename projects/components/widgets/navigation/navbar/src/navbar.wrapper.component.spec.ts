@@ -1,5 +1,5 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from './navbar.component'; // Make sure to replace these with actual paths
 import { App } from '@wm/core';

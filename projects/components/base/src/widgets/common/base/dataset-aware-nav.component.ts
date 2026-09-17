@@ -2,7 +2,7 @@ import {Inject, Injectable, Injector, OnDestroy, Optional} from '@angular/core';
 
 import { Subject } from 'rxjs';
 
-import {$appDigest, findValueOf, isObject, isDefined, validateAccessRoles} from '@wm/core';
+import {$appDigest, findValueOf, isObject, validateAccessRoles} from '@wm/core';
 import { SecurityService } from '@wm/security';
 
 import { createArrayFrom } from '../../../utils/data-utils';
@@ -57,12 +57,12 @@ export abstract class DatasetAwareNavComponent extends StylableComponent impleme
     private binditemtarget: string | null;
     private binduserrole: string | null;
     private bindisactive: string | null;
-    private securityService: any;
+    private readonly securityService: any;
 
     protected binditemid: string | null;
     protected nodes$ = new Subject();
 
-    private cancelLocaleChangeSubscription;
+    private readonly cancelLocaleChangeSubscription;
 
     constructor(inj: Injector, WIDGET_CONFIG, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);

@@ -104,7 +104,7 @@ Reset state:
 sh scripts/reset-state.sh
 ```
 
-Omit a mode's line entirely if it was skipped (no URL configured) rather than showing it as failed/blank.
+Omit a mode's line entirely if it was skipped (no URL configured) rather than showing it as failed/blank. This omission rule is specific to this user-facing completion message — `current-state.md`'s own Preview Validation section always keeps both mode subsections and writes an explicit `Status: skipped` (see `state.md`), since that file is the audit/resume record, not a user summary.
 
 After showing this, run:
 
@@ -145,7 +145,7 @@ Branch: <branch> (ng-runtime + ng-codegen)
 
 ## Preview Validation
 
-One subsection per configured validation mode (`VALIDATION_MODES` in `repo.config.sh`). Omit a mode's subsection entirely if it was skipped (no URL configured) — do not show it as failed.
+One subsection per configured validation mode (`VALIDATION_MODES` in `repo.config.sh`). Omit a mode's subsection entirely if it was skipped (no URL configured) — do not show it as failed. Like the completion message above, this omission rule applies only to this final upgrade doc — `current-state.md` always keeps both subsections (see `state.md`).
 
 ### Angular Deployment
 

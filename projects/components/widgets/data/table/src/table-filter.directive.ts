@@ -160,7 +160,7 @@ const setAllFilterFields = function(filterFields, searchObj, visibleCols) {
 
 // Set the filter fields as required by datasource
 const setFilterFields = (filterFields, searchObj, visibleCols = []) => {
-    const field = searchObj && searchObj.field;
+    const field = searchObj?.field;
     /*Set the filter options when a field/column has been selected.*/
     if (field) {
         filterFields[field] = {
@@ -372,12 +372,11 @@ export class TableFilterSortDirective implements OnDestroy {
             const parts = dateString?.split(/[-/\s]+/)?.map(Number) || [];
             return  new Date(parts[2], parts[1] - 1, parts[0]).getTime();
         }
-        return NaN;
     }
 
     // Returns data sorted using sortObj
     getSortResult(data, sortObj) {
-        if (sortObj && sortObj.direction) {
+        if (sortObj?.direction) {
             const sampleItem = find(data, (item) => {
                 const v = get(item, sortObj.field);
                 return typeof v === 'string' && !!v.trim();
@@ -483,7 +482,7 @@ export class TableFilterSortDirective implements OnDestroy {
                 $row.hide();
             }
         });
-        if (data && data.length) {
+        if (data?.length) {
             this.table.callDataGridMethod('setStatus', 'ready');
             // Select the first row after the search for single select
             if (this.table.gridfirstrowselect && !this.table.multiselect) {
@@ -505,7 +504,7 @@ export class TableFilterSortDirective implements OnDestroy {
         }
 
         const sortInfo     = this.table.sortInfo;
-        const sortOptions  = sortInfo && sortInfo.direction ? (sortInfo.field + ' ' + sortInfo.direction) : '';
+        const sortOptions  = sortInfo?.direction ? (sortInfo.field + ' ' + sortInfo.direction) : '';
         const filterFields = this.getFilterFields(searchObj);
         const logicalOp = this.getLogicalOperator(filterFields);
         refreshDataSource(this.table.datasource, {
@@ -527,7 +526,7 @@ export class TableFilterSortDirective implements OnDestroy {
         this.table.gridOptions.sortInfo.direction = sortObj.direction;
         this.table.sortInfo = getClonedObject(sortObj);
 
-        const sortOptions  = sortObj && sortObj.direction ? (sortObj.field + ' ' + sortObj.direction) : '';
+        const sortOptions  = sortObj?.direction ? (sortObj.field + ' ' + sortObj.direction) : '';
         const filterFields = this.getFilterFields(this.table.filterInfo);
         const condition = this.getLogicalOperator(filterFields);
         if (!statePersistenceTriggered && this.table.getConfiguredState() !== 'none') {
@@ -541,7 +540,7 @@ export class TableFilterSortDirective implements OnDestroy {
             condition : condition
         }).then((response) => {
             $appDigest();
-            const data = (response && response.data) ? response.data : response;
+            const data = (response?.data) ? response.data : response;
             this.table.invokeEventCallback('sort', {$event: e, $data: {
                     data,
                     sortDirection: sortObj.direction,
@@ -612,11 +611,11 @@ export class TableFilterSortDirective implements OnDestroy {
                 filterFields.push({field: key, matchMode: val.matchMode, type: val.type, value: val.value});
             });
         }
-        if (dataSource && dataSource.execute(DataSource.Operation.SUPPORTS_SERVER_FILTER)) {
+        if (dataSource?.execute(DataSource.Operation.SUPPORTS_SERVER_FILTER)) {
             this.handleServerSideSearch(filterFields);
             return;
         }
-        if (dataSource && dataSource.execute(DataSource.Operation.IS_API_AWARE) && dataSource.execute(DataSource.Operation.IS_PAGEABLE)) {
+        if (dataSource?.execute(DataSource.Operation.IS_API_AWARE) && dataSource.execute(DataSource.Operation.IS_PAGEABLE)) {
             this.handleSinglePageSearch(filterFields);
         } else {
             this.handleClientSideSortSearch(filterFields, e, type);
@@ -641,7 +640,7 @@ export class TableFilterSortDirective implements OnDestroy {
         }
 
         // WMS-22387: For server side pagination, execute client side sorting
-        if (dataSource && dataSource.execute(DataSource.Operation.IS_SORTABLE)) {
+        if (dataSource?.execute(DataSource.Operation.IS_SORTABLE)) {
             this.handleSeverSideSort(searchSortObj, e, statePersistenceTriggered);
         } else {
             this.handleClientSideSortSearch(searchSortObj, e, type);
@@ -670,13 +669,13 @@ export class TableFilterSortDirective implements OnDestroy {
 
     // Method to show/hide clear icon in multi column filter
     showClearIcon(fieldName) {
-        const value = this.table.rowFilter[fieldName] && this.table.rowFilter[fieldName].value;
+        const value = this.table.rowFilter[fieldName]?.value;
         return isDefined(value) && value !== '' && value !== null;
     }
 
     // Method clear the filter value in multi column filter
     clearRowFilter(fieldName) {
-        if (this.table.rowFilter && this.table.rowFilter[fieldName]) {
+        if (this.table.rowFilter?.[fieldName]) {
             this.table.columns[fieldName].resetFilter();
             this.onRowFilterChange(fieldName);
         }
@@ -690,7 +689,7 @@ export class TableFilterSortDirective implements OnDestroy {
         if (includes(this.table.emptyMatchModes, condition)) {
             this.table.columns[fieldName].resetFilter();
             this.table.onRowFilterChange();
-        } else {
+        } else 
             // If value is present, call the filter. Else, focus on the field
             if (isDefined(this.table.rowFilter[fieldName].value) && this.table.rowFilter[fieldName].value !== '') {
                 this.table.onRowFilterChange();
@@ -699,12 +698,12 @@ export class TableFilterSortDirective implements OnDestroy {
                     this.table.columns[fieldName].filterInstance.focus();
                 });
             }
-        }
+        
     }
 
     // Method to get the updated values when filter on field is changed for multicolumn filter
     private getFilterOnFieldValues(filterDef) {
-        if (!this.table.datasource || !this.table.datasource.execute(DataSource.Operation.SUPPORTS_DISTINCT_API)) {
+        if (!this.table.datasource?.execute(DataSource.Operation.SUPPORTS_DISTINCT_API)) {
             return;
         }
 
@@ -772,7 +771,7 @@ export class TableFilterSortDirective implements OnDestroy {
         }
         const page = isSamePage ? this.table.dataNavigator.dn.currentPage : 1;
         const sortInfo     = this.table.sortInfo;
-        const sortOptions  = sortInfo && sortInfo.direction ? (sortInfo.field + ' ' + sortInfo.direction) : '';
+        const sortOptions  = sortInfo?.direction ? (sortInfo.field + ' ' + sortInfo.direction) : '';
         const filterFields = this.getFilterFields(this.table.filterInfo);
         const logicalOp = this.getLogicalOperator(filterFields);
         refreshDataSource(this.table.datasource, {

@@ -153,7 +153,7 @@ export class PaginationUtils {
     static checkPaginationAtQuery(operationInfo, variable, options) {
         const paginationInfo = this.getPaginationInfo(operationInfo, variable);
         // If page is not first, pagination is present on the variable and paginationInfo's input meta has size set pagination in query params
-        const hasPagination = options && options['page'] && paginationInfo?.input.size && variable.pagination;
+        const hasPagination = options?.['page'] && paginationInfo?.input.size && variable.pagination;
         if (!hasPagination) {
             return;
         }
@@ -231,7 +231,7 @@ export class PaginationUtils {
             // assign bodyVal to updated pagination info object
             const bodyVal = JSON.parse(paramObj.sampleValue);
             const bodyParam = paginationInfo.input[inputParam].split('.')[1]
-            if (bodyVal && bodyVal[bodyParam]) {
+            if (bodyVal?.[bodyParam]) {
                 const inputBodyParam = paginationInfo.input[inputParam].split('.').splice(1).join('.');
                 if (inputParam !== 'offset') {
                     set(reqObj, inputBodyParam, variable.pagination['page']);
@@ -365,13 +365,13 @@ export class PaginationUtils {
                 }
             } else if (resOutput?.totalElements) {
                 this.setPaginationItems(resOutput.totalElements, response, res, 'totalElements', resHeaders);
-            } else {
+            } else 
                 if (paginationInfo.type === 'offset' || paginationInfo.input.offset) {
                     res['totalElements'] = (res['size'] * (options['page'] ? options['page'] : 1)) + 1;
                 } else {
                     res['totalElements'] = (res['size'] * res['page']) + 1;
                 }
-            }
+            
             /**
              * If hasMoreItems is present in the pagination's output metadata deduce hasMoreItems from api's response
              * Else assign it as empty which will be calculated at pagination object generation

@@ -56,7 +56,7 @@ const boundDOMContentLoadedHandler = () => {
     .then((appRef: ApplicationRef) => {
       // MEMORY LEAK FIX: Store unload handler reference
       const boundUnloadHandler = () => {
-        appRef.components.map(c => c?.destroy());
+        appRef.components.forEach(c => c?.destroy());
         // MEMORY LEAK FIX: Remove unload listener after cleanup (though unload is typically final)
         window.removeEventListener('unload', boundUnloadHandler);
       };

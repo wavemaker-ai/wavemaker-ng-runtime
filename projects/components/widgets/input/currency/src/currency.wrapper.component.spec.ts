@@ -1,7 +1,7 @@
 import { Component, ViewChild } from "@angular/core";
 import { CurrencyComponent } from "./currency.component";
 import { AbstractControl, FormControl, FormsModule } from "@angular/forms";
-import { AbstractI18nService, App, AppDefaults, CURRENCY_INFO, setPipeProvider } from "@wm/core";
+import { AbstractI18nService, App, AppDefaults, setPipeProvider } from "@wm/core";
 import { TrailingZeroDecimalPipe } from "@wm/components/base";
 import { DecimalPipe } from "@angular/common";
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from "../../../../base/src/test/common-widget.specs";

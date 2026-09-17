@@ -6,7 +6,7 @@ import {DomSanitizer, SafeValue} from "@angular/platform-browser";
     name: 'sanitize'
 })
 export class SanitizePipe implements PipeTransform {
-    constructor(private domSanitizer: DomSanitizer) {
+    constructor(private readonly domSanitizer: DomSanitizer) {
     }
 
     transform(content: string | SafeValue, context: string | SecurityContext): string {

@@ -9,7 +9,12 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-REPO_ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
+REPO_ROOT="$(cd "$SKILL_DIR" && git rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$REPO_ROOT" ]; then
+  echo "ERROR  could not determine repo root: 'git rev-parse --show-toplevel' failed from $SKILL_DIR" >&2
+  echo "       (expected the skill directory to live inside a git repo — check the install location)" >&2
+  exit 1
+fi
 
 # shellcheck source=../repo.config.sh
 . "$SKILL_DIR/repo.config.sh"

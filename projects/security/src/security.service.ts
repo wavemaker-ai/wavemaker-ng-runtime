@@ -26,11 +26,11 @@ export class SecurityService implements OnDestroy {
     private appSubscriptions: Array<() => void> = []; // MEMORY LEAK FIX: Track App subscriptions
 
     constructor(
-        private injector: Injector,
-        private $http: AbstractHttpService,
-        private routerService: Router,
-        private activatedRoute: ActivatedRoute,
-        private _location: Location
+        private readonly injector: Injector,
+        private readonly $http: AbstractHttpService,
+        private readonly routerService: Router,
+        private readonly activatedRoute: ActivatedRoute,
+        private readonly _location: Location
     ) {}
 
     isLoaded() {
@@ -158,7 +158,7 @@ export class SecurityService implements OnDestroy {
     }
 
     getLastLoggedInUsername() {
-        return this.lastLoggedInUser && this.lastLoggedInUser.userName;
+        return this.lastLoggedInUser?.userName;
     }
 
     /**
@@ -428,7 +428,7 @@ export class SecurityService implements OnDestroy {
     getLoggedInUser() {
         return new Promise<any>((resolve, reject) => {
             this.getConfig((config) => {
-                if (config && config.userInfo) {
+                if (config?.userInfo) {
                     resolve(config.userInfo);
                 } else {
                     reject();
@@ -449,7 +449,7 @@ export class SecurityService implements OnDestroy {
     ngOnDestroy() {
         // MEMORY LEAK FIX: Unsubscribe from all query params subscriptions
         this.queryParamsSubscriptions.forEach(sub => {
-            if (sub && sub.unsubscribe) {
+            if (sub?.unsubscribe) {
                 sub.unsubscribe();
             }
         });

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture } from '@angular/core/testing';
 import { Component, ViewChild } from "@angular/core";
 import { App } from "@wm/core";
 import { IframeComponent } from "./iframe.component";

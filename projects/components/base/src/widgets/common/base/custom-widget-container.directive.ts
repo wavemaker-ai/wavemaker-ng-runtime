@@ -16,10 +16,10 @@ export class CustomWidgetContainerDirective implements OnDestroy {
         public vcRef: ViewContainerRef,
         public elRef: ElementRef,
         public inj: Injector,
-        private envInjector: EnvironmentInjector,
-        private app: App,
+        private readonly envInjector: EnvironmentInjector,
+        private readonly app: App,
         @Attribute('widgetname') widgetname: string,
-        private customWidgetRefProvider: CustomWidgetRefProvider
+        private readonly customWidgetRefProvider: CustomWidgetRefProvider
     ) {
         this.loadCustomWidget(widgetname);
     }

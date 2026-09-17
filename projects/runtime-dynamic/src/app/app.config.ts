@@ -107,12 +107,12 @@ const WM_XHR_FACTORY: XhrFactory = { build: () => new XMLHttpRequest() } as XhrF
 export const xsrfHeaderName = getWmProjectProperties().xsrf_header_name || "X-WM-XSRF-TOKEN";
 
 export const initializeProjectDetails = () => {
-    let cdnUrl = document.querySelector('[name="deployUrl"]') && document.querySelector('[name="deployUrl"]').getAttribute('content');
+    let cdnUrl = document.querySelector('[name="deployUrl"]')?.getAttribute('content');
     _WM_APP_PROJECT.isPreview = cdnUrl ? false : true;
-    const apiUrl = document.querySelector('[name="apiUrl"]') && document.querySelector('[name="apiUrl"]').getAttribute('content');
+    const apiUrl = document.querySelector('[name="apiUrl"]')?.getAttribute('content');
     //for preview
     if (!cdnUrl) {
-        cdnUrl = document.querySelector('[name="cdnUrl"]') && document.querySelector('[name="cdnUrl"]').getAttribute('content');
+        cdnUrl = document.querySelector('[name="cdnUrl"]')?.getAttribute('content');
     }
     _WM_APP_PROJECT.id = location.href.split('/')[3];
     // Integration with third party apps like in SSPA/WebComponents, this meta tag with cdnUrl will not be there then default it to ng-bundle/

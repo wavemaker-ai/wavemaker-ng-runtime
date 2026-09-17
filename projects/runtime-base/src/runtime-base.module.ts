@@ -2,8 +2,7 @@ import { APP_INITIALIZER, LOCALE_ID, ModuleWithProviders, NgModule } from '@angu
 import { RouterModule } from '@angular/router';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { ɵSharedStylesHost } from '@angular/platform-browser';
-import { ɵDomRendererFactory2 } from "@angular/platform-browser";
+import { ɵSharedStylesHost, ɵDomRendererFactory2 } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ToastrModule } from 'ngx-toastr';
 import {
@@ -97,10 +96,8 @@ import { CurrencyComponent } from "@wm/components/input/currency";
 import { DateComponent } from '@wm/components/input/epoch/date';
 import { DatetimeComponent } from '@wm/components/input/epoch/date-time';
 import { TimeComponent } from '@wm/components/input/epoch/time';
-import { DateTimePickerComponent } from '@wm/components/input/epoch/date-time-picker';
-import { TimePickerComponent } from '@wm/components/input/epoch/date-time-picker';
-import { PickerComponent } from '@wm/components/input/epoch/picker';
-import { PickerGroupComponent } from '@wm/components/input/epoch/picker';
+import { DateTimePickerComponent, TimePickerComponent } from '@wm/components/input/epoch/date-time-picker';
+import { PickerComponent, PickerGroupComponent } from '@wm/components/input/epoch/picker';
 import { FileUploadComponent } from "@wm/components/input/file-upload";
 import { ButtonComponent } from "@wm/components/input/button";
 import { ButtonGroupDirective } from "@wm/components/input/button-group";
@@ -112,11 +109,7 @@ import { NumberComponent } from "@wm/components/input/number";
 import { RadiosetComponent } from "@wm/components/input/radioset";
 import { SelectComponent } from "@wm/components/input/select";
 import { SwitchComponent } from "@wm/components/input/switch";
-import { InputCalendarComponent } from "@wm/components/input/text";
-import { InputColorComponent } from "@wm/components/input/text";
-import { InputEmailComponent } from "@wm/components/input/text";
-import { InputNumberComponent } from "@wm/components/input/text";
-import { InputTextComponent } from "@wm/components/input/text";
+import { InputCalendarComponent, InputColorComponent, InputEmailComponent, InputNumberComponent, InputTextComponent } from "@wm/components/input/text";
 import { TextareaComponent } from "@wm/components/input/textarea";
 
 import { RatingComponent } from "@wm/components/input/rating";
@@ -185,12 +178,12 @@ import { PrefabDirective as PrefabLoader } from './directives/prefab.directive';
 import { ContainerDirective, CustomPipe, DialogServiceImpl, FileExtensionFromMimePipe, FileIconClassPipe, FileSizePipe, FilterPipe, ImagePipe, ItemTemplateDirective, LazyLoadDirective, MessageComponent, NumberToStringPipe, PartialContainerDirective, PartialDirective, PartialParamDirective, PartialParamHandlerDirective, PrefixPipe, RedrawableDirective, RepeatTemplateDirective, SanitizePipe, ShowInDeviceDirective, StateClassPipe, StringToNumberPipe, SuffixPipe, TextContentDirective, TimeFromNowPipe, ToCurrencyPipe, ToDatePipe, ToNumberPipe, TrailingZeroDecimalPipe, TrustAsPipe, CustomWidgetContainerDirective  as BaseCustomWidgetContainerDirective} from '@wm/components/base';
 
 const initializeProjectDetails = () => {
-    let cdnUrl = document.querySelector('[name="deployUrl"]') && document.querySelector('[name="deployUrl"]').getAttribute('content');
+    let cdnUrl = document.querySelector('[name="deployUrl"]')?.getAttribute('content');
     _WM_APP_PROJECT.isPreview = cdnUrl ? false : true;
-    const apiUrl = document.querySelector('[name="apiUrl"]') && document.querySelector('[name="apiUrl"]').getAttribute('content');
+    const apiUrl = document.querySelector('[name="apiUrl"]')?.getAttribute('content');
     //for preview
     if (!cdnUrl) {
-        cdnUrl = document.querySelector('[name="cdnUrl"]') && document.querySelector('[name="cdnUrl"]').getAttribute('content');
+        cdnUrl = document.querySelector('[name="cdnUrl"]')?.getAttribute('content');
     }
     _WM_APP_PROJECT.id = location.href.split('/')[3];
     // Integration with third party apps like in SSPA/WebComponents, this meta tag with cdnUrl will not be there then default it to ng-bundle/
@@ -538,7 +531,6 @@ export class RuntimeBaseModule {
             app.notify('on-viewport-details', details.os);
         });
     }
-
 
     private getDeviceDetails(): Promise<any> {
         return new Promise<any>(function (resolve, reject) {

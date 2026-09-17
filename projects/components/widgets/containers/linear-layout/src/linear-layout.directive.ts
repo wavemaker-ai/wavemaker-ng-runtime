@@ -28,7 +28,7 @@ vAlignValues = {
     ]
 })
 export class LinearLayoutDirective extends BaseContainerComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public direction;
     public horizontalalign: string;

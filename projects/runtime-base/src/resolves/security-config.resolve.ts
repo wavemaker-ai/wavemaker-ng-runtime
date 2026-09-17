@@ -11,7 +11,7 @@ import { AppManagerService } from '../services/app.manager.service';
 export class SecurityConfigResolve {
     loaded: boolean;
 
-    constructor(private appManager: AppManagerService) {
+    constructor(private readonly appManager: AppManagerService) {
             // if the project type is PREFAB, setting this flag will not trigger security/info call
             this.loaded = this.appManager.isPrefabType() || this.appManager.isTemplateBundleType() || !getWmProjectProperties().securityEnabled;
     }

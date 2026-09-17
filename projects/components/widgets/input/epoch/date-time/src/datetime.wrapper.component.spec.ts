@@ -30,11 +30,8 @@ import { FormsModule } from '@angular/forms';
 import { ToDatePipe } from '../../../../../base/src/pipes/custom-pipes';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import {
-    getTimeFieldValue,
-    triggerTimerClickonArrowsByIndex,
     datepatternTest,
-    outputpatternTest,
-    localizedTimePickerTest, localizedValueOnInputTest, MockAbstractI18nService, MockAbstractI18nServiceDe, MockAbstractI18nServiceRO
+    localizedValueOnInputTest, MockAbstractI18nService, MockAbstractI18nServiceDe, MockAbstractI18nServiceRO
 } from '../../../../../base/src/test/util/date-test-util';
 import localeDE from '@angular/common/locales/de';
 import localeRO from '@angular/common/locales/ro';
@@ -431,7 +428,7 @@ describe(('Datetime Component with Localization'), () => {
     }));
 
     it('should update the datavalue without error when we type "de" format datetime in inputbox with "24H" format', fakeAsync(() => {
-        const datetime = '2020, 21 Februar 15:15:00', datepattern = 'yyyy, dd MMMM HH:mm:ss';
+        const datepattern = 'yyyy, dd MMMM HH:mm:ss';
         (wmComponent as any).getWidget().datepattern = datepattern;
         localizedValueOnInputTest(fixture, '2020, 21 Februar 15:15:00', wmComponent, datepattern);
     }));
@@ -594,7 +591,6 @@ describe(('Datetime Component with Localization'), () => {
 
     describe('addTimepickerClickListener', () => {
         let originalSetTimeout;
-        let mockBodyElement;
         let mockDropdownElement;
         let originalJQuery;
 
@@ -602,7 +598,6 @@ describe(('Datetime Component with Localization'), () => {
             originalSetTimeout = global.setTimeout;
             global.setTimeout = jest.fn().mockImplementation(cb => cb()) as any;
 
-            mockBodyElement = document.createElement('body');
             mockDropdownElement = document.createElement('div');
 
             // Store the original jQuery

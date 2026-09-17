@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform, SecurityContext } from '@angular/core';
-import {DomSanitizer, SafeHtml, SafeResourceUrl, SafeScript, SafeStyle, SafeUrl} from '@angular/platform-browser';
+import {DomSanitizer} from '@angular/platform-browser';
 
 @Pipe({
   standalone: true,
@@ -7,7 +7,7 @@ import {DomSanitizer, SafeHtml, SafeResourceUrl, SafeScript, SafeStyle, SafeUrl}
 })
 export class TrustAsPipe implements PipeTransform {
 
-    constructor(private domSanitizer: DomSanitizer) {}
+    constructor(private readonly domSanitizer: DomSanitizer) {}
 
     transform(content: string, context: string | SecurityContext) {
         if (content === null || content === undefined) {

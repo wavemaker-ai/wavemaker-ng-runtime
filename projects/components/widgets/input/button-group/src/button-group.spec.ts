@@ -18,7 +18,6 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 class TestComponent { }
 
 describe('ButtonGroupDirective', () => {
-    let component: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let buttonGroupElement: DebugElement;
     let buttonGroupDirective: ButtonGroupDirective;
@@ -33,7 +32,6 @@ describe('ButtonGroupDirective', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(TestComponent);
-        component = fixture.componentInstance;
         buttonGroupElement = fixture.debugElement.query(By.directive(ButtonGroupDirective));
         buttonGroupDirective = buttonGroupElement.injector.get(ButtonGroupDirective);
         fixture.detectChanges();

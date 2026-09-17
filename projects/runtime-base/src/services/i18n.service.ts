@@ -11,15 +11,13 @@ import {
     AppDefaults,
     getSessionStorageItem,
     getWmProjectProperties,
-    isMobile,
     loadScripts,
     replace,
     setCSS,
     setSessionStorageItem,
     App
 } from '@wm/core';
-import { CONSTANTS } from '@wm/variables';
-import {find, forEach, get, includes, intersection, isObject, map, toLower} from "lodash-es";
+import {find, get, includes, intersection, isObject, map, toLower} from "lodash-es";
 
 import * as momentLib from 'moment-timezone/moment-timezone';
 const moment = momentLib.default || window['moment'];
@@ -34,7 +32,7 @@ const RTL_LANGUAGE_CODES = ['ar', 'ar-001', 'ar-ae', 'ar-bh', 'ar-dz', 'ar-eg', 
 export class I18nServiceImpl extends AbstractI18nService {
 
     private selectedLocale: string;
-    private defaultSupportedLocale = 'en';
+    private readonly defaultSupportedLocale = 'en';
     private readonly appLocale: any;
     private readonly prefabLocale: Map<String, any>;
     private messages: any;
@@ -42,13 +40,13 @@ export class I18nServiceImpl extends AbstractI18nService {
     private formatsByLocale = {'timezone': '', 'number': ''};
     private get app() { return this.inj.get(App) };
 
-    private bundleLoaded:{[key:string] : any} = {};
+    private readonly bundleLoaded:{[key:string] : any} = {};
 
     constructor(
-        private $http: HttpClient,
-        private bsLocaleService: BsLocaleService,
-        private appDefaults: AppDefaults,
-        private inj: Injector
+        private readonly $http: HttpClient,
+        private readonly bsLocaleService: BsLocaleService,
+        private readonly appDefaults: AppDefaults,
+        private readonly inj: Injector
     ) {
         super();
         this.appLocale = {};
@@ -150,7 +148,7 @@ export class I18nServiceImpl extends AbstractI18nService {
             // For ngx bootstrap locale, get the config from script and apply locale
             // moment.localeData(momentLocale) will return moment locale instance. _config inside will have actual config
             let _config: any = moment.localeData(momentLocale);
-            _config = _config && _config._config;
+            _config = _config?._config;
             defineLocale(this.selectedLocale, _config);
             this.bsLocaleService.use(this.getSelectedLocale() || this.defaultSupportedLocale);
             this.bundleLoaded.moment = true;
@@ -201,7 +199,6 @@ export class I18nServiceImpl extends AbstractI18nService {
     }
 
     public setTimezone(locale, compInstance?) {
-        new Promise<void>(resolve => {
         this.loadMomentTimeZoneBundle().then(()=>{
             /**
              * If locale is provided in the form of offset and not timezone name, deduce the name.
@@ -220,11 +217,9 @@ export class I18nServiceImpl extends AbstractI18nService {
                 });
             }
             (moment as any).tz.setDefault(locale);
-            const localeData =  compInstance && compInstance.formatsByLocale ? compInstance.formatsByLocale : this.formatsByLocale;
+            const localeData =  compInstance?.formatsByLocale ? compInstance.formatsByLocale : this.formatsByLocale;
             Object.assign(localeData, localeObj);
-            resolve();
-        },resolve);
-        });
+        }, () => {});
     }
     
     public setTimezoneEarly(): Promise<any> {
@@ -298,7 +293,7 @@ export class I18nServiceImpl extends AbstractI18nService {
         if (!preferBrowserLang) { // when preferBrowserLang is not defined, set to its default value
             preferBrowserLang  = true;
         } else { // convert stringified boolean values recieved from BE to booleans
-            preferBrowserLang= (preferBrowserLang === 'true' || preferBrowserLang === true) ? true : false;
+            preferBrowserLang = (preferBrowserLang === 'true' || preferBrowserLang === true);
         }
 
         let _supportedLang = Object.keys(getWmProjectProperties().supportedLanguages) || [this.defaultSupportedLocale];

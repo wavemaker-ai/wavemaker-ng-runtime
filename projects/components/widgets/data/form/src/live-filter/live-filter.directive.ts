@@ -16,7 +16,7 @@ const noop = () => {};
     selector: '[wmLiveFilter]'
 })
 export class LiveFilterDirective implements OnDestroy {
-    static  initializeProps = registerLiveFilterProps();
+    static  readonly initializeProps = registerLiveFilterProps();
     private _options;
 
     orderBy;
@@ -193,7 +193,7 @@ export class LiveFilterDirective implements OnDestroy {
             if (isValid === false) {
                 return;
             }
-            if (isValid && isValid.error) {
+            if (isValid?.error) {
                 this.form.toggleMessage(true, isValid.error, 'error', 'ERROR');
                 return;
             }
@@ -240,7 +240,7 @@ export class LiveFilterDirective implements OnDestroy {
                         if (getEnableEmptyFilter(this.form.enableemptyfilter) && filterField._value === FILTER_CONSTANTS.EMPTY_KEY) {
                             matchMode  = getEmptyMatchMode(this.form.enableemptyfilter);
                             fieldValue = filterField._value;
-                        } else {
+                        } else 
                             if (filterField.type === DataType.BOOLEAN) {
                                 if (isDefined(filterField._value) && filterField._value !== '') {
                                     fieldValue = JSON.parse(filterField._value);
@@ -248,11 +248,11 @@ export class LiveFilterDirective implements OnDestroy {
                             } else {
                                 fieldValue = filterField._value;
                             }
-                        }
+                        
                         break;
                     case FormWidgetType.CHECKBOXSET:
                     case FormWidgetType.CHIPS:
-                        if (filterField._value && filterField._value.length) {
+                        if (filterField._value?.length) {
                             fieldValue = filterField._value;
                         }
                         break;

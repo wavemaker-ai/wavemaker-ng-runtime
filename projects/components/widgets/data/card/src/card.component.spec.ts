@@ -3,7 +3,7 @@ import { Component, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { CardComponent } from './card.component';
 import { MenuAdapterComponent } from '@wm/components/navigation/menu';
-import { App } from '@wm/core';
+import { App, removeAttr, setAttr } from '@wm/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 
 jest.mock('@wm/core', () => ({
@@ -18,7 +18,6 @@ jest.mock('@wm/components/base', () => ({
     APPLY_STYLES_TYPE: { SHELL: 'shell', INNER_SHELL: 'inner_shell' },
 }));
 
-import { removeAttr, setAttr } from '@wm/core';
 import { styler } from '@wm/components/base';
 
 @Component({

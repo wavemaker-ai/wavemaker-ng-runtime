@@ -27,12 +27,12 @@ const WIDGET_CONFIG = {widgetType: 'wm-radioset', hostClass: DEFAULT_CLS};
     ]
 })
 export class RadiosetComponent extends DatasetAwareFormComponent implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public layout = '';
     public disabled: boolean;
     public itemsperrow: string;
-    private itemsPerRowClass: string;
+    private readonly itemsPerRowClass: string;
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
@@ -43,7 +43,7 @@ export class RadiosetComponent extends DatasetAwareFormComponent implements OnDe
     triggerInvokeOnChange(key, $event) {
         this.modelByKey = key;
 
-        if(this.viewParent.containerWidget && this.viewParent.containerWidget.updateDataValue)
+        if(this.viewParent.containerWidget?.updateDataValue)
             this.viewParent.containerWidget.updateDataValue(this.datavalue);
 
         this.invokeOnTouched();

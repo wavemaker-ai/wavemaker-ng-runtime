@@ -50,7 +50,7 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
     protected allowempty = true;
     public compareby: any;
 
-    private cancelLocaleChangeSubscription;
+    private readonly cancelLocaleChangeSubscription;
 
     public get modelByKey() {
         return this._modelByKey;
@@ -192,7 +192,7 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
             values.forEach(val => {
                 const itemByValue = find(this.datasetItems, item => {
                     if (filterField === 'dataObject') {
-                        if (this.compareby && this.compareby.length) {
+                        if (this.compareby?.length) {
                             return isEqualWithFields(item[filterField], val, this.compareby);
                         }
                     }
@@ -207,7 +207,7 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
             this._modelByKey = undefined;
             const itemByValue = find(this.datasetItems, item => {
                 if (filterField === 'dataObject') {
-                    if (this.compareby && this.compareby.length) {
+                    if (this.compareby?.length) {
                         return isEqualWithFields(item[filterField], values, this.compareby);
                     }
                 }
@@ -250,7 +250,7 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
         });
 
         this.displayValue = this.multiple ? displayValues : displayValues[0] || '';
-        if(this.viewParent.containerWidget && this.viewParent.containerWidget._isCustom)
+        if(this.viewParent.containerWidget?._isCustom)
             this.viewParent.containerWidget.displayValue = this.displayValue.length ? this.displayValue : '';
     }
 
@@ -303,7 +303,7 @@ export abstract class DatasetAwareFormComponent extends BaseFormCustomComponent 
 
     protected setTemplate(partialName) {
         this.content = partialName;
-        if (this.viewParent && this.viewParent.prefabName) {
+        if (this.viewParent?.prefabName) {
             this['prefabName'] = this.viewParent.prefabName;
         }
     }

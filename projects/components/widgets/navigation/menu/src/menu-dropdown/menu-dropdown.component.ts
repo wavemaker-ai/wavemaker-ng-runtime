@@ -42,7 +42,7 @@ export class MenuDropdownComponent implements AfterViewInit {
     private readonly nativeElement;
     private hasExecutedCallback;
     @Input() items;
-    private menuRef = inject(MenuComponent);
+    private readonly menuRef = inject(MenuComponent);
     constructor(elRef: ElementRef) {
         this.nativeElement = elRef.nativeElement;
         this.hasExecutedCallback = false;

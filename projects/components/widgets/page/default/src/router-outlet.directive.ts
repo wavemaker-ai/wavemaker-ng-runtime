@@ -19,7 +19,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class RouterOutletDirective extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     isPrism: boolean;
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, public app: App) {
         super(inj, WIDGET_CONFIG, explicitContext);

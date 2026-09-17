@@ -3,17 +3,15 @@ import {
     tick,
     fakeAsync
 } from '@angular/core/testing';
-import { AbstractI18nService, App, isMobile } from '@wm/core';
+import { AbstractI18nService, App, isMobile, PartialRefProvider, AppDefaults } from '@wm/core';
 import { Component, ViewChild } from '@angular/core';
 import { SearchComponent } from './search.component';
 import { FormsModule } from '@angular/forms';
 import { TypeaheadDirective, TypeaheadMatch, TypeaheadModule } from 'ngx-bootstrap/typeahead';
-import { BaseComponent, TextContentDirective } from '@wm/components/base';
+import { BaseComponent, TextContentDirective, ToDatePipe } from '@wm/components/base';
 import { By } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
 import { ScrollableDirective } from './scrollable.directive';
-import { ToDatePipe } from '@wm/components/base';
-import { PartialRefProvider, AppDefaults } from '@wm/core';
 import { ITestModuleDef, ITestComponentDef, ComponentTestBase } from 'projects/components/base/src/test/common-widget.specs';
 import { compileTestComponent, setInputValue, getElementByTagOnDocQuery, hasAttributeCheck, mockApp } from 'projects/components/base/src/test/util/component-test-util';
 import { MockAbstractI18nService } from 'projects/components/base/src/test/util/date-test-util';
@@ -166,8 +164,6 @@ describe('SearchComponent', () => {
         expect(wrapperComponent).toBeTruthy();
     }));
 
-
-
     /******************************** EVents starts ***************************************** */
 
     it('should change the input and call the onChange event', waitForAsync(async () => {
@@ -232,12 +228,9 @@ describe('SearchComponent', () => {
     }));
     /******************************** EVents end ***************************************** */
 
-
-
     /******************************** Dataset starts ********************************** */
 
     //TypeError: Cannot read properties of undefined (reading 'querySelectorAll')
-
 
     //TypeError: The provided value is not of type 'Element'.
 
@@ -298,12 +291,7 @@ describe('SearchComponent', () => {
 
     });
 
-
-
     /******************************** Properties end ********************************** */
-
-
-
 
     /************************************ Scenarios starts ********************************** */
 
@@ -339,10 +327,7 @@ describe('SearchComponent', () => {
         });
     })));
 
-
     /************************************ Scenarios end ********************************** */
-
-
 
     /*********************************** Method invoking starts************************** */
 
@@ -383,7 +368,6 @@ describe('SearchComponent', () => {
         expect(wmComponent.getTransformedData).toHaveBeenCalled();
     }));
     /*********************************** Method invoking end ************************** */
-
 
     describe('debounceDefaultQuery', () => {
         it('should set query model and related properties when response has length', fakeAsync(() => {
@@ -1097,8 +1081,6 @@ describe('SearchComponent', () => {
         });
     });
 
-
-
     describe('loadMoreData', () => {
         let dataProviderMock: jest.Mocked<DataProvider>;
         let typeaheadMock: jest.Mocked<TypeaheadDirective>;
@@ -1191,7 +1173,6 @@ describe('SearchComponent', () => {
             wmComponent['triggerSearch']();
             expect(loadMoreDataSpy).not.toHaveBeenCalled();
         });
-
 
         it('should trigger loadMoreData if conditions are met', () => {
             (wmComponent as any).dataProvider.isLastPage = false;

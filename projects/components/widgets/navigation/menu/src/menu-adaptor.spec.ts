@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, ElementRef, Inject, Injector } from '@angular/core';
+import { Component, ElementRef, Inject, Injector, QueryList } from '@angular/core';
 import { MenuAdapterComponent } from './menu-adapator.component';
 import { MenuComponent } from './menu.component';
-import { QueryList } from '@angular/core';
 import { App } from '@wm/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 

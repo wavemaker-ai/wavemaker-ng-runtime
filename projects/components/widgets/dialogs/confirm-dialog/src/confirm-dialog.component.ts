@@ -7,7 +7,7 @@ import {
     TemplateRef,
     ViewChild,
     HostListener,
-    Optional, 
+    Optional,
     Inject
 } from '@angular/core';
 
@@ -32,7 +32,7 @@ const WIDGET_INFO = {widgetType: 'wm-confirmdialog'};
     ]
 })
 export class ConfirmDialogComponent extends BaseDialog implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate: TemplateRef<any>;
 
     constructor(

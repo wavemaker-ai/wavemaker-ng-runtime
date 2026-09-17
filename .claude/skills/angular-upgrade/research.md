@@ -63,7 +63,7 @@ R8 below is written for ngx-bootstrap because that's this repo's largest Angular
 
 ## Checklist
 
-Base/target from Step 0. **Block Step 2** if R1, R2, R3, R5, R8, R9, R10, R11, or R12 = not reviewed.
+Base/target from Step 0. **Block Step 2** if R1, R2, R3, R5, R8, R9, R10, R11, or R12 = not reviewed. (R4 is intentionally excluded from this blocking list — see its row below, marked `ref-only`. R7 does not appear in the table below — no reason for the gap is recorded; treat it as an unused reference number, not a sign that a row was accidentally dropped, but flag to a human if you're porting this skill and need to know why.)
 
 | # | Reference | Req | Steps | What to extract | Repo |
 |---|-----------|-----|-------|-----------------|------|

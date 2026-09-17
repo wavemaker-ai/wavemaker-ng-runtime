@@ -15,7 +15,7 @@ const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-tile', hostClass: DEFAULT_
     ]
 })
 export class TileDirective extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);

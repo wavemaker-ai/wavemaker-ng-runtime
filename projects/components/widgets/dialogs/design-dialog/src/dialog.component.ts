@@ -35,7 +35,7 @@ const WIDGET_INFO = {widgetType: 'wm-dialog'};
     ]
 })
 export class DialogComponent extends BaseDialog implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     isDialogComponent: boolean = true;
 
     @ViewChild('dialogTemplate', { static: true, read: TemplateRef }) dialogTemplate: TemplateRef<any>;

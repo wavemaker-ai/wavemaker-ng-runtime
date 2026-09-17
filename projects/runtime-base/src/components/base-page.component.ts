@@ -202,7 +202,7 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
                 && lastPage) {
                 const $target = lastPage.parent();
                 const onTransitionEnd = (e) => {
-                    if (resolve && !(e && e.pseudoElement)) {
+                    if (resolve && !e?.pseudoElement) {
                         $target.off('animationend', onTransitionEnd);
                         $target.removeClass(transition);
                         $target.children().first().remove();
@@ -221,7 +221,7 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
                 resolve();
             }
         }).then(() => {
-            this.$page && this.$page.removeClass('page-entry');
+            this.$page?.removeClass('page-entry');
             if (lastPage) {
                 lastPage.remove();
                 BasePageComponent.lastPageSnapShot = null;
@@ -243,7 +243,7 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
 
     private loadScripts() {
         return new Promise<void>((resolve) => {
-            const scriptsRequired = this.pageDirective && this.pageDirective.$element.attr('scripts-to-load');
+            const scriptsRequired = this.pageDirective?.$element.attr('scripts-to-load');
             if (scriptsRequired) {
                 this.scriptLoaderService
                     .load(...scriptsRequired.split(','))
@@ -409,18 +409,18 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
     onPageContentReady() {}
 
     canReuse() {
-        return !!(this.pageDirective && this.pageDirective.cache);
+        return !!(this.pageDirective?.cache);
     }
 
     mute() {
-        const m = o => { o && o.mute && o.mute(); };
+        const m = o => { o?.mute?.(); };
         each(this.Widgets, m);
         each(this.Variables, m);
         each(this.Actions, m);
     }
 
     unmute(c = this) {
-        const um = o => { o && o.unmute && o.unmute(); };
+        const um = o => { o?.unmute?.(); };
         each(this.Widgets, um);
         each(this.Variables, um);
         each(this.Actions, um);
@@ -437,14 +437,14 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         this.unmute();
         // expose current page widgets on app
         (this.App as any).Widgets = Object.create(this.Widgets);
-        if(this.pageDirective && this.pageDirective.refreshdataonattach) {
-            const refresh = v => { v && v.startUpdate && v.invoke && v.invoke(); };
+        if(this.pageDirective?.refreshdataonattach) {
+            const refresh = v => { v?.startUpdate && v?.invoke?.(); };
             each(this.Variables, refresh);
             each(this.Actions, refresh);
         }
         this.runPageTransition().then(() => {
             setTimeout(() => this.restoreScrollPosition(), 100);
-            each(this.Widgets, w => w && w.ngOnAttach && w.ngOnAttach());
+            each(this.Widgets, w => w?.ngOnAttach?.());
             this.appManager.notify('pageAttach', {'name' : this.pageName, instance: this});
         });
     }
@@ -453,7 +453,7 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         this.saveScrollPosition();
         this.savePageSnapShot();
         this.mute();
-        each(this.Widgets, w => w && w.ngOnDetach && w.ngOnDetach());
+        each(this.Widgets, w => w?.ngOnDetach?.());
         this.appManager.notify('pageDetach', {'name' : this.pageName, instance: this});
     }
 

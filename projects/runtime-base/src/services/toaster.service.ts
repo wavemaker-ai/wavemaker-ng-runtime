@@ -10,7 +10,7 @@ import {isNumber, isObject, merge} from "lodash-es";
 @Injectable()
 export class ToasterServiceImpl extends AbstractToasterService {
 
-    constructor(private toaster: ToastrService) {
+    constructor(private readonly toaster: ToastrService) {
         super();
     }
 

@@ -24,10 +24,10 @@ export class PrefabDirective implements OnDestroy {
         @Self() @Inject(WidgetRef) public componentInstance,
         public vcRef: ViewContainerRef,
         public elRef: ElementRef,
-        private prefabMngr: PrefabManagerService,
-        private injector: Injector,
-        private envInjector: EnvironmentInjector,
-        private componentRefProvider: ComponentRefProvider
+        private readonly prefabMngr: PrefabManagerService,
+        private readonly injector: Injector,
+        private readonly envInjector: EnvironmentInjector,
+        private readonly componentRefProvider: ComponentRefProvider
     ) {
         const prefabName = this.componentInstance.prefabName;
 

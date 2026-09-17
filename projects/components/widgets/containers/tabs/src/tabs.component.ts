@@ -58,13 +58,13 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class TabsComponent extends StylableComponent implements AfterContentInit, OnInit, AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public defaultpaneindex: number;
     public transition: string;
     public tabsposition: string;
     public statehandler: any;
-    private statePersistence: StatePersistence;
+    private readonly statePersistence: StatePersistence;
 
     public vertical: boolean;
     public justified: boolean;
@@ -73,7 +73,7 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
     private tabsAnimator: TabsAnimator;
     private _oldPaneIndex: number;
     private isPageLoadCall: boolean;
-    private dynamicComponentProvider;
+    private readonly dynamicComponentProvider;
     private _dynamicContext;
     private dynamicPaneIndex;
     public dynamicTabs;
@@ -262,7 +262,7 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
         if (evt) {
             headerElement = $(evt.target as HTMLElement).closest('li.tab-header');
         }
-        if (!evt || !headerElement || !headerElement.length) {
+        if (!evt || !headerElement?.length) {
             headerElement = this.nativeElement.querySelector(`li[data-paneid=${paneRef.widgetId}]`);
             const insideTabs = !!$(headerElement).closest('.app-tabs')
                 .parent().closest('.app-tabs').length;
@@ -551,9 +551,9 @@ export class TabsComponent extends StylableComponent implements AfterContentInit
         }
 
         // MEMORY LEAK FIX: Destroy all dynamically created component instances
-        if (this.dynamicComponentRefs && this.dynamicComponentRefs.length) {
+        if (this.dynamicComponentRefs?.length) {
             this.dynamicComponentRefs.forEach(componentRef => {
-                if (componentRef && componentRef.destroy) {
+                if (componentRef?.destroy) {
                     componentRef.destroy();
                 }
             });

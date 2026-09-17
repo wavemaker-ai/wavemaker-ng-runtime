@@ -1,7 +1,7 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable } from '@angular/core';
 
 
-import { App, UtilsService, CustomPipeManager } from '@wm/core';
+import { CustomPipeManager } from '@wm/core';
 
 import { AppExtensionProvider } from '../types/types';
 import { AppManagerService } from '../services/app.manager.service';
@@ -14,9 +14,9 @@ let appJsLoaded = false;
 export class AppExtensionJSResolve {
 
     constructor(
-        private appManager: AppManagerService,
-        private appJsProvider: AppExtensionProvider,
-        private customPipeManager: CustomPipeManager
+        private readonly appManager: AppManagerService,
+        private readonly appJsProvider: AppExtensionProvider,
+        private readonly customPipeManager: CustomPipeManager
     ) {}
 
      resolve() {

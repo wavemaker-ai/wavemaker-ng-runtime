@@ -2,7 +2,6 @@ import { RemoteDataProvider } from './remote-data-provider';
 import { DataSource, AppConstants, findValueOf } from '@wm/core';
 import * as baseComponentsModule from '@wm/components/base';
 import { IDataProviderConfig } from './data-provider';
-import * as lodash from 'lodash-es';
 
 jest.mock('@wm/core');
 jest.mock('@wm/components/base');
@@ -255,7 +254,7 @@ describe('RemoteDataProvider', () => {
             // Mock findValueOf to simulate its behavior
             (findValueOf as jest.Mock).mockImplementation((datum, expr) => {
                 const parts = expr.split('.');
-                return parts.reduce((obj, key) => obj && obj[key], datum);
+                return parts.reduce((obj, key) => obj?.[key], datum);
             });
 
             await (remoteDataProvider as any).onFilterSuccess(mockConfig, mockResponse);

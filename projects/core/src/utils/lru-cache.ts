@@ -6,14 +6,14 @@ interface CachedData<T> {
 }
 
 export class LRUCache<T> {
-    private cache = new Map<string, CachedData<T>>();
-    private evictQueue: [string] = [''];
+    private readonly cache = new Map<string, CachedData<T>>();
+    private readonly evictQueue: [string] = [''];
     private evictionIntervalId: number | null = null; // MEMORY LEAK FIX: Store interval ID for cleanup
 
     constructor(
-        private maxSize = 100,
-        private maxAge = 60,
-        private onEvict?: ((key: string, value: T) => any)) {
+        private readonly maxSize = 100,
+        private readonly maxAge = 60,
+        private readonly onEvict?: ((key: string, value: T) => any)) {
             this.evictQueue.shift();
             if(this.maxAge > 0) {
                 if (this.maxAge <= 30) {
@@ -76,7 +76,7 @@ export class LRUCache<T> {
         if(key && this.cache.has(key)) {
             const cachedData = this.cache.get(key);
             this.cache.delete(key);
-            this.onEvict && this.onEvict(key, cachedData.instance);
+            this.onEvict?.(key, cachedData.instance);
             const index = this.evictQueue.findIndex(k => (k === key));
             if (index >= 0) {
                 this.evictQueue.splice(index, 1);

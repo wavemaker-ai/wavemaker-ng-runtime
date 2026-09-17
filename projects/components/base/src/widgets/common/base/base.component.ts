@@ -46,10 +46,10 @@ declare const $;
 
 // Gets list of classes to add and remove and applies on the $el
 const updateClasses = (toAdd, toRemove, el) => {
-    if (toRemove && toRemove.length) {
+    if (toRemove?.length) {
         removeClass(el, join(toRemove, ' '));
     }
-    if (toAdd && toAdd.length) {
+    if (toAdd?.length) {
         addClass(el, join(toAdd, ' '));
     }
 };
@@ -152,7 +152,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     /**
      * Map of event handler callbacks
      */
-    private eventHandlers = new Map<string, {callback: Function, locals: any}>();
+    private readonly eventHandlers = new Map<string, {callback: Function, locals: any}>();
 
     /**
      * context of the widget
@@ -182,13 +182,13 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      * Holds the event registration functions.
      * these functions needs to be executed after onViewInit
      */
-    private toBeSetupEventsQueue: Array<Function> = [];
+    private readonly toBeSetupEventsQueue: Array<Function> = [];
 
     public __cloneable__ = false;
 
     public widgetProps: Map<string, any>;
 
-    private $attrs = new Map<string, string>();
+    private readonly $attrs = new Map<string, string>();
 
     private isMuted = false;
 
@@ -288,7 +288,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
 
                 this.initWidget();
                 this.setInitProps();
-                resolveFn && resolveFn()
+                resolveFn?.()
             });
         }
         if(explicitContext) {
@@ -699,7 +699,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     protected getAttributes() {
         let _tNodeAttrs = (this.inj as any)._tNode.attrs, actualAttrs = Array.from(this.nativeElement.attributes).map(attr => attr.name);
         if(_tNodeAttrs === null) {
-            return actualAttrs.sort();
+            return actualAttrs.sort((a, b) => a.localeCompare(b));
         }
         forEach(_tNodeAttrs, (attr, i: any) => {
             if (typeof attr === 'number') {
@@ -721,7 +721,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         If array is sorted, placeholder.bind value will be set finally.
         This is caused because of the way we are storing attribute names in watcher registry map
          */
-        return actualAttrs.sort();
+        return actualAttrs.sort((a, b) => a.localeCompare(b));
     }
 
     /**

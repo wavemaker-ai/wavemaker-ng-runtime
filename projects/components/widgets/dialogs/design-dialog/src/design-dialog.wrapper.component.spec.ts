@@ -5,7 +5,7 @@ import { BehaviorSubject } from 'rxjs';
 import { DialogComponent } from './dialog.component';
 import { Context, provideAsDialogRef, provideAsWidgetRef } from '@wm/components/base';
 import { By } from '@angular/platform-browser';
-import { ITestComponentDef, ComponentTestBase } from 'projects/components/base/src/test/common-widget.specs';
+import { ITestComponentDef } from 'projects/components/base/src/test/common-widget.specs';
 import { compileTestComponent, mockApp } from 'projects/components/base/src/test/util/component-test-util';
 import { AbstractDialogService, App } from '@wm/core';
 import { BsModalService } from 'ngx-bootstrap/modal';
