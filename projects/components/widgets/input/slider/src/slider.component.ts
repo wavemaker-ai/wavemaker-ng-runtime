@@ -107,7 +107,7 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
     private renderMarkers() {
         const sliderTrack = this.nativeElement.querySelector('.range-input') as HTMLElement;
         const trackWidth = sliderTrack?.offsetWidth-9|| 0;
-        const tickCount = this.step > 0 ? Math.floor((this.maxvalue||100 - this.minvalue||0) / this.step) + 1 : 0;
+        const tickCount = this.step > 0 ? Math.floor(((this.maxvalue||100) - (this.minvalue||0)) / this.step) + 1 : 0;
         const labels = convertDataToObject(this.markerlabeltext);
         this.markerItems = [];
         for (let i = 0; i < tickCount; i++) {

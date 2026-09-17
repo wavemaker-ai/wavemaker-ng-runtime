@@ -577,7 +577,7 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
                         const pipeInfo = pipeProvider.meta(pipeName);
                         let pipeInstance;
                         if (!pipeInfo) {
-                            pipeInstance = nullPipe;
+                            pipeInstance = nullPipe();
                         } else {
                             if (pipeInfo.pure) {
                                 hasPurePipe = true;
@@ -699,7 +699,7 @@ const fnExecutor = (expr, exprType) => {
             const pipeInfo = pipeProvider.meta(pipeName);
             let pipeInstance;
             if (!pipeInfo) {
-                pipeInstance = nullPipe;
+                pipeInstance = nullPipe();
             } else {
                 if (pipeInfo.pure) {
                     hasPurePipe = true;

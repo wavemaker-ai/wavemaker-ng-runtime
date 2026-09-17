@@ -528,6 +528,9 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     /** String / number variants for zTree <code>getNodeByParam('nodeId', …)</code> and flatten fallback. */
     private nodeIdLookupCandidates(raw: any): any[] {
         const out: any[] = [];
+        if (raw === undefined || raw === null || raw === '') {
+            return out;
+        }
         const push = (v: any) => {
             if (v !== undefined && v !== null && v !== '' && !out.includes(v)) {
                 out.push(v);
