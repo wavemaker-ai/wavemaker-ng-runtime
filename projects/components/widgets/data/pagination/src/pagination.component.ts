@@ -10,7 +10,7 @@ import {
     Optional,
     Output,
     SkipSelf,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {
@@ -56,6 +56,7 @@ const sizeClasses = {
     }
 };
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
     imports: [CommonModule, FormsModule, PaginationModule, BsDropdownModule],
     selector: '[wmPagination]',

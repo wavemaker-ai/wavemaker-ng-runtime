@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {Component, HostListener, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import {Component, HostListener, Inject, Injector, OnDestroy, Optional, ChangeDetectionStrategy} from '@angular/core';
 import { NG_VALUE_ACCESSOR, NG_VALIDATORS } from '@angular/forms';
 
 import {setListClass} from '@wm/core';
@@ -15,6 +15,7 @@ const DEFAULT_CLS = 'app-checkboxset list-group inline';
 const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-checkboxset', hostClass: DEFAULT_CLS};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective],
     selector: '[wmCheckboxset]',

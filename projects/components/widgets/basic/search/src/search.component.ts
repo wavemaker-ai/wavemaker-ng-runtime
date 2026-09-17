@@ -14,7 +14,7 @@ import {
     Optional,
     QueryList,
     ViewChild,
-    ViewChildren
+    ViewChildren, ChangeDetectionStrategy
 } from '@angular/core';
 
 import { from, Observable, of } from 'rxjs';
@@ -67,6 +67,7 @@ import {
 const WIDGET_CONFIG = { widgetType: 'wm-search', hostClass: 'input-group' };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, FormsModule, ScrollableDirective, TypeaheadModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective, WmAppIconComponent],
     selector: '[wmSearch]',

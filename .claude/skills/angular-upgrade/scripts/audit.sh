@@ -116,9 +116,14 @@ ANG_PKGS_AFTER=$(angular_pins_from_pkg)
 major_ver() { echo "$1" | cut -d. -f1; }
 
 if [ "$ANG_PKGS" != "$ANG_PKGS_AFTER" ]; then
-  # Show what changed
-  diff <(echo "$ANG_PKGS") <(echo "$ANG_PKGS_AFTER") 2>/dev/null | grep '^[<>]' \
+  # Show what changed (avoid <() process substitution — not portable to plain /bin/sh)
+  BEFORE_TMP=$(mktemp)
+  AFTER_TMP=$(mktemp)
+  printf '%s\n' "$ANG_PKGS" > "$BEFORE_TMP"
+  printf '%s\n' "$ANG_PKGS_AFTER" > "$AFTER_TMP"
+  diff "$BEFORE_TMP" "$AFTER_TMP" 2>/dev/null | grep '^[<>]' \
     | sed 's/^</  before: /; s/^>/  after:  /' || true
+  rm -f "$BEFORE_TMP" "$AFTER_TMP"
   # Strip minor.patch — only flag if the major version changed
   ANG_MAJORS_BEFORE=$(echo "$ANG_PKGS"       | sed 's/=\([0-9]*\)\.[0-9.]*$/=\1/' | sort)
   ANG_MAJORS_AFTER=$(echo  "$ANG_PKGS_AFTER" | sed 's/=\([0-9]*\)\.[0-9.]*$/=\1/' | sort)

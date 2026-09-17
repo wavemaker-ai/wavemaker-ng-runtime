@@ -11,7 +11,7 @@ import {
     OnInit,
     Optional,
     TemplateRef,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {PopoverDirective, PopoverModule} from 'ngx-bootstrap/popover';
@@ -53,6 +53,7 @@ const eventsMap = {
 let activePopover: PopoverComponent;
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, PopoverModule, AnchorComponent],
     selector: 'wm-popover',

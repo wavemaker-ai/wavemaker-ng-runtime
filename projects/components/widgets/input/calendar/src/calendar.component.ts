@@ -9,7 +9,7 @@ import {
     OnInit,
     Optional,
     ViewChild,
-    ViewEncapsulation
+    ViewEncapsulation, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {AbstractI18nService, getClonedObject, getSessionStorageItem, isMobile} from '@wm/core';
@@ -98,6 +98,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-calendar', hostClass: DEFAULT_CLS};
 const dateFormat = 'YYYY/MM/DD';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmCalendar]',
     templateUrl: './calendar.component.html',

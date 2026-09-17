@@ -8,7 +8,7 @@ import {
     OnDestroy,
     OnInit,
     Optional,
-    Self
+    Self, ChangeDetectionStrategy
 } from "@angular/core";
 import {
     getCurrentWidgets,
@@ -36,6 +36,7 @@ const enum STEP_STATUS {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'form[wmWizardStep]',
     template: `<ng-content partial-container-target></ng-content>`,

@@ -9,7 +9,7 @@ import {
     Injector,
     OnDestroy,
     OnInit,
-    Optional
+    Optional, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {App, noop, removeAttr} from '@wm/core';
@@ -35,6 +35,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @AutoLayout({ targetSelector: '.tab-body' })
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'div[wmTabPane]',
     templateUrl: './tab-pane.component.html',

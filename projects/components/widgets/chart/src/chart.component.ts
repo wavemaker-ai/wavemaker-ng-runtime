@@ -8,7 +8,7 @@ import {
     Injector,
     ViewEncapsulation,
     Optional,
-    Inject
+    Inject, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {
@@ -128,6 +128,7 @@ const angle = d => {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, SpinnerComponent, WmAppIconComponent],
     selector: 'div[wmChart]',

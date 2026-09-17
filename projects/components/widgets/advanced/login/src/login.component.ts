@@ -8,7 +8,7 @@ import {
     Optional,
     OnDestroy,
     QueryList,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import { APPLY_STYLES_TYPE, MessageComponent, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
@@ -21,6 +21,7 @@ import {includes} from "lodash-es";
 const WIDGET_INFO = {widgetType: 'wm-login', hostClass: 'app-login'};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true, 
     imports: [ MessageComponent ],
     selector: 'div[wmLogin]',

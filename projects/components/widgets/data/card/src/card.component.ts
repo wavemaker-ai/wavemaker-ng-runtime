@@ -12,7 +12,7 @@ import {
     Renderer2,
     Optional,
     ViewChild,
-    Inject
+    Inject, ChangeDetectionStrategy
 } from '@angular/core';
 
 import { registerProps } from './card.props';
@@ -25,6 +25,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective, PictureDirective, MenuComponent, WmAppIconComponent],
     selector: '[wmCard]',

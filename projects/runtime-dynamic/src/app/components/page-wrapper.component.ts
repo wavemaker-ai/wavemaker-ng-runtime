@@ -7,7 +7,7 @@ import {
     NgZone,
     OnDestroy,
     OnInit,
-    ViewContainerRef} from '@angular/core';
+    ViewContainerRef, ChangeDetectionStrategy} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { Subscription } from 'rxjs';
@@ -18,6 +18,7 @@ import { SecurityService } from '@wm/security';
 import { AppManagerService, BasePageComponent, ComponentRefProvider, ComponentType } from '@wm/runtime/base';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true, 
     selector: 'app-page-outlet',
     template: '<div></div>'

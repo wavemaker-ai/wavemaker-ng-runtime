@@ -10,7 +10,7 @@ import {
     OnDestroy,
     OnInit,
     Optional,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import { $appDigest, noop, removeAttr, setCSS, toggleClass } from '@wm/core';
@@ -23,6 +23,7 @@ const DEFAULT_CLS = 'app-panel panel';
 const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAULT_CLS };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [BsDropdownModule, CommonModule, TextContentDirective, TrustAsPipe, MenuComponent, WmAppIconComponent],
     selector: '[wmPanel]',

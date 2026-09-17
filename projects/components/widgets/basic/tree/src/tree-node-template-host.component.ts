@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 import {
     ItemTemplateDirective,
@@ -7,6 +7,7 @@ import {
 } from '@wm/components/base';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'wm-tree-node-template-host',
     standalone: true,
     imports: [

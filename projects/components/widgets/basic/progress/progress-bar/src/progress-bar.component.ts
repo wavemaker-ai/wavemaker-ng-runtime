@@ -1,4 +1,4 @@
-import {Attribute, Component, Inject, Injector, Optional} from '@angular/core';
+import {Attribute, Component, Inject, Injector, Optional, ChangeDetectionStrategy} from '@angular/core';
 
 import {findValueOf, isDefined} from '@wm/core';
 import {IWidgetConfig, provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
@@ -33,6 +33,7 @@ interface IProgressInfo {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmProgressBar]',
     templateUrl: './progress-bar.component.html',

@@ -1,4 +1,4 @@
-import {Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import {Component, Inject, Injector, OnDestroy, Optional, ChangeDetectionStrategy} from '@angular/core';
 
 import {App, switchClass} from '@wm/core';
 import { APPLY_STYLES_TYPE, PullToRefresh, provideAsWidgetRef, StylableComponent, styler, AutoLayout } from '@wm/components/base';
@@ -10,6 +10,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-page-content', hostClass: DEFAULT_CLS};
 
 @AutoLayout()
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmPageContent]',
     templateUrl: './page-content.component.html',
