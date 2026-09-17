@@ -302,22 +302,52 @@ describe('AlertDialogComponent', () => {
     });
 
     describe('AlertDialogComponent: ngOnInit alerttype mapping', () => {
+        // ngOnInit can only run once per instance (base setInitProps clears its one-time
+        // initState after first use), so each case gets its own component via a markup
+        // attribute rather than re-invoking ngOnInit() on the shared dialogComponent.
+        const createWithAlertType = (alerttype: string): AlertDialogComponent => {
+            const markupWithAlertType = `<div wmAlertDialog alerttype="${alerttype}"></div>`;
+
+            @Component({
+                standalone: false,
+                template: markupWithAlertType
+            })
+            class AlertTypeWrapperComponent {
+                @ViewChild(AlertDialogComponent, { static: true }) wmComponent: AlertDialogComponent;
+            }
+
+            const alertTypeTestModuleDef = {
+                imports: [FormsModule, AlertDialogComponent],
+                declarations: [AlertTypeWrapperComponent],
+                schemas: [NO_ERRORS_SCHEMA],
+                providers: [
+                    provideAsWidgetRef(AlertDialogComponent),
+                    { provide: Context, useFactory: () => ({}), multi: true },
+                    { provide: App, useValue: mockApp },
+                    { provide: BsModalService, useClass: MockBsModalService },
+                    { provide: AbstractDialogService, useClass: MockAbstractDialogService },
+                    { provide: Router, useClass: MockRouter }
+                ]
+            };
+
+            TestBed.resetTestingModule();
+            const alertTypeFixture = compileTestComponent(alertTypeTestModuleDef, AlertTypeWrapperComponent);
+            const component = alertTypeFixture.componentInstance.wmComponent;
+            component.dialogTemplate = {} as TemplateRef<any>;
+            alertTypeFixture.detectChanges();
+            return component;
+        };
+
         it('should map a known alerttype to its corresponding style class via alertMap', () => {
-            dialogComponent.alerttype = 'information';
-            dialogComponent.ngOnInit();
-            expect(dialogComponent.alerttype).toEqual('info');
+            expect(createWithAlertType('information').alerttype).toEqual('info');
         });
 
         it('should map the success alerttype to the success style class', () => {
-            dialogComponent.alerttype = 'success';
-            dialogComponent.ngOnInit();
-            expect(dialogComponent.alerttype).toEqual('success');
+            expect(createWithAlertType('success').alerttype).toEqual('success');
         });
 
         it('should leave an alerttype unchanged when it has no entry in alertMap', () => {
-            dialogComponent.alerttype = 'custom-unmapped-type';
-            dialogComponent.ngOnInit();
-            expect(dialogComponent.alerttype).toEqual('custom-unmapped-type');
+            expect(createWithAlertType('custom-unmapped-type').alerttype).toEqual('custom-unmapped-type');
         });
     });
 
@@ -350,6 +380,7 @@ describe('AlertDialogComponent', () => {
         let attrDialogComponent: AlertDialogComponent;
 
         beforeEach(waitForAsync(() => {
+            TestBed.resetTestingModule();
             TestBed.configureTestingModule(attrTestModuleDef)
                 .compileComponents()
                 .then(() => {

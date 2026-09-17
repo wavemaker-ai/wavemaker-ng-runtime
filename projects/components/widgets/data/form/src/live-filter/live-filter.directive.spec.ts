@@ -456,7 +456,10 @@ describe('LiveFilterDirective', () => {
         it('should set a string match mode from the datasource when the field is a STRING type', () => {
             const field = createMockField({ field: 'firstname', value: 'Ram', type: DataType.STRING });
             form.formFields = [field];
-            form.datasource.execute.mockReturnValue('anywhereignorecase');
+            form.datasource.execute.mockImplementation((operation: any) =>
+                operation === DataSource.Operation.GET_MATCH_MODE
+                    ? 'anywhereignorecase'
+                    : Promise.resolve({ data: {}, pagination: {} }));
             const directive = createDirective(form);
             directive.filter();
             expect(form.datasource.execute).toHaveBeenCalledWith(DataSource.Operation.GET_MATCH_MODE);

@@ -476,7 +476,7 @@ describe('PaginationService', () => {
 
         it('should treat node === document as the body scrollTop source in the vertical each callback', () => {
             const docScrollParentMock: any = {
-                0: { scrollHeight: 500, clientHeight: 500 },
+                0: { scrollHeight: 1000, clientHeight: 500 },
                 each: jest.fn((cb) => {
                     cb(0, document);
                     return docScrollParentMock;
@@ -696,7 +696,7 @@ describe('PaginationService', () => {
             container.appendChild(wmListEl);
             (container as any).iscroll = {
                 on: jest.fn(),
-                x: -600,
+                x: -850,
                 wrapper: { clientWidth: 100, scrollWidth: 1000 },
                 indicatorRefresh: jest.fn()
             };
@@ -748,7 +748,7 @@ describe('PaginationService', () => {
             const updateCallback = app.subscribe.mock.calls[0][1];
             updateCallback({ isSameNode: (n: any) => n === $scrollParent2[0] });
 
-            expect(service.setIscrollHandlers).toHaveBeenCalledWith($scrollParent2[0], parent.dataNavigator, 300);
+            expect(service.setIscrollHandlers).toHaveBeenCalledWith($scrollParent2[0], parent.dataNavigator, 300, parent);
             expect(subscriptionMock).toHaveBeenCalled();
         });
     });
@@ -786,7 +786,7 @@ describe('PaginationService', () => {
             service.bindScrollEvt(parentMock, 'tbody', debounceNum);
             const scrollCallback = $scrollParentMock.on.mock.calls.find(c => c[0] === 'scroll.scroll_evt')[1];
             const target = { clientHeight: 500, scrollHeight: 1000, scrollTop: 950 };
-            const evt = { target };
+            const evt = { target, stopPropagation: jest.fn() };
             scrollCallback.call($scrollParentMock, evt);
 
             expect(service.debouncedFetchNextDatasetOnScroll).toHaveBeenCalled();
@@ -796,7 +796,7 @@ describe('PaginationService', () => {
             service.bindScrollEvt(parentMock, 'tbody', debounceNum);
             const scrollCallback = $scrollParentMock.on.mock.calls.find(c => c[0] === 'scroll.scroll_evt')[1];
             const target = { clientHeight: 500, scrollHeight: 1000, scrollTop: 10 };
-            const evt = { target };
+            const evt = { target, stopPropagation: jest.fn() };
             scrollCallback.call($scrollParentMock, evt);
 
             expect(service.debouncedFetchNextDatasetOnScroll).not.toHaveBeenCalled();

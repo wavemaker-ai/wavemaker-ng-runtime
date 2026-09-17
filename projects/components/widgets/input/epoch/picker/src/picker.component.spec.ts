@@ -191,11 +191,15 @@ describe('PickerComponent', () => {
 
             buildPaddedContainer(nativeElement, picker.options.map(o => o.label));
 
+            // jest.spyOn replaces $.fn.swipey with a wrapper that doesn't carry over the
+            // original function's static DIRECTIONS property, which picker.component.ts reads.
+            const originalDirections = jq.fn.swipey.DIRECTIONS;
             const swipeySpy = jest.spyOn(jq.fn, 'swipey');
+            jq.fn.swipey.DIRECTIONS = originalDirections;
             picker.ngAfterViewInit();
             expect(swipeySpy).toHaveBeenCalled();
 
-            const settings = swipeySpy.mock.calls[swipeySpy.mock.calls.length - 1][0];
+            const settings: any = swipeySpy.mock.calls[swipeySpy.mock.calls.length - 1][0];
             expect(typeof settings.onSwipe).toBe('function');
             expect(typeof settings.onSwipeEnd).toBe('function');
 
@@ -227,9 +231,11 @@ describe('PickerComponent', () => {
 
             buildPaddedContainer(nativeElement, picker.options.map(o => o.label));
 
+            const originalDirections = jq.fn.swipey.DIRECTIONS;
             const swipeySpy = jest.spyOn(jq.fn, 'swipey');
+            jq.fn.swipey.DIRECTIONS = originalDirections;
             picker.ngAfterViewInit();
-            const settings = swipeySpy.mock.calls[swipeySpy.mock.calls.length - 1][0];
+            const settings: any = swipeySpy.mock.calls[swipeySpy.mock.calls.length - 1][0];
 
             // A large swipe pushes the computed index past the end of the padded list;
             // select() should bail out early and leave the current selection untouched.

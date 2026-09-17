@@ -417,7 +417,9 @@ describe('LiveFormDirective', () => {
             const { directive, datePipe } = createDirective(form);
             directive.constructDataObject();
             expect(datePipe.transform).not.toHaveBeenCalled();
-            expect(form.updateFormDataOutput).toHaveBeenCalledWith(expect.objectContaining({ createdAt: expect.any(Date) }));
+            // getValidDateObject returns the value as-is (a string here) when it is already a moment-parseable date,
+            // it only produces a Date instance for values that need normalization.
+            expect(form.updateFormDataOutput).toHaveBeenCalledWith(expect.objectContaining({ createdAt: '2020-01-01' }));
         });
 
         it('should use the raw field value when there is no outputformat', () => {

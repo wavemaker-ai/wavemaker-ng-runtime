@@ -49,7 +49,7 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
     public readonly: boolean;
     public hint: string;
     public arialabel: string;
-    public markerlabeltext: string
+    public markerlabeltext: any;
     public showmarkers: boolean;
     public showicons: boolean;
     public starticon: string;
