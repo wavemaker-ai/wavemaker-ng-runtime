@@ -308,33 +308,27 @@ export class AppManagerService implements OnDestroy {
         // if user found, 401 was thrown after session time
         if (config.userInfo && config.userInfo.userName) {
             config.authenticated = false;
-            // AppRef.on401() (in app.service.ts) always invokes App.onSessionTimeout on timeout.
-            // Skip our own dialog/page handling when the app has overridden it, so the two don't
-            //  run for the same timeout (e.g. this dialog briefly flashing before a custom
-            // SSO redirect from onSessionTimeout takes effect).
-            if (!this.$app.isSessionTimeoutOverridden) {
-                sessionTimeoutConfig = loginConfig.sessionTimeout || {'type': LOGIN_METHOD.DIALOG};
-                sessionTimeoutMethod = sessionTimeoutConfig.type.toUpperCase();
-                switch (sessionTimeoutMethod) {
-                    case LOGIN_METHOD.DIALOG:
-                        this.showLoginDialog();
-                        break;
-                    case LOGIN_METHOD.PAGE:
-                        if (!page) {
-                            page = this.$security.getCurrentRoutePage();
-                        }
-                        queryParamsObj['redirectTo'] = page;
-                        // Adding query params(page params of page being redirected to) to the URL.
-                        queryParamsObj = merge(queryParamsObj, this.$security.getRedirectedRouteQueryParams());
-                        // the redirect page should not be same as session timeout login page
-                        if ( page !== sessionTimeoutConfig.pageName) {
-                            this.$router.navigate([sessionTimeoutConfig.pageName], {queryParams: queryParamsObj});
-                        }
-                        break;
-                    case LOGIN_METHOD.SSO:
-                        this.handleSSOLogin(config, options);
-                        break;
-                }
+            sessionTimeoutConfig = loginConfig.sessionTimeout || {'type': LOGIN_METHOD.DIALOG};
+            sessionTimeoutMethod = sessionTimeoutConfig.type.toUpperCase();
+            switch (sessionTimeoutMethod) {
+                case LOGIN_METHOD.DIALOG:
+                    this.showLoginDialog();
+                    break;
+                case LOGIN_METHOD.PAGE:
+                    if (!page) {
+                        page = this.$security.getCurrentRoutePage();
+                    }
+                    queryParamsObj['redirectTo'] = page;
+                    // Adding query params(page params of page being redirected to) to the URL.
+                    queryParamsObj = merge(queryParamsObj, this.$security.getRedirectedRouteQueryParams());
+                    // the redirect page should not be same as session timeout login page
+                    if ( page !== sessionTimeoutConfig.pageName) {
+                        this.$router.navigate([sessionTimeoutConfig.pageName], {queryParams: queryParamsObj});
+                    }
+                    break;
+                case LOGIN_METHOD.SSO:
+                    this.handleSSOLogin(config, options);
+                    break;
             }
             this.setLandingPage();
         } else {
