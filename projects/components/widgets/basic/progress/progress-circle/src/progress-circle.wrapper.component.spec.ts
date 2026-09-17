@@ -1,6 +1,6 @@
 import { ComponentFixture, waitForAsync } from '@angular/core/testing';
 import { Component, ViewChild } from '@angular/core';
-import { CircleProgressComponent, CircleProgressOptions, CircleProgressOptionsInterface } from 'ng-circle-progress';
+import { CircleProgressOptions, CircleProgressOptionsInterface } from 'ng-circle-progress';
 import { ProgressCircleComponent } from './progress-circle.component';
 import { FormsModule } from '@angular/forms';
 import { App } from '@wm/core';

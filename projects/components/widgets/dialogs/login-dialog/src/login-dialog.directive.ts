@@ -22,8 +22,8 @@ export class LoginDialogDirective implements AfterViewInit, OnDestroy {
     @ContentChild(MessageComponent) msgCmp: MessageComponent;
     dialogOpenSubscription;
 
-    constructor(@Self() @Inject(Context) private contexts: Array<any>,
-                @Self() private dialogRef: DialogRef<any>) {
+    constructor(@Self() @Inject(Context) private readonly contexts: Array<any>,
+                @Self() private readonly dialogRef: DialogRef<any>) {
         this.contexts[0].doLogin = () => this.doLogin();
     }
 

@@ -1,6 +1,6 @@
 import { AppConstants, DataSource, findValueOf, getClonedObject } from '@wm/core';
 
-import { convertDataToObject, interpolateBindExpressions } from '@wm/components/base';
+import { interpolateBindExpressions } from '@wm/components/base';
 import { IDataProvider, IDataProviderConfig } from './data-provider';
 import {assign, get, indexOf, isArray, isEmpty, isObject, set, slice, split} from "lodash-es";
 

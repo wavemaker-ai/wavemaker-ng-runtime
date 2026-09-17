@@ -63,13 +63,13 @@ const moment = momentLib.default || window['moment'];
     </ng-template>
     `
 })
-export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
+export class DateTimePickerComponent implements OnDestroy {
 
     private isDateOpen = true;
 
     private isTimeOpen = false;
 
-    private appLocale: any;
+    private readonly appLocale: any;
 
     @ViewChild('datetimepickerTemplate' , { static: true }) datetimepickerTemplate: TemplateRef<any>;
 
@@ -104,7 +104,7 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
 
     constructor(
         protected inj: Injector,
-        private bsModalService: BsModalService) {
+        private readonly bsModalService: BsModalService) {
         this.appLocale = inj.get(App).appLocale || {};
     }
 
@@ -174,6 +174,7 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
         if (this._displayFormat) {
             return this._displayFormat;
         }
+        return undefined;
     }
     /**
      * This method is used to highlight the current date
@@ -282,10 +283,6 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    ngAfterViewInit(): void {
-
-    }
-
     ngOnDestroy(): void {
         this.hideModal();
     }
@@ -329,10 +326,10 @@ export class TimePickerComponent implements AfterViewInit {
     private value = new Date();
 
     @Input()
-    private min: Date = null;
+    private readonly min: Date = null;
 
     @Input()
-    private max: Date = null;
+    private readonly max: Date = null;
 
     @Output() change = new EventEmitter<Date>();
 
@@ -394,7 +391,7 @@ export class TimePickerComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-
+        // Intentional no-op, kept so ngAfterViewInit is a stable, testable hook on this component.
     }
 
 }

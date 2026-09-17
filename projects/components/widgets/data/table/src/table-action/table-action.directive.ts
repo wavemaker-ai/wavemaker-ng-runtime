@@ -16,7 +16,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-table-action', hostClass: ''};
     ]
 })
 export class TableActionDirective extends BaseComponent implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     accessroles;
     action;

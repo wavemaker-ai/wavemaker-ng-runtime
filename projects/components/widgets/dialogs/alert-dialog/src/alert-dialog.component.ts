@@ -39,7 +39,7 @@ const alertMap: Record<string, string> = {
     ]
 })
 export class AlertDialogComponent extends BaseDialog implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     isPrism: boolean;
     alerttype: any;
 

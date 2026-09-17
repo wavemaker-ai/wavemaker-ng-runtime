@@ -9,7 +9,7 @@ export class MetadataService {
     providerMap: Map<string, any>;
     CONTEXT_APP = 'app';
 
-    constructor(private $http: AbstractHttpService) {}
+    constructor(private readonly $http: AbstractHttpService) {}
 
     isLoaded() {
         return this.metadataMap ? this.metadataMap.has(this.CONTEXT_APP) : false;
@@ -39,14 +39,14 @@ export class MetadataService {
     getByOperationId(operationId, context) {
         context = context || this.CONTEXT_APP;
         const map = this.metadataMap.get(context);
-        return map && map[operationId];
+        return map?.[operationId];
     }
 
     // function to get Provider details from providerMap for the passed providerId
     getByProviderId(providerId, context) {
         context = context || this.CONTEXT_APP;
         const map = this.providerMap.get(context);
-        return map && map[providerId];
+        return map?.[providerId];
     }
 
     getByCrudId(crudId, context) {

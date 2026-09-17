@@ -1,8 +1,8 @@
 import {ToNumberPipe} from '../pipes/custom-pipes';
 import {DatePipe, DecimalPipe} from '@angular/common';
-import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {TestBed} from '@angular/core/testing';
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser';
-import {Component, Injector, OnInit} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {compileTestComponent, mockApp} from './util/component-test-util';
 import {ITestModuleDef} from './common-widget.specs';
 import {
@@ -62,10 +62,9 @@ const testModuleDef: ITestModuleDef = {
 };
 
 describe('ToNumber pipe', () => {
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: ToNumberPipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new ToNumberPipe(TestBed.inject(DecimalPipe), TestBed.inject(AbstractI18nService));
     });
 
@@ -82,10 +81,9 @@ describe('ToNumber pipe', () => {
 
 
 describe('Trailingzero pipe', () => {
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: TrailingZeroDecimalPipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new TrailingZeroDecimalPipe(TestBed.inject(DecimalPipe));
     });
 
@@ -105,7 +103,6 @@ describe('Trailingzero pipe', () => {
 });
 
 describe('ToDate pipe', () => {
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: ToDatePipe;
     let customPipeManager: CustomPipeManager;
     let i18nService: AbstractI18nService;
@@ -113,7 +110,7 @@ describe('ToDate pipe', () => {
     let app: App;
 
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         customPipeManager = TestBed.inject(CustomPipeManager);
         i18nService = TestBed.inject(AbstractI18nService);
         datePipe = TestBed.inject(DatePipe);
@@ -170,7 +167,6 @@ describe('ToDate pipe', () => {
     });
 
     it('should return empty string when data is invalid', () => {
-        const date = new Date('04/03/2020 09:07:05:055');
         const result = pipe.transform(null, 'timestamp');
         expect(result).toBe('')
     });
@@ -231,10 +227,9 @@ describe('ToDate pipe', () => {
 
 describe('StringToNumber pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: StringToNumberPipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new StringToNumberPipe();
     });
 
@@ -255,10 +250,9 @@ describe('StringToNumber pipe', () => {
 
 describe('NumberToString pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: NumberToStringPipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new NumberToStringPipe(TestBed.inject(DecimalPipe), TestBed.inject(AbstractI18nService));
     });
 
@@ -282,10 +276,9 @@ describe('NumberToString pipe', () => {
 
 describe('Prefix pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: PrefixPipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new PrefixPipe();
     });
 
@@ -304,10 +297,9 @@ describe('Prefix pipe', () => {
 
 describe('Suffix pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: SuffixPipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new SuffixPipe();
     });
 
@@ -325,10 +317,9 @@ describe('Suffix pipe', () => {
 
 describe('ToCurrency pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: ToCurrencyPipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new ToCurrencyPipe(TestBed.inject(DecimalPipe), TestBed.inject(AbstractI18nService));
     });
 
@@ -355,10 +346,9 @@ describe('ToCurrency pipe', () => {
 
 describe('TimeFromNow pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: TimeFromNowPipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         moment.locale('en');
         pipe = new TimeFromNowPipe();
     });
@@ -397,7 +387,6 @@ describe('TimeFromNow pipe', () => {
 
 describe('Filter pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: FilterPipe;
     let data = [{
         name: 'Ram',
@@ -422,7 +411,7 @@ describe('Filter pipe', () => {
     }];
 
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new FilterPipe();
     });
 
@@ -463,10 +452,9 @@ describe('Filter pipe', () => {
 
 describe('FileSize pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: FileSizePipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new FileSizePipe();
     });
 
@@ -499,10 +487,9 @@ describe('FileSize pipe', () => {
 
 describe('FileIconClass pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: FileIconClassPipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new FileIconClassPipe();
     });
 
@@ -554,10 +541,9 @@ describe('FileIconClass pipe', () => {
 
 describe('StateClass pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: StateClassPipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new StateClassPipe();
     });
 
@@ -588,10 +574,9 @@ describe('StateClass pipe', () => {
 
 describe('fileExtensionFromMime pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: FileExtensionFromMimePipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new FileExtensionFromMimePipe();
     });
 
@@ -646,10 +631,9 @@ describe('fileExtensionFromMime pipe', () => {
 });
 
 describe('Image pipe', () => {
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: ImagePipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         pipe = new ImagePipe();
     });
 
@@ -698,11 +682,10 @@ describe('Image pipe', () => {
 
 describe('TrustAs, Sanitize pipes', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let trustAsPipe: TrustAsPipe;
     let sanitizePipe: SanitizePipe;
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         trustAsPipe = new TrustAsPipe(TestBed.inject(DomSanitizer));
         sanitizePipe = new SanitizePipe(TestBed.inject(DomSanitizer));
     });
@@ -741,18 +724,13 @@ describe('TrustAs, Sanitize pipes', () => {
 
 describe('Custom pipe', () => {
 
-    let fixture: ComponentFixture<PipeWrapperComponent>;
     let pipe: CustomPipe;
-    let wrapperComponent: PipeWrapperComponent;
     let customPipeManager: CustomPipeManager;
-    let injector : Injector;
     let app: App;
 
     beforeEach(() => {
-        fixture = compileTestComponent(testModuleDef, PipeWrapperComponent);
-        wrapperComponent = fixture.componentInstance;
+        compileTestComponent(testModuleDef, PipeWrapperComponent);
         customPipeManager = TestBed.inject(CustomPipeManager);
-        injector = TestBed.inject(Injector);
         app = TestBed.inject(App);
          pipe = TestBed.runInInjectionContext(() => new CustomPipe(app, customPipeManager));
     });

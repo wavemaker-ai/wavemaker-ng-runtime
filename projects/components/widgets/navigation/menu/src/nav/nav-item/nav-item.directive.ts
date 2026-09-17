@@ -20,7 +20,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-nav-item', hostClass: DEFAULT_CLS};
     ]
 })
 export class NavItemDirective extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     @ContentChild(AnchorComponent) innerLink;
 
     @HostListener('click')

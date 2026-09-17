@@ -7,7 +7,7 @@ import { AppJSProvider } from '@wm/runtime/base';
     providedIn: 'root'
 })
 export class AppJSProviderService extends AppJSProvider {
-    constructor(private $http: HttpClient) {
+    constructor(private readonly $http: HttpClient) {
         super();
     }
 

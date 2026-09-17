@@ -18,7 +18,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     exportAs: 'wmFooter'
 })
 export class FooterDirective extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
 

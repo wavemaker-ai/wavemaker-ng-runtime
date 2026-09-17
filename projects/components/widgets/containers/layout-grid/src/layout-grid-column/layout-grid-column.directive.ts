@@ -20,8 +20,8 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class LayoutGridColumnDirective extends StylableComponent {
-    static initializeProps = registerProps();
-    constructor(inj: Injector, @Attribute('height') height, private viewport: Viewport, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    static readonly initializeProps = registerProps();
+    constructor(inj: Injector, @Attribute('height') height, private readonly viewport: Viewport, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
 
         // if the height is provided set the overflow to auto

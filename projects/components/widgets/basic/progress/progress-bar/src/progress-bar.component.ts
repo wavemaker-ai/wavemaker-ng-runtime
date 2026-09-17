@@ -41,7 +41,7 @@ interface IProgressInfo {
     ]
 })
 export class ProgressBarComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public displayformat: string;
     public datavalue: string;
@@ -53,7 +53,7 @@ export class ProgressBarComponent extends StylableComponent {
     public arialabel: string;
     public tabindex: string;
 
-    private _prepareData: Function;
+    private readonly _prepareData: Function;
     private readonly hasDataset: boolean;
 
     // progress-bar data, ngFor in the template iterates on this
@@ -90,7 +90,7 @@ export class ProgressBarComponent extends StylableComponent {
         val = parseFloat('' + val);
         val = (val.toFixed(getDecimalCount(format)));
 
-        if (format && format.includes('%')) {
+        if (format?.includes('%')) {
             val = `${val}%`;
         }
         return val;
@@ -119,13 +119,13 @@ export class ProgressBarComponent extends StylableComponent {
                 if (isPercentageValue(this.datavalue)) {
                     const val = (this.datavalue || '0%');
                     width = displayVal = val;
-                } else {
+                } else 
                     if (isDefined(this.datavalue)) {
                         const denominator = (+this.maxvalue - +this.minvalue) || 1;
                         const val = ((+this.datavalue - +this.minvalue) * 100) / denominator + '%';
                         width = displayVal = val;
                     }
-                }
+                
             }
             this.data[0].displayValue = this.getFormattedDisplayVal(displayVal as string);
             this.data[0].progressBarWidth = width as string;

@@ -17,7 +17,7 @@ import {
 
 import {Observable, Subject} from 'rxjs';
 
-import {$watch, addClass, App} from '@wm/core';
+import {$watch, App} from '@wm/core';
 
 import {ListComponent} from './list.component';
 import {APPLY_STYLES_TYPE, AutoLayout, StylableComponent, styler, widgetIdGenerator} from "@wm/components/base";
@@ -39,7 +39,7 @@ const WIDGET_CONFIG = { widgetType: 'wm-listtemplate'};
 })
 export class ListItemDirective  extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
 
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public item;
     public context;
@@ -49,7 +49,7 @@ export class ListItemDirective  extends StylableComponent implements OnInit, Aft
     public readonly listComponent: ListComponent;
 
     private itemClass = '';
-    private _currentItemWidgets = {};
+    private readonly _currentItemWidgets = {};
     viewContainerRef: ViewContainerRef;
     /**
      * To avoid re-rendering of widget, passing unique id as contextKey to createCustomInjector
@@ -57,10 +57,10 @@ export class ListItemDirective  extends StylableComponent implements OnInit, Aft
     trackId = widgetIdGenerator.nextUid();
 
     // Store event listener references for cleanup
-    private editClickHandler;
-    private deleteClickHandler;
-    private mouseEnterHandler;
-    private mouseLeaveHandler;
+    private readonly editClickHandler;
+    private readonly deleteClickHandler;
+    private readonly mouseEnterHandler;
+    private readonly mouseLeaveHandler;
 
     @HostBinding('class.active') isActive = false;
     @HostBinding('class.disable-item') disableItem = false;
@@ -102,8 +102,8 @@ export class ListItemDirective  extends StylableComponent implements OnInit, Aft
     @Input() set wmListItem(val) {
         this.item = val;
     }
-    private _viewParent = inject(ListComponent, {optional: true});
-    constructor(inj: Injector, elRef: ElementRef, public app: App, private renderer: Renderer2, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    private readonly _viewParent = inject(ListComponent, {optional: true});
+    constructor(inj: Injector, elRef: ElementRef, public app: App, private readonly renderer: Renderer2, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         // addClass(this.nativeElement, DEFAULT_CLS); // Will come to this later for listtemplate = container variant
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER);

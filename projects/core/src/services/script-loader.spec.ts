@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ScriptLoaderService } from './script-loader.service';
-import { _WM_APP_PROJECT } from '../utils/utils';
 
 // Mock _WM_APP_PROJECT with desired values
 jest.mock('../utils/utils', () => ({

@@ -8,8 +8,7 @@
 
 import {
     APP_ID,
-    inject,
-    Inject,
+        Inject,
     Injectable,
     Renderer2,
     RendererFactory2,
@@ -89,12 +88,12 @@ let hasLoggedNativeEncapsulationWarning = false;
 
 @Injectable()
 export class WMDomRendererFactory2 implements RendererFactory2 {
-  private rendererByCompId = new Map<string, Renderer2>();
-  private defaultRenderer: Renderer2;
+  private readonly rendererByCompId = new Map<string, Renderer2>();
+  private readonly defaultRenderer: Renderer2;
 
   constructor(
-      private eventManager: EventManager, private sharedStylesHost: ɵSharedStylesHost,
-      @Inject(APP_ID) private appId: string, @Inject(DOCUMENT) private readonly doc: Document,) {
+      private readonly eventManager: EventManager, private readonly sharedStylesHost: ɵSharedStylesHost,
+      @Inject(APP_ID) private readonly appId: string, @Inject(DOCUMENT) private readonly doc: Document,) {
     this.defaultRenderer = new WMDefaultDomRenderer2(eventManager, doc);
   }
 
@@ -146,7 +145,7 @@ export class WMDomRendererFactory2 implements RendererFactory2 {
 
 class WMDefaultDomRenderer2 implements Renderer2 {
   data: {[key: string]: any} = Object.create(null);
-  constructor(private eventManager: EventManager, @Inject(DOCUMENT) protected readonly doc: Document,) {}
+  constructor(private readonly eventManager: EventManager, @Inject(DOCUMENT) protected readonly doc: Document,) {}
 
   destroy(): void {}
 
@@ -246,14 +245,14 @@ class WMDefaultDomRenderer2 implements Renderer2 {
       } else {
         el.setAttribute(name, value);
       }
-    } else {
+    } else 
       if (name === 'style') {
         this.resetStyles(el);
         this.applyStyles(el, value);
       } else {
         el.setAttribute(name, value);
       }
-    }
+    
   }
 
   removeAttribute(el: any, name: string, namespace?: string): void {
@@ -346,12 +345,12 @@ function isTemplateNode(node: any): node is HTMLTemplateElement {
 }
 
 class EmulatedEncapsulationDomRenderer2 extends WMDefaultDomRenderer2 {
-  private contentAttr: string;
-  private hostAttr: string;
+  private readonly contentAttr: string;
+  private readonly hostAttr: string;
 
   constructor(
       eventManager: EventManager, sharedStylesHost: ɵSharedStylesHost,
-      private component: RendererType2, appId: string, @Inject(DOCUMENT) protected readonly doc: Document) {
+      private readonly component: RendererType2, appId: string, @Inject(DOCUMENT) protected readonly doc: Document) {
     super(eventManager, doc);
     const styles = flattenStyles(appId + '-' + component.id, component.styles, []);
     sharedStylesHost.addStyles(styles);
@@ -372,11 +371,11 @@ class EmulatedEncapsulationDomRenderer2 extends WMDefaultDomRenderer2 {
 }
 
 class ShadowDomRenderer extends WMDefaultDomRenderer2 {
-  private shadowRoot: any;
+  private readonly shadowRoot: any;
 
   constructor(
-      eventManager: EventManager, private sharedStylesHost: ɵSharedStylesHost,
-      private hostEl: any, component: RendererType2, @Inject(DOCUMENT) protected readonly doc: Document,) {
+      eventManager: EventManager, private readonly sharedStylesHost: ɵSharedStylesHost,
+      private readonly hostEl: any, component: RendererType2, @Inject(DOCUMENT) protected readonly doc: Document,) {
     super(eventManager, doc);
     this.shadowRoot = (hostEl as any).attachShadow({mode: 'open'});
     this.sharedStylesHost.addHost(this.shadowRoot);

@@ -1,9 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { TextContentDirective } from "@wm/components/base";
+import { TextContentDirective, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, ImagePipe, WmAppIconComponent } from '@wm/components/base';
 import {Component, Inject, Injector, OnInit, OnDestroy, Optional} from '@angular/core';
 
 import {DataSource, validateDataSourceCtx} from '@wm/core';
-import { IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, ImagePipe, WmAppIconComponent } from '@wm/components/base';
 
 import { registerProps } from './spinner.props';
 import {includes, isEmpty, split} from "lodash-es";
@@ -22,7 +21,7 @@ const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-spinner', hostClass: DEFAU
     exportAs: 'wmSpinner'
 })
 export class SpinnerComponent extends StylableComponent implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public iconclass = '';
     public iconurl = '';
@@ -57,7 +56,7 @@ export class SpinnerComponent extends StylableComponent implements OnInit, OnDes
         });
     }
 
-    constructor(inj: Injector, private imagePipe: ImagePipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private readonly imagePipe: ImagePipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
     }

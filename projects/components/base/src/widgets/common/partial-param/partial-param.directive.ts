@@ -12,7 +12,7 @@ import {get} from "lodash-es";
     selector: '[partialContainer]',
 })
 export class PartialParamHandlerDirective implements OnDestroy {
-    constructor (@Self() @Inject(WidgetRef) private widgetRef) {
+    constructor (@Self() @Inject(WidgetRef) private readonly widgetRef) {
         this.widgetRef.partialParams = {};
         this.widgetRef.pageParams = this.widgetRef.partialParams;
         this.widgetRef.params$ = new Subject();
@@ -67,7 +67,7 @@ export class PartialParamDirective implements OnInit {
     constructor(
         @Attribute('value.bind') public bindValue,
         @Attribute('type') public type,
-        private partialParamsProvider: PartialParamHandlerDirective
+        private readonly partialParamsProvider: PartialParamHandlerDirective
     ) {
     }
 

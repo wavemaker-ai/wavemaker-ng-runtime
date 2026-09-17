@@ -43,7 +43,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class TabPaneComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     private _isFirstLoad: boolean = true;
     private _isOnLoadTriggered: boolean = false;
@@ -51,9 +51,9 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
     public name: string;
     public show: boolean;
     public smoothscroll: any;
-    private isdynamic: boolean;
+    private readonly isdynamic: boolean;
     public content: string;
-    private _currentTabWidgets = {};
+    private readonly _currentTabWidgets = {};
 
     @HostBinding('class.active') isActive = false;
     @HostBinding('class.disabled') disabled = false;
@@ -61,13 +61,13 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
     // reference to the components which needs a redraw(eg, grid, chart) when the height of this component changes
     @ContentChildren(RedrawableDirective, {descendants: true}) reDrawableComponents;
 
-    private tabsRef = inject(TabsComponent);
+    private readonly tabsRef = inject(TabsComponent);
     constructor(
         inj: Injector,
         @Attribute('heading') public heading,
         @Attribute('title') public title,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any,
-        private app: App
+        private readonly app: App
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);
 

@@ -1,4 +1,4 @@
-import {ContentChildren, Directive, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import {ContentChildren, Directive, Injector, OnDestroy} from '@angular/core';
 import { StylableComponent } from "./stylable.component";
 import { RedrawableDirective } from "../redraw/redrawable.directive";
 import { IWidgetConfig } from '../../framework/types';
@@ -18,10 +18,10 @@ export abstract class BaseContainerComponent extends StylableComponent implement
     private updateRedrawableComponents(widgets) {
         pickBy(widgets, widget => {
             // check for redrawable widget and whether it is already exist in reDrawableComponents query list or not
-            if (widget && widget.nativeElement && widget.nativeElement.hasAttribute('redrawable') && !includes(this.reDrawableComponents._results, widget)) {
+            if (widget?.nativeElement?.hasAttribute('redrawable') && !includes(this.reDrawableComponents._results, widget)) {
                 this.reDrawableComponents._results.push(widget);
             }
-            if (widget && widget.Widgets) {
+            if (widget?.Widgets) {
                 this.updateRedrawableComponents(widget.Widgets);
             }
         });

@@ -95,7 +95,7 @@ export const getObjValueByKey = (obj: any, strKey: string) => {
         /* convert indexes to properties, so as to work for even 'key1[0].child1'*/
         strKey.replace(/\[(\w+)\]/g, '.$1').split('.').forEach(key => {
             // If obj is null, then assign val to null.
-            val = (val && val[key]) || (isNull(obj) ? obj : obj[key]);
+            val = (val?.[key]) || (isNull(obj) ? obj : obj[key]);
         });
         return val;
     }
@@ -392,7 +392,7 @@ const pushFieldDef = (dataObject, columnDefObj, namePrefix, options) => {
         }
         if (options.noModifyTitle) {
             modifiedTitle = title;
-        } else {
+        } else 
             if (isString(title)) {
                 modifiedTitle = prettifyLabel(title);
                 modifiedTitle = deHyphenate(modifiedTitle);
@@ -400,7 +400,7 @@ const pushFieldDef = (dataObject, columnDefObj, namePrefix, options) => {
             } else {
                 modifiedTitle = title;
             }
-        }
+        
         title = namePrefix ? namePrefix + '.' + title : title;
         if (isRelated) {
             // For related columns, shorten the title to last two words

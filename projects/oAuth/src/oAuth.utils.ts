@@ -203,7 +203,7 @@ function checkForWindowExistence(oAuthWindow, provider, callback, providerInfo?)
     if (oAuthWindow && listeners[provider]) {
         if (!oAuthWindow.closed) { // .closed is supported across major browser vendors however for IE the user has to enable protected mode from security options
             setTimeout(checkForWindowExistence.bind(undefined, oAuthWindow, provider, callback, providerInfo), 3000);
-        } else {
+        } else 
             if (!isPassedFlow(providerInfo, pkceIdentifier)) {
                 window.removeEventListener('message', listeners[provider]);
                 delete listeners[provider];
@@ -211,7 +211,7 @@ function checkForWindowExistence(oAuthWindow, provider, callback, providerInfo?)
                     callback('error');
                 }
             }
-        }
+        
     }
 }
 /**
@@ -434,7 +434,7 @@ export const performAuthorization = (url, providerId, onSuccess, onError, http, 
         } else {
             postGetAuthorizationURL(url, providerId, onSuccess, removeProviderConfigCallBack, securityObj, requestSourceType, http);
         }
-    } else {
+    } else 
         if (isPassedFlow(securityObj, implicitIdentifier) || isPassedFlow(securityObj, pkceIdentifier)) {
             triggerProviderConfigCallBack(url, providerId, onSuccess, onError, http, addProviderConfigCallBack, removeProviderConfigCallBack, securityObj, requestSourceType, customUriScheme, deployedURL);
         } else {
@@ -445,5 +445,5 @@ export const performAuthorization = (url, providerId, onSuccess, onError, http, 
                 triggerProviderConfigCallBack(response, providerId, onSuccess, onError, http, addProviderConfigCallBack, removeProviderConfigCallBack, securityObj, requestSourceType, customUriScheme, deployedURL);
             });
         }
-    }
+    
 };

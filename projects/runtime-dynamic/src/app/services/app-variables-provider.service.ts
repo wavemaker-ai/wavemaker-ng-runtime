@@ -7,7 +7,7 @@ import { App } from '@wm/core';
     providedIn: 'root'
 })
 export class AppVariablesProviderService extends AppVariablesProvider {
-    constructor(private resourceManager: AppResourceManagerService, private app: App) {
+    constructor(private readonly resourceManager: AppResourceManagerService, private readonly app: App) {
         super();
     }
 

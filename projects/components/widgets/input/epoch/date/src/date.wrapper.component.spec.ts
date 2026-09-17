@@ -497,7 +497,6 @@ const dateComponentLocaleModuleDef: ITestModuleDef = {
 
 describe(('Date Component with Localization'), () => {
     let dateWrapperComponent: DateWrapperComponent;
-    let wmComponent: DateComponent;
     let fixture: ComponentFixture<DateWrapperComponent>;
 
     beforeEach((async () => {
@@ -505,7 +504,6 @@ describe(('Date Component with Localization'), () => {
         registerLocaleData(localeDE);
         fixture = compileTestComponent(dateComponentLocaleModuleDef, DateWrapperComponent);
         dateWrapperComponent = fixture.componentInstance;
-        wmComponent = dateWrapperComponent.wmComponent;
         fixture.detectChanges();
     }));
     afterEach(() => {

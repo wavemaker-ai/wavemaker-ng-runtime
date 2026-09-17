@@ -1,5 +1,4 @@
 import { _WM_APP_PROJECT } from "@wm/core";
-import { MODE_CONSTANTS } from '@wm/variables';
 
 export const isPrefabInPreview = (prefabName: string) => prefabName === '__self__';
 

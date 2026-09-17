@@ -1,4 +1,42 @@
 (function ($) {
+	const LETTER_KEY_CODES = Array.from({ length: 26 }, (v, i) => i + 65);
+
+	function refreshTreeIcon(ele, treeicon) {
+		$(ele).addClass(treeicon);
+	}
+
+	function bindTreeIconRefreshOnClick(ele, treeicon) {
+		$(ele).on('click', function () {
+			setTimeout(() => refreshTreeIcon(ele, treeicon), 0);
+		});
+	}
+
+	function updateTreeIcons(treeicon) {
+		const eleClose = $('.app-tree li span.button.switch');
+		$(eleClose).map((idx, ele) => {
+			refreshTreeIcon(ele, treeicon);
+			bindTreeIconRefreshOnClick(ele, treeicon);
+		});
+	}
+
+	function matchesNodeAccessKey(node, keyCode) {
+		return 'accesskey' in node && node.accesskey.length && (node.accesskey.charCodeAt(0) & 95) === keyCode;
+	}
+
+	function findNodeMatchingLetterKey(zTree, rootNodes, keyCode) {
+		if (!LETTER_KEY_CODES.includes(keyCode & 95)) return null;
+
+		const nodes = zTree.transformToArray(rootNodes).filter(node => matchesNodeAccessKey(node, keyCode));
+		if (!nodes.length) return null;
+
+		const selectedNodes = zTree.getSelectedNodes();
+		if (!selectedNodes.length) return null;
+
+		if (selectedNodes[0] === nodes[0]) return null;
+
+		return nodes[0];
+	}
+
 	/**
 	 * Dummy function to provide a placeholder for the destroy function
 	 */
@@ -23,12 +61,13 @@
 			element = $(element);
 		}
 
-		var rootNodes = zTree.getNodes();
+		const rootNodes = zTree.getNodes();
 		if (!rootNodes) return;
 
-		var focusSelectedNode = function () {
-			if ((selectedNodes = zTree.getSelectedNodes()) && selectedNodes.length) {
-				$("#" + selectedNodes[0].tId).focus();
+		const focusSelectedNode = function () {
+			const currentSelectedNodes = zTree.getSelectedNodes();
+			if (currentSelectedNodes && currentSelectedNodes.length) {
+				$("#" + currentSelectedNodes[0].tId).focus();
 			}
 		}
 
@@ -43,44 +82,34 @@
 		}
 
 		$.fn.changeTreeIcons = function () {
-			let eleClose = $('.app-tree li span.button.switch');
-
-			$(eleClose).map((idx, ele) => {
-				$(ele).addClass(treeicon);
-				$(ele).on("click", function (e) {
-					setTimeout(() => {
-						$(ele).addClass(treeicon);
-					}, 0);
-				});
-			})
+			updateTreeIcons(treeicon);
 		}
 
-
 		$(element).on('keydown', function (e) {
-			var selectedNodes = zTree.getSelectedNodes();
-			var selectedNode = selectedNodes.length ? selectedNodes[0] : null;
+			const selectedNodes = zTree.getSelectedNodes();
+			const selectedNode = selectedNodes.length ? selectedNodes[0] : null;
 
-			var processSpace = function () {
+			const processSpace = function () {
 				// If there are no nodes or the selected node is not a parent, get out
 				if (selectedNode && selectedNode.isParent) {
 					// Toggle the node
-					zTree.expandNode(selectedNode, selectedNode.open ? false : true, true, true);
+					zTree.expandNode(selectedNode, !selectedNode.open, true, true);
 					$.fn.changeTreeIcons()
 				}
 			}
 
-			var processHome = function () {
+			const processHome = function () {
 				zTree.selectNode(rootNodes[0], false, true);
 			}
 
-			var processEnd = function () {
-				var nodes = zTree.transformToArray(rootNodes);
+			const processEnd = function () {
+				const nodes = zTree.transformToArray(rootNodes);
 				// Select the last node
 				zTree.selectNode(nodes[nodes.length - 1]);
 			}
 
-			var processUp = function () {
-				var priorNode;
+			const processUp = function () {
+				let priorNode;
 				if (selectedNode) {
 					priorNode = selectedNode.getPreNode();
 					if (!priorNode) return;
@@ -94,8 +123,8 @@
 				zTree.selectNode(priorNode);
 			}
 
-			var processDown = function () {
-				var nextNode;
+			const processDown = function () {
+				let nextNode;
 				if (selectedNode) {
 					nextNode = selectedNode.getNextNode();
 					if (!nextNode) return;
@@ -109,11 +138,11 @@
 				zTree.selectNode(nextNode);
 			}
 
-			var processOut = function () {
+			const processOut = function () {
 				if (!selectedNode) return;
 
-				var parentNode = selectedNode.getParentNode();
-				var priorNode = selectedNode.getPreNode();
+				const parentNode = selectedNode.getParentNode();
+				let priorNode = selectedNode.getPreNode();
 				if (!parentNode && !priorNode) return; // Must have been the root node
 
 				if (priorNode) {
@@ -136,13 +165,13 @@
 
 				// Find the parent node with a valid prior sibling
 				if (parentNode) {
-					// This call should be silent otherwise (in my view a bug in) 
+					// This call should be silent otherwise (in my view a bug in)
 					// selectNode causes the root node to blur
 					zTree.selectNode(parentNode, false, true);
 				}
 			}
 
-			var processIn = function () {
+			const processIn = function () {
 				if (!selectedNode) return;
 
 				if (selectedNode.isParent && selectedNode.open && selectedNode.children) {
@@ -150,16 +179,16 @@
 					return;
 				}
 
-				var nextNode = selectedNode.getNextNode();
+				const nextNode = selectedNode.getNextNode();
 				if (nextNode) {
 					zTree.selectNode(nextNode);
 				}
 				else {
 					// Cannot be root if there is a selected node that is not a parent
-					var node = selectedNode;
+					let node = selectedNode;
 					// Find the parent node with a valid next sibling
 					while (node = node.getParentNode()) {
-						var nextNode = node.getNextNode();
+						const nextNode = node.getNextNode();
 						if (nextNode) {
 							zTree.selectNode(nextNode);
 							break;
@@ -168,28 +197,13 @@
 				}
 			}
 
-			var processLetter = function (keyCode) {
-				if (!Array.from({ length: 26 }, (v, i) => i + 65).includes(keyCode & 95)) return false;
+			const processLetter = function (keyCode) {
+				const node = findNodeMatchingLetterKey(zTree, rootNodes, keyCode);
+				if (!node) return false;
 
-				var nodes = zTree.transformToArray(rootNodes);
-				nodes = nodes.filter(node => {
-					return 'accesskey' in node && node.accesskey.length && (node.accesskey.charCodeAt(0) & 95) == keyCode;
-				});
-
-				if (!nodes.length) return false;
-
-				var selectedNodes = zTree.getSelectedNodes();
-				if (!selectedNodes.length) return false;
-
-				if (selectedNodes[0] == nodes[0]) return false;
-
-				zTree.selectNode(nodes[0]);
-
+				zTree.selectNode(node);
 				return true;
 			}
-
-			// console.log('before');
-			// console.log(document.activeElement);
 
 			switch (e.keyCode) {
 				case 32: /* Toggle parent nodes */
@@ -233,8 +247,6 @@
 					break;
 			}
 
-			// console.log('after');
-			// console.log(document.activeElement);
 			focusSelectedNode();
 		});
 

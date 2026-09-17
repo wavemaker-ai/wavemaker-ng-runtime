@@ -1,9 +1,8 @@
-import { TextContentDirective } from "@wm/components/base";
+import { TextContentDirective, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TrustAsPipe } from '@wm/components/base';
 import {Component, Inject, Injector, Optional, SecurityContext} from '@angular/core';
 import {SafeResourceUrl} from '@angular/platform-browser';
 
 import {encodeUrl, isInsecureContentRequest} from '@wm/core';
-import {IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TrustAsPipe} from '@wm/components/base';
 
 import {registerProps} from './iframe.props';
 
@@ -23,7 +22,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class IframeComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public iframesrc: string;
     public encodeurl: boolean;
@@ -41,7 +40,7 @@ export class IframeComponent extends StylableComponent {
      */
     public showContentLoadError = false;
 
-    constructor(inj: Injector, private trustAsPipe: TrustAsPipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private readonly trustAsPipe: TrustAsPipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
     }

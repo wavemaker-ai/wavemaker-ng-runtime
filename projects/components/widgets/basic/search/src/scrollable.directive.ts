@@ -9,8 +9,8 @@ declare const $;
     selector: '[scrollableHandler]'
 })
 export class ScrollableDirective implements AfterContentInit, AfterViewInit, OnDestroy {
-    private elementRef: ElementRef;
-    private searchRef = inject( SearchComponent );
+    private readonly elementRef: ElementRef;
+    private readonly searchRef = inject( SearchComponent );
     private boundNotifyParent: (evt: Event) => void; // MEMORY LEAK FIX: Store bound function
     
     constructor(inj: Injector) {
@@ -41,7 +41,7 @@ export class ScrollableDirective implements AfterContentInit, AfterViewInit, OnD
     
     ngOnDestroy() {
         // MEMORY LEAK FIX: Remove scroll event listener using stored bound function reference
-        if (this.elementRef && this.elementRef.nativeElement && this.boundNotifyParent) {
+        if (this.elementRef?.nativeElement && this.boundNotifyParent) {
             this.elementRef.nativeElement.removeEventListener('scroll', this.boundNotifyParent);
             this.boundNotifyParent = null;
         }

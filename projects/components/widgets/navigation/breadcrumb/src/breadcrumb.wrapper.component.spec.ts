@@ -53,14 +53,13 @@ describe('BreadcrumbComponent', () => {
     let breadcrumbComponent: BreadcrumbComponent;
     let fixture: ComponentFixture<BreadcrumbWrapperComponent>;
     let router: Router;
-    let location: Location;
 
     beforeEach(waitForAsync(() => {
         fixture = TestBed.configureTestingModule(testModuleDef).createComponent(BreadcrumbWrapperComponent);
         wrapperComponent = fixture.componentInstance;
         breadcrumbComponent = wrapperComponent.wmComponent;
         router = TestBed.inject(Router);
-        location = TestBed.inject(Location);
+        TestBed.inject(Location);
         jest.spyOn(breadcrumbComponent, 'invokeEventCallback').mockReturnValue(true);
         fixture.detectChanges();
     }));

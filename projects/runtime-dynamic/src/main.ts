@@ -12,14 +12,13 @@ if (sessionStorage.getItem(DEBUG_MODE) !== 'true') {
 }
 console.time('bootstrap');
 
-
 document.addEventListener('DOMContentLoaded', () => {
   new Promise<Event | void>(resolve => {
       resolve();
   }).then(() => bootstrapApplication(AppComponent, appConfig))
     .then((appRef: ApplicationRef) => { 
       window.addEventListener('unload', () => {
-        appRef.components.map(c => c?.destroy());
+        appRef.components.forEach(c => c?.destroy());
       });
     })
     .catch(err => console.error('Error bootstrapping app:', err));

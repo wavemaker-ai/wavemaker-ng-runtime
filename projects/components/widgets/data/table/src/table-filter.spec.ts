@@ -1,4 +1,4 @@
-import { $appDigest, DataSource, getClonedObject } from '@wm/core';
+import { DataSource, getClonedObject } from '@wm/core';
 import { TableFilterSortDirective } from './table-filter.directive';
 import { TableComponent } from './table.component';
 import { refreshDataSource, getMatchModeMsgs } from '@wm/components/base';
@@ -330,7 +330,6 @@ describe('TableFilterSortDirective', () => {
             const searchObj = [{ id: 1 }, { name: 'Test' }];
             const visibleCols = ['id', 'name'];
             directive.getTableVisibleCols = jest.fn().mockReturnValue(visibleCols);
-            const getFilteredData = jest.fn().mockReturnValue(data);
 
             expect(directive.getSearchResult(data, searchObj)).toEqual(data);
         });

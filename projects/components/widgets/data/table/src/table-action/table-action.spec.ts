@@ -13,7 +13,6 @@ import { App } from '@wm/core';
 class TestComponent { }
 
 describe('TableActionDirective', () => {
-    let component: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let directive: TableActionDirective;
     let tableComponent: jest.Mocked<TableComponent>;
@@ -34,7 +33,6 @@ describe('TableActionDirective', () => {
         });
 
         fixture = TestBed.createComponent(TestComponent);
-        component = fixture.componentInstance;
         directive = fixture.debugElement.children[0].injector.get(TableActionDirective);
     });
 

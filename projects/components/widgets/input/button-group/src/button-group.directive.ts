@@ -17,7 +17,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class ButtonGroupDirective extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     @HostBinding('class.btn-group-vertical') vertical: boolean;
     @HostListener('click', ['$event']) handleClick(event) {
         const $target = $(event.target).closest('.app-button');

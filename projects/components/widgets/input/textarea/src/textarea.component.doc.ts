@@ -1,5 +1,4 @@
 import { Input } from '@angular/core';
-import {TextareaComponent} from '../textarea.component';
 
 /**
  * The wmTextarea component defines the textarea widget.

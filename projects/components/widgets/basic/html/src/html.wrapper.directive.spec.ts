@@ -48,14 +48,12 @@ TestBase.verifyAccessibility();
 
 
 describe('HtmlDirective', () => {
-    let component: HtmlWrapperDirective;
     let fixture: ComponentFixture<HtmlWrapperDirective>;
     let directiveElement: HTMLElement;
     let directive: HtmlDirective;
 
     beforeEach(async () => {
         fixture = compileTestComponent(testModuleDef, HtmlWrapperDirective);
-        component = fixture.componentInstance;
         directiveElement = fixture.debugElement.query(By.directive(HtmlDirective)).nativeElement;
         directive = fixture.debugElement.query(By.directive(HtmlDirective)).injector.get(HtmlDirective);
         // Mock setInitProps to avoid initState error

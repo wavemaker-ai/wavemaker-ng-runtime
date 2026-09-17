@@ -38,17 +38,17 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class AccordionDirective extends StylableComponent implements AfterContentInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public defaultpaneindex: number;
     public closeothers: boolean;
     public statehandler: any;
-    private statePersistence: StatePersistence;
+    private readonly statePersistence: StatePersistence;
 
     private activePaneIndex: number;
     private activePane: AccordionPaneComponent;
-    private promiseResolverFn: Function;
-    private dynamicComponentProvider;
+    private readonly promiseResolverFn: Function;
+    private readonly dynamicComponentProvider;
     private _dynamicContext;
     private dynamicPaneIndex;
     private dynamicPanes;
@@ -292,11 +292,11 @@ export class AccordionDirective extends StylableComponent implements AfterConten
                         this.expandPane(this.getPaneIndexByRef(paneToSelect[0]));
                     }
                 });
-            } else {
+            } else 
                 if (this.isValidPaneIndex(this.defaultpaneindex)) {
                     this.expandPane(this.defaultpaneindex);
                 }
-            }
+            
         } else if (key === 'tabindex') {
             return;
         } else {
@@ -322,9 +322,9 @@ export class AccordionDirective extends StylableComponent implements AfterConten
         }
 
         // MEMORY LEAK FIX: Destroy all dynamically created component instances
-        if (this.dynamicComponentRefs && this.dynamicComponentRefs.length) {
+        if (this.dynamicComponentRefs?.length) {
             this.dynamicComponentRefs.forEach(componentRef => {
-                if (componentRef && componentRef.destroy) {
+                if (componentRef?.destroy) {
                     componentRef.destroy();
                 }
             });

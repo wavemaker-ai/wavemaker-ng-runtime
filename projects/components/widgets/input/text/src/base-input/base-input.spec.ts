@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgModel } from '@angular/forms';
 import { Component, ElementRef, Injector } from '@angular/core';
-import { IWidgetConfig, styler, WidgetConfig } from '@wm/components/base';
+import { IWidgetConfig, WidgetConfig } from '@wm/components/base';
 import { BaseInput } from './base-input';
 import { addClass, App } from '@wm/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';

@@ -71,6 +71,8 @@
   <div class="mobile-input mobile-datepicker-container"
     [tabindex]="tabindex || 0"
     (click)="!(disabled || readonly) && showDatePickerModal(bsDataValue)"
+    (keydown.enter)="!(disabled || readonly) && showDatePickerModal(bsDataValue)"
+    (keydown.space)="$event.preventDefault(); !(disabled || readonly) && showDatePickerModal(bsDataValue)"
     (focus)="onDateTimeInputFocus(true); invokeOnFocus($event);"
     (blur)="onDateTimeInputBlur(); invokeOnTouched($event)"
     [attr.aria-label]="displayValue ? 'Change Date ' + displayValue : arialabel || 'Choose Date'"

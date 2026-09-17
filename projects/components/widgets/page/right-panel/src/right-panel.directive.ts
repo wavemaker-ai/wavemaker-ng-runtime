@@ -20,7 +20,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     exportAs: 'wmRightPanel'
 })
 export class RightPanelDirective extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, @Attribute('navtype') navtype: string) {
         super(inj, WIDGET_CONFIG, explicitContext);
 

@@ -63,7 +63,7 @@ let activePopover: PopoverComponent;
 })
 
 export class PopoverComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public event: string;
     public isOpen = false;
@@ -105,7 +105,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     public iconposition: string;
     private documentClickHandler: (e: MouseEvent) => void;
     private isClosingProgrammatically = false;
-    private static activePopovers: PopoverComponent[] = [];
+    private static readonly activePopovers: PopoverComponent[] = [];
     private isHandlingClick = false;
     private preventFocusShift: boolean = false;
     private partialLoadedSubscription: any;
@@ -117,7 +117,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     @ContentChild(TemplateRef) popoverTemplate;
     @ContentChild('partial') partialRef;
 
-    constructor(inj: Injector, private app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, private cdr: ChangeDetectorRef) {
+    constructor(inj: Injector, private readonly app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, private readonly cdr: ChangeDetectorRef) {
         super(inj, WIDGET_CONFIG, explicitContext);
         this.popoverContainerCls = `app-popover-${this.widgetId}`;
         this.isPrism = this.app.isPrism;
@@ -415,7 +415,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
                 }
 
                 // Check if component is still alive and partialRef exists
-                if (!this.partialRef || !this.partialRef.nativeElement) {
+                if (!this.partialRef?.nativeElement) {
                     return;
                 }
 

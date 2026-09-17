@@ -427,11 +427,11 @@ export const processNode = (node, importCollector: (i: ImportDef[]) => void, pro
                 providers.splice(providers.indexOf(provideInfo), 1);
             }
             markup += (<any>post)(attrMap, shared, ...requiredProviders);
-        } else {
+        } else 
             if (node.endSourceSpan && !getHtmlTagDefinition(node.name).isVoid) {
                 markup += `</${nodeName}>`;
             }
-        }
+        
     } else if (node instanceof Text) {
         markup += node.value;
     } else if (node instanceof Comment) {
@@ -440,7 +440,7 @@ export const processNode = (node, importCollector: (i: ImportDef[]) => void, pro
         }
     }
     importCollector(WIDGET_IMPORTS.get(node.name));
-    if (nodeDef && nodeDef.imports) {
+    if (nodeDef?.imports) {
         let imports = [];
         if (typeof nodeDef.imports === 'function') {
             imports = nodeDef.imports(attrMap);

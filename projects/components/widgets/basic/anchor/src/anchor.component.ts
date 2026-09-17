@@ -38,7 +38,7 @@ export const disableContextMenu = ($event: Event) => {
     exportAs: 'wmAnchor'
 })
 export class AnchorComponent extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     private hasNavigationToCurrentPageExpr: boolean;
     private hasGoToPageExpr: boolean;
@@ -59,11 +59,11 @@ export class AnchorComponent extends StylableComponent implements AfterViewInit,
     @HostBinding('target') target: string;
     @HostBinding('attr.accesskey') shortcutkey: string;
     @HostBinding('attr.icon-position') iconposition: string;
-    private _eventNotifier = new EventNotifier();
+    private readonly _eventNotifier = new EventNotifier();
 
     constructor(
         inj: Injector,
-        private app: App,
+        private readonly app: App,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);

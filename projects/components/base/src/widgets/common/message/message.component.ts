@@ -21,7 +21,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-message', hostClass: DEFA
     exportAs: 'wmMessage'
 })
 export class MessageComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     messageClass = '';
     messageIconClass = '';
     type = '';

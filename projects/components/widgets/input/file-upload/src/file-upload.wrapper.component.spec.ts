@@ -577,7 +577,6 @@ describe('Fileupload Component', () => {
 
             // Use setTimeout to allow for the asynchronous update
             setTimeout(() => {
-                const updatedFile = wmComponent.selectedFiles.find(file => file.name === 'valid.txt');
                 //expect(updatedFile.progress).toBe(50);
                 //expect(updatedFile.status).toBe('error');
                 //expect(updatedFile.errMsg).toBe('Upload failed due to network error');

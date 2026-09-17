@@ -7,7 +7,7 @@ import {clone, isNil, isString} from "lodash-es";
  * @param options
  */
 export const navigate = (variable, options) => {
-    variable.dataSet = (options && options.data) || variable.dataSet;
+    variable.dataSet = (options?.data) || variable.dataSet;
     let viewName;
     const pageName = variable.dataBinding.pageName || variable.pageName,
         operation = variable.operation,
@@ -33,16 +33,16 @@ export const navigate = (variable, options) => {
             });
             break;
         case 'gotoView':
-            viewName = (variable.dataBinding && variable.dataBinding.viewName) || variable.viewName;
+            viewName = (variable.dataBinding?.viewName) || variable.viewName;
             break;
         case 'gotoTab':
-            viewName = (variable.dataBinding && variable.dataBinding.tabName) || variable.tabName;
+            viewName = (variable.dataBinding?.tabName) || variable.tabName;
             break;
         case 'gotoAccordion':
-            viewName = (variable.dataBinding && variable.dataBinding.accordionName) || variable.accordionName;
+            viewName = (variable.dataBinding?.accordionName) || variable.accordionName;
             break;
         case 'gotoSegment':
-            viewName = (variable.dataBinding && variable.dataBinding.segmentName) || variable.segmentName;
+            viewName = (variable.dataBinding?.segmentName) || variable.segmentName;
             break;
     }
 

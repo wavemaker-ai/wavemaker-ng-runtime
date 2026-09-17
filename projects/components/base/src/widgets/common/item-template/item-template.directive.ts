@@ -29,7 +29,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-item-template'};
     ]
 })
 export class ItemTemplateDirective extends StylableComponent implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     public context;
     public content;
     public partialParams;
@@ -45,7 +45,7 @@ export class ItemTemplateDirective extends StylableComponent implements OnInit, 
         this.widget.content = value;
     }
 
-    constructor(inj: Injector, elRef: ElementRef, private app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, elRef: ElementRef, private readonly app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         this.nativeElement = elRef.nativeElement;
         // this.context = (<NgForOfContext<ItemTemplateDirective>>(<any>inj).view.context);

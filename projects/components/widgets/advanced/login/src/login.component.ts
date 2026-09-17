@@ -30,7 +30,7 @@ const WIDGET_INFO = {widgetType: 'wm-login', hostClass: 'app-login'};
     ]
 })
 export class LoginComponent extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     loginBtnCmp: ButtonComponent;
 
     @ContentChild(FormComponent) formCmp: FormComponent;

@@ -1,4 +1,4 @@
-import { AfterContentInit, Directive, ElementRef, Injector, OnDestroy, Optional } from '@angular/core';
+import { AfterContentInit, Directive, Injector, OnDestroy } from '@angular/core';
 
 import {Viewport, ViewportEvent} from '@wm/core';
 import { registerProps } from './custom-widget-prop';
@@ -16,9 +16,9 @@ declare const _;
     ]
 })
 export class CustomWidgetDirective extends StylableComponent implements OnDestroy, AfterContentInit {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
-    constructor(inj: Injector, private viewport: Viewport) {
+    constructor(inj: Injector, private readonly viewport: Viewport) {
         super(inj, WIDGET_CONFIG);
         this.registerDestroyListener(this.viewport.subscribe(ViewportEvent.RESIZE, data => this.callback('resize', data)));
         this.registerDestroyListener(this.viewport.subscribe(ViewportEvent.ORIENTATION_CHANGE, data => this.callback('orientationchange', data)));

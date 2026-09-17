@@ -1,6 +1,6 @@
 import {Directive, HostBinding, Inject, Injector, OnInit, Optional} from '@angular/core';
 
-import {setAttr, setCSS, switchClass} from '@wm/core';
+import {setCSS, switchClass} from '@wm/core';
 import {
     DISPLAY_TYPE,
     ImagePipe,
@@ -28,7 +28,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     exportAs: 'wmPicture'
 })
 export class PictureDirective extends StylableComponent implements OnInit {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     encodeurl;
     picturesource;
@@ -37,7 +37,7 @@ export class PictureDirective extends StylableComponent implements OnInit {
 
     @HostBinding('src') imgSource: string;
 
-    constructor(inj: Injector, private imagePipe: ImagePipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private readonly imagePipe: ImagePipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
 
         styler(this.nativeElement, this);

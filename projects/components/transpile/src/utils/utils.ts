@@ -43,7 +43,7 @@ export const isDataSetWidget = widget => {
 
 // Get filter widget applicable to the given type
 export const getDataTableFilterWidget = type => {
-    let widget = fieldTypeWidgetTypeMap[type] && fieldTypeWidgetTypeMap[type][0];
+    let widget = fieldTypeWidgetTypeMap[type]?.[0];
     if (type === DataType.BOOLEAN) {
         widget = FormWidgetType.SELECT;
     }
@@ -70,5 +70,5 @@ export const getEditModeWidget = colDef => {
     if (colDef['related-entity-name'] && colDef['primary-key']) {
         return FormWidgetType.SELECT;
     }
-    return (fieldTypeWidgetTypeMap[colDef.type] && fieldTypeWidgetTypeMap[colDef.type][0]) || FormWidgetType.TEXT;
+    return (fieldTypeWidgetTypeMap[colDef.type]?.[0]) || FormWidgetType.TEXT;
 };

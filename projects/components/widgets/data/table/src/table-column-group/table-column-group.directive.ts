@@ -14,7 +14,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-table-column-group', hostClass: ''};
     ]
 })
 export class TableColumnGroupDirective extends BaseComponent implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     accessroles;
     backgroundcolor;

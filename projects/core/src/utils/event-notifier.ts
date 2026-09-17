@@ -4,7 +4,7 @@ import { isObject, noop } from './utils';
 
 export class EventNotifier {
 
-    private _subject = new Subject();
+    private readonly _subject = new Subject();
     private _isInitialized = false;
     private _eventsBeforeInit = [];
 
@@ -57,7 +57,7 @@ export class EventNotifier {
             eventListener = this._subject
                 .subscribe((event: any) => {
                     if (event && isObject(event) && event.name === eventName) {
-                        callback.apply(undefined, event.data);
+                        callback(...event.data);
                     }
                 });
             return () => {

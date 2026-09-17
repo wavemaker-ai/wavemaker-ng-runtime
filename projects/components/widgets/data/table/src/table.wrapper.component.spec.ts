@@ -1,10 +1,9 @@
 import { waitForAsync, ComponentFixture, fakeAsync, tick, discardPeriodicTasks } from "@angular/core/testing";
 import { Component, ViewChild } from "@angular/core";
 import { TrustAsPipe } from "../../../../base/src/pipes/trust-as.pipe";;
-import { FormBuilder } from "@angular/forms";
-import { App, AppDefaults, DynamicComponentRefProvider, AbstractI18nService, Viewport, DataSource, extendProto } from "@wm/core";
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { App, AppDefaults, DynamicComponentRefProvider, AbstractI18nService, Viewport, DataSource, extendProto, VALIDATOR } from '@wm/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { WidgetRef } from '@wm/components/base';
 import { IMaskModule } from 'angular-imask';
 import { TableComponent } from './table.component';
@@ -15,7 +14,6 @@ import { TableColumnDirective } from './table-column/table-column.directive';
 import { TableColumnGroupDirective } from './table-column-group/table-column-group.directive';
 import { TableRowDirective } from './table-row/table-row.directive';
 import { TableRowActionDirective } from './table-row-action/table-row-action.directive';
-import { VALIDATOR } from '@wm/core';
 import { BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { TimepickerModule } from 'ngx-bootstrap/timepicker';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
@@ -445,7 +443,6 @@ const TestBase: ComponentTestBase = new ComponentTestBase(componentDef);
 // TestBase.verifyPropsInitialization();  /* to be fixed for isdynamictable property issue */
 // TestBase.verifyCommonProperties(); /* to be fixed for tabindex property issue */
 TestBase.verifyStyles();
-
 
 const clickEditElement = (isNewRow, fixture) => {
     const selector = isNewRow ? 'tr.app-datagrid-row:first-child>td' : 'tr.app-datagrid-row:first-child>td .edit-row-button';
@@ -926,7 +923,6 @@ describe("DataTable", () => {
                     );
                 }));
 
-
                 it('should trigger custom validator(sync)', waitForAsync(() => {
                     customValidatorSync(false, wmComponent, inline_edit_fixture);
                 }));
@@ -1034,7 +1030,6 @@ describe("DataTable", () => {
                         }, 600);
                     });
                 });
-
 
                 describe('triggerWMEvent', () => {
                     it('should not trigger event if editmode is dialog', () => {
@@ -1468,11 +1463,6 @@ describe("DataTable", () => {
                             field1: 'value1',
                             field2: 'value2',
                         };
-
-                        const mockPrepareFieldDefs = jest.fn().mockReturnValue([
-                            { field: 'field1', displayName: 'Field 1' },
-                            { field: 'field2', displayName: 'Field 2' },
-                        ]);
 
                         jest.spyOn(wmComponent as any, 'invokeEventCallback').mockImplementation(() => { });
                         jest.spyOn(wmComponent as any, 'generateDynamicColumns').mockImplementation(() => { });
@@ -2035,7 +2025,6 @@ describe("DataTable", () => {
                     });
                 });
 
-
                 describe('_documentClickBind', () => {
                     beforeEach(() => {
                         Object.defineProperty(wmComponent, '$element', {
@@ -2161,7 +2150,6 @@ describe("DataTable", () => {
                 describe('generateDynamicColumns', () => {
                     let mockDynamicComponentProvider;
                     let mockViewContainerRef;
-                    let mockComponentRef;
 
                     beforeEach(() => {
                         mockDynamicComponentProvider = {
@@ -2173,10 +2161,6 @@ describe("DataTable", () => {
                                 instance: {},
                                 location: { nativeElement: document.createElement('div') }
                             })
-                        };
-                        mockComponentRef = {
-                            instance: {},
-                            location: { nativeElement: document.createElement('div') }
                         };
                         (wmComponent as any).dynamicComponentProvider = mockDynamicComponentProvider;
                         wmComponent.dynamicTableRef = mockViewContainerRef;
@@ -2627,7 +2611,6 @@ describe("DataTable", () => {
                     filterInputEl.dispatchEvent(new Event('input'));
                     filterInputEl.dispatchEvent(new Event('keyup'));
 
-
                     quick_edit_fixture.detectChanges();
 
                     await quick_edit_fixture.whenStable();
@@ -2646,7 +2629,6 @@ describe("DataTable", () => {
                     expect(loadMoreBtnEl).toBeDefined();
                 });
 
-
                 it('should open confirmaion dialog on click of delete icon', () => {
                     const debugEl = quick_edit_fixture.debugElement.nativeElement;
                     const tableBodyEl = debugEl.querySelector(".app-datagrid-body");
@@ -2656,7 +2638,6 @@ describe("DataTable", () => {
                     const modalEl = document.querySelector(".modal-dialog");
                     expect(modalEl).toBeDefined();
                 });
-
 
                 it("Tab out between columns", () => { });
                 it("Tab out of last columns with empty new-row", () => { });

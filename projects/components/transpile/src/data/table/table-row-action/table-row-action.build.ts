@@ -16,7 +16,7 @@ const getSaveCancelTemplate = () => {
 const getRowActionTmpl = (attrs) => {
     const action =  attrs.get('action');
     const actionTmpl = action ? ` click.event.delayed="${action}" ` : '';
-    const saveCancelTmpl = action && action.includes('editRow(') ? getSaveCancelTemplate() : '';
+    const saveCancelTmpl = action?.includes('editRow(') ? getSaveCancelTemplate() : '';
     const btnClass = action ? (action.includes('editRow(') ? 'edit edit-row-button' :
                         (action.includes('deleteRow(') ? 'delete delete-row-button' : '')) : '';
     const tabIndex = attrs.get('tabindex') ? `tabindex="${attrs.get('tabindex')}"` : '';

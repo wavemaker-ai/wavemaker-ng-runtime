@@ -1,12 +1,16 @@
 import { AfterViewInit, HostListener, Injector, OnDestroy, ViewChild, Directive, AfterContentInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { isAndroid, isIos, Viewport, ScriptLoaderService, registerFnByExpr } from '@wm/core';
 import { LayoutDirective, SpaPageDirective } from '@wm/components/page';
 
 import {Subject} from 'rxjs';
 
 import {
+    isAndroid,
+    isIos,
+    Viewport,
+    ScriptLoaderService,
+    registerFnByExpr,
     AbstractI18nService,
     AbstractNavigationService,
     App,
@@ -16,7 +20,6 @@ import {
     UtilsService
 } from '@wm/core';
 import { commonPartialWidgets } from './base-partial.component';
-
 
 import { VariablesService } from '@wm/variables';
 import { AppManagerService } from '../services/app.manager.service';
@@ -134,8 +137,6 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
         Object.entries(variableCollection.Variables).forEach(([name, variable]) => this.Variables[name] = variable);
         Object.entries(variableCollection.Actions).forEach(([name, action]) => this.Actions[name] = action);
 
-
-
         const subscription = this.viewInit$.subscribe(noop, noop, () => {
 
             if (!this.appManager.isAppVariablesFired()) {
@@ -188,7 +189,7 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
                 && lastPage) {
                 const $target = lastPage.parent();
                 const onTransitionEnd = (e) => {
-                    if (resolve && !(e && e.pseudoElement)) {
+                    if (resolve && !e?.pseudoElement) {
                         $target.off('animationend', onTransitionEnd);
                         $target.removeClass(transition);
                         $target.children().first().remove();
@@ -207,7 +208,7 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
                 resolve();
             }
         }).then(() => {
-            this.$page && this.$page.removeClass('page-entry');
+            this.$page?.removeClass('page-entry');
             if (lastPage) {
                 lastPage.remove();
                 BaseSpaPageComponent.lastPageSnapShot = null;
@@ -225,7 +226,7 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
 
     private loadScripts() {
         return new Promise<void>((resolve) => {
-            const scriptsRequired = this.spaPageDirective && this.spaPageDirective.$element.attr('scripts-to-load');
+            const scriptsRequired = this.spaPageDirective?.$element.attr('scripts-to-load');
 
             if (scriptsRequired) {
                 this.scriptLoaderService
@@ -371,18 +372,18 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     onPageContentReady() {}
 
     canReuse() {
-        return !!(this.spaPageDirective && this.spaPageDirective.cache);
+        return !!(this.spaPageDirective?.cache);
     }
 
     mute() {
-        const m = o => { o && o.mute && o.mute(); };
+        const m = o => { o?.mute?.(); };
         each(this.Widgets, m);
         each(this.Variables, m);
         each(this.Actions, m);
     }
 
     unmute(c = this) {
-        const um = o => { o && o.unmute && o.unmute(); };
+        const um = o => { o?.unmute?.(); };
         each(this.Widgets, um);
         each(this.Variables, um);
         each(this.Actions, um);
@@ -399,14 +400,14 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
         this.unmute();
         // expose current page widgets on app
         (this.App as any).Widgets = Object.create(this.Widgets);
-        if(this.spaPageDirective && this.spaPageDirective.refreshdataonattach) {
-            const refresh = v => { v && v.startUpdate && v.invoke && v.invoke(); };
+        if(this.spaPageDirective?.refreshdataonattach) {
+            const refresh = v => { v?.startUpdate && v?.invoke?.(); };
             each(this.Variables, refresh);
             each(this.Actions, refresh);
         }
         this.runPageTransition().then(() => {
             setTimeout(() => this.restoreScrollPosition(), 100);
-            each(this.Widgets, w => w && w.ngOnAttach && w.ngOnAttach());
+            each(this.Widgets, w => w?.ngOnAttach?.());
             this.appManager.notify('pageAttach', {'name' : this.pageName, instance: this});
         });
         this.appManager.notify('highlightActiveLink', {'pageName': this.pageName});
@@ -416,7 +417,7 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
         this.saveScrollPosition();
         this.savePageSnapShot();
         this.mute();
-        each(this.Widgets, w => w && w.ngOnDetach && w.ngOnDetach());
+        each(this.Widgets, w => w?.ngOnDetach?.());
         this.appManager.notify('pageDetach', {'name' : this.pageName, instance: this});
     }
 

@@ -31,7 +31,7 @@ const NavClassMap = {
     ]
 })
 export class NavComponent extends DatasetAwareNavComponent implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public selecteditem;
     public type;
@@ -46,10 +46,10 @@ export class NavComponent extends DatasetAwareNavComponent implements OnInit, On
 
     constructor(
         inj: Injector,
-        private cdRef: ChangeDetectorRef,
-        private route: Router,
-        private userDefinedExecutionContext: UserDefinedExecutionContext,
-        private app: App,
+        private readonly cdRef: ChangeDetectorRef,
+        private readonly route: Router,
+        private readonly userDefinedExecutionContext: UserDefinedExecutionContext,
+        private readonly app: App,
         @Attribute('select.event') selectEventCB,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {

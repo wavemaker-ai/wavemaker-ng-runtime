@@ -24,11 +24,11 @@ export class PrefabPreviewComponent implements AfterViewInit, OnDestroy {
     private windowMessageListener: (e: MessageEvent) => void;
     private readyStateSubscription: Subscription;
 
-    constructor(private prefabManager: PrefabManagerService) {
+    constructor(private readonly prefabManager: PrefabManagerService) {
 
         // MEMORY LEAK FIX: Store bound function reference for cleanup
         this.windowMessageListener = (e: MessageEvent) => {
-            const context = e.data && e.data.context;
+            const context = e.data?.context;
 
             if (context !== PREFAB) {
                 return;

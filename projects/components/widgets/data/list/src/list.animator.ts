@@ -10,18 +10,18 @@ import {map, reduce} from "lodash-es";
 declare const $;
 
 export class ListAnimator extends SwipeAnimation {
-    private $el: JQuery<HTMLElement>;
+    private readonly $el: JQuery<HTMLElement>;
     private li: JQuery<HTMLElement>;
     private limit: number;
     private transitionProportions: any;
-    private rightChildrenCount: number;
-    private leftChildrenCount: number;
+    private readonly rightChildrenCount: number;
+    private readonly leftChildrenCount: number;
     private position: string;
     private actionPanel: JQuery<HTMLElement>;
     private actionItems: QueryList<ButtonComponent>;
     public $btnSubscription: Subscription;
 
-    constructor(private list: ListComponent) {
+    constructor(private readonly list: ListComponent) {
         super();
         this.$el = $(this.list.getNativeElement()).find('ul.app-livelist-container').first();
 
@@ -203,7 +203,7 @@ export class ListAnimator extends SwipeAnimation {
                 transform: 'translate3d(${{$D + $d}}px, 0, 0)'
             }
         }, { // styles to be applied on the child elements of action panel
-            target: () => (this.actionPanel && this.actionPanel.children()),
+            target: () => (this.actionPanel?.children()),
             css: {
                 transform: 'translate3d(${{computeActionTransition($i, $D + $d)}}px, 0, 0)'
             }
@@ -226,7 +226,7 @@ export class ListAnimator extends SwipeAnimation {
             index = actions.length - 1;
         }
         target = actions[index];
-        if (target && target.hasEventCallback('tap')) {
+        if (target?.hasEventCallback('tap')) {
             target.invokeEventCallback('tap', {$event});
         }
         this.resetState();

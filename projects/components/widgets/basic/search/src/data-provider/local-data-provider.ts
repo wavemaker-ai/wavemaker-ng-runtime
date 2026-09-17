@@ -59,7 +59,7 @@ export class LocalDataProvider implements IDataProvider {
                         return this.applyFilter(a, b, matchMode);
                     });
                 });
-            } else {
+            } else 
                 // local search on data with array of objects.
                 // Iterate over each item and return the filtered data containing the matching string.
                 if (isArray(entries) && isObject(entries[0])) {
@@ -82,7 +82,7 @@ export class LocalDataProvider implements IDataProvider {
                         return this.applyFilter(entry, queryText, matchMode);
                     });
                 }
-            }
+            
             resolve({
                 data: filteredData,
                 hasMoreData: false,

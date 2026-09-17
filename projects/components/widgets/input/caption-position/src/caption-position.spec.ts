@@ -16,7 +16,6 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 class TestComponent { }
 
 describe('CaptionPositionDirective', () => {
-    let component: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let inputEl: DebugElement;
     let directive: CaptionPositionDirective;
@@ -39,7 +38,6 @@ describe('CaptionPositionDirective', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(TestComponent);
-        component = fixture.componentInstance;
         inputEl = fixture.debugElement.query(By.css('input'));
         directive = fixture.debugElement.query(By.directive(CaptionPositionDirective)).injector.get(CaptionPositionDirective);
 

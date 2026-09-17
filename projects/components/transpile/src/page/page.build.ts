@@ -7,7 +7,7 @@ import {forEach} from "lodash-es";
 const tagName = 'div';
 
 const findChild = (node: Element, childName: string): Element => {
-    const child = node && node.children.find(e => (e instanceof Element && (e as Element).name === childName));
+    const child = node?.children.find(e => (e instanceof Element && (e as Element).name === childName));
     return child as Element;
 };
 

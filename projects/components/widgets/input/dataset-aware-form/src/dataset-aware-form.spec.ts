@@ -1,7 +1,7 @@
 import { TestBed, ComponentFixture, tick, fakeAsync } from '@angular/core/testing';
 import { DatasetAwareFormComponent } from './dataset-aware-form.component';
 import { Component, Injector } from '@angular/core';
-import { groupData, handleHeaderClick, ToDatePipe } from '@wm/components/base';
+import { groupData, ToDatePipe } from '@wm/components/base';
 import { App, AppDefaults } from '@wm/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 

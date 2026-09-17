@@ -1,4 +1,4 @@
-import {AfterViewInit, Directive, Inject, Injector, OnDestroy, Optional, SkipSelf} from '@angular/core';
+import {AfterViewInit, Directive, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 import { Title } from '@angular/platform-browser';
 
 import {EventNotifier, Viewport, ViewportEvent} from '@wm/core';
@@ -18,9 +18,9 @@ const WIDGET_CONFIG = {widgetType: 'wm-spa-page', hostClass: DEFAULT_CLS};
     exportAs: 'wmSpaPage'
 })
 export class SpaPageDirective extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
-    private _eventNotifier = new EventNotifier(false);
+    private readonly _eventNotifier = new EventNotifier(false);
     public refreshdataonattach = true;
     public pagetitle: string;
 
@@ -32,7 +32,7 @@ export class SpaPageDirective extends StylableComponent implements AfterViewInit
         }
     }
 
-    constructor(inj: Injector, private titleService: Title, private viewport: Viewport, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private readonly titleService: Title, private readonly viewport: Viewport, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
     }
 
@@ -44,7 +44,7 @@ export class SpaPageDirective extends StylableComponent implements AfterViewInit
      * @param data
      */
     public notify(eventName: string, ...data: Array<any>) {
-        this._eventNotifier.notify.apply(this._eventNotifier, arguments);
+        this._eventNotifier.notify(eventName, ...data);
     }
 
     /**

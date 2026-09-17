@@ -5,7 +5,7 @@ import { AbstractI18nService } from '@wm/core';
 @Injectable()
 export class I18nResolve {
 
-    constructor(private i18nService: AbstractI18nService) {}
+    constructor(private readonly i18nService: AbstractI18nService) {}
 
     resolve() {
         return this.i18nService.loadDefaultLocale();

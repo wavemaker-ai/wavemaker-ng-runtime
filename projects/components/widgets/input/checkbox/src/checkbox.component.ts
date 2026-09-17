@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import {
     AfterViewInit,
     Attribute,
@@ -13,7 +13,6 @@ import {
     Optional,
     ViewChild
 } from '@angular/core';
-import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
 import {isDefined, toggleClass} from '@wm/core';
 import {IWidgetConfig, provideAs, provideAsWidgetRef, styler, WmAppIconComponent} from '@wm/components/base';
@@ -62,7 +61,7 @@ export const unStringify = (val, defaultVal?) => {
     ]
 })
 export class CheckboxComponent extends BaseFormCustomComponent implements OnInit, AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public proxyModel: boolean;
     public disabled: boolean;
@@ -80,7 +79,6 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
     public selectedicon;
     public unselectediconurl;
     public selectediconurl;
-
 
     @ViewChild(NgModel) ngModel: NgModel;
     @ViewChild('checkbox', { static: true, read: ElementRef }) checkboxEl: ElementRef;
@@ -163,7 +161,6 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
         $event.preventDefault();
         this.checkboxEl.nativeElement.click();
     }
-
 
     ngAfterViewInit() {
         super.ngAfterViewInit();

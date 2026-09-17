@@ -102,7 +102,7 @@ export class TableCUDDirective implements OnDestroy {
 
         if (!this.table.isNavigationEnabled()) {
             const sortInfo = this.table.sortInfo;
-            const sortOptions  = sortInfo && sortInfo.direction ? (sortInfo.field + ' ' + sortInfo.direction) : '';
+            const sortOptions  = sortInfo?.direction ? (sortInfo.field + ' ' + sortInfo.direction) : '';
             refreshDataSource(dataSource, {
                 page: 1,
                 filterFields: this.table.getFilterFields(this.table.filterInfo),
@@ -306,7 +306,7 @@ export class TableCUDDirective implements OnDestroy {
     private deleteSuccessHandler(row, response?, evt?, callBack?) {
         /* check the response whether the data successfully deleted or not , if any error occurred show the
          * corresponding error , other wise remove the row from grid */
-        if (response && response.error) {
+        if (response?.error) {
             if (!this.table.onError) {
                 this.table.toggleMessage(true, 'error', this.table.errormessage || response.error);
             }
@@ -421,9 +421,9 @@ export class TableCUDDirective implements OnDestroy {
             this.triggerWMEvent('update');
             return;
         }
-        if (evt && evt.target) {
+        if (evt?.target) {
             this.table.callDataGridMethod('toggleEditRow', evt, {'selectRow': true, action: 'edit'});
-        } else {
+        } else 
             // For live form, call the update function with selected item
             if (this.table.editmode === 'form' || this.table.editmode === 'dialog') {
                 row = evt || this.table.selectedItems[0];
@@ -437,7 +437,7 @@ export class TableCUDDirective implements OnDestroy {
                     }
                 });
             }
-        }
+        
         this.table._triggeredByUser = true;
         //  Fix for [WMS-23263]: set 'isDataUpdatedByUser' flag to false since dataset is not being updated from script
         this.table.gridOptions.setIsDataUpdatedByUser(false);
@@ -465,7 +465,7 @@ export class TableCUDDirective implements OnDestroy {
 
     deleteRow(evt) {
         let row;
-        if (evt && evt.target) {
+        if (evt?.target) {
             this.table.callDataGridMethod('deleteRowAndUpdateSelectAll', evt);
         } else {
             // Wait for the selected item to get updated

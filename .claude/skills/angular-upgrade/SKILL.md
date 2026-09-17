@@ -40,7 +40,7 @@ When in doubt: keep the existing code.
 |------|------|------|
 | 0 | Config & Confirm | Single summary table shown; user confirms once; `Inputs confirmed: yes` written — no further interruptions for the rest of the run |
 | 1 | Inventory | Angular version ≈ base version; all inventory paths resolve |
-| 2 | Research & Plan | R1–R3, R5, R8–R12 reviewed; R4 dry-run checked; R5 confirms stable release; every breaking change traced to plan or [N/A]; R2 version pins recorded (incl. R9 jest-preset-angular, R10 ng-packagr); change plan printed and Step 3 begun |
+| 2 | Research & Plan | R1–R3, R5, R8–R12 reviewed (blocking); R4 dry-run run for extra coverage (ref-only — expected practice, but does not itself block Step 2 the way R1–R12 do); R5 confirms stable release; every breaking change traced to plan or [N/A]; R2 version pins recorded (incl. R9 jest-preset-angular, R10 ng-packagr); change plan printed and Step 3 begun |
 | 3 | Bump Packages | `package.json` edited in **both repos**; R9/R10 pins applied; no install yet |
 | 4 | Install | `npm install` exit 0 in all applicable repos |
 | 5 | Security Audit | No critical/high vulns; Angular/TS packages unchanged by audit fix |
@@ -50,9 +50,12 @@ When in doubt: keep the existing code.
 | 9 | Preview Validation | Every configured validation mode's preview URL renders identically to its comparison URL(s) |
 | 10 | Finalize & Reset | `docs/{major}-upgrade.md` written; `current-state.md` reset |
 
-**Resume:** start from first step not `done`. A `blocked` step stays blocked until the user clears it. A step in `in-progress` state means the previous session crashed mid-step — **treat `in-progress` as `pending` and restart that step from the beginning**; do not assume partial work is safe to build on. Re-read `repo.config.sh` before Step 7 — build flags may have changed mid-session. A completed round (Step 10 done) always resets; the next run starts at Step 0.
+**Resume:** first re-check the reset conditions below — they apply to every "Resume Angular upgrade" invocation, not only a fresh "Start" — then start from the first step not `done`. If a reset condition fires (most commonly: `repo.config.sh`'s current `ANGULAR_BASE_VERSION`/`ANGULAR_TARGET_VERSION` no longer match what's stored in `current-state.md`), do not silently resume — surface the mismatch to the user and ask whether the in-progress run's stored version is still correct (continue as-is) or `repo.config.sh` was updated for *this* run (reset and restart at Step 0). A `blocked` step stays blocked until the user clears it. A step in `in-progress` state means the previous session crashed mid-step — **treat `in-progress` as `pending` and restart that step from the beginning**; do not assume partial work is safe to build on. Re-read `repo.config.sh` before Step 7 — build flags may have changed mid-session. A completed round (Step 10 done) always resets; the next run starts at Step 0.
 
 **On resume, spot-check claimed-done steps before skipping:**
+- Step 0 — `Inputs confirmed: yes`, and the recorded ng-runtime/ng-codegen branches match the actual current `git rev-parse --abbrev-ref HEAD` in both repos (a branch may have changed since Step 0 ran)
+- Step 1 — the Angular version recorded in current-state.md's inventory still matches `package.json`'s actual current version (re-run Step 1's own check)
+- Step 2 — the Dual-Repo Change Plan has at least one row (or explicit `[N/A: reason]` entries covering every R1/R3 breaking change) and R2 Version Pins are filled in, not blank
 - Step 3 — both `package.json` files contain the target Angular version
 - Step 4 — `node_modules/@angular/core/package.json` shows the target version
 - Step 6 — `pattern-review.sh` exits 0
@@ -100,6 +103,8 @@ Show one row per entry in `VALIDATION_MODES` (currently `angular_deployment`, `w
 
 Below the table, add a single line for each ⚠ issue with the action needed (e.g. "dirty: commit or stash before confirming"). Then ask **once**: "Confirm to start, or fix the issues above first."
 
+**ng-codegen branch mismatch blocks by default.** Unlike a mode-not-configured row (informational only), `⚠ mismatch` on the ng-codegen branch row blocks Step 0 from completing — per "Both repos together" in Important Rules, ng-runtime and ng-codegen must upgrade on the same branch name. Do not accept a plain "confirm" as clearing this row. Proceed past it only if the user explicitly says so (e.g. "proceed with mismatched branches"), and record that explicit override in `current-state.md` → Step 0 Overrides.
+
 The user's reply — "confirm", "yes", "go", or any affirmative — starts Steps 1–10. Do not interrupt again after this point regardless of what is found during the run. Unexpected findings (new pattern warnings, audit results, build warnings) are recorded in `current-state.md` and reported at the end of each step as informational — never as blocking prompts.
 
 **Parsing rules:**
@@ -108,14 +113,16 @@ The user's reply — "confirm", "yes", "go", or any affirmative — starts Steps
 |-----------------------------------|-------------------------------------------------------------|----------------------------------|
 | Base version                      | `base version <N>`                                          | `ANGULAR_BASE_VERSION`           |
 | Target version                    | `target version <N>`                                        | `ANGULAR_TARGET_VERSION`         |
-| Angular Deployment URL            | `local deployment url <url>`                                | `LOCAL_DEPLOYMENT_URL`           |
-| Angular Deployment comparison URL | `wavemaker deployment url <url>`                            | `WAVEMAKER_DEPLOYMENT_URL`       |
-| WaveMaker Preview URL             | `local preview url <url>`                                   | `LOCAL_PREVIEW_URL`              |
-| WaveMaker Preview comparison URL  | `wavemaker preview url <url>`                               | `WAVEMAKER_PREVIEW_URL`          |
+| Angular Deployment URL            | `preview url <url>`                                         | `LOCAL_DEPLOYMENT_URL`           |
+| Angular Deployment comparison URL | `comparison url <url>`                                      | `WAVEMAKER_DEPLOYMENT_URL`       |
+| WaveMaker Preview URL             | `wavemaker preview url <url>`                                | `LOCAL_PREVIEW_URL`              |
+| WaveMaker Preview comparison URL  | `wavemaker preview comparison url <url>`                    | `WAVEMAKER_PREVIEW_URL`          |
 | Skip preview (all modes)          | `skip preview yes`, `skip step 9`                           | `no` when any mode has a URL set |
 | Skip one mode                     | `skip angular deployment yes`, `skip wavemaker preview yes` | `no` when that mode's URL is set |
-| Skip tests                        | `skip tests yes/no`                                         | `DEFAULT_RUN_TESTS`              |
-| Skip verify                       | `skip verify yes/no`                                        | `DEFAULT_RUN_BUNDLE_VERIFY`      |
+| Skip tests                        | `skip tests yes/no`                                         | `no` when `DEFAULT_RUN_TESTS=yes`; `yes` when `DEFAULT_RUN_TESTS=no` |
+| Skip verify                       | `skip verify yes/no`                                        | `no` when `DEFAULT_RUN_BUNDLE_VERIFY=yes`; `yes` when `DEFAULT_RUN_BUNDLE_VERIFY=no` |
+
+These phrases match `templates.md`'s canonical trigger examples exactly — `preview url`/`comparison url` name the Angular Deployment mode's pair, `wavemaker preview url`/`wavemaker preview comparison url` name the WaveMaker Preview mode's pair. The `Skip tests`/`Skip verify` defaults are shown inverted from the underlying `DEFAULT_RUN_*` config vars because those vars are phrased as "run" flags (`yes` = do run = do not skip); see Step 8 for the same inversion stated in context.
 
 `skip preview yes` sets **every** mode's url var to `skip` (matches the pre-existing blanket behavior). `skip <mode name> yes` sets only that mode's url var to `skip`, leaving other modes unaffected — useful when only one mode is relevant for a given run. A mode whose url var is empty or `skip` is skipped independently at Step 9; this is not a separate flag, it's the same convention `LOCAL_DEPLOYMENT_URL=skip` has always used, now applied per mode. Chat overrides win over `repo.config.sh` defaults.
 

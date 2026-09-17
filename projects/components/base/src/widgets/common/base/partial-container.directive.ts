@@ -113,10 +113,10 @@ export class PartialContainerDirective implements OnDestroy {
         public vcRef: ViewContainerRef,
         public elRef: ElementRef,
         public inj: Injector,
-        private envInjector: EnvironmentInjector,
-        private app: App,
+        private readonly envInjector: EnvironmentInjector,
+        private readonly app: App,
         @Attribute('content') _content: string,
-        private partialRefProvider: PartialRefProvider
+        private readonly partialRefProvider: PartialRefProvider
     ) {
 
         componentInstance.registerPropertyChangeListener((key: string, nv: any, ov?: any) => {
@@ -145,7 +145,7 @@ export class PartialContainerDirective implements OnDestroy {
                 // in place instead of destroying and recreating it (that used to cause a
                 // visible flicker on every param change). Fall back to a full render only if
                 // there's no live instance yet to refresh.
-                if (this.instanceRef && this.instanceRef.instance) {
+                if (this.instanceRef?.instance) {
                     $appDigest(true);
                 } else {
                     this.renderPartial(componentInstance.content);

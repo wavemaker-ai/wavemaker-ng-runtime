@@ -23,7 +23,7 @@ export class DialogBodyDirective implements OnDestroy {
         elRef: ElementRef,
         @Inject(DialogRef) private dialogRef,
         bsModal: BsModalService,
-         private renderer: Renderer2
+         private readonly renderer: Renderer2
     ) {
         addClass(elRef.nativeElement, DEFAULT_CLS);
 

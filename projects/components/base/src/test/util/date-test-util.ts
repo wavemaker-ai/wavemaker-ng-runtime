@@ -58,7 +58,7 @@ export const triggerTimerClickonArrowsByIndex = (index?) => {
 
 export const disableMaxDatePanel = (ele) => {
     let datePickerRows = ele[0].querySelectorAll('tbody tr');
-    var eleRow = datePickerRows[0];
+    const eleRow = datePickerRows[0];
     expect(eleRow.children[7].querySelector('[bsdatepickerdaydecorator]').classList).toContain('disabled');
     for (let rowIndex = 1; rowIndex < datePickerRows.length; rowIndex++) {
         for (let index = 1; index < datePickerRows[rowIndex].children.length; index++) {
@@ -71,7 +71,7 @@ export const disableMaxDatePanel = (ele) => {
 
 export const disableMindatePanel = (ele) => {
     let datePickerRows = ele[0].querySelectorAll('tbody tr');
-    var eleRow = datePickerRows[0];
+    const eleRow = datePickerRows[0];
     for (let index = 1; index < 6; index++) {
         expect(eleRow.children[index].querySelector('[bsdatepickerdaydecorator]').classList).toContain('disabled');
     }

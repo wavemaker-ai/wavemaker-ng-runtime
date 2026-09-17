@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { TextContentDirective, WmAppIconComponent } from "@wm/components/base";
+import { TextContentDirective, WmAppIconComponent, APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, styler } from '@wm/components/base';
 import { PictureDirective } from '@wm/components/basic/picture';
-import { MenuComponent } from '@wm/components/navigation/menu';
+import { MenuComponent, MenuAdapterComponent } from '@wm/components/navigation/menu';
 import {
     AfterViewInit,
     Component,
@@ -14,9 +14,6 @@ import {
     ViewChild,
     Inject
 } from '@angular/core';
-
-import { APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, styler } from '@wm/components/base';
-import { MenuAdapterComponent } from '@wm/components/navigation/menu';
 
 import { registerProps } from './card.props';
 import {removeAttr, setAttr} from '@wm/core';
@@ -37,7 +34,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class CardComponent extends MenuAdapterComponent implements OnInit, AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public showHeader: boolean;
     public title: string;
@@ -50,7 +47,7 @@ export class CardComponent extends MenuAdapterComponent implements OnInit, After
     @ViewChild('cardContainerWrapper', { static: true }) private cardContainerElRef: ElementRef;
     private keydownListener: () => void;
 
-    constructor(inj: Injector, private render2: Renderer2, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private readonly render2: Renderer2, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.SHELL);
     }
