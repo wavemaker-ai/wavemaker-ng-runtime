@@ -994,4 +994,51 @@ describe('PaginationComponent', () => {
         });
     });
 
+    describe('onOpenChange', () => {
+        let mockFocus: jest.Mock;
+        let mockEq: jest.Mock;
+
+        beforeEach(() => {
+            mockFocus = jest.fn();
+            mockEq = jest.fn().mockReturnValue({ focus: mockFocus });
+            (global as any).$ = jest.fn().mockReturnValue({ eq: mockEq });
+            jest.useFakeTimers();
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it('should focus the currently selected page size option, not the first one', () => {
+            component.pageSizeOptions = [5, 10, 20, 50, 100];
+            component.maxResults = 20;
+
+            component.onOpenChange(true);
+
+            expect(component.focusedIndex).toBe(2);
+            jest.runAllTimers();
+            expect(mockEq).toHaveBeenCalledWith(2);
+            expect(mockFocus).toHaveBeenCalled();
+        });
+
+        it('should default to the first option when maxResults does not match any pageSizeOptions', () => {
+            component.pageSizeOptions = [5, 10, 20];
+            component.maxResults = 999;
+
+            component.onOpenChange(true);
+
+            expect(component.focusedIndex).toBe(0);
+        });
+
+        it('should not update focusedIndex when the dropdown is closed', () => {
+            component.pageSizeOptions = [5, 10, 20];
+            component.maxResults = 20;
+            component.focusedIndex = 3;
+
+            component.onOpenChange(false);
+
+            expect(component.focusedIndex).toBe(3);
+        });
+    });
+
 });

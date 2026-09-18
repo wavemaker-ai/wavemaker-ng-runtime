@@ -836,12 +836,15 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     // Function gets called on dropdown open & close
     onOpenChange(isOpen) {
         if (isOpen) {
-            this.focusedIndex = 0;
+            // Focus the currently selected page size option (not always the first one),
+            // since the ':focus' state is what visually highlights the item in the dropdown
+            const selectedIndex = this.pageSizeOptions?.findIndex(option => option == this.maxResults);
+            this.focusedIndex = selectedIndex >= 0 ? selectedIndex : 0;
             setTimeout(() => {
                 // manually focus the dropdown as dropdown has container="body"
                 const $items = $('ul#dropdown-basic a.dropdown-item');
-                const $firstItem = $items.eq(this.focusedIndex);
-                $firstItem?.focus();
+                const $selectedItem = $items.eq(this.focusedIndex);
+                $selectedItem?.focus();
             }, 0);
         }
     }
