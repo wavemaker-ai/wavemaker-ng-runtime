@@ -1,9 +1,5 @@
 
 // This file is automatically loaded when running `jest` commands
-import { patchNgxBootstrapFiles } from '../build-scripts/ngx-bootstrap-patch.mjs';
-
-patchNgxBootstrapFiles();
-
 import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
 import { ToastrModule } from 'ngx-toastr';
 import { TestBed } from '@angular/core/testing';

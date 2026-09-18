@@ -117,9 +117,9 @@ describe('CalendarComponent', () => {
         expect(CalendarWrapperComponent).toBeTruthy();
     })
 
-    xit('should apply the view to be month view', waitForAsync(() => {
+    it('should apply the view to be month view', waitForAsync(() => {
         fixture.whenStable().then(() => {
-            expect(document.getElementsByClassName('fc-month-view').length).toBe(1);
+            expect(document.getElementsByClassName('fc-dayGridMonth-view').length).toBe(1);
         })
     }))
 

@@ -228,7 +228,7 @@ describe("DatetimeComponent", () => {
         tick();  // Allow time for the whenStable promise to resolve
     }));
 
-    xit('should be disabled mode', waitForAsync(() => {
+    it('should be disabled mode', waitForAsync(() => {
         (wmComponent as any).getWidget().disabled = true;
         fixture.detectChanges();
 
@@ -238,7 +238,7 @@ describe("DatetimeComponent", () => {
         });
     }));
 
-    xit('should be disabled mode (picker button)', waitForAsync(() => {
+    it('should be disabled mode (picker button)', waitForAsync(() => {
         (wmComponent as any).getWidget().disabled = true;
         fixture.detectChanges();
         hasAttributeCheck(fixture, '.btn-time', 'disabled');
@@ -268,14 +268,14 @@ describe("DatetimeComponent", () => {
 
     /************************* Validation starts ****************************************** **/
 
-    xit('should be required validation ', waitForAsync(() => {
+    it('should be required validation ', waitForAsync(() => {
         fixture.whenStable().then(() => {
             let dateInputControl = getHtmlSelectorElement(fixture, '.app-textbox');
             expect(dateInputControl.nativeElement.hasAttribute('required')).toBe(true);
         });
     }));
 
-    xit('should respect the mindate validation', waitForAsync(() => {
+    it('should respect the mindate validation', waitForAsync(() => {
         (wmComponent as any).getWidget().datavalue = getFormatedDate('2019-11-01');
 
         checkElementClass(fixture, '.app-datetime', 'ng-invalid');
@@ -283,7 +283,7 @@ describe("DatetimeComponent", () => {
     }));
 
 
-    xit('should ignore the  excluded days', waitForAsync(() => {
+    it('should ignore the  excluded days', waitForAsync(() => {
         (wmComponent as any).getWidget().excludedays = '1,6';
         (wmComponent as any).getWidget().datavalue = getFormatedDate('2019-12-30');
         checkElementClass(fixture, '.app-datetime', 'ng-invalid');

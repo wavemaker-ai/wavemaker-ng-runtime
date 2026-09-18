@@ -2603,8 +2603,7 @@ describe("DataTable", () => {
                     customValidatorAsync(true, wmComponent, quick_edit_fixture);
                 }));
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should sort the column on click of the column header', () => {
+                it('should sort the column on click of the column header', () => {
                     const debugEl = quick_edit_fixture.debugElement.nativeElement;
                     const tableHeaderEl = debugEl.querySelectorAll(".app-datagrid-header-cell");
                     tableHeaderEl[0].click();
@@ -2614,8 +2613,7 @@ describe("DataTable", () => {
                     expect(firstRowColEls[0].textContent.trim()).toEqual('admin');
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should sort the column in descending order on click of the column header twice', () => {
+                it('should sort the column in descending order on click of the column header twice', () => {
                     const debugEl = quick_edit_fixture.debugElement.nativeElement;
                     const tableHeaderEl = debugEl.querySelectorAll(".app-datagrid-header-cell");
                     tableHeaderEl[0].click();
@@ -2789,14 +2787,12 @@ describe("DataTable", () => {
                     expect(wmComponent).toBeDefined();
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip("Should have summary row at the bottom", () => {
+                it("Should have summary row at the bottom", () => {
                     const tableSummaryEl = getSummaryContainer(summary_row_fixture);
                     expect(tableSummaryEl).toBeDefined();
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip("Sum aggregate function", () => {
+                it("Sum aggregate function", () => {
                     const tableSummaryEl = getSummaryContainer(summary_row_fixture);
                     const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(1)");
                     const summaryColumns = summaryRow.querySelectorAll("td");
@@ -2805,8 +2801,7 @@ describe("DataTable", () => {
                     expect(summaryColumns[2].textContent).toEqual('34');
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip("Average aggregate function", () => {
+                it("Average aggregate function", () => {
                     const tableSummaryEl = getSummaryContainer(summary_row_fixture);
                     const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(2)");
                     const summaryColumns = summaryRow.querySelectorAll("td");
@@ -2815,8 +2810,7 @@ describe("DataTable", () => {
                     expect(summaryColumns[2].textContent).toEqual('17');
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip("Count aggregate function", () => {
+                it("Count aggregate function", () => {
                     const tableSummaryEl = getSummaryContainer(summary_row_fixture);
                     const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(3)");
                     const summaryColumns = summaryRow.querySelectorAll("td");
@@ -2825,8 +2819,7 @@ describe("DataTable", () => {
                     expect(summaryColumns[2].textContent).toEqual('2');
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip("Minimum aggregate function", () => {
+                it("Minimum aggregate function", () => {
                     const tableSummaryEl = getSummaryContainer(summary_row_fixture);
                     const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(4)");
                     const summaryColumns = summaryRow.querySelectorAll("td");
@@ -2835,8 +2828,7 @@ describe("DataTable", () => {
                     expect(summaryColumns[2].textContent).toEqual('5');
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip("Maximum aggregate function", () => {
+                it("Maximum aggregate function", () => {
                     const tableSummaryEl = getSummaryContainer(summary_row_fixture);
                     const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(5)");
                     const summaryColumns = summaryRow.querySelectorAll("td");
@@ -2845,8 +2837,7 @@ describe("DataTable", () => {
                     expect(summaryColumns[2].textContent).toEqual('29');
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip("Percent aggregate function and Value concatination", () => {
+                it("Percent aggregate function and Value concatination", () => {
                     const tableSummaryEl = getSummaryContainer(summary_row_fixture);
                     const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(6)");
                     const summaryColumns = summaryRow.querySelectorAll("td");
@@ -2855,8 +2846,7 @@ describe("DataTable", () => {
                     expect(summaryColumns[2].textContent).toEqual('34%');
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip("Object notation custom function with class property", () => {
+                it("Object notation custom function with class property", () => {
                     const tableSummaryEl = getSummaryContainer(summary_row_fixture);
                     const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(7)");
                     const summaryColumns = summaryRow.querySelectorAll("td");
@@ -2867,8 +2857,7 @@ describe("DataTable", () => {
                     expect(summaryColumns[2].classList).toContain('fail');
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip("Custom function in combination with aggregate function", () => {
+                it("Custom function in combination with aggregate function", () => {
                     const tableSummaryEl = getSummaryContainer(summary_row_fixture);
                     const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(8)");
                     const summaryColumns = summaryRow.querySelectorAll("td");
@@ -2876,8 +2865,7 @@ describe("DataTable", () => {
                     expect(summaryColumns[2].textContent).toEqual('98');
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip("Asyncronous function in combination with aggregate function", fakeAsync(() => {
+                it("Asyncronous function in combination with aggregate function", fakeAsync(() => {
                     tick(500);
                     const tableSummaryEl = getSummaryContainer(summary_row_fixture);
                     const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(9)");

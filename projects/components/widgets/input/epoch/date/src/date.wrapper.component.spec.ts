@@ -165,7 +165,7 @@ describe('DateComponent', () => {
 
     /************************* Properties starts ****************************************** **/
 
-    xit('should show the calendar panel on click the date button (show date picker on button click)', waitForAsync(() => {
+    it('should show the calendar panel on click the date button (show date picker on button click)', waitForAsync(() => {
         onClickCheckTaglengthOnBody(fixture, '.btn-time', 'bs-datepicker-container', 1);
     }));
 
@@ -181,12 +181,12 @@ describe('DateComponent', () => {
     //     hasAttributeCheck(fixture, '.app-dateinput', 'readonly');
     // });
 
-    xit('should show the week numbers on the calendar pan ', waitForAsync(() => {
-        onClickCheckClassEleLengthOnBody(fixture, '.btn-time', 'table.weeks', 1);
+    it('should show the week numbers on the calendar pan ', waitForAsync(() => {
+        onClickCheckClassEleLengthOnBody(fixture, '.btn-time', 'weeks', 1);
 
     }));
 
-    xit('should not show the week numbers on the calendar pan ', waitForAsync(() => {
+    it('should not show the week numbers on the calendar pan ', waitForAsync(() => {
         wmComponent.getWidget().showweeks = false;
 
         // Check if the property was set correctly
@@ -201,7 +201,7 @@ describe('DateComponent', () => {
         fixture.whenStable().then(() => {
             // Check that week numbers are not displayed when showweeks is false
             // The table.weeks class should not be present
-            const weekElements = document.getElementsByClassName('table.weeks');
+            const weekElements = document.getElementsByClassName('weeks');
             expect(weekElements.length).toBe(0);
         });
     }));
@@ -212,7 +212,7 @@ describe('DateComponent', () => {
     }));
 
 
-    xit('should set the current date as default value ', waitForAsync(() => {
+    it('should set the current date as default value ', waitForAsync(() => {
         const dateInputControl = getHtmlSelectorElement(fixture, '.app-dateinput');
         expect(dateInputControl.nativeElement.value).toEqual(currentDate);
     }));
@@ -241,7 +241,7 @@ describe('DateComponent', () => {
 
     }));
 
-    xit('should be autofocus the element ', waitForAsync(() => {
+    it('should be autofocus the element ', waitForAsync(() => {
         hasAttributeCheck(fixture, '.app-dateinput', 'autofocus');
 
     }));
@@ -254,13 +254,13 @@ describe('DateComponent', () => {
 
     // });
 
-    xit('should be disabled mode ', waitForAsync(() => {
+    it('should be disabled mode ', waitForAsync(() => {
         wmComponent.getWidget().disabled = true;
         fixture.detectChanges();
         hasAttributeCheck(fixture, '.app-dateinput', 'disabled');
 
     }));
-    xit('should be disabled mode (picker button)', waitForAsync(() => {
+    it('should be disabled mode (picker button)', waitForAsync(() => {
         wmComponent.getWidget().disabled = true;
         fixture.detectChanges();
         hasAttributeCheck(fixture, '.btn-time', 'disabled');
@@ -281,7 +281,7 @@ describe('DateComponent', () => {
 
     /************************* Validations starts****************************************** **/
 
-    xit('should be apply required validation ', waitForAsync(() => {
+    it('should be apply required validation ', waitForAsync(() => {
         hasAttributeCheck(fixture, '.app-dateinput', 'required');
 
     }));
@@ -325,7 +325,7 @@ describe('DateComponent', () => {
         });
     });
 
-    xit('should ignore the  excluded date', waitForAsync(() => {
+    it('should ignore the  excluded date', waitForAsync(() => {
         dateWrapperComponent.wmComponent.getWidget().excludedates = '2020-01-01';
         dateWrapperComponent.wmComponent.getWidget().datavalue = '2020-01-01';
         checkElementClass(fixture, '.app-date', 'ng-invalid');

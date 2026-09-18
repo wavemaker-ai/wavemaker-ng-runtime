@@ -165,7 +165,7 @@ describe('PopoverComponent', () => {
     /************************* icon properties starts ****************************************** **/
 
     // TypeError: Cannot read properties of undefined (reading 'match')
-    xit('icon class should be applied', () => {
+    it('icon class should be applied', () => {
         wmComponent.iconclass = "wi wi-star-border";
         fixture.detectChanges();
         expect(document.getElementsByClassName('app-icon').length).toBe(1);
@@ -175,14 +175,14 @@ describe('PopoverComponent', () => {
 
 
     //TypeError: Cannot read properties of undefined (reading 'match')
-    xit('icon url should should show the image', () => {
+    it('icon url should should show the image', () => {
         wmComponent.iconurl = "https://therightsofnature.org/wp-content/uploads/2018/01/turkey-3048299_1920-1366x550.jpg";
         fixture.detectChanges();
         expect(document.getElementsByClassName('anchor-image-icon').length).toBe(1);
     })
 
     //TypeError: Cannot read properties of undefined (reading 'match')
-    xit('icon width , height and margin with icon class should be applied', () => {
+    it('icon width , height and margin with icon class should be applied', () => {
         wmComponent.iconclass = "wi wi-star-border";
         wmComponent.iconwidth = "60px";
         wmComponent.iconheight = "40px";
@@ -193,7 +193,7 @@ describe('PopoverComponent', () => {
         expect(document.getElementsByClassName('app-icon')[0]['style']['margin']).toBe('4px');
     })
 
-    xit('icon width and height with url should be applied', () => {
+    it('icon width and height with url should be applied', () => {
         wmComponent.iconurl = "https://therightsofnature.org/wp-content/uploads/2018/01/turkey-3048299_1920-1366x550.jpg";
         wmComponent.iconwidth = "60px";
         wmComponent.iconheight = "40px";
