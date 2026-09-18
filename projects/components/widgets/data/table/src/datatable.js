@@ -2176,8 +2176,8 @@ $.widget('wm.datatable', {
         var $firstEl,
             $target = e && $(e.target),
             $focusEl;
-        //If focused directly on the cell, focus the input in the cell
-        if ($target && $target.hasClass('app-datagrid-cell')) {
+        //If focused directly on the cell, focus the input in the cell (only when the element is still in the DOM)
+        if ($target && $target.hasClass('app-datagrid-cell') && document.body.contains($target[0])) {
             $firstEl = $target.find('input');
         } else {
             if (!$el) {
@@ -2229,9 +2229,9 @@ $.widget('wm.datatable', {
         this.toggleNewRowActions(false);
     },
     //Method to save a row which is in editable state
-    saveRow: function (callBack) {
+    saveRow: function (callBack, skipFocus) {
         this.gridElement.find('tr.app-datagrid-row.row-editing:not(.always-new-row)').each(function () {
-            $(this).trigger('click', [undefined, {action: 'save', skipSelect: true, noMsg: true, success: callBack}]);
+            $(this).trigger('click', [undefined, {action: 'save', skipSelect: true, noMsg: true, skipFocus: skipFocus, success: callBack}]);
         });
     },
     //Method to make row editable with widgets
@@ -2378,7 +2378,8 @@ $.widget('wm.datatable', {
             if (_.isFunction(options.success)) {
                 options.success(skipFocus, error);
             }
-            if (!advancedEdit || self.options.actionsEnabled.edit) {
+            // [WMS-31104] Do not refocus this table when the save was initiated from outside (e.g. clicking another table).
+            if (!skipFocus && !options.skipFocus && (!advancedEdit || self.options.actionsEnabled.edit)) {
                 self.focusActiveRow();
             }
         }
@@ -2404,6 +2405,43 @@ $.widget('wm.datatable', {
                     self.editSuccessHandler(skipFocus, error, e, $row, true);
                 });
                 return;
+            }
+            if (advancedEdit) {
+                // [WMS-31104] Close/save row in another quick-edit table before editing this row.
+                $(document).find('tr.app-datagrid-row.always-new-row.row-editing').filter(function () {
+                    return $(this).closest(self.element).length === 0;
+                }).each(function () {
+                    var $newRow = $(this),
+                        $otherGrid = $newRow.closest('.app-datagrid');
+                    if ($otherGrid.length) {
+                        $otherGrid.datatable('resetNewRow', $newRow);
+                    }
+                });
+                // [WMS-31104] Save the editing row in another table before opening the clicked row in this table.
+                var $otherEditingRow = $(document).find('tr.app-datagrid-row.row-editing:not(.always-new-row)').filter(function () {
+                    return $(this).closest(self.element).length === 0;
+                }).first();
+                if ($otherEditingRow.length) {
+                    var rowId = $row.attr('data-row-id');
+                    $otherEditingRow.trigger('click', [undefined, {
+                        action: 'save',
+                        $row: $otherEditingRow,
+                        skipSelect: true,
+                        noMsg: true,
+                        skipFocus: true,
+                        success: function () {
+                            var $liveRow = self.gridElement.find('tr.app-datagrid-row[data-row-id="' + rowId + '"]');
+                            var $targetRow = $liveRow.length ? $liveRow : $row;
+                            self.toggleEditRow(e, _.extend({}, options, {
+                                action: 'edit',
+                                $row: $targetRow,
+                                skipFocus: true,
+                                focusAfterCrossTableSave: true
+                            }));
+                        }
+                    }]);
+                    return;
+                }
             }
             $row.addClass('row-editing');
             if (_.isFunction(this.options.beforeRowUpdate)) {
@@ -2445,6 +2483,12 @@ $.widget('wm.datatable', {
             if (_.isFunction(this.options.onFormRender)) {
                 this.options.onFormRender($row, e, options.operation || action, $row.hasClass('always-new-row'));
             }
+            // [WMS-31104] Focus target row after widgets render when edit opened from another table save.
+            if (options.focusAfterCrossTableSave) {
+                self.options.timeoutCall(function () {
+                    self.setFocusOnElement(undefined, $row.find('td.cell-editing'), true);
+                });
+            }
         } else {
             $editableElements = $row.find('td.cell-editing');
             isNewRow = self._isNewRow($row);
@@ -2457,6 +2501,10 @@ $.widget('wm.datatable', {
                 }
 
                 if (isDataChanged) {
+                    editOptions.skipFocus = options.skipFocus;
+                    if (options.skipFocus) {
+                        self.options.activeRow = undefined;
+                    }
                     $editableElements.each(function () {
                         var $el = $(this),
                             colId = $el.attr('data-col-id'),
@@ -3163,6 +3211,25 @@ $.widget('wm.datatable', {
                     relatedGridId = relatedGrid ? $(relatedGrid).attr('widget-id') : null,
                     isRelatedGridDifferent = relatedGrid && relatedGridId !== currentGridId,
                     invalidTargets = '.row-editing:not(".always-new-row"), .row-action-button, .app-datagrid-cell, .caption, button.btn-time, button.btn-date';
+
+                // [WMS-31104] Do not insert the new row when focus moves to another table; that table's row-click handler will reset it.
+                if ($row.hasClass('always-new-row')
+                        && $relatedTarget.length
+                        && !$relatedTarget.closest(self.element).length
+                        && $relatedTarget.closest('.app-datagrid').length) {
+                    return;
+                }
+                // Focus moved to a date/time picker — the row is still being edited, do not save.
+                if ($relatedTarget.closest('bs-datepicker-container, .btn-date, .btn-time').length) {
+                    return;
+                }
+                // [WMS-31104] For regular rows, do not save on focusout when focus leaves this table; the outside-click handler handles it.
+                // The new row (always-new-row) is excluded from this guard so Tab-key save still works when focus moves to pagination.
+                if (!$row.hasClass('always-new-row')
+                        && $relatedTarget.length
+                        && !$relatedTarget.closest(self.element).length) {
+                    return;
+                }
 
                 //Check if the focus out element is outside the grid or some special elements
                 function isInvalidTarget() {
