@@ -225,7 +225,7 @@ export class AppManagerService {
         const supportedLocaleVar = get(this.$app, 'Variables.supportedLocale');
     }
 
-    handleSSOLogin(config, options, providerId?: string) {     // providerId, if given, targets that specific OpenID/SSO provider instead of the default SSO login.
+    handleSSOLogin(config, options) {
         const SSO_URL = 'services/security/ssologin',
             PREVIEW_WINDOW_NAME = 'WM_PREVIEW_WINDOW';
         let page = '',
@@ -248,15 +248,10 @@ export class AppManagerService {
                 page = '?redirectPage=' + encodeURIComponent(redirectPage);
             }
 
-            // provider param appended last; '&' if page/queryParams already added a '?', else '?'
-            const providerParam = providerId
-                ? (page || queryParams ? '&' : '?') + 'providerId=' + encodeURIComponent(providerId)
-                : '';
-
             // showing a redirecting message
             document.body.textContent = get(this.getAppLocale(), ['MESSAGE_LOGIN_REDIRECTION']) || 'Redirecting to sso login...';
             // appending redirect to page and page params
-            const ssoUrl = this.getDeployedURL() + SSO_URL + page + queryParams + providerParam;
+            const ssoUrl = this.getDeployedURL() + SSO_URL + page + queryParams;
             /*
              * remove iFrame when redirected to IdP login page.
              * this is being done as IDPs do not allow to get themselves loaded into iFrames.
@@ -279,28 +274,6 @@ export class AppManagerService {
             } else {
                 window.location.href = ssoUrl;
             }
-    }
-
-  /**
-     * Storage key for the OpenID/SSO provider the user last logged in with (value format e.g.
-     * "OPENID.google"). Written by the project's own login page/dialog (its "login with <provider>"
-     * button click) when it offers a choice of multiple providers - this method is only the read
-     * side, used on session timeout.
-     */
-    private getOpenIdProviderStorageKey(): string {
-        return 'wm_last_idp';
-    }
-
-    /**
-     * @returns the OpenID/SSO provider id stored by the project's login UI, or null if none is stored
-     *          (single-provider projects, provider info not persisted, or storage unavailable).
-     */
-    private getStoredOpenIdProvider(): string | null {
-        try {
-            return localStorage.getItem(this.getOpenIdProviderStorageKey()) || null;
-        } catch (e) {
-            return null;
-        }
     }
 
     /**
@@ -330,12 +303,11 @@ export class AppManagerService {
         // if user found, 401 was thrown after session time
         if (config.userInfo && config.userInfo.userName) {
             config.authenticated = false;
-           // Redirect directly to the previously selected SSO provider when available,
-            // otherwise fall through to the existing sessionTimeoutConfig behavior.
-            const storedProviderId = this.getStoredOpenIdProvider();
-            if (storedProviderId) {
-                this.handleSSOLogin(config, options, storedProviderId);
-            } else {
+            // AppRef.on401() (in app.service.ts) always invokes App.onSessionTimeout on timeout.
+            // Skip our own dialog/page handling when the app has overridden it, so the two don't
+            //  run for the same timeout (e.g. this dialog briefly flashing before a custom
+            // SSO redirect from onSessionTimeout takes effect).
+            if (!this.$app.isSessionTimeoutOverridden) {
                 sessionTimeoutConfig = loginConfig.sessionTimeout || {'type': LOGIN_METHOD.DIALOG};
                 sessionTimeoutMethod = sessionTimeoutConfig.type.toUpperCase();
                 switch (sessionTimeoutMethod) {
