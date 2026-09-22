@@ -157,6 +157,7 @@ When each section was first required. **Update "Last verified" when you confirm 
 | §26 | Generic — any dependency major bump | Angular 21 (first instance: ngx-bootstrap 20.0.2, WMS-29275) | Not version-gated to a specific Angular major — check on every dependency Step 3 bumps by more than a patch/minor. `inject()`-based API vs Zone/async boundary; see Verification Principle above |
 | §27 | Angular 22 | Angular 22 | Default-behavior changes with no compile error — `changeDetection` (27a, incl. dynamic-component factories per 27c), Router `paramsInheritanceStrategy` (27b) — pinned back to pre-22 behavior. §27c was the actual root cause of a real reported preview failure, confirmed fixed live, not just via a green build — see `docs/22-upgrade.md` |
 | §28 | Angular 22 | Angular 22 | Compiler strictness ratchet — NG1054 (duplicate `@Input` alias), NG6008/NG6009 (standalone components in `NgModule.declarations`/`.bootstrap`) |
+| §29 | Angular 19 | Angular 19 | Standalone-by-default breaks inline test-harness components/pipes lacking an explicit `standalone` flag — `npm test`-only (Step 8), `build.sh` compiles clean; 80 files/87 classes in this repo's first 18→19 hop |
 
 ---
 

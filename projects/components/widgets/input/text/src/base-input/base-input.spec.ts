@@ -35,6 +35,7 @@ class MockInjector extends Injector {
 }
 
 @Component({
+    standalone: false,
     template: '<input [(ngModel)]="value">'
 })
 class TestInputComponent extends BaseInput {

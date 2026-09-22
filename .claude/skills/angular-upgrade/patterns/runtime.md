@@ -863,3 +863,44 @@ npx tsc --noEmit 2>&1 | rg 'NG1054|NG6008|NG6009'
 ```
 
 **Step 6 classification:** `must-change` — these are compile errors, not warnings; `build.sh -f` will not pass with them present.
+
+### 29. Standalone-by-default breaks inline test-harness components/pipes (Angular 19)
+
+**First required:** Angular 19 (official 19.0.0 breaking change: "Angular directives, components and pipes are now standalone by default"). Discovered via `npm test`, not the build — `build.sh -f` compiles clean even when every affected test fails, because this only surfaces at TestBed runtime, not AOT/ng-packagr compile time.
+
+**Symptom:** `npm test` mass-failure (in this repo: 2934/4022 tests, 79/126 suites — one root cause, one error signature repeated):
+
+```text
+Unexpected "<ClassName>" found in the "declarations" array of the "TestBed.configureTestingModule" call,
+"<ClassName>" is marked as standalone and can't be declared in any NgModule -
+did you intend to import it instead (by adding it to the "imports" array)?
+```
+
+**Root cause:** inline test-harness "wrapper" components (e.g. `class IconWrapperComponent { @ViewChild(...) ... }`, defined directly inside a `*.spec.ts` file to give a widget-under-test a host template) and inline mock pipes/directives, when their `@Component`/`@Pipe`/`@Directive` decorator omits `standalone` entirely. At Angular 18 the implicit default was `false` (NgModule-based) — fine in a `declarations: [...]` array. At Angular 19 the implicit default flips to `true` — now invalid there.
+
+**Not a production-code issue in this repo:** verified all real `.component.ts` files already declare `standalone` explicitly (grep: 0/74 missing it). This is specifically an inline-test-harness gap — production source was already following explicit-standalone discipline.
+
+**Canonical fix:** add `standalone: false` to the decorator of every locally-defined test-harness class that's referenced in a `declarations: [...]` array in the same file — this restores the exact pre-19 behavior with a one-line, zero-risk addition (do **not** switch these to `imports` + `standalone: true`; that's modernization, not compatibility, and changes how the harness component itself gets compiled).
+
+**Find every instance in one pass** (don't fix file-by-file from individual jest failures — this repo had 80 files / 87 classes, one shared root cause):
+
+```js
+// For each *.spec.ts with a declarations:[...] array, find locally-defined
+// @Component/@Pipe/@Directive classes referenced there whose decorator body
+// doesn't contain "standalone:", then insert "standalone: false," right after
+// the decorator's opening brace. See git history around the WMS-32451 skill
+// port for the exact script (find-standalone-issue.js / fix-standalone.js
+// pattern) if reimplementing.
+```
+
+**Separate, look-alike failure — do not confuse with the above:** a *third-party* library component/pipe (not locally defined) can hit a related but different error depending on whether it's placed in `declarations` or `imports`, if the library was compiled against an old Angular version whose partial Ivy declaration omits the `isStandalone` field entirely (Angular 19's `declarations`-check and `imports`-check read that missing field with *opposite* defaults). You can't add `standalone: false` to a compiled third-party class. Fix: use the library's own NgModule export if it has one, matching however your **production** code already consumes that dependency (check the real `.component.ts`, don't guess) — e.g. `ng-circle-progress`'s `CircleProgressComponent` (compiled against Angular 14.2.12, no `isStandalone` field) must be imported via `NgCircleProgressModule`, not the raw component class, exactly as `progress-circle.component.ts` already does in production.
+
+**Step 6/8 grep:**
+
+```bash
+# after Step 8 test run, if standalone-related TestBed errors appear:
+rg -l "declarations\s*:" projects/ --include="*.spec.ts"
+# then check each locally-defined @Component/@Pipe/@Directive referenced there for a missing "standalone:"
+```
+
+**Step 6 classification:** `must-change` — but only surfaces via `npm test` (Step 8), not `build.sh` (Step 7); don't assume Step 7 passing means this is clear.

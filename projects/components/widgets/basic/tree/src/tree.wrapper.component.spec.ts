@@ -18,6 +18,7 @@ const markup = `<ul wmTree name="tree1" class="testClass" height="800" width="20
                 padding="3px 4px 5px 6px"></ul>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class TreeWrapperComponent {

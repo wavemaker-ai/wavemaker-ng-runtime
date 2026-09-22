@@ -17,6 +17,7 @@ const markup = `<div wmRichTextEditor #wm_richtexteditor1="wmRichTextEditor"
                 </div>`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 class RichTextEditorWrapperComponent {

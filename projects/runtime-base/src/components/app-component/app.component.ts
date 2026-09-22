@@ -120,8 +120,10 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
             });
         });
 
-        // set theme to bs3 on ngx-bootstrap. This avoids runtime calculation to determine bs theme. Thus resolves performance.
-        setTheme('bs3');
+        // set theme on ngx-bootstrap. This avoids runtime calculation to determine bs theme. Thus resolves performance.
+        // NOTE: ngx-bootstrap 19 dropped 'bs3' from AvailableBsVersions ('bs4' | 'bs5' only) — pinned to 'bs4' as the
+        // closer match to the prior 'bs3' behavior; verify no visual regression in Step 9 preview validation.
+        setTheme('bs4');
 
         let spinnerId;
 

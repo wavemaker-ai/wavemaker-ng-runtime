@@ -17,6 +17,7 @@ jest.mock("@wm/core", () => ({
 const markup = `<div wmColorPicker name="colorpicker1" hint="colorpicker" tabindex="1">`;
 
 @Component({
+    standalone: false,
     template: markup
 })
 

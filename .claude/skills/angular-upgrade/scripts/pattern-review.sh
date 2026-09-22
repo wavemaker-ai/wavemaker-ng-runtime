@@ -76,6 +76,20 @@ warn() {
 ok()    { echo "OK   [§${1}] ${2}"; }
 info()  { echo "INFO [§${1}] ${2}"; }
 
+# fail_or_warn_below SECTION THRESHOLD MSG — fail if ANGULAR_TARGET_VERSION >= THRESHOLD,
+# else warn (found, but not yet required — tracked, not blocking). Used for §N checks whose
+# pattern doc documents an explicit "not required until Angular <THRESHOLD>" gate (verified
+# against the actual installed @angular/* .d.ts, not assumed from the gate table alone) —
+# see checklist.md's "Verification Principle" and Section version history.
+fail_or_warn_below() {
+  _section="$1"; _threshold="$2"; _msg="$3"
+  if [ -n "${ANGULAR_TARGET_VERSION:-}" ] && [ "$ANGULAR_TARGET_VERSION" -ge "$_threshold" ] 2>/dev/null; then
+    fail "$_section" "$_msg"
+  else
+    warn "$_section" "$_msg (not required until Angular $_threshold — target is $ANGULAR_TARGET_VERSION; tracked, not blocking)"
+  fi
+}
+
 # search PATTERN [PATHS...] — 0=found, 1=not-found; uses rg when available
 search() {
   _pat="$1"; shift
@@ -111,7 +125,7 @@ echo ""
 # §1  Legacy runtime compiler
 # ─────────────────────────────────────────────────────────────────────────────
 if search 'compileModuleAndAllComponentsSync' projects/runtime-base 2>/dev/null; then
-  fail 1 "legacy compileModuleAndAllComponentsSync still present in runtime-base — must be removed"
+  fail_or_warn_below 1 20 "legacy compileModuleAndAllComponentsSync still present in runtime-base — must be removed"
 else
   ok 1 "no legacy compileModuleAndAllComponentsSync"
 fi
@@ -121,7 +135,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # Positional args: createComponent(Cls, 0, inj) or createComponent(Cls, index, ...)
 if search 'createComponent([^,)]*,[[:space:]]*[0-9]' projects/ 2>/dev/null; then
-  fail 2 "createComponent() with positional numeric arg found — must use object syntax {environmentInjector,...}"
+  fail_or_warn_below 2 20 "createComponent() with positional numeric arg found — must use object syntax {environmentInjector,...} (deprecated-but-present factory overload at <20 per ViewContainerRef.createComponent's own .d.ts — verify against installed @angular/core before assuming still-safe on a later hop)"
 else
   ok 2 "no positional createComponent() calls"
 fi
@@ -135,7 +149,7 @@ fi
 # §6  ngx-bootstrap .forRoot() in ng-runtime source (codegen checked in §20b)
 # ─────────────────────────────────────────────────────────────────────────────
 if search 'ModalModule\.forRoot\|BsDatepickerModule\.forRoot\|NgCircleProgressModule\.forRoot' projects/ 2>/dev/null; then
-  fail 6 "ngx-bootstrap .forRoot() on ModalModule/BsDatepickerModule/NgCircleProgressModule in projects/ — removed in ngx-bootstrap 21"
+  fail_or_warn_below 6 21 "ngx-bootstrap .forRoot() on ModalModule/BsDatepickerModule/NgCircleProgressModule in projects/ — removed in ngx-bootstrap 21 (verify the ngx-bootstrap version this hop actually pins — .forRoot() may still be present in its .d.ts below that)"
 else
   ok 6 "no disallowed ngx-bootstrap .forRoot() in projects/"
 fi
@@ -296,7 +310,7 @@ EXPR_PARSER="projects/core/src/utils/expression-parser.ts"
 if [ -f "$EXPR_PARSER" ]; then
   # §19a: old-style string placeholder must NOT be present
   if grep -q "parseBinding.*'', 0\|parseAction.*'', 0\|parseAction.*false, ''" "$EXPR_PARSER"; then
-    fail "19a" "expression-parser.ts uses old string placeholder in parseBinding/parseAction — must use ParseSourceSpan"
+    fail_or_warn_below "19a" 20 "expression-parser.ts uses old string placeholder in parseBinding/parseAction — must use ParseSourceSpan (mandatory from Angular 20 per patterns/runtime.md §19a — the @angular/compiler \`Parser\` class's parseBinding/parseAction keep a string \`location\` param below that; do not assume ParseSourceSpan is required without checking the installed .d.ts, and do not confuse this with the unrelated BindingParser class's similarly-named method)"
   else
     ok "19a" "no old-style parseBinding/parseAction string placeholder"
   fi
@@ -365,7 +379,7 @@ if [ -f tsconfig.json ] && [ -f tsconfig.web-app.json ]; then
   MOD_ROOT=$(grep_tsconfig_field module tsconfig.json)
   MOD_WEB=$(grep_tsconfig_field  module tsconfig.web-app.json)
   if [ -n "$MOD_ROOT" ] && [ -n "$MOD_WEB" ] && [ "$MOD_ROOT" != "$MOD_WEB" ]; then
-    fail "20a" "tsconfig module mismatch: root=$MOD_ROOT  web-app=$MOD_WEB"
+    fail_or_warn_below "20a" 21 "tsconfig module mismatch: root=$MOD_ROOT  web-app=$MOD_WEB — part of the §20a moduleResolution:bundler transition bundle, resync together at that hop rather than piecemeal"
   else
     ok "20a" "tsconfig module aligned (${MOD_WEB:-n/a})"
   fi
@@ -393,7 +407,7 @@ if [ -n "$NG_CODEGEN" ] && [ -d "$NG_CODEGEN" ]; then
   HBS="$NG_CODEGEN/templates/app.config.ts.hbs"
   if [ -f "$HBS" ]; then
     if grep -qE 'ModalModule\.forRoot|BsDatepickerModule\.forRoot|NgCircleProgressModule\.forRoot' "$HBS"; then
-      fail "20b" "app.config.ts.hbs calls disallowed ngx-bootstrap .forRoot() — removed in ngx-bootstrap 21"
+      fail_or_warn_below "20b" 21 "app.config.ts.hbs calls disallowed ngx-bootstrap .forRoot() — removed in ngx-bootstrap 21"
     else
       ok "20b" "app.config.ts.hbs — no disallowed ngx-bootstrap .forRoot()"
     fi
@@ -404,9 +418,9 @@ if [ -n "$NG_CODEGEN" ] && [ -d "$NG_CODEGEN" ]; then
   UAJ="$NG_CODEGEN/src/update-angular-json.js"
   if [ -f "$UAJ" ]; then
     if grep -q 'foundation-css/foundation/foundation\.css' "$UAJ"; then
-      fail "20e" "$UAJ uses wrong foundation-css path (must include dist/styles/foundation/)"
+      fail_or_warn_below "20e" 21 "$UAJ uses wrong foundation-css path (must include dist/styles/foundation/) — part of the §20 bootstrapApplication-era codegen bundle, gated with the rest of §20"
     elif ! grep -q 'foundation-css/dist/styles/foundation/foundation\.css' "$UAJ"; then
-      fail "20e" "$UAJ missing foundation-css dist path — Prism ng build will fail"
+      fail_or_warn_below "20e" 21 "$UAJ missing foundation-css dist path — Prism ng build will fail"
     else
       ok "20e" "update-angular-json.js foundation-css dist path correct"
     fi

@@ -13,6 +13,7 @@ declare const _: any;
 
 const markup = `<div wmCheckboxset hint="checkboxset1" caption="Label" required itemsperrow="3" name="checkboxset1" tabindex="1"></div>`;
 @Component({
+    standalone: false,
     template: markup
 })
 
