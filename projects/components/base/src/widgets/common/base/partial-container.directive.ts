@@ -108,6 +108,20 @@ export class PartialContainerDirective implements OnDestroy {
         this.app.notify('partialLoaded');
     }
 
+    private handleContentChange(componentInstance, nv: string) {
+        if ('isInlineContent' in componentInstance) {
+            componentInstance.isInlineContent = !(nv && nv !== '');
+        }
+        if (componentInstance.$lazyLoad) {
+            componentInstance.$lazyLoad = () => {
+                this.renderPartial(nv);
+                componentInstance.$lazyLoad = noop;
+            };
+        } else {
+            this.renderPartial(nv);
+        }
+    }
+
     constructor(
         @Self() @Inject(WidgetRef) public componentInstance,
         public vcRef: ViewContainerRef,
@@ -115,25 +129,30 @@ export class PartialContainerDirective implements OnDestroy {
         public inj: Injector,
         private readonly envInjector: EnvironmentInjector,
         private readonly app: App,
-        @Attribute('content') _content: string,
+        @Attribute('content') initialContent: string,
         private readonly partialRefProvider: PartialRefProvider
     ) {
 
         componentInstance.registerPropertyChangeListener((key: string, nv: any, ov?: any) => {
             if (key === 'content') {
-                if ('isInlineContent' in componentInstance) {
-                    componentInstance.isInlineContent = !(nv && nv !== '');
-                }
-                if (componentInstance.$lazyLoad) {
-                    componentInstance.$lazyLoad = () => {
-                        this.renderPartial(nv);
-                        componentInstance.$lazyLoad = noop;
-                    };
-                } else {
-                    this.renderPartial(nv);
-                }
+                this.handleContentChange(componentInstance, nv);
             }
         });
+
+        // 'content' is usually a static attribute, so its one-and-only property-change
+        // notification (fired via the widget proxy as this component initializes) can
+        // land before this constructor runs and subscribes above -- registerPropertyChangeListener
+        // is backed by a plain RxJS Subject, which does not replay past emissions to late
+        // subscribers. Without this, the listener is the only thing that ever calls
+        // renderPartial, and it silently misses the sole emission, leaving the partial
+        // permanently empty. componentInstance.content (set by the time this constructor
+        // runs, if the proxy notification already fired) is preferred over the raw
+        // @Attribute() snapshot since it reflects any WM-side processing of the value;
+        // @Attribute() is the fallback for the case where it hasn't been set yet either.
+        const contentValue = componentInstance.content || initialContent;
+        if (contentValue) {
+            this.handleContentChange(componentInstance, contentValue);
+        }
 
         const subscription = componentInstance.params$
             .pipe(

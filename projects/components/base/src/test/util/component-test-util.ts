@@ -1,8 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from "@angular/core";
+import { ChangeDetectionStrategy, DebugElement } from "@angular/core";
 
 export const compileTestComponent = (moduleDef, componentInstance): ComponentFixture<any> => {
+    // Angular 22 changed the default changeDetection strategy for components with no
+    // explicit setting (see patterns/runtime.md §27a). Widget components got pinned to
+    // Eager individually, but these dynamically-declared test wrapper components
+    // (`@Component({ template: markup })` in each *.wrapper.component.spec.ts) never got
+    // that pin -- pinning it here, once, for every test through this shared entry point,
+    // instead of editing 50+ individual spec files.
+    TestBed.overrideComponent(componentInstance, {
+        set: { changeDetection: ChangeDetectionStrategy.Eager }
+    });
+
     TestBed.configureTestingModule(moduleDef)
         .compileComponents();
 

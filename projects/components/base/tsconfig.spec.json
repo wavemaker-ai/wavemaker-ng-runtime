@@ -4,7 +4,7 @@
     "outDir": "../../../out-tsc/spec",
       "skipLibCheck": true,
       "types": [
-      "jasmine",
+      "jest",
       "node",
       "jquery"
     ]

@@ -455,6 +455,8 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
             this.nativeElement.hidden = !nv;
         } else if (key === 'hint') {
             setAttr(this.nativeElement, 'title', nv);
+        } else if (key === 'arialabel') {
+            setAttr(this.nativeElement, 'aria-label', nv);
         } else if (key === 'class') {
             switchClass(this.nativeElement, nv, ov);
         } else if (key === 'name' || key === 'tabindex') {
