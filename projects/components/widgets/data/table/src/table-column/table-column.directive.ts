@@ -653,11 +653,18 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
             const content = item;
             if (content instanceof Promise) {
                 content.then(res => {
+                    // the directive (and this.table) can be destroyed before an async summary value resolves
+                    if (!this.table) {
+                        return;
+                    }
                     this.table.callDataGridMethod('setSummaryRowDef', this.key, res, index, true);
                 });
             } else if (content.value && content.value instanceof Promise) {
                 const contentData = content;
                 content.value.then(res => {
+                    if (!this.table) {
+                        return;
+                    }
                     contentData.value = res;
                     this.table.callDataGridMethod('setSummaryRowDef', this.key, contentData, index, true);
                 });

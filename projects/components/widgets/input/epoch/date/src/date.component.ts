@@ -196,7 +196,12 @@ export class DateComponent extends BaseDateTimeComponent {
         $('.bs-calendar-container').removeAttr('role');
         const datePickerContainer = $('.bs-datepicker-container')[0];
         this.focusTrap = setFocusTrap(datePickerContainer, true);
-        this.focusTrap.activate();
+        try {
+            // focus-trap throws if the container has no tabbable node yet (e.g. calendar still rendering);
+            // that shouldn't stop the picker from opening.
+            this.focusTrap.activate();
+        } catch (e) {
+        }
         this.addDatepickerKeyboardEvents(this, false);
         adjustContainerPosition($('bs-datepicker-container'), this.nativeElement, this.bsDatePickerDirective._datepicker);
         adjustContainerRightEdges($('bs-datepicker-container'), this.nativeElement, this.bsDatePickerDirective._datepicker);

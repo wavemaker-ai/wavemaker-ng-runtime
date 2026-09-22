@@ -799,6 +799,9 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      * Sets the focus on the widget
      */
     protected focus(): void {
+        if (!this.$element?.[0]) {
+            return;
+        }
         /**
          * Check for the nodes having focus-target attribute inside the element
          * If found, focus the first node (eg, date widget)

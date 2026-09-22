@@ -1,5 +1,5 @@
 import { waitForAsync, ComponentFixture } from '@angular/core/testing';
-import { addClass, adjustContainerPosition, adjustContainerRightEdges, App, findRootContainer, setCSSFromObj } from '@wm/core';
+import { addClass, adjustContainerPosition, adjustContainerRightEdges, App, findRootContainer, setCSSFromObj, setPipeProvider, $invokeWatchers } from '@wm/core';
 import { Component, ViewChild } from '@angular/core';
 import { PopoverComponent } from './popover.component';
 import { PopoverConfig, PopoverModule } from 'ngx-bootstrap/popover';
@@ -109,6 +109,16 @@ describe('PopoverComponent', () => {
     let fixture: ComponentFixture<PopoverwrapperComponent>;
 
     beforeEach(waitForAsync(() => {
+        // Widget `.bind` attributes (e.g. iconclass.bind="iconclass" on the nested <a wmAnchor>
+        // in popover.component.html) are evaluated via $parseExpr, which no-ops until a
+        // pipe provider is registered. The real app wires this up once at bootstrap
+        // (AppComponent); this isolated component test never bootstraps that, so it must be
+        // stubbed here for any property relayed through `.bind` to resolve at all.
+        setPipeProvider({
+            getPipeNameVsIsPureMap: () => new Map(),
+            meta: () => undefined,
+            getInstance: () => ({ transform: (v: any) => v })
+        });
         fixture = compileTestComponent(testModuleDef, PopoverwrapperComponent);
         popoverWrapperComponent = fixture.componentInstance;
         wmComponent = popoverWrapperComponent.wmComponent;
@@ -164,29 +174,28 @@ describe('PopoverComponent', () => {
 
     /************************* icon properties starts ****************************************** **/
 
-    // TypeError: Cannot read properties of undefined (reading 'match')
     it('icon class should be applied', () => {
         wmComponent.iconclass = "wi wi-star-border";
+        // Force the WM watch/digest cycle to run synchronously (it's normally debounced
+        // ~200ms) so the `.bind`-relayed value reaches the nested AnchorComponent before we assert.
+        $invokeWatchers(true);
         fixture.detectChanges();
         expect(document.getElementsByClassName('app-icon').length).toBe(1);
     })
 
-    // TypeError: Cannot read properties of undefined (reading 'match')
-
-
-    //TypeError: Cannot read properties of undefined (reading 'match')
     it('icon url should should show the image', () => {
         wmComponent.iconurl = "https://therightsofnature.org/wp-content/uploads/2018/01/turkey-3048299_1920-1366x550.jpg";
+        $invokeWatchers(true);
         fixture.detectChanges();
         expect(document.getElementsByClassName('anchor-image-icon').length).toBe(1);
     })
 
-    //TypeError: Cannot read properties of undefined (reading 'match')
     it('icon width , height and margin with icon class should be applied', () => {
         wmComponent.iconclass = "wi wi-star-border";
         wmComponent.iconwidth = "60px";
         wmComponent.iconheight = "40px";
         wmComponent.iconmargin = "4px";
+        $invokeWatchers(true);
         fixture.detectChanges();
         expect(document.getElementsByClassName('app-icon')[0]['style']['width']).toBe('60px');
         expect(document.getElementsByClassName('app-icon')[0]['style']['height']).toBe('40px');
@@ -197,6 +206,7 @@ describe('PopoverComponent', () => {
         wmComponent.iconurl = "https://therightsofnature.org/wp-content/uploads/2018/01/turkey-3048299_1920-1366x550.jpg";
         wmComponent.iconwidth = "60px";
         wmComponent.iconheight = "40px";
+        $invokeWatchers(true);
         fixture.detectChanges();
         expect(document.getElementsByClassName('anchor-image-icon')[0]['style']['width']).toBe('60px');
         expect(document.getElementsByClassName('anchor-image-icon')[0]['style']['height']).toBe('40px');

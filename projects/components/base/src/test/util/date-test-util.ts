@@ -7,7 +7,7 @@ import * as momentLib  from 'moment';
 const moment = momentLib.default || window['moment'];
 
 export const datepatternTest = (fixture, selector: string, inputSelector: string, attr?: string, isLower?: boolean) => {
-    fixture.whenStable().then(() => {
+    return fixture.whenStable().then(() => {
         let dateControl = getHtmlSelectorElement(fixture, selector);
         let dateInputControl = getHtmlSelectorElement(fixture, inputSelector);
         let attrVal = dateControl.nativeElement.getAttribute(attr || 'datepattern');

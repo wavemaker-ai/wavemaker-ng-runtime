@@ -6,7 +6,7 @@ import {AbstractI18nService, App, AppDefaults, UserDefinedExecutionContext} from
 import {SecurityService} from '@wm/security';
 import {DatePipe, registerLocaleData} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import {ComponentFixture, waitForAsync} from '@angular/core/testing';
+import {ComponentFixture, fakeAsync, tick, waitForAsync} from '@angular/core/testing';
 import {DateComponent} from './date.component';
 import {ComponentTestBase, ITestComponentDef, ITestModuleDef} from '../../../../../base/src/test/common-widget.specs';
 import {
@@ -159,14 +159,19 @@ describe('DateComponent', () => {
         if (fixture) {
             fixture.destroy();
         }
+        // ngx-bootstrap's datepicker container is appended directly to document.body
+        // (outside the component tree), so fixture.destroy() doesn't remove it; clean it
+        // up here so a calendar left open by one test doesn't leak into the next.
+        document.querySelectorAll('bs-datepicker-container').forEach(el => el.remove());
     });
 
 
 
     /************************* Properties starts ****************************************** **/
 
-    it('should show the calendar panel on click the date button (show date picker on button click)', waitForAsync(() => {
+    it('should show the calendar panel on click the date button (show date picker on button click)', fakeAsync(() => {
         onClickCheckTaglengthOnBody(fixture, '.btn-time', 'bs-datepicker-container', 1);
+        tick();
     }));
 
     it('should not show the calendar panel on click the input control (show date picker on only button click) ', waitForAsync(() => {
@@ -181,12 +186,18 @@ describe('DateComponent', () => {
     //     hasAttributeCheck(fixture, '.app-dateinput', 'readonly');
     // });
 
-    it('should show the week numbers on the calendar pan ', waitForAsync(() => {
-        onClickCheckClassEleLengthOnBody(fixture, '.btn-time', 'weeks', 1);
+    it('should show the week numbers on the calendar pan ', fakeAsync(() => {
+        const dateButton = getHtmlSelectorElement(fixture, '.btn-time');
+        dateButton.nativeElement.click();
+        fixture.detectChanges();
+        tick();
 
+        // '.weeks' is the calendar table's own static class (always present); the week-number
+        // column itself is rendered as 'td.week' only when showWeekNumbers is true.
+        expect(document.querySelectorAll('td.week').length).toBeGreaterThanOrEqual(1);
     }));
 
-    it('should not show the week numbers on the calendar pan ', waitForAsync(() => {
+    it('should not show the week numbers on the calendar pan ', fakeAsync(() => {
         wmComponent.getWidget().showweeks = false;
 
         // Check if the property was set correctly
@@ -196,14 +207,13 @@ describe('DateComponent', () => {
         const dateButton = getHtmlSelectorElement(fixture, '.btn-time');
         dateButton.nativeElement.click();
         fixture.detectChanges();
+        tick();
 
-        // Wait for the datepicker to be rendered
-        fixture.whenStable().then(() => {
-            // Check that week numbers are not displayed when showweeks is false
-            // The table.weeks class should not be present
-            const weekElements = document.getElementsByClassName('weeks');
-            expect(weekElements.length).toBe(0);
-        });
+        // Check that week numbers are not displayed when showweeks is false.
+        // '.weeks' is the calendar table's own static class (always present); the week-number
+        // column itself is rendered as 'td.week' only when showWeekNumbers is true.
+        const weekElements = document.querySelectorAll('td.week');
+        expect(weekElements.length).toBe(0);
     }));
 
     it('should assign the shortkey to the input control as attribute accesskey ', waitForAsync(() => {
@@ -242,7 +252,7 @@ describe('DateComponent', () => {
     }));
 
     it('should be autofocus the element ', waitForAsync(() => {
-        hasAttributeCheck(fixture, '.app-dateinput', 'autofocus');
+        return hasAttributeCheck(fixture, '.app-dateinput', 'autofocus');
 
     }));
     // TODO
@@ -257,13 +267,13 @@ describe('DateComponent', () => {
     it('should be disabled mode ', waitForAsync(() => {
         wmComponent.getWidget().disabled = true;
         fixture.detectChanges();
-        hasAttributeCheck(fixture, '.app-dateinput', 'disabled');
+        return hasAttributeCheck(fixture, '.app-dateinput', 'disabled');
 
     }));
     it('should be disabled mode (picker button)', waitForAsync(() => {
         wmComponent.getWidget().disabled = true;
         fixture.detectChanges();
-        hasAttributeCheck(fixture, '.btn-time', 'disabled');
+        return hasAttributeCheck(fixture, '.btn-time', 'disabled');
 
     }));
 
@@ -282,7 +292,7 @@ describe('DateComponent', () => {
     /************************* Validations starts****************************************** **/
 
     it('should be apply required validation ', waitForAsync(() => {
-        hasAttributeCheck(fixture, '.app-dateinput', 'required');
+        return hasAttributeCheck(fixture, '.app-dateinput', 'required');
 
     }));
 
@@ -310,25 +320,26 @@ describe('DateComponent', () => {
         // So we'll just verify the properties were set correctly
     }));
 
-    it('should ignore the  excluded days', (() => {
+    it('should ignore the  excluded days', waitForAsync(() => {
         dateWrapperComponent.wmComponent.getWidget().excludedays = '1,6';
         dateWrapperComponent.wmComponent.getWidget().datavalue = '2019-12-30';
-        checkElementClass(fixture, '.app-date', 'ng-invalid');
+        return checkElementClass(fixture, '.app-date', 'ng-invalid');
     }));
 
-    it('should disable the excluded days on the calendar panel', async () => {
+    it('should disable the excluded days on the calendar panel', fakeAsync(() => {
         dateWrapperComponent.wmComponent.getWidget().excludedays = '1,6';
         fixture.detectChanges();
 
-        await onClickCheckTaglengthOnBody(fixture, '.btn-time', 'bs-datepicker-container', 1, async (ele) => {
-            await excludedDaysDisable(ele);
+        onClickCheckTaglengthOnBody(fixture, '.btn-time', 'bs-datepicker-container', 1, (ele) => {
+            excludedDaysDisable(ele);
         });
-    });
+        tick();
+    }));
 
     it('should ignore the  excluded date', waitForAsync(() => {
         dateWrapperComponent.wmComponent.getWidget().excludedates = '2020-01-01';
         dateWrapperComponent.wmComponent.getWidget().datavalue = '2020-01-01';
-        checkElementClass(fixture, '.app-date', 'ng-invalid');
+        return checkElementClass(fixture, '.app-date', 'ng-invalid');
     }));
 
 
@@ -364,12 +375,13 @@ describe('DateComponent', () => {
         });
     }));
 
-    it('should show the calendar panel when we click on the input control', async () => {
+    it('should show the calendar panel when we click on the input control', fakeAsync(() => {
         wmComponent.getWidget().showdropdownon = 'default';
         fixture.detectChanges();
 
-        await onClickCheckTaglengthOnBody(fixture, '.app-dateinput', 'bs-datepicker-container', 1);
-    });
+        onClickCheckTaglengthOnBody(fixture, '.app-dateinput', 'bs-datepicker-container', 1);
+        tick();
+    }));
 
     /************************ Scenarios ends **************************************** */
 

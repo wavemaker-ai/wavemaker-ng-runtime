@@ -220,13 +220,15 @@ describe("DatetimeComponent", () => {
         expect(dateInputControl.nativeElement.getAttribute('accesskey')).toEqual('t');
     }));
 
-    it('should show the date pattern as yyyy-MM-ddTHH:mm:ss format', fakeAsync(() => {
-        (wmComponent as any).datepattern = 'yyyy-MM-ddTHH:mm:ss';
+    it('should show the date pattern as yyyy-MM-ddTHH:mm:ss format', async () => {
+        // getFormattedDate is jest.mock()'d at the top of this file (returns undefined by
+        // default), so the widget's displayValue/datavalue getters need it stubbed here to
+        // actually render a value that can be checked against the datepattern.
+        (getFormattedDate as jest.Mock).mockReturnValue('2023-01-01T10:30:00');
         fixture.detectChanges();
-        tick();  // Allow time for changes to be applied
-        datepatternTest(fixture, '.app-datetime', '.app-textbox');
-        tick();  // Allow time for the whenStable promise to resolve
-    }));
+        await datepatternTest(fixture, '.app-datetime', '.app-textbox');
+        (getFormattedDate as jest.Mock).mockReset();
+    });
 
     it('should be disabled mode', waitForAsync(() => {
         (wmComponent as any).getWidget().disabled = true;

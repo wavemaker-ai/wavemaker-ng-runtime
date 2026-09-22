@@ -501,6 +501,11 @@ const defaultValidators = (
     fixture.detectChanges();
     fixture.whenStable().then(() => {
         let formFieldControl = formField.getFormControl();
+        // with teardown disabled (see NOTE above testModuleDef), this callback can still fire
+        // during a later, unrelated test whose row/fixture no longer has this control
+        if (!formFieldControl) {
+            return;
+        }
         // Positive case
         formFieldControl.setValue(invalidTestValue);
         expect(formFieldControl.valid).toBeFalsy();
@@ -2865,15 +2870,19 @@ describe("DataTable", () => {
                     expect(summaryColumns[2].textContent).toEqual('98');
                 });
 
-                it("Asyncronous function in combination with aggregate function", fakeAsync(() => {
-                    tick(500);
-                    const tableSummaryEl = getSummaryContainer(summary_row_fixture);
-                    const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(9)");
-                    const summaryColumns = summaryRow.querySelectorAll("td");
-                    expect(summaryColumns[1].textContent).toEqual('Grade');
-                    expect(summaryColumns[2].textContent).toEqual('B+');
-                    discardPeriodicTasks();
-                }));
+                it("Asyncronous function in combination with aggregate function", (done) => {
+                    // evaluateGrade()'s promise resolves via a real setTimeout (scheduled in the
+                    // waitForAsync beforeEach above), so a fakeAsync/tick() here can't advance it --
+                    // wait on the real timer instead.
+                    setTimeout(() => {
+                        const tableSummaryEl = getSummaryContainer(summary_row_fixture);
+                        const summaryRow = tableSummaryEl.querySelector("tr.app-datagrid-row:nth-child(9)");
+                        const summaryColumns = summaryRow.querySelectorAll("td");
+                        expect(summaryColumns[1].textContent).toEqual('Grade');
+                        expect(summaryColumns[2].textContent).toEqual('B+');
+                        done();
+                    }, 500);
+                });
             });
         });
     });
