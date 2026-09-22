@@ -155,7 +155,7 @@ When each section was first required. **Update "Last verified" when you confirm 
 | §24 | Populated at Step 10 | Angular 21 | Forward-looking deprecations found during R1/R3 review |
 | §25 | Every TS major | Angular 22 | TypeScript strictness ratchet; re-check on each Angular/TS bump. TS 6.0 flipped `strict` default to `true` — disabled explicitly (deliberate exception, see §25 body) rather than fixed, since real strict-mode adoption is out of scope for a compatibility-only upgrade |
 | §26 | Generic — any dependency major bump | Angular 21 (first instance: ngx-bootstrap 20.0.2, WMS-29275) | Not version-gated to a specific Angular major — check on every dependency Step 3 bumps by more than a patch/minor. `inject()`-based API vs Zone/async boundary; see Verification Principle above |
-| §27 | Angular 22 | Angular 22 | Default-behavior changes with no compile error — `changeDetection` (27a), Router `paramsInheritanceStrategy` (27b) — pinned back to pre-22 behavior in `app.config.ts` / component decorators |
+| §27 | Angular 22 | Angular 22 | Default-behavior changes with no compile error — `changeDetection` (27a, incl. dynamic-component factories per 27c), Router `paramsInheritanceStrategy` (27b) — pinned back to pre-22 behavior. §27c was the actual root cause of a real reported preview failure, confirmed fixed live, not just via a green build — see `docs/22-upgrade.md` |
 | §28 | Angular 22 | Angular 22 | Compiler strictness ratchet — NG1054 (duplicate `@Input` alias), NG6008/NG6009 (standalone components in `NgModule.declarations`/`.bootstrap`) |
 
 ---

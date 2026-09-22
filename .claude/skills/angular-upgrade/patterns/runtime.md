@@ -782,9 +782,9 @@ rg -B8 'inject\(|takeUntilDestroyed\(\)' <matched-file> | rg -B6 'runOutsideAngu
 
 ### 27. Angular 22 default-behavior changes (compatibility pins)
 
-**Caution — reconstructed from commit messages, not from a completed Step 9 run.** The 21→22 upgrade that produced these findings (`aab04e7ae`) shipped without preview validation ever passing (see `docs/22-upgrade.md`). The source changes below are real and confirmed by a green `build.sh -f`, but whether they're *sufficient* — i.e. whether preview actually renders correctly with them in place — is unconfirmed. Re-verify against Step 9 before trusting this section's gates the way §1–§26 (validated via a passing preview run) can be trusted.
+**Update:** 27a/27b were originally reconstructed from commit messages (`aab04e7ae`) without a passing Step 9 run — that gap is why §27c below was missed the first time. §27c has since been found and fixed via a live proxy-preview check (not just a green build), which also implicitly re-confirms 27a is correct for the *statically-declared* component case. Still worth an independent Step 9 pass on any future upgrade rather than assuming this section is exhaustive — see the case study below for exactly how a "green build" can hide this class of bug.
 
-Both changes below share a shape: Angular 22 silently changed a default with no compile-time error, so nothing catches a missed pin except a behavioral difference in the browser.
+All three changes below share a shape: Angular 22 silently changed a default with no compile-time error, so nothing catches a missed pin except a behavioral difference in the browser.
 
 #### 27a. `changeDetection` default (Angular 22)
 
@@ -816,6 +816,33 @@ rg 'withRouterConfig' projects/runtime-dynamic/src/app/app.config.ts
 ```
 
 **Step 6 classification:** `must-change` — any route with child routes reading inherited params is affected without this pin.
+
+#### 27c. `changeDetection` default — dynamic `Component()` factories (Angular 22)
+
+**First required:** Angular 22. Found the hard way: this exact gap caused a real, reported "preview is broken" bug that survived a fully green `build.sh -f`, `pattern-review.sh`, and even a working *local development-build* deployment — see `docs/22-upgrade.md` § Preview bug investigation for the full methodology.
+
+§27a's grep (`rg -L '@Component\(\{[^}]*changeDetection' --type ts -g '*.component.ts' projects/`) only finds *static* `@Component()` class decorators. It cannot find a `@Component()` decorator applied *programmatically at runtime* to a dynamically-created class — the pattern this codebase uses to build every page/partial/prefab/custom-widget component from server-fetched markup:
+
+```typescript
+return Component({ template, ... })(DynamicComponent);
+```
+
+Two call sites had this exact gap:
+- `projects/runtime-dynamic/src/app/services/component-ref-provider.service.ts` — `createComponent()`, used for PAGE/PARTIAL/PREFAB/WIDGET
+- `projects/runtime-base/src/services/dynamic-component-ref-provider.service.ts` — `createDynamicComponent()`, a separate generic ad-hoc dynamic-component path
+
+**Why a green build never caught this:** `ViewContainerRef.createComponent(SomeClass, ...)` (or the standalone `createComponent()` function) succeeds and inserts the new component's host element into the DOM regardless of its `changeDetection` strategy — there's no error, no thrown exception, nothing for `pattern-review.sh`/`tsc`/a passing build to catch. Under Angular 22's new default, the host element appears but the component's own template content is simply never checked, so it renders as visually empty. This is functionally invisible to everything except an actual browser render — exactly the class of bug this section's own §26 (`inject()`/Zone-boundary hazards) and the "Verification Principle" section already warn about: patterns validated only by a green build, never by Step 9, can hide bugs like this indefinitely.
+
+**Step 6 grep:**
+
+```bash
+# Find dynamic Component({...}) factory files, then flag any missing the pin nearby
+for f in $(rg -l "return Component\(\{" --type ts projects/); do
+  rg -A15 "return Component\(\{" "$f" | rg -q "changeDetection" || echo "MISSING pin: $f"
+done
+```
+
+**Step 6 classification:** `must-change` — any dynamic `Component()` factory used to build page/partial/prefab/custom-widget content at runtime needs this pin; treat as equally critical to §27a's static sweep, not a lesser edge case.
 
 ### 28. Angular 22 compiler strictness ratchet (NG1054, NG6008, NG6009)
 

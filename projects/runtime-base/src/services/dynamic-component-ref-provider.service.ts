@@ -1,4 +1,5 @@
 import {
+    ChangeDetectionStrategy,
     Component,
     ComponentRef,
     ApplicationRef,
@@ -66,6 +67,12 @@ const createDynamicComponent = (selector: string, template: string, css = ''): T
         // directives like [wmFormField] will be treated as unknown (and silently ignored due to schemas),
         // causing "directive not initialized" symptoms in dynamic wizard/tabs/accordion paths.
         imports: [CommonModule, FormsModule, ReactiveFormsModule, ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS],
+        // Angular 22 changed the default changeDetection strategy for components with no
+        // explicit setting (patterns/runtime.md §27a) -- without this pin, a component created
+        // through this factory gets inserted into the DOM (createComponent() "succeeds") but its
+        // template content never gets checked/rendered under the new default. Same root cause as
+        // component-ref-provider.service.ts's createComponent(); found via that fix first.
+        changeDetection: ChangeDetectionStrategy.Eager,
         schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
     })(DynamicComponent);
 };
