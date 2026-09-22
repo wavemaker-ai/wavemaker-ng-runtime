@@ -52,17 +52,22 @@ VALIDATION_MODES="angular_deployment:LOCAL_DEPLOYMENT_URL:WAVEMAKER_DEPLOYMENT_U
 
 # --- Project used by local-angular-build.md (Studio export name; must match
 # the project segment in the URLs below) ---
-PROJECT_NAME="WMTheme"
+PROJECT_NAME="NestedWidgets"
 
 # --- Angular Deployment (Tomcat) validation — built/deployed by
 # local-angular-build.md; see LOCAL_BUILD_DOC below ---
-LOCAL_DEPLOYMENT_URL="http://localhost:8080/WMTheme/#/Main"
-WAVEMAKER_DEPLOYMENT_URL="https://cloud.wavemakeronline.com/pkcq1975w401/WMTheme/#/Main"
+LOCAL_DEPLOYMENT_URL="http://localhost:8080/NestedWidgets/#/Main"
+# WAVEMAKER_DEPLOYMENT_URL: the WMTheme value inherited from the ported skill (WMS-32451)
+# does not apply to NestedWidgets — needs a real comparison URL from the user before Step 9's
+# browser verify can run for this mode. Left as "skip" until supplied.
+WAVEMAKER_DEPLOYMENT_URL="skip"
 
 # --- WaveMaker Preview validation — supplied directly (like the pair above);
 # not built by this skill's automation. Leave empty to skip this mode. ---
-LOCAL_PREVIEW_URL="https://proxy-studio.wmdev.com/run-xnhzlbk1jd/ent12663d4a370d/WMTheme_master/#/Main"
-WAVEMAKER_PREVIEW_URL="https://www.wavemakeronline.com/run-xnhzlbk1jd/ent12663d4a370d/WMTheme_master/#/Main"
+# Same issue: WMTheme-specific URLs inherited from the ported skill, not valid for
+# NestedWidgets. Left as "skip" until the user supplies real URLs for this project.
+LOCAL_PREVIEW_URL="skip"
+WAVEMAKER_PREVIEW_URL="skip"
 
 NG_CODEGEN_PATH="../wavemaker-ng-codegen"
 LOCAL_BUILD_DOC="../../commands/local-angular-build.md"
