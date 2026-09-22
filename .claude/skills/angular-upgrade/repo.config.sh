@@ -16,6 +16,16 @@
 # Step 10: UPGRADE_DOC_PATH
 
 # --- Angular version range (defaults — user may override in Start message) ---
+# STATUS: 21->22 package/source changes shipped and merged to stage-ai (WMS-TBD,
+# commits aab04e7ae/3d5e32079/e00efb3f3/6ff1ec379) WITHOUT going through this
+# skill's Step 0-10 process. package.json is already at @angular/core 22.1.7,
+# but Step 9 (preview validation, G1-G7) was never confirmed passing, and the
+# user has confirmed preview is currently broken. Do NOT bump this to 22->23 —
+# that would skip validating 22 entirely. Kept at 21->22 so the next "Start/
+# Resume Angular upgrade" surfaces the real state: Step 1 Inventory will find
+# package.json already at 22 (not 21), which should be treated as "finish
+# validating the in-flight 21->22 upgrade" (esp. Step 9), not "start fresh."
+# See docs/upgrade-log/21-to-22.md and docs/22-upgrade.md for what's known.
 ANGULAR_BASE_VERSION="21"
 ANGULAR_TARGET_VERSION="22"
 
@@ -42,6 +52,10 @@ NODE_VERSION="24.15.0"
 # the skill needs to change; Step 9's skip logic, gate table (G1-G7/E1-E13),
 # fix loop, and "done when" criterion are all mode-generic already.
 VALIDATION_MODES="angular_deployment:LOCAL_DEPLOYMENT_URL:WAVEMAKER_DEPLOYMENT_URL wavemaker_preview:LOCAL_PREVIEW_URL:WAVEMAKER_PREVIEW_URL"
+
+# --- Project used by local-angular-build.md (Studio export name; must match
+# the project segment in the URLs below) ---
+PROJECT_NAME="WMTheme"
 
 # --- Angular Deployment (Tomcat) validation — built/deployed by
 # local-angular-build.md; see LOCAL_BUILD_DOC below ---

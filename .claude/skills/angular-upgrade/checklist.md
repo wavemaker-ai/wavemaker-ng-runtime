@@ -47,7 +47,8 @@ Before marking any pattern item `[N/A: version gate]`, you must:
 1. **Independently reproduce the check** — run the exact "Known preview error" / "Step 6 grep" the section describes against the *actual installed source* for the version this upgrade installs. Do not accept "the table says Angular N+1" as a substitute for running the grep yourself.
 2. **If the check involves an `inject()`-based/functional-DI API**, trace the real runtime call chain (constructor → the actual call site) and check for a Zone/async boundary in between — see [`patterns/runtime.md` §26](patterns/runtime.md#26-inject-based-api-called-across-a-zoneasync-boundary-any-angular-ecosystem-dependency) and [`research.md`'s general dependency-jump principle](research.md#general-principle-for-any-dependency-jumping-multiple-majors-not-just-ngx-bootstrap). A call being textually "inside the constructor" is not sufficient evidence it runs in a valid injection context.
 3. **Record the specific evidence** you used to conclude N/A (grep output, a `.d.ts` signature, a file:line reference) in `current-state.md` — not just a citation of the version-gate table. A bare "table says N/A" with no independent check is not a defensible N/A and will not survive review.
-4. **Update the section's version-gate annotation** (and "Last verified" column) with what you actually found for this upgrade — whether it confirms the existing gate or corrects it. Pattern files only stay accurate if every upgrade run feeds its findings back in, not just its fixes.
+4. **Before overwriting an existing §N row or section text**, append its prior value to `docs/upgrade-log/{base}-to-{target}.md` (create if missing — skeleton in [`templates.md`](templates.md#pattern-diff-log-skeleton-step-26--docsupgrade-logbase-to-targetmd)). This is the only permanent record of what a previous run found — the pattern files and the Section Version History table below hold only the *current* understanding, and the next run's edits will overwrite what's there now.
+5. **Update the section's version-gate annotation** (and "Last verified" column) with what you actually found for this upgrade — whether it confirms the existing gate or corrects it. Pattern files only stay accurate if every upgrade run feeds its findings back in, not just its fixes.
 
 **Why this matters (concrete precedent):** during the Angular 18→20 upgrade (WMS-29275), §12 was marked N/A on the strength of its version-gate table alone ("first required Angular 21"), despite `takeUntilDestroyed()` appearing directly in the installed ngx-bootstrap 20.0.2 source. The actual bug — `NG0203`, not the documented `ReferenceError` — was invisible to `pattern-review.sh`, `tsc --noEmit`, and a fully green `build.sh -f`, and only surfaced when the upgraded app actually ran in a browser. §12's gate has since been corrected to reflect that it applies starting at ngx-bootstrap 20.0.2. Treat every other §N's gate with the same skepticism until you've checked it yourself for the version you're actually installing.
 
@@ -123,6 +124,8 @@ See [`troubleshoot.md`](troubleshoot.md) — single source of truth. Add new err
 
 When each section was first required. **Update "Last verified" when you confirm a section still applies (or no longer applies) after an upgrade** — this tells the next engineer which sections are known-current vs. potentially stale.
 
+**Before editing any row below, append its current value to `docs/upgrade-log/{base}-to-{target}.md` first** (see Verification Principle step 4 above) — this table only ever shows the latest run's findings; the diff log is where prior runs' values survive.
+
 | § | First required | Last verified | Notes |
 |---|---------------|---------------|-------|
 | §1 | Angular 20 | Angular 21 | Legacy `compileModuleAndAllComponentsSync` incompatible with AOT-first defaults |
@@ -131,7 +134,7 @@ When each section was first required. **Update "Last verified" when you confirm 
 | §4 | Angular 20 | Angular 21 | `Element` constructor requires 9 args including `endSourceSpan` |
 | §5 | Angular 17 | Angular 21 | `@if` / `@for` block syntax introduced |
 | §6 | Angular 20+ | Angular 21 | ngx-bootstrap patch first needed at WMS-29275; re-check every ngx-bootstrap major |
-| §7 | Angular 20 | Angular 21 | `bootstrapApplication` + `APP_INITIALIZER` ordering; Zone.js rule applies to all majors |
+| §7 | Angular 20 | Angular 22 | `bootstrapApplication` + `APP_INITIALIZER` ordering; Zone.js rule applies to all majors; `provideHttpClient` default backend pin added at Angular 22 (§7b) |
 | §8 | Angular 21 | Angular 21 | fesm primitive renames; `moduleResolution: "bundler"` required |
 | §8b | Angular 21 | Angular 21 | ngx-bootstrap 21 removed `forRoot()` from `ModalModule` / `BsDatepickerModule` |
 | §9 | Every major | Angular 21 | `jest-preset-angular` major must match Angular major |
@@ -139,8 +142,8 @@ When each section was first required. **Update "Last verified" when you confirm 
 | §10a | Angular 20 | Angular 21 | Popover + date/time picker outside-click isolation (subsection of §10) |
 | §10b | Angular 20 | Angular 21 | File upload success/delete template binding shape (subsection of §10) |
 | §11 | Angular 20+ | Angular 21 | `@ViewChild(RouterOutlet)` setter pattern (WMS-28429) |
-| §12 | Angular 21 | Angular 21 | ngx-bootstrap 21 ships `takeUntilDestroyed(__destroyRef)` without declaring it |
-| §13 | Angular 16+ | Angular 21 | Fork must be synced on every major; last sync at Angular 21 (@ animation) |
+| §12 | Angular 21 | Angular 22 | ngx-bootstrap 21 ships `takeUntilDestroyed(__destroyRef)` without declaring it; ngx-bootstrap 22.0.0 natively ships all 5 patches `ngx-bootstrap-patch.mjs` applies — patch script required no source changes at 22, keep it (do not remove without re-verifying) |
+| §13 | Angular 16+ | Angular 22 | Fork must be synced on every major; last sync at Angular 22 — `removeStyles()` no-op added to `wm_shared_styles_host.ts` (§13i) |
 | §14 | Angular 20 | Angular 21 | Template type-checker rejects explicit `this.` in bindings |
 | §15 | Angular 20 | Angular 21 | `route.queryParams` may emit after first variable init |
 | §16 | Angular 20 | Angular 21 | `ngTemplateOutletContext` row aliasing; `createCustomInjector` per-template |
@@ -150,8 +153,10 @@ When each section was first required. **Update "Last verified" when you confirm 
 | §22 | Any major | Angular 21 | Peer dep version declared in `.yalc` package |
 | §23 | Check every major | Angular 21 | Builder renames; deprecated option removal |
 | §24 | Populated at Step 10 | Angular 21 | Forward-looking deprecations found during R1/R3 review |
-| §25 | Every TS major | Angular 21 | TypeScript strictness ratchet; re-check on each Angular/TS bump |
+| §25 | Every TS major | Angular 22 | TypeScript strictness ratchet; re-check on each Angular/TS bump. TS 6.0 flipped `strict` default to `true` — disabled explicitly (deliberate exception, see §25 body) rather than fixed, since real strict-mode adoption is out of scope for a compatibility-only upgrade |
 | §26 | Generic — any dependency major bump | Angular 21 (first instance: ngx-bootstrap 20.0.2, WMS-29275) | Not version-gated to a specific Angular major — check on every dependency Step 3 bumps by more than a patch/minor. `inject()`-based API vs Zone/async boundary; see Verification Principle above |
+| §27 | Angular 22 | Angular 22 | Default-behavior changes with no compile error — `changeDetection` (27a), Router `paramsInheritanceStrategy` (27b) — pinned back to pre-22 behavior in `app.config.ts` / component decorators |
+| §28 | Angular 22 | Angular 22 | Compiler strictness ratchet — NG1054 (duplicate `@Input` alias), NG6008/NG6009 (standalone components in `NgModule.declarations`/`.bootstrap`) |
 
 ---
 
@@ -288,13 +293,9 @@ Warning: The …:browser builder is deprecated. Use …:application instead.
 
 ---
 
-**Angular 21 → Angular 22 watch items** *(fill in at Step 10 of the 20→21 upgrade)*
+**Angular 21 → Angular 22 watch items** — **abandoned, historical.** Angular 21→22 shipped (`aab04e7ae` et al.) without going through this skill's Step 2, so no genuine R1/R3 deprecation research exists for this row. Left unfilled rather than fabricated after the fact — see `docs/upgrade-log/21-to-22.md` for what *was* reconstructed from commit messages (actual breaking changes hit, not forward-looking deprecations).
 
-> Add rows here from R1/R3 deprecation notices found during Step 2 research for Angular 21. Leave blank if no deprecation notices were found.
-
-| API / pattern | Deprecated in | Removed in | Affected files | Notes |
-|---------------|--------------|-----------|---------------|-------|
-| *(populate from R1 Angular 21 migration guide deprecation section)* | Angular 21 | Angular 22 | | |
+**Do not add an "Angular 22 → 23" row yet.** The 21→22 upgrade itself is not confirmed complete — package/source changes shipped but Step 9 preview validation never passed (currently broken, per the user). `repo.config.sh` is deliberately still `21→22`, not `22→23`. The next skill run should finish/validate 22 first (see `docs/22-upgrade.md`); only once that's genuinely done does a 22→23 row become meaningful.
 
 ---
 

@@ -205,6 +205,23 @@ provideHttpClient(withInterceptorsFromDi(), …),
 - Do **not** duplicate-register `HttpServiceImpl` when `AbstractHttpService` is already provided.
 - `InitializeApp` must await `AppJSResolve`, `AppVariablesResolve`, `AppExtensionJSResolve`, locale load, then `AppBeforeLoadResolve`.
 
+#### 7b. `provideHttpClient` default backend (`withXhr()`) — Angular 22
+
+**First required:** Angular 22 (`aab04e7ae`).
+
+Angular 22 changed `provideHttpClient()`'s default backend behavior. Without `withXhr()` explicitly passed, upload-progress reporting (`reportProgress: true` on a request with a body upload) silently stops working — no compile error, no runtime error, just missing progress events.
+
+**Fix:** `provideHttpClient(withInterceptorsFromDi(), withXhr(), …)` in `app.config.ts`.
+
+**Step 6 grep:**
+
+```bash
+rg 'provideHttpClient\(' projects/runtime-dynamic/src/app/app.config.ts
+# Confirm withXhr() is present among the args
+```
+
+**Step 6 classification:** `must-change` if the app has any file-upload widget using progress reporting (WaveMaker's Upload widget does) — `safe` only if no upload-progress consumer exists, which is not the case here.
+
 ### 8. Rollup library bundles
 
 - `config/rollup.ng-libs.config.mjs` — peer dependency alignment with `@angular/*`
@@ -523,6 +540,22 @@ rg 'AT_CHARCODE|charCodeAt\(0\) === AT' projects/runtime-base/src/overrides/wm_d
 
 **Cross-section dependency:** §13 and §15 interact — `bd406e2a7` introduced an animation-event fix that broke page-param-driven variables on first load; `56f3b9ce6` reverted it. If §13 animation handling is re-attempted, re-validate §15 in preview before marking done.
 
+#### 13i. `removeStyles()` no-op (Angular 22)
+
+**First required:** Angular 22 (`aab04e7ae`).
+
+Angular 22's internal `SharedStylesHost` gained a `removeStyles()` method. `WMDomSharedStylesHost` overrides this class but bypasses Angular's real style-node management entirely (§13a), so upstream calling the new method against the fork's instance would hit a missing method rather than a real behavioral gap.
+
+**Fix:** add a no-op `removeStyles(): void {}` override in `wm_shared_styles_host.ts`. Defensive — not a fix for an observed crash, just closing the API-surface gap upstream added.
+
+**Step 6 grep:**
+
+```bash
+rg 'removeStyles' projects/runtime-base/src/overrides/wm_shared_styles_host.ts
+```
+
+**Step 6 classification:** `needs-review each major` — same as §13h (`destroyNode`): compare upstream `SharedStylesHost`'s method surface on every bump; implement any newly-required override as a no-op unless a real crash proves otherwise.
+
 ### 14. Template `this.` context references
 
 **WMS-29275:** `d9a05f1be`
@@ -746,3 +779,60 @@ rg -B8 'inject\(|takeUntilDestroyed\(\)' <matched-file> | rg -B6 'runOutsideAngu
 | `inject()`-based call reachable from inside a Zone/async boundary, no value captured beforehand | `must-change` |
 | `inject()`-based call present but only reachable synchronously from the constructor (no boundary in between) | `safe` |
 | Dependency version bumped by more than one major/minor and not yet checked for this pattern at all | `needs-review` — check before marking `safe`
+
+### 27. Angular 22 default-behavior changes (compatibility pins)
+
+**Caution — reconstructed from commit messages, not from a completed Step 9 run.** The 21→22 upgrade that produced these findings (`aab04e7ae`) shipped without preview validation ever passing (see `docs/22-upgrade.md`). The source changes below are real and confirmed by a green `build.sh -f`, but whether they're *sufficient* — i.e. whether preview actually renders correctly with them in place — is unconfirmed. Re-verify against Step 9 before trusting this section's gates the way §1–§26 (validated via a passing preview run) can be trusted.
+
+Both changes below share a shape: Angular 22 silently changed a default with no compile-time error, so nothing catches a missed pin except a behavioral difference in the browser.
+
+#### 27a. `changeDetection` default (Angular 22)
+
+**First required:** Angular 22 (`aab04e7ae`).
+
+Angular 22 changed the default change-detection strategy applied to any `@Component` with no explicit `changeDetection` value. 76 components in this repo had no explicit strategy and got `changeDetection: ChangeDetectionStrategy.Eager` added to pin the pre-22 default behavior.
+
+**This is forward-looking, not just a one-time fix:** any **new** component added after this upgrade that omits `changeDetection` will silently pick up Angular 22's new default instead of matching the rest of the codebase, unless something enforces the pin going forward (lint rule, base class, or code-review discipline — none currently exist for this).
+
+**Step 6 grep:**
+
+```bash
+# Components with no explicit changeDetection (candidates needing the pin)
+rg -L '@Component\(\{[^}]*changeDetection' --type ts -g '*.component.ts' projects/ | rg -l '@Component'
+```
+
+**Step 6 classification:** `must-change` for any component lacking the pin; `needs-review` for the forward-looking gap (no enforcement mechanism) — flag as a deferred item, not a Step 6 blocker.
+
+#### 27b. Router default `paramsInheritanceStrategy` (Angular 22)
+
+**First required:** Angular 22 (`aab04e7ae`).
+
+Angular 22 changed the router's default child-route param-inheritance behavior. `withRouterConfig({ paramsInheritanceStrategy: 'emptyOnly' })` added to the router providers in `app.config.ts` to preserve pre-22 behavior.
+
+**Step 6 grep:**
+
+```bash
+rg 'withRouterConfig' projects/runtime-dynamic/src/app/app.config.ts
+```
+
+**Step 6 classification:** `must-change` — any route with child routes reading inherited params is affected without this pin.
+
+### 28. Angular 22 compiler strictness ratchet (NG1054, NG6008, NG6009)
+
+**First required:** Angular 22 (`e00efb3f3`). Same caution as §27 — reconstructed from a build that passed, not a validated preview.
+
+Angular 22's template compiler tightened several checks that previously compiled cleanly:
+
+| Diagnostic | Trigger | Fix |
+|-----------|---------|-----|
+| `NG1054` | Two class members bound to the same public `@Input` alias (e.g. a `@Input("config")` field plus a differently-named setter aliased to the same `"config"` input) | Remove the redundant one — keep whichever actually does the work (usually the setter, if it has side effects) |
+| `NG6009` | `bootstrap: [...]` in an `NgModule` referencing a component that is (or has become) standalone | Remove the `bootstrap` array entry — standalone components can't appear there. If the app already bootstraps via `bootstrapApplication()`, the whole `NgModule` may be dead code (`WMS-TBD`/`aab04e7ae`: `AppModule` — confirm before deleting; this run only removed the offending entries, not the module itself) |
+| `NG6008` | A standalone component listed in an `NgModule`'s `declarations` | Move it to that `NgModule`'s `imports` instead |
+
+**Step 6 grep:**
+
+```bash
+npx tsc --noEmit 2>&1 | rg 'NG1054|NG6008|NG6009'
+```
+
+**Step 6 classification:** `must-change` — these are compile errors, not warnings; `build.sh -f` will not pass with them present.

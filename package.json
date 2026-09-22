@@ -36,6 +36,7 @@
         "@fullcalendar/list": "6.1.18",
         "@fullcalendar/timegrid": "6.1.18",
         "@metrichor/jmespath": "0.3.1",
+        "@wavemaker-ai/angular-app": "file:.yalc/@wavemaker-ai/angular-app",
         "@wavemaker-ai/custom-widgets-m3": "file:.yalc/@wavemaker-ai/custom-widgets-m3",
         "@wavemaker-ai/foundation-css": "file:.yalc/@wavemaker-ai/foundation-css",
         "@wavemaker-ai/variables": "file:.yalc/@wavemaker-ai/variables",
