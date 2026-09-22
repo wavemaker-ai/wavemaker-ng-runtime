@@ -1,4 +1,5 @@
 import {
+    ChangeDetectionStrategy,
     Component,
     CUSTOM_ELEMENTS_SCHEMA,
     Inject,
@@ -168,6 +169,15 @@ const createComponent = (name: string, type: ComponentType, template: string,
         encapsulation: ViewEncapsulation.None,
         selector,
         standalone: true,
+        // Angular 22 changed the default changeDetection strategy for components with no
+        // explicit setting (patterns/runtime.md §27a). The 76 statically-declared production
+        // components got ChangeDetectionStrategy.Eager pinned during the upgrade, but this
+        // dynamic Component() call -- which builds every page/partial/prefab/widget component
+        // in the entire app at runtime -- was missed, since it's not a static @Component()
+        // decorator a repo-wide grep would catch. Without this, the created component's host
+        // element is inserted into the DOM (so createComponent() "succeeds", no error), but
+        // its own template content never gets checked/rendered under the new default strategy.
+        changeDetection: ChangeDetectionStrategy.Eager,
         imports: [...IMPORTS],
         providers: [{ provide: UserDefinedExecutionContext, useExisting: DynamicComponent }],
         schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]

@@ -1,5 +1,8 @@
 
-// This file is automatically loaded when running `jest` commands
+// This file is automatically loaded when running `jest` commands.
+// ngx-bootstrap ESM patching (build-scripts/ngx-bootstrap-patch.mjs) is a build-time
+// concern (applied via its Rollup plugin during build.sh) -- deliberately not called
+// here or anywhere else in the test flow.
 import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
 import { ToastrModule } from 'ngx-toastr';
 import { TestBed } from '@angular/core/testing';

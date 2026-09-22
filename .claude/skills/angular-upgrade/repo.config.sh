@@ -16,8 +16,26 @@
 # Step 10: UPGRADE_DOC_PATH
 
 # --- Angular version range (defaults — user may override in Start message) ---
-ANGULAR_BASE_VERSION="21"
-ANGULAR_TARGET_VERSION="22"
+# STATUS: 21->22 shipped and merged to stage-ai without going through this skill's
+# Step 0-10 process (WMS-TBD, commits aab04e7ae/3d5e32079/e00efb3f3/6ff1ec379).
+# Step 9 (preview validation, G1-G7) was reconstructed and completed after the
+# fact -- root-caused and fixed a real "preview is broken" bug (two dynamic
+# Component() factories missing the changeDetection: Eager pin -- patterns/
+# runtime.md §27c), then user-confirmed passing on both configured validation
+# modes. This upgrade is genuinely complete; bumped forward per the Step 10
+# post-merge checklist. See docs/upgrade-log/21-to-22.md and docs/22-upgrade.md
+# for the full record.
+ANGULAR_BASE_VERSION="22"
+ANGULAR_TARGET_VERSION="23"
+
+# --- Node.js version pin (R11 — set per upgrade; drives engines.node in Step 3) ---
+# Scripts source this and, if nvm is available, auto-activate this exact version
+# before running install/build/audit/test/pattern-review — the active `node` in a
+# fresh shell is whatever this machine's PATH snapshot points to (not necessarily
+# this pin), and `nvm use` from a prior command does not persist to the next one.
+# Update this whenever Step 2/R11 picks a different Node version for the target
+# Angular major. If unset, scripts skip activation and use whatever `node` is on PATH.
+NODE_VERSION="24.15.0"
 
 # --- Validation modes (Step 9) ---
 # Space-separated list of "key:urlVar:comparisonVar" triples. Each urlVar/
@@ -33,6 +51,10 @@ ANGULAR_TARGET_VERSION="22"
 # the skill needs to change; Step 9's skip logic, gate table (G1-G7/E1-E13),
 # fix loop, and "done when" criterion are all mode-generic already.
 VALIDATION_MODES="angular_deployment:LOCAL_DEPLOYMENT_URL:WAVEMAKER_DEPLOYMENT_URL wavemaker_preview:LOCAL_PREVIEW_URL:WAVEMAKER_PREVIEW_URL"
+
+# --- Project used by local-angular-build.md (Studio export name; must match
+# the project segment in the URLs below) ---
+PROJECT_NAME="WMTheme"
 
 # --- Angular Deployment (Tomcat) validation — built/deployed by
 # local-angular-build.md; see LOCAL_BUILD_DOC below ---

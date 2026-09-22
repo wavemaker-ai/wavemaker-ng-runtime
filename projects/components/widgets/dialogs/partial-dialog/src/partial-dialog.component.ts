@@ -8,7 +8,7 @@ import {
     OnDestroy,
     Optional,
     TemplateRef,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import { App, toBoolean } from '@wm/core';
@@ -23,6 +23,7 @@ const DIALOG_CLS = 'app-dialog modal-dialog app-page-dialog';
 const WIDGET_INFO = { widgetType: 'wm-partialdialog' };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent, NgTemplateOutlet],
     selector: 'div[wmPartialDialog]',

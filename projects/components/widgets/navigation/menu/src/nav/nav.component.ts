@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { AnchorComponent } from '@wm/components/basic/anchor';
 import { MenuComponent } from '../menu.component';
 import { NavItemDirective } from './nav-item/nav-item.directive';
-import { Attribute, ChangeDetectorRef, Component, forwardRef, Inject, Injector, OnDestroy, OnInit, Optional } from '@angular/core';
+import { Attribute, ChangeDetectorRef, Component, forwardRef, Inject, Injector, OnDestroy, OnInit, Optional, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { addClass, App, triggerItemAction, UserDefinedExecutionContext } from '@wm/core';
@@ -22,6 +22,7 @@ const NavClassMap = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, BsDropdownModule, AnchorComponent, forwardRef(() => MenuComponent), NavItemDirective, ],
     selector: '[wmNav]',

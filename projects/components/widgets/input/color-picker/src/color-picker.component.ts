@@ -1,6 +1,6 @@
 import { FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { ColorPickerService, ColorPickerDirective } from 'ngx-color-picker';
-import { Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from "@angular/common";
 
 import { addClass, removeClass } from '@wm/core';
@@ -16,6 +16,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, FormsModule, ColorPickerDirective],
     selector: '[wmColorPicker]',

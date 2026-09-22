@@ -19,7 +19,7 @@ import {
     QueryList,
     TemplateRef,
     ViewChild,
-    ViewContainerRef
+    ViewContainerRef, ChangeDetectionStrategy
 } from '@angular/core';
 import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {
@@ -139,6 +139,7 @@ const isInputBodyWrapper = target => {
 };
 
 @Component({
+      changeDetection: ChangeDetectionStrategy.Eager,
       standalone: true,
       imports: [CommonModule, AnchorComponent, PaginationComponent, ButtonComponent, BsDropdownModule, MenuComponent, WmAppIconComponent],
     selector: '[wmTable]',

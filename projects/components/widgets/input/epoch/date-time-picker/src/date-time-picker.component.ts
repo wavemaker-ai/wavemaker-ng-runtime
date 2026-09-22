@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, EventEmitter, Injector, Input, OnDestroy, Output, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Injector, Input, OnDestroy, Output, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { BsDatepickerConfig, BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { App } from '@wm/core';
@@ -12,6 +12,7 @@ import * as momentLib  from 'moment';
 const moment = momentLib.default || window['moment'];
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, BsDatepickerModule, BsDropdownModule],
     selector: 'wm-datetimepicker',
@@ -79,7 +80,6 @@ export class DateTimePickerComponent implements OnDestroy {
     @Input()
     private placement: 'MODAL' | 'INLINE' = 'MODAL';
 
-    @Input("config")
     private _bsDatepickerConfig: BsDatepickerConfig;
 
     @Input()
@@ -291,6 +291,7 @@ export class DateTimePickerComponent implements OnDestroy {
 
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'wm-timepicker',
     standalone: true,
     template: `

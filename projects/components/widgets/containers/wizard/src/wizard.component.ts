@@ -24,7 +24,7 @@ import {
     Optional,
     QueryList,
     Self,
-    TemplateRef
+    TemplateRef, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {DynamicComponentRefProvider, isDefined, noop} from '@wm/core';
@@ -54,6 +54,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: 'div[wmWizard]',

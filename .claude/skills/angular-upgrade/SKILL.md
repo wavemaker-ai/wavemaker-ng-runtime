@@ -164,6 +164,8 @@ Review references R1–R13 per [`research.md`](research.md). Block if R1, R2, R3
 
 **Undocumented target version:** if the pattern files have no §N entries for the target Angular major (i.e., you are upgrading to a version beyond what they cover), treat every plan item from R1/R3 as `must-review` until Step 9 confirms it. Add new §N entries to the appropriate file as you discover and fix issues:
 
+**Before editing any existing §N row or section** (here or in Step 6), append its prior value to `docs/upgrade-log/{base}-to-{target}.md` first — see [`checklist.md` → Verification Principle](checklist.md#verification-principle-pattern-gates-are-hints-not-guarantees) step 4 and the skeleton in [`templates.md`](templates.md#pattern-diff-log-skeleton-step-26--docsupgrade-logbase-to-targetmd). New §N entries don't need a diff-log row — there's no prior value to lose.
+
 - ng-runtime source pattern → `patterns/runtime.md`
 - ng-codegen template/src pattern → `patterns/codegen.md`
 - Evergreen or meta check (applies to any Angular major) → `checklist.md` §21+
@@ -364,6 +366,8 @@ Deferrals block Step 10 unless explicitly accepted by the user.
 
 Write `docs/{major}-upgrade.md` covering: Angular versions, date, branch names, references reviewed, package changes in both repos, breaking changes fixed, preview validation result, deferred items.
 
+Confirm `docs/upgrade-log/{base}-to-{target}.md` exists and has an entry for every §N row edited during this run (Step 2/6). If no existing §N row was ever edited (only new §N entries were added), the file may not exist — that's fine, don't create an empty one.
+
 ```bash
 sh scripts/reset-state.sh
 ```
@@ -412,6 +416,7 @@ Config source: [`repo.config.sh`](repo.config.sh) (sourced by all scripts).
 | [`checklist.md`](checklist.md) | Step 3 — dependency classification table; Step 6 — automated blockers, §21–§25, classification guide; Step 9 — extended checks |
 | [`troubleshoot.md`](troubleshoot.md) | Any step — error message → §N quick lookup |
 | [`state.md`](state.md) | Template for `current-state.md` |
+| `docs/upgrade-log/{base}-to-{target}.md` | Step 2/6 — before editing an existing §N row/section; Step 10 — verify it's complete. Skeleton in [`templates.md`](templates.md#pattern-diff-log-skeleton-step-26--docsupgrade-logbase-to-targetmd) |
 | [`../../commands/local-angular-build.md`](../../commands/local-angular-build.md) | Step 9 — Tomcat build and deploy |
 
 **Port this skill:** copy this skill's directory as-is to another tool's skills root, keeping the same relative layout (`<tool-dir>/skills/angular-upgrade/`), plus `commands/local-angular-build.md` to that root's `commands/` sibling (`<tool-dir>/commands/`); edit `repo.config.sh`.
@@ -428,4 +433,5 @@ Config source: [`repo.config.sh`](repo.config.sh) (sourced by all scripts).
 - **Never edit generated app source.** No hand-edits under `~/Desktop/local-*/src/` or any codegen `dist/`. Fix source in ng-runtime or ng-codegen, then rebuild and regenerate.
 - **Block on `must-change`.** Any finding classified `must-change` in `checklist.md` blocks Step 6 done. Do not defer without explicit user acceptance.
 - **R1/R3 take precedence.** A breaking change in the official Angular changelog that is not in the pattern files is still `must-change`. Pattern files are a starting point, not a complete list.
+- **Diff-log before overwrite.** Before editing an existing §N row or section in `checklist.md`/`patterns/*.md`, append its prior value to `docs/upgrade-log/{base}-to-{target}.md`. New §N entries don't need this — only edits to something that already existed.
 - **User verifies G1–G7, for every configured validation mode.** The AI builds/deploys Angular Deployment (the only mode with automation) and waits; WaveMaker Preview has no build step at all. Do not self-report preview checks as passed for any mode — only accept a user-confirmed result. Both modes are first-class; do not treat Angular Deployment as the "real" check and WaveMaker Preview as optional, or vice versa.

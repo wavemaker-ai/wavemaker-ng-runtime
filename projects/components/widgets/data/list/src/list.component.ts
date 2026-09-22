@@ -36,7 +36,7 @@ import {
     QueryList,
     TemplateRef,
     ViewChild,
-    ViewChildren
+    ViewChildren, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {Subscription} from 'rxjs';
@@ -95,6 +95,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-list', hostClass: DEFAULT_CLS};
 
 @AutoLayout({ targetSelector: 'ul' })
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, TextContentDirective, PaginationComponent, ListItemDirective, WmAppIconComponent],
     selector: 'div[wmList]',

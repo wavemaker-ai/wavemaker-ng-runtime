@@ -1,5 +1,5 @@
 import {CommonModule} from '@angular/common';
-import {AfterViewInit, Component, ContentChildren, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import {AfterViewInit, Component, ContentChildren, Inject, Injector, OnDestroy, Optional, ChangeDetectionStrategy} from '@angular/core';
 import {App, noop, removeAttr} from '@wm/core';
 import {
     APPLY_STYLES_TYPE,
@@ -21,6 +21,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-accordionpane', hostClass
 
 @AutoLayout({ targetSelector: '.panel-body' })
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, WmAppIconComponent],
     selector: 'div[wmAccordionPane]',

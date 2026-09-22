@@ -17,7 +17,7 @@ import {
     Optional,
     SkipSelf,
     ViewChild,
-    ViewContainerRef
+    ViewContainerRef, ChangeDetectionStrategy
 } from '@angular/core';
 import {FormArray, FormBuilder, FormGroup} from '@angular/forms';
 
@@ -158,6 +158,7 @@ const setTouchedState = (self, ngForm, fieldName) => {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FilterPipe, AnchorComponent, ButtonComponent, MessageComponent, WmAppIconComponent],
     selector: 'form[wmForm]',

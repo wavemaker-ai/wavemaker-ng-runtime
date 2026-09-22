@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, OnInit, ViewChild, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild, ViewContainerRef, TemplateRef, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 
 import { Toast } from 'ngx-toastr';
 
@@ -10,6 +10,7 @@ import { ContainerDirective, PartialContainerDirective, PartialParamDirective, P
 declare const $;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, ContainerDirective, PartialParamHandlerDirective, PartialContainerDirective, PartialParamDirective],
     selector: '[custom-toaster-component]',

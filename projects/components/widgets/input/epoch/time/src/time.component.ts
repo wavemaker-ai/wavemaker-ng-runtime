@@ -1,7 +1,7 @@
 import {FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {DateTimePickerComponent} from '@wm/components/input/epoch/date-time-picker';
 import {CommonModule} from '@angular/common';
-import {Component, Inject, Injector, NgZone, OnDestroy, Optional} from '@angular/core';
+import {Component, Inject, Injector, NgZone, OnDestroy, Optional, ChangeDetectionStrategy} from '@angular/core';
 import {TimepickerConfig, TimepickerModule} from 'ngx-bootstrap/timepicker';
 import {
     $appDigest,
@@ -34,6 +34,7 @@ const DEFAULT_CLS = 'input-group app-timeinput';
 const WIDGET_CONFIG = { widgetType: 'wm-time', hostClass: DEFAULT_CLS };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [FormsModule, DateTimePickerComponent, BsDropdownModule, TimepickerModule,CommonModule],
     selector: '[wmTime]',

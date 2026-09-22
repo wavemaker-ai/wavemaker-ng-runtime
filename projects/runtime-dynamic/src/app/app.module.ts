@@ -143,13 +143,11 @@ import { TopNavDirective } from '@wm/components/page/top-nav';
 import { PrefabDirective, PrefabContainerDirective } from '@wm/components/prefab';
 
 import {
-    AppComponent,
     AppJSProvider,
     AppVariablesProvider,
     ComponentRefProvider,
     PrefabConfigProvider,
     WmRouteReuseStrategy,
-    WM_MODULES_FOR_ROOT,
     CustomwidgetConfigProvider,
     REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
     AppExtensionProvider
@@ -315,15 +313,14 @@ REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(...componentsModule as any);
 REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule as any, ReactiveFormsModule as any);
 
 @NgModule({
-    declarations: [
-        PageWrapperComponent
-    ],
+    declarations: [],
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
         CommonModule,
         RouterModule,
         HttpClientModule,
+        PageWrapperComponent,
 
         ModalModule,
         BsDatepickerModule,
@@ -339,8 +336,7 @@ REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule as any, ReactiveFormsMo
 
         routerModule,
         toastrModule,
-        httpClientXsrfModule,
-        WM_MODULES_FOR_ROOT
+        httpClientXsrfModule
     ],
     providers: [
         AppResourceManagerService,
@@ -354,8 +350,7 @@ REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule as any, ReactiveFormsMo
         { provide: PrefabConfigProvider, useClass: PrefabConfigProviderService },
         { provide: RouteReuseStrategy, useClass: WmRouteReuseStrategy },
         { provide: AbstractHttpService, useClass: HttpServiceImpl }
-    ],
-    bootstrap: [AppComponent]
+    ]
 })
 export class AppModule {
     constructor(private readonly app: App, private readonly inj: Injector, private readonly componentRefProvider: ComponentRefProvider) {

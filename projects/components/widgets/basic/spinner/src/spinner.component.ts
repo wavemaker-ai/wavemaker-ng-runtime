@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { TextContentDirective, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, ImagePipe, WmAppIconComponent } from '@wm/components/base';
-import {Component, Inject, Injector, OnInit, OnDestroy, Optional} from '@angular/core';
+import {Component, Inject, Injector, OnInit, OnDestroy, Optional, ChangeDetectionStrategy} from '@angular/core';
 
 import {DataSource, validateDataSourceCtx} from '@wm/core';
 
@@ -11,6 +11,7 @@ const DEFAULT_CLS = 'app-spinner';
 const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-spinner', hostClass: DEFAULT_CLS};
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: '[wmSpinner]',

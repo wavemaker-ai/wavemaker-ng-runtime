@@ -1,5 +1,5 @@
 import { NgCircleProgressModule, CircleProgressComponent, CircleProgressOptions, CircleProgressOptionsInterface } from 'ng-circle-progress';
-import {AfterViewInit, Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, Inject, Injector, OnDestroy, Optional, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 
 import {IRedrawableComponent, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
 import {registerProps} from './progress-circle.props';
@@ -34,6 +34,7 @@ export const TYPE_CLASS_MAP_PC = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [NgCircleProgressModule],
     selector: '[wmProgressCircle]',

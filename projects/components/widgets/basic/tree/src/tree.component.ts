@@ -1,4 +1,4 @@
-import { ApplicationRef, Attribute, Component, ComponentRef, EnvironmentInjector, Inject, Injector, NgZone, OnDestroy, Optional, ViewEncapsulation, createComponent } from '@angular/core';
+import { ApplicationRef, Attribute, Component, ComponentRef, EnvironmentInjector, Inject, Injector, NgZone, OnDestroy, Optional, ViewEncapsulation, createComponent, ChangeDetectionStrategy } from '@angular/core';
 import { APPLY_STYLES_TYPE, getEvaluatedData, getOrderedDataset, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 import { registerProps } from './tree.props';
 import { $parseEvent, getClonedObject, StatePersistence } from "@wm/core";
@@ -15,6 +15,7 @@ const TREE_STATE_SELECTED_ID = 'selectedNodeId';
 const TREE_STATE_SELECTED_PATH = 'selectedNodePath';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'ul[wmTree]',
     templateUrl: './tree.component.html',

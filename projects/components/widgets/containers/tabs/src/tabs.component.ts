@@ -21,7 +21,7 @@ import {
     OnDestroy,
     OnInit,
     Optional,
-    QueryList
+    QueryList, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {
@@ -48,6 +48,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: 'div[wmTabs]',
