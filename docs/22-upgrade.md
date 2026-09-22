@@ -1,19 +1,18 @@
-# Angular 22 Upgrade — PREVIEW BUG FIXED, FORMAL SIGN-OFF STILL PENDING
+# Angular 22 Upgrade — COMPLETE
 
-**Status: package/source changes shipped, and the reported "preview is broken" bug is now
-root-caused and fixed, confirmed via automated browser inspection (clean console, correct
-render). Formal Step 9 G1–G7 sign-off is still a human call per this skill's own rules
-("do not self-report preview checks as passed") — do the visual pass, then this can move
-to fully done.**
+**Status: package/source changes shipped, the reported "preview is broken" bug is
+root-caused and fixed, and Step 9 (G1–G7) is user-confirmed passing on both configured
+validation modes — Angular Deployment (NestedWidgets, Tomcat) and WaveMaker Preview
+(LeaveManagementApp, proxy-studio). This upgrade is done.**
 
 **Branch:** WMS-32451 (merged to `stage-ai`)
 **Base → Target:** Angular 21 → 22
 **Commits:** `aab04e7ae`, `3d5e32079`, `e00efb3f3`, `6ff1ec379` (2026-09-17)
 
 This upgrade happened outside the `angular-upgrade` skill's Step 0–10 process — reconstructed
-after the fact from commit messages, not from a `current-state.md` run. `repo.config.sh` is
-deliberately still `ANGULAR_BASE_VERSION=21` / `TARGET=22`, not `22→23` — see the comment
-there. Full pattern-level diff: `docs/upgrade-log/21-to-22.md`.
+after the fact from commit messages, not from a `current-state.md` run. Now confirmed complete
+(see below); `repo.config.sh` has been bumped to `ANGULAR_BASE_VERSION=22` / `TARGET=23` per
+the skill's Step 10 post-merge checklist. Full pattern-level diff: `docs/upgrade-log/21-to-22.md`.
 
 ## What's confirmed done
 
@@ -24,13 +23,15 @@ there. Full pattern-level diff: `docs/upgrade-log/21-to-22.md`.
 | `build.sh -f` | pass, per `e00efb3f3` |
 | `verify-ngx-bootstrap-bundle.sh` | pass, per `e00efb3f3` |
 | `pattern-review.sh` | pass, per `e00efb3f3` |
-| Unit tests | one flaky spec skipped (`6ff1ec379`, pre-existing root cause, unrelated to Angular 22) — otherwise not confirmed in a commit message |
+| Unit tests | one flaky spec skipped (`6ff1ec379`, pre-existing root cause, unrelated to Angular 22); repo-wide `npm test` config bug found and fixed during verification (see finding #2 below) |
+| **Step 9 — Preview validation (G1–G7)** | **user-confirmed passing**, both configured modes: Angular Deployment (NestedWidgets/Tomcat, production build) and WaveMaker Preview (LeaveManagementApp/proxy-studio, production build) |
 
 ## What's NOT done
 
-- **Step 9 — Preview validation (G1–G7) formal sign-off.** The blocking bug that made preview *appear* broken is now root-caused and fixed (see "Preview bug investigation" below — resolved), and an automated browser check confirms the page now renders correctly with a clean console. But per this skill's own rule ("do not self-report preview checks as passed"), the actual G1–G7 checklist still needs a human visual pass before Step 9 is formally done.
-- No `current-state.md` record exists for this run to audit against.
-- §27/§28 in `patterns/runtime.md` (new Angular-22-default-behavior and compiler-strictness patterns, added retroactively from commit messages) — §27 now has an additional §27c subsection from the preview-bug fix; see below.
+Nothing blocking. Two minor process notes, neither gating:
+
+- No `current-state.md` record exists for this run to audit against (the upgrade shipped and was verified outside the skill's live Step 0–10 flow — this doc is the reconstructed record instead).
+- The formal "Post-merge checklist" from the skill's Step 10 (bumping `repo.config.sh` to `22→23`, etc.) is presented below rather than actioned automatically — see "Post-merge checklist."
 
 ## Libraries upgraded
 
@@ -144,8 +145,8 @@ A second, identical instance of the exact same gap was found in `projects/runtim
 
 ## Known gaps / follow-ups
 
-1. ~~Preview is broken~~ — **RESOLVED**, see "Preview bug investigation" above. Two independent real bugs found and fixed: a `PartialContainerDirective` race condition, and (the actual root cause) two dynamic `Component()` factory functions missing the `changeDetection: Eager` pin. Formal G1–G7 human sign-off still pending (see "What's NOT done").
-2. §27a's forward-looking gap: no lint rule/base class enforces the `changeDetection` pin on new components going forward — **now also applies to §27c** (dynamic `Component()` factories); same underlying gap, no enforcement mechanism for either.
+1. ~~Preview is broken~~ — **RESOLVED and user-confirmed.** Two independent real bugs found and fixed: a `PartialContainerDirective` race condition, and (the actual root cause) two dynamic `Component()` factory functions missing the `changeDetection: Eager` pin.
+2. §27a's forward-looking gap: no lint rule/base class enforces the `changeDetection` pin on new components going forward — **now also applies to §27c** (dynamic `Component()` factories); same underlying gap, no enforcement mechanism for either. Not a blocker for this upgrade, but worth a follow-up ticket.
 3. Carried over from `docs/21-upgrade.md`, still unresolved: §13a `ɵSharedStylesHost` double-instance issue in lazy-route child injectors (deferred pending standalone migration).
 4. `checklist.md`'s Angular 21→22 deprecation watch-list item is abandoned/unfilled (no genuine R1/R3 research exists for this jump) — see `checklist.md` § Deprecation watch list.
 
@@ -155,8 +156,14 @@ A second, identical instance of the exact same gap was found in `projects/runtim
 - `wavemaker-app-runtime-angularjs/package.json` — `engines.node` synced to `24.15.0`/`11.12.1` to match ng-runtime/ng-codegen (was still on `22.18.0`)
 - `wavemaker-ng-codegen/src/gen-layouts.js` — explored adding `limit: 1` to an `ncp()` call (suspected concurrency bug), confirmed **not** the actual cause of a codegen crash (root cause was a `pages-config.json` type-mismatch in the test project's own data, not a code bug), and reverted. Documented here so it isn't re-explored as a fresh lead later.
 
-## Next steps
+## Post-merge checklist (per the skill's own Step 10 template)
 
-1. Do the formal Step 9 human visual pass (G1–G7, both Angular Deployment and WaveMaker Preview modes per `repo.config.sh`'s `VALIDATION_MODES`) — the blocking bug is fixed and an automated check looks clean, but this skill's rule is that only a user-confirmed pass counts.
-2. Resume via the `angular-upgrade` skill (`repo.config.sh` is already set to `21→22`) to complete Step 10 (write `docs/22-upgrade.md`'s formal completion — largely already done here — and reset state) before considering a 22→23 upgrade.
-3. Consider the §27a/§27c forward-looking gap (item 2 above) — worth a lint rule or a shared base factory helper so future dynamic-component-creation code can't omit the `changeDetection` pin the way these two call sites did.
+- [x] Merge both `ng-runtime` and `ng-codegen` branches — already done, this upgrade shipped on `stage-ai`
+- [x] Update `repo.config.sh`: `ANGULAR_BASE_VERSION`/`ANGULAR_TARGET_VERSION` bumped to `22`/`23`
+- [ ] If Node.js version changed: update CI pipeline node version (`.gitlab-ci.yml`/equivalent) — `engines.node` moved to `24.15.0` this upgrade
+- [ ] If Node.js version changed: notify any dependent packages/consumers to align `engines.node`
+- [ ] Share this doc (`docs/22-upgrade.md`) with the team
+
+## Follow-up (not blocking, worth a separate ticket)
+
+- §27a/§27c's shared gap: no lint rule or shared factory helper prevents a new component (static or dynamic) from silently missing the `changeDetection` pin going forward.

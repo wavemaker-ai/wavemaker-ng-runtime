@@ -16,18 +16,17 @@
 # Step 10: UPGRADE_DOC_PATH
 
 # --- Angular version range (defaults — user may override in Start message) ---
-# STATUS: 21->22 package/source changes shipped and merged to stage-ai (WMS-TBD,
-# commits aab04e7ae/3d5e32079/e00efb3f3/6ff1ec379) WITHOUT going through this
-# skill's Step 0-10 process. package.json is already at @angular/core 22.1.7,
-# but Step 9 (preview validation, G1-G7) was never confirmed passing, and the
-# user has confirmed preview is currently broken. Do NOT bump this to 22->23 —
-# that would skip validating 22 entirely. Kept at 21->22 so the next "Start/
-# Resume Angular upgrade" surfaces the real state: Step 1 Inventory will find
-# package.json already at 22 (not 21), which should be treated as "finish
-# validating the in-flight 21->22 upgrade" (esp. Step 9), not "start fresh."
-# See docs/upgrade-log/21-to-22.md and docs/22-upgrade.md for what's known.
-ANGULAR_BASE_VERSION="21"
-ANGULAR_TARGET_VERSION="22"
+# STATUS: 21->22 shipped and merged to stage-ai without going through this skill's
+# Step 0-10 process (WMS-TBD, commits aab04e7ae/3d5e32079/e00efb3f3/6ff1ec379).
+# Step 9 (preview validation, G1-G7) was reconstructed and completed after the
+# fact -- root-caused and fixed a real "preview is broken" bug (two dynamic
+# Component() factories missing the changeDetection: Eager pin -- patterns/
+# runtime.md §27c), then user-confirmed passing on both configured validation
+# modes. This upgrade is genuinely complete; bumped forward per the Step 10
+# post-merge checklist. See docs/upgrade-log/21-to-22.md and docs/22-upgrade.md
+# for the full record.
+ANGULAR_BASE_VERSION="22"
+ANGULAR_TARGET_VERSION="23"
 
 # --- Node.js version pin (R11 — set per upgrade; drives engines.node in Step 3) ---
 # Scripts source this and, if nvm is available, auto-activate this exact version

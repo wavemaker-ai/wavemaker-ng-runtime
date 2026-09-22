@@ -295,7 +295,15 @@ Warning: The …:browser builder is deprecated. Use …:application instead.
 
 **Angular 21 → Angular 22 watch items** — **abandoned, historical.** Angular 21→22 shipped (`aab04e7ae` et al.) without going through this skill's Step 2, so no genuine R1/R3 deprecation research exists for this row. Left unfilled rather than fabricated after the fact — see `docs/upgrade-log/21-to-22.md` for what *was* reconstructed from commit messages (actual breaking changes hit, not forward-looking deprecations).
 
-**Do not add an "Angular 22 → 23" row yet.** The 21→22 upgrade itself is not confirmed complete — package/source changes shipped but Step 9 preview validation never passed (currently broken, per the user). `repo.config.sh` is deliberately still `21→22`, not `22→23`. The next skill run should finish/validate 22 first (see `docs/22-upgrade.md`); only once that's genuinely done does a 22→23 row become meaningful.
+---
+
+**Angular 22 → Angular 23 watch items** *(fill in at Step 10 of the 22→23 upgrade)*
+
+> Add rows here from R1/R3 deprecation notices found during Step 2 research for Angular 22. Leave blank if no deprecation notices were found. The 21→22 upgrade shipped outside this skill's Step 2, so there's no genuine prior research to seed this from — this section starts empty, same as §24's placeholder is designed to.
+
+| API / pattern | Deprecated in | Removed in | Affected files | Notes |
+|---------------|--------------|-----------|---------------|-------|
+| *(populate from R1 Angular 22 migration guide deprecation section)* | Angular 22 | Angular 23 | | |
 
 ---
 
