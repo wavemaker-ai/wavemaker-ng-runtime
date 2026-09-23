@@ -119,7 +119,7 @@ When `@wavemaker-ai/angular-app/dependencies/` filenames use a `.cjs.js` suffix,
 | Step 7 | `BUILD_CMD` (runtime) |
 | Step 9 | Codegen `build.sh`; local build; Tomcat; preview checklist below |
 
-Iteration table: [`SKILL.md`](../SKILL.md) Step 9 only.
+Iteration table: [`steps-6-10.md`](../steps-6-10.md) Step 9 only.
 
 #### 20e. Prism `foundation-css` path in `update-angular-json.js` — must-change
 
@@ -149,4 +149,4 @@ Iteration table: [`SKILL.md`](../SKILL.md) Step 9 only.
 
 **All fixes:** `wavemaker-ng-runtime` and/or `wavemaker-ng-codegen` → rebuild → re-run codegen (local-angular-build Steps 2–5).
 
-**Step 9 iteration:** see [`SKILL.md`](../SKILL.md) Step 9 only.
+**Step 9 iteration:** see [`steps-6-10.md`](../steps-6-10.md) Step 9 only.

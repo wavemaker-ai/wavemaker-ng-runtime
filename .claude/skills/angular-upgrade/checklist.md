@@ -52,6 +52,8 @@ Before marking any pattern item `[N/A: version gate]`, you must:
 
 **Why this matters (concrete precedent):** during the Angular 18→20 upgrade (WMS-29275), §12 was marked N/A on the strength of its version-gate table alone ("first required Angular 21"), despite `takeUntilDestroyed()` appearing directly in the installed ngx-bootstrap 20.0.2 source. The actual bug — `NG0203`, not the documented `ReferenceError` — was invisible to `pattern-review.sh`, `tsc --noEmit`, and a fully green `build.sh -f`, and only surfaced when the upgraded app actually ran in a browser. §12's gate has since been corrected to reflect that it applies starting at ngx-bootstrap 20.0.2. Treat every other §N's gate with the same skepticism until you've checked it yourself for the version you're actually installing.
 
+**Second precedent — don't trust your own first guess either, not just the gate table:** during the same 19→20 hop, Step 9 preview validation surfaced a real `SyntaxError: Unexpected token ','` at runtime. Because two different `ASTCompiler`-related fixes (§19a `ParseSourceSpan`, §19b `PropertyWrite` removal) had just been made in the same file in the same hop, the initial assumption was that the newly-edited `PropertyWrite` removal caused it — a plausible story, but never independently checked. A cheap diagnostic (temporarily logging the unhandled AST node's constructor name from `ASTCompiler.build()`'s silent fallthrough, instead of guessing) took one rebuild cycle and proved the real cause was `ParenthesizedExpression` (§19b's *other*, unrelated, already-documented WMS-31316 gap) — nothing to do with the edit just made. The lesson generalizes past version-gates: any causal story about "what broke this" needs the same independent check as a version-gate N/A, especially when it's convenient to blame the thing you just touched.
+
 ---
 
 Classify findings: `safe` | `needs-review` | `likely-breakage` | `must-change` — block on unresolved `must-change`.
@@ -66,8 +68,6 @@ When adding a **must-change** grep, update **both** the script and the matching 
 
 | Check | Repo | § |
 |-------|------|---|
-| No `compileModuleAndAllComponentsSync` | runtime | §1 |
-| No positional `createComponent(Cls, 0, inj)` | runtime | §2 |
 | No ngx-bootstrap `.forRoot()` on ModalModule / BsDatepickerModule / NgCircleProgressModule | runtime | §6 |
 | `ngx-bootstrap-patch.mjs` references `__destroyRef` | runtime | §6, §12 |
 | Upstream PositioningService needs `__destroyRef` → patch covers it | runtime | §12 |
@@ -87,6 +87,8 @@ When adding a **must-change** grep, update **both** the script and the matching 
 
 | Check | § |
 |-------|---|
+| `compileModuleAndAllComponentsSync` still present in runtime-base | §1 |
+| Positional `createComponent(Cls, 0, inj)` still present | §2 |
 | `ComponentFactoryResolver` / `resolveComponentFactory` still present | §2 |
 | `jest-preset-angular` major != Angular target | §9 |
 | RouterOutlet `overrideRouterOutlet` without `@ViewChild` setter | §11 |
@@ -96,6 +98,8 @@ When adding a **must-change** grep, update **both** the script and the matching 
 | `setPipeProvider` not called | §19c |
 | Yalc package declares old Angular major peer dep | §22 |
 | Deprecated `@angular-devkit/build-angular:browser` builder in `angular.json` | §23 |
+
+**§1/§2 moved FAIL→WARN (19→20 hop):** both were unconditional FAILs before; confirmed via a real 0-error build that they still compile clean, unmodified, at Angular 20.3.31 (`Compiler.compileModuleAndAllComponentsSync` and the positional `createComponent` overload are `@deprecated`, not removed — see [`patterns/runtime.md` §1](patterns/runtime.md#1-legacy-runtime-compiler-should-be-removed)). Real removal version is still unknown — re-verify against the installed `.d.ts` every hop and tighten back to a `fail_or_warn_below` gate once that version is confirmed, rather than leaving this an unconditional WARN forever.
 
 **Manual only (automation cannot cover):** §3, §4, §5, §7, §8, §8b, §10 (including §10a/§10b), §13c, §15, §16, §19b (ASTCompiler node renames only — the ParenthesizedExpression handler check is automated as a WARN), §20c (codegen require paths), §21, §24, §25, **§26 (which dependency and which call site is different every upgrade — cannot be grepped for generically ahead of time; run its Step 6 grep against every dependency Step 3 bumped)**.
 
@@ -129,7 +133,7 @@ When each section was first required. **Update "Last verified" when you confirm 
 | § | First required | Last verified | Notes |
 |---|---------------|---------------|-------|
 | §1 | Angular 20 | Angular 21 | Legacy `compileModuleAndAllComponentsSync` incompatible with AOT-first defaults |
-| §2 | Angular 17 | Angular 21 | Positional `createComponent(factory, index, inj)` API removed |
+| §2 | Angular 20 | Angular 21 | Positional `createComponent(factory, index, inj)` overload still present in `@angular/core@20.3.31`'s `.d.ts` — not actually removed by Angular itself; coupled to §1's mandatory legacy-compiler removal in the same 2 files (see `d9a05f1be`/`a2062ecf8`/`3c1028fe8`, WMS-29275) |
 | §3 | Angular 12+ | Angular 21 | `attachView` / `detachView` required after `createComponent` |
 | §4 | Angular 20 | Angular 21 | `Element` constructor requires 9 args including `endSourceSpan` |
 | §5 | Angular 17 | Angular 21 | `@if` / `@for` block syntax introduced |
@@ -142,7 +146,7 @@ When each section was first required. **Update "Last verified" when you confirm 
 | §10a | Angular 20 | Angular 21 | Popover + date/time picker outside-click isolation (subsection of §10) |
 | §10b | Angular 20 | Angular 21 | File upload success/delete template binding shape (subsection of §10) |
 | §11 | Angular 20+ | Angular 21 | `@ViewChild(RouterOutlet)` setter pattern (WMS-28429) |
-| §12 | Angular 21 | Angular 22 | ngx-bootstrap 21 ships `takeUntilDestroyed(__destroyRef)` without declaring it; ngx-bootstrap 22.0.0 natively ships all 5 patches `ngx-bootstrap-patch.mjs` applies — patch script required no source changes at 22, keep it (do not remove without re-verifying) |
+| §12 | Angular 20 | Angular 22 | Confirmed at ngx-bootstrap 20.0.2 (not 21 — prior row understated this): bare `takeUntilDestroyed()` nested inside `ngZone.runOutsideAngular(...)` in `PositioningService`, throws NG0203; ngx-bootstrap 21 ships `takeUntilDestroyed(__destroyRef)` without declaring it; ngx-bootstrap 22.0.0 natively ships all 5 patches `ngx-bootstrap-patch.mjs` applies — patch script required no source changes at 22, keep it (do not remove without re-verifying) |
 | §13 | Angular 16+ | Angular 22 | Fork must be synced on every major; last sync at Angular 22 — `removeStyles()` no-op added to `wm_shared_styles_host.ts` (§13i) |
 | §14 | Angular 20 | Angular 21 | Template type-checker rejects explicit `this.` in bindings |
 | §15 | Angular 20 | Angular 21 | `route.queryParams` may emit after first variable init |
@@ -158,6 +162,7 @@ When each section was first required. **Update "Last verified" when you confirm 
 | §27 | Angular 22 | Angular 22 | Default-behavior changes with no compile error — `changeDetection` (27a, incl. dynamic-component factories per 27c), Router `paramsInheritanceStrategy` (27b) — pinned back to pre-22 behavior. §27c was the actual root cause of a real reported preview failure, confirmed fixed live, not just via a green build — see `docs/22-upgrade.md` |
 | §28 | Angular 22 | Angular 22 | Compiler strictness ratchet — NG1054 (duplicate `@Input` alias), NG6008/NG6009 (standalone components in `NgModule.declarations`/`.bootstrap`) |
 | §29 | Angular 19 | Angular 19 | Standalone-by-default breaks inline test-harness components/pipes lacking an explicit `standalone` flag — `npm test`-only (Step 8), `build.sh` compiles clean; 80 files/87 classes in this repo's first 18→19 hop |
+| §30 | ng-packagr major bump (not strictly an Angular-version gate) | Angular 19 | `config/rollup.build-task.mjs`'s dependency-extraction pipeline breaks when ng-packagr drops per-file `esm2022/<path>.mjs` output for the flattened `fesm2022/index.mjs` barrel — first hit in this repo's 18→19 hop (ng-packagr 17.3.0→19.2.2); re-check on every future ng-packagr major, independent of whether Angular's own major changes that hop |
 
 ---
 
@@ -369,9 +374,9 @@ npx tsc --noEmit 2>&1 | grep 'error TS' | grep -v 'node_modules' | head -40
 
 ## Preview validation (Step 9)
 
-**Gate G1–G7:** see `SKILL.md` Step 9 — all required, source of truth is there. Both this table and the extended checks below apply identically to **every configured validation mode** (`VALIDATION_MODES` in `repo.config.sh` — currently Angular Deployment and WaveMaker Preview) — there is one shared checklist, not a checklist per mode.
+**Gate G1–G7:** see `steps-6-10.md` Step 9 — all required, source of truth is there. Both this table and the extended checks below apply identically to **every configured validation mode** (`VALIDATION_MODES` in `repo.config.sh` — currently Angular Deployment and WaveMaker Preview) — there is one shared checklist, not a checklist per mode.
 
-URLs from Step 0, per mode. Order: comparison first → note all visible elements → preview → compare element by element (hard refresh both). Repeat for each configured mode. Fix loop: `SKILL.md` Step 9 (a fix found via one mode should be re-verified against every other already-passed mode too, since they share the same underlying build).
+URLs from Step 0, per mode. Order: comparison first → note all visible elements → preview → compare element by element (hard refresh both). Repeat for each configured mode. Fix loop: `steps-6-10.md` Step 9 (a fix found via one mode should be re-verified against every other already-passed mode too, since they share the same underlying build).
 
 ### Extended checks (run on each mode's preview URL — compare against that mode's comparison URL)
 

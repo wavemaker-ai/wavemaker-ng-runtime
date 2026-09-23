@@ -6,7 +6,7 @@ description: Build wavemaker-ng-runtime + wavemaker-ng-codegen, generate an Angu
 
 Run this workflow **step by step, in order**. Execute each step fully before moving to the next. Stop and report errors if any step fails.
 
-**Scope note:** this workflow only ever produces the **Angular Deployment** validation target (Tomcat WAR + Angular dist). It has no automation for **WaveMaker Preview** — that mode's URL is supplied directly via `LOCAL_PREVIEW_URL`/`WAVEMAKER_PREVIEW_URL` in `repo.config.sh` (see angular-upgrade `SKILL.md` Step 9) and does not need this command to run at all. Both are first-class validation modes in Step 9; this file is the automation for exactly one of them.
+**Scope note:** this workflow only ever produces the **Angular Deployment** validation target (Tomcat WAR + Angular dist). It has no automation for **WaveMaker Preview** — that mode's URL is supplied directly via `LOCAL_PREVIEW_URL`/`WAVEMAKER_PREVIEW_URL` in `repo.config.sh` (see angular-upgrade `steps-6-10.md` Step 9) and does not need this command to run at all. Both are first-class validation modes in Step 9; this file is the automation for exactly one of them.
 
 ## Invocation modes & who collects inputs
 
@@ -262,7 +262,7 @@ cp -R "${GENERATED_APP}/dist/ng-bundle" "${TOMCAT_APP}/"
 
 **With URLs:** load `${WAVEMAKER_DEPLOYMENT_URL}` then `${LOCAL_DEPLOYMENT_URL}` (or `${APP_URL}`). Pass/fail: **Preview validation** checklist in [`checklist.md`](../skills/angular-upgrade/checklist.md#preview-validation-step-9) (gate G1–G7 required; extended E1–E13 where applicable).
 
-On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUNTIME` or `NG_CODEGEN`; re-run affected steps. **Upgrade:** `SKILL.md` Step 9 iteration table. **Standalone:** same matrix (runtime fix → 2a; codegen fix → 3→4→5→7; both → 2a→3→4→5→7).
+On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUNTIME` or `NG_CODEGEN`; re-run affected steps. **Upgrade:** `steps-6-10.md` Step 9 iteration table. **Standalone:** same matrix (runtime fix → 2a; codegen fix → 3→4→5→7; both → 2a→3→4→5→7).
 
 ---
 

@@ -1,5 +1,5 @@
 # Repo defaults — sourced by scripts/*.sh
-# Skill layout: SKILL.md | templates.md | research.md | checklist.md (meta) | patterns/runtime.md (§1–§19) | patterns/codegen.md (§20)
+# Skill layout: SKILL.md (entry point) | steps-0-5.md | steps-6-10.md | templates.md | research.md | checklist.md (meta) | patterns/runtime.md (§1–§19) | patterns/codegen.md (§20)
 #
 # PORTING TO ANOTHER REPO: edit this file + pattern files.
 # The pattern files (patterns/runtime.md, patterns/codegen.md, checklist.md) are
@@ -16,15 +16,12 @@
 # Step 10: UPGRADE_DOC_PATH
 
 # --- Angular version range (defaults — user may override in Start message) ---
-# STATUS: fresh run on stage-classic (branch was previously on Angular 18.2.13,
-# never run through this skill). Skill folder + docs/patterns ported over from
-# branch WMS-32451, which independently carried a different code history all
-# the way to Angular 22/23 — that branch's package/code changes were NOT
-# brought over, only the skill machinery and reference docs (patterns/runtime.md,
-# patterns/codegen.md, checklist.md, docs/21-upgrade.md, docs/22-upgrade.md,
-# docs/upgrade-log/*). First hop of this run: 18 -> 19.
-ANGULAR_BASE_VERSION="18"
-ANGULAR_TARGET_VERSION="19"
+# STATUS: hop 2 of 4 toward Angular 22 on stage-classic. Hop 1 (18->19) shipped
+# in commits 60a35bc5f, ae18441f5, 6258573, 626eed187 — see docs/19-upgrade.md
+# for the full record, including the ngx-bootstrap .show/.in modal regression
+# found in Step 9 and fixed in the separate wavemaker-foundation-css repo.
+ANGULAR_BASE_VERSION="19"
+ANGULAR_TARGET_VERSION="20"
 
 # --- Node.js version pin (R11 — set per upgrade; drives engines.node in Step 3) ---
 # Scripts source this and, if nvm is available, auto-activate this exact version
@@ -45,7 +42,7 @@ NODE_VERSION="22.18.0"
 # To add a new mode: add one "key:urlVar:comparisonVar" entry here, define its
 # two URL vars below, and — only if it needs its own automated build/deploy
 # step (unlike wavemaker_preview, whose URL is supplied directly) — add a short
-# subsection to SKILL.md Step 9 describing how to produce it. Nothing else in
+# subsection to steps-6-10.md Step 9 describing how to produce it. Nothing else in
 # the skill needs to change; Step 9's skip logic, gate table (G1-G7/E1-E13),
 # fix loop, and "done when" criterion are all mode-generic already.
 VALIDATION_MODES="angular_deployment:LOCAL_DEPLOYMENT_URL:WAVEMAKER_DEPLOYMENT_URL wavemaker_preview:LOCAL_PREVIEW_URL:WAVEMAKER_PREVIEW_URL"

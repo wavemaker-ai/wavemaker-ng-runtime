@@ -1,4 +1,4 @@
-# WaveMaker runtime patterns — ng-runtime §1–§19
+# WaveMaker runtime patterns — ng-runtime §1–§30
 
 Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/`) in Step 6. For codegen patterns see [`patterns/codegen.md`](codegen.md). Workflow: [`SKILL.md`](../SKILL.md). References: [`research.md`](../research.md) R12.
 
@@ -28,6 +28,10 @@ Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/
 | [§16](#16-list--table-embedded-template-context--di) | List/table — `ngTemplateOutletContext`, row DI |
 | [§19](#19-wavemaker-expression-parser-astcompiler--parseexpr) | Expression parser — `ParseSourceSpan`, AST renames |
 | [§26](#26-inject-based-api-called-across-a-zoneasync-boundary-any-angular-ecosystem-dependency) | **Generic** — `inject()`-based API vs Zone/async boundary, any dependency |
+| [§27](#27-angular-22-default-behavior-changes-compatibility-pins) | Angular 22 default-behavior changes — `changeDetection`, router `paramsInheritanceStrategy` |
+| [§28](#28-angular-22-compiler-strictness-ratchet-ng1054-ng6008-ng6009) | Angular 22 compiler strictness — NG1054, NG6008, NG6009 |
+| [§29](#29-standalone-by-default-breaks-inline-test-harness-componentspipes-angular-19) | Standalone-by-default — inline test-harness components/pipes (Angular 19) |
+| [§30](#30-ng-packagr-output-shape-changes-break-configrollupbuild-taskmjs-dependency-extraction-pipeline) | ng-packagr output-shape changes — `rollup.build-task.mjs` dependency extraction |
 
 ---
 
@@ -66,7 +70,13 @@ Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/
 
 **Risk:** incompatible with AOT-first / standalone defaults on Angular 20+.
 
-**Current repo:** dynamic path uses standalone `Component({ standalone: true, imports: [...] })` in `dynamic-component-ref-provider.service.ts`. Grep should find **zero** legacy compiler calls. Remove deprecated `wm-view` transpiler registration (`a2062ecf8`).
+**Verified (18→19 hop):** `Compiler.compileModuleAndAllComponentsSync` was still present in `@angular/core@19.2.25`'s `.d.ts` — genuinely NOT required at 19, correctly deferred.
+
+**Verified (19→20 hop) — correction of an earlier same-session error:** `compileModuleAndAllComponentsSync` and `Compiler` are **still present** in `@angular/core@20.3.31`'s real public entrypoint (`node_modules/@angular/core/index.d.ts`, re-exported from `discovery.d.d.ts`) — marked `@deprecated` ("Ivy JIT mode doesn't require accessing this symbol") but not removed; same for the positional `ViewContainerRef.createComponent(factory, index, injector, ...)` overload (`index.d.ts` line ~3701). An earlier note in this same run claimed these were "gone, confirmed via direct grep" — that grep was against the wrong/non-canonical `.d.ts` file (or was simply wrong) and has been retracted here. Per the Compatibility Policy ("would this be needed even if Angular hadn't released a new version?"), a deprecation with a still-working implementation is not a `must-change` for a compatibility-only upgrade. See the empirical build check recorded in `docs/upgrade-log/19-to-20.md` for whether the legacy path actually still compiles/runs at 20.3.31 before deciding to defer again vs. apply the rewrite.
+
+**This repo's own git history has the real reference fix**, even though it's not on `stage-classic` (it's on whatever branch this WMS-29275 work shipped from — reachable as loose commit objects via `git cat-file -t <hash>` even without a branch ref, at least as of 2026-09; if these ever get garbage-collected, this note becomes historical only): commits `d9a05f1be` → `a2062ecf8` (both 2025-11-19) → `3c1028fe8` (2025-12-19), each viewable directly with `git show <hash>:<path>` without needing to check out or merge the branch. Do **not** cherry-pick these directly onto a diverged branch (expect conflicts) — use `git show <hash>:<path>` output as a worked-example reference and adapt manually. Final shape (after all 3): standalone `Component({ standalone: true, ... })` classes created via the `Component()` decorator function, instantiated with the modern `createComponent(componentType, { environmentInjector, elementInjector })` free function from `@angular/core` (not `ViewContainerRef.createComponent`), manual `ApplicationRef.attachView`/`detachView` lifecycle, `inject()`-style DI. `component-ref-provider.service.ts` (the big one — drives all page/partial/prefab/widget dynamic rendering) goes through all 3 commits before reaching its final shape; the other 6 §2 call sites (directives/components that call into these 2 services) get simpler, mostly-mechanical updates once the services' return type changes from `ComponentFactory` to `Type<unknown>`.
+
+**Current repo (pre-fix):** dynamic path still uses the legacy `Compiler`/`compileModuleAndAllComponentsSync`/NgModule-wrapper pattern in both services as of the 19→20 hop. Target end state per the reference commits: dynamic path uses standalone `Component({ standalone: true, imports: [...] })` in `dynamic-component-ref-provider.service.ts`. Grep should find **zero** legacy compiler calls once fixed. Remove deprecated `wm-view` transpiler registration (`a2062ecf8`).
 
 ### 2. Standalone dynamic component creation
 
@@ -140,6 +150,8 @@ rg 'compileModuleAndAllComponentsSync|Compiler' projects/runtime-base
 - Patched in full build via `config/rollup.ngxBootstrap.config.mjs` (`ngxBootstrapPatchPlugin`); ESM patch also runs on `npm run build`
 - Legacy root scripts (`patch-positioning.mjs`, `bootstrap-module-replace.js`) removed in WMS-29275 — do not reintroduce
 
+**`config/rollup.ngxBootstrap.config.mjs` hardcodes ngx-bootstrap's fesm bundle format per entry (18→19 hop):** every one of its ~22 module entries (`positioning`, `modal`, `dropdown`, `tooltip`, etc.) hardcodes a `fesm20XX` path segment (e.g. `node_modules/ngx-bootstrap/positioning/fesm2020/ngx-bootstrap-positioning.mjs`). ngx-bootstrap bumping its own build output from `fesm2020` to `fesm2022` (independent of which Angular major triggered the ngx-bootstrap bump) breaks every single entry at once with `Could not resolve entry module` errors. Fix is mechanical — replace `fesm2020` → `fesm2022` (or whatever the new format is) across all entries — but confirm the *actual* installed format first (`ls node_modules/ngx-bootstrap/positioning/` — don't assume it's always `fesm2022` going forward; verified unchanged 19.0.2→20.0.2 in this repo's 19→20 hop, but re-check every ngx-bootstrap bump rather than assuming stability).
+
 **Patch targets (WMS-29275: `a6b0848e7`, `bfc670354`, `2fef2d417`, `9fb962af5`):**
 
 | Module | Fix | Symptom if missing |
@@ -157,7 +169,11 @@ rg 'compileModuleAndAllComponentsSync|Compiler' projects/runtime-base
 
 **Interaction with §12 (bundle verify):** after extending or modifying `PATCHES` in `ngx-bootstrap-patch.mjs`, verify that the `__destroyRef` injection described in §12 is still intact — regex replacement order in the patch file matters. Run `verify-ngx-bootstrap-bundle.sh` after any patch change, not only after a full `build.sh -f`.
 
+**`setTheme('bs3')` → `setTheme('bs4')` (18→19 hop):** `ngx-bootstrap/utils`' `setTheme()` call in `projects/runtime-base/src/components/app-component/app.component.ts` must match a theme ngx-bootstrap actually still supports — `'bs3'` stopped being valid at the ngx-bootstrap version this repo bumped to. Grep `setTheme(` in that file if datepicker/timepicker/rating render with wrong styling after an ngx-bootstrap bump; check `node_modules/ngx-bootstrap/utils/theme-provider.d.ts` for the currently valid theme strings rather than assuming `'bs4'` is still correct at a future major.
+
 **ngx-bootstrap 20 modal events (WMS-29275: `bfb1f5bb4`):** v20 removed global `BsModalService.onShown` / `onHidden` in some builds — `BaseDialog` must invoke open/close callbacks manually on the modal ref. **Re-verify on ngx-bootstrap 21+** — upstream may restore global emitters; grep `base-dialog.ts` for `onShown.subscribe` vs manual `setTimeout` callbacks.
+
+**Don't confuse the `modal` patch-table row above with a separate, third-repo bug (confirmed live, 18→19 hop):** the patch table's `SHOW: 'show'` → `'in'` fix is inside `ngx-bootstrap-patch.mjs`, patching ngx-bootstrap's own component *class-binding* behavior — it does not touch CSS. The modal/backdrop's actual *opacity* rules (`.fade`, `&.in`/`&.show`) live in **`wavemaker-foundation-css`**, a sibling repo this skill does not otherwise edit or grep (`../wavemaker-foundation-css` relative to ng-runtime; no config var for it in `repo.config.sh`). ngx-bootstrap 19+/20 always emits the BS5 `.show` class (confirmed, never `.in`), but if foundation-css's `src/styles/web/components/modal-dialog.less` still only has an `&.in { opacity: 1; }` rule (no `&.show`), the modal renders with `opacity: 0` — invisible, no console error, easy to misdiagnose as an ngx-bootstrap-patch problem since the symptom (modal doesn't show) is identical. Fix: add `&.show { opacity: 1; }` alongside `&.in` in that file, for both `.modal` and `.modal-backdrop` blocks, then `npm run build` in foundation-css (auto-runs `yalc push`) and rebuild ng-runtime. **Step 9 preview validation is the only way this surfaces** — no static check in this skill's pattern-review.sh reaches outside ng-runtime/ng-codegen into a third sibling repo.
 
 **ngx-bootstrap 21+:** most modules **removed `forRoot()`** — use bare modules in `importProvidersFrom` / `NgModule.imports` and `ToastNoAnimationModule.forRoot()` only where still supported. Grep `projects/` for `.forRoot()` on ngx-bootstrap imports (including `*.spec.ts` if Step 8 runs).
 
@@ -278,6 +294,8 @@ ls -lh dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.bundle.js \
 - Inject `EnvironmentInjector` mock in `partial-container.spec.ts` (constructor signature changed).
 - Mock `showPopover` in popover wrapper specs when testing `open()` / keyboard handlers — real popover positioning fails under Jest.
 - ESM patch path: `build-scripts/ngx-bootstrap-patch.mjs` (invoked from `build-scripts/build.js`).
+
+**18→19 hop:** `projects/core/src/utils/utils.spec.ts` — direct property assignment to `window.location` (`window.location = {...}`) started failing under the jsdom/jest-preset-angular version this hop pinned (that property became non-writable via plain assignment). Fix: mock via `(window as any).location = {...}` instead — casting bypasses the stricter type/writability check without changing what the test actually verifies. Watch for the same class of jsdom-environment-object-mocking break (`window.location`, `window.history`, etc.) on any future `jest-preset-angular`/jsdom bump (§9's own R9 pin), not just this exact property.
 
 ### 10. Preview-sensitive runtime rendering
 
@@ -673,6 +691,8 @@ parser.parseAction(expr, createParseSourceSpan(expr), 0);
 
 **WMS-31316 symptom:** watch/bind expressions like `(a && b)` or `(row.field \| pipe)` compile to **noop** — widgets never update, no console error.
 
+**Confirmed live (19→20 hop, 2026-09):** this was NOT a hypothetical — it produced a real, reproducible `SyntaxError: Unexpected token ','` at `new Function (<anonymous>)` inside `ASTCompiler.compile()`, from `swipey.jquery.plugin.js`'s `compile()` (a `{{...}}` CSS-animation-binding evaluator, `projects/swipey/src/swipey.jquery.plugin.js`) calling `$parseExpr` with a parenthesized expression. Root-caused via a temporary diagnostic in `ASTCompiler.build()`'s fallthrough (log `ast.constructor.name` instead of silently returning `undefined`) — confirmed `ParenthesizedExpression` (and, once handled, cascaded through `Conditional` and `BindingPipe` wrapped in parens too) — NOT related to the same hop's §19b `PropertyWrite` removal, which was the initial (wrong) suspicion given both changes were made in the same file in the same hop. Reproduced identically in both development and production builds. See `docs/upgrade-log/19-to-20.md`.
+
 **Fix:** import `ParenthesizedExpression` and add:
 
 ```typescript
@@ -904,3 +924,35 @@ rg -l "declarations\s*:" projects/ --include="*.spec.ts"
 ```
 
 **Step 6 classification:** `must-change` — but only surfaces via `npm test` (Step 8), not `build.sh` (Step 7); don't assume Step 7 passing means this is clear.
+
+### 30. ng-packagr output-shape changes break `config/rollup.build-task.mjs` (dependency-extraction pipeline)
+
+**Where:** `config/rollup.build-task.mjs` — a custom, hand-rolled rollup pipeline distinct from §8's `rollup.ng-libs.config.mjs`. It extracts specific library exports (expression parser, pipes, pipe provider) into standalone CJS/ES bundles under `dist/transpilation/`, consumed by **ng-codegen** at Node runtime (not by the browser app) to initialize its own copy of the WM expression parser for build-time transpilation. Companion fix on the ng-codegen side: `src/wm-utils.js`'s `initExpressionParser()`.
+
+**First required:** Angular 20 hop (ng-packagr 17.3.0→19.2.2, WMS-29275/18→19 hop in this repo's real history — this repo hit it again fresh going 18→19). **Re-check on every ng-packagr major bump** (R10 pin) — this is an ng-packagr output-shape risk, not an Angular-version risk per se, so it can recur even on an Angular hop where ng-packagr's own major doesn't change, or skip a hop where ng-packagr's internal structure happens not to shift.
+
+**Root cause:** ng-packagr's major bump dropped **per-file** `esm2022/<path>.mjs` output (e.g. `libraries/core/esm2022/utils/expression-parser.mjs`), leaving only the **flattened, whole-library** `fesm2022/index.mjs` bundle per library. `rollup.build-task.mjs`'s entries previously pointed at the narrow per-file paths — those paths no longer exist at all, not just moved.
+
+**Symptom cascade (three distinct, sequential failures — don't assume the first fix is the last one needed):**
+1. `Error: Could not resolve entry module './libraries/core/esm2022/utils/expression-parser.mjs'` (or similar) — the old per-file path is simply gone.
+2. After repointing at the `fesm2022/index.mjs` barrel: `dist/transpilation/*.cjs.js` builds "successfully" but the output is a near-empty stub (~15 bytes) — caused by `@rollup/plugin-multi-entry` (deprecated, silently produces empty chunks against rollup 4.60.1+) still being used from the old per-file, multi-entry setup. Fix: remove the plugin entirely — a single `fesm2022/index.mjs` entry point needs no multi-entry aggregation.
+3. After that: `Cannot find module '@wm/components/dialogs/confirm-dialog'`-style errors from **unanchored string aliases** — `@rollup/plugin-alias`'s plain-string `find` values are **prefix matches**, so `{ find: '@wm/components/dialogs', replacement: ... }` also wrongly matches `@wm/components/dialogs/confirm-dialog`. Fix: anchor as a regex — `{ find: /^@wm\/components\/dialogs$/, replacement: ... }` — and order special-cased entries (`@wm/components/page`, `@wm/components/dialogs` — both have multiple implementations behind a `default` folder, matching `tsconfig.json`'s own path mappings) **before** a generic `{ find: /^@wm\/(.+)$/, replacement: 'libraries/$1/fesm2022/index.mjs' }` catch-all, or the catch-all wins first and resolves to a non-existent `libraries/components/page/fesm2022/` instead of `libraries/components/page/default/fesm2022/`.
+
+**Documented dead-end — do not retry this approach:** narrowing the bundle to just the 1–3 specific exports actually needed (instead of pulling in the whole `fesm2022/index.mjs` barrel, which drags in every sibling class in that library) does **not** reduce bundle scope. Angular decorators (`@Component`, `@Injectable`, etc.) are treated by rollup as side-effecting, so it cannot tree-shake sibling classes out of a decorated barrel file even via a narrow re-export shim. Verified empirically in this repo — go straight to consuming the full barrel and let the generic alias + downstream Node-side global stubs (below) absorb the consequences, rather than re-attempting a shim.
+
+**Unrelated but co-discovered in the same investigation (third-party package bug, not an Angular-version issue):** `@wavemaker/variables` (separate sibling repo, `.yalc`-linked) ships a malformed `package.json` `"exports"` map (`{"." : "./index"}`, missing the `.js` extension) — blocks `nodeResolve`'s strict exports-map resolution (unlike legacy `"main"` resolution, it does not auto-append extensions). Workaround: a targeted alias entry (`{ find: '@wavemaker/variables', replacement: '.yalc/@wavemaker/variables/index.js' }`) in this repo's own rollup config — cannot fix the third-party package itself, and don't spend time trying to.
+
+**Cross-repo companion (ng-codegen `src/wm-utils.js`'s `initExpressionParser()`):** because the rollup output now bundles the *whole* `@wm/runtime/base`/`@wm/core` barrel instead of a narrow extract, it pulls in Angular internals whose constructor `design:paramtypes` metadata references browser-only globals (e.g. `EventManager`'s `Document` parameter) that don't exist in ng-codegen's plain Node process. These values are never actually instantiated there (ng-codegen only calls `new PipeProvider(...)`), so dummy class placeholders for `Document`/`Window`/`Element`/etc. are sufficient to satisfy `emitDecoratorMetadata`'s reference at class-definition time. Same root cause also surfaces `@swipey`'s side-effecting `$.fn.swipeAnimation.expressionEvaluator = $parseExpr` top-level registration line needing a `$.fn.swipeAnimation` stub — **place this stub check outside any `typeof global.$ === 'undefined'` guard**, since `codegen.js`/`pages-util.js` already set `global.$` to real jQuery earlier in the process, so that guard is always false and a stub placed inside it silently never runs (a real bug hit and fixed in this repo — the first attempt nested it wrong).
+
+**Step 6 grep:**
+
+```bash
+# Confirm current ng-packagr output shape before assuming per-file esm2022 still exists:
+ls libraries/core/esm2022/ 2>/dev/null || echo "per-file esm2022 gone — fesm2022-only, as expected at this ng-packagr version"
+ls libraries/core/fesm2022/index.mjs
+
+# After any rollup.build-task.mjs edit, confirm real output size (not a near-empty stub):
+ls -la dist/transpilation/*.cjs.js dist/transpilation/*.es.js
+```
+
+**Step 6 classification:** `must-change` if `libraries/*/esm2022/<path>.mjs` per-file output is gone and `rollup.build-task.mjs` still references those paths — this is a hard break, not a deprecation. `dist/transpilation/*.cjs.js` under ~1KB after a "successful" rollup run is `must-change` (empty-chunk symptom, #2 above) even though the build exits 0.
