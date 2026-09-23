@@ -1,4 +1,5 @@
 import rollupGlobals, {rollupExternals} from './rollup-utils.mjs';
+import {ngxBootstrapPatchPlugin} from '../build-scripts/ngx-bootstrap-patch.mjs';
 
 export default [
     {
@@ -34,6 +35,7 @@ export default [
     {
         input: 'node_modules/ngx-bootstrap/positioning/fesm2022/ngx-bootstrap-positioning.mjs',
         external: [ ...rollupExternals ],
+        plugins: [ ngxBootstrapPatchPlugin() ],
         output: {
             file: 'node_modules/ngx-bootstrap/positioning/bundles/ngx-bootstrap-positioning.umd.js',
             format: 'umd',
