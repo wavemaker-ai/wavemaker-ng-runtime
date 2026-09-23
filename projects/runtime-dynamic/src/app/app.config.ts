@@ -83,9 +83,9 @@ import {PageDirective} from "@wm/components/page";
 
 const wmModules = [
     importProvidersFrom(
-        ModalModule.forRoot(),
+        ModalModule,
         ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true }),
-        BsDatepickerModule.forRoot(),
+        BsDatepickerModule,
         NgCircleProgressModule.forRoot(),
     )
 ];

@@ -16,12 +16,14 @@
 # Step 10: UPGRADE_DOC_PATH
 
 # --- Angular version range (defaults — user may override in Start message) ---
-# STATUS: hop 2 of 4 toward Angular 22 on stage-classic. Hop 1 (18->19) shipped
-# in commits 60a35bc5f, ae18441f5, 6258573, 626eed187 — see docs/19-upgrade.md
-# for the full record, including the ngx-bootstrap .show/.in modal regression
-# found in Step 9 and fixed in the separate wavemaker-foundation-css repo.
-ANGULAR_BASE_VERSION="19"
-ANGULAR_TARGET_VERSION="20"
+# STATUS: hop 3 of 4 toward Angular 22 on stage-classic. Hop 1 (18->19) shipped
+# in commits 60a35bc5f, ae18441f5, 6258573, 626eed187 — see docs/19-upgrade.md.
+# Hop 2 (19->20) shipped in commits e74783c3c, e77a0ffc3 — see docs/20-upgrade.md
+# for the full record, including the confirmed-live §19b ParenthesizedExpression
+# runtime bug found and fixed in Step 9, and the new §30 pattern (ng-packagr
+# output-shape changes breaking config/rollup.build-task.mjs).
+ANGULAR_BASE_VERSION="20"
+ANGULAR_TARGET_VERSION="21"
 
 # --- Node.js version pin (R11 — set per upgrade; drives engines.node in Step 3) ---
 # Scripts source this and, if nvm is available, auto-activate this exact version

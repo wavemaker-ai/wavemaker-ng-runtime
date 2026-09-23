@@ -9,11 +9,12 @@ export default [
                 "@angular/core": "ng.core",
                 "@angular/core/primitives/signals": "ng.signals",
                 "@angular/core/primitives/event-dispatch": "ng.event-dispatch",
+                "@angular/core/primitives/di": "ng.di",
                 "rxjs": "rxjs",
                 "rxjs/operators": "rxjs.operators",
             }
         },
-        external: ["rxjs", "rxjs/operators", "@angular/core/primitives/signals", "@angular/core/primitives/event-dispatch"],
+        external: ["rxjs", "rxjs/operators", "@angular/core/primitives/signals", "@angular/core/primitives/event-dispatch", "@angular/core/primitives/di"],
     },
     {
         input: "node_modules/@angular/animations/fesm2022/animations.mjs",
@@ -101,7 +102,9 @@ export default [
         external: ["@angular/core", "@angular/common", "rxjs", "rxjs/operators"],
     },
     {
-        input: 'node_modules/@angular/core/fesm2022/primitives/signals.mjs',
+        // Angular 21: ng-packagr flattened fesm2022/primitives/signals.mjs to fesm2022/primitives-signals.mjs
+        // (no more nested primitives/ subfolder) - see patterns/runtime.md §8.
+        input: 'node_modules/@angular/core/fesm2022/primitives-signals.mjs',
         output: {
             file: 'node_modules/@angular/core/bundles/core-signals.umd.js',
             format: 'umd',
@@ -111,11 +114,23 @@ export default [
         external: [],
     },
     {
-        input: 'node_modules/@angular/core/fesm2022/primitives/event-dispatch.mjs',
+        input: 'node_modules/@angular/core/fesm2022/primitives-event-dispatch.mjs',
         output: {
             file: 'node_modules/@angular/core/bundles/core-event-dispatch.umd.js',
             format: 'umd',
             name: 'ng.event-dispatch',
+            globals: {}
+        },
+        external: [],
+    },
+    {
+        // New at Angular 21 - core.mjs now also imports '@angular/core/primitives/di' as a
+        // package-subpath external, same pattern as signals/event-dispatch above.
+        input: 'node_modules/@angular/core/fesm2022/primitives-di.mjs',
+        output: {
+            file: 'node_modules/@angular/core/bundles/core-di.umd.js',
+            format: 'umd',
+            name: 'ng.di',
             globals: {}
         },
         external: [],

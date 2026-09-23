@@ -81,7 +81,7 @@ describe('ListComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 FormsModule,
-                PaginationModule.forRoot(),
+                PaginationModule,
                 WmPaginationModule,
                 ListComponent, ListItemDirective
             ],
@@ -1902,7 +1902,7 @@ describe('ListComponent With groupby', () => {
         TestBed.configureTestingModule({
             imports: [
                 FormsModule,
-                PaginationModule.forRoot(),
+                PaginationModule,
                 WmPaginationModule, ListComponent, ListItemDirective
             ],
             declarations: [ListWrapperComponent],

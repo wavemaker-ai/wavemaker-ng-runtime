@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import {Router} from '@angular/router';
 
-import {BsDropdownDirective, BsDropdownModule} from 'ngx-bootstrap/dropdown';
+import {BsDropdownDirective, BsDropdownModule, BsDropdownState} from 'ngx-bootstrap/dropdown';
 
 import {
     $appDigest,
@@ -178,6 +178,11 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
         private userDefinedExecutionContext: UserDefinedExecutionContext,
         private app: App,
         @Self() @Optional() public bsDropdown: BsDropdownDirective,
+        // ngx-bootstrap 21: BsDropdownDirective.autoClose became a read-only InputSignal
+        // (template-binding only, no imperative setter). BsDropdownState is the directive's
+        // own internal source of truth for the runtime autoClose check (same DI scope, since
+        // it's in BsDropdownDirective's own `providers`) — write here instead.
+        @Self() @Optional() private bsDropdownState: BsDropdownState,
         @Optional() private parentNav: NavComponent,
         @Attribute('select.event') public selectEventCB: string,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any

@@ -140,13 +140,13 @@ When each section was first required. **Update "Last verified" when you confirm 
 | §6 | Angular 20+ | Angular 21 | ngx-bootstrap patch first needed at WMS-29275; re-check every ngx-bootstrap major |
 | §7 | Angular 20 | Angular 22 | `bootstrapApplication` + `APP_INITIALIZER` ordering; Zone.js rule applies to all majors; `provideHttpClient` default backend pin added at Angular 22 (§7b) |
 | §8 | Angular 21 | Angular 21 | fesm primitive renames; `moduleResolution: "bundler"` required |
-| §8b | Angular 21 | Angular 21 | ngx-bootstrap 21 removed `forRoot()` from `ModalModule` / `BsDatepickerModule` |
+| §8b | Angular 21 | Angular 21 | ngx-bootstrap 21 removed `forRoot()` from **every** module (confirmed 10/10 at the 20→21 hop, not just `ModalModule`/`BsDatepickerModule` as this row previously said) — `NgCircleProgressModule.forRoot()` is unaffected (separate package) |
 | §9 | Every major | Angular 21 | `jest-preset-angular` major must match Angular major |
 | §10 | Every major | Angular 21 | Preview-sensitive failures not caught by static analysis |
 | §10a | Angular 20 | Angular 21 | Popover + date/time picker outside-click isolation (subsection of §10) |
 | §10b | Angular 20 | Angular 21 | File upload success/delete template binding shape (subsection of §10) |
 | §11 | Angular 20+ | Angular 21 | `@ViewChild(RouterOutlet)` setter pattern (WMS-28429) |
-| §12 | Angular 20 | Angular 22 | Confirmed at ngx-bootstrap 20.0.2 (not 21 — prior row understated this): bare `takeUntilDestroyed()` nested inside `ngZone.runOutsideAngular(...)` in `PositioningService`, throws NG0203; ngx-bootstrap 21 ships `takeUntilDestroyed(__destroyRef)` without declaring it; ngx-bootstrap 22.0.0 natively ships all 5 patches `ngx-bootstrap-patch.mjs` applies — patch script required no source changes at 22, keep it (do not remove without re-verifying) |
+| §12 | Angular 20 | Angular 22 | Confirmed at ngx-bootstrap 20.0.2 (not 21 — prior row understated this): bare `takeUntilDestroyed()` nested inside `ngZone.runOutsideAngular(...)` in `PositioningService`, throws NG0203. **Confirmed at ngx-bootstrap 21.2.2 (20→21 hop, corrects a prior wrong claim here about "ships takeUntilDestroyed(__destroyRef) without declaring it"):** actual source is still bare `takeUntilDestroyed()` (no arg, same NG0203 hazard as 20.0.2), but the constructor signature changed (`ngZone` param removed) and the Zone boundary is now `runInZoneRootIfPresent(...)`, not `ngZone.runOutsideAngular(...)` — patch regex needed a full rewrite, not just a version-gate bump. ngx-bootstrap 22.0.0 natively ships all 5 patches `ngx-bootstrap-patch.mjs` applies — patch script required no source changes at 22, keep it (do not remove without re-verifying) |
 | §13 | Angular 16+ | Angular 22 | Fork must be synced on every major; last sync at Angular 22 — `removeStyles()` no-op added to `wm_shared_styles_host.ts` (§13i) |
 | §14 | Angular 20 | Angular 21 | Template type-checker rejects explicit `this.` in bindings |
 | §15 | Angular 20 | Angular 21 | `route.queryParams` may emit after first variable init |

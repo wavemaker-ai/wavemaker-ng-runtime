@@ -139,6 +139,8 @@ Iteration table: [`steps-6-10.md`](../steps-6-10.md) Step 9 only.
 
 **Prerequisite:** `foundation-css` yalc/npm package must ship `dist/` (build `wavemaker-foundation-css` before `bundle-angular-app-cli`).
 
+**Confirmed limitation, local yalc-linked dev workflow only (20→21 hop):** `dist/` is `.gitignore`d in `wavemaker-foundation-css`, and `yalc push` respects `.gitignore` when selecting what to publish (confirmed empirically — a genuinely fresh `npm run build && ` auto-`yalc push` still produced a `.yalc/@wavemaker/foundation-css/` snapshot with **no `dist/` folder at all**, even though `dist/styles/foundation/foundation.css` existed on disk in the source repo at push time). This means the `dist/styles/foundation/...` path this section requires **will never resolve via yalc-linking** in this repo's local preview workflow, only via a genuine `npm install` against a real registry-published version (where a `"files"` field or default npm-publish behavior — not gitignore — determines scope, and typically does include `dist/`). The fix above is still correct for real Prism/production builds and for `pattern-review.sh`'s check — don't revert it. But Step 9's local `local-angular-build.md` Step 5 (generated app `npm i`) will likely need the same manual workaround already used for `@wavemaker/variables` (`cp -R "${YALC_VARIABLES}" ...`) — copy `wavemaker-foundation-css/dist` into the generated app's `node_modules/@wavemaker/foundation-css/dist` directly — rather than assuming `npm i` + yalc alone resolves it.
+
 **Step 6:** enforced by `scripts/pattern-review.sh`.
 
 #### 20f. Generated app edit policy — must-follow

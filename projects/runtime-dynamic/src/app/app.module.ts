@@ -187,17 +187,21 @@ if (xsrfHeaderName) {
 }
 export const httpClientXsrfModule = HttpClientXsrfModule.withOptions(xsrfOptions);
 
-export const modalModule: ModuleWithProviders<ModalModule> = ModalModule.forRoot();
-export const bsDatePickerModule: ModuleWithProviders<BsDatepickerModule> = BsDatepickerModule.forRoot();
-export const timepickerModule: ModuleWithProviders<ngxTimepickerModule> = ngxTimepickerModule.forRoot();
-export const bsDropdownModule: ModuleWithProviders<BsDropdownModule> = BsDropdownModule.forRoot();
-export const paginationModule: ModuleWithProviders<ngxPaginationModule> = ngxPaginationModule.forRoot();
-export const typeaheadModule: ModuleWithProviders<TypeaheadModule> = TypeaheadModule.forRoot();
-export const progressbarModule: ModuleWithProviders<ProgressbarModule> = ProgressbarModule.forRoot();
-export const carouselModule: ModuleWithProviders<ngxCarouselModule> = ngxCarouselModule.forRoot();
-export const popoverModule: ModuleWithProviders<ngxPopoverModule> = ngxPopoverModule.forRoot();
+// ngx-bootstrap 21 removed forRoot() from every module (verified against installed 21.2.2
+// .d.ts, not assumed — broader than the checklist's originally-documented Modal/Datepicker-only
+// note) — bare module references now, ModuleWithProviders<X> types no longer apply.
+export const modalModule: typeof ModalModule = ModalModule;
+export const bsDatePickerModule: typeof BsDatepickerModule = BsDatepickerModule;
+export const timepickerModule: typeof ngxTimepickerModule = ngxTimepickerModule;
+export const bsDropdownModule: typeof BsDropdownModule = BsDropdownModule;
+export const paginationModule: typeof ngxPaginationModule = ngxPaginationModule;
+export const typeaheadModule: typeof TypeaheadModule = TypeaheadModule;
+export const progressbarModule: typeof ProgressbarModule = ProgressbarModule;
+export const carouselModule: typeof ngxCarouselModule = ngxCarouselModule;
+export const popoverModule: typeof ngxPopoverModule = ngxPopoverModule;
+// ng-circle-progress is a separate, unbumped package — its forRoot() still exists, unchanged.
 export const ngCircleProgressModule: ModuleWithProviders<NgCircleProgressModule> = NgCircleProgressModule.forRoot({});
-export const tooltipModule: ModuleWithProviders<TooltipModule> = TooltipModule.forRoot();
+export const tooltipModule: typeof TooltipModule = TooltipModule;
 
 const componentsModule = [
     // NGX Bootstrap

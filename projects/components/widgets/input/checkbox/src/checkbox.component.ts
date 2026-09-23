@@ -155,7 +155,7 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
         this.invokeOnChange(this.datavalue, {type: 'change'}, this.ngModel.valid);
     }
 
-    @HostListener('keydown.enter', ['$event', '"ENTER"'])
+    @HostListener('keydown.enter', ['$event'])
     onKeyDown($event) {
         $event.preventDefault();
         this.checkboxEl.nativeElement.click();

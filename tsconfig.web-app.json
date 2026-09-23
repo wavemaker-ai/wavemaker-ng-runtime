@@ -7,15 +7,16 @@
         "sourceMap": true,
         "declaration": false,
         "target": "es2022",
-        "module": "es2020",
-        "moduleResolution": "node",
+        "module": "es2022",
+        "moduleResolution": "bundler",
+        "esModuleInterop": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "typeRoots": [
             "node_modules/@types"
         ],
         "lib": [
-            "es2018",
+            "es2022",
             "dom"
         ],
         "paths": {
@@ -73,7 +74,8 @@
             "@wm/runtime/dynamic": [
                 "libraries/runtime/dynamic"
             ]
-        }
+        },
+        "useDefineForClassFields": false
     },
     "angularCompilerOptions":{
         "compilationMode": "full"

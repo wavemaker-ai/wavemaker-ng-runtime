@@ -8,7 +8,7 @@
         "declaration": false,
         "target": "es2022",
         "module": "es2022",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "esModuleInterop": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,

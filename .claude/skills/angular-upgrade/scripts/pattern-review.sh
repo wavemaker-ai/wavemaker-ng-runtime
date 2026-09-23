@@ -148,8 +148,12 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # §6  ngx-bootstrap .forRoot() in ng-runtime source (codegen checked in §20b)
 # ─────────────────────────────────────────────────────────────────────────────
-if search 'ModalModule\.forRoot\|BsDatepickerModule\.forRoot\|NgCircleProgressModule\.forRoot' projects/ 2>/dev/null; then
-  fail_or_warn_below 6 21 "ngx-bootstrap .forRoot() on ModalModule/BsDatepickerModule/NgCircleProgressModule in projects/ — removed in ngx-bootstrap 21 (verify the ngx-bootstrap version this hop actually pins — .forRoot() may still be present in its .d.ts below that)"
+# NgCircleProgressModule deliberately excluded — it ships from ng-circle-progress, a separate
+# package not bumped alongside ngx-bootstrap; its .forRoot() is unaffected and still required.
+# Confirmed at the 20->21 hop that ALL ngx-bootstrap modules lost .forRoot(), not just modal/
+# datepicker (prior version of this check only covered 2 of 10) — see patterns/runtime.md §8b.
+if search 'ModalModule\.forRoot\|BsDatepickerModule\.forRoot\|TimepickerModule\.forRoot\|BsDropdownModule\.forRoot\|PaginationModule\.forRoot\|TypeaheadModule\.forRoot\|ProgressbarModule\.forRoot\|CarouselModule\.forRoot\|PopoverModule\.forRoot\|TooltipModule\.forRoot' projects/ 2>/dev/null; then
+  fail_or_warn_below 6 21 "ngx-bootstrap .forRoot() found on a module that removed it at ngx-bootstrap 21 (all modules except NgCircleProgressModule, which is a separate package) — verify the ngx-bootstrap version this hop actually pins — .forRoot() may still be present in its .d.ts below that"
 else
   ok 6 "no disallowed ngx-bootstrap .forRoot() in projects/"
 fi
@@ -406,7 +410,8 @@ if [ -n "$NG_CODEGEN" ] && [ -d "$NG_CODEGEN" ]; then
 
   HBS="$NG_CODEGEN/templates/app.config.ts.hbs"
   if [ -f "$HBS" ]; then
-    if grep -qE 'ModalModule\.forRoot|BsDatepickerModule\.forRoot|NgCircleProgressModule\.forRoot' "$HBS"; then
+    # NgCircleProgressModule excluded — separate package, .forRoot() still valid, see §8b.
+    if grep -qE 'ModalModule\.forRoot|BsDatepickerModule\.forRoot' "$HBS"; then
       fail_or_warn_below "20b" 21 "app.config.ts.hbs calls disallowed ngx-bootstrap .forRoot() — removed in ngx-bootstrap 21"
     else
       ok "20b" "app.config.ts.hbs — no disallowed ngx-bootstrap .forRoot()"

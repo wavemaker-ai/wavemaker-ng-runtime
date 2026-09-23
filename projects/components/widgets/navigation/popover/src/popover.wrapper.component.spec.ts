@@ -80,7 +80,7 @@ class PopoverwrapperComponent {
 }
 
 const testModuleDef: ITestModuleDef = {
-    imports: [PopoverModule.forRoot(), PopoverComponent, AnchorComponent],
+    imports: [PopoverModule, PopoverComponent, AnchorComponent],
     declarations: [PopoverwrapperComponent],
     providers: [
         { provide: App, useValue: mockApp },
