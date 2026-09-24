@@ -1,4 +1,4 @@
-# WaveMaker runtime patterns — ng-runtime §1–§19
+# WaveMaker runtime patterns — ng-runtime §1–§30
 
 Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/`) in Step 6. For codegen patterns see [`patterns/codegen.md`](codegen.md). Workflow: [`SKILL.md`](../SKILL.md). References: [`research.md`](../research.md) R12.
 
@@ -28,6 +28,16 @@ Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/
 | [§16](#16-list--table-embedded-template-context--di) | List/table — `ngTemplateOutletContext`, row DI |
 | [§19](#19-wavemaker-expression-parser-astcompiler--parseexpr) | Expression parser — `ParseSourceSpan`, AST renames |
 | [§26](#26-inject-based-api-called-across-a-zoneasync-boundary-any-angular-ecosystem-dependency) | **Generic** — `inject()`-based API vs Zone/async boundary, any dependency |
+| [§27](#27-angular-22-default-behavior-changes-compatibility-pins) | Angular 22 default-behavior changes — `changeDetection`, router `paramsInheritanceStrategy` |
+| [§28](#28-angular-22-compiler-strictness-ratchet-ng1054-ng6008-ng6009) | Angular 22 compiler strictness — NG1054, NG6008, NG6009 |
+| [§29](#29-standalone-by-default-breaks-inline-test-harness-componentspipes-angular-19) | Standalone-by-default — inline test-harness components/pipes (Angular 19) |
+| [§30](#30-ng-packagr-output-shape-changes-break-configrollupbuild-taskmjs-dependency-extraction-pipeline) | ng-packagr output-shape changes — `rollup.build-task.mjs` dependency extraction |
+| [§31](#31-ngx-bootstrap-directive-inputs-converted-to-signal-based-input-any-ngx-bootstrap-major-bump-confirmed-at-21) | ngx-bootstrap directive `@Input`s → signal `input()` — imperative writes break |
+| [§32](#32-root-appcomponent-renders-nothing-after-bootstrap--bare-settimeout-no-longer-reliably-triggers-change-detection-angular-21-confirmed-live-at-step-9) | Blank page / stuck spinner — bare `setTimeout`/`.then()`/`.subscribe()` property writes stop triggering CD reliably (7 confirmed instances) |
+| [§33](#33-angular-22-removed-compilercompilemoduleandallcomponentssync-and-the-componentfactory-based-createcomponent-overload) | Angular 22 removed `compileModuleAndAllComponentsSync` + factory `createComponent` — whole dynamic-component pipeline restructured to standalone |
+| [§34](#34-angular-22s-onpush-by-default-also-breaks-inline-test-harness-components-in-spects-27as-blind-spot) | OnPush-by-default also hits inline `*.spec.ts` harness components — 23 suites/60 tests (§27a's blind spot, same files as §29) |
+| [§35](#35-ngx-bootstrap-22-removed-the-internal-_ngzone-field-its-directives-exposed) | ngx-bootstrap 22 removed directives' internal `_ngZone` — popover + `utils.ts` positioning helpers |
+| [§36](#36-third-party-dependency-ngx-toastr--removed-componentfactoryresolver-usage-and-changed-toasttoastbases-constructor--signal-based-fields-angular-22) | `ngx-toastr` removed `ComponentFactoryResolver` (bump to 20.0.5) + `Toast`/`ToastBase` constructor/fields went signal-based — silent runtime bug, not just a compile error |
 
 ---
 
@@ -66,7 +76,13 @@ Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/
 
 **Risk:** incompatible with AOT-first / standalone defaults on Angular 20+.
 
-**Current repo:** dynamic path uses standalone `Component({ standalone: true, imports: [...] })` in `dynamic-component-ref-provider.service.ts`. Grep should find **zero** legacy compiler calls. Remove deprecated `wm-view` transpiler registration (`a2062ecf8`).
+**Verified (18→19 hop):** `Compiler.compileModuleAndAllComponentsSync` was still present in `@angular/core@19.2.25`'s `.d.ts` — genuinely NOT required at 19, correctly deferred.
+
+**Verified (19→20 hop) — correction of an earlier same-session error:** `compileModuleAndAllComponentsSync` and `Compiler` are **still present** in `@angular/core@20.3.31`'s real public entrypoint (`node_modules/@angular/core/index.d.ts`, re-exported from `discovery.d.d.ts`) — marked `@deprecated` ("Ivy JIT mode doesn't require accessing this symbol") but not removed; same for the positional `ViewContainerRef.createComponent(factory, index, injector, ...)` overload (`index.d.ts` line ~3701). An earlier note in this same run claimed these were "gone, confirmed via direct grep" — that grep was against the wrong/non-canonical `.d.ts` file (or was simply wrong) and has been retracted here. Per the Compatibility Policy ("would this be needed even if Angular hadn't released a new version?"), a deprecation with a still-working implementation is not a `must-change` for a compatibility-only upgrade. See the empirical build check recorded in `docs/upgrade-log/19-to-20.md` for whether the legacy path actually still compiles/runs at 20.3.31 before deciding to defer again vs. apply the rewrite.
+
+**This repo's own git history has the real reference fix**, even though it's not on `stage-classic` (it's on whatever branch this WMS-29275 work shipped from — reachable as loose commit objects via `git cat-file -t <hash>` even without a branch ref, at least as of 2026-09; if these ever get garbage-collected, this note becomes historical only): commits `d9a05f1be` → `a2062ecf8` (both 2025-11-19) → `3c1028fe8` (2025-12-19), each viewable directly with `git show <hash>:<path>` without needing to check out or merge the branch. Do **not** cherry-pick these directly onto a diverged branch (expect conflicts) — use `git show <hash>:<path>` output as a worked-example reference and adapt manually. Final shape (after all 3): standalone `Component({ standalone: true, ... })` classes created via the `Component()` decorator function, instantiated with the modern `createComponent(componentType, { environmentInjector, elementInjector })` free function from `@angular/core` (not `ViewContainerRef.createComponent`), manual `ApplicationRef.attachView`/`detachView` lifecycle, `inject()`-style DI. `component-ref-provider.service.ts` (the big one — drives all page/partial/prefab/widget dynamic rendering) goes through all 3 commits before reaching its final shape; the other 6 §2 call sites (directives/components that call into these 2 services) get simpler, mostly-mechanical updates once the services' return type changes from `ComponentFactory` to `Type<unknown>`.
+
+**Current repo (pre-fix):** dynamic path still uses the legacy `Compiler`/`compileModuleAndAllComponentsSync`/NgModule-wrapper pattern in both services as of the 19→20 hop. Target end state per the reference commits: dynamic path uses standalone `Component({ standalone: true, imports: [...] })` in `dynamic-component-ref-provider.service.ts`. Grep should find **zero** legacy compiler calls once fixed. Remove deprecated `wm-view` transpiler registration (`a2062ecf8`).
 
 ### 2. Standalone dynamic component creation
 
@@ -140,6 +156,8 @@ rg 'compileModuleAndAllComponentsSync|Compiler' projects/runtime-base
 - Patched in full build via `config/rollup.ngxBootstrap.config.mjs` (`ngxBootstrapPatchPlugin`); ESM patch also runs on `npm run build`
 - Legacy root scripts (`patch-positioning.mjs`, `bootstrap-module-replace.js`) removed in WMS-29275 — do not reintroduce
 
+**`config/rollup.ngxBootstrap.config.mjs` hardcodes ngx-bootstrap's fesm bundle format per entry (18→19 hop):** every one of its ~22 module entries (`positioning`, `modal`, `dropdown`, `tooltip`, etc.) hardcodes a `fesm20XX` path segment (e.g. `node_modules/ngx-bootstrap/positioning/fesm2020/ngx-bootstrap-positioning.mjs`). ngx-bootstrap bumping its own build output from `fesm2020` to `fesm2022` (independent of which Angular major triggered the ngx-bootstrap bump) breaks every single entry at once with `Could not resolve entry module` errors. Fix is mechanical — replace `fesm2020` → `fesm2022` (or whatever the new format is) across all entries — but confirm the *actual* installed format first (`ls node_modules/ngx-bootstrap/positioning/` — don't assume it's always `fesm2022` going forward; verified unchanged 19.0.2→20.0.2 in this repo's 19→20 hop, but re-check every ngx-bootstrap bump rather than assuming stability).
+
 **Patch targets (WMS-29275: `a6b0848e7`, `bfc670354`, `2fef2d417`, `9fb962af5`):**
 
 | Module | Fix | Symptom if missing |
@@ -157,11 +175,15 @@ rg 'compileModuleAndAllComponentsSync|Compiler' projects/runtime-base
 
 **Interaction with §12 (bundle verify):** after extending or modifying `PATCHES` in `ngx-bootstrap-patch.mjs`, verify that the `__destroyRef` injection described in §12 is still intact — regex replacement order in the patch file matters. Run `verify-ngx-bootstrap-bundle.sh` after any patch change, not only after a full `build.sh -f`.
 
+**`setTheme('bs3')` → `setTheme('bs4')` (18→19 hop):** `ngx-bootstrap/utils`' `setTheme()` call in `projects/runtime-base/src/components/app-component/app.component.ts` must match a theme ngx-bootstrap actually still supports — `'bs3'` stopped being valid at the ngx-bootstrap version this repo bumped to. Grep `setTheme(` in that file if datepicker/timepicker/rating render with wrong styling after an ngx-bootstrap bump; check `node_modules/ngx-bootstrap/utils/theme-provider.d.ts` for the currently valid theme strings rather than assuming `'bs4'` is still correct at a future major.
+
 **ngx-bootstrap 20 modal events (WMS-29275: `bfb1f5bb4`):** v20 removed global `BsModalService.onShown` / `onHidden` in some builds — `BaseDialog` must invoke open/close callbacks manually on the modal ref. **Re-verify on ngx-bootstrap 21+** — upstream may restore global emitters; grep `base-dialog.ts` for `onShown.subscribe` vs manual `setTimeout` callbacks.
 
-**ngx-bootstrap 21+:** most modules **removed `forRoot()`** — use bare modules in `importProvidersFrom` / `NgModule.imports` and `ToastNoAnimationModule.forRoot()` only where still supported. Grep `projects/` for `.forRoot()` on ngx-bootstrap imports (including `*.spec.ts` if Step 8 runs).
+**Don't confuse the `modal` patch-table row above with a separate, third-repo bug (confirmed live, 18→19 hop):** the patch table's `SHOW: 'show'` → `'in'` fix is inside `ngx-bootstrap-patch.mjs`, patching ngx-bootstrap's own component *class-binding* behavior — it does not touch CSS. The modal/backdrop's actual *opacity* rules (`.fade`, `&.in`/`&.show`) live in **`wavemaker-foundation-css`**, a sibling repo this skill does not otherwise edit or grep (`../wavemaker-foundation-css` relative to ng-runtime; no config var for it in `repo.config.sh`). ngx-bootstrap 19+/20 always emits the BS5 `.show` class (confirmed, never `.in`), but if foundation-css's `src/styles/web/components/modal-dialog.less` still only has an `&.in { opacity: 1; }` rule (no `&.show`), the modal renders with `opacity: 0` — invisible, no console error, easy to misdiagnose as an ngx-bootstrap-patch problem since the symptom (modal doesn't show) is identical. Fix: add `&.show { opacity: 1; }` alongside `&.in` in that file, for both `.modal` and `.modal-backdrop` blocks, then `npm run build` in foundation-css (auto-runs `yalc push`) and rebuild ng-runtime. **Step 9 preview validation is the only way this surfaces** — no static check in this skill's pattern-review.sh reaches outside ng-runtime/ng-codegen into a third sibling repo.
 
-**Angular 21 `@HostListener`:** one **static** event name per decorator (`keydown.enter`, `keydown.arrowup`); do not combine multiple keys in one decorator. Pass `$event` in the method signature (`['$event']` is fine when the event name is static). See checkbox/menu widgets.
+**ngx-bootstrap 21+:** **every** module removed `forRoot()` (confirmed 10/10, not just "most" — see §8b) — use bare modules in `importProvidersFrom` / `NgModule.imports` and `ToastNoAnimationModule.forRoot()` only where still supported (separate package, unaffected). Grep `projects/` for `.forRoot()` on ngx-bootstrap imports (including `*.spec.ts` if Step 8 runs).
+
+**Angular 21 `@HostListener` — stricter host-binding arg-count checking (R1: "hidden type issues in host bindings may surface"):** `@HostListener('event', ['$event', '"someLiteral"'])` on a method declaring only `($event)` (one param) now fails `TS2554: Expected 1 arguments, but got N` — the decorator's args array length must match the method's declared parameter count exactly. **Confirmed fix in `checkbox.component.ts`/`checkboxset.component.ts` (20→21 hop):** the extra literal-string arg was genuinely vestigial/unused in both method bodies — drop it from the array (`['$event', '"ENTER"']` → `['$event']`). **Do not assume every instance is vestigial** — `menu.component.ts`/`menu-dropdown-item.component.ts` stack several `@HostListener`s on one method with a matching 2-param signature (`onKeyDown($event, eventAction)`) specifically to dispatch on which decorator fired; those compile fine as-is (2 array entries, 2 params) and must not be "fixed" to 1 — check the method's actual param count before touching either side of the mismatch. Also: one **static** event name per decorator (`keydown.enter`, `keydown.arrowup`) — do not combine multiple keys in one decorator string.
 
 **Dropdown positioning helpers:** `adjustContainerPosition` / `adjustContainerRightEdges` in `projects/core/src/utils/utils.ts` must tolerate ngx-bootstrap refs without `ngZone` (use `runAfterStable` fallback when `onStable` is unavailable).
 
@@ -225,20 +247,22 @@ rg 'provideHttpClient\(' projects/runtime-dynamic/src/app/app.config.ts
 ### 8. Rollup library bundles
 
 - `config/rollup.ng-libs.config.mjs` — peer dependency alignment with `@angular/*`
-- Angular 21 fesm renames: `@angular/core/primitives/di` → `primitives-di.mjs`, `signals` → `primitives-signals.mjs`, `event-dispatch` → `primitives-event-dispatch.mjs`
+- Angular 21 fesm renames: `@angular/core/primitives/di` → `primitives-di.mjs`, `signals` → `primitives-signals.mjs`, `event-dispatch` → `primitives-event-dispatch.mjs` (path change only — the nested `fesm2022/primitives/` subfolder is gone, flat filenames directly in `fesm2022/`)
 - `tsconfig.json` **`moduleResolution: "bundler"`** — required for ng-packagr to resolve `@angular/common/http` and core primitives
 - **`tsconfig.web-app.json` must stay aligned with `tsconfig.json`** on every major bump — codegen renames it to the generated app's `tsconfig.json` (§20a)
 
-**Risk:** broken `dist` packages consumed by generated apps; TS2307 / NG1010 on `ng build` after codegen.
+**Confirmed at Angular 21 (20→21 hop):** `core.mjs` gained a **new**, previously-absent top-level `import '@angular/core/primitives/di';` (bare package-subpath, external — same pattern as the pre-existing `signals` import) — not just a path rename, a genuinely new external dependency. Required a **new** `rollup.ng-libs.config.mjs` bundle entry (`fesm2022/primitives-di.mjs` → `core-di.umd.js`, `external: []`, global name `ng.di`), a new `"@angular/core/primitives/di": "ng.di"` entry in the `core` bundle's own `globals`/`external`, **and** a new line in `build.sh`'s `bundleJS()` terser concatenation list (`./node_modules/@angular/core/bundles/core-di.umd.js`, positioned before `core.umd.js`, same as `core-signals.umd.js`) — the rollup config alone is not sufficient, the raw UMD bundle must also be wired into the final concatenated `web-libs` bundle or `di` stays `undefined` at runtime with no build-time signal. **Note the asymmetry:** `event-dispatch` is imported via a *relative* path (`./primitives-event-dispatch.mjs`) and gets inlined directly into `core.umd.js` by rollup — it has never needed its own `bundleJS()` line, unlike `signals`/`di` which are bare package-subpath imports and stay external. Don't assume every primitives import needs the same treatment — check whether the import in `core.mjs` is relative (inlined) or a bare specifier (external, needs its own bundle line) before deciding.
+
+**Risk:** broken `dist` packages consumed by generated apps; TS2307 / NG1010 on `ng build` after codegen; a missing `bundleJS()` line is a **silent runtime failure** (undefined global, no error at build time) — see `patterns/runtime.md` §26's general warning about this exact failure class.
 
 #### 8b. NgModule / `ApplicationConfig` static analysis (Angular 21)
 
-**This is a breaking change in ngx-bootstrap, not a refactor choice.** ngx-bootstrap 21 removed `.forRoot()` from `ModalModule`, `BsDatepickerModule`, and `NgCircleProgressModule`. Angular 21's static analysis then raises **NG1010** on any `ModuleWithProviders` value in `imports`. The fix is forced by the library — use bare modules.
+**This is a breaking change in ngx-bootstrap, not a refactor choice.** ngx-bootstrap 21 removed `.forRoot()` from **every** module, not just Modal/Datepicker — confirmed via direct grep of all installed `.d.ts` files (20→21 hop): `modal`, `datepicker`, `timepicker`, `dropdown`, `pagination`, `typeahead`, `progressbar`, `carousel`, `popover`, `tooltip` all lost it. **`NgCircleProgressModule.forRoot()` is a misattribution — do not touch it.** It ships from `ng-circle-progress`, a completely separate package this repo doesn't bump in lockstep with ngx-bootstrap; its `.forRoot()` was confirmed still present at the 20→21 hop and should be left exactly as-is. Angular 21's static analysis raises **NG1010** on any `ModuleWithProviders` value in `imports`. The fix is forced by the library — use bare modules.
 
 - `ModuleWithProviders` from `SomeModule.forRoot()` in `NgModule.imports` → **NG1010** (not statically analyzable)
 - **Fix:** bare modules in `imports`; spread `forRoot().providers` into `providers`, or use `importProvidersFrom` in `app.config.ts` without `.forRoot()` on the affected ngx-bootstrap modules
 
-**Where:** `projects/runtime-dynamic/src/app/app.config.ts` (flat `providers`; primary bootstrap), transpiler-generated imports (`projects/transpiler/src/imports.ts` — bare ngx-bootstrap `ImportDef`s, no `forRoot: true`), **`wavemaker-ng-codegen/templates/app.config.ts.hbs`** (§20b — edit source templates only, not `dist/`). Legacy `app.module.ts` / `WM_MODULES_FOR_ROOT` in runtime preview are not used by codegen output.
+**Where:** `projects/runtime-dynamic/src/app/app.config.ts` (flat `providers`; primary bootstrap), **`wavemaker-ng-codegen/templates/app.config.ts.hbs`** (§20b — edit source templates only, not `dist/`). `projects/transpiler/src/imports.ts`'s `ImportDef.forRoot` flag was checked at the 20→21 hop and confirmed to have **zero actual consumers anywhere in the codebase** — it's inert/dead data, not a real forcing function; don't spend time "fixing" it. `projects/runtime-dynamic/src/app/app.module.ts` (legacy, not used by codegen output, but still part of the TS project and must still compile) also has its own set of 9 `SomeModule.forRoot()`-typed exports (`ModuleWithProviders<X>`) that need the same bare-module treatment — change the type annotation to `typeof X` alongside removing `.forRoot()`.
 
 #### 8c. Locale bundle before angular-app CLI bundle
 
@@ -278,6 +302,8 @@ ls -lh dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.bundle.js \
 - Inject `EnvironmentInjector` mock in `partial-container.spec.ts` (constructor signature changed).
 - Mock `showPopover` in popover wrapper specs when testing `open()` / keyboard handlers — real popover positioning fails under Jest.
 - ESM patch path: `build-scripts/ngx-bootstrap-patch.mjs` (invoked from `build-scripts/build.js`).
+
+**18→19 hop:** `projects/core/src/utils/utils.spec.ts` — direct property assignment to `window.location` (`window.location = {...}`) started failing under the jsdom/jest-preset-angular version this hop pinned (that property became non-writable via plain assignment). Fix: mock via `(window as any).location = {...}` instead — casting bypasses the stricter type/writability check without changing what the test actually verifies. Watch for the same class of jsdom-environment-object-mocking break (`window.location`, `window.history`, etc.) on any future `jest-preset-angular`/jsdom bump (§9's own R9 pin), not just this exact property.
 
 ### 10. Preview-sensitive runtime rendering
 
@@ -382,6 +408,8 @@ RuntimeError: NG0203 (inject() must be called from an injection context)
 
 **Confirmed at ngx-bootstrap 20.0.2 (WMS-29275, 18→20 upgrade, 2026-07):** upstream's actual source is `this.triggerEvent$.pipe(takeUntilDestroyed()).subscribe(...)` called **inside** `ngZone.runOutsideAngular(() => {...})`. This is syntactically valid (no `ReferenceError`) — `takeUntilDestroyed()` with no arg relies on an implicit `inject(DestroyRef)`, and Angular's injection-context tracking does not survive the Zone.js task boundary created by `runOutsideAngular`, so it throws **NG0203** instead. Do not assume this bug is 21+-only just because `takeUntilDestroyed()` is called syntactically "in the constructor" — check whether it's nested inside `runOutsideAngular` (or any other Zone/task-scheduling wrapper) before concluding the patch isn't needed.
 
+**Confirmed changed shape at ngx-bootstrap 21.2.2 (20→21 hop):** the constructor signature itself changed — `constructor(ngZone, rendererFactory, platformId)` lost its `ngZone` parameter entirely, now `constructor(rendererFactory, platformId)`. The Zone boundary is no longer `ngZone.runOutsideAngular(...)` but `runInZoneRootIfPresent(() => {...})` (new helper in `ngx-bootstrap/utils`, does `zone.root.run(fn)` directly via raw Zone.js — same hazard, since Angular's injection-context tracking doesn't survive *any* Zone.js task boundary regardless of which API creates it, not just `NgZone.runOutsideAngular` specifically). `triggerEvent$` access also gained optional chaining (`this.triggerEvent$?.pipe(...)`). **The 20.0.2 patch regex does not match this shape at all** — verified directly (`RegExp.test()` against the installed source, not assumed) — the old 20.0.2 regex silently fails to match, which `verify-ngx-bootstrap-bundle.sh`'s fallback WARN would have caught, but only if actually run. `ngx-bootstrap-patch.mjs` now targets the 21.2.2 shape specifically (matches from `constructor(rendererFactory, platformId)` through the `merge(...)` call up to `runInZoneRootIfPresent(() => {` using a non-greedy `[\s\S]*?` middle section — a fixed-character-class approach like `[^)]*` breaks on the nested parens inside `merge(fromEvent(...), fromEvent(...), ...)`). **This is now the second confirmed distinct upstream shape for the same underlying bug** — expect a third at a future ngx-bootstrap major; always re-verify the regex against the actual installed source rather than assuming either prior shape still applies.
+
 **Root cause (general):** across the versions checked, ngx-bootstrap's `PositioningService` calls `takeUntilDestroyed()` (bare, or referencing an undeclared `__destroyRef`) in a context where implicit DI resolution is unreliable. The Rollup patch must inject `const __destroyRef = i0.inject(i0.DestroyRef)` **before** the `runOutsideAngular` call (still in a valid injection context) and pass it explicitly: `takeUntilDestroyed(__destroyRef)`. If the patch **regex no longer matches** the upstream constructor (ngx-bootstrap minor bump) or **`sh build.sh -f` was skipped** / preview uses stale `wm-libs.js`, the bundle ships broken positioning — dropdown, popover, modal, datetime fail at runtime.
 
 **Step 6 — source checks:**
@@ -395,6 +423,33 @@ find node_modules/ngx-bootstrap/positioning -name '*.mjs' | xargs rg 'takeUntilD
 ```
 
 Compare `PositioningService` constructor in `node_modules/ngx-bootstrap/positioning/fesm2022/ngx-bootstrap-positioning.mjs` to the regex in `PATCHES.positioning` — if shape changed, extend patch → `must-change`.
+
+**21→22 hop: `ngx-bootstrap-patch.mjs` replaced wholesale with a more comprehensive version from `feature/angular-22-upgrade` (a sibling WMS-32451 branch, same ticket, independent implementation) — 4 more patch categories added, and a real rollup-wiring bug found and fixed in the process.**
+
+Before this hop, `ngx-bootstrap-patch.mjs` on `stage-classic` only had the `positioning`/`DestroyRef` patch. The `feature/angular-22-upgrade` branch's copy of the same file additionally carries `componentLoader` (subscription tracking/cleanup), `dropdown` (BS5 `.show` class restoration), `modal` (`SHOW` class value), and `typeahead` (dropdown-menu overflow style) patches — all tracing back to **WMS-29275** (the original 18→20 upgrade), not anything Angular-22-specific. **Before copying, each was independently verified against `stage-classic`'s own installed ngx-bootstrap 22.0.0 source** (grep for the exact broken pattern each patch targets) rather than trusted at face value — 2 of the 8 individual sub-patches correctly no-op on this version (see below), the other 6 target real, currently-unpatched code.
+
+**Copying the patch file alone was not sufficient — found a second, separate bug in `config/rollup.ngxBootstrap.config.mjs`.** That config builds each ngx-bootstrap submodule as its own separate Rollup entry (23 entries; `feature/angular-22-upgrade` instead uses one combined virtual-entry bundle — a bigger structural difference not worth porting). `plugins: [ ngxBootstrapPatchPlugin() ]` was attached to the `positioning` entry only — **`component-loader`, `dropdown`, `modal`, and `typeahead` had no `plugins:` array at all**, so even with the fuller patch file in place, only the positioning patch was ever actually applied; the other 4 categories silently never ran. Confirmed via direct build: after copying the patch file alone, `grep -c "SHOW: 'in'"`/`_onShownSubscription`/etc. against the built `ngx-bootstrap.umd.js` all returned 0. Fixed by adding `plugins: [ ngxBootstrapPatchPlugin() ]` to each of the other 4 entries in the existing 23-entry structure (not restructuring to a virtual entry). **Lesson: verify a patch file's effect in the actual built output, never from its own console log lines alone** — `sh build.sh -f`'s own log for this run showed zero `ngx-bootstrap-patch` lines at all (a separate, cosmetic issue — the emoji-prefixed `console.log` lines this file uses don't propagate through `execCommand`'s output capture in `build.sh`; `rollup -c ./config/rollup.ngxBootstrap.config.mjs` run standalone does show them) — only grepping the actual bundle content is reliable.
+
+**2 sub-patches that correctly no-op on ngx-bootstrap 22.0.0 (verified why, not just observed):**
+- `dropdown`'s BS5 `.show` class restoration: `grep -n "class.show" node_modules/ngx-bootstrap/dropdown/fesm2022/ngx-bootstrap-dropdown.mjs` shows `[class.show]="isOpen"` already present in the host bindings at 22.0.0 — this bug is fixed upstream now, the patch's own `if (code.includes(...)) return {wasPatched:false}` guard correctly detects that and skips it.
+- `componentLoader`'s "Unsubscribe fix" sub-patch (the third of three `componentLoader` patches): its regex requires a `_zoneSubscription` field in `_unsubscribePositioning()`, but 22.0.0's actual implementation uses `_positioningRafId`/`cancelAnimationFrame` instead — a different, already-refactored cleanup mechanism. The regex correctly fails to match rather than corrupting the file. The first `componentLoader` sub-patch (subscription tracking, adds `this._onShownSubscription = this.onShown.subscribe(...)`) does apply and is harmless on its own even without its unmatched cleanup companion — it only adds a reference, doesn't change existing behavior.
+
+**Step 6 — verify the full patch pipeline, not just the patch file's content:**
+
+```bash
+# 1. Confirm the patch file itself has all 5 categories:
+rg '^\s+(positioning|componentLoader|dropdown|modal|typeahead):\s*\{' build-scripts/ngx-bootstrap-patch.mjs
+
+# 2. Confirm EVERY entry that should be patched actually has the plugin wired —
+#    this is the check that would have caught the rollup-config gap immediately:
+rg -B3 "input: 'node_modules/ngx-bootstrap/(component-loader|dropdown|modal|typeahead)" config/rollup.ngxBootstrap.config.mjs | rg -c "plugins:"
+# must equal 4 (one per module) — if less, some entries are missing the plugin
+
+# 3. Verify in the actual BUILT bundle, not the patch file or its logs:
+grep -c "SHOW: 'in'" dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.umd.js          # modal
+grep -c "_onShownSubscription" dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.umd.js  # componentLoader
+grep -c 'dropdown-menu{overflow-y:auto;height:100px}' dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.umd.js  # typeahead — should be 0 after patch
+```
 
 **Step 7 — post-build gate (when bundle verify enabled):**
 
@@ -673,6 +728,8 @@ parser.parseAction(expr, createParseSourceSpan(expr), 0);
 
 **WMS-31316 symptom:** watch/bind expressions like `(a && b)` or `(row.field \| pipe)` compile to **noop** — widgets never update, no console error.
 
+**Confirmed live (19→20 hop, 2026-09):** this was NOT a hypothetical — it produced a real, reproducible `SyntaxError: Unexpected token ','` at `new Function (<anonymous>)` inside `ASTCompiler.compile()`, from `swipey.jquery.plugin.js`'s `compile()` (a `{{...}}` CSS-animation-binding evaluator, `projects/swipey/src/swipey.jquery.plugin.js`) calling `$parseExpr` with a parenthesized expression. Root-caused via a temporary diagnostic in `ASTCompiler.build()`'s fallthrough (log `ast.constructor.name` instead of silently returning `undefined`) — confirmed `ParenthesizedExpression` (and, once handled, cascaded through `Conditional` and `BindingPipe` wrapped in parens too) — NOT related to the same hop's §19b `PropertyWrite` removal, which was the initial (wrong) suspicion given both changes were made in the same file in the same hop. Reproduced identically in both development and production builds. See `docs/upgrade-log/19-to-20.md`.
+
 **Fix:** import `ParenthesizedExpression` and add:
 
 ```typescript
@@ -863,3 +920,316 @@ npx tsc --noEmit 2>&1 | rg 'NG1054|NG6008|NG6009'
 ```
 
 **Step 6 classification:** `must-change` — these are compile errors, not warnings; `build.sh -f` will not pass with them present.
+
+### 29. Standalone-by-default breaks inline test-harness components/pipes (Angular 19)
+
+**First required:** Angular 19 (official 19.0.0 breaking change: "Angular directives, components and pipes are now standalone by default"). Discovered via `npm test`, not the build — `build.sh -f` compiles clean even when every affected test fails, because this only surfaces at TestBed runtime, not AOT/ng-packagr compile time.
+
+**Symptom:** `npm test` mass-failure (in this repo: 2934/4022 tests, 79/126 suites — one root cause, one error signature repeated):
+
+```text
+Unexpected "<ClassName>" found in the "declarations" array of the "TestBed.configureTestingModule" call,
+"<ClassName>" is marked as standalone and can't be declared in any NgModule -
+did you intend to import it instead (by adding it to the "imports" array)?
+```
+
+**Root cause:** inline test-harness "wrapper" components (e.g. `class IconWrapperComponent { @ViewChild(...) ... }`, defined directly inside a `*.spec.ts` file to give a widget-under-test a host template) and inline mock pipes/directives, when their `@Component`/`@Pipe`/`@Directive` decorator omits `standalone` entirely. At Angular 18 the implicit default was `false` (NgModule-based) — fine in a `declarations: [...]` array. At Angular 19 the implicit default flips to `true` — now invalid there.
+
+**Not a production-code issue in this repo:** verified all real `.component.ts` files already declare `standalone` explicitly (grep: 0/74 missing it). This is specifically an inline-test-harness gap — production source was already following explicit-standalone discipline.
+
+**Canonical fix:** add `standalone: false` to the decorator of every locally-defined test-harness class that's referenced in a `declarations: [...]` array in the same file — this restores the exact pre-19 behavior with a one-line, zero-risk addition (do **not** switch these to `imports` + `standalone: true`; that's modernization, not compatibility, and changes how the harness component itself gets compiled).
+
+**Find every instance in one pass** (don't fix file-by-file from individual jest failures — this repo had 80 files / 87 classes, one shared root cause):
+
+```js
+// For each *.spec.ts with a declarations:[...] array, find locally-defined
+// @Component/@Pipe/@Directive classes referenced there whose decorator body
+// doesn't contain "standalone:", then insert "standalone: false," right after
+// the decorator's opening brace. See git history around the WMS-32451 skill
+// port for the exact script (find-standalone-issue.js / fix-standalone.js
+// pattern) if reimplementing.
+```
+
+**Separate, look-alike failure — do not confuse with the above:** a *third-party* library component/pipe (not locally defined) can hit a related but different error depending on whether it's placed in `declarations` or `imports`, if the library was compiled against an old Angular version whose partial Ivy declaration omits the `isStandalone` field entirely (Angular 19's `declarations`-check and `imports`-check read that missing field with *opposite* defaults). You can't add `standalone: false` to a compiled third-party class. Fix: use the library's own NgModule export if it has one, matching however your **production** code already consumes that dependency (check the real `.component.ts`, don't guess) — e.g. `ng-circle-progress`'s `CircleProgressComponent` (compiled against Angular 14.2.12, no `isStandalone` field) must be imported via `NgCircleProgressModule`, not the raw component class, exactly as `progress-circle.component.ts` already does in production.
+
+**Step 6/8 grep:**
+
+```bash
+# after Step 8 test run, if standalone-related TestBed errors appear:
+rg -l "declarations\s*:" projects/ --include="*.spec.ts"
+# then check each locally-defined @Component/@Pipe/@Directive referenced there for a missing "standalone:"
+```
+
+**Step 6 classification:** `must-change` — but only surfaces via `npm test` (Step 8), not `build.sh` (Step 7); don't assume Step 7 passing means this is clear.
+
+### 30. ng-packagr output-shape changes break `config/rollup.build-task.mjs` (dependency-extraction pipeline)
+
+**Where:** `config/rollup.build-task.mjs` — a custom, hand-rolled rollup pipeline distinct from §8's `rollup.ng-libs.config.mjs`. It extracts specific library exports (expression parser, pipes, pipe provider) into standalone CJS/ES bundles under `dist/transpilation/`, consumed by **ng-codegen** at Node runtime (not by the browser app) to initialize its own copy of the WM expression parser for build-time transpilation. Companion fix on the ng-codegen side: `src/wm-utils.js`'s `initExpressionParser()`.
+
+**First required:** Angular 20 hop (ng-packagr 17.3.0→19.2.2, WMS-29275/18→19 hop in this repo's real history — this repo hit it again fresh going 18→19). **Re-check on every ng-packagr major bump** (R10 pin) — this is an ng-packagr output-shape risk, not an Angular-version risk per se, so it can recur even on an Angular hop where ng-packagr's own major doesn't change, or skip a hop where ng-packagr's internal structure happens not to shift.
+
+**Root cause:** ng-packagr's major bump dropped **per-file** `esm2022/<path>.mjs` output (e.g. `libraries/core/esm2022/utils/expression-parser.mjs`), leaving only the **flattened, whole-library** `fesm2022/index.mjs` bundle per library. `rollup.build-task.mjs`'s entries previously pointed at the narrow per-file paths — those paths no longer exist at all, not just moved.
+
+**Symptom cascade (three distinct, sequential failures — don't assume the first fix is the last one needed):**
+1. `Error: Could not resolve entry module './libraries/core/esm2022/utils/expression-parser.mjs'` (or similar) — the old per-file path is simply gone.
+2. After repointing at the `fesm2022/index.mjs` barrel: `dist/transpilation/*.cjs.js` builds "successfully" but the output is a near-empty stub (~15 bytes) — caused by `@rollup/plugin-multi-entry` (deprecated, silently produces empty chunks against rollup 4.60.1+) still being used from the old per-file, multi-entry setup. Fix: remove the plugin entirely — a single `fesm2022/index.mjs` entry point needs no multi-entry aggregation.
+3. After that: `Cannot find module '@wm/components/dialogs/confirm-dialog'`-style errors from **unanchored string aliases** — `@rollup/plugin-alias`'s plain-string `find` values are **prefix matches**, so `{ find: '@wm/components/dialogs', replacement: ... }` also wrongly matches `@wm/components/dialogs/confirm-dialog`. Fix: anchor as a regex — `{ find: /^@wm\/components\/dialogs$/, replacement: ... }` — and order special-cased entries (`@wm/components/page`, `@wm/components/dialogs` — both have multiple implementations behind a `default` folder, matching `tsconfig.json`'s own path mappings) **before** a generic `{ find: /^@wm\/(.+)$/, replacement: 'libraries/$1/fesm2022/index.mjs' }` catch-all, or the catch-all wins first and resolves to a non-existent `libraries/components/page/fesm2022/` instead of `libraries/components/page/default/fesm2022/`.
+
+**Documented dead-end — do not retry this approach:** narrowing the bundle to just the 1–3 specific exports actually needed (instead of pulling in the whole `fesm2022/index.mjs` barrel, which drags in every sibling class in that library) does **not** reduce bundle scope. Angular decorators (`@Component`, `@Injectable`, etc.) are treated by rollup as side-effecting, so it cannot tree-shake sibling classes out of a decorated barrel file even via a narrow re-export shim. Verified empirically in this repo — go straight to consuming the full barrel and let the generic alias + downstream Node-side global stubs (below) absorb the consequences, rather than re-attempting a shim.
+
+**Unrelated but co-discovered in the same investigation (third-party package bug, not an Angular-version issue):** `@wavemaker/variables` (separate sibling repo, `.yalc`-linked) ships a malformed `package.json` `"exports"` map (`{"." : "./index"}`, missing the `.js` extension) — blocks `nodeResolve`'s strict exports-map resolution (unlike legacy `"main"` resolution, it does not auto-append extensions). Workaround: a targeted alias entry (`{ find: '@wavemaker/variables', replacement: '.yalc/@wavemaker/variables/index.js' }`) in this repo's own rollup config — cannot fix the third-party package itself, and don't spend time trying to.
+
+**Cross-repo companion (ng-codegen `src/wm-utils.js`'s `initExpressionParser()`):** because the rollup output now bundles the *whole* `@wm/runtime/base`/`@wm/core` barrel instead of a narrow extract, it pulls in Angular internals whose constructor `design:paramtypes` metadata references browser-only globals (e.g. `EventManager`'s `Document` parameter) that don't exist in ng-codegen's plain Node process. These values are never actually instantiated there (ng-codegen only calls `new PipeProvider(...)`), so dummy class placeholders for `Document`/`Window`/`Element`/etc. are sufficient to satisfy `emitDecoratorMetadata`'s reference at class-definition time. Same root cause also surfaces `@swipey`'s side-effecting `$.fn.swipeAnimation.expressionEvaluator = $parseExpr` top-level registration line needing a `$.fn.swipeAnimation` stub — **place this stub check outside any `typeof global.$ === 'undefined'` guard**, since `codegen.js`/`pages-util.js` already set `global.$` to real jQuery earlier in the process, so that guard is always false and a stub placed inside it silently never runs (a real bug hit and fixed in this repo — the first attempt nested it wrong).
+
+**Step 6 grep:**
+
+```bash
+# Confirm current ng-packagr output shape before assuming per-file esm2022 still exists:
+ls libraries/core/esm2022/ 2>/dev/null || echo "per-file esm2022 gone — fesm2022-only, as expected at this ng-packagr version"
+ls libraries/core/fesm2022/index.mjs
+
+# After any rollup.build-task.mjs edit, confirm real output size (not a near-empty stub):
+ls -la dist/transpilation/*.cjs.js dist/transpilation/*.es.js
+```
+
+**Step 6 classification:** `must-change` if `libraries/*/esm2022/<path>.mjs` per-file output is gone and `rollup.build-task.mjs` still references those paths — this is a hard break, not a deprecation. `dist/transpilation/*.cjs.js` under ~1KB after a "successful" rollup run is `must-change` (empty-chunk symptom, #2 above) even though the build exits 0.
+
+### 31. ngx-bootstrap directive `@Input`s converted to signal-based `input()` (any ngx-bootstrap major bump, confirmed at 21)
+
+**This is a real, previously-undocumented class of breaking change** — not covered by R1/R3 (Angular's own changelog doesn't describe third-party library internals) and not caught by any prior pattern-doc entry. ngx-bootstrap 21 converted **every** directive's `@Input()` properties to Angular's signal-based `input()` API throughout the library (confirmed on `BsDropdownDirective` and `TypeaheadDirective`; likely applies to every other directive too — popover, tooltip, datepicker, etc. — check each on first use, don't assume only these two are affected).
+
+**Symptom:** any WM code that imperatively writes to a ngx-bootstrap directive's property from TypeScript (`this.someDirective.someInput = value`, not a template binding) fails to compile:
+
+```text
+TS2540: Cannot assign to 'X' because it is a read-only property.
+TS2322: Type 'Y' is not assignable to type 'InputSignal<Y>'.
+```
+
+**Why:** `input()`-based signal inputs are read-only from outside the directive — there is no public `.set()` on an `InputSignal` (unlike a plain `signal()`'s `WritableSignal`, which does have `.set()`). Angular's compiler writes to them via a private internal mechanism only it can invoke, triggered by template binding evaluation. There is no supported imperative external write path once a directive has switched an `@Input()` to `input()`.
+
+**Two different fix patterns found, depending on what the directive itself exposes — check both before picking one:**
+
+1. **Directive has its own internal "state" service in the same DI scope, and that service still uses a plain writable property (not converted to a signal) as its internal source of truth.** Confirmed for `BsDropdownDirective`: `BsDropdownState.autoClose: boolean` is what the directive's own runtime logic actually reads (the signal is copied into `_state.autoClose` via an internal `effect()` — WM writing there directly achieves the exact same runtime effect). `BsDropdownState` is in `BsDropdownDirective`'s own `providers` array, so it's injectable from a sibling directive/component on the same host element via `@Self() @Optional()`, exactly like the directive itself. Check the directive's own compiled source (`grep 'this\._state\.' node_modules/ngx-bootstrap/<module>/fesm2022/*.mjs`) for this pattern before assuming it doesn't exist.
+2. **No such internal state service — but the WM widget's own template already has (or can get) a real `[input]="componentProperty"` binding to that same directive input.** Confirmed for `TypeaheadDirective.typeaheadOptionsLimit`: the widget's `.html` template already had `[typeaheadOptionsLimit]="limit"` — the WM fix is simply to set `this.limit = value` (an ordinary class property) instead of writing to the directive, and let Angular's normal template-binding change detection carry the value into the signal input on the next cycle. Search the widget's own `.html` for an existing `[inputName]="..."` binding before assuming one needs to be added.
+
+**Step 6 grep** (broader than the two confirmed instances — this can recur anywhere a ngx-bootstrap directive is held as a class field and written to):
+
+```bash
+# Find candidate imperative writes to any injected/ViewChild'd ngx-bootstrap directive instance:
+rg 'this\.(bsDropdown|popover|tooltip|bsDatepicker|typeahead|bsModal|carousel|tabset|accordion|progressbar|rating|bsTimepicker)[A-Za-z]*\.\w+\s*=\s*[^=]' projects/ --include='*.ts' -g '!*.spec.ts'
+# For each hit, confirm whether the target property is now `input(...)`-based in the
+# installed ngx-bootstrap source before assuming it's still a plain writable property:
+grep -n '<propertyName>' node_modules/ngx-bootstrap/<module>/types/*.d.ts
+```
+
+**Step 6 classification:** `must-change` — this is a hard compile error, not a deprecation warning; `tsc` will not compile with the assignment left in place.
+
+### 32. Root `AppComponent` renders nothing after bootstrap — bare `setTimeout` no longer reliably triggers change detection (Angular 21, confirmed live at Step 9)
+
+**Severity: build succeeds, app silently renders blank — invisible to every static check (Step 6/7/8), only surfaces in an actual browser (Step 9), and produces zero console errors.** This is exactly the class of bug checklist.md's Verification Principle warns about — do not assume a clean `build.sh -f` means the app works.
+
+**Symptom:** `<app-root>` bootstraps (Angular devtools `ng` global present, `ng-version` attribute set, root component instance exists, `router.navigated: true`, correct URL) but its template renders **nothing** — `document.body.innerHTML` shows only `<app-root><!--container--><!--ng-container--></app-root>`, no actual DOM. No console error, no exception, nothing — the page is just blank.
+
+**Root cause (fully confirmed, RESOLVED — see final verified fix below):** `app.component.ts`'s `start()` method sets `this.startApp = true` (the flag gating the entire template's `@if (startApp) { ... router-outlet ... }` block) inside a bare `setTimeout(() => { this.startApp = true; })` — a pre-existing pattern, deliberately added to dodge a dev-mode-only `ExpressionChangedAfterItHasBeenCheckedError` (comment references an old angular-university.io blog post). This relies on zone.js's patched `setTimeout` automatically triggering Angular's change detection once the callback completes — which has reliably worked across every prior Angular major in this codebase's history. **At Angular 21 it does not fire reliably for this call site.**
+
+**Ruled out: Angular 21 zoneless-by-default.** Angular 21 does make zoneless the default for *new* applications, which made this look like a prime suspect. Directly verified against the installed `@angular/core@21.2.23` source and ruled it out: (1) `projects/runtime-dynamic/src/polyfills.ts` still does `import 'zone.js';`, so zone.js is loaded and patching `setTimeout`; (2) `app.config.ts` calls `provideZoneChangeDetection({eventCoalescing: true, runCoalescing: true})`, and reading `provideZoneChangeDetection`'s implementation in `node_modules/@angular/core/fesm2022/core.mjs` shows it explicitly provides `{provide: ZONELESS_ENABLED, useValue: false}` — WM's app is definitively zone-based, not zoneless, at Angular 21. This was a dead end; don't re-investigate it for this repo.
+
+**Actual mechanism (confirmed by reading `ChangeDetectionSchedulerImpl`/`NgZoneChangeDetectionScheduler` in `node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs` + `core.mjs`, not just inferred):** zone-triggered automatic CD (`zone.onMicrotaskEmpty` → `appRef.dirtyFlags |= 1; appRef._tick()`) does still run a full, non-OnPush-gated top-down refresh (`useGlobalCheck` mode) when it fires. Critically, **`ApplicationRef.tickImpl()`'s dev-mode `checkNoChanges` loop runs *after* `synchronize()` has already applied the real DOM update** — it's a diagnostic-only second pass, not a gate. So an `NG0100` being thrown (and it now is, repeatedly, in dev-mode console — see below) does **not**, by itself, mean the DOM failed to update. The actual failure mode is upstream of that: the automatic zone-triggered tick simply isn't being scheduled at all for these specific flag writes (confirmed by reading `comp.startApp`/`comp.showPageContent`/`comp.compilePageContent` directly off the live component instance — `true`, but DOM unchanged — and confirming an explicit, targeted `ChangeDetectorRef.detectChanges()` fixes it immediately with no dev/prod difference). The precise "why doesn't the automatic tick fire for this call site" was not fully pinned down mechanistically (candidate: these flag writes happen inside Promise chains built on `ScriptLoaderService`/similar service calls that may run outside `NgZone` via `runOutsideAngular`, meaning zone.js's patched Promise machinery never sees the write as inside the zone) — **not worth chasing further; the fix is verified correct and stable in both dev and prod builds (see Step 9 evidence below), regardless of the exact scheduler-internals explanation.**
+
+**Fix — FINAL, verified working (supersedes the two-iteration `tick()`-based history below, which is kept only as a record of what NOT to do):** inject `ChangeDetectorRef` and call `this.cdr.detectChanges()` immediately after the flag write, in the *same* task (no extra `setTimeout` nesting needed) — `detectChanges()` is scoped to just that component's view and does **not** run the dev-mode `checkNoChanges` verification pass, so it renders cleanly with no `NG0100`:
+```typescript
+setTimeout(() => {
+    this.startApp = true;
+    this.cdr.detectChanges();
+});
+```
+
+**Two earlier failed iterations (history — do not repeat):**
+1. **First attempt (wrong):** call `this.ngZone.run(() => this._appRef.tick())` immediately after the flag write, inside the same `setTimeout` callback. Throws `NG0100` (`Previous value: '-1'. Current value: '0'`) — this is `@if`'s first-ever branch activation (-1 → 0), which always looks like a change between `synchronize()` and the immediately-following `checkNoChanges` pass when both happen in the same task as the triggering write.
+2. **Second attempt (also wrong — worked for `AppComponent` alone, did not fix nested content, superseded):** nest a second `setTimeout` around `ngZone.run(() => appRef.tick())` for task separation. Stopped `AppComponent`'s own blank-render symptom but is a **global, expensive, error-prone tick of the entire app** compared to `detectChanges()` scoped to one component — abandoned once `detectChanges()` was found to work with less blast radius and no `NG0100` at all.
+
+**Step 9 check:** don't trust a fix for this class of bug from source review alone — reproduce the exact symptom in a live browser (`document.body.innerText.length` / `document.body.innerHTML.length` before/after, or the devtools `ng.getRootComponents()` technique) both before *and after* applying a fix, in **both dev and production builds** — this bug affected both identically, so a dev-only check is not sufficient evidence of a full fix.
+
+**Step 6 classification:** `must-change` once confirmed live (was invisible until Step 9) — this exact case, `likely-breakage` generically wherever the same bare-`setTimeout`/Promise-`.then()`-property-write pattern appears elsewhere, pending Step 9 confirmation each time.
+
+**Confirmed systemic — SEVEN independent instances found and fixed this hop, not just one:**
+1. `app.component.ts` `start()` — `this.startApp = true` (setTimeout). Fixed with `cdr.detectChanges()`.
+2. `base-page.component.ts` `initVariables()` — `this.showPageContent = true` (setTimeout, 100ms). Fixed with `cdr.detectChanges()`.
+3. `base-spa-page.component.ts` `initVariables()` — `this.showPageContent = true` (setTimeout, 100ms). Fixed with `cdr.detectChanges()`.
+4. **`base-page.component.ts` AND `base-spa-page.component.ts` `ngAfterViewInit()` — `(this as any).compilePageContent = true` inside a `Promise.then()` chain (`this.loadScripts().then(() => this.runPageTransition().then(() => { (this as any).compilePageContent = true; ... })))`), with *no* setTimeout at all.** This is the one that mattered most and took the longest to find: `compilePageContent` gates the **top-level `@if (compilePageContent) { ... }` block that wraps the entire transpiled page template** (see `projects/components/transpile/src/page/page.build.ts:48` and `page-content/page-content.build.ts:18` — every generated page's `.component.html` is wrapped in this). Even after fixes #1–#3 above, the app rendered its full shell (header, left-nav, right-panel — confirmed via `document.querySelector('app-root').innerHTML`, ~5100 chars) but the actual page content div (`<div wmpagecontent ...>`) stayed empty (`<!----><!---->`, two un-activated `@if`/`@for` comment placeholders) in **both dev and production Tomcat deployments** — `document.body.innerText.length` stayed at 7 (whitespace only). Fixed identically: `this.cdr.detectChanges()` right after the `compilePageContent = true` assignment, in both files. **This is why the earlier `setTimeout`-only repo-wide scan (below) missed it — it's a `Promise.then()` chain, not a `setTimeout`, and the scan's regex only matched `setTimeout(...)` blocks.**
+5. **`app.component.ts`'s spinner-visibility subscription** (a few lines above `start()`, `this.spinnerService.getMessageSource().asObservable().subscribe((data) => { setTimeout(() => { this.spinner.show = data.show; ... }); })`) — found by an actual interaction test (clicking a table "New" button), not source review: the click landed on `<div.app-spinner.global-spinner>` instead of the button, because the global spinner's `show` flag flipped to `false` internally but the DOM never updated to hide it, silently blocking **all clicks anywhere on the page**. This instance's RHS is `data.show` (a variable), not a literal `true`/`false`, so **neither** scan regex below (original or `.then()`-updated) would have caught it — found only through actual click-testing, not any static/regex scan. Fixed with `cdr.detectChanges()`.
+6. **`base-partial.component.ts` `ngAfterViewInit()`** — `this.compileContent = true` inside `this.loadScripts().then(() => { ... })`, no setTimeout. Gates the top-level `@if (compileContent) { ... }` wrapping every partial's template (header/footer/leftnav/topnav/rightpanel — see `projects/components/transpile/src/partial/partial.build.ts:14`). Confirmed live: `<app-partial-header><section wmpartial ...><!----><!----></section></app-partial-header>` — partial shells present, inner content empty. `BasePartialComponent` had no `ChangeDetectorRef` field at all before this fix — added it via the file's existing `this.injector ? this.injector.get(X) : inject(X)` DI pattern in `init()`, same as `cdr` in base-page/base-spa-page.
+7. **`base-prefab.component.ts` `ngAfterViewChecked()`** — same pattern, `this.compileContent = true` inside `this.loadScripts().then(() => { ... })`, gates `@if (compileContent)` for prefabs (`projects/components/transpile/src/prefab/prefab-container/prefab-container.build.ts:16`). Same fix: added `cdr` field, call `detectChanges()` right after the flag write.
+
+**Step 9 evidence (both dev and prod, Tomcat, NestedWidgets project, `/Main` page):** before fix #4, `document.body.innerText.length` was `7` in both dev and prod builds (74 DOM elements — shell only). After fixes #1–4 (full pipeline rebuild: ng-runtime → yalc push → ng-codegen build → regenerate app → npm i → re-apply `.yalc/@wavemaker/variables` package.json fix → build dev/prod → deploy to Tomcat): `document.body.innerText.length` = `2674`, `1441` DOM elements, real content visible (pie chart with percentages, line chart, nav labels, header) in **both** dev and prod — confirmed via screenshot. Dev-mode console still showed repeated `NG0100` (confirmed non-blocking, see "actual mechanism" note above); prod build showed zero `NG0100`. **Then, interaction-testing (not just load/render checks) surfaced fix #5**: clicking a Department table's "New" button failed with "Element is covered by `<div.app-spinner.global-spinner>`" — the stuck spinner blocked every click on the page despite the page content itself rendering correctly. After fixes #5–7 and a second full pipeline rebuild: `document.body.innerText.length` = `2806` (dev) / `3331` (prod), spinner correctly hidden (`document.querySelector('.app-spinner.global-spinner')` → `null`), and the "New" button click now correctly opens its modal (`.modal.show` present, screenshot-confirmed) in **both** dev and prod. **Lesson: static/regex scans and load-only checks (`document.body.innerText.length`) are necessary but not sufficient for this bug class — an actual click-through interaction test found a live-blocking instance (#5) that no source-level scan could have caught, since its flag write isn't a boolean literal.**
+
+**Lower-severity instances found via a repo-wide scan, not yet fixed or confirmed broken — treat as `needs-review`, not `must-change`, until Step 9 evidence (including actual click/interaction testing, not just load checks — see fix #5's lesson above) says otherwise:** a Python/regex scan for `setTimeout(() => { ... this.\w+ = true|false ... })` blocks with no `detectChanges`/`tick`/`markForCheck` call anywhere in the block found several more, all controlling narrower widget-level UI state rather than gating an entire template's content — lower blast radius if still broken, and not worth blanket-patching without evidence (risks scattering unnecessary `detectChanges()` calls that could themselves cause performance issues or new dev-mode NG0100s elsewhere):
+- `projects/components/base/src/widgets/common/pull-to-refresh/pull-to-refresh.ts:124` — `runAnimation`/`animationInProgress`
+- `projects/components/widgets/input/epoch/date/src/date.component.ts:273` — `isOpen`
+- `projects/components/widgets/navigation/popover/src/popover.component.ts:172` — `isHandlingClick`
+- `projects/components/widgets/containers/tabs/src/tab-pane/tab-pane.component.ts:117` — `_isOnLoadTriggered`
+- `projects/components/widgets/containers/accordion/src/accordion-pane/accordion-pane.component.ts:116` — `_isOnLoadTriggered`
+- `projects/components/widgets/data/table/src/table.component.ts:658` — `_isInlineEditSave`
+
+**A broadened scan (any `this.foo = ...;` / `this.foo.bar = ...;` assignment, not just boolean literals — run after fix #5 showed the boolean-literal-only regex has a real blind spot) turned up ~30 more hits** across `base-partial.component.ts`, `base-prefab.component.ts` (both now fixed, #6/#7 above), `i18n.service.ts`, `security-config.resolve.ts`, and a long tail of widget-level components (select, chips, date/time pickers, pagination, form-field, table, list, carousel). **Do not blanket-fix these** — the broadened regex has many false positives (properties never bound in any template, e.g. `pageTransitionCompleted` in base-page/base-spa-page, confirmed via `grep` finding zero template references). Each hit needs the same two-step verification used for #5–7: (1) confirm the property is actually referenced in a `.html` template behind an `@if`/interpolation, (2) reproduce the actual symptom live (blank content or, per #5, a blocked interaction) before fixing — don't fix speculatively.
+
+**Scan command used — UPDATED to also catch `Promise.then()`/`.subscribe()` chains and non-literal RHS assignments, not just `setTimeout` + boolean literals (the original version missed both #4, a `.then()` chain, and #5, a non-literal RHS; rerun this expanded version at Step 6 for future hops, then manually verify each hit against its template before fixing):**
+```python
+import re, glob
+# Original setTimeout-only, boolean-literal-only pattern — kept for continuity, insufficient alone:
+block_pattern = re.compile(r'setTimeout\(\(\)\s*=>\s*\{(.*?)\}\s*(?:,\s*\d+\s*)?\)', re.DOTALL)
+# Added: bare .then(() => { ... }) chains — missed §32's #4 (compilePageContent).
+then_pattern = re.compile(r'\.then\(\(\)\s*=>\s*\{(.*?)\}\)', re.DOTALL)
+# Added: .subscribe((data) => { ... }) chains — same class of hazard as #5 (spinner).
+subscribe_pattern = re.compile(r'\.subscribe\(\([^)]*\)\s*=>\s*\{(.*?)\n\s*\}\);', re.DOTALL)
+# Broadened flag_pattern (any assignment, not just `= true|false`) catches #5's `data.show` —
+# expect many more matches and more false positives; verify each against its template, don't
+# blanket-fix. The literal-only version is kept commented for the narrower, higher-confidence pass.
+# flag_pattern = re.compile(r'this\.(\w+)\s*=\s*(true|false)\s*;')
+flag_pattern = re.compile(r'this\.[\w.]+\s*=\s*[^=][^;]*;')
+cd_pattern = re.compile(r'detectChanges|markForCheck|appRef\.tick|_appRef\.tick|cdr\.')
+seen = set()
+for f in glob.glob('projects/**/*.ts', recursive=True):
+    if 'spec' in f: continue
+    content = open(f).read()
+    for pattern in (block_pattern, then_pattern, subscribe_pattern):
+        for m in pattern.finditer(content):
+            body = m.group(1)
+            if flag_pattern.search(body) and not cd_pattern.search(body):
+                key = (f, content[:m.start()].count(chr(10)) + 1)
+                if key not in seen:
+                    seen.add(key)
+                    print(*key)
+```
+
+### 33. Angular 22 removed `Compiler.compileModuleAndAllComponentsSync()` and the `ComponentFactory`-based `createComponent()` overload
+
+**First required:** Angular 22 (21→22 hop on `stage-classic`). **Severity: build-breaking, and it breaks the single most load-bearing path in this runtime** — every page, partial, prefab and custom widget is created through it.
+
+**Not found by R1/R3 research or by the other branch's `docs/22-upgrade.md`** — found only by reading the installed `@angular/core@22.2.0` types directly after a build failure. Treat this as the canonical example of why the Verification Principle exists.
+
+**What was removed (verify both against the installed `.d.ts`, don't assume):**
+
+| Removed | How to confirm |
+|---|---|
+| `Compiler.compileModuleAndAllComponentsSync()` | `grep -rn "compileModuleAndAllComponentsSync" node_modules/@angular/core/types/` → zero hits at 22.2.0 (still present at 21.2.23) |
+| `ViewContainerRef.createComponent(factory, index, injector)` (positional/factory overload) | `grep -n -A15 "class ViewContainerRef" node_modules/@angular/core/types/core.d.ts` → only `createComponent<C>(componentType: Type<C>, options?: {index?, injector?, ngModuleRef?, environmentInjector?, projectableNodes?, directives?, bindings?, onError?})` remains |
+| `ComponentFactoryResolver` | `grep -rn "ComponentFactoryResolver" node_modules/@angular/core/types/` → zero hits |
+
+`Compiler` itself is **not** removed — only those methods. An unused `private compiler: Compiler` injection still compiles fine (this repo has one in `pipe-provider.service.ts`); leave it alone unless it actually calls a removed method.
+
+**The old WM pipeline (all of it gone):** `getDynamicComponent()` built a component class via `Component({...})(class X{})` → `getDynamicModule()` wrapped it in a runtime `NgModule({declarations:[X], imports:[...], providers:[...]})` → `compiler.compileModuleAndAllComponentsSync(moduleDef).componentFactories.filter(f => f.componentType === X)[0]` produced a `ComponentFactory` → `vcRef.createComponent(factory, 0, injector)`.
+
+**Fix — make the dynamic components standalone and drop the NgModule/Compiler step entirely:**
+
+1. `getDynamicComponent()` already returned a component **class** (a decorator call returns the class). That class is exactly what the new `createComponent(Type, options)` API wants — the whole NgModule-compilation detour existed only to manufacture a `ComponentFactory`.
+2. Move the wrapping NgModule's `imports` / `providers` / `schemas` **directly onto the `Component({...})` call** and add `standalone: true`. A standalone component's own `imports` accepts standalone components/directives **and** legacy `NgModule`s (`CommonModule`, `FormsModule`, `ReactiveFormsModule`, …) — supported since Angular 14, so the existing arrays move across unchanged.
+3. Delete `getDynamicModule()` and the `Compiler` injection.
+4. Convert every call site: `createComponent(x, 0, inj)` → `createComponent(x, { index: 0, injector: inj })`.
+
+**Files changed in this repo (8):** producers `runtime-base/src/services/dynamic-component-ref-provider.service.ts`, `runtime-dynamic/src/app/services/component-ref-provider.service.ts`; consumers `prefab.directive.ts`, `partial-container.directive.ts`, `custom-widget-container.directive.ts`, `form.component.ts`, `table.component.ts`, `page-wrapper.component.ts`.
+
+**Gotchas:**
+- The variable name `componentFactoryRef` now holds a **class**, not a factory. Renaming it touches many files for no functional gain — this run kept the name and documented it at both producer sites. Expect the name to mislead; read the comment.
+- In `component-ref-provider.service.ts` the `Component({...})` call spreads `...componentDef`. Check that `componentDef` does not itself set `changeDetection` before relying on a `changeDetection` key placed above the spread (here it does not — verified).
+- `@NgModule`/`@Component` built by *calling* the decorator (rather than decorator syntax) is invisible to AOT's static checks — that is why NG6008 ("standalone component in `declarations`") never fired on the old code despite it being exactly that shape.
+
+**Step 6 grep:**
+
+```bash
+grep -rn "compileModuleAndAllComponentsSync" projects/
+grep -rn "createComponent([a-zA-Z_]*, [0-9]" projects/ --include="*.ts"   # positional overload
+grep -rn "ComponentFactoryResolver" projects/ --include="*.ts"
+```
+
+Note the second grep must not assume a variable name — this repo used `componentFactory`, `componentFactoryRef` **and** `pageComponentFactoryRef`; a name-specific grep missed the third one until a later sweep.
+
+**Step 6 classification:** `must-change` — hard build failure, and the failure cascades (one library failing to emit produces a flood of misleading `TS2307: Cannot find module '@wm/...'` errors in every downstream project; always find the *first* failing entry point in the build log rather than chasing the cascade).
+
+### 34. Angular 22's OnPush-by-default also breaks inline test-harness components in `*.spec.ts` (§27a's blind spot)
+
+**First required:** Angular 22. **Only surfaces in `npm test` (Step 8)** — `build.sh -f` passes completely clean.
+
+§27a pins `changeDetection: ChangeDetectionStrategy.Eager` on every `@Component()` in **source** (`*.component.ts`). It does not touch the inline "wrapper" harness components declared inside `*.spec.ts` files — which at Angular 22 silently become **OnPush**.
+
+**Symptom:** a large block of widget specs fail with assertions that look unrelated to change detection:
+
+```text
+expect(received).toBe(expected)
+Expected: "updated aria-label"     ← set imperatively, then fixture.detectChanges()
+Received: "Switch button"          ← DOM never re-rendered
+
+TypeError: Cannot read properties of null (reading 'click')
+      fixture.nativeElement.querySelector('a[name="..."]').click();   ← element never rendered
+```
+
+Both come from the same cause: the host wrapper is OnPush and was never marked dirty, so `fixture.detectChanges()` does not re-render its template — and the widget's bindings live in *that* template.
+
+In this repo: **23 of 126 suites / 60 tests** failed this way; the fix took it to **2 suites / 5 tests**.
+
+**This is the exact same category as [§29](#29-standalone-by-default-breaks-inline-test-harness-componentspipes-angular-19)** — an Angular default flip that affects inline spec-file harness classes which the main source sweep structurally cannot reach. It hit the **same 80 files** §29 did. When a future major flips another `@Component` default, check `*.spec.ts` in the same pass as the source sweep.
+
+**Fix:** apply §27a's pin to inline spec components too — add `ChangeDetectionStrategy` to the file's `@angular/core` import and `changeDetection: ChangeDetectionStrategy.Eager,` to each inline `@Component({`. 80 files / 88 decorators here. Reuse §32's script shape, but glob `*.spec.ts`, and insert into **every** `@Component({` match per file (8 files here declare two harness components).
+
+**Verify you did not break passing specs:** after a mass spec edit, run a sample of suites that were *already* passing, not only the ones that were failing.
+
+**Step 6/8 classification:** `must-change`, but invisible until Step 8 — do not treat a clean Step 7 as evidence this is clear.
+
+### 35. ngx-bootstrap 22 removed the internal `_ngZone` field its directives exposed
+
+**First required:** ngx-bootstrap 22 (not an Angular-version gate). Same hazard family as §12/§26/§31: WM reaching into a third party's private internals.
+
+`grep -c "_ngZone" node_modules/ngx-bootstrap/popover/fesm2022/ngx-bootstrap-popover.mjs` → **0** at 22.0.0. Two places depended on it:
+
+| Location | Old code | Fix |
+|---|---|---|
+| `popover.component.ts` | `this.bsPopoverDirective._popover._ngZone.onStable.subscribe(...)` | inject `NgZone` in the constructor, use `this.ngZone.onStable` |
+| `core/src/utils/utils.ts` — `adjustContainerPosition`, `adjustContainerRightEdges`, `adjustVerticalPosition` | `const zoneRef = ref._ngZone \|\| ref.ngZone;` where `ref` is a library directive's internal scope | fall back to the app-level zone via a new `getNgZone()` accessor (`watcher.ts`, exported from `core/public_api.ts`), and apply the positioning immediately when no zone exists at all |
+
+**Symptom:** `TypeError: Cannot read properties of undefined (reading 'onStable')`, logged during `ngOnDestroy` (`executeOnDestroys` in the stack) — it reads as a teardown bug but is really the positioning helper failing.
+
+**Other ngx-bootstrap internals WM reaches into were re-verified present at 22.0.0** — `_popover`, `_dropdown`, `_container`, `_typeahead` all still exist. Only `_ngZone` went. Check each one individually on every ngx-bootstrap major; do not assume a whole family of internals survived or died together.
+
+**When you change a component to stop using a private internal, update its spec too** — `popover.wrapper.component.spec.ts` mocked `{ _popover: { _ngZone: mockNgZone } }` and had to be repointed at the injected zone.
+
+**Step 6 grep:**
+
+```bash
+grep -rn "bsPopoverDirective\._\|bsDropdown\._\|typeahead\._\|\._popover\b\|\._dropdown\b" projects/ --include="*.ts" | grep -v "\.spec\.ts"
+# then confirm each internal still exists in the installed bundle:
+grep -c "_ngZone" node_modules/ngx-bootstrap/<module>/fesm2022/*.mjs
+```
+
+### 36. Third-party dependency `ngx-toastr` — removed `ComponentFactoryResolver` usage AND changed `Toast`/`ToastBase`'s constructor + signal-based fields (Angular 22)
+
+**First required:** Angular 22. **Severity: hard build failure** — a Rollup module-resolution error (`Could not resolve entry module "./libraries/runtime/base/fesm2022/index.mjs"`) that cascades into misleading `TS2307: Cannot find module '@wm/runtime/base'` errors everywhere downstream, exactly like §33's cascade pattern. The real error is upstream of all of that; always find the first failure, not the cascade.
+
+**Part 1 — `ngx-toastr@19.0.0` (the version already pinned in this repo) imports the removed `ComponentFactoryResolver`:**
+
+```text
+RollupError: node_modules/ngx-toastr/fesm2022/ngx-toastr.mjs (2:56):
+"ComponentFactoryResolver" is not exported by "node_modules/@angular/core/fesm2022/core.mjs"
+```
+
+Confirmed **actively used**, not dead code (unlike WM's own 3 instances in §33) — `ngx-toastr.mjs` calls `this._componentFactoryResolver.resolveComponentFactory(portal.component)` to render toast content. Not something to patch out.
+
+**Fix: bump `ngx-toastr` to `20.0.5` (latest).** Confirmed by downloading the tarball (`npm pack ngx-toastr@20.0.5`) and grepping its `fesm2022/ngx-toastr.mjs` — only a stale doc-comment mentions `ComponentFactoryResolver` now, the actual import/usage is gone. **Note ngx-toastr's own declared `peerDependencies` still say `"@angular/core": "^21.0.0"` — one major behind its actual compiled output** — don't trust the declared peer range over the real installed source for this package; verify the actual `.mjs`, same as every other API-removal check in this doc.
+
+**Part 2 — the version bump itself changed `Toast`/`ToastBase`'s public API, breaking WM's own subclass (`custom-toaster.component.ts`):**
+
+1. **Constructor signature:** `ToastBase`'s constructor now takes **zero** arguments (`ctorParameters: () => []`) — `toastPackage`/`toastrService`/`appRef`/`timeoutsService` are now `inject()`-ed as base-class fields, not constructor params. A subclass whose own constructor still does `constructor(protected toastrService: ToastrService, public toastPackage: ToastPackage) { super(toastrService, toastPackage); ... }` gets `TS2554: Expected 0 arguments, but got 2`. **Fix:** drop the params entirely, `super()` with no args — the inherited fields are still accessible via `this.toastPackage`/`this.toastrService`, redeclaring them as constructor params would shadow the base class's own fields, not restore anything.
+2. **`message`/`options`/`title` are now Signals**, not plain properties: `message = computed(() => this.toastPackage.message)`, `options = linkedSignal(() => this.toastPackage.config)`. Any subclass code reading `this.message` or `this.options.someProp` now gets the **signal function itself** (always truthy, no `.someProp`), not the underlying value — a silent behavioral bug, not a compile error (TS doesn't flag `if (this.message)` as wrong when `message` is callable). **Fix:** call them — `this.message()`, `this.options().someProp`. **This class of bug does not show up as a build error at all** — grep every subclass for property reads (not calls) on `message`/`title`/`options`/`width`/`state`/`displayStyle`/`toastClasses`/`originalTimeout` after any `ngx-toastr` bump, since the compiler won't catch a stale non-call reference through an `any`-cast the way this file's `(<any>this.options)` cast did.
+
+**`ToastNoAnimationModule.forRoot()` (used in `app.config.ts` and `app.module.ts`) is unaffected** — confirmed present, unchanged, in the 20.0.5 source; don't assume every `.forRoot()` in an upgraded dependency needs the ngx-bootstrap-style removal treatment (§8b) without checking each package individually.
+
+**Step 6 grep:**
+
+```bash
+# After any ngx-toastr bump, confirm no other subclass exists (currently just 1):
+grep -rn "extends Toast\b" projects/ --include="*.ts"
+# For any found, check every this.<field> read against ToastBase's actual current field list
+# (inject()-based vs signal-based) in the installed node_modules/ngx-toastr/fesm2022/ngx-toastr.mjs
+# — a stale peerDependencies range on the npm registry is not evidence either way.
+```
+
+**Step 6 classification:** `must-change` — Part 1 blocks the build entirely; Part 2's constructor mismatch also blocks the build (`TS2554`), but the signal-property-read issue is a **silent runtime bug with zero compile signal** — treat any third-party dependency bump that touches a class WM subclasses as `needs-review` for its base class's *field* shape changing, not just its constructor/method signatures.

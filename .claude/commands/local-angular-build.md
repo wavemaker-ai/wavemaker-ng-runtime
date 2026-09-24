@@ -6,7 +6,7 @@ description: Build wavemaker-ng-runtime + wavemaker-ng-codegen, generate an Angu
 
 Run this workflow **step by step, in order**. Execute each step fully before moving to the next. Stop and report errors if any step fails.
 
-**Scope note:** this workflow only ever produces the **Angular Deployment** validation target (Tomcat WAR + Angular dist). It has no automation for **WaveMaker Preview** — that mode's URL is supplied directly via `LOCAL_PREVIEW_URL`/`WAVEMAKER_PREVIEW_URL` in `repo.config.sh` (see angular-upgrade `SKILL.md` Step 9) and does not need this command to run at all. Both are first-class validation modes in Step 9; this file is the automation for exactly one of them.
+**Scope note:** this workflow only ever produces the **Angular Deployment** validation target (Tomcat WAR + Angular dist). It has no automation for **WaveMaker Preview** — that mode's URL is supplied directly via `LOCAL_PREVIEW_URL`/`WAVEMAKER_PREVIEW_URL` in `repo.config.sh` (see angular-upgrade `steps-6-10.md` Step 9) and does not need this command to run at all. Both are first-class validation modes in Step 9; this file is the automation for exactly one of them.
 
 ## Invocation modes & who collects inputs
 
@@ -74,6 +74,14 @@ Set **`PROJECT_NAME`** (or `project name` in chat). Other `PROJECT_*` paths **de
 | `WAVEMAKER_DEPLOYMENT_URL` | from `repo.config.sh` or chat override |
 
 Tomcat is running locally on **port `${TOMCAT_PORT}`**.
+
+**If `${TOMCAT_WEBAPPS}` doesn't exist or is empty:** the `${CATALINA_HOME:-$HOME/tomcat}` default guess is frequently wrong on a dev machine with multiple Tomcat installs (Homebrew Cellar, `/Applications`, IDE-bundled, etc.) — a blind `find / -iname "*tomcat*"` filesystem scan is slow and often still misses the right one. Instead, read it directly off the running process, which is authoritative and fast:
+
+```bash
+ps aux | grep '[t]omcat' | grep -o '\-Dcatalina\.base=[^ ]*'
+```
+
+Use that path's `webapps/` as the real `TOMCAT_WEBAPPS`, re-export `APACHE_TOMCAT_PATH`/`TOMCAT_WEBAPPS`/`TOMCAT_APP` from it, and continue.
 
 `NG_RUNTIME` and `NG_CODEGEN` are relative to the **ng-runtime workspace root** (where this command is invoked).
 
@@ -254,6 +262,10 @@ cp "${GENERATED_APP}/dist/index.html" "${TOMCAT_APP}/"
 cp -R "${GENERATED_APP}/dist/ng-bundle" "${TOMCAT_APP}/"
 ```
 
+**Checking both dev and prod builds side by side:** `${GENERATED_APP}/dist/` is overwritten by every `build.js` run (dev or prod), so only one build's output exists on disk at a time — deploying one to `${TOMCAT_APP}` and then rebuilding the other overwrites it there too, forcing you to alternate. If both need to stay live simultaneously (e.g. for the user to manually check each independently), deploy them to **two separate Tomcat webapp folders** instead of reusing `${TOMCAT_APP}` for both: copy `${TOMCAT_APP}` (its extracted WAR backend — `META-INF`/`WEB-INF`/`resources`) to a second folder (e.g. `${TOMCAT_APP}-dev`), then build+copy dev's `dist/index.html`+`dist/ng-bundle` into that second folder while prod stays in `${TOMCAT_APP}`. No `context.xml` path is hardcoded in a project WAR's `META-INF` (confirmed empirically) — Tomcat derives the context path from the folder name, so the copy is served at `/{ProjectName}-dev/` automatically, no config edit needed. Verify the two are genuinely different builds, not the same content copied twice, by checking the referenced main bundle filename in each `index.html` — dev is unhashed (`main.js`), prod is content-hashed (`main.<hash>.js`).
+
+**Syncing a stale second webapp with no source changes since the last build:** if `${GENERATED_APP}/dist/` already holds a build newer than the second webapp folder and nothing in `${NG_RUNTIME}`/`${NG_CODEGEN}`/the generated app has changed since, just re-copy the existing `dist/index.html` + `dist/ng-bundle` into the stale folder (mtimes make this easy to confirm — compare `dist/index.html`'s mtime against each webapp folder's). This is a plain file copy, not a rebuild, so it's fine to do even when builds/tests are off-limits for the agent to run. It does mean both webapp folders now serve the *same* build config (e.g. both prod-hashed) rather than one dev + one prod — acceptable when the goal is just "make the other URL show the same upgraded app," not "verify the dev build config specifically."
+
 ---
 
 ## Browser verify (after Step 7 deploy)
@@ -262,7 +274,7 @@ cp -R "${GENERATED_APP}/dist/ng-bundle" "${TOMCAT_APP}/"
 
 **With URLs:** load `${WAVEMAKER_DEPLOYMENT_URL}` then `${LOCAL_DEPLOYMENT_URL}` (or `${APP_URL}`). Pass/fail: **Preview validation** checklist in [`checklist.md`](../skills/angular-upgrade/checklist.md#preview-validation-step-9) (gate G1–G7 required; extended E1–E13 where applicable).
 
-On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUNTIME` or `NG_CODEGEN`; re-run affected steps. **Upgrade:** `SKILL.md` Step 9 iteration table. **Standalone:** same matrix (runtime fix → 2a; codegen fix → 3→4→5→7; both → 2a→3→4→5→7).
+On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUNTIME` or `NG_CODEGEN`; re-run affected steps. **Upgrade:** `steps-6-10.md` Step 9 iteration table. **Standalone:** same matrix (runtime fix → 2a; codegen fix → 3→4→5→7; both → 2a→3→4→5→7).
 
 ---
 
