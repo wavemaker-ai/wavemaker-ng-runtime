@@ -1,0 +1,74 @@
+{
+  "skill_name": "angular-upgrade",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Start Angular upgrade.\n\nbase version 20\ntarget version 21\npreview url http://localhost:8080/SearchWidgetScenarios/#/LiveForm_Autocomplete\ncomparison url https://stage-platform.wavemaker.ai/run-jlqb2h631c/SearchWidgetScenarios_master/#/Main\nskip preview no\nskip tests no\nskip verify no",
+      "expected_output": "Step 0 prints effective config table (Angular 20→21, both repo paths, branches), sets Inputs confirmed: yes in current-state.md after user confirms, and does NOT proceed to Step 1 until the user types 'confirm'.",
+      "assertions": [
+        {
+          "name": "config-table-printed",
+          "description": "Step 0 prints the effective config table showing Angular 20→21, preview URL, comparison URL, skip flags, and both repo paths"
+        },
+        {
+          "name": "waits-for-confirm",
+          "description": "Step 0 does not start Step 1 or take any action before receiving 'confirm' from the user"
+        },
+        {
+          "name": "current-state-initialized",
+          "description": "After confirmation, current-state.md records ng-runtime branch, ng-codegen path, ng-codegen branch, and Inputs confirmed: yes"
+        },
+        {
+          "name": "branch-mismatch-blocks",
+          "description": "If ng-runtime and ng-codegen are on different branches, Step 0 blocks and asks the user to align branches before proceeding"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Resume Angular upgrade.",
+      "expected_output": "Reads current-state.md to find the first step that is not 'done', prints the progress banner for that step, and resumes from there without resetting state or asking for confirmation again.",
+      "assertions": [
+        {
+          "name": "reads-current-state",
+          "description": "Reads current-state.md to determine the current step, rather than starting from Step 0"
+        },
+        {
+          "name": "resumes-from-first-incomplete-step",
+          "description": "Starts at the first step that is not marked 'done' in current-state.md"
+        },
+        {
+          "name": "no-state-reset",
+          "description": "Does not run scripts/reset-state.sh or overwrite current-state.md when the user says Resume (not Start)"
+        },
+        {
+          "name": "progress-indicator-shown",
+          "description": "Clearly announces the step being resumed into (number and name), e.g. via the Step Status table plus a one-line resume statement — SKILL.md defines no glyph/banner format (confirmed by full-directory search), only the plain Step Status table and a one-line announcement, so this checks for a clear announcement rather than a specific format"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Start Angular upgrade.\n\nbase version 20\ntarget version 21\nskip preview yes\nskip tests no",
+      "expected_output": "Step 9 is skipped when skip preview is yes. Step 10 still runs. Upgrade doc records that preview was skipped. Step 8 (unit tests) still runs since skip tests is no.",
+      "assertions": [
+        {
+          "name": "step-9-skipped",
+          "description": "When skip preview is yes, Step 9 is recorded as skipped in current-state.md with reason, and the skill does not attempt to open any URLs or deploy to Tomcat"
+        },
+        {
+          "name": "step-8-still-runs",
+          "description": "When skip tests is no, Step 8 runs TEST_CMD even though preview is skipped"
+        },
+        {
+          "name": "step-10-documents-skip",
+          "description": "Step 10's upgrade doc and completion message omit the skipped preview mode(s) entirely rather than showing them as failed/blank (per templates.md's explicit omission rule) — current-state.md is the file that keeps an explicit 'skipped' record, not the Step 10 doc"
+        },
+        {
+          "name": "compatible-changes-only",
+          "description": "No signals, inject() style changes, zoneless, or input()/output() modernization applied — only breaking-change fixes"
+        }
+      ]
+    }
+  ]
+}

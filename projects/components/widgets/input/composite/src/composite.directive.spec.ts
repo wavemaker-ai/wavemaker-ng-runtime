@@ -1,5 +1,5 @@
 import { ComponentFixture, waitForAsync } from '@angular/core/testing';
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { CompositeDirective } from "./composite.directive";
 import { App } from "@wm/core";
 import { WidgetRef } from '@wm/components/base';
@@ -11,6 +11,8 @@ const markup = `<div wmComposite #wm_composite
 </div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class CompositeWrapperComponent {

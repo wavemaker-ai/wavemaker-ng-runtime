@@ -1,4 +1,4 @@
-import { Component, DebugElement, Injector } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DebugElement, Injector } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { PrefabContainerDirective } from './prefab-container.directive';
@@ -9,6 +9,8 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 
 // Define a test component to host the directive
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: `<div wmPrefabContainer></div>`
 })
 class TestComponent { }

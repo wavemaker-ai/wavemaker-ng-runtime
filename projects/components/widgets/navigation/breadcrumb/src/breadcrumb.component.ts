@@ -1,4 +1,4 @@
-import {Attribute, Component, Inject, Injector, Optional} from '@angular/core';
+import { ChangeDetectionStrategy,Attribute, Component, Inject, Injector, Optional} from '@angular/core';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 
@@ -11,6 +11,7 @@ const DEFAULT_CLS = 'breadcrumb app-breadcrumb';
 const WIDGET_CONFIG = {widgetType: 'wm-breadcrumb', hostClass: DEFAULT_CLS};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TextContentDirective],
     selector: '[wmBreadcrumb]',

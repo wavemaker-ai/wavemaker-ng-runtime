@@ -1,6 +1,6 @@
 import { ComponentFixture, waitForAsync } from '@angular/core/testing';
-import { Component, ViewChild } from '@angular/core';
-import { CircleProgressComponent, CircleProgressOptions, CircleProgressOptionsInterface } from 'ng-circle-progress';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
+import { CircleProgressOptions, CircleProgressOptionsInterface, NgCircleProgressModule } from 'ng-circle-progress';
 import { ProgressCircleComponent } from './progress-circle.component';
 import { FormsModule } from '@angular/forms';
 import { App } from '@wm/core';
@@ -15,6 +15,8 @@ jest.mock('../../progress-utils/src/progress-utils');  // Mock the entire utils 
 const markup = `<div wmProgressCircle title="progress-circle" [attr.aria-label]="'progress-circle'" name="progress-circle" hint="progress-circle" tabindex="1"></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class ProgressCircleWrapperComponent {
@@ -22,8 +24,8 @@ class ProgressCircleWrapperComponent {
 }
 
 const testModuleDef: ITestModuleDef = {
-    imports: [FormsModule, ProgressCircleComponent],
-    declarations: [ProgressCircleWrapperComponent, CircleProgressComponent],
+    imports: [FormsModule, ProgressCircleComponent, NgCircleProgressModule],
+    declarations: [ProgressCircleWrapperComponent],
     providers: [
         { provide: App, useValue: mockApp },
         provideAsWidgetRef(ProgressCircleComponent),

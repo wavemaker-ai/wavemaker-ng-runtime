@@ -1,6 +1,6 @@
 import { ComponentFixture } from '@angular/core/testing';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { FormFieldDirective } from './form-field.directive';
 import { FormComponent } from '../form.component';
 import { App, FormWidgetType, isMobile, Viewport, isDateTimeType, isDefined } from '@wm/core';
@@ -24,6 +24,8 @@ jest.mock('@wm/components/base', () => ({
 const markup = `<div wmFormField></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class TestComponent {

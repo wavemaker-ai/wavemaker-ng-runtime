@@ -1,4 +1,4 @@
-import { Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { BreadcrumbComponent } from './breadcrumb.component';
@@ -13,6 +13,8 @@ import { ComponentTestBase, ITestComponentDef } from 'projects/components/base/s
 const markup = `<div wmBreadcrumb name="breadcrumb1" aria-label="breadcrumb"></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class BreadcrumbWrapperComponent {

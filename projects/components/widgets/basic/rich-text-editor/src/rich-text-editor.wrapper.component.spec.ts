@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { RichTextEditorComponent } from './rich-text-editor.component';
 import { compileTestComponent, mockApp } from '../../../../base/src/test/util/component-test-util';
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
@@ -17,6 +17,8 @@ const markup = `<div wmRichTextEditor #wm_richtexteditor1="wmRichTextEditor"
                 </div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class RichTextEditorWrapperComponent {

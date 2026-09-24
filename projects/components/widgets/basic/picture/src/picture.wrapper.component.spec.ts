@@ -1,4 +1,4 @@
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from "../../../../base/src/test/common-widget.specs";
 import { PictureDirective } from "./picture.directive";
 import { App, switchClass } from "@wm/core";
@@ -14,6 +14,8 @@ jest.mock('@wm/core', () => ({
 const markup = `<img wmPicture #wm_picture="wmPicture" [attr.aria-label]="wm_picture.arialabel || 'Picture content'" hint="Picture content" name="picture1" tabindex="0" picturesource="source.jpg" encodeurl="true" pictureplaceholder="placeholder.jpg">`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 

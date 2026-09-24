@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { NavigationControlDirective, disableContextMenu } from './navigation-control.directive';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<a [wmNavigationControl]="link" [disableMenuContext]="disableMenu">Test Link</a>'
 })
 class TestComponent {

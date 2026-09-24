@@ -1,4 +1,4 @@
-import {Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import { ChangeDetectionStrategy,Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 
 import {App, switchClass} from '@wm/core';
 import { APPLY_STYLES_TYPE, PullToRefresh, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
@@ -9,6 +9,7 @@ const DEFAULT_CLS = 'app-page-content app-content-column';
 const WIDGET_CONFIG = {widgetType: 'wm-page-content', hostClass: DEFAULT_CLS};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmPageContent]',
     templateUrl: './page-content.component.html',

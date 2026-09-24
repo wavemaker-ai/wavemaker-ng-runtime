@@ -7,7 +7,7 @@ import {
     TextContentDirective
 } from "@wm/components/base";
 import {FormsModule, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
-import {Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import { ChangeDetectionStrategy,Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {BaseFormCustomComponent} from '@wm/components/input/base-form-custom';
 
 import {registerProps} from './slider.props';
@@ -26,6 +26,7 @@ const RANGE_LABEL_POSITION: {[key: string]: string} = {
   bottom: 'range-label-bottom',
 };
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TextContentDirective, FormsModule, CommonModule],
     selector: '[wmSlider]',

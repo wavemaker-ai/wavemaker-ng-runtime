@@ -1,5 +1,5 @@
 import {IMaskDirective, IMaskModule} from 'angular-imask';
-import {ChangeDetectorRef, Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import { ChangeDetectionStrategy,ChangeDetectorRef, Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {BsDatepickerDirective, BsDatepickerModule} from 'ngx-bootstrap/datepicker';
 import {
@@ -31,6 +31,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [DateTimePickerComponent, IMaskModule, BsDatepickerModule],
     selector: '[wmDate]',

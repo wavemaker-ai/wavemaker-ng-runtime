@@ -1,5 +1,5 @@
 import { ComponentFixture } from '@angular/core/testing';
-import { Component, SecurityContext, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, SecurityContext, ViewChild } from "@angular/core";
 import { LabelDirective } from "./label.directive";
 import { App, setProperty, toggleClass } from "@wm/core";
 import { SanitizePipe } from "@wm/components/base";
@@ -17,6 +17,8 @@ jest.mock('@wm/core', () => ({
 const markup = `<label wmLabel #wm_label1="wmLabel" [attr.aria-label]="wm_label1.arialabel || 'Label text'" hint="Label text"  name="label1" paddingright="0.5em" paddingleft="0.5em"></label>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class LabelWrapperDirective {

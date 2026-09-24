@@ -9,7 +9,7 @@ import {
     styler,
     TextContentDirective
 } from "@wm/components/base";
-import {
+import { ChangeDetectionStrategy,
     AfterContentInit,
     AfterViewChecked,
     AfterViewInit,
@@ -40,6 +40,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, TextContentDirective],
     selector: 'div[wmWizard]',

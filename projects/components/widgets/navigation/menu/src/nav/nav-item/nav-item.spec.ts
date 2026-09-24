@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { NavItemDirective } from './nav-item.directive';
 import { AnchorComponent } from '@wm/components/basic/anchor';
@@ -16,6 +16,8 @@ const markup = `<ul>
   </ul>`
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class TestComponent { }

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { App } from "@wm/core";
 import { IframeComponent } from "./iframe.component";
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from "../../../../base/src/test/common-widget.specs";
@@ -10,6 +10,8 @@ import { compileTestComponent, mockApp } from 'projects/components/base/src/test
 const markup = `<div wmIframe name="iframe1" iframesrc="//bing.com" hint="iframe"></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class IframeWrapperComponent {

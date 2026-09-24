@@ -1,4 +1,4 @@
-import {Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
+import { ChangeDetectionStrategy,Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
 
 import {IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective} from '@wm/components/base';
 import {registerProps} from './icon.props';
@@ -10,6 +10,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TextContentDirective],
     selector: '[wmIcon]',

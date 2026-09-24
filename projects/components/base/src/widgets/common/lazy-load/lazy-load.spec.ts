@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, TemplateRef, ViewContainerRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TemplateRef, ViewContainerRef, ViewChild } from '@angular/core';
 import { LazyLoadDirective } from './lazy-load.directive';
 import { App } from '@wm/core';
 
@@ -12,6 +12,8 @@ jest.mock('@wm/core', () => ({
 
 // Test component
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<ng-template [lazyLoad]="condition">Lazy loaded content</ng-template>'
 })
 class TestComponent {

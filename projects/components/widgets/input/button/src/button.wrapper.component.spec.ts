@@ -1,6 +1,6 @@
 import { ComponentFixture, waitForAsync } from '@angular/core/testing';
 import { ButtonComponent } from './button.component';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { compileTestComponent, mockApp } from '../../../../base/src/test/util/component-test-util';
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
 import { App } from '@wm/core';
@@ -31,6 +31,8 @@ const markup = `
         ></button>
     `;
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class TestComponent {
@@ -218,6 +220,8 @@ describe('wm-button: Component specific tests: ', () => {
 // Button widget without class property in the markup
 const btnMarkup = `<button wmButton name="testbutton1" caption="Test Button1" type="button"></button>`;
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: btnMarkup
 })
 class BtnTestComponent {

@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ElementRef, ViewChild } from "@angular/core";
 import { CheckboxComponent, unStringify } from "./checkbox.component";
 import { waitForAsync, ComponentFixture } from "@angular/core/testing";
 import { compileTestComponent, getHtmlSelectorElement, mockApp } from "../../../../base/src/test/util/component-test-util";
@@ -9,6 +9,8 @@ import { App } from "@wm/core";
 const markup = `<div wmCheckbox hint="checkbox" caption="Label" name="checkbox1" tabindex="1"></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 

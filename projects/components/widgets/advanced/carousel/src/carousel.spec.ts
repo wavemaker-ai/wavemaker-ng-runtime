@@ -1,5 +1,5 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { CarouselModule } from 'ngx-bootstrap/carousel';
 import { CarouselDirective } from "./carousel.directive";
 import { PipeProvider } from '../../../../../runtime-base/src/services/pipe-provider.service';
@@ -32,6 +32,8 @@ const markup = `
 `;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class CarouselSpec {

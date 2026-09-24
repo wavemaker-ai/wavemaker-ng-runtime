@@ -10,12 +10,14 @@ import { ToDatePipe } from '@wm/components/base';
 import { RatingComponent } from "./rating.component";
 import { ComponentFixture } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { AbstractI18nService, App, AppDefaults } from '@wm/core';
 import { MockAbstractI18nService } from '../../../../base/src/test/util/date-test-util';
 
 const markup = `<div tabindex="1"  wmRating  name="rating1"></div>`;
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class TestComponent {

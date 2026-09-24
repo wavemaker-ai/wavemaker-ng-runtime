@@ -2,7 +2,7 @@ import {ToNumberPipe} from '../pipes/custom-pipes';
 import {DatePipe, DecimalPipe} from '@angular/common';
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser';
-import {Component, Injector, OnInit} from '@angular/core';
+import { ChangeDetectionStrategy,Component, Injector, OnInit} from '@angular/core';
 import {compileTestComponent, mockApp} from './util/component-test-util';
 import {ITestModuleDef} from './common-widget.specs';
 import {
@@ -41,6 +41,8 @@ jest.mock('@wm/core', () => ({
 }));
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<div></div>'
 })
 class PipeWrapperComponent implements OnInit {

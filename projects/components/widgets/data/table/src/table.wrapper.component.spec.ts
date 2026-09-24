@@ -1,5 +1,5 @@
 import { waitForAsync, ComponentFixture, fakeAsync, tick, discardPeriodicTasks } from "@angular/core/testing";
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { TrustAsPipe } from "../../../../base/src/pipes/trust-as.pipe";;
 import { FormBuilder } from "@angular/forms";
 import { App, AppDefaults, DynamicComponentRefProvider, AbstractI18nService, Viewport, DataSource, extendProto } from "@wm/core";
@@ -364,6 +364,8 @@ const summaryRowData: any = [
 ];
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: quick_edit_markup
 })
 
@@ -384,9 +386,9 @@ let imports = [
     FormWidgetDirective,
     MenuComponent,
     IMaskModule,
-    BsDatepickerModule.forRoot(),
-    TimepickerModule.forRoot(),
-    BsDropdownModule.forRoot()
+    BsDatepickerModule,
+    TimepickerModule,
+    BsDropdownModule
 ]
 
 let declarations = [
@@ -754,6 +756,8 @@ describe("DataTable", () => {
             });
             describe("Inline Editable", () => {
                 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
                     template: inline_edit_markup
                 })
                 class InlineTableWrapperComponent {
@@ -2365,6 +2369,8 @@ describe("DataTable", () => {
 
             describe("Quick Edit", () => {
                 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
                     template: quick_edit_markup
                 })
                 class QuickEditTableWrapperComponent {
@@ -2678,6 +2684,8 @@ describe("DataTable", () => {
 
             describe("Summary Row", () => {
                 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
                     template: summary_row_markup
                 })
                 class SummaryRowWrapperComponent {

@@ -4,7 +4,7 @@ import { FormComponent } from './form.component';
 import { FormWidgetDirective } from './form-widget.directive';
 import { InputTextComponent } from '@wm/components/input';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { IMaskModule } from 'angular-imask';
 import { FormActionDirective } from './form-action/form-action.directive';
 import { FormFieldDirective } from './form-field/form-field.directive';
@@ -190,6 +190,8 @@ const markup = `<form wmForm role="" #form_1 ngNativeValidate
                 </form>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 
@@ -228,9 +230,9 @@ const testModuleDef: ITestModuleDef = {
         LayoutGridRowDirective,
         LabelDirective,
         CommonModule,
-        BsDatepickerModule.forRoot(),
-        TimepickerModule.forRoot(),
-        BsDropdownModule.forRoot()
+        BsDatepickerModule,
+        TimepickerModule,
+        BsDropdownModule
     ],
     declarations: [
         FormWrapperComponent,

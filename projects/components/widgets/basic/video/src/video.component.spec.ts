@@ -1,5 +1,5 @@
 import { ComponentFixture } from '@angular/core/testing';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { ToDatePipe, TrustAsPipe } from '@wm/components/base';
 import { VideoComponent } from './video.component';
 import { compileTestComponent, mockApp } from 'projects/components/base/src/test/util/component-test-util';
@@ -23,6 +23,8 @@ const markup = `<video wmVideo
 </video>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class TestComponent {

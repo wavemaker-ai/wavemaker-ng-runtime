@@ -1,5 +1,5 @@
 import { ComponentFixture } from '@angular/core/testing';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { App, UserDefinedExecutionContext } from '@wm/core';
 import { NavComponent } from './nav.component';
@@ -16,6 +16,8 @@ const markup = ` <ul wmNav data-element-type="wmNav" data-role="page-header"  ty
 
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 

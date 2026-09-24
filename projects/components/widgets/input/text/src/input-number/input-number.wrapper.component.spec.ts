@@ -1,4 +1,4 @@
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { App, AppDefaults } from "@wm/core";
 import { ToDatePipe } from "@wm/components/base";
@@ -17,6 +17,8 @@ import { compileTestComponent, mockApp } from "projects/components/base/src/test
 const markup = `<wm-input type="number" name="text1" hint="number field">`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 

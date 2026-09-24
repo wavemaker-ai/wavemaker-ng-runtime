@@ -1,5 +1,4 @@
 import {
-    ComponentFactoryResolver,
     Directive,
     ElementRef,
     Inject,
@@ -25,7 +24,6 @@ export class PrefabDirective implements OnDestroy {
         public vcRef: ViewContainerRef,
         public elRef: ElementRef,
         private prefabMngr: PrefabManagerService,
-        private resolver: ComponentFactoryResolver,
         private injector: Injector,
         private componentRefProvider: ComponentRefProvider
     ) {
@@ -35,7 +33,10 @@ export class PrefabDirective implements OnDestroy {
             .then(async () => {
                 const componentFactory = await this.componentRefProvider.getComponentFactoryRef(prefabName, ComponentType.PREFAB);
                 if (componentFactory) {
-                    const instanceRef = this.vcRef.createComponent(componentFactory, 0, injector);
+                    // Angular 22 removed the positional (factory, index, injector) createComponent()
+                    // overload — componentFactory is now a component class, not a ComponentFactory
+                    // (see component-ref-provider.service.ts / dynamic-component-ref-provider.service.ts).
+                    const instanceRef = this.vcRef.createComponent(componentFactory, { index: 0, injector });
                     this.elRef.nativeElement.appendChild(instanceRef.location.nativeElement);
                 }
             });

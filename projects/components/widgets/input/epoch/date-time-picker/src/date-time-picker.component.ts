@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, EventEmitter, Injector, Input, OnDestroy, Output, TemplateRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, AfterViewInit, Component, EventEmitter, Injector, Input, OnDestroy, Output, TemplateRef, ViewChild } from '@angular/core';
 import { BsDatepickerConfig, BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { App } from '@wm/core';
@@ -12,6 +12,7 @@ import * as momentLib  from 'moment';
 const moment = momentLib.default || window['moment'];
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, BsDatepickerModule, BsDropdownModule],
     selector: 'wm-datetimepicker',
@@ -79,7 +80,10 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
     @Input()
     private placement: 'MODAL' | 'INLINE' = 'MODAL';
 
-    @Input("config")
+    // Angular 22 (NG1054, §28): two class members can no longer alias the same public @Input
+    // name. The `bsDatepickerConfig` setter below is also @Input("config") and does the real
+    // work (assigns into this field plus sets showClearButton/showTodayButton defaults) —
+    // dropped the decorator here, this field stays a plain internal backing field.
     private _bsDatepickerConfig: BsDatepickerConfig;
 
     @Input()
@@ -294,6 +298,7 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
 
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'wm-timepicker',
     standalone: true,
     template: `

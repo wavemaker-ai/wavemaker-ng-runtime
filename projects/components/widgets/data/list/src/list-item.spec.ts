@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ListItemDirective } from './list-item.directive';
 import { ListComponent } from './list.component';
@@ -13,6 +13,8 @@ jest.mock('@wm/core', () => ({
 }));
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: `<div wmListItem [item]="testItem"></div>`
 })
 class TestComponent {

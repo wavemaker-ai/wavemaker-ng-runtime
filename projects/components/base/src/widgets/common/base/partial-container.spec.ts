@@ -1,4 +1,4 @@
-import { ComponentFactoryResolver, ElementRef, Injector, ViewContainerRef } from '@angular/core';
+import { ElementRef, Injector, ViewContainerRef } from '@angular/core';
 import { PartialContainerDirective } from './partial-container.directive';
 import { App, ComponentType, PartialRefProvider } from '@wm/core';
 import { Subject } from 'rxjs';
@@ -26,7 +26,6 @@ describe('PartialContainerDirective', () => {
     let elRefMock: ElementRef;
     let injectorMock: jest.Mocked<Injector>;
     let appMock: jest.Mocked<App>;
-    let resolverMock: jest.Mocked<ComponentFactoryResolver>;
     let partialRefProviderMock: jest.Mocked<PartialRefProvider>;
     let paramsSubject: Subject<any>;
 
@@ -55,7 +54,6 @@ describe('PartialContainerDirective', () => {
 
         injectorMock = { get: jest.fn() } as unknown as jest.Mocked<Injector>;
         appMock = { notify: jest.fn() } as unknown as jest.Mocked<App>;
-        resolverMock = { resolveComponentFactory: jest.fn() } as unknown as jest.Mocked<ComponentFactoryResolver>;
         partialRefProviderMock = { getComponentFactoryRef: jest.fn() } as unknown as jest.Mocked<PartialRefProvider>;
 
         directive = new PartialContainerDirective(
@@ -65,7 +63,6 @@ describe('PartialContainerDirective', () => {
             injectorMock,
             appMock,
             'test-content',
-            resolverMock,
             partialRefProviderMock
         );
     });

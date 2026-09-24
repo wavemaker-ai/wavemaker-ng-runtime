@@ -1,5 +1,5 @@
 import {ComponentFixture, waitForAsync} from '@angular/core/testing';
-import {Component, OnInit, ViewChild} from '@angular/core';
+import { ChangeDetectionStrategy,Component, OnInit, ViewChild} from '@angular/core';
 import {By} from '@angular/platform-browser';
 import {FormsModule} from '@angular/forms';
 import {TypeaheadModule} from 'ngx-bootstrap/typeahead';
@@ -22,6 +22,8 @@ jest.mock('@wm/core', () => ({
 const markup = `<ul wmChips name="chips1" readonly="false" class= "text-success" show="true" width="800" height="200" backgroundcolor="#00ff29"
                     placeholder="" tabindex="0" overflow="auto"></ul>`; // placeholder and tabindex are not working because .bind is not working
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class ChipsWrapperComponent implements OnInit {
@@ -37,7 +39,7 @@ class ChipsWrapperComponent implements OnInit {
 const testModuleDef: ITestModuleDef = {
     imports: [
         FormsModule,
-        TypeaheadModule.forRoot(),
+        TypeaheadModule,
         ChipsComponent, SearchComponent
     ],
     declarations: [ChipsWrapperComponent],

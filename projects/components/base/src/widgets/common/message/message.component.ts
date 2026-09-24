@@ -1,4 +1,4 @@
-import { Component, Inject, Injector, Optional } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject, Injector, Optional } from '@angular/core';
 
 import { switchClass } from '@wm/core';
 
@@ -12,6 +12,7 @@ const DEFAULT_CLS = 'alert app-message';
 const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-message', hostClass: DEFAULT_CLS };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmMessage]',
     templateUrl: './message.component.html',

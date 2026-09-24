@@ -4,7 +4,7 @@ import {
     fakeAsync
 } from '@angular/core/testing';
 import { AbstractI18nService, App, isMobile } from '@wm/core';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { SearchComponent } from './search.component';
 import { FormsModule } from '@angular/forms';
 import { TypeaheadDirective, TypeaheadMatch, TypeaheadModule } from 'ngx-bootstrap/typeahead';
@@ -51,6 +51,8 @@ const markup = `
     `;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class SearchWrapperComponent {
@@ -77,7 +79,7 @@ class SearchWrapperComponent {
 const testModuleDef: ITestModuleDef = {
     imports: [
         FormsModule,
-        TypeaheadModule.forRoot(),
+        TypeaheadModule,
         SearchComponent, ScrollableDirective, InputTextComponent
     ],
     declarations: [SearchWrapperComponent],

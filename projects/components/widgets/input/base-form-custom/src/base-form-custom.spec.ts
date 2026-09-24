@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, ReactiveFormsModule, FormControlName, AbstractControl } from '@angular/forms';
 import { BaseFormCustomComponent } from './base-form-custom.component';
-import { Component, Injector } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injector } from '@angular/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 import { App } from '@wm/core';
 
 
 // Mock BaseFormComponent
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: ''
 })
 class MockBaseFormComponent {
@@ -24,6 +25,8 @@ class MockBaseFormComponent {
 
 // Create a testable version of BaseFormCustomComponent
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: ''
 })
 class TestableBaseFormCustomComponent extends MockBaseFormComponent implements Partial<BaseFormCustomComponent> {

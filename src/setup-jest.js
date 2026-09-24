@@ -118,4 +118,30 @@ Object.defineProperty(global.HTMLMediaElement.prototype, 'addTextTrack', {
     value: jest.fn(),
 });
 
+// jsdom has no layout engine: Element.prototype.getClientRects() always returns an
+// empty list, regardless of the element's actual content/attachment. tabbable@6+'s
+// default displayCheck: 'full' treats "zero client rects" as hidden, so under jsdom
+// every element looks invisible and @wavemaker/focus-trap's activate() always throws
+// "must have at least one tabbable node" for any real container (e.g. ngx-bootstrap's
+// bs-datepicker-container). This is a jsdom/tabbable interaction, not app behavior --
+// stub a non-empty rect so tabbable's own attribute-based checks (tabindex, disabled,
+// etc.) decide tabbability instead, matching real-browser behavior for elements that
+// are actually attached and not display:none.
+if (!global.Element.prototype.getClientRects || !global.Element.prototype.getClientRects.__wmStub) {
+    const originalGetClientRects = global.Element.prototype.getClientRects;
+    const stubGetClientRects = function () {
+        const real = originalGetClientRects ? originalGetClientRects.call(this) : [];
+        if (real && real.length) {
+            return real;
+        }
+        const style = global.getComputedStyle(this);
+        if (style.display === 'none' || style.visibility === 'hidden') {
+            return [];
+        }
+        return [{ width: 1, height: 1, top: 0, left: 0, right: 1, bottom: 1, x: 0, y: 0 }];
+    };
+    stubGetClientRects.__wmStub = true;
+    global.Element.prototype.getClientRects = stubGetClientRects;
+}
+
 

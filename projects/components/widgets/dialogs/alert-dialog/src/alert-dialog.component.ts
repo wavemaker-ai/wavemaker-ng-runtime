@@ -1,4 +1,4 @@
-import {
+import { ChangeDetectionStrategy,
     Attribute,
     Component,
     Inject,
@@ -29,6 +29,7 @@ const alertMap: Record<string, string> = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TextContentDirective, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
     selector: 'div[wmAlertDialog]',

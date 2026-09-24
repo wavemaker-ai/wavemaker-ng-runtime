@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from './navbar.component'; // Make sure to replace these with actual paths
@@ -9,6 +9,8 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 const markup = `<div wmNavbar aria-label="breadcrumb" name="navbar1"></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class NavbarWrapperComponent {

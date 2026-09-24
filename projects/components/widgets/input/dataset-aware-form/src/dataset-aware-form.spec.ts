@@ -1,6 +1,6 @@
 import { TestBed, ComponentFixture, tick, fakeAsync } from '@angular/core/testing';
 import { DatasetAwareFormComponent } from './dataset-aware-form.component';
-import { Component, Injector } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injector } from '@angular/core';
 import { groupData, handleHeaderClick, ToDatePipe } from '@wm/components/base';
 import { App, AppDefaults } from '@wm/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
@@ -16,6 +16,8 @@ jest.mock('lodash-es', () => ({
     debounce: jest.fn(fn => fn)
 }));
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     selector: 'test-dataset-aware-form',
     template: '<div></div>'
 })

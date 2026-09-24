@@ -1,9 +1,10 @@
 import {APP_INITIALIZER, ApplicationConfig, importProvidersFrom, LOCALE_ID, provideZoneChangeDetection} from "@angular/core";
-import {provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation} from "@angular/router";
+import {provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation, withRouterConfig} from "@angular/router";
 import {
     HTTP_INTERCEPTORS,
     provideHttpClient,
     withInterceptorsFromDi,
+    withXhr,
     withXsrfConfiguration
 } from "@angular/common/http";
 import {provideAnimations} from "@angular/platform-browser/animations";
@@ -83,9 +84,9 @@ import {PageDirective} from "@wm/components/page";
 
 const wmModules = [
     importProvidersFrom(
-        ModalModule.forRoot(),
+        ModalModule,
         ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true }),
-        BsDatepickerModule.forRoot(),
+        BsDatepickerModule,
         NgCircleProgressModule.forRoot(),
     )
 ];
@@ -140,9 +141,15 @@ export const appConfig: ApplicationConfig = {
         }),
         { provide: HTTP_INTERCEPTORS, useClass: HttpCallInterceptor, multi: true },
         // Provide Angular core services
-        provideRouter(routes, withHashLocation(), withComponentInputBinding()),
+        // Angular 22: paramsInheritanceStrategy default flipped 'emptyOnly' -> 'always' - pinned
+        // back to pre-22 behavior (any route with child routes reading inherited params is affected).
+        provideRouter(routes, withHashLocation(), withComponentInputBinding(), withRouterConfig({ paramsInheritanceStrategy: 'emptyOnly' })),
         provideHttpClient(
             withInterceptorsFromDi(),
+            // Angular 22: provideHttpClient's default backend changed - withXhr() preserves the
+            // pre-22 default; without it, upload-progress reporting (reportProgress: true) silently
+            // stops working (WaveMaker's Upload widget uses this).
+            withXhr(),
             withXsrfConfiguration({
                 cookieName: "wm_xsrf_token",
                 headerName: xsrfHeaderName

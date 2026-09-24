@@ -1,6 +1,6 @@
 import { waitForAsync, ComponentFixture } from '@angular/core/testing';
 import { addClass, adjustContainerPosition, adjustContainerRightEdges, App, findRootContainer, setCSSFromObj } from '@wm/core';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { PopoverComponent } from './popover.component';
 import { PopoverConfig, PopoverModule } from 'ngx-bootstrap/popover';
 import { compileTestComponent, getHtmlSelectorElement, mockApp } from '../../../../base/src/test/util/component-test-util';
@@ -67,6 +67,8 @@ const markup = `
     `;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class PopoverwrapperComponent {
@@ -79,7 +81,7 @@ class PopoverwrapperComponent {
 }
 
 const testModuleDef: ITestModuleDef = {
-    imports: [PopoverModule.forRoot(), PopoverComponent, AnchorComponent],
+    imports: [PopoverModule, PopoverComponent, AnchorComponent],
     declarations: [PopoverwrapperComponent],
     providers: [
         { provide: App, useValue: mockApp },
@@ -236,7 +238,9 @@ describe('PopoverComponent', () => {
         const mockPopoverLeftShift = 20;
         const mockNgZone = { onStable: { subscribe: (fn: Function) => fn() } };
 
-        (wmComponent as any).bsPopoverDirective = { _popover: { _ngZone: mockNgZone } } as any;
+        // ngx-bootstrap 22 removed `_popover._ngZone`; adjustPopoverArrowPosition() now uses the
+        // component's own injected NgZone, so that is what this test mocks.
+        (wmComponent as any).ngZone = mockNgZone;
 
         wmComponent['adjustPopoverArrowPosition'](mockPopoverElem, mockPopoverLeftShift);
         expect(mockPopoverElem.find).toHaveBeenCalledWith('.popover-arrow');

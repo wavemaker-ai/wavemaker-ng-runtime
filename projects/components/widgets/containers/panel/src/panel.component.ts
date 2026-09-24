@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { TextContentDirective, TrustAsPipe } from "@wm/components/base";
-import {
+import { ChangeDetectionStrategy,
     AfterContentInit,
     Component,
     ContentChildren,
@@ -24,6 +24,7 @@ const DEFAULT_CLS = 'app-panel panel';
 const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAULT_CLS };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [BsDropdownModule, CommonModule, TextContentDirective, TrustAsPipe, MenuComponent],
     selector: '[wmPanel]',

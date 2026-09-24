@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { TextContentDirective } from "@wm/components/base";
 import { PictureDirective } from '@wm/components/basic/picture';
 import { MenuComponent } from '@wm/components/navigation/menu';
-import {
+import { ChangeDetectionStrategy,
     AfterViewInit,
     Component,
     ElementRef,
@@ -28,6 +28,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective, PictureDirective, MenuComponent],
     selector: '[wmCard]',

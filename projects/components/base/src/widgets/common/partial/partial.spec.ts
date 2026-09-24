@@ -1,11 +1,13 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { PartialDirective } from './partial.directive';
 import { App, Viewport, ViewportEvent } from '@wm/core';
 import { StylableComponent } from '../base/stylable.component';
 import { mockApp } from '../../../test/util/component-test-util';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<div wmPartial></div>'
 })
 class TestComponent { }

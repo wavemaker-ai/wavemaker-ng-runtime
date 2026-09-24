@@ -161,6 +161,11 @@ const triggerWatchers = (ignoreMuted?: boolean) => {
 
 export const setNgZone = zone => ngZone = zone;
 
+// ngx-bootstrap 22 removed the internal `_ngZone` field that utils.ts's positioning helpers
+// used to read off a directive's internal scope object — they now fall back to this app-level
+// zone instead of depending on a third party's private internals.
+export const getNgZone = () => ngZone;
+
 export const setAppRef = ref => {
     appRef = ref
 };

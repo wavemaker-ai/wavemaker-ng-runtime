@@ -1,7 +1,7 @@
 import {FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {CommonModule} from '@angular/common';
 import {DateTimePickerComponent} from '@wm/components/input/epoch/date-time-picker';
-import {
+import { ChangeDetectionStrategy,
     AfterViewInit,
     ChangeDetectorRef,
     Component,
@@ -48,6 +48,7 @@ const WIDGET_CONFIG = { widgetType: 'wm-datetime', hostClass: DEFAULT_CLS };
 const CURRENT_DATE = 'CURRENT_DATE';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [FormsModule, DateTimePickerComponent, BsDropdownModule, BsDatepickerModule, TimepickerModule,CommonModule],
     selector: '[wmDateTime]',

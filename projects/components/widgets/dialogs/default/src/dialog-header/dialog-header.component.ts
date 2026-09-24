@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ImagePipe, TextContentDirective } from "@wm/components/base";
-import {Component, ElementRef, Inject, Input} from '@angular/core';
+import { ChangeDetectionStrategy,Component, ElementRef, Inject, Input} from '@angular/core';
 
 import {addClass, App, toBoolean} from '@wm/core';
 
@@ -11,6 +11,7 @@ const DEFAULT_CLS = 'app-dialog-header modal-header';
 const DEFAULT_ICON_DIMENSIONS = '21px';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective, ImagePipe],
     selector: 'div[wmDialogHeader]',

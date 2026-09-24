@@ -1,5 +1,5 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormActionDirective } from './form-action.directive';
 import { FormComponent } from '../form.component';
 import { By } from '@angular/platform-browser';
@@ -7,6 +7,8 @@ import { App } from '@wm/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<div wmFormAction></div>'
 })
 class TestComponent { }

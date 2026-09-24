@@ -2,7 +2,7 @@ import {CommonModule} from '@angular/common';
 import {AnchorComponent} from '@wm/components/basic/anchor';
 import {ButtonComponent} from '@wm/components/input/button';
 import {MenuComponent} from '@wm/components/navigation/menu';
-import {
+import { ChangeDetectionStrategy,
     AfterContentInit,
     Attribute,
     Component,
@@ -138,6 +138,7 @@ const isInputBodyWrapper = target => {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
       standalone: true,
       imports: [CommonModule, AnchorComponent, PaginationComponent, ButtonComponent, BsDropdownModule, MenuComponent],
     selector: '[wmTable]',
@@ -2171,7 +2172,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                 noCache: true,
                 transpile: true
             });
-        const component = this.dynamicTableRef.createComponent(componentFactoryRef, 0, this.inj);
+        // Angular 22 removed the positional (factory, index, injector) createComponent()
+        // overload — componentFactoryRef is now a component class, not a ComponentFactory
+        // (see dynamic-component-ref-provider.service.ts).
+        const component = this.dynamicTableRef.createComponent(componentFactoryRef, { index: 0, injector: this.inj });
         extendProto(component.instance, this._dynamicContext);
         this.$element.find('.dynamic-table-container')[0].appendChild(component.location.nativeElement);
     }

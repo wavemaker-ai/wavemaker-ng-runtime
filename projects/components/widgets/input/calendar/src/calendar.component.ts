@@ -1,4 +1,4 @@
-import {
+import { ChangeDetectionStrategy,
     AfterContentInit,
     AfterViewInit,
     Component,
@@ -98,6 +98,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-calendar', hostClass: DEFAULT_CLS};
 const dateFormat = 'YYYY/MM/DD';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmCalendar]',
     templateUrl: './calendar.component.html',

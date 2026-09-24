@@ -1,6 +1,6 @@
 import { waitForAsync, ComponentFixture } from '@angular/core/testing';
 import { AbstractI18nService, App, setPipeProvider } from '@wm/core';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { NumberComponent } from './number.component';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe, registerLocaleData } from '@angular/common';
@@ -15,6 +15,8 @@ import { MockAbstractI18nService } from 'projects/components/base/src/test/util/
 const markup = `<div wmNumber hint="Number" name="testnumber" tabindex="1" ngModel change.event="onChange($event, widget, newVal, oldVal)"></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 

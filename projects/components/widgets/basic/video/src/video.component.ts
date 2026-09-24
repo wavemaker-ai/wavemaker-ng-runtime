@@ -1,4 +1,4 @@
-import {Component, Inject, Injector, Optional, SecurityContext} from '@angular/core';
+import { ChangeDetectionStrategy,Component, Inject, Injector, Optional, SecurityContext} from '@angular/core';
 
 import {appendNode, createElement, removeNode, transformFileURI} from '@wm/core';
 import {DISPLAY_TYPE, ImagePipe, provideAsWidgetRef, StylableComponent, styler, TrustAsPipe} from '@wm/components/base';
@@ -13,6 +13,7 @@ const WIDGET_CONFIG = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TrustAsPipe, ImagePipe],
     selector: '[wmVideo]',

@@ -1,4 +1,4 @@
-import {
+import { ChangeDetectionStrategy,
     AfterViewInit,
     Component,
     ContentChild,
@@ -21,6 +21,7 @@ import {includes} from "lodash-es";
 const WIDGET_INFO = {widgetType: 'wm-login', hostClass: 'app-login'};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true, 
     imports: [ MessageComponent ],
     selector: 'div[wmLogin]',

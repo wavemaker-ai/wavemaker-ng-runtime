@@ -1,4 +1,4 @@
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { CurrencyComponent } from "./currency.component";
 import { AbstractControl, FormControl, FormsModule } from "@angular/forms";
 import { AbstractI18nService, App, AppDefaults, CURRENCY_INFO, setPipeProvider } from "@wm/core";
@@ -18,6 +18,8 @@ const markup = `<div blur.event="onBlur($event, widget)"
                  trailingzero="true" tabindex="1"></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 

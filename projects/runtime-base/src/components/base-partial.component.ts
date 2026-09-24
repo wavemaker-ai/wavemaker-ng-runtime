@@ -1,5 +1,6 @@
 import {
     AfterViewInit,
+    ChangeDetectorRef,
     Injector,
     OnDestroy,
     ViewChild,
@@ -54,6 +55,7 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
     Prefab: PrefabDirective;
     scriptLoaderService: ScriptLoaderService;
     Viewport: Viewport;
+    cdr: ChangeDetectorRef;
     compileContent = false;
     spa: boolean;
 
@@ -73,6 +75,7 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
     init() {
 
         this.App = this.injector ? this.injector.get(App) : inject(App);
+        this.cdr = this.injector ? this.injector.get(ChangeDetectorRef) : inject(ChangeDetectorRef);
         //making the code compatible in both the JIT and AOT modes
         this.containerWidget = this.injector ? this.injector.get(WidgetRef) : inject(WidgetRef);
         this.i18nService = this.injector ? this.injector.get(AbstractI18nService) : inject(AbstractI18nService);
@@ -237,7 +240,11 @@ export abstract class BasePartialComponent extends FragmentMonitor implements Af
 
     ngAfterViewInit(): void {
         this.loadScripts().then(() => {
+            // Angular 21: same root cause as compilePageContent in base-page/base-spa-page (see
+            // patterns §32) — this flag gates the top-level `@if (compileContent)` block wrapping
+            // the partial's template (see transpile/src/partial/partial.build.ts).
             this.compileContent = true;
+            this.cdr.detectChanges();
             setTimeout(() => {
                 this.viewInit$.complete();
 

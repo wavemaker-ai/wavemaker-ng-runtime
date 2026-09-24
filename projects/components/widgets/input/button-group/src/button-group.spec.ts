@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement, Injector } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DebugElement, Injector } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ButtonGroupDirective } from './button-group.directive';
 import { App } from '@wm/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: `
       <div wmButtonGroup>
         <button class="app-button">Button 1</button>

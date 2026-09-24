@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ButtonComponent } from '@wm/components/input/button';
 import { MenuDropdownComponent } from './menu-dropdown/menu-dropdown.component';
-import {
+import { ChangeDetectionStrategy,
     AfterViewInit,
     Attribute,
     Component,
@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import {Router} from '@angular/router';
 
-import {BsDropdownDirective, BsDropdownModule} from 'ngx-bootstrap/dropdown';
+import {BsDropdownDirective, BsDropdownModule, BsDropdownState} from 'ngx-bootstrap/dropdown';
 
 import {
     $appDigest,
@@ -85,6 +85,7 @@ const AUTO_OPEN = {
 
 const WIDGET_CONFIG = { widgetType: 'wm-menu', hostClass: 'dropdown app-menu' };
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [BsDropdownModule, CommonModule, TextContentDirective, AnchorComponent, ButtonComponent, MenuDropdownComponent],
     selector: '[wmMenu]',
@@ -178,6 +179,11 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
         private userDefinedExecutionContext: UserDefinedExecutionContext,
         private app: App,
         @Self() @Optional() public bsDropdown: BsDropdownDirective,
+        // ngx-bootstrap 21: BsDropdownDirective.autoClose became a read-only InputSignal
+        // (template-binding only, no imperative setter). BsDropdownState is the directive's
+        // own internal source of truth for the runtime autoClose check (same DI scope, since
+        // it's in BsDropdownDirective's own `providers`) — write here instead.
+        @Self() @Optional() private bsDropdownState: BsDropdownState,
         @Optional() private parentNav: NavComponent,
         @Attribute('select.event') public selectEventCB: string,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
@@ -251,7 +257,9 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
         }
 
         if (key === 'autoclose') {
-            this.bsDropdown.autoClose = nv !== AUTOCLOSE_TYPE.DISABLED;
+            if (this.bsDropdownState) {
+                this.bsDropdownState.autoClose = nv !== AUTOCLOSE_TYPE.DISABLED;
+            }
             this.autoclose = nv;
         } else {
             super.onPropertyChange(key, nv, ov);

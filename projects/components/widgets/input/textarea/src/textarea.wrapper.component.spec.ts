@@ -1,4 +1,4 @@
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { TextareaComponent } from "./textarea.component";
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from "../../../../base/src/test/common-widget.specs";
 import { FormsModule, NgModel } from "@angular/forms";
@@ -12,6 +12,8 @@ import { By } from "@angular/platform-browser";
 const markup = `<wm-textarea name="textarea1" hint="textarea field">`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class TextareaWrapperComponent {

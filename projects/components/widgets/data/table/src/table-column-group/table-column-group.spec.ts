@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Injector } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injector } from '@angular/core';
 import { TableColumnGroupDirective } from './table-column-group.directive';
 import { TableComponent } from '../table.component';
 import { BaseComponent, setHeaderConfigForTable } from '@wm/components/base';
@@ -12,6 +12,8 @@ jest.mock('@wm/components/base', () => ({
 }));
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<div wmTableColumnGroup></div>'
 })
 class TestComponent { }

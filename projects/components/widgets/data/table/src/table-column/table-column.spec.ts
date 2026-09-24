@@ -3,7 +3,7 @@ import { TableColumnDirective } from './table-column.directive';
 import { TableComponent } from '../table.component';
 import { App, AppDefaults, FormWidgetType } from '@wm/core';
 import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 import { fetchRelatedFieldData, getDistinctValuesForField, isDataSetWidget, getDefaultValue } from '@wm/components/base';
 
@@ -16,6 +16,8 @@ jest.mock('@wm/components/base', () => ({
 }));
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<div wmTableColumn></div>'
 })
 class TestComponent { }

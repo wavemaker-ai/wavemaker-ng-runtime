@@ -1,5 +1,5 @@
 import { ComponentFixture, waitForAsync, fakeAsync, tick } from '@angular/core/testing';
-import { Component, ElementRef, Injector, LOCALE_ID, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, Injector, LOCALE_ID, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {
@@ -67,6 +67,8 @@ shortcutkey="t" showweeks="true" class="input-group-lg" readonly="true" required
    tap.event="datetime1Tap($event, widget)"
    ngModel></div>`;
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class DatetimeWrapperComponent {
@@ -104,7 +106,7 @@ class DatetimeWrapperComponent {
 
 const dateComponentModuleDef: ITestModuleDef = {
     declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule, TimepickerModule, BsDatepickerModule],
     providers: [
         { provide: Router, useValue: Router },
         { provide: App, useValue: mockApp },
@@ -378,7 +380,7 @@ describe("DatetimeComponent", () => {
 
 const dateComponentLocaleModuleDef: ITestModuleDef = {
     declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule, TimepickerModule, BsDatepickerModule],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: LOCALE_ID, useValue: 'de' },
@@ -1023,7 +1025,7 @@ describe(('Datetime Component with Localization'), () => {
 
 const dateComponentROLocaleModuleDef: ITestModuleDef = {
     declarations: [DatetimeWrapperComponent],
-    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule.forRoot(), TimepickerModule.forRoot(), BsDatepickerModule.forRoot()],
+    imports: [BrowserAnimationsModule, DatetimeComponent, FormsModule, BsDropdownModule, TimepickerModule, BsDatepickerModule],
     providers: [
         { provide: App, useValue: mockApp },
         { provide: LOCALE_ID, useValue: 'ro' },

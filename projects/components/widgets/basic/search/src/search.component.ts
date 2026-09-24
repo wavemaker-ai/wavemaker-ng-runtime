@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ScrollableDirective } from './scrollable.directive';
-import {
+import { ChangeDetectionStrategy,
     AfterViewChecked,
     AfterViewInit,
     Attribute,
@@ -66,6 +66,7 @@ import {
 const WIDGET_CONFIG = { widgetType: 'wm-search', hostClass: 'input-group' };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, FormsModule, ScrollableDirective, TypeaheadModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective],
     selector: '[wmSearch]',
@@ -724,8 +725,11 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
                 }
 
                 // explicitly setting the optionslimit as the matches more than 20 will be ignored if optionslimit is not specified.
+                // ngx-bootstrap 21: typeaheadOptionsLimit became a read-only InputSignal (template-binding
+                // only) - route through the existing [typeaheadOptionsLimit]="limit" template binding instead
+                // of writing to the directive property directly.
                 if (this.formattedDataset.length > 20 && !isDefined(this.limit)) {
-                    this.typeahead.typeaheadOptionsLimit = this.formattedDataset.length;
+                    this.limit = this.formattedDataset.length;
                 }
 
                 // In mobile, trigger the search by default until the results have height upto page height. Other results can be fetched by scrolling

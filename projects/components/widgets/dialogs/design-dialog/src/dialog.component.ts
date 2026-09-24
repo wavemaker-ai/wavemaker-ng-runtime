@@ -1,4 +1,4 @@
-import {
+import { ChangeDetectionStrategy,
     Attribute,
     Component,
     ContentChild,
@@ -24,6 +24,7 @@ const DIALOG_CLS = 'app-dialog modal-dialog';
 const WIDGET_INFO = {widgetType: 'wm-dialog'};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [DialogBodyDirective, DialogHeaderComponent, NgTemplateOutlet],
     selector: 'div[wmDialog]',

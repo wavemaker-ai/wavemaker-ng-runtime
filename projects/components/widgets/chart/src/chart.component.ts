@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { SpinnerComponent } from '@wm/components/basic/spinner';
-import {
+import { ChangeDetectionStrategy,
     AfterViewInit,
     OnDestroy,
     Component,
@@ -128,6 +128,7 @@ const angle = d => {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, SpinnerComponent],
     selector: 'div[wmChart]',

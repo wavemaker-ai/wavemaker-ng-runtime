@@ -1,4 +1,4 @@
-import {Component, Inject, Injector, NgZone, OnDestroy, OnInit, Optional, SecurityContext} from '@angular/core';
+import { ChangeDetectionStrategy,Component, Inject, Injector, NgZone, OnDestroy, OnInit, Optional, SecurityContext} from '@angular/core';
 import {NG_VALUE_ACCESSOR} from '@angular/forms';
 
 import {setAttr, setCSS, setHtml} from '@wm/core';
@@ -48,6 +48,7 @@ const overrideSummerNote = () => {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'div[wmRichTextEditor]',
     templateUrl: './rich-text-editor.component.html',
