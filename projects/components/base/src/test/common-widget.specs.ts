@@ -292,15 +292,24 @@ export class ComponentTestBase {
                         return;
                     }
 
-                    it('should have given ' + cssName, async () => {
+                    it('should have given ' + cssName, (done) => {
                         // core/utils/dom.ts's setCSS() (used by styler.ts to apply width/height,
                         // among other style props) defers every write through requestAnimationFrame
-                        // unless explicitly called with sync=true -- styler.ts never does. Wait for
-                        // at least one RAF cycle before asserting, rather than relying on
-                        // fixture.whenStable()'s zone-tracking of requestAnimationFrame (which is
-                        // environment-dependent and not guaranteed here).
-                        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-                        expect(component.$element.css(cssName)).toBe(initValue + 'px');
+                        // unless explicitly called with sync=true -- styler.ts never does. Wait it
+                        // out with a plain setTimeout, matching the same widget's own "should contain
+                        // class as btn-primary" test (button.wrapper.component.spec.ts), which waits
+                        // out the same kind of deferred write the same way.
+                        setTimeout(() => {
+                            // jQuery's $.css('width'/'height') getter tries to report the *rendered*
+                            // pixel dimension (via offsetWidth/getBoundingClientRect-style logic), not
+                            // the plain inline style -- and jsdom has no real layout engine, so it
+                            // always computes 0 there regardless of what's actually set (confirmed via
+                            // direct inspection: the inline style is correctly "200px" at this point,
+                            // cssText contains "width: 200px", but $element.css('width') still reports
+                            // "0px"). Read the inline style directly instead.
+                            expect(component.nativeElement.style[cssName]).toBe(initValue + 'px');
+                            done();
+                        }, 50);
                     });
                 });
             }
