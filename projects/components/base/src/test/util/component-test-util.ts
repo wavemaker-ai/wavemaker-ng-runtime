@@ -36,14 +36,26 @@ export const getElementByTagOnDocQuery = (tagName: string) => {
     return document.getElementsByTagName(tagName);
 }
 
-export const checkElementClass = (fixture, cssquery: string, eleClass: string) => {
-    return fixture.whenStable().then(() => {
-        let dateControl = getHtmlSelectorElement(fixture, cssquery);
+export const checkElementClass = async (fixture, cssquery: string, eleClass: string) => {
+    await fixture.whenStable();
 
+    // The element/class we're waiting for can depend on async work (e.g. a validator
+    // status update) that isn't guaranteed to have settled by the time whenStable()
+    // resolves once -- this was previously flaky when run alongside other spec files
+    // (query happened before detectChanges() too, capturing a stale/null reference).
+    // Poll for a short window instead of asserting after a single check.
+    const maxAttempts = 10;
+    let dateControl;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
         fixture.detectChanges();
-        expect(dateControl.nativeElement.classList).toContain(eleClass);
+        dateControl = getHtmlSelectorElement(fixture, cssquery);
+        if (dateControl?.nativeElement.classList.contains(eleClass)) {
+            break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
 
-    });
+    expect(dateControl?.nativeElement.classList).toContain(eleClass);
 }
 
 export const checkCustomElementClass = (elem, toCheckClass) => {

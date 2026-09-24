@@ -1,10 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { NavigationControlDirective, disableContextMenu } from './navigation-control.directive';
 
 @Component({
     standalone: false,
+    // Angular 22 changed the default changeDetection strategy for components with no
+    // explicit setting (see .claude/skills/angular-upgrade/patterns/runtime.md §27a).
+    // Pin it here to match the pre-22 default behavior these tests rely on.
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: '<a [wmNavigationControl]="link" [disableMenuContext]="disableMenu">Test Link</a>'
 })
 class TestComponent {
