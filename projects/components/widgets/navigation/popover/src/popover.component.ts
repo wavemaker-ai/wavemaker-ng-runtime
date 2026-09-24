@@ -7,6 +7,7 @@ import {
     ElementRef,
     Inject,
     Injector,
+    NgZone,
     OnDestroy,
     OnInit,
     Optional,
@@ -118,7 +119,7 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
     @ContentChild(TemplateRef) popoverTemplate;
     @ContentChild('partial') partialRef;
 
-    constructor(inj: Injector, private readonly app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, private readonly cdr: ChangeDetectorRef) {
+    constructor(inj: Injector, private readonly app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, private readonly cdr: ChangeDetectorRef, private readonly ngZone: NgZone) {
         super(inj, WIDGET_CONFIG, explicitContext);
         this.popoverContainerCls = `app-popover-${this.widgetId}`;
         this.isPrism = this.app.isPrism;
@@ -262,7 +263,11 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             this.arrowPositionSubscription = null;
         }
 
-        this.arrowPositionSubscription = this.bsPopoverDirective._popover._ngZone.onStable.subscribe(() => {
+        // ngx-bootstrap 22 removed the internal `_ngZone` field this used to reach into
+        // (`bsPopoverDirective._popover._ngZone`) — confirmed gone from the installed 22.0.0
+        // popover bundle. Use the app's own injected NgZone instead: same onStable stream
+        // (NgZone is app-scoped), without depending on a third party's private internals.
+        this.arrowPositionSubscription = this.ngZone.onStable.subscribe(() => {
             popoverElem.find('.popover-arrow').css('left', popoverLeftShift + 'px');
         });
     }
