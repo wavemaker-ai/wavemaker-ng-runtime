@@ -42,10 +42,10 @@
                 "libraries/core"
             ],
             "@wavemaker/variables": [
-                "node_modules/@wavemaker/variables/"
+                "node_modules/@wavemaker/variables/index"
             ],
             "@wavemaker/custom-widgets-m3": [
-                "node_modules/@wavemaker/custom-widgets-m3/"
+                "node_modules/@wavemaker/custom-widgets-m3/index"
             ],
             "@wm/components/base": [
                 "libraries/components/base"

@@ -292,7 +292,14 @@ export class ComponentTestBase {
                         return;
                     }
 
-                    it('should have given ' + cssName, () => {
+                    it('should have given ' + cssName, async () => {
+                        // core/utils/dom.ts's setCSS() (used by styler.ts to apply width/height,
+                        // among other style props) defers every write through requestAnimationFrame
+                        // unless explicitly called with sync=true -- styler.ts never does. Wait for
+                        // at least one RAF cycle before asserting, rather than relying on
+                        // fixture.whenStable()'s zone-tracking of requestAnimationFrame (which is
+                        // environment-dependent and not guaranteed here).
+                        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
                         expect(component.$element.css(cssName)).toBe(initValue + 'px');
                     });
                 });
