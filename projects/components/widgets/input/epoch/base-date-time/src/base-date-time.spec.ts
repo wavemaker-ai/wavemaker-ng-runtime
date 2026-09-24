@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Injector, LOCALE_ID } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injector, LOCALE_ID } from '@angular/core';
 import { AbstractI18nService, App, AppDefaults, isIos } from '@wm/core';
 import { BaseDateTimeComponent, getTimepickerConfig } from './base-date-time.component';
 import { ToDatePipe } from '@wm/components/base';
@@ -103,6 +103,8 @@ describe('getTimepickerConfig', () => {
 });
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<div></div>'
 })
 class TestBaseDateTimeComponent extends BaseDateTimeComponent {

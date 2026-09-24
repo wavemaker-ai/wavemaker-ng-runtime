@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { SpinnerComponent } from "./spinner.component";
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from "../../../../base/src/test/common-widget.specs";
 import { App, AppDefaults } from "@wm/core";
@@ -10,6 +10,8 @@ import { mockApp } from "projects/components/base/src/test/util/component-test-u
 const markup = `<div wmSpinner #wm_spinner1="wmSpinner" [attr.aria-label]="wm_spinner1.arialabel || 'Loading...'" hint="Loading..." name="spinner1">`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class SpinnerWrapperComponent {

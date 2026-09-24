@@ -17,7 +17,7 @@ import {
     unsupportedStatePersistenceTypes,
     WidgetRef
 } from "@wm/components/base";
-import {
+import { ChangeDetectionStrategy,
     AfterViewInit,
     Attribute,
     ChangeDetectorRef,
@@ -92,6 +92,7 @@ const DEFAULT_CLS = 'app-livelist app-panel';
 const WIDGET_CONFIG = {widgetType: 'wm-list', hostClass: DEFAULT_CLS};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, TextContentDirective, PaginationComponent, ListItemDirective],
     selector: 'div[wmList]',

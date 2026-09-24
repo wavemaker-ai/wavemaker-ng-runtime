@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, AfterViewInit, Component, ViewChild, ViewContainerRef, TemplateRef, OnDestroy } from '@angular/core';
 
-import { Toast, ToastPackage, ToastrService } from 'ngx-toastr';
+import { Toast } from 'ngx-toastr';
 
 import { $watch, $appDigest } from '@wm/core';
 import {forEach, isString} from "lodash-es";
@@ -10,6 +10,7 @@ import { ContainerDirective, PartialContainerDirective, PartialParamDirective, P
 declare const $;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, ContainerDirective, PartialParamHandlerDirective, PartialContainerDirective, PartialParamDirective],
     selector: '[custom-toaster-component]',
@@ -34,24 +35,29 @@ export class CustomToasterComponent extends Toast implements AfterViewInit, OnDe
     watchers: any = [];
     params: any = {};
 
-    // constructor is only necessary when not using AoT
-    constructor(
-        protected toastrService: ToastrService,
-        public toastPackage: ToastPackage
-    ) {
-        super(toastrService, toastPackage);
-        this.pagename = this.message || '';
+    // ngx-toastr 20: Toast/ToastBase's constructor no longer takes toastrService/toastPackage as
+    // params — both are now inject()-ed as base-class fields (ToastBase), so this subclass's own
+    // constructor no longer needs them either; super() takes no args. `toastrService`/`toastPackage`
+    // stay accessible via the inherited base-class fields (no need to redeclare them here — doing
+    // so would shadow the base class's own inject()-populated fields).
+    constructor() {
+        super();
+        // ngx-toastr 20: `message` is now a Signal (computed(() => this.toastPackage.message)),
+        // not a plain property — must be called as a function to read its value.
+        this.pagename = this.message() || '';
         this.generateParams();
     }
 
     // Generate the params for partial page. If bound, watch the expression and set the value
     generateParams() {
-        forEach((<any>this.options).partialParams, (param) => {
+        // ngx-toastr 20: `options` is now a Signal (linkedSignal(() => this.toastPackage.config)),
+        // not a plain property — must be called as a function to read its value.
+        forEach((<any>this.options()).partialParams, (param) => {
             if (isString(param.value) && param.value.indexOf('bind:') === 0) {
                 //[Todo-CSP]: bind expr fn should be generated in the toaster action for this
                 this.watchers.push($watch(
                     param.value.substr(5),
-                    (<any>this.options).context,
+                    (<any>this.options()).context,
                     {},
                     nv => {
                         this.params[param.name] = nv;

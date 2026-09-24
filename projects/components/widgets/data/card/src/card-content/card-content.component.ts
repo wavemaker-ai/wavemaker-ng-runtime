@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import { ChangeDetectionStrategy,AfterViewInit, Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 
 import { APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 import { registerProps } from './card-content.props';
@@ -10,6 +10,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'div[wmCardContent]',
     templateUrl: './card-content.component.html',

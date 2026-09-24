@@ -8,7 +8,7 @@ import {
     styler,
     TextContentDirective
 } from "@wm/components/base";
-import {
+import { ChangeDetectionStrategy,
     AfterContentInit,
     AfterViewInit,
     Attribute,
@@ -47,6 +47,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective],
     selector: 'div[wmTabs]',

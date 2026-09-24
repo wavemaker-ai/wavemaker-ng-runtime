@@ -1,4 +1,4 @@
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { SliderComponent } from "./slider.component";
 import { FormsModule, NgModel } from "@angular/forms";
 import { App, AppDefaults } from "@wm/core";
@@ -11,6 +11,8 @@ import { ComponentFixture } from "@angular/core/testing";
 const markup = `<div wmSlider name="slider1" hint="slider" tabindex="1">`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 

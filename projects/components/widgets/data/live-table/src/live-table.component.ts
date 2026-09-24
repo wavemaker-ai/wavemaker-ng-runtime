@@ -1,4 +1,4 @@
-import {
+import { ChangeDetectionStrategy,
     AfterContentInit,
     Attribute,
     ChangeDetectorRef,
@@ -26,6 +26,7 @@ const DEFAULT_CLS = 'app-livegrid';
 const WIDGET_CONFIG = {widgetType: 'wm-livetable', hostClass: DEFAULT_CLS};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmLiveTable]',
     templateUrl: './live-table.component.html',

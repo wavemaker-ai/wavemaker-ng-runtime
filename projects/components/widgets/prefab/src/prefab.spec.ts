@@ -1,5 +1,5 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { Component, DebugElement } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { PrefabDirective } from './prefab.directive';
 import { App } from '@wm/core';
@@ -13,6 +13,8 @@ jest.mock('@wm/core', () => ({
 }));
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<section wmPrefab prefabname="test" name="testPrefab"></section>'
 })
 class TestComponent { }

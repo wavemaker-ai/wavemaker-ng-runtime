@@ -1,4 +1,4 @@
-import {
+import { ChangeDetectionStrategy,
     Attribute,
     Component,
     Inject,
@@ -22,6 +22,7 @@ const DIALOG_CLS = 'app-dialog modal-dialog app-iframe-dialog';
 const WIDGET_INFO = {widgetType: 'wm-iframedialog'};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [IframeComponent, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
     selector: 'div[wmIframeDialog]',

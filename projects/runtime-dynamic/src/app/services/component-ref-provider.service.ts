@@ -1,10 +1,9 @@
 import {
-    Compiler,
+    ChangeDetectionStrategy,
     Component,
     CUSTOM_ELEMENTS_SCHEMA, Inject,
     Injectable,
     Injector,
-    NgModule,
     NO_ERRORS_SCHEMA,
     ViewEncapsulation
 } from '@angular/core';
@@ -126,38 +125,6 @@ const imports = [
     PrefabContainerDirective,
 ]
 
-const getDynamicModule = (componentRef: any) => {
-    return NgModule({
-        declarations: [componentRef],
-        imports: [
-            ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
-            CommonModule,
-            FormsModule,
-            ReactiveFormsModule,
-            ...imports
-        ],
-        providers: [
-            PipeService,
-            DecimalPipe,
-            DatePipe,
-            AppManagerService,
-            PrefabManagerService,
-            AuthGuard,
-            RoleGuard,
-            PageNotFoundGuard,
-            CanDeactivatePageGuard,
-            AppJSResolve,
-            AppExtensionJSResolve,
-            I18nResolve,
-            SecurityService,
-            OAuthService,
-            VariablesService,
-            MetadataService,
-        ],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
-    })(class DynamicModule { });
-};
-
 const getDynamicComponent = (
     componentName,
     type: ComponentType,
@@ -242,9 +209,44 @@ const getDynamicComponent = (
     }
 
     const component = Component({
+        // Angular 22: changeDetection now defaults to OnPush — this dynamic factory needs the
+        // pre-22 default pinned explicitly, same as every static @Component() in this repo (§27a).
+        // componentDef (above) does not itself set changeDetection, so this can't be overridden
+        // by the spread below.
+        changeDetection: ChangeDetectionStrategy.Eager,
+        // Angular 22 removed Compiler.compileModuleAndAllComponentsSync() and the
+        // ComponentFactory-based createComponent() overload — the wrapping NgModule this used to
+        // go through (getDynamicModule, since removed) is gone; its imports/providers/schemas
+        // moved directly onto this standalone component instead. See the equivalent, smaller fix
+        // in dynamic-component-ref-provider.service.ts for the same root cause.
+        standalone: true,
+        imports: [
+            ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
+            CommonModule,
+            FormsModule,
+            ReactiveFormsModule,
+            ...imports
+        ],
+        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
         ...componentDef,
         selector,
         providers: [
+            PipeService,
+            DecimalPipe,
+            DatePipe,
+            AppManagerService,
+            PrefabManagerService,
+            AuthGuard,
+            RoleGuard,
+            PageNotFoundGuard,
+            CanDeactivatePageGuard,
+            AppJSResolve,
+            AppExtensionJSResolve,
+            I18nResolve,
+            SecurityService,
+            OAuthService,
+            VariablesService,
+            MetadataService,
             {
                 provide: UserDefinedExecutionContext,
                 useExisting: DynamicComponent
@@ -292,8 +294,7 @@ export class ComponentRefProviderService extends ComponentRefProvider {
     constructor(
         private resouceMngr: AppResourceManagerService,
         private app: App,
-        private appManager: AppManagerService,
-        private compiler: Compiler
+        private appManager: AppManagerService
     ) {
         super();
     }
@@ -313,14 +314,7 @@ export class ComponentRefProviderService extends ComponentRefProvider {
 
         return this.loadResourcesOfFragment(componentName, componentType, options)
             .then(({ markup, script, styles, variables }) => {
-                const componentDef = getDynamicComponent(componentName, componentType, markup, styles, script, JSON.stringify(variables));
-                const moduleDef = getDynamicModule(componentDef);
-
-                componentFactoryRef = this.compiler
-                    .compileModuleAndAllComponentsSync(moduleDef)
-                    .componentFactories
-                    .filter(factory => // @ts-ignore
-                        factory.componentType === componentDef)[0];
+                componentFactoryRef = getDynamicComponent(componentName, componentType, markup, styles, script, JSON.stringify(variables));
                 const updatedComponentName = (options && options['prefab']) ? options['prefab'] + componentName : componentName;
                 componentFactoryRefCache.get(componentType).set(updatedComponentName, componentFactoryRef);
 

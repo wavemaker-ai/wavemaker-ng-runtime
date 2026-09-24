@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { SwitchComponent } from './switch.component';
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from '../../../../base/src/test/common-widget.specs';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +12,8 @@ import { ToDatePipe } from '@wm/components/base';
 const markup = `<div wmSwitch #wm_switch1="wmSwitch" [attr.aria-label]="wm_switch1.arialabel || 'Switch button'" datavalue="yes" show="true" width="800" height="200" hint="Switch button" tabindex="0" disabled="false" name="switch1"></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class SwitchWrapperComponent {

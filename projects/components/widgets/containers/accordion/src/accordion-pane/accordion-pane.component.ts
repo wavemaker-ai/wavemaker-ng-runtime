@@ -1,5 +1,5 @@
 import {CommonModule} from '@angular/common';
-import {AfterViewInit, Component, ContentChildren, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import { ChangeDetectionStrategy,AfterViewInit, Component, ContentChildren, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 import {noop, removeAttr} from '@wm/core';
 import {
     APPLY_STYLES_TYPE,
@@ -18,6 +18,7 @@ const DEFAULT_CLS = 'app-accordion-panel panel';
 const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-accordionpane', hostClass: DEFAULT_CLS };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule],
     selector: 'div[wmAccordionPane]',

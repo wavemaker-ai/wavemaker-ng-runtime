@@ -1,4 +1,4 @@
-import {
+import { ChangeDetectionStrategy,
     ApplicationRef,
     Component,
     ElementRef,
@@ -17,6 +17,7 @@ import { SecurityService } from '@wm/security';
 import { AppManagerService, BasePageComponent, ComponentRefProvider, ComponentType } from '@wm/runtime/base';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true, 
     selector: 'app-page-outlet',
     template: '<div></div>'
@@ -59,7 +60,10 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
             .then(async () => {
                 const pageComponentFactoryRef = await this.componentRefProvider.getComponentFactoryRef(pageName, ComponentType.PAGE);
                 if (pageComponentFactoryRef) {
-                    const componentRef = this.vcRef.createComponent(pageComponentFactoryRef, 0, this.injector);
+                    // Angular 22 removed the positional (factory, index, injector) createComponent()
+                    // overload — pageComponentFactoryRef is now a component class, not a
+                    // ComponentFactory (see component-ref-provider.service.ts).
+                    const componentRef = this.vcRef.createComponent(pageComponentFactoryRef, { index: 0, injector: this.injector });
                     this.instance = componentRef.instance;
                     $target.appendChild(componentRef.location.nativeElement);
                 } else {

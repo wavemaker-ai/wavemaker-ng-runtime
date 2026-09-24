@@ -1,4 +1,4 @@
-import { Component, ElementRef, SecurityContext, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ElementRef, SecurityContext, ViewChild } from "@angular/core";
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from "../../../../base/src/test/common-widget.specs";
 import { HtmlDirective } from "./html.directive";
 import { App, setCSS } from "@wm/core";
@@ -16,6 +16,8 @@ jest.mock('@wm/core', () => ({
 const markup = `<div wmHtml #wm_html2="wmHtml" [attr.aria-label]="wm_html2.arialabel || 'HTML content'" hint="HTML content"  name="html1">`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class HtmlWrapperDirective {

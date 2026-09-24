@@ -1,4 +1,4 @@
-import {
+import { ChangeDetectionStrategy,
     Attribute,
     Component,
     Injector,
@@ -22,6 +22,7 @@ const DIALOG_CLS = 'app-dialog modal-dialog app-confirm-dialog';
 const WIDGET_INFO = {widgetType: 'wm-confirmdialog'};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
     selector: 'div[wmConfirmDialog]',

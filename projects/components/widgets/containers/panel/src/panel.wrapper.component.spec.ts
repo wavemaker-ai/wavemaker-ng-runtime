@@ -1,6 +1,6 @@
 import { ComponentFixture } from '@angular/core/testing';
 import { PanelComponent } from './panel.component';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MenuDropdownItemComponent } from "../../../navigation/menu/src/menu-dropdown-item/menu-dropdown-item.component";
 import { MenuDropdownComponent } from "../../../navigation/menu/src//menu-dropdown/menu-dropdown.component";
@@ -17,6 +17,8 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 
 const markup = `<div wmPanel badgevalue="Test val" #wm_panel1="wmPanel" expanded="true" helptext="samplePanel" partialContainer wm-navigable-element="true"  subheading="subheading" iconclass="wi wi-account-circle" actions="testData" autoclose="outsideClick" title="Title" enablefullscreen="true" closable="true" collapsible="true" name="panel1" hint="panel hint" actionsclick.event="panel1Actionsclick($item)">`;
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 

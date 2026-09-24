@@ -1,7 +1,7 @@
 import {CommonModule} from '@angular/common';
 import {AnchorComponent} from '@wm/components/basic/anchor';
 import {ButtonComponent} from '@wm/components/input/button';
-import {
+import { ChangeDetectionStrategy,
     AfterContentInit,
     AfterViewInit,
     Attribute,
@@ -158,6 +158,7 @@ const setTouchedState = (self, ngForm, fieldName) => {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FilterPipe, AnchorComponent, ButtonComponent, MessageComponent],
     selector: 'form[wmForm]',
@@ -1288,7 +1289,10 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                 noCache: true,
                 transpile: true
             });
-        const component = this.dynamicFormRef.createComponent(componentFactoryRef, 0, this.inj);
+        // Angular 22 removed the positional (factory, index, injector) createComponent()
+        // overload — componentFactoryRef is now a component class, not a ComponentFactory
+        // (see dynamic-component-ref-provider.service.ts).
+        const component = this.dynamicFormRef.createComponent(componentFactoryRef, { index: 0, injector: this.inj });
         extendProto(component.instance, this._dynamicContext);
         $gridLayout[0].appendChild(component.location.nativeElement);
         this.setFormData(this.formdata);

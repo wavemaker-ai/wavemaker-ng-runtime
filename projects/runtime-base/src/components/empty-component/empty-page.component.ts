@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { App, getWmProjectProperties } from '@wm/core';
@@ -7,6 +7,7 @@ import { SecurityService } from '@wm/security';
 import { AppManagerService } from '../../services/app.manager.service';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'app-empty-page',
     template: '<div></div>'

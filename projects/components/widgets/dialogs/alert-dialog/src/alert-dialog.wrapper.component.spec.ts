@@ -1,4 +1,4 @@
-import { Component, NO_ERRORS_SCHEMA, ViewChild, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NO_ERRORS_SCHEMA, ViewChild, TemplateRef } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { AlertDialogComponent } from './alert-dialog.component';
@@ -33,6 +33,8 @@ class MockAbstractDialogService {
 
 const markup = `<div wmAlertDialog></div>`;
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class AlertDialogWrapperComponent {

@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { CalendarComponent } from './calendar.component';
 import { waitForAsync, ComponentFixture } from '@angular/core/testing';
 import { ITestModuleDef, ITestComponentDef, ComponentTestBase } from 'projects/components/base/src/test/common-widget.specs';
@@ -11,6 +11,10 @@ import { IMaskModule } from 'angular-imask';
 import { AbstractI18nService, App } from '@wm/core';
 import { MockAbstractI18nService } from 'projects/components/base/src/test/util/date-test-util';
 import { StylableComponent, BaseComponent } from '@wm/components/base';
+// TypeScript 6.0 (TS2882) requires type declarations even for side-effect-only imports; this is
+// a plain pre-bundled JS global with no shipped .d.ts, so the import is suppressed rather than
+// typed (it is loaded purely for its global side effect).
+// @ts-ignore
 import "@fullcalendar/core/index.global.min.js"
 import * as momentLib  from 'moment';
 const moment = momentLib.default || window['moment'];
@@ -37,6 +41,8 @@ const markup = `<div
                  >
                 </div>`;
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class CalendarWrapperComponent {

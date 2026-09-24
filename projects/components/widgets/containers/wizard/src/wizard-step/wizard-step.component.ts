@@ -1,4 +1,4 @@
-import {
+import { ChangeDetectionStrategy,
     AfterViewInit,
     Component,
     ContentChildren,
@@ -36,6 +36,7 @@ const enum STEP_STATUS {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'form[wmWizardStep]',
     template: `<ng-content partial-container-target></ng-content>`,

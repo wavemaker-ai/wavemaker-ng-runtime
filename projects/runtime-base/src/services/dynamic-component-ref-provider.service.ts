@@ -1,9 +1,8 @@
 import {
-    Compiler,
+    ChangeDetectionStrategy,
     Component,
     CUSTOM_ELEMENTS_SCHEMA,
     Injectable,
-    NgModule,
     NO_ERRORS_SCHEMA,
     ViewEncapsulation
 } from '@angular/core';
@@ -18,17 +17,14 @@ import {get} from "lodash-es";
 
 initComponentsBuildTask();
 
+// Angular 22 removed Compiler.compileModuleAndAllComponentsSync() and the ComponentFactory-based
+// ViewContainerRef.createComponent() overload — both required to get a usable component reference
+// out of a runtime-constructed NgModule. Fixed by making the dynamic component standalone (moving
+// the wrapping NgModule's `imports`/`schemas` directly onto the @Component() call below) and
+// creating it straight from its class via the new createComponent(Type, options) API — no
+// NgModule/Compiler step needed at all. "componentFactoryRef" below is now a component *class*,
+// not a ComponentFactory instance — kept the name to minimize diff/blast-radius across callers.
 const componentFactoryRefCache = new Map<string, any>();
-
-const getDynamicModule = (componentRef: any) => {
-    return NgModule({
-        declarations: [componentRef],
-        imports: [
-            RuntimeBaseModule,
-        ],
-        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
-    })(class DynamicModule {});
-};
 
 const getDynamicComponent = (
     selector: any,
@@ -36,6 +32,12 @@ const getDynamicComponent = (
     css: string = '') => {
     // @ts-ignore
     return Component({
+        // Angular 22: changeDetection now defaults to OnPush — this dynamic factory needs the
+        // pre-22 default pinned explicitly, same as every static @Component() in this repo (§27a).
+        changeDetection: ChangeDetectionStrategy.Eager,
+        standalone: true,
+        imports: [RuntimeBaseModule],
+        schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
         template,
         styles: [css],
         encapsulation: ViewEncapsulation.None,
@@ -51,8 +53,7 @@ export class DynamicComponentRefProviderService {
 
     constructor(
         private app: App,
-        private appManager: AppManagerService,
-        private compiler: Compiler
+        private appManager: AppManagerService
     ) {}
 
     public async getComponentFactoryRef(selector: string, markup: string, options: any = {}): Promise<any> {
@@ -61,14 +62,7 @@ export class DynamicComponentRefProviderService {
 
         markup = options.transpile ? transpile(markup).markup : markup;
         if (!componentFactoryRef || options.noCache) {
-            const componentDef = getDynamicComponent(selector, markup, options.styles);
-            const moduleDef = getDynamicModule(componentDef);
-
-            componentFactoryRef = this.compiler
-                .compileModuleAndAllComponentsSync(moduleDef)
-                .componentFactories
-                .filter(factory => factory.componentType === componentDef)[0];
-
+            componentFactoryRef = getDynamicComponent(selector, markup, options.styles);
             componentFactoryRefCache.set(selector, componentFactoryRef);
         }
         return componentFactoryRef;
@@ -90,7 +84,7 @@ export class DynamicComponentRefProviderService {
         options.noCache = isDefined(options.noCache) ? options.noCache : true;
         options.selector = isDefined(options.selector) ? options.selector : 'wm-dynamic-component-' + this.counter++;
         const componentFactoryRef = await this.getComponentFactoryRef(options.selector, markup, options);
-        const component = this.app.dynamicComponentContainerRef.createComponent(componentFactoryRef, 0, get(options, 'inj'));
+        const component = this.app.dynamicComponentContainerRef.createComponent(componentFactoryRef, { index: 0, injector: get(options, 'inj') });
         extendProto(component.instance, context);
         target.appendChild(component.location.nativeElement);
         // MEMORY LEAK FIX: Return component reference so caller can destroy it

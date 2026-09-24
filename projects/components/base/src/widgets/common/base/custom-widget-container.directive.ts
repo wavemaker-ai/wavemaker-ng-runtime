@@ -1,4 +1,4 @@
-import { Attribute, ComponentFactoryResolver, Directive, ElementRef, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
+import { Attribute, Directive, ElementRef, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
 import { App, $invokeWatchers, noop, ComponentType, CustomWidgetRefProvider } from '@wm/core';
 import { WidgetRef } from "../../framework/types";
 
@@ -23,7 +23,9 @@ export class CustomWidgetContainerDirective implements OnDestroy {
         const widgetnames = this.componentInstance.widgetname;
         this.customWidgetRefProvider.getComponentFactoryRef(widgetname, ComponentType.WIDGET).then((componentFactory) => {
             if (componentFactory) {
-                const instanceRef = this.vcRef.createComponent(componentFactory, 0, this.inj);
+                // Angular 22 removed the positional (factory, index, injector) createComponent()
+                // overload — componentFactory is now a component class, not a ComponentFactory.
+                const instanceRef = this.vcRef.createComponent(componentFactory, { index: 0, injector: this.inj });
                 this.elRef.nativeElement.appendChild(instanceRef.location.nativeElement);
             }
         });

@@ -1,4 +1,4 @@
-import { Component, LOCALE_ID, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, LOCALE_ID, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { BsLocaleService } from 'ngx-bootstrap/datepicker';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -42,6 +42,8 @@ const markup = `<div wmDate  name="date1" mindate="2019-12-02"  datavalue="${cur
     blur.event="date1Blur($event, widget)" click.event="date1Click($event, widget)" mouseenter.event="date1Mouseenter($event, widget)"
      mouseleave.event="date1Mouseleave($event, widget)" tap.event="date1Tap($event, widget)" margintop="30px" marginright="23px" ngModel></div>`;
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 
@@ -81,7 +83,7 @@ class DateWrapperComponent {
 
 const dateComponentModuleDef: ITestModuleDef = {
     declarations: [DateWrapperComponent],
-    imports: [BrowserAnimationsModule, FormsModule, BsDatepickerModule.forRoot(), IMaskModule, DateComponent],
+    imports: [BrowserAnimationsModule, FormsModule, BsDatepickerModule, IMaskModule, DateComponent],
     providers: [
         { provide: Router, useValue: Router },
         { provide: App, useValue: mockApp },
@@ -478,7 +480,7 @@ describe('DateComponent', () => {
 
 const dateComponentLocaleModuleDef: ITestModuleDef = {
     declarations: [DateWrapperComponent],
-    imports: [FormsModule, BsDatepickerModule.forRoot(), IMaskModule, DateComponent],
+    imports: [FormsModule, BsDatepickerModule, IMaskModule, DateComponent],
     providers: [
         { provide: LOCALE_ID, useValue: 'de' },
         { provide: Router, useValue: Router },

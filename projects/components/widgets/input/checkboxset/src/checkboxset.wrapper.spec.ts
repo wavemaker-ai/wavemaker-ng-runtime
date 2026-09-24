@@ -1,5 +1,5 @@
 import { DatePipe } from "@angular/common";
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { ComponentFixture, TestBed, waitForAsync } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { EventManager } from "@angular/platform-browser";
@@ -13,6 +13,8 @@ declare const _: any;
 
 const markup = `<div wmCheckboxset hint="checkboxset1" caption="Label" required itemsperrow="3" name="checkboxset1" tabindex="1"></div>`;
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 

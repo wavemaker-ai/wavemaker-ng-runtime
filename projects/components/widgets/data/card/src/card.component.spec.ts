@@ -1,5 +1,5 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { CardComponent } from './card.component';
 import { MenuAdapterComponent } from '@wm/components/navigation/menu';
@@ -22,6 +22,8 @@ import { removeAttr, setAttr } from '@wm/core';
 import { styler } from '@wm/components/base';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: `
         <div>
             <div wmCard name="testcard" title="Test Card" subheading="Subheading"></div>

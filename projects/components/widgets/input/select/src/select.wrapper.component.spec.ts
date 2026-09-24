@@ -1,4 +1,4 @@
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { SelectComponent } from "./select.component";
 import { ComponentTestBase, ITestComponentDef, ITestModuleDef } from "../../../../base/src/test/common-widget.specs";
 import { FormsModule } from "@angular/forms";
@@ -12,6 +12,8 @@ import { compileTestComponent, mockApp } from "projects/components/base/src/test
 const markup = `<wm-select name="select1" hint="select field">`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 

@@ -1,4 +1,4 @@
-import { Injectable, ComponentFactoryResolver } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { PartialRefProvider } from '@wm/core';
 import { ComponentType } from '@wm/runtime/base';
 import { partialLazyModules, prefabLazyModules, prefabPartialLazyModules } from '../util/lazy-module-routes';
@@ -11,11 +11,6 @@ type Options = {
     providedIn: 'root'
 })
 export class LazyComponentRefProviderService extends PartialRefProvider {
-    constructor(
-        private componentFactoryResolver: ComponentFactoryResolver
-    ) {
-        super();
-    }
 
     private getLazyModule(componentName: string, componentType: ComponentType, options?: Options) {
         if (componentType === ComponentType.PARTIAL && options && options.prefab) {
@@ -46,8 +41,10 @@ export class LazyComponentRefProviderService extends PartialRefProvider {
                 return null;
             }
 
-            // For standalone components, create a component factory
-            return this.componentFactoryResolver.resolveComponentFactory(loadedComponent);
+            // Angular 22 removed ComponentFactoryResolver / ComponentFactory-based createComponent()
+            // entirely — loadedComponent is already a component class, which the new
+            // ViewContainerRef.createComponent(Type, options) API accepts directly.
+            return loadedComponent;
         } catch (e) {
             console.error('Error in getComponentFactoryRef:', e);
             return null;

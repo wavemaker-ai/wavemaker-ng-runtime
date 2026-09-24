@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {AfterViewChecked, Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import { ChangeDetectionStrategy,AfterViewChecked, Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
 import {provideAs, provideAsWidgetRef} from '@wm/components/base';
@@ -14,6 +14,7 @@ const WIDGET_CONFIG = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, FormsModule],
     selector: 'wm-textarea',

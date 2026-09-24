@@ -1,4 +1,4 @@
-import { Attribute, ComponentFactoryResolver, Directive, ElementRef, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
+import { Attribute, Directive, ElementRef, Inject, Injector, OnDestroy, Self, ViewContainerRef } from '@angular/core';
 
 import { debounceTime, filter } from 'rxjs/operators';
 
@@ -36,7 +36,9 @@ export class PartialContainerDirective implements OnDestroy {
 
         const componentFactory = await this.partialRefProvider.getComponentFactoryRef(nv, ComponentType.PARTIAL, {prefab: prefabName});
         if (componentFactory) {
-            const instanceRef = this.vcRef.createComponent(componentFactory, 0, this.inj);
+            // Angular 22 removed the positional (factory, index, injector) createComponent()
+            // overload — componentFactory is now a component class, not a ComponentFactory.
+            const instanceRef = this.vcRef.createComponent(componentFactory, { index: 0, injector: this.inj });
             if (instanceRef && instanceRef['instance'] && prefabName) {
                 // @ts-ignore
                 instanceRef['instance'].prefabName = prefabName;
@@ -67,7 +69,6 @@ export class PartialContainerDirective implements OnDestroy {
         public inj: Injector,
         private app: App,
         @Attribute('content') _content: string,
-        private resolver: ComponentFactoryResolver,
         private partialRefProvider: PartialRefProvider
     ) {
 

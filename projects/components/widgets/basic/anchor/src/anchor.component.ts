@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {AfterViewInit, Component, HostBinding, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import { ChangeDetectionStrategy,AfterViewInit, Component, HostBinding, Inject, Injector, OnDestroy, Optional} from '@angular/core';
 
 import {
     addClass,
@@ -28,6 +28,7 @@ export const disableContextMenu = ($event: Event) => {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, ImagePipe, TextContentDirective],
     selector: 'a[wmAnchor]',

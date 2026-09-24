@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild, OnDestroy} from '@angular/core';
+import { ChangeDetectionStrategy,AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild, OnDestroy} from '@angular/core';
 
 import { APPLY_STYLES_TYPE, styler, StylableComponent, provideAsWidgetRef, TextContentDirective ,TrustAsPipe} from '@wm/components/base';
 
@@ -11,6 +11,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-navbar', hostClass: DEFAULT_CLS};
 declare const $;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective,TrustAsPipe],
     selector: '[wmNavbar]',

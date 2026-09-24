@@ -1,4 +1,4 @@
-import {Attribute, Component, Inject, Injector, OnInit, Optional, ViewEncapsulation} from '@angular/core';
+import { ChangeDetectionStrategy,Attribute, Component, Inject, Injector, OnInit, Optional, ViewEncapsulation} from '@angular/core';
 import { APPLY_STYLES_TYPE, getEvaluatedData, getOrderedDataset, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 import { registerProps } from './tree.props';
 import { $parseEvent, getClonedObject } from "@wm/core";
@@ -10,6 +10,7 @@ const WIDGET_INFO = {widgetType: 'wm-tree', hostClass: 'app-tree'};
 const defaultTreeIconClass = 'plus-minus';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'ul[wmTree]',
     templateUrl: './tree.component.html',

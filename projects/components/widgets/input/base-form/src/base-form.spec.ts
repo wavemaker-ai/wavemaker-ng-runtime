@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Injector } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injector } from '@angular/core';
 import { IWidgetConfig, WidgetConfig, StylableComponent, getWidgetPropsByType } from '@wm/components/base';
 import { BaseFormComponent } from './base-form.component';
 import { App, DataSource } from '@wm/core';
@@ -25,6 +25,8 @@ class MockWidgetConfig implements IWidgetConfig {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<div></div>'
 })
 class TestFormComponent extends BaseFormComponent {

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TableActionDirective } from './table-action.directive';
 import { TableComponent } from '../table.component';
 import { BaseComponent } from '@wm/components/base';
@@ -7,6 +7,8 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 import { App } from '@wm/core';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<div wmTableAction></div>'
 })
 class TestComponent { }

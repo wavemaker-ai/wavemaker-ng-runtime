@@ -1,4 +1,4 @@
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { ColorPickerComponent } from "./color-picker.component";
 import { FormsModule } from "@angular/forms";
 import { addClass, App, removeClass } from "@wm/core";
@@ -17,6 +17,8 @@ jest.mock("@wm/core", () => ({
 const markup = `<div wmColorPicker name="colorpicker1" hint="colorpicker" tabindex="1">`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 

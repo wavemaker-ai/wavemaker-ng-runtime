@@ -1,5 +1,5 @@
 import { ComponentFixture, waitForAsync } from '@angular/core/testing';
-import { Component, Pipe, PipeTransform, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Pipe, PipeTransform, ViewChild } from '@angular/core';
 import { AudioComponent } from './audio.component';
 import { FormsModule } from '@angular/forms';
 import { App } from '@wm/core';
@@ -12,7 +12,7 @@ import {
 } from 'projects/components/base/src/test/common-widget.specs';
 import { compileTestComponent, mockApp } from 'projects/components/base/src/test/util/component-test-util';
 
-@Pipe({ name: 'trustAs' })
+@Pipe({ name: 'trustAs', standalone: false })
 class MockTrustAsPipe implements PipeTransform {
     transform(value: string, type: string): string {
         return value;
@@ -22,6 +22,8 @@ class MockTrustAsPipe implements PipeTransform {
 const markup = `<div wmAudio name="audio" hint="audio" [attr.aria-label]="'audio'" tabindex="0"></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class AudioWrapperComponent {

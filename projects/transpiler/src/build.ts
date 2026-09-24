@@ -10,6 +10,14 @@ const CSS_REGEX = {
 
 const isString = v => typeof v === 'string';
 
+// Angular 20's Element constructor requires 9 args (added `directives`, `isSelfClosing`,
+// `isVoid`) — was 6 pre-20 (WMS-29275). Centralized here since transpiler builds several
+// synthetic ng-container wrapper elements with no real source positions.
+const createCompilerElement = (name: string): Element => {
+    const noSpan = ({} as ParseSourceSpan);
+    return new Element(name, [], [], [], false, noSpan, noSpan, noSpan, false);
+};
+
 interface IProviderInfo {
     nodeName: string;
     provide: Map<string, any>;
@@ -363,10 +371,9 @@ export const processNode = (node, importCollector: (i: ImportDef[]) => void, pro
                     /* If more than one out of showindevice, accessroles and deferload exist for a widget, add ng-container wrappers to fix angular limitation
                        of applying only one structural directive to an element.
                     *  */
-                    const noSpan = ({} as ParseSourceSpan);
-                    const showInDeviceContainer:any = showInDeviceAttr ? new Element('ng-container', [], [], noSpan, noSpan, noSpan) : '';
-                    const accessRolesContainer:any = accessRolesAttr ? new Element('ng-container', [], [], noSpan, noSpan, noSpan) : '';
-                    const deferLoadContainer:any = deferLoadAttr ? new Element('ng-container', [], [], noSpan, noSpan, noSpan) : '';
+                    const showInDeviceContainer:any = showInDeviceAttr ? createCompilerElement('ng-container') : '';
+                    const accessRolesContainer:any = accessRolesAttr ? createCompilerElement('ng-container') : '';
+                    const deferLoadContainer:any = deferLoadAttr ? createCompilerElement('ng-container') : '';
                     if (showInDeviceContainer) {
                         showInDeviceContainer.attrs.push(showInDeviceAttr);
                     }

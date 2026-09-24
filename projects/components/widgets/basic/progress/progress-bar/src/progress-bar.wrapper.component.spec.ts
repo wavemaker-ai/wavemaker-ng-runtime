@@ -1,4 +1,4 @@
-import { Component, ViewChild } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ViewChild } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { App } from "@wm/core";
 import { ProgressBarComponent } from "./progress-bar.component";
@@ -11,6 +11,8 @@ import { provideAsWidgetRef } from "@wm/components/base";
 const markup = `<div wmProgressBar name="progress_bar1" hint="Progress bar" arialabel="Progress bar" tabindex="0"></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class ProgressBarWrapperComponent {

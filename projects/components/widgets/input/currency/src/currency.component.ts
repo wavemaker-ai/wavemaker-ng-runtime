@@ -1,5 +1,5 @@
 import { FormsModule } from '@angular/forms';
-import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import { ChangeDetectionStrategy,Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
 
 import {AbstractI18nService, AppDefaults, CURRENCY_INFO} from '@wm/core';
@@ -16,6 +16,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [TextContentDirective, FormsModule],
     selector: '[wmCurrency]',

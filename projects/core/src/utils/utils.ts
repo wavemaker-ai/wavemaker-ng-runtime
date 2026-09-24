@@ -1,7 +1,7 @@
 import {Subject} from 'rxjs';
 
 import {getPreviewProperties} from './wm-project-properties';
-import {$appDigest, $watch} from './watcher';
+import {$appDigest, $watch, getNgZone} from './watcher';
 import {DataType} from '../enums/enums';
 import {DataSource} from '../types/types';
 import {setAttr} from './dom';
@@ -1380,9 +1380,18 @@ export const addForIdAttributes = (element: HTMLElement) => {
  * @param ref - scope of particular library directive
  * @param ele - Child element(jquery). For some of the widgets(time, search) containerElem doesn't have height. The inner element(dropdown-menu) has height so passing it as optional.
  */
+/**
+ * ngx-bootstrap 22 removed the internal `_ngZone` field these positioning helpers used to read
+ * off a library directive's internal scope object (`ref`), which made `zoneRef` undefined and
+ * threw "Cannot read properties of undefined (reading 'onStable')". Fall back to the app-level
+ * NgZone; if there is none either (e.g. a bare unit test with no bootstrapped app), the caller
+ * applies its positioning immediately instead of waiting for zone stability.
+ */
+const getZoneRef = (ref) => ref?._ngZone || ref?.ngZone || getNgZone();
+
 export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) => {
-    const zoneRef = ref._ngZone || ref.ngZone;
-    zoneRef.onStable.subscribe(() => {
+    const zoneRef = getZoneRef(ref);
+    const apply = () => {
         const containerEleTransformations = getWebkitTraslationMatrix(containerElem);
         if (containerEleTransformations.m41 < 0) {
              containerEleTransformations.m41 = 0;
@@ -1390,7 +1399,8 @@ export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) =>
              return;
          }
          setTranslation3dPosition(containerElem, containerEleTransformations);
-     });
+     };
+    zoneRef ? zoneRef.onStable.subscribe(apply) : apply();
    };
 
 
@@ -1408,8 +1418,8 @@ export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) =>
         const parentDimesion = parentElem.getBoundingClientRect();
         const parentRight = parentDimesion.right + window.scrollX;
         let newLeft;
-        const zoneRef = ref._ngZone || ref.ngZone;
-        zoneRef.onStable.subscribe(() => {
+        const zoneRef = getZoneRef(ref);
+        const apply = () => {
             const containerEleTransformations = getWebkitTraslationMatrix(containerElem);
 
             if (viewPortWidth - (parentRight + parentDimesion.width) < containerWidth) {
@@ -1422,7 +1432,8 @@ export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) =>
                 return;
             }
             setTranslation3dPosition(containerElem, containerEleTransformations);
-        });
+        };
+        zoneRef ? zoneRef.onStable.subscribe(apply) : apply();
    };
 
   /**
@@ -1657,9 +1668,9 @@ export const getFontConfig = () => {
 }
 
 export const adjustVerticalPosition = (containerElem, parentElem: HTMLElement, ref, ele?): void => {
-    const zoneRef = ref._ngZone || ref.ngZone;
+    const zoneRef = getZoneRef(ref);
 
-    zoneRef.onStable.subscribe(() => {
+    const apply = () => {
             const containerHeight = ele
                 ? parseInt(ele.css('height'), 10)
                 : parseInt(containerElem.css('height'), 10);
@@ -1681,7 +1692,8 @@ export const adjustVerticalPosition = (containerElem, parentElem: HTMLElement, r
 
                 setTranslation3dPosition(containerElem, matrix);
             }
-        });
+        };
+    zoneRef ? zoneRef.onStable.subscribe(apply) : apply();
 };
 /*export const getParent = (parent: any) => {
     if(parent.hasOwnProperty("isDynamicComponent") || parent.hasOwnProperty("isPageComponent")) {

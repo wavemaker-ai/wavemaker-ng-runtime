@@ -1,10 +1,12 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { Component, Injector } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Injector } from '@angular/core';
 import { RepeatTemplateDirective } from './repeat-template.directive';
 import { mockApp } from '../../../test/util/component-test-util';
 import { App } from '@wm/core';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<div wmRepeatTemplate></div>'
 })
 class TestComponent { }

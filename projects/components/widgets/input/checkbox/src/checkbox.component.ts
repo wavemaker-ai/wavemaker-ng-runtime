@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
+import { ChangeDetectionStrategy,
     AfterViewInit,
     Attribute,
     Component,
@@ -51,6 +51,7 @@ export const unStringify = (val, defaultVal?) => {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FormsModule],
     selector: '[wmCheckbox]',
@@ -155,7 +156,7 @@ export class CheckboxComponent extends BaseFormCustomComponent implements OnInit
         this.invokeOnChange(this.datavalue, {type: 'change'}, this.ngModel.valid);
     }
 
-    @HostListener('keydown.enter', ['$event', '"ENTER"'])
+    @HostListener('keydown.enter', ['$event'])
     onKeyDown($event) {
         $event.preventDefault();
         this.checkboxEl.nativeElement.click();

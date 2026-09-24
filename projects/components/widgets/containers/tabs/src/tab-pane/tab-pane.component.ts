@@ -1,4 +1,4 @@
-import {
+import { ChangeDetectionStrategy,
     AfterViewInit,
     Attribute,
     Component,
@@ -33,6 +33,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'div[wmTabPane]',
     templateUrl: './tab-pane.component.html',

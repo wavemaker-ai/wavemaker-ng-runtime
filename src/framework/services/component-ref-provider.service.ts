@@ -1,4 +1,4 @@
-import { ComponentFactoryResolver, Injectable, Inject } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 
 import { ComponentRefProvider, ComponentType } from '@wm/runtime/base';
 import { LazyComponentRefProviderService } from './lazy-component-ref-provider.service';
@@ -16,7 +16,7 @@ export class ComponentRefProviderService extends ComponentRefProvider {
         componentRefCache.get(type).set(name, {ref: ref, componentFactory: componentFactory});
     }
 
-    constructor(private componentFactoryResolver: ComponentFactoryResolver, @Inject(LazyComponentRefProviderService) private lazyComponentRef) {
+    constructor(@Inject(LazyComponentRefProviderService) private lazyComponentRef) {
         super();
     }
 
@@ -36,8 +36,13 @@ export class ComponentRefProviderService extends ComponentRefProvider {
         if (!value) {
             return Promise.resolve(null);
         }
+        // Angular 22 removed ComponentFactoryResolver / ComponentFactory-based createComponent()
+        // entirely — value.ref is already a component class (registered via
+        // ComponentRefProviderService.registerComponentRef), which the new
+        // ViewContainerRef.createComponent(Type, options) API accepts directly. No factory
+        // resolution step needed at all anymore.
         if (!value.componentFactory) {
-            value.componentFactory = this.componentFactoryResolver.resolveComponentFactory(value.ref);
+            value.componentFactory = value.ref;
         }
         return Promise.resolve(value.componentFactory);
     }

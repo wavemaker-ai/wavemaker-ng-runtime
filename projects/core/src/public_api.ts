@@ -150,6 +150,7 @@ export {
     unMuteWatchers,
     $watch,
     $unwatch,
+    getNgZone,
     setNgZone,
     setAppRef,
     isChangeFromWatch,

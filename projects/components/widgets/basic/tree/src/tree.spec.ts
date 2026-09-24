@@ -1,5 +1,5 @@
 import { waitForAsync, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 
 import { TreeComponent } from "./tree.component";
 import { PipeProvider } from "../../../../../runtime-base/src/services/pipe-provider.service";
@@ -20,6 +20,8 @@ const markup = `
 `;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class TreeSpec {

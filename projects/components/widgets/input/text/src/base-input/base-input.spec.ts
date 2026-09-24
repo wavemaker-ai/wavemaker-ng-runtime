@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgModel } from '@angular/forms';
-import { Component, ElementRef, Injector } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, Injector } from '@angular/core';
 import { IWidgetConfig, styler, WidgetConfig } from '@wm/components/base';
 import { BaseInput } from './base-input';
 import { addClass, App } from '@wm/core';
@@ -35,6 +35,8 @@ class MockInjector extends Injector {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<input [(ngModel)]="value">'
 })
 class TestInputComponent extends BaseInput {

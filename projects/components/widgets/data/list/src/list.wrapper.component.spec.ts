@@ -1,6 +1,6 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
 import { AbstractI18nService, App, AppDefaults, DataSource, setPipeProvider } from '@wm/core';
-import { Component, QueryList, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, QueryList, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ListComponent } from './list.component';
@@ -42,6 +42,8 @@ jest.mock('jquery', () => jest.fn(() => ({
 })));
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: `
         <div wmList template="true" itemsperrow="xs-1 sm-1 md-1 lg-1" class="media-list" name="testlist"
              dataset.bind="testdata" navigation="Basic"
@@ -80,7 +82,7 @@ describe('ListComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 FormsModule,
-                PaginationModule.forRoot(),
+                PaginationModule,
                 WmPaginationModule,
                 ListComponent, ListItemDirective
             ],
@@ -1901,7 +1903,7 @@ describe('ListComponent With groupby', () => {
         TestBed.configureTestingModule({
             imports: [
                 FormsModule,
-                PaginationModule.forRoot(),
+                PaginationModule,
                 WmPaginationModule, ListComponent, ListItemDirective
             ],
             declarations: [ListWrapperComponent],

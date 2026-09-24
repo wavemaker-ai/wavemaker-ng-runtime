@@ -1,4 +1,4 @@
-import { Component, NO_ERRORS_SCHEMA, ViewChild, TemplateRef, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NO_ERRORS_SCHEMA, ViewChild, TemplateRef, ElementRef } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { PartialDialogComponent } from './partial-dialog.component';
@@ -35,6 +35,8 @@ class MockAbstractDialogService {
 const markup = `<div wmPartialDialog></div>`;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class PartialDialogWrapperComponent {

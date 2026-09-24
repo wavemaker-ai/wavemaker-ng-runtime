@@ -1,5 +1,5 @@
 import { TextContentDirective } from "@wm/components/base";
-import {Component, Inject, Injector, Optional, SecurityContext} from '@angular/core';
+import { ChangeDetectionStrategy,Component, Inject, Injector, Optional, SecurityContext} from '@angular/core';
 import {SafeResourceUrl} from '@angular/platform-browser';
 
 import {encodeUrl, isInsecureContentRequest} from '@wm/core';
@@ -14,6 +14,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TextContentDirective],
     selector: '[wmIframe]',

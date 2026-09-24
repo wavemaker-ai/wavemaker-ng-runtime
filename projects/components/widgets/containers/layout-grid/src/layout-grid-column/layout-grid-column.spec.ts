@@ -1,5 +1,5 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { LayoutGridColumnDirective } from './layout-grid-column.directive';
 import { Viewport } from '@wm/core';
 import * as coreModule from '@wm/core';
@@ -22,6 +22,8 @@ jest.mock('@wm/components/base', () => ({
 
 // Create a test component
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: '<div wmLayoutGridColumn height="100px"></div>'
 })
 class TestComponent {

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, ElementRef, Inject, Injector } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, Inject, Injector } from '@angular/core';
 import { MenuAdapterComponent } from './menu-adapator.component';
 import { MenuComponent } from './menu.component';
 import { QueryList } from '@angular/core';
@@ -7,6 +7,8 @@ import { App } from '@wm/core';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     selector: 'app-test-menu-adapter',
     template: '<div></div>'
 })

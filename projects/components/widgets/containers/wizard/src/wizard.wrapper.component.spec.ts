@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import { WizardComponent } from './wizard.component';
 import { FormsModule } from '@angular/forms';
 import { waitForAsync, ComponentFixture } from '@angular/core/testing';
@@ -30,6 +30,8 @@ const markup = `
     `;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false,
     template: markup
 })
 class WizardWrapperComponent {

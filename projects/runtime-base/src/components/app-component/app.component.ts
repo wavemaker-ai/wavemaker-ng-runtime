@@ -1,9 +1,10 @@
 import {CommonModule} from '@angular/common';
 import {AlertDialogComponent} from '@wm/components/dialogs/alert-dialog';
 import {ConfirmDialogComponent} from '@wm/components/dialogs/confirm-dialog';
-import {
+import { ChangeDetectionStrategy,
     AfterViewInit,
     ApplicationRef,
+    ChangeDetectorRef,
     Component,
     DoCheck,
     ElementRef,
@@ -54,6 +55,7 @@ interface SPINNER {
     arialabel: string;
 }
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, RouterOutlet, AlertDialogComponent, ConfirmDialogComponent, DialogComponent, AppSpinnerComponent, ContainerDirective, PartialParamHandlerDirective , PartialContainerDirective],
     selector: 'app-root',
@@ -79,12 +81,13 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
     spinner: SPINNER = { show: false, messages: [], arialabel: '' };
     constructor(
         _pipeProvider: PipeProvider,
-        _appRef: ApplicationRef,
+        private _appRef: ApplicationRef,
+        private cdr: ChangeDetectorRef,
         private elRef: ElementRef,
         private oAuthService: OAuthService,
         private dialogService: AbstractDialogService,
         private spinnerService: AbstractSpinnerService,
-        ngZone: NgZone,
+        private ngZone: NgZone,
         private router: Router,
         public app: App,
         private appManager: AppManagerService,
@@ -113,15 +116,20 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         // Subscribe to the message source to show/hide app spinner
         this.spinnerService.getMessageSource().asObservable().subscribe((data: any) => {
             // setTimeout is to avoid 'ExpressionChangedAfterItHasBeenCheckedError'
+            // Angular 21: same root cause as startApp above (see patterns §32) — needs an
+            // explicit trigger or the global spinner never hides, blocking all clicks underneath it.
             setTimeout(() => {
                 this.spinner.show = data.show;
                 this.spinner.messages = data.messages;
                 this.spinner.arialabel = data.messages.toString();
+                this.cdr.detectChanges();
             });
         });
 
-        // set theme to bs3 on ngx-bootstrap. This avoids runtime calculation to determine bs theme. Thus resolves performance.
-        setTheme('bs3');
+        // set theme on ngx-bootstrap. This avoids runtime calculation to determine bs theme. Thus resolves performance.
+        // NOTE: ngx-bootstrap 19 dropped 'bs3' from AvailableBsVersions ('bs4' | 'bs5' only) — pinned to 'bs4' as the
+        // closer match to the prior 'bs3' behavior; verify no visual regression in Step 9 preview validation.
+        setTheme('bs4');
 
         let spinnerId;
 
@@ -192,8 +200,18 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         //to fix the issue that happens only in the development mode
         //ExpressionChangedAfterItHasBeenCheckedError
         //fix: https://blog.angular-university.io/angular-debugging/
+        // Angular 21: this setTimeout callback is no longer reliably picked up by the zone-based
+        // change detection scheduler (confirmed via preview validation — startApp flipped to true
+        // in the component but the @if(startApp) template block never re-rendered until a manual
+        // detectChanges()). ApplicationRef.tick() (even in a separate later task) throws NG0100 for
+        // this exact transition — @if's first-ever activation always looks like a branch-index
+        // change (-1 -> 0) to Angular's dev-mode checkNoChanges pass, which tick() always runs.
+        // ChangeDetectorRef.detectChanges(), scoped to just this component, does not run that
+        // second verification pass and renders cleanly (confirmed via Angular DevTools' own
+        // ng.applyChanges(), which uses this exact mechanism, before writing this fix).
         setTimeout(() => {
             this.startApp = true;
+            this.cdr.detectChanges();
         });
         setTimeout(() => {
             this.app.dynamicComponentContainerRef = this.dynamicComponentContainerRef;
