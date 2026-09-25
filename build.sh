@@ -361,6 +361,14 @@ buildApp() {
     ngPackagrBuild runtime-base projects/runtime-base '@wm/runtime/base'
     ngPackagrBuild runtime-dynamic projects/runtime-dynamic '@wm/runtime/dynamic'
 
+    # dist/transpilation/*.cjs.js, consumed by ng-codegen's Node-side expression parser
+    # (see bundle-angular-app-cli.sh's cp of these files) -- must be rebuilt whenever any
+    # of its source libraries changed, and unconditionally on a clean/CI checkout where it
+    # doesn't exist yet at all.
+    if [[ "${sourceModified}" == true ]] || ! [[ -f dist/transpilation/pipe-provider.cjs.js ]]; then
+        execCommand rollup transpilation "$ROLLUP -c config/rollup.build-task.mjs --silent"
+    fi
+
     if [[ "${sourceModified}" == true ]]; then
         buildWMComponentUmdLibs
         bundleWeb
