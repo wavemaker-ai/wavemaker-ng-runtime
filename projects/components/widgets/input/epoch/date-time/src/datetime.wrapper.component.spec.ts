@@ -220,15 +220,17 @@ describe("DatetimeComponent", () => {
         expect(dateInputControl.nativeElement.getAttribute('accesskey')).toEqual('t');
     }));
 
-    it('should show the date pattern as yyyy-MM-ddTHH:mm:ss format', fakeAsync(() => {
-        (wmComponent as any).datepattern = 'yyyy-MM-ddTHH:mm:ss';
+    it('should show the date pattern as yyyy-MM-ddTHH:mm:ss format', async () => {
+        // getFormattedDate is jest.mock()'d at the top of this file (returns undefined by
+        // default), so the widget's displayValue/datavalue getters need it stubbed here to
+        // actually render a value that can be checked against the datepattern.
+        (getFormattedDate as jest.Mock).mockReturnValue('2023-01-01T10:30:00');
         fixture.detectChanges();
-        tick();  // Allow time for changes to be applied
-        datepatternTest(fixture, '.app-datetime', '.app-textbox');
-        tick();  // Allow time for the whenStable promise to resolve
-    }));
+        await datepatternTest(fixture, '.app-datetime', '.app-textbox');
+        (getFormattedDate as jest.Mock).mockReset();
+    });
 
-    xit('should be disabled mode', waitForAsync(() => {
+    it('should be disabled mode', waitForAsync(() => {
         (wmComponent as any).getWidget().disabled = true;
         fixture.detectChanges();
 
@@ -238,7 +240,7 @@ describe("DatetimeComponent", () => {
         });
     }));
 
-    xit('should be disabled mode (picker button)', waitForAsync(() => {
+    it('should be disabled mode (picker button)', waitForAsync(() => {
         (wmComponent as any).getWidget().disabled = true;
         fixture.detectChanges();
         hasAttributeCheck(fixture, '.btn-time', 'disabled');
@@ -268,14 +270,14 @@ describe("DatetimeComponent", () => {
 
     /************************* Validation starts ****************************************** **/
 
-    xit('should be required validation ', waitForAsync(() => {
+    it('should be required validation ', waitForAsync(() => {
         fixture.whenStable().then(() => {
             let dateInputControl = getHtmlSelectorElement(fixture, '.app-textbox');
             expect(dateInputControl.nativeElement.hasAttribute('required')).toBe(true);
         });
     }));
 
-    xit('should respect the mindate validation', waitForAsync(() => {
+    it('should respect the mindate validation', waitForAsync(() => {
         (wmComponent as any).getWidget().datavalue = getFormatedDate('2019-11-01');
 
         checkElementClass(fixture, '.app-datetime', 'ng-invalid');
@@ -283,7 +285,7 @@ describe("DatetimeComponent", () => {
     }));
 
 
-    xit('should ignore the  excluded days', waitForAsync(() => {
+    it('should ignore the  excluded days', waitForAsync(() => {
         (wmComponent as any).getWidget().excludedays = '1,6';
         (wmComponent as any).getWidget().datavalue = getFormatedDate('2019-12-30');
         checkElementClass(fixture, '.app-datetime', 'ng-invalid');

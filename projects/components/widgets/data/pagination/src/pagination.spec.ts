@@ -1,6 +1,12 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
 import {PaginationComponent} from './pagination.component';
-import {App, AppConstants, DataSource} from '@wm/core';
+
+jest.mock('@wm/core', () => ({
+    ...jest.requireActual('@wm/core'),
+    adjustVerticalPosition: jest.fn()
+}));
+
+import {App, AppConstants, DataSource, adjustVerticalPosition} from '@wm/core';
 import {mockApp} from 'projects/components/base/src/test/util/component-test-util';
 import {WidgetRef} from '@wm/components/base';
 import {NO_ERRORS_SCHEMA} from '@angular/compiler';
@@ -991,6 +997,311 @@ describe('PaginationComponent', () => {
             expect(component.setDefaultPagingValues).toHaveBeenCalledWith(0, 1, 2);
             expect(component.disableNavigation).toHaveBeenCalled();
             expect(component.setResult).toHaveBeenCalledWith([]);
+        });
+    });
+
+    describe('onOpenChange', () => {
+        let mockFocus: jest.Mock;
+        let mockEq: jest.Mock;
+
+        beforeEach(() => {
+            mockFocus = jest.fn();
+            mockEq = jest.fn().mockReturnValue({ focus: mockFocus });
+            (global as any).$ = jest.fn().mockReturnValue({ eq: mockEq });
+            jest.useFakeTimers();
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it('should focus the currently selected page size option, not the first one', () => {
+            component.pageSizeOptions = [5, 10, 20, 50, 100];
+            component.maxResults = 20;
+
+            component.onOpenChange(true);
+
+            expect(component.focusedIndex).toBe(2);
+            jest.runAllTimers();
+            expect(mockEq).toHaveBeenCalledWith(2);
+            expect(mockFocus).toHaveBeenCalled();
+        });
+
+        it('should default to the first option when maxResults does not match any pageSizeOptions', () => {
+            component.pageSizeOptions = [5, 10, 20];
+            component.maxResults = 999;
+
+            component.onOpenChange(true);
+
+            expect(component.focusedIndex).toBe(0);
+        });
+
+        it('should not update focusedIndex when the dropdown is closed', () => {
+            component.pageSizeOptions = [5, 10, 20];
+            component.maxResults = 20;
+            component.focusedIndex = 3;
+
+            component.onOpenChange(false);
+
+            expect(component.focusedIndex).toBe(3);
+        });
+    });
+
+    describe('normalizeToNumberArray', () => {
+        it('should return an empty array for falsy input', () => {
+            expect(component.normalizeToNumberArray(null)).toEqual([]);
+            expect(component.normalizeToNumberArray(undefined)).toEqual([]);
+            expect(component.normalizeToNumberArray('')).toEqual([]);
+        });
+
+        it('should sort and coerce a real array of mixed types', () => {
+            expect(component.normalizeToNumberArray([30, '10', 20])).toEqual([10, 20, 30]);
+        });
+
+        it('should parse a JSON array string', () => {
+            expect(component.normalizeToNumberArray('[30,10,20]')).toEqual([10, 20, 30]);
+        });
+
+        it('should fall back to an empty array for malformed JSON-looking input', () => {
+            // Must both start with "[" and end with "]" to hit the JSON.parse/catch branch.
+            expect(component.normalizeToNumberArray('[30,10,]')).toEqual([]);
+        });
+
+        it('should parse a comma-separated string', () => {
+            expect(component.normalizeToNumberArray('30,10,20')).toEqual([10, 20, 30]);
+        });
+
+        it('should drop non-numeric entries', () => {
+            expect(component.normalizeToNumberArray('10,abc,20')).toEqual([10, 20]);
+        });
+
+        it('should return an empty array for unsupported input types', () => {
+            expect(component.normalizeToNumberArray(42)).toEqual([]);
+        });
+    });
+
+    describe('getPageDetails', () => {
+        it('should build the row summary when all indices are defined', () => {
+            component.getPageDetails(1, 10, 100);
+            expect(component.rowSummary).toEqual({ startIndex: 1, endIndex: 10, totalRecords: 100 });
+        });
+
+        it('should reset the row summary when any index is missing', () => {
+            component.getPageDetails(undefined, 10, 100);
+            expect(component.rowSummary).toEqual({});
+        });
+    });
+
+    describe('invokeSetRecord', () => {
+        it('should delegate to the parent invokeEventCallback when a parent is present', () => {
+            component.dn.currentPage = 2;
+            component.maxResults = 10;
+            component.dataSize = 100;
+            component.pageCount = 10;
+            component.invokeSetRecord({ type: 'click' }, { id: 1 });
+            expect(component.parent.invokeEventCallback).toHaveBeenCalledWith('setrecord', expect.objectContaining({
+                $index: 2,
+                $data: { id: 1 },
+                data: { id: 1 },
+                pageInfo: { currentPage: 2, size: 10, totalElements: 100, totalPages: 10 }
+            }));
+        });
+
+        it('should invoke its own event callback when there is no parent', () => {
+            component.parent = null;
+            const invokeSpy = jest.spyOn(component, 'invokeEventCallback').mockImplementation(() => undefined as any);
+            component.invokeSetRecord({ type: 'click' }, { id: 1 });
+            expect(invokeSpy).toHaveBeenCalledWith('setrecord', expect.objectContaining({ $data: { id: 1 } }));
+        });
+    });
+
+    describe('setDataSource', () => {
+        it('should store the given datasource', () => {
+            const ds = { execute: jest.fn() };
+            component.setDataSource(ds);
+            expect(component.datasource).toBe(ds);
+        });
+    });
+
+    describe('onDropdownKeydown', () => {
+        beforeEach(() => {
+            component.pageSizeOptions = [10, 20, 30];
+            component.focusedIndex = 1;
+            (component as any).bsDropdown = { hide: jest.fn() };
+            jest.spyOn(component, 'onPageSizeChange').mockImplementation(() => undefined);
+            jest.spyOn(component, 'closeDropdown').mockImplementation(() => undefined);
+        });
+
+        it('should move focus to the next item on ArrowDown', () => {
+            const event = { key: 'ArrowDown', preventDefault: jest.fn() };
+            component.onDropdownKeydown(event, 1);
+            expect(component.focusedIndex).toEqual(2);
+        });
+
+        it('should wrap to the first item on ArrowDown past the last option', () => {
+            const event = { key: 'ArrowDown', preventDefault: jest.fn() };
+            component.onDropdownKeydown(event, 2);
+            expect(component.focusedIndex).toEqual(0);
+        });
+
+        it('should move focus to the previous item on ArrowUp', () => {
+            const event = { key: 'ArrowUp', preventDefault: jest.fn() };
+            component.onDropdownKeydown(event, 1);
+            expect(component.focusedIndex).toEqual(0);
+        });
+
+        it('should wrap to the last item on ArrowUp before the first option', () => {
+            const event = { key: 'ArrowUp', preventDefault: jest.fn() };
+            component.onDropdownKeydown(event, 0);
+            expect(component.focusedIndex).toEqual(2);
+        });
+
+        it('should treat Shift+Tab like ArrowUp', () => {
+            const event = { key: 'Tab', shiftKey: true, preventDefault: jest.fn() };
+            component.onDropdownKeydown(event, 1);
+            expect(component.focusedIndex).toEqual(0);
+        });
+
+        it('should treat Tab like ArrowDown', () => {
+            const event = { key: 'Tab', shiftKey: false, preventDefault: jest.fn() };
+            component.onDropdownKeydown(event, 1);
+            expect(component.focusedIndex).toEqual(2);
+        });
+
+        it('should select the focused option and close the dropdown on Enter', () => {
+            const event = { key: 'Enter', preventDefault: jest.fn() };
+            component.onDropdownKeydown(event, 1);
+            expect(component.onPageSizeChange).toHaveBeenCalledWith(event, 20);
+            expect(component.closeDropdown).toHaveBeenCalled();
+        });
+
+        it('should close the dropdown on Escape', () => {
+            const event = { key: 'Escape', preventDefault: jest.fn() };
+            component.onDropdownKeydown(event, 1);
+            expect(component.closeDropdown).toHaveBeenCalled();
+        });
+
+        it('should ignore any other key', () => {
+            const event = { key: 'a', preventDefault: jest.fn() };
+            component.onDropdownKeydown(event, 1);
+            expect(event.preventDefault).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('closeDropdown', () => {
+        it('should hide the dropdown and return focus to the toggle button', () => {
+            const hide = jest.fn();
+            const focus = jest.fn();
+            (component as any).bsDropdown = { hide };
+            jest.spyOn(global, '$' as any).mockReturnValue({ focus });
+            component.closeDropdown();
+            expect(hide).toHaveBeenCalled();
+            expect(focus).toHaveBeenCalled();
+        });
+    });
+
+    describe('onPageSizeChange', () => {
+        beforeEach(() => {
+            component.maxResults = 10;
+            component.parent.statePersistence.getWidgetState = jest.fn().mockReturnValue({});
+            jest.spyOn(component, 'navigatePage').mockImplementation(() => undefined as any);
+            jest.spyOn(component, 'calculatePagingValues').mockImplementation(() => undefined);
+        });
+
+        it('should update maxResults and notify listeners', () => {
+            component.onPageSizeChange({} as any, '20');
+            expect(component.maxResults).toEqual(20);
+            expect(component.navigatePage).toHaveBeenCalledWith('first', {}, true);
+            expect(component.calculatePagingValues).toHaveBeenCalled();
+        });
+
+        it('should push the new page size onto the datasource when it supports paging', () => {
+            component.datasource = { maxResults: 0 };
+            jest.spyOn(component as any, 'isDataSourceHasPaging').mockReturnValue(true);
+            component.onPageSizeChange({} as any, '25');
+            expect((component.datasource as any).maxResults).toEqual(25);
+        });
+
+        it('should persist updated selected-item state when one is present', () => {
+            component.parent.statePersistence.getWidgetState = jest.fn().mockReturnValue({
+                selectedItem: [{ page: 1, index: 0 }]
+            });
+            component.onPageSizeChange({} as any, '5');
+            expect(component.parent.statePersistence.setWidgetState).toHaveBeenCalledWith(
+                component.parent,
+                expect.objectContaining({ selectedItem: expect.any(Array) })
+            );
+        });
+
+        it('should stop propagation and close the dropdown when triggered from within a popover', () => {
+            const popover = document.createElement('div');
+            popover.className = 'popover';
+            (component as any).nativeElement = document.createElement('span');
+            popover.appendChild((component as any).nativeElement);
+            document.body.appendChild(popover);
+            (component as any).bsDropdown = { hide: jest.fn() };
+            const event = { stopPropagation: jest.fn() };
+            component.onPageSizeChange(event as any, '15');
+            expect(event.stopPropagation).toHaveBeenCalled();
+            expect((component as any).bsDropdown.hide).toHaveBeenCalled();
+            document.body.removeChild(popover);
+        });
+    });
+
+    describe('onDropDownShown / onDropdownScroll / onDropdownHidden', () => {
+        it('should do nothing when the event carries no element', () => {
+            expect(() => component.onDropDownShown({})).not.toThrow();
+        });
+
+        it('should register a scroll handler that delegates to onDropdownScroll', () => {
+            const addEventListenerSpy = jest.spyOn(window, 'addEventListener');
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            (component as any).bsDropdown = { _dropdown: {} };
+            component.onDropDownShown({ _element: { nativeElement: container } });
+            expect(addEventListenerSpy).toHaveBeenCalledWith('scroll', expect.any(Function), true);
+            document.body.removeChild(container);
+        });
+
+        it('onDropdownScroll should be a safe no-op', () => {
+            expect(() => component.onDropdownScroll()).not.toThrow();
+        });
+
+        it('onDropdownHidden should remove the registered scroll handler', () => {
+            const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
+            const handler = () => undefined;
+            (component as any).dropdownScrollHandler = handler;
+            component.onDropdownHidden();
+            expect(removeEventListenerSpy).toHaveBeenCalledWith('scroll', handler, true);
+            expect((component as any).dropdownScrollHandler).toBeUndefined();
+        });
+
+        it('onDropdownHidden should do nothing when there is no handler registered', () => {
+            (component as any).dropdownScrollHandler = undefined;
+            expect(() => component.onDropdownHidden()).not.toThrow();
+        });
+    });
+
+    describe('ngAfterViewInit', () => {
+        it('should stop propagation on native clicks within the widget', () => {
+            component.ngAfterViewInit();
+            const event = { stopPropagation: jest.fn() };
+            (component as any).nativeElement.onclick(event);
+            expect(event.stopPropagation).toHaveBeenCalled();
+        });
+    });
+
+    describe('ngOnDestroy', () => {
+        it('should clear timers, listeners and references without throwing', () => {
+            const handler = () => undefined;
+            (component as any).dropdownScrollHandler = handler;
+            (component as any)._initTimeoutId = setTimeout(() => undefined, 1000);
+            component.pageSizeOptions = [10, 20];
+            component.defaultPageSizeOptions = [10, 20];
+            expect(() => component.ngOnDestroy()).not.toThrow();
+            expect(component.datasource).toBeNull();
+            expect(component.parent).toBeNull();
+            expect(component.pageSizeOptions).toEqual([]);
         });
     });
 

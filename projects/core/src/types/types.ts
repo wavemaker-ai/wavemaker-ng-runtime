@@ -63,7 +63,6 @@ export abstract class App {
     Actions: any;
     onAppVariablesReady: Function;
     onSessionTimeout: Function;
-    isSessionTimeoutOverridden: boolean;
     onBeforeAppReady: Function;
     onPageReady: Function;
     onBeforePageLeave: Function;

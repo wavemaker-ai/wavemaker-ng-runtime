@@ -27,7 +27,7 @@ export const getElementByTagOnDocQuery = (tagName: string) => {
 }
 
 export const checkElementClass = (fixture, cssquery: string, eleClass: string) => {
-    fixture.whenStable().then(() => {
+    return fixture.whenStable().then(() => {
         let dateControl = getHtmlSelectorElement(fixture, cssquery);
 
         fixture.detectChanges();
@@ -62,7 +62,7 @@ export const onClickCheckTaglengthOnBody =
 export const onClickCheckClassEleLengthOnBody = (fixture, selector: string, classquery: string, expectedEleLength: number, callback?: Function) => {
     let element = getHtmlSelectorElement(fixture, selector)
     element.nativeElement.click();
-    fixture.whenStable().then(() => {
+    return fixture.whenStable().then(() => {
         expect(document.getElementsByClassName(classquery).length).toBeGreaterThanOrEqual(expectedEleLength);
         if (callback) {
             callback();
@@ -72,7 +72,7 @@ export const onClickCheckClassEleLengthOnBody = (fixture, selector: string, clas
 };
 
 export const hasAttributeCheck = (fixture, selector: string, attribute: string) => {
-    fixture.whenStable().then(() => {
+    return fixture.whenStable().then(() => {
         let element = getHtmlSelectorElement(fixture, selector);
         expect(element.nativeElement.hasAttribute(attribute)).toBe(true);
     });

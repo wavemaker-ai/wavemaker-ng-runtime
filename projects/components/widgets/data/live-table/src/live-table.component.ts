@@ -71,7 +71,7 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
         super.ngAfterContentInit();
         if (this.table) {
             this.table._liveTableParent = this;
-            
+
             // Defer live-table configuration to ensure parent table datatable is initialized (Angular 20 timing)
             const configureLiveTable = () => {
                 if (typeof this.table.datagridElement.datatable === 'function' && this.table.datagridElement.datatable('instance')) {
@@ -114,8 +114,12 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
 
     focusFirstInput() {
         const $firstInput = $(this.form.$element).find('input').first();
-        $firstInput.focus();
-        $firstInput.select();
+        if (!$firstInput.length || !$firstInput.is(':visible')) {
+            setTimeout(()=>{$firstInput.focus();  $firstInput.select();},200);
+        }else{
+            $firstInput.focus();
+            $firstInput.select();
+        }
     }
 
     onDialogOpen(action) {

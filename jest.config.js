@@ -19,8 +19,6 @@ module.exports = {
     "**/projects/**/*.spec.ts"
   ],
   testPathIgnorePatterns: [
-    'projects/components/widgets/data/table/src/table.wrapper.component.spec.ts',
-    'projects/components/widgets/data/form/src/form.wrapper.component.spec.ts',
     '/node_modules/',
     '/dist/',
   ],
@@ -28,25 +26,43 @@ module.exports = {
   collectCoverage: true,
   coverageReporters: ["html", "json-summary"],
   coveragePathIgnorePatterns: [
-    "libraries/scripts/tree-keyboard-navigation",
-    "libraries/scripts/jquery.ui.touch-punch",
-    "libraries/scripts/swipey",
-    ".yalc/@wavemaker-ai/variables/src/",
-    ".yalc/@wavemaker-ai/foundation-css",
+    // anything outside projects/, src/, libraries/ (and the .yalc ui-variables exception below)
+    "/node_modules/",
+    "/build-helpers/",
+    "/build-scripts/",
+    "/config/",
+    "/dependency-check-bin/",
+    "/dependency-check-reports/",
+    "<rootDir>/dist/",
+    "/docs/",
+    "/documentation/",
+    "/out-tsc/",
+    "/pwa-assets/",
+    "/tools/",
+    // any "scripts" folder anywhere (top-level scripts/, libraries/scripts/, vendored build scripts)
+    "/scripts/",
+    // libraries/swipey stays excluded; projects/swipey stays included except the vendored plugin file below
+    "libraries/swipey/",
+    // other .yalc-linked packages; @wavemaker-ai/variables is intentionally NOT excluded
+    ".yalc/@wavemaker/",
+    ".yalc/@wavemaker-ai/angular-app",
     ".yalc/@wavemaker-ai/custom-widgets-m3",
+    ".yalc/@wavemaker-ai/foundation-css",
+    // vendored third-party files inside projects/
+    "projects/components/widgets/basic/tree/src/keyboard-navigation.js",
+    "projects/jquery.ui.touch-punch/jquery.ui.touch-punch.min.js",
+    "projects/swipey/src/swipey.jquery.plugin.js",
     "projects/components/base/src/test/"
   ],
-  // collectCoverageFrom: [
-  //     '**/*.{ts,tsx}',
-  //     '!**/node_modules/**',
-  //     '!**/dist/**'
-  // ],
   coverageDirectory: "coverage",
   moduleNameMapper: {
     "@wavemaker-ai/variables": `<rootDir>/${variablesEntry || '.yalc/@wavemaker-ai/variables/index.js'}`,
     "@fullcalendar/(.*)$": "<rootDir>/node_modules/@fullcalendar/core/index.cjs",
     "^jQuery$": "jquery",
     "@wm/security": "<rootDir>/projects/security/src/public_api.ts",
+    "@wm/variables": "<rootDir>/projects/variables/src/public_api.ts",
+    "@wm/oAuth": "<rootDir>/projects/oAuth/src/public_api.ts",
+    "@wm/http": "<rootDir>/projects/http-service/src/public_api.ts",
     "@wm/swipey": "<rootDir>/projects/swipey/src/public_api.ts",
     "@swipey": "<rootDir>/projects/swipey/src/public_api.ts",
     "@wm/components/base": "<rootDir>/projects/components/base/index.ts",

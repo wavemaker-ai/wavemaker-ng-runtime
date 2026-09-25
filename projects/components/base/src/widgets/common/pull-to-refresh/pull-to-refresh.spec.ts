@@ -23,6 +23,7 @@ describe('PullToRefresh', () => {
         show: jest.fn(),
         hide: jest.fn(),
         removeClass: jest.fn(),
+        remove: jest.fn(),
       }),
       // Add this line to mock the array-like behavior of jQuery objects
       0: {
@@ -54,6 +55,11 @@ describe('PullToRefresh', () => {
 
   test('threshold returns 10', () => {
     expect(pullToRefresh.threshold()).toBe(10);
+  });
+
+  test('direction returns swipey VERTICAL constant', () => {
+    ($ as any).fn = { swipey: { DIRECTIONS: { VERTICAL: 'VERTICAL' } } };
+    expect(pullToRefresh.direction()).toBe('VERTICAL');
   });
 
 
@@ -116,6 +122,20 @@ describe('PullToRefresh', () => {
     const context = pullToRefresh.context();
     expect(context).toHaveProperty('spin');
     expect(typeof context['spin']).toBe('function');
+  });
+
+  test('context spin callback doubles the drag delta and forwards it to the spinner', () => {
+    const mockSpinner = {
+      start: jest.fn(),
+      stop: jest.fn(),
+      setRotation: jest.fn(),
+    };
+    pullToRefresh['spinner'] = mockSpinner as any;
+
+    const context = pullToRefresh.context();
+    context['spin'](15);
+
+    expect(mockSpinner.setRotation).toHaveBeenCalledWith(30);
   });
 
   test('animation returns correct object for Android', () => {
@@ -278,6 +298,183 @@ describe('PullToRefresh', () => {
       pullToRefresh.bounds(mockEvent, mockD);
 
       expect(mockEl.find('.ios-spinner')).toBeDefined();
+    });
+  });
+
+  describe('context iOS branch', () => {
+    test('adds the entry class for iOS', () => {
+      (isIos as jest.Mock).mockReturnValue(true);
+      pullToRefresh = new PullToRefresh(mockEl, mockApp, mockOnPullToRefresh);
+      pullToRefresh.context();
+      expect(pullToRefresh['infoContainer'].addClass).toHaveBeenCalledWith('entry');
+    });
+  });
+
+  describe('onAnimation timeout behavior', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      pullToRefresh['spinner'] = { start: jest.fn(), stop: jest.fn(), setRotation: jest.fn() } as any;
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    test('calls stopAnimation when runAnimation is not set', () => {
+      const stopSpy = jest.spyOn(pullToRefresh, 'stopAnimation').mockImplementation(() => undefined);
+      pullToRefresh['runAnimation'] = false;
+      pullToRefresh.onAnimation();
+      jest.runAllTimers();
+      expect(stopSpy).toHaveBeenCalled();
+    });
+
+    test('does not call stopAnimation when runAnimation is true', () => {
+      const stopSpy = jest.spyOn(pullToRefresh, 'stopAnimation').mockImplementation(() => undefined);
+      pullToRefresh['runAnimation'] = true;
+      pullToRefresh.onAnimation();
+      jest.runAllTimers();
+      expect(stopSpy).not.toHaveBeenCalled();
+    });
+
+    test('does not throw when onPullToRefresh callback is not provided', () => {
+      const instance = new PullToRefresh(mockEl, mockApp, undefined as any);
+      instance['spinner'] = { start: jest.fn(), stop: jest.fn(), setRotation: jest.fn() } as any;
+      expect(() => instance.onAnimation()).not.toThrow();
+      jest.runAllTimers();
+    });
+  });
+
+  describe('destroy', () => {
+    test('cleans up subscription, animation, spinner and infoContainer', () => {
+      const cancelSpy = jest.fn();
+      pullToRefresh['cancelSubscription'] = cancelSpy;
+      pullToRefresh['animationInProgress'] = true;
+      const stopAnimationSpy = jest.spyOn(pullToRefresh, 'stopAnimation').mockImplementation(() => undefined);
+      const mockSpinner = { start: jest.fn(), stop: jest.fn(), setRotation: jest.fn() };
+      pullToRefresh['spinner'] = mockSpinner as any;
+      const infoContainerRef = pullToRefresh['infoContainer'];
+
+      pullToRefresh.destroy();
+
+      expect(cancelSpy).toHaveBeenCalled();
+      expect(pullToRefresh['cancelSubscription']).toBeNull();
+      expect(stopAnimationSpy).toHaveBeenCalled();
+      expect(mockSpinner.stop).toHaveBeenCalled();
+      expect(pullToRefresh['spinner']).toBeNull();
+      expect(infoContainerRef.remove).toHaveBeenCalled();
+      expect(pullToRefresh['infoContainer']).toBeNull();
+    });
+
+    test('is a no-op safe call when nothing is set', () => {
+      pullToRefresh['cancelSubscription'] = null;
+      pullToRefresh['animationInProgress'] = false;
+      pullToRefresh['spinner'] = null;
+      pullToRefresh['infoContainer'] = null;
+      expect(() => pullToRefresh.destroy()).not.toThrow();
+    });
+  });
+
+  describe('Spinner internal behavior with real jQuery', () => {
+    let realJQuery: any;
+    let hostEl: any;
+    let realPullToRefresh: PullToRefresh;
+
+    beforeEach(() => {
+      realJQuery = require('jquery');
+      (global as any).$ = realJQuery;
+      hostEl = realJQuery('<div></div>');
+      document.body.appendChild(hostEl[0]);
+      mockApp = { subscribe: jest.fn() };
+      mockOnPullToRefresh = jest.fn();
+    });
+
+    afterEach(() => {
+      hostEl.remove();
+    });
+
+    test('AndroidSpinner start/setRotation/stop manipulate the DOM', () => {
+      (isIos as jest.Mock).mockReturnValue(false);
+      realPullToRefresh = new PullToRefresh(hostEl, mockApp, mockOnPullToRefresh);
+      realPullToRefresh.bounds({} as any, 0);
+      const spinner: any = realPullToRefresh['spinner'];
+      expect(spinner).toBeDefined();
+
+      jest.useFakeTimers();
+      spinner.start();
+      expect(hostEl.find('.android-spinner').hasClass('spin')).toBe(true);
+      jest.advanceTimersByTime(500);
+      spinner.stop();
+      expect(hostEl.find('.android-spinner').hasClass('spin')).toBe(false);
+      jest.useRealTimers();
+    });
+
+    test('IOSSpinner start/setRotation/stop manipulate the DOM', () => {
+      (isIos as jest.Mock).mockReturnValue(true);
+      realPullToRefresh = new PullToRefresh(hostEl, mockApp, mockOnPullToRefresh);
+      realPullToRefresh.bounds({} as any, 0);
+      const spinner: any = realPullToRefresh['spinner'];
+      expect(spinner).toBeDefined();
+
+      jest.useFakeTimers();
+      spinner.start();
+      expect(hostEl.find('.ios-spinner svg line').length).toBeGreaterThan(0);
+      jest.advanceTimersByTime(100);
+      spinner.stop();
+      jest.useRealTimers();
+    });
+
+    test('AndroidSpinner setRotation updates the arc path directly and reuses an existing initialization', () => {
+      (isIos as jest.Mock).mockReturnValue(false);
+      realPullToRefresh = new PullToRefresh(hostEl, mockApp, mockOnPullToRefresh);
+      realPullToRefresh.bounds({} as any, 0);
+      const spinner: any = realPullToRefresh['spinner'];
+
+      // First call initializes the spinner (small arc, <= 180 degrees).
+      spinner.setRotation(90);
+      const pathEl = hostEl.find('.android-spinner path');
+      const firstD = pathEl.attr('d');
+      expect(firstD).toContain('M');
+      expect(hostEl.find('.android-spinner').length).toBe(1);
+
+      // Second call must hit the "already initialized" guard in init() instead of
+      // appending another svg/container, while still updating the path (large arc, > 180 degrees).
+      spinner.setRotation(200);
+      const secondD = pathEl.attr('d');
+      expect(secondD).not.toBe(firstD);
+      expect(hostEl.find('.android-spinner').length).toBe(1);
+    });
+
+    test('AndroidSpinner start() interval traverses the large-arc and wrap-around branches', () => {
+      (isIos as jest.Mock).mockReturnValue(false);
+      realPullToRefresh = new PullToRefresh(hostEl, mockApp, mockOnPullToRefresh);
+      realPullToRefresh.bounds({} as any, 0);
+      const spinner: any = realPullToRefresh['spinner'];
+      const describeArcSpy = jest.spyOn(spinner, 'describeArc');
+
+      jest.useFakeTimers();
+      spinner.start();
+      // interval = (1800 * 10) / 360 = 50ms; 80 ticks pushes i past both the
+      // ">360" (720 - i) branch and the ">720" (wrap back to 0) branch.
+      jest.advanceTimersByTime(50 * 80);
+      spinner.stop();
+      jest.useRealTimers();
+
+      const endAngles = describeArcSpy.mock.calls.map((call: any[]) => call[4]);
+
+      // The "720 - i" branch (i > 360) counts back down to 0 as i keeps climbing,
+      // producing a strictly decreasing run of angles - proof that branch executed.
+      expect(endAngles.some((deg, idx) => idx > 0 && deg < endAngles[idx - 1])).toBe(true);
+
+      // Angle 0 is reachable two different ways: once when the countdown above hits
+      // exactly 0 (i === 720), and again on the very next tick when i > 720 wraps
+      // back to 0. Seeing it at least twice proves the wrap-around branch also ran
+      // (a single occurrence would mean only the countdown branch fired).
+      expect(endAngles.filter(deg => deg === 0).length).toBeGreaterThanOrEqual(2);
+
+      // Both the small-arc (<=180) and large-arc (>180) paths of describeArc's
+      // sweep-flag ternary were exercised while counting up/down through 180-360.
+      expect(endAngles.some(deg => deg > 0 && deg <= 180)).toBe(true);
+      expect(endAngles.some(deg => deg > 180)).toBe(true);
     });
   });
 });

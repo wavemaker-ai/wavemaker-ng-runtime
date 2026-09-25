@@ -440,6 +440,359 @@ describe("TimeComponent", () => {
             expect(((wmComponent as any).displayInputElem as HTMLInputElement).value).toBe('12:30');
         });
     });
+
+    describe('datavalue', () => {
+        it('should return CURRENT_TIME while tracking the current time with no resolved value yet', () => {
+            (wmComponent as any).isCurrentTime = true;
+            (wmComponent as any).bsTimeValue = undefined;
+            expect(wmComponent.datavalue).toEqual('CURRENT_TIME');
+        });
+
+        it('should set isCurrentTime and start the interval for CURRENT_TIME', () => {
+            const setIntervalSpy = jest.spyOn(wmComponent as any, 'setTimeInterval');
+            wmComponent.datavalue = 'CURRENT_TIME';
+            expect((wmComponent as any).isCurrentTime).toBeTruthy();
+            expect(setIntervalSpy).toHaveBeenCalled();
+        });
+
+        it('should clear the interval and parse a real value', () => {
+            const clearIntervalSpy = jest.spyOn(wmComponent as any, 'clearTimeInterval');
+            wmComponent.datavalue = '10:30:00';
+            expect((wmComponent as any).isCurrentTime).toBeFalsy();
+            expect(clearIntervalSpy).toHaveBeenCalled();
+            expect((wmComponent as any).bsTimeValue).toBeInstanceOf(Date);
+        });
+
+        it('should clear the value entirely when set to a falsy value', () => {
+            wmComponent.datavalue = '10:30:00';
+            wmComponent.datavalue = undefined;
+            expect((wmComponent as any).bsTimeValue).toBeUndefined();
+            expect((wmComponent as any).isCurrentTime).toBeFalsy();
+        });
+    });
+
+    describe('displayValue / nativeDisplayValue / timestamp', () => {
+        it('should return an empty string display value without a time', () => {
+            (wmComponent as any).bsTimeValue = undefined;
+            expect(wmComponent.displayValue).toEqual('');
+        });
+
+        it('should return undefined timestamp without a time', () => {
+            (wmComponent as any).bsTimeValue = undefined;
+            expect(wmComponent.timestamp).toBeUndefined();
+        });
+
+        it('should return the epoch timestamp once a time is set', () => {
+            const date = new Date('2023-06-15T10:30:00');
+            (wmComponent as any).bsTimeValue = date;
+            expect(wmComponent.timestamp).toEqual(date.valueOf());
+        });
+    });
+
+    describe('onPropertyChange', () => {
+        it('should ignore tabindex changes', () => {
+            const superSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(wmComponent)), 'onPropertyChange');
+            wmComponent.onPropertyChange('tabindex', '2', '1');
+            expect(superSpy).not.toHaveBeenCalled();
+        });
+
+        it('should update the time pattern format', () => {
+            const updateFormatSpy = jest.spyOn(wmComponent as any, 'updateFormat');
+            wmComponent.onPropertyChange('timepattern', 'HH:mm', 'hh:mm a');
+            expect(updateFormatSpy).toHaveBeenCalledWith('timepattern');
+        });
+
+        it('should compute and validate mintime', () => {
+            const validateSpy = jest.spyOn(wmComponent as any, 'mintimeMaxtimeValidation');
+            wmComponent.onPropertyChange('mintime', '09:00:00', undefined);
+            expect((wmComponent as any).minTime).toBeInstanceOf(Date);
+            expect(validateSpy).toHaveBeenCalled();
+        });
+
+        it('should compute and validate maxtime', () => {
+            const validateSpy = jest.spyOn(wmComponent as any, 'mintimeMaxtimeValidation');
+            wmComponent.onPropertyChange('maxtime', '18:00:00', undefined);
+            expect((wmComponent as any).maxTime).toBeInstanceOf(Date);
+            expect(validateSpy).toHaveBeenCalled();
+        });
+
+        it('should delegate unrecognized property changes to the base implementation', () => {
+            expect(() => wmComponent.onPropertyChange('show', true, false)).not.toThrow();
+        });
+    });
+
+    describe('setValidateType / mintimeMaxtimeValidation', () => {
+        it('should not set a validate type when the time is in range', () => {
+            (wmComponent as any).timeNotInRange = false;
+            wmComponent.setValidateType(new Date(2023, 0, 1, 9), new Date(2023, 0, 1, 18), new Date(2023, 0, 1, 12));
+            expect((wmComponent as any).validateType).toBeUndefined();
+        });
+
+        it('should flag mintime as the validate type when the value is too early', () => {
+            (wmComponent as any).timeNotInRange = true;
+            wmComponent.setValidateType(new Date(2023, 0, 1, 9), new Date(2023, 0, 1, 18), new Date(2023, 0, 1, 8));
+            expect((wmComponent as any).validateType).toEqual('mintime');
+        });
+
+        it('should flag maxtime as the validate type when the value is too late', () => {
+            (wmComponent as any).timeNotInRange = true;
+            wmComponent.setValidateType(new Date(2023, 0, 1, 9), new Date(2023, 0, 1, 18), new Date(2023, 0, 1, 20));
+            expect((wmComponent as any).validateType).toEqual('maxtime');
+        });
+
+        it('should mark timeNotInRange when the current value falls outside mintime/maxtime', () => {
+            (wmComponent as any).minTime = new Date(2023, 0, 1, 9);
+            (wmComponent as any).maxTime = new Date(2023, 0, 1, 18);
+            (wmComponent as any).bsTimeValue = new Date(2023, 0, 1, 20);
+            (wmComponent as any).mintimeMaxtimeValidation();
+            expect((wmComponent as any).timeNotInRange).toBeTruthy();
+        });
+    });
+
+    describe('toggleDropdown', () => {
+        it('should focus the input for native pickers unless focus is explicitly skipped', () => {
+            (wmComponent as any).loadNativeDateInput = true;
+            const focusSpy = jest.spyOn(wmComponent, 'onDateTimeInputFocus').mockImplementation(() => undefined);
+            wmComponent.toggleDropdown({ type: 'click' });
+            expect(focusSpy).toHaveBeenCalled();
+        });
+
+        it('should skip focusing for native pickers when skipFocus is true', () => {
+            (wmComponent as any).loadNativeDateInput = true;
+            const focusSpy = jest.spyOn(wmComponent, 'onDateTimeInputFocus').mockImplementation(() => undefined);
+            wmComponent.toggleDropdown({ type: 'click' }, true);
+            expect(focusSpy).not.toHaveBeenCalled();
+        });
+
+        it('should invoke the click callback and toggle the dropdown open state', () => {
+            (wmComponent as any).loadNativeDateInput = false;
+            const invokeSpy = jest.spyOn(wmComponent, 'invokeEventCallback').mockImplementation(() => undefined as any);
+            (wmComponent as any).status.isopen = false;
+            wmComponent.toggleDropdown({ type: 'click' });
+            expect(invokeSpy).toHaveBeenCalledWith('click', { $event: { type: 'click' } });
+            expect((wmComponent as any).status.isopen).toBeTruthy();
+        });
+
+        it('should not toggle when the click target is an input and dropdown-on-input is disabled', () => {
+            (wmComponent as any).loadNativeDateInput = false;
+            (wmComponent as any).showdropdownon = 'button';
+            (wmComponent as any).status.isopen = false;
+            const input = document.createElement('input');
+            wmComponent.toggleDropdown({ type: 'click', target: input });
+            expect((wmComponent as any).status.isopen).toBeFalsy();
+        });
+    });
+
+    describe('preventTpClose', () => {
+        it('should stop immediate propagation and notify caption animation when inside a floating caption', () => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'app-composite-widget caption-floating';
+            wrapper.appendChild((wmComponent as any).nativeElement);
+            document.body.appendChild(wrapper);
+            const notifySpy = jest.spyOn((wmComponent as any).app, 'notify');
+            const $event = { stopImmediatePropagation: jest.fn() };
+            (wmComponent as any).preventTpClose($event);
+            expect($event.stopImmediatePropagation).toHaveBeenCalled();
+            expect(notifySpy).toHaveBeenCalledWith('captionPositionAnimate', expect.objectContaining({ nativeEl: expect.anything() }));
+            document.body.removeChild(wrapper);
+        });
+
+    });
+
+    describe('addBodyClickListener', () => {
+        it('should do nothing when skipListener is false', fakeAsync(() => {
+            expect(() => (wmComponent as any).addBodyClickListener(false)).not.toThrow();
+        }));
+    });
+
+    describe('onDisplayKeydown', () => {
+        it('should toggle the dropdown on Enter when dropdown-on-input is enabled', () => {
+            (wmComponent as any).showdropdownon = 'default';
+            const toggleSpy = jest.spyOn(wmComponent, 'toggleDropdown').mockImplementation(() => undefined);
+            const event = { key: 'Enter', stopPropagation: jest.fn(), preventDefault: jest.fn() };
+            wmComponent.onDisplayKeydown(event);
+            expect(toggleSpy).toHaveBeenCalledWith(event);
+        });
+
+        it('should toggle the dropdown on ArrowDown when dropdown-on-input is enabled', () => {
+            (wmComponent as any).showdropdownon = 'default';
+            const toggleSpy = jest.spyOn(wmComponent, 'toggleDropdown').mockImplementation(() => undefined);
+            const event = { key: 'ArrowDown', stopPropagation: jest.fn(), preventDefault: jest.fn() };
+            wmComponent.onDisplayKeydown(event);
+            expect(toggleSpy).toHaveBeenCalledWith(event);
+        });
+
+        it('should hide the dropdown for any other key when dropdown-on-input is enabled', () => {
+            (wmComponent as any).showdropdownon = 'default';
+            const hideSpy = jest.spyOn(wmComponent, 'hideTimepickerDropdown').mockImplementation(() => undefined);
+            const event = { key: 'a', stopPropagation: jest.fn() };
+            wmComponent.onDisplayKeydown(event);
+            expect(hideSpy).toHaveBeenCalled();
+        });
+
+        it('should hide the dropdown when dropdown-on-input is disabled', () => {
+            (wmComponent as any).showdropdownon = 'button';
+            const hideSpy = jest.spyOn(wmComponent, 'hideTimepickerDropdown').mockImplementation(() => undefined);
+            wmComponent.onDisplayKeydown({ key: 'Enter' });
+            expect(hideSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('onDisplayTimeChange', () => {
+        it('should abort silently on an invalid format', () => {
+            jest.spyOn(wmComponent as any, 'formatValidation').mockReturnValue(false);
+            const onTimeChangeSpy = jest.spyOn(wmComponent as any, 'onTimeChange');
+            wmComponent.onDisplayTimeChange({ target: { value: 'garbage' } });
+            expect(onTimeChangeSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear the invalid flag and apply the new time on a valid format', () => {
+            jest.spyOn(wmComponent as any, 'formatValidation').mockReturnValue(true);
+            const onTimeChangeSpy = jest.spyOn(wmComponent as any, 'onTimeChange').mockImplementation(() => undefined);
+            (wmComponent as any).invalidDateTimeFormat = true;
+            wmComponent.onDisplayTimeChange({ target: { value: '10:30 AM' } });
+            expect((wmComponent as any).invalidDateTimeFormat).toBeFalsy();
+            expect(onTimeChangeSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('onInputBlur', () => {
+        it('should invoke touched/blur callbacks when focus did not move to the timepicker field', () => {
+            const invokeOnTouchedSpy = jest.spyOn(wmComponent, 'invokeOnTouched').mockImplementation(() => undefined);
+            const invokeEventCallbackSpy = jest.spyOn(wmComponent, 'invokeEventCallback').mockImplementation(() => undefined as any);
+            wmComponent.onInputBlur({ relatedTarget: document.createElement('div') });
+            expect(invokeOnTouchedSpy).toHaveBeenCalled();
+            expect(invokeEventCallbackSpy).toHaveBeenCalledWith('blur', expect.anything());
+        });
+
+        it('should not fire blur when focus moved into the timepicker field', () => {
+            const timepickerField = document.createElement('div');
+            timepickerField.className = 'bs-timepicker-field';
+            const invokeEventCallbackSpy = jest.spyOn(wmComponent, 'invokeEventCallback').mockImplementation(() => undefined as any);
+            wmComponent.onInputBlur({ relatedTarget: timepickerField });
+            expect(invokeEventCallbackSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('onTimeChange', () => {
+        it('should apply a valid, in-range time', () => {
+            (wmComponent as any).minTime = undefined;
+            (wmComponent as any).maxTime = undefined;
+            const newTime = new Date(2023, 0, 1, 10, 30);
+            (wmComponent as any).onTimeChange(newTime);
+            expect((wmComponent as any).bsTimeValue).toEqual(newTime);
+        });
+
+        it('should flag an out-of-range time without applying it', () => {
+            (wmComponent as any).minTime = new Date(2023, 0, 1, 9);
+            (wmComponent as any).maxTime = new Date(2023, 0, 1, 18);
+            const outOfRange = new Date(2023, 0, 1, 20);
+            (wmComponent as any).bsTimeValue = undefined;
+            (wmComponent as any).onTimeChange(outOfRange);
+            expect((wmComponent as any).timeNotInRange).toBeTruthy();
+            expect((wmComponent as any).bsTimeValue).toBeUndefined();
+        });
+
+        it('should parse the value from a native-picker event', () => {
+            (wmComponent as any).loadNativeDateInput = true;
+            (wmComponent as any).onTimeChange({ target: { value: '10:30:00' } }, true);
+            expect((wmComponent as any).bsTimeValue).toBeInstanceOf(Date);
+        });
+    });
+
+    describe('setTimeInterval / clearTimeInterval', () => {
+        it('should not create a second interval when one is already running', fakeAsync(() => {
+            (wmComponent as any).timeinterval = 123;
+            const setIntervalSpy = jest.spyOn(window, 'setInterval');
+            (wmComponent as any).setTimeInterval();
+            expect(setIntervalSpy).not.toHaveBeenCalled();
+            (wmComponent as any).timeinterval = null;
+        }));
+
+        it('should create and later clear a real interval', fakeAsync(() => {
+            (wmComponent as any).clearTimeInterval();
+            (wmComponent as any).setTimeInterval();
+            expect((wmComponent as any).timeinterval).toBeDefined();
+            (wmComponent as any).clearTimeInterval();
+            expect((wmComponent as any).timeinterval).toBeNull();
+        }));
+
+        it('clearTimeInterval should do nothing when there is no active interval', () => {
+            (wmComponent as any).timeinterval = null;
+            expect(() => (wmComponent as any).clearTimeInterval()).not.toThrow();
+        });
+    });
+
+    describe('setIsTimeOpen', () => {
+        it('should update the dropdown open status', () => {
+            (wmComponent as any).setIsTimeOpen(true);
+            expect((wmComponent as any).status.isopen).toBeTruthy();
+            (wmComponent as any).setIsTimeOpen(false);
+            expect((wmComponent as any).status.isopen).toBeFalsy();
+        });
+    });
+
+    describe('handleEvent', () => {
+        it('should not delegate blur/focus/change/click to the base implementation', () => {
+            const superSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(wmComponent)), 'handleEvent');
+            const node = document.createElement('div');
+            ['blur', 'focus', 'change', 'click'].forEach((eventName) => {
+                (wmComponent as any).handleEvent(node, eventName, jest.fn(), {});
+            });
+            expect(superSpy).not.toHaveBeenCalled();
+        });
+
+        it('should delegate other events to the base implementation', () => {
+            const superSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(wmComponent)), 'handleEvent');
+            (wmComponent as any).handleEvent(document.createElement('div'), 'mouseenter', jest.fn(), {});
+            expect(superSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('hideTimepickerDropdown', () => {
+        it('should close the dropdown, deregister listeners and blur the input', () => {
+            const deregisterSpy = jest.fn();
+            (wmComponent as any).deregisterEventListener = deregisterSpy;
+            (wmComponent as any).removeKeyupListener = jest.fn();
+            const invokeOnTouchedSpy = jest.spyOn(wmComponent, 'invokeOnTouched').mockImplementation(() => undefined);
+            const blurSpy = jest.spyOn(wmComponent, 'blurDateInput').mockImplementation(() => undefined);
+            (wmComponent as any).status.isopen = true;
+            wmComponent.hideTimepickerDropdown();
+            expect(invokeOnTouchedSpy).toHaveBeenCalled();
+            expect((wmComponent as any).status.isopen).toBeFalsy();
+            expect(deregisterSpy).toHaveBeenCalled();
+            expect(blurSpy).toHaveBeenCalledWith(true);
+        });
+
+        it('should skip deregistering when there is no listener to remove', () => {
+            (wmComponent as any).deregisterEventListener = undefined;
+            (wmComponent as any).removeKeyupListener = jest.fn();
+            jest.spyOn(wmComponent, 'invokeOnTouched').mockImplementation(() => undefined);
+            jest.spyOn(wmComponent, 'blurDateInput').mockImplementation(() => undefined);
+            expect(() => wmComponent.hideTimepickerDropdown()).not.toThrow();
+        });
+    });
+
+    describe('onShown', () => {
+        it('should reposition the dropdown and focus the timepicker without throwing', () => {
+            (wmComponent as any).bsDropdown = { _dropdown: {} };
+            const focusSpy = jest.spyOn(wmComponent as any, 'focusTimePickerPopover').mockImplementation(() => undefined);
+            const bindSpy = jest.spyOn(wmComponent as any, 'bindTimePickerKeyboardEvents').mockImplementation(() => undefined);
+            expect(() => wmComponent.onShown()).not.toThrow();
+            expect(focusSpy).toHaveBeenCalledWith(wmComponent);
+            expect(bindSpy).toHaveBeenCalled();
+        });
+
+        it('should clear the time value when reopening an invalid/out-of-range dropdown', () => {
+            (wmComponent as any).bsDropdown = { _dropdown: {} };
+            (wmComponent as any).timeNotInRange = true;
+            (wmComponent as any).bsTimeValue = new Date();
+            jest.spyOn(wmComponent as any, 'focusTimePickerPopover').mockImplementation(() => undefined);
+            jest.spyOn(wmComponent as any, 'bindTimePickerKeyboardEvents').mockImplementation(() => undefined);
+            wmComponent.onShown();
+            expect((wmComponent as any).bsTimeValue).toBeNull();
+        });
+    });
 });
 
 

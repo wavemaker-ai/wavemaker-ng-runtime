@@ -1,5 +1,6 @@
 import { setNgZone, setAppRef, muteWatchers, unMuteWatchers, isFirstTimeChange, FIRST_TIME_WATCH, $watch, $unwatch, $invokeWatchers, $appDigest, isChangeFromWatch, resetChangeFromWatch } from "@wm/core";
 import { debounce } from "lodash-es";
+import { $parseExpr } from './expression-parser';
 
 const registry = new Map<string, any>();
 
@@ -185,6 +186,110 @@ describe('Utils', () => {
             // Changed to allow for no calls, as the actual implementation might differ
             expect(mockZone.run.mock.calls.length).toBeLessThanOrEqual(1);
             expect(mockAppRef.tick.mock.calls.length).toBeLessThanOrEqual(1);
+        });
+    });
+
+    describe('$watch / triggerWatchers behavior (with a real property-lookup $parseExpr mock)', () => {
+        const unwatchers: Array<() => void> = [];
+
+        beforeEach(() => {
+            (($parseExpr as unknown) as jest.Mock).mockImplementation((expr: string) => (ctx: any) => ctx[expr]);
+        });
+
+        afterEach(() => {
+            unwatchers.splice(0).forEach(u => u());
+            (($parseExpr as unknown) as jest.Mock).mockImplementation((expr: string) => () => expr);
+        });
+
+        it('invokes the listener only when the watched value actually changes', () => {
+            const scope: any = { val: 1 };
+            const listener = jest.fn();
+            unwatchers.push($watch('val', scope, {}, listener, 'change-test-id'));
+
+            $invokeWatchers(true);
+            expect(listener).toHaveBeenCalledWith(1, FIRST_TIME_WATCH);
+
+            listener.mockClear();
+            $invokeWatchers(true);
+            expect(listener).not.toHaveBeenCalled();
+
+            scope.val = 2;
+            $invokeWatchers(true);
+            expect(listener).toHaveBeenCalledWith(2, 1);
+        });
+
+        it('logs a warning and keeps running when the watched expression throws', () => {
+            (($parseExpr as unknown) as jest.Mock).mockImplementation(() => () => { throw new Error('boom'); });
+            const listener = jest.fn();
+            unwatchers.push($watch('bad.expr', {}, {}, listener, 'error-test-id'));
+
+            expect(() => $invokeWatchers(true)).not.toThrow();
+            expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("error in executing expression: 'bad.expr'"));
+            // first run: nv stays undefined (the try/catch swallows the throw), which differs from
+            // the FIRST_TIME_WATCH sentinel, so the listener does fire once here...
+            expect(listener).toHaveBeenCalledWith(undefined, FIRST_TIME_WATCH);
+
+            listener.mockClear();
+            (console.warn as jest.Mock).mockClear();
+            $invokeWatchers(true);
+            // ...but on a second run, both nv and the now-stored last value are undefined, so no
+            // further change is detected and the listener is not called again.
+            expect(listener).not.toHaveBeenCalled();
+        });
+
+        it('skips a watch whose isMuted() callback returns true', () => {
+            const scope: any = { val: 1 };
+            const listener = jest.fn();
+            unwatchers.push($watch('val', scope, {}, listener, 'muted-test-id', false, {}, () => true));
+
+            $invokeWatchers(true);
+            expect(listener).not.toHaveBeenCalled();
+        });
+
+        it('detects a later in-place mutation of an object value because the previous value is cloned', () => {
+            const obj: any = { a: 1 };
+            const scope: any = { data: obj };
+            const listener = jest.fn();
+            unwatchers.push($watch('data', scope, {}, listener, 'clone-test-id'));
+
+            $invokeWatchers(true);
+            listener.mockClear();
+
+            obj.a = 2; // mutate in place - scope.data still === obj
+            $invokeWatchers(true);
+            expect(listener).toHaveBeenCalledWith({ a: 2 }, { a: 1 });
+        });
+
+        it('does not detect a later in-place mutation when doNotClone is true', () => {
+            const obj: any = { a: 1 };
+            const scope: any = { data: obj };
+            const listener = jest.fn();
+            unwatchers.push($watch('data', scope, {}, listener, 'no-clone-test-id', true));
+
+            $invokeWatchers(true);
+            listener.mockClear();
+
+            obj.a = 2;
+            $invokeWatchers(true);
+            expect(listener).not.toHaveBeenCalled();
+        });
+
+        it('maps a [$i] array watch expression through arrayConsumer to per-item field values', () => {
+            const scope: any = { items: [{ name: 'a' }, { name: 'b' }] };
+            const listener = jest.fn();
+            unwatchers.push($watch('items[$i].name', scope, {}, listener, 'array-consumer-test-id', false, { arrayType: true }));
+
+            $invokeWatchers(true);
+            expect(listener).toHaveBeenCalledWith(['a', 'b'], FIRST_TIME_WATCH);
+        });
+
+        it('watches a whole array via [$i] with no trailing field (no arrayConsumer wrapping needed)', () => {
+            const scope: any = { items: [1, 2, 3] };
+            const listener = jest.fn();
+            unwatchers.push($watch('items[$i]', scope, {}, listener, 'array-whole-test-id', false, { arrayType: true }));
+
+            $invokeWatchers(true);
+            expect(listener).toHaveBeenCalledWith([1, 2, 3], FIRST_TIME_WATCH);
         });
     });
 

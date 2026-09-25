@@ -297,6 +297,10 @@ export class FormFieldDirective extends StylableComponent implements OnInit, Aft
 
     // Method to setup validators for reactive form control
     setUpValidators(customValidator?) {
+        // the debounced call scheduling this can still be in flight after ngOnDestroy nulls fieldValidations
+        if (!this.fieldValidations) {
+            return;
+        }
         this.fieldValidations.setUpValidators(customValidator);
     }
 
