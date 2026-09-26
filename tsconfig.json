@@ -2,10 +2,6 @@
     "compileOnSave": false,
     "compilerOptions": {
         "ignoreDeprecations": "6.0",
-        // TypeScript 6.0: "strict" now defaults to true unless explicitly disabled (previously
-        // defaulted to false) - this codebase was never written to satisfy strictNullChecks/
-        // noImplicitAny/etc. Pinned back to the pre-6.0 default to preserve existing behavior;
-        // a real strict-mode migration is a separate, deliberate effort out of scope here.
         "strict": false,
         "baseUrl": "./",
         "downlevelIteration": true,
@@ -96,11 +92,6 @@
         "compilationMode": "full",
         "strictMetadataEmit": false,
         "fullTemplateTypeCheck": false,
-        // Angular 22: the legacy fullTemplateTypeCheck:false no longer fully suppresses template
-        // property-access checking on its own — strictTemplates now needs its own explicit false
-        // to preserve the same pre-22 leniency (this codebase assigns many widget properties, e.g.
-        // iconwidth/iconheight/iconmargin, dynamically via registerProps()/PROP_STRING outside
-        // TypeScript's static knowledge, and was never written to satisfy strict template checking).
         "strictTemplates": false
     }
 }

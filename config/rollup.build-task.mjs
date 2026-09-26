@@ -100,12 +100,6 @@ export default [
                 entries: [
                     { find: 'rxjs/Subject', replacement: 'node_modules/rxjs/_esm5/internal/Subject.js' },
                     { find: '@swipey', replacement: 'libraries/swipey/fesm2022/index.mjs' },
-                    // @wavemaker/variables (separate sibling repo, yalc-linked) has a malformed
-                    // package.json "exports" map ({".": "./index"}, missing the .js extension) —
-                    // unrelated to this repo's Angular bump, but blocks nodeResolve's strict
-                    // exports-map resolution (which doesn't auto-append extensions the way
-                    // legacy "main" resolution does).
-                    { find: '@wavemaker/variables', replacement: '.yalc/@wavemaker/variables/index.js' },
                     // Anchored regex, not a plain string — plugin-alias string matches are
                     // prefix matches, and unanchored 'dialogs'/'page' also swallow real sibling
                     // subpaths like @wm/components/dialogs/confirm-dialog (its own real path).
