@@ -156,8 +156,7 @@ const registerFormField = (isFormField): IBuildTaskDef => {
                                         [ngStyle]="{width: ${pCounter}.captionsize}" [ngClass]="{'text-danger': ${counter}._control?.invalid && ${counter}._control?.touched && ${pCounter}.isUpdateMode,
                                          required: ${pCounter}.isUpdateMode && ${counter}.required}" [textContent]="${counter}.displayname"> </label>
                             <div [ngClass]="${counter}.displayname ? ${pCounter}._widgetClass : '${controlLayout}'">
-                                 <span class="form-control-static app-label"
-                                       [hidden]="${pCounter}.isUpdateMode || ${counter}.viewmodewidget === 'default' || ${counter}.widgettype === 'upload'" [innerHTML]="${getCaptionByWidget(attrs, widgetType, counter)}"></span>
+                                 @if(!(${pCounter}.isUpdateMode || ${counter}.viewmodewidget === 'default' || ${counter}.widgettype === 'upload')){ <span class="form-control-static app-label" [innerHTML]="${getCaptionByWidget(attrs, widgetType, counter)}"></span> }
                                 ${getTemplate(attrs, widgetType, eventsTmpl, counter, pCounter, isInList)}
                                 @if(${counter}.showPendingSpinner){ <span aria-hidden="true" class="form-field-spinner fa fa-circle-o-notch fa-spin form-control-feedback"></span>}
                                 @if(!(${counter}._control?.invalid && ${counter}._control?.touched) && ${pCounter}.isUpdateMode){ <p class="help-block" aria-hidden="true" role="alert" aria-live="polite" [textContent]="${counter}.hint"></p> }
