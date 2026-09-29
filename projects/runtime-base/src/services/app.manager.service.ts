@@ -95,9 +95,13 @@ export class AppManagerService {
                 }, null);
             }
         });
-        this.$app.subscribe('userLoggedOut', () => this.setLandingPage().then(() => {
-            this.$app.clearPageCache();
-        }));
+        this.$app.subscribe('userLoggedOut', () => {
+            // explicit logout, next user should not be redirected to the previous user's IdP
+            this.clearSSOProvider();
+            return this.setLandingPage().then(() => {
+                this.$app.clearPageCache();
+            });
+        });
         this.$app.subscribe('http401', (d = {}) => this.handle401(d.page, d.options));
     }
 
@@ -225,11 +229,60 @@ export class AppManagerService {
         const supportedLocaleVar = get(this.$app, 'Variables.supportedLocale');
     }
 
+    /**
+     * Returns the localStorage key used to persist the SSO provider id.
+     * Keyed on the app's context path so that apps served from the same origin
+     * (multiple apps on one server, multiple projects in studio preview) do not override each other.
+     */
+    private getSSOProviderStorageKey() {
+        let appPath;
+        try {
+            appPath = new URL(this.getDeployedURL(), window.location.href).pathname;
+        } catch (e) {
+            appPath = window.location.pathname;
+        }
+        return 'wm_sso_provider' + appPath.replace(/\/+$/, '');
+    }
+
+    /**
+     * Persists the id of the SSO provider the user logged in with.
+     * When multiple SSO providers are configured, the user is redirected to this provider on session timeout.
+     * @param providerId provider id passed to ssologin, e.g. 'OPENID.google'
+     */
+    setSSOProvider(providerId: string) {
+        try {
+            if (providerId) {
+                localStorage.setItem(this.getSSOProviderStorageKey(), providerId);
+            } else {
+                this.clearSSOProvider();
+            }
+        } catch (e) {
+            // storage not available, fallback to default session timeout behaviour
+        }
+    }
+
+    getSSOProvider(): string {
+        try {
+            return localStorage.getItem(this.getSSOProviderStorageKey());
+        } catch (e) {
+            return null;
+        }
+    }
+
+    clearSSOProvider() {
+        try {
+            localStorage.removeItem(this.getSSOProviderStorageKey());
+        } catch (e) {
+            // storage not available
+        }
+    }
+
     handleSSOLogin(config, options) {
         const SSO_URL = 'services/security/ssologin',
             PREVIEW_WINDOW_NAME = 'WM_PREVIEW_WINDOW';
         let page = '',
             queryParams;
+        const ssoProviderId = options?.ssoProviderId;
 
         // do not provide redirectTo page if fetching HOME page resulted 401
         // on app load, by default Home page is loaded
@@ -251,7 +304,12 @@ export class AppManagerService {
             // showing a redirecting message
             document.body.textContent = get(this.getAppLocale(), ['MESSAGE_LOGIN_REDIRECTION']) || 'Redirecting to sso login...';
             // appending redirect to page and page params
-            const ssoUrl = this.getDeployedURL() + SSO_URL + page + queryParams;
+            let ssoParams = page + queryParams;
+            // if the user logged in through a specific SSO provider, redirect to the same provider
+            if (ssoProviderId) {
+                ssoParams = '?providerId=' + encodeURIComponent(ssoProviderId) + ssoParams.replace(/^\?/, '&');
+            }
+            const ssoUrl = this.getDeployedURL() + SSO_URL + ssoParams;
             /*
              * remove iFrame when redirected to IdP login page.
              * this is being done as IDPs do not allow to get themselves loaded into iFrames.
@@ -262,7 +320,8 @@ export class AppManagerService {
                 try {
                     if (window.parent && window.location.origin === window.parent.origin){
                         if(window.parent.name === PREVIEW_WINDOW_NAME) {
-                            window.parent.location.href = window.self.location.href;
+                            // on reload, user info is lost and the provider can not be resolved, hence redirect directly
+                            window.parent.location.href = ssoProviderId ? ssoUrl : window.self.location.href;
                             window.parent.name = ""
                         }
                     } else {
@@ -305,6 +364,12 @@ export class AppManagerService {
             config.authenticated = false;
             sessionTimeoutConfig = loginConfig.sessionTimeout || {'type': LOGIN_METHOD.DIALOG};
             sessionTimeoutMethod = sessionTimeoutConfig.type.toUpperCase();
+            // multiple SSO providers: redirect to the provider the user logged in with (set through App.setSSOProvider)
+            const ssoProviderId = this.getSSOProvider();
+            if (ssoProviderId) {
+                sessionTimeoutMethod = LOGIN_METHOD.SSO;
+                options = {...options, ssoProviderId};
+            }
             switch (sessionTimeoutMethod) {
                 case LOGIN_METHOD.DIALOG:
                     this.showLoginDialog();
