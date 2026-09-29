@@ -81,6 +81,8 @@ export abstract class App {
     setTimezone: Function;
     reload: Function;
     on401: Function;
+    setSSOProvider: (providerId: string) => void;
+    clearSSOProvider: () => void;
     notifyApp: Function;
     importModule: Function;
     getDependency: Function;

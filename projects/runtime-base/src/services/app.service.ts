@@ -188,6 +188,20 @@ export class AppRef implements OnDestroy {
         return this._eventNotifier.subscribe(eventName, callback);
     }
 
+    /**
+     * When multiple SSO providers are configured, call this before redirecting the user to a provider,
+     * so that on session timeout the user is redirected to the same provider.
+     * e.g. App.setSSOProvider('OPENID.google');
+     * @param providerId provider id passed to ssologin
+     */
+    public setSSOProvider(providerId: string) {
+        this.getDependency('AppManagerService')?.setSSOProvider(providerId);
+    }
+
+    public clearSSOProvider() {
+        this.getDependency('AppManagerService')?.clearSSOProvider();
+    }
+
     public notifyApp(template, type, title) {
         const notificationAction = get(this, 'Actions.appNotification');
         const EXCLUDE_NOTIFICATION_MESSAGES = ['PROCESS_REJECTED_IN_QUEUE'];
