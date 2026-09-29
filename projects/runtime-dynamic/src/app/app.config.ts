@@ -1,7 +1,8 @@
-import {APP_INITIALIZER, ApplicationConfig, importProvidersFrom, LOCALE_ID, provideZoneChangeDetection} from "@angular/core";
+import {APP_INITIALIZER, ApplicationConfig, importProvidersFrom, LOCALE_ID, provideZoneChangeDetection, RendererFactory2} from "@angular/core";
 import {provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation, withRouterConfig} from "@angular/router";
 import {
     HTTP_INTERCEPTORS,
+    HttpXhrBackend,
     provideHttpClient,
     withInterceptorsFromDi,
     withXhr,
@@ -40,7 +41,8 @@ import {
     RoleGuard,
     SpinnerServiceImpl,
     ToasterServiceImpl,
-    WmRouteReuseStrategy
+    WmRouteReuseStrategy,
+    WMDomRendererFactory2
 } from "@wm/runtime/base";
 import {
     _WM_APP_PROJECT,
@@ -61,7 +63,7 @@ import {ModalModule} from "ngx-bootstrap/modal";
 import {ToastNoAnimationModule} from "ngx-toastr";
 import {BsDatepickerModule} from "ngx-bootstrap/datepicker";
 import {NgCircleProgressModule} from "ng-circle-progress";
-import {DatePipe, DecimalPipe} from "@angular/common";
+import {DatePipe, DecimalPipe, XhrFactory} from "@angular/common";
 import {CustomwidgetConfigProviderService} from "./services/customwidget-config-provider.service";
 import {AppJSProviderService} from "./services/app-js-provider.service";
 import {AppVariablesProviderService} from "./services/app-variables-provider.service";
@@ -90,6 +92,10 @@ const wmModules = [
         NgCircleProgressModule.forRoot(),
     )
 ];
+// Same as feature/angular-22-upgrade: explicit XhrFactory + HttpXhrBackend so Preview's HttpClient uses
+// plain XMLHttpRequest (upload progress, XSRF) regardless of the environment's default backend.
+const WM_XHR_FACTORY: XhrFactory = { build: () => new XMLHttpRequest() } as XhrFactory;
+
 export const xsrfHeaderName = getWmProjectProperties().xsrf_header_name || "X-WM-XSRF-TOKEN";
 
 
@@ -144,6 +150,7 @@ export const appConfig: ApplicationConfig = {
         // Angular 22: paramsInheritanceStrategy default flipped 'emptyOnly' -> 'always' - pinned
         // back to pre-22 behavior (any route with child routes reading inherited params is affected).
         provideRouter(routes, withHashLocation(), withComponentInputBinding(), withRouterConfig({ paramsInheritanceStrategy: 'emptyOnly' })),
+        { provide: XhrFactory, useValue: WM_XHR_FACTORY },
         provideHttpClient(
             withInterceptorsFromDi(),
             // Angular 22: provideHttpClient's default backend changed - withXhr() preserves the
@@ -155,7 +162,12 @@ export const appConfig: ApplicationConfig = {
                 headerName: xsrfHeaderName
             })
         ),
+        { provide: HttpXhrBackend, useFactory: () => new HttpXhrBackend(WM_XHR_FACTORY) },
         provideAnimations(),
+        // Custom renderer override — must come after provideAnimations(), which also provides RendererFactory2.
+        // Same as feature/angular-22-upgrade (already reviewed): binding WMDomRendererFactory2 directly to
+        // RendererFactory2 avoids the NG0200 circular-dependency failure Preview hit on Angular 22.
+        { provide: RendererFactory2, useClass: WMDomRendererFactory2 },
         // Provide application-specific services
         {
             provide: APP_INITIALIZER,

@@ -115,12 +115,13 @@ Edit `package.json` in **both repos** using:
 - R10 pin from Step 2 (`ng-packagr` — must be compatible with Angular target)
 - Dual-repo change plan from Step 2
 - Dependency classification table in [`checklist.md`](checklist.md)
+- Bump every `@angular/*` entry in each `projects/*/package.json` `peerDependencies` (ng-runtime only) to `^<target major>.0.0` — see [§37](patterns/runtime.md)
 
 Hold off on `npm install` — editing first lets you review the full version delta as a unit before anything is locked into `node_modules`.
 
 Record all before/after version changes in `current-state.md` → **Package Changes** (separate tables for ng-runtime and ng-codegen).
 
-**Done when:** `package.json` edits complete in all applicable repos; R9 (`jest-preset-angular`) and R10 (`ng-packagr`) pins applied; no install run yet.
+**Done when:** `package.json` edits complete in all applicable repos; R9 (`jest-preset-angular`) and R10 (`ng-packagr`) pins applied; `projects/*/package.json` peer deps on the target major (§37); no install run yet.
 
 ---
 

@@ -6,7 +6,7 @@
 #   §9  jest-preset       §11 RouterOutlet       §12 PositioningService DestroyRef
 #   §13 WMDomRenderer     §14 template this.     §19 expression parser
 #   §19b ParenthesizedExpression handler (WARN)  §20 branch/tsconfig/codegen files
-#   §22 yalc peer deps    §23 angular.json builders
+#   §22 yalc peer deps    §23 angular.json builders    §37 projects/*/package.json peer deps    §38 Preview renderer provider
 #
 # Manual checks listed at end (printed each run):
 #   §3 §4 §5 §7 §8 §8b §10 §10a §10b §13c §15 §16
@@ -124,10 +124,12 @@ echo ""
 # ─────────────────────────────────────────────────────────────────────────────
 # §1  Legacy runtime compiler
 # ─────────────────────────────────────────────────────────────────────────────
-if search 'compileModuleAndAllComponentsSync' projects/runtime-base 2>/dev/null; then
-  warn 1 "legacy compileModuleAndAllComponentsSync still present in runtime-base — @deprecated but confirmed still present (not removed) in @angular/core@20.3.31's .d.ts, and confirmed via a real 0-error build that this compiles clean unmodified at Angular 20 (WMS-29275-adjacent hop). Real removal version not yet known — re-verify against the installed .d.ts every hop rather than trusting this threshold, and tighten back to a fail_or_warn_below gate once the actual removal version is confirmed. Runtime AOT-only tree-shaking risk still unverified by a compile-only check — Step 9 must exercise a dynamic-component path (custom widget/prefab/partial) before fully trusting this is safe to keep."
+# Match real calls only — comment lines mentioning the removed API (e.g. migration notes) are not usage.
+if grep -rn 'compileModuleAndAllComponentsSync' projects/runtime-base projects/runtime-dynamic 2>/dev/null \
+    | grep -Ev ':[0-9]+:[[:space:]]*(//|\*|/\*)' | grep -q .; then
+  fail_or_warn_below 1 22 "Compiler.compileModuleAndAllComponentsSync() called in runtime-base/runtime-dynamic — @deprecated but still present through @angular/core 21; REMOVED in 22 (verify: grep -rn compileModuleAndAllComponentsSync node_modules/@angular/core/types/ -> zero hits at 22.2.0). See patterns/runtime.md §1/§33"
 else
-  ok 1 "no legacy compileModuleAndAllComponentsSync"
+  ok 1 "no compileModuleAndAllComponentsSync calls (comment mentions ignored)"
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -135,7 +137,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # Positional args: createComponent(Cls, 0, inj) or createComponent(Cls, index, ...)
 if search 'createComponent([^,)]*,[[:space:]]*[0-9]' projects/ 2>/dev/null; then
-  warn 2 "createComponent() with positional numeric arg found — @deprecated but confirmed still present (not removed) in ViewContainerRef.createComponent's .d.ts at @angular/core@20.3.31, and confirmed via a real 0-error build that this compiles clean unmodified at Angular 20. Coupled to §1 (same 2 files, same forcing function) — real removal version not yet known, re-verify against the installed .d.ts every hop rather than trusting this threshold. Runtime AOT-only tree-shaking risk still unverified by a compile-only check."
+  warn 2 "createComponent() with positional numeric arg found — the positional/factory overload was @deprecated through Angular 21 and REMOVED in 22 (see patterns/runtime.md §33) — replace with createComponent(Type, {index, injector, ...}). Re-verify against the installed types/core.d.ts."
 else
   ok 2 "no positional createComponent() calls"
 fi
@@ -428,11 +430,11 @@ if [ -n "$NG_CODEGEN" ] && [ -d "$NG_CODEGEN" ]; then
   UAJ="$NG_CODEGEN/src/update-angular-json.js"
   if [ -f "$UAJ" ]; then
     if grep -q 'foundation-css/foundation/foundation\.css' "$UAJ"; then
-      fail_or_warn_below "20e" 21 "$UAJ uses wrong foundation-css path (must include dist/styles/foundation/) — part of the §20 bootstrapApplication-era codegen bundle, gated with the rest of §20"
-    elif ! grep -q 'foundation-css/dist/styles/foundation/foundation\.css' "$UAJ"; then
-      fail_or_warn_below "20e" 21 "$UAJ missing foundation-css dist path — Prism ng build will fail"
+      ok "20e" "update-angular-json.js foundation-css path (no dist/styles — matches installed yalc package layout)"
+    elif grep -q 'foundation-css/dist/styles/foundation/foundation\.css' "$UAJ"; then
+      warn "20e" "$UAJ uses foundation-css/dist/styles/... — never resolves via local yalc (no dist/ in snapshot); current decision is foundation-css/foundation/foundation.css (patterns/codegen.md §20e)"
     else
-      ok "20e" "update-angular-json.js foundation-css dist path correct"
+      fail_or_warn_below "20e" 21 "$UAJ has no recognisable foundation-css path — Prism ng build will fail"
     fi
   else
     fail "20e" "missing $UAJ"
@@ -462,6 +464,32 @@ if [ -f angular.json ]; then
     warn 23 "angular.json uses deprecated @angular-devkit/build-angular:browser — plan migration to :application (§23)"
   else
     ok 23 "no deprecated :browser builder in angular.json"
+  fi
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §37  projects/*/package.json peerDependencies on the target Angular major
+# ─────────────────────────────────────────────────────────────────────────────
+if [ -n "${ANGULAR_TARGET_VERSION:-}" ]; then
+  PEER_STALE=$(git ls-files 'projects/*/package.json' 2>/dev/null \
+    | xargs grep -Hn '"@angular/[a-z-]*": "[\^~]\{0,1\}[0-9]' 2>/dev/null \
+    | grep -v "\"[\^~]\{0,1\}${ANGULAR_TARGET_VERSION}\." || true)
+  if [ -n "$PEER_STALE" ]; then
+    fail 37 "projects/*/package.json @angular/* peer dep not on Angular ${ANGULAR_TARGET_VERSION} — bump in Step 3 (§37)"
+    echo "$PEER_STALE" | while read -r _l; do info 37 "  stale peer dep: $_l"; done
+  else
+    ok 37 "all projects/*/package.json @angular/* peer deps on Angular ${ANGULAR_TARGET_VERSION}"
+  fi
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §38  Preview renderer: RendererFactory2 bound to WMDomRendererFactory2 in runtime-dynamic app.config
+# ─────────────────────────────────────────────────────────────────────────────
+if [ -f projects/runtime-dynamic/src/app/app.config.ts ]; then
+  if grep -q 'provide: RendererFactory2, useClass: WMDomRendererFactory2' projects/runtime-dynamic/src/app/app.config.ts; then
+    ok 38 "runtime-dynamic app.config provides RendererFactory2 -> WMDomRendererFactory2"
+  else
+    fail 38 "runtime-dynamic app.config.ts lacks { provide: RendererFactory2, useClass: WMDomRendererFactory2 } after provideAnimations() — Preview NG0200 on Angular 22 (§38)"
   fi
 fi
 
