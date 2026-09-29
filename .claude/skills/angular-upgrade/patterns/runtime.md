@@ -1,4 +1,4 @@
-# WaveMaker runtime patterns — ng-runtime §1–§30
+# WaveMaker runtime patterns — ng-runtime §1–§38
 
 Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/`) in Step 6. For codegen patterns see [`patterns/codegen.md`](codegen.md). Workflow: [`SKILL.md`](../SKILL.md). References: [`research.md`](../research.md) R12.
 
@@ -38,6 +38,8 @@ Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/
 | [§34](#34-angular-22s-onpush-by-default-also-breaks-inline-test-harness-components-in-spects-27as-blind-spot) | OnPush-by-default also hits inline `*.spec.ts` harness components — 23 suites/60 tests (§27a's blind spot, same files as §29) |
 | [§35](#35-ngx-bootstrap-22-removed-the-internal-_ngzone-field-its-directives-exposed) | ngx-bootstrap 22 removed directives' internal `_ngZone` — popover + `utils.ts` positioning helpers |
 | [§36](#36-third-party-dependency-ngx-toastr--removed-componentfactoryresolver-usage-and-changed-toasttoastbases-constructor--signal-based-fields-angular-22) | `ngx-toastr` removed `ComponentFactoryResolver` (bump to 20.0.5) + `Toast`/`ToastBase` constructor/fields went signal-based — silent runtime bug, not just a compile error |
+| [§37](#37-projectspackagejson-peer-dependencies-still-declare-the-old-angular-major-every-major) | `projects/*/package.json` `peerDependencies` still declare the old Angular major — published libs would ship a stale peer range |
+| [§38](#38-angular-private-chunks-inlined-into-a-second-umd-entry--duplicate-di-tokens-ng0200-for-rendererfactory2-preview-only) | Angular private `_*-chunk.mjs` files get inlined into every UMD entry → duplicate DI tokens (NG0200 `RendererFactory2`, Preview only) |
 
 ---
 
@@ -1233,3 +1235,60 @@ grep -rn "extends Toast\b" projects/ --include="*.ts"
 ```
 
 **Step 6 classification:** `must-change` — Part 1 blocks the build entirely; Part 2's constructor mismatch also blocks the build (`TS2554`), but the signal-property-read issue is a **silent runtime bug with zero compile signal** — treat any third-party dependency bump that touches a class WM subclasses as `needs-review` for its base class's *field* shape changing, not just its constructor/method signatures.
+
+---
+
+### 37. `projects/*/package.json` peer dependencies still declare the old Angular major (every major)
+
+**First required:** every Angular major. **Severity: silent** — no build error, no test failure. Found only by a manual manifest grep after four hops (18→19→20→21→22) had all left `"@angular/core": "^18.2.13"` in place.
+
+Distinct from [§22](../checklist.md#22-yalc-linked-package-peer-dependency-mismatch): §22 covers packages this repo **consumes** (`.yalc/*`). This section covers the libraries this repo **publishes** (`projects/*/package.json`) — their `peerDependencies` are what npm consumers see, so a stale range makes consumers on the new Angular major get peer-dependency warnings or install conflicts.
+
+**Symptom:** none locally. Consumers see `ERESOLVE`/unmet-peer warnings for `@angular/core`/`@angular/common`/`@angular/compiler` against a `@wavemaker/*` library.
+
+**Fix:** set every `@angular/*` entry in each `projects/*/package.json` `peerDependencies` to `^<target major>.0.0` (Step 3, alongside the root `package.json` bump).
+
+**Step 6 grep:**
+
+```bash
+# Any projects/*/package.json @angular/* peer range not on the target major:
+git ls-files 'projects/*/package.json' | xargs grep -n '"@angular/[a-z-]*": "\^[0-9]' | grep -v '"\^<TARGET>\.'
+```
+
+**Automated:** `pattern-review.sh` §37 FAILs on any stale range.
+
+**Step 6 classification:** `must-change`.
+
+---
+
+### 38. Angular private chunks inlined into a second UMD entry → duplicate DI tokens (NG0200 for `RendererFactory2`, Preview only)
+
+**First required:** Angular 22 in this repo (private `_*-chunk.mjs` files exist in earlier majors too — re-check every major). **Severity: blocks Preview bootstrap entirely; deployment (Tomcat) mode is unaffected** because generated apps use their own webpack build, not the rollup UMD libs (`wm-libs.js`).
+
+**Symptom (Preview, blank page):**
+
+```text
+NG0200: Circular dependency detected for `RendererFactory2`. Source: Environment Injector
+```
+
+Prod mode strips the token — in the preview tab run `debugMode(true)` (reloads with `enableProdMode()` skipped) to see the token name.
+
+**Cause:** `config/rollup.ng-libs.config.mjs` builds each Angular entry as its own UMD. Angular 22's `platform-browser/animations.mjs` imports `DomRendererFactory2` from `./_dom_renderer-chunk.mjs` and `BrowserModule` from `./_browser-chunk.mjs` — *relative* private chunks, not the `@angular/platform-browser` package, so the `external` list does not cover them and rollup inlines a second copy. `ng.platformBrowser.animations` then carries its own `DomRendererFactory2`/`BrowserModule`/`BROWSER_MODULE_PROVIDERS`; `provideAnimations()` injects that copy's `DomRendererFactory2`, which `WMDomRendererFactory2` (provided for `ng.platformBrowser`'s token) does not override.
+
+**Diagnosis without rebuilding** (Preview tab console; globals are `ng.*`/`wm.*`): build an injector with the stock platform-browser providers + `ng.platformBrowser.animations.provideAnimations()` and `get(RendererFactory2)` — it fails with `No provider found for DomRendererFactory2` even though the stock providers include it, proving two distinct token classes.
+
+**Fix (as on `feature/angular-22-upgrade`, already reviewed):** in `runtime-dynamic/src/app/app.config.ts`, after `provideAnimations()`, add `{ provide: RendererFactory2, useClass: WMDomRendererFactory2 }` (import `RendererFactory2` from `@angular/core`, `WMDomRendererFactory2` from `@wm/runtime/base`). This binds the WM renderer straight to the shared `RendererFactory2` token, so it no longer matters that the animations UMD carries its own `DomRendererFactory2` copy. Side effect: it replaces the animation renderer that `provideAnimations()` installs, so Angular `@trigger` animations do not run in Preview — acceptable here, matches the reference branch.
+
+**Alternative not used:** a rollup plugin on the `platform-browser/animations` entry that routes its `_dom_renderer-chunk`/`_browser-chunk` imports to the public `ng.platformBrowser` exports removes the duplicate at the source and keeps animations, but is not what the reviewed branch ships.
+
+**Same class of risk, NOT fixed (verify next hop):** other entries import relative chunks too — `animations` + `animations/browser` (`_private_export-chunk`), `core` + `primitives/signals` (`_effect-chunk`, `_weak_ref-chunk`) + `primitives/di` (`_not_found-chunk`), `common` chunks. Any state or token duplicated across two UMDs can misbehave silently.
+
+**Step 6 check:**
+
+```bash
+grep -n 'provide: RendererFactory2' projects/runtime-dynamic/src/app/app.config.ts   # must exist, after provideAnimations()
+```
+
+**Step 6 classification:** `must-change` (Preview only — deployment mode will not show it; validate Preview).
+
+**Related (same Preview-only UMD family) — `@angular/core/rxjs-interop` needs its own UMD global.** ngx-bootstrap 22's positioning code imports `takeUntilDestroyed` from `@angular/core/rxjs-interop`. With no `ng.core.rxjsInterop` global, rollup guessed `rxjsInterop` (undefined at runtime) → Preview: `TypeError: Cannot read properties of undefined (reading 'takeUntilDestroyed')` in `new PositioningService`. Fix (ported from `feature/angular-22-upgrade`): UMD entry `core-rxjs-interop.umd.js` in `rollup.ng-libs.config.mjs`, `'@angular/core/rxjs-interop': 'ng.core.rxjsInterop'` in `rollupGlobals` + `rollupExternals` (`rollup-utils.mjs`), and the bundle in `build.sh`'s `bundleJS` concat list right after `core.umd.js`. Caveat: that entry inlines Angular's private core chunks (§38's risk class) — fine for `takeUntilDestroyed(destroyRef)` with an explicit `DestroyRef` (only calls `onDestroy`), but do not rely on `toSignal`/`rxResource` from this UMD.

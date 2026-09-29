@@ -495,6 +495,7 @@ bundleJS() {
         ./node_modules/@angular/core/bundles/core-signals.umd.js \
         ./node_modules/@angular/core/bundles/core-di.umd.js \
         ./node_modules/@angular/core/bundles/core.umd.js \
+        ./node_modules/@angular/core/bundles/core-rxjs-interop.umd.js \
         ./node_modules/@angular/common/bundles/common.umd.js \
         ./node_modules/@angular/animations/bundles/animations.umd.js \
         ./node_modules/@angular/animations/bundles/animations-browser.umd.js \

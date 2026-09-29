@@ -136,6 +136,24 @@ export default [
         external: [],
     },
     {
+        // ngx-bootstrap 22's positioning code imports takeUntilDestroyed from '@angular/core/rxjs-interop';
+        // without a UMD global here the ngx-bootstrap bundle resolved it to an undefined `rxjsInterop`
+        // and PositioningService threw "Cannot read properties of undefined (reading 'takeUntilDestroyed')".
+        // Same entry as feature/angular-22-upgrade.
+        input: 'node_modules/@angular/core/fesm2022/rxjs-interop.mjs',
+        output: {
+            file: 'node_modules/@angular/core/bundles/core-rxjs-interop.umd.js',
+            format: 'umd',
+            name: 'ng.core.rxjsInterop',
+            globals: {
+                "@angular/core": "ng.core",
+                "rxjs": "rxjs",
+                "rxjs/operators": "rxjs.operators"
+            }
+        },
+        external: ["@angular/core", "rxjs", "rxjs/operators"],
+    },
+    {
         input: "node_modules/@angular/forms/fesm2022/forms.mjs",
         output: {
             file: "node_modules/@angular/forms/bundles/forms.umd.js",
