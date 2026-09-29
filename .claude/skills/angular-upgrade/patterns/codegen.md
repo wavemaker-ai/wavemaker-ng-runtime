@@ -4,7 +4,7 @@ Applied to **ng-codegen** (`templates/`, `src/`) in Step 6. For ng-runtime sourc
 
 ---
 
-### 20. Generated Angular apps (`wavemaker-ng-codegen` + `@wavemaker-ai/angular-app`)
+### 20. Generated Angular apps (`wavemaker-ng-codegen` + the `angular-app` package — `@wavemaker/angular-app` on the `stage-classic` lineage, `@wavemaker-ai/angular-app` on `stage-ai`)
 
 **Scope:** Studio **codegen** output (`ng build` on a generated app), not this repo's preview shell alone. Fixes span **two repos** — keep them in sync on every Angular major bump.
 
@@ -56,7 +56,7 @@ grep moduleResolution tsconfig.json tsconfig.web-app.json
 
 #### 20b. Codegen Handlebars — ngx-bootstrap `forRoot()` (must-change)
 
-**This is a breaking change in ngx-bootstrap upstream, not a modernization.** ngx-bootstrap 21 removed `.forRoot()` from `ModalModule`, `BsDatepickerModule`, and `NgCircleProgressModule`. The generated app will not compile until these are removed from the template.
+**This is a breaking change in ngx-bootstrap upstream, not a modernization.** ngx-bootstrap 21 removed `.forRoot()` from `ModalModule` and `BsDatepickerModule`. (`NgCircleProgressModule` is a **separate package** — `ng-circle-progress` — and still has `forRoot()`; see below.) The generated app will not compile until these are removed from the template.
 
 **Repo:** `wavemaker-ng-codegen/templates/` (**source only** — never hand-edit `dist/`; `build.sh` copies `templates/` → `dist/codegen/codegen-app/`).
 
@@ -64,12 +64,13 @@ grep moduleResolution tsconfig.json tsconfig.web-app.json
 
 | File | Priority | Change |
 |------|----------|--------|
-| `templates/app.config.ts.hbs` | **must-change** | `ModalModule`, `BsDatepickerModule`, `NgCircleProgressModule` — **no** `.forRoot()` inside `importProvidersFrom(...)` |
+| `templates/app.config.ts.hbs` | **must-change** | `ModalModule`, `BsDatepickerModule` — **no** `.forRoot()` inside `importProvidersFrom(...)` |
 | `templates/app.module.ts.hbs` | optional / legacy | Same fix if kept for reference; **does not affect codegen output** |
 
 **Keep `.forRoot()` in `app.config.ts.hbs` where still valid:**
 
 - `ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true })` (ngx-toastr)
+- `NgCircleProgressModule.forRoot()` (ng-circle-progress) — **keep on `stage-classic`-lineage branches**. `CircleProgressComponent` injects `CircleProgressOptions` with no `@Optional`, and the module only provides it via `forRoot()`. The `stage-ai`/`feature/angular-22-upgrade` lineage can drop it *only because* its `progress-circle.component.ts` provides `CircleProgressOptions` itself; classic's does not — removing it there gives `NullInjectorError` when a progress-circle widget renders. Check the widget's own `providers` before ever removing it.
 
 **Do not add WaveMaker `*.forRoot()` in generated bootstrap:** register services directly in `providers` (see canonical `app.config.ts.hbs` in codegen). `RouterModule.forRoot` is not used — routing uses `provideRouter(...)`.
 
@@ -88,7 +89,7 @@ const wmModules = [
         ModalModule,
         ToastNoAnimationModule.forRoot({ maxOpened: 1, autoDismiss: true }),
         BsDatepickerModule,
-        NgCircleProgressModule,
+        NgCircleProgressModule.forRoot(),
         // ...
     )
 ];
@@ -123,19 +124,21 @@ When `@wavemaker-ai/angular-app/dependencies/` filenames use a `.cjs.js` suffix,
 
 Iteration table: [`steps-6-10.md`](../steps-6-10.md) Step 9 only.
 
-#### 20e. Prism `foundation-css` path in `update-angular-json.js` — must-change
+#### 20e. Prism `foundation-css` path in `update-angular-json.js` — must-follow
 
-**Repo:** `wavemaker-ng-codegen/src/update-angular-json.js`
+**Repo:** `wavemaker-ng-codegen/src/update-angular-json.js` (and any `angular.json` in any repo).
 
-**Current decision (user, Angular 22 hop on `feature/angular-22-upgrade-classic`):** Prism projects inject foundation CSS from the path **without** `dist/styles/`:
+**Required path — exactly this, nothing added between the package name and `foundation/`:**
 
 ```text
 ./node_modules/${WM_NPM_SCOPE}/foundation-css/foundation/foundation.css
 ```
 
-This is the layout of the package as installed via the local yalc-linked workflow (`node_modules/@wavemaker/foundation-css/foundation/foundation.css`; the yalc snapshot has **no `dist/` folder**, because `dist/` is `.gitignore`d in `wavemaker-foundation-css` and `yalc push` respects that).
+**Rule (user, global `CLAUDE.md`):** never put a build-output subfolder segment into the foundation-css path in any `angular.json` or angular.json-updating script, in any repo. If an existing file has one, remove it — do not "correct" it back, and do not re-add it in a later hop because an older note or another branch has it.
 
-**History / caveat:** the 20→21 hop had changed this to `.../foundation-css/dist/styles/foundation/foundation.css`, which is correct only if the published `foundation-css` npm package ships `dist/`. That path can never resolve via local yalc. If a real production install of `foundation-css` ships `dist/` only, the no-`dist` path will fail `ng build` there — **verify against the actual published package layout before releasing.**
+**Why:** the installed / yalc-linked `foundation-css` package exposes `foundation/foundation.css` at its root and has no build-output folder (the source repo's build folder is `.gitignore`d and `yalc push` respects that), so a path with an extra segment never resolves and Prism `ng build` fails.
+
+**Unverified caveat:** if a real production install of the published `foundation-css` npm package lays files out differently, check its actual layout before a release — but follow the rule above unless the user says otherwise.
 
 **Step 6:** enforced by `scripts/pattern-review.sh`.
 
@@ -148,3 +151,19 @@ This is the layout of the package as installed via the local yalc-linked workflo
 **All fixes:** `wavemaker-ng-runtime` and/or `wavemaker-ng-codegen` → rebuild → re-run codegen (local-angular-build Steps 2–5).
 
 **Step 9 iteration:** see [`steps-6-10.md`](../steps-6-10.md) Step 9 only.
+
+#### 20g. Angular 22 codegen templates — must-change (reference: `WMS-32451` codegen branch, commit `835a8df`)
+
+**Repo:** `wavemaker-ng-codegen/templates/`. Generated apps do not use `runtime-dynamic`'s `app.config.ts` — these templates are what make deployment-mode apps correct on Angular 22.
+
+| File | Change |
+|------|--------|
+| `page/page.component.ts.hbs`, `partial/…`, `prefab/…`, `layout/…`, `customwidget/…` | add `changeDetection: ChangeDetectionStrategy.Eager` to `@Component({...})` and import `ChangeDetectionStrategy` — Angular 22 flipped the default to OnPush (§27a); generated components need the pre-22 behavior |
+| `app.config.ts.hbs` | `provideZoneChangeDetection({ eventCoalescing: true, runCoalescing: true })`; `withRouterConfig({ paramsInheritanceStrategy: 'emptyOnly' })` (§27b); `withXhr()` in `provideHttpClient(...)` |
+
+**Do NOT blindly copy a whole diff from the sibling codegen branch.** `WMS-32451` in codegen descends from `stage-ai`: it also carries `wavemaker-ai` package names, `WM_NPM_SCOPE`, react/angular block handling in `gen-index-html.js`, a `NavigationVariable`→`NavigationAction` rename, `.gitlab-ci.yml` and a node 24 pin — none of that is Angular-22 work and it breaks a classic branch. Take only the Angular-22 commit's template hunks (find it with `git log --oneline <branch> -- templates/`), then re-check each hunk against the classic lineage (e.g. keep `NgCircleProgressModule.forRoot()`, §20b).
+
+**Codegen engines pin** follows ng-runtime (`package.json` `engines`) — `engineStrict: true` makes any mismatch an `EBADENGINE` install warning.
+
+**Step 6 check:** `grep -c 'ChangeDetectionStrategy.Eager' templates/*/*.component.ts.hbs` — one per template; `grep -n 'withXhr\|provideZoneChangeDetection\|withRouterConfig' templates/app.config.ts.hbs`.
+

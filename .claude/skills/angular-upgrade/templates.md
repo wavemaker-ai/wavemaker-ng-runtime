@@ -84,10 +84,10 @@ Used only when a step fails with a non-zero exit code (build, install) and canno
 
 ## Dual-repo change plan row (Step 2)
 
-| § / Ref | Repo | Files | Change | Breaking change source |
-|---------|------|-------|--------|----------------------|
-| §20a / R2 | both | tsconfig.json, tsconfig.web-app.json | moduleResolution → bundler | R2: Angular 21 requires bundler for package exports |
-| §20b / R8 | codegen | templates/app.config.ts.hbs | Remove ModalModule.forRoot() | ngx-bootstrap 21 removed forRoot on ModalModule |
+| § / Ref | Repo | Path | Files | Change | Breaking change source |
+|---------|------|------|-------|--------|----------------------|
+| §20a / R2 | both | Both | tsconfig.json, tsconfig.web-app.json | moduleResolution → bundler | R2: Angular 21 requires bundler for package exports |
+| §20b / R8 | codegen | Deployment | templates/app.config.ts.hbs | Remove ModalModule.forRoot() | ngx-bootstrap 21 removed forRoot on ModalModule |
 
 ## Step 10 — completion message (AI output to user)
 
@@ -160,6 +160,14 @@ One subsection per configured validation mode (`VALIDATION_MODES` in `repo.confi
 - Comparison URL(s): <url>
 - G1–G7: all passed
 - Extended checks run: <list E1–E13 items verified>
+
+## Path Parity (Preview ↔ Deployment)
+
+| Change | Preview file | Deployment file | Result |
+|--------|--------------|-----------------|--------|
+| <what changed> | `<runtime path>` | `<codegen path>` | same change applied / intentionally different (<reason>) / not applicable (<reason>) |
+
+Per-path validation: Deployment dev build <PASSED/FAILED>, Deployment prod build <PASSED/FAILED>, Preview <PASSED/FAILED>. CSP-on Deployment: <tested / not tested>.
 
 ## Deferred Items
 

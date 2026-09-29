@@ -6,7 +6,7 @@
 #   §9  jest-preset       §11 RouterOutlet       §12 PositioningService DestroyRef
 #   §13 WMDomRenderer     §14 template this.     §19 expression parser
 #   §19b ParenthesizedExpression handler (WARN)  §20 branch/tsconfig/codegen files
-#   §22 yalc peer deps    §23 angular.json builders    §37 projects/*/package.json peer deps    §38 Preview renderer provider
+#   §22 yalc peer deps    §23 angular.json builders    §37 projects/*/package.json peer deps    §38 Preview renderer provider + rxjs-interop UMD    §39 HttpXhrBackend    §20g codegen Eager templates    PARITY Preview↔Deployment bootstrap providers
 #
 # Manual checks listed at end (printed each run):
 #   §3 §4 §5 §7 §8 §8b §10 §10a §10b §13c §15 §16
@@ -430,15 +430,21 @@ if [ -n "$NG_CODEGEN" ] && [ -d "$NG_CODEGEN" ]; then
   UAJ="$NG_CODEGEN/src/update-angular-json.js"
   if [ -f "$UAJ" ]; then
     if grep -q 'foundation-css/foundation/foundation\.css' "$UAJ"; then
-      ok "20e" "update-angular-json.js foundation-css path (no dist/styles — matches installed yalc package layout)"
-    elif grep -q 'foundation-css/dist/styles/foundation/foundation\.css' "$UAJ"; then
-      warn "20e" "$UAJ uses foundation-css/dist/styles/... — never resolves via local yalc (no dist/ in snapshot); current decision is foundation-css/foundation/foundation.css (patterns/codegen.md §20e)"
+      ok "20e" "update-angular-json.js foundation-css path is foundation-css/foundation/foundation.css"
     else
-      fail_or_warn_below "20e" 21 "$UAJ has no recognisable foundation-css path — Prism ng build will fail"
+      fail "20e" "$UAJ foundation-css path must be exactly ./node_modules/<scope>/foundation-css/foundation/foundation.css — no extra path segments (patterns/codegen.md §20e, global CLAUDE.md rule)"
     fi
   else
     fail "20e" "missing $UAJ"
   fi
+
+  # Rule: no extra directory segment between foundation-css/ and foundation/ in any angular.json / update-angular-json script.
+  for _f in angular.json "$NG_CODEGEN/src/update-angular-json.js"; do
+    [ -f "$_f" ] || continue
+    if grep -nE 'foundation-css/[^"'"'"' ]+/foundation/' "$_f" >/dev/null 2>&1; then
+      fail "20e" "$_f: foundation-css path has an extra directory segment before foundation/ — remove it (global CLAUDE.md rule)"
+    fi
+  done
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -490,6 +496,68 @@ if [ -f projects/runtime-dynamic/src/app/app.config.ts ]; then
     ok 38 "runtime-dynamic app.config provides RendererFactory2 -> WMDomRendererFactory2"
   else
     fail 38 "runtime-dynamic app.config.ts lacks { provide: RendererFactory2, useClass: WMDomRendererFactory2 } after provideAnimations() — Preview NG0200 on Angular 22 (§38)"
+  fi
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §38 (related)  @angular/core/rxjs-interop UMD global — ngx-bootstrap positioning imports it
+# ─────────────────────────────────────────────────────────────────────────────
+if grep -q "@angular/core/rxjs-interop" node_modules/ngx-bootstrap/positioning/fesm2022/ngx-bootstrap-positioning.mjs 2>/dev/null; then
+  if grep -q "core-rxjs-interop.umd.js" build.sh 2>/dev/null && grep -q "'@angular/core/rxjs-interop': 'ng.core.rxjsInterop'" config/rollup-utils.mjs 2>/dev/null && grep -q "core-rxjs-interop.umd.js" config/rollup.ng-libs.config.mjs 2>/dev/null; then
+    ok 38 "rxjs-interop UMD entry + global + build.sh concat present"
+  else
+    fail 38 "ngx-bootstrap positioning imports @angular/core/rxjs-interop but the UMD entry/global/build.sh concat is incomplete — Preview: takeUntilDestroyed undefined (§38 related)"
+  fi
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §39  Preview runtime-dynamic app.config: explicit HttpXhrBackend (copied from reviewed branch)
+# ─────────────────────────────────────────────────────────────────────────────
+if [ -f projects/runtime-dynamic/src/app/app.config.ts ]; then
+  if grep -q 'HttpXhrBackend' projects/runtime-dynamic/src/app/app.config.ts; then
+    ok 39 "runtime-dynamic app.config provides HttpXhrBackend/XhrFactory"
+  else
+    warn 39 "runtime-dynamic app.config.ts has no explicit HttpXhrBackend/XhrFactory provider (reference branch feature/angular-22-upgrade has one) — verify Preview uploads/HTTP (§39)"
+  fi
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §20g  Codegen templates: Eager change detection on generated components
+# ─────────────────────────────────────────────────────────────────────────────
+if [ -n "${NG_CODEGEN:-}" ] && [ -d "$NG_CODEGEN/templates" ]; then
+  _missing=""
+  for _t in page/page partial/partial prefab/prefab layout/layout customwidget/customwidget; do
+    grep -q 'ChangeDetectionStrategy.Eager' "$NG_CODEGEN/templates/${_t}.component.ts.hbs" 2>/dev/null || _missing="$_missing ${_t}"
+  done
+  if [ -n "$_missing" ]; then
+    fail_or_warn_below "20g" 22 "codegen templates missing ChangeDetectionStrategy.Eager:$_missing — generated components fall back to Angular 22 OnPush default (§27a, patterns/codegen.md §20g)"
+  else
+    ok "20g" "codegen component templates pin ChangeDetectionStrategy.Eager"
+  fi
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PARITY  Preview bootstrap (runtime-dynamic/app.config.ts) vs Deployment bootstrap (app.config.ts.hbs)
+# ─────────────────────────────────────────────────────────────────────────────
+PV_CFG=projects/runtime-dynamic/src/app/app.config.ts
+DP_CFG="$NG_CODEGEN/templates/app.config.ts.hbs"
+if [ -f "$PV_CFG" ] && [ -f "$DP_CFG" ]; then
+  _sym() { grep -oE '\b(provide[A-Z][A-Za-z]*|with[A-Z][A-Za-z]*|Http[A-Za-z]*Backend|XhrFactory|RendererFactory2|WMDomRendererFactory2|ɵ[A-Za-z0-9]+)\b' "$1" | sort -u; }
+  _pv=$(mktemp); _dp=$(mktemp)
+  _sym "$PV_CFG" > "$_pv"; _sym "$DP_CFG" > "$_dp"
+  # Known, intentional differences (preview-vs-deployment.md parity matrix). Add a symbol here ONLY with a recorded reason.
+  #   Preview-only:    HttpXhrBackend XhrFactory RendererFactory2  (reference branch has them in runtime only; renderer bound always in Preview)
+  #   Deployment-only: ɵDomRendererFactory2 ɵSharedStylesHost      (CSP-only renderer override in the generated app)
+  _known="HttpXhrBackend XhrFactory RendererFactory2 ɵDomRendererFactory2 ɵSharedStylesHost"
+  _gap=""
+  for _s in $(comm -3 "$_pv" "$_dp" | tr -d '\t'); do
+    case " $_known " in *" $_s "*) ;; *) _gap="$_gap $_s" ;; esac
+  done
+  rm -f "$_pv" "$_dp"
+  if [ -n "$_gap" ]; then
+    warn PARITY "Preview and Deployment bootstrap differ on:$_gap — apply the counterpart change or record it as intentional (preview-vs-deployment.md parity matrix)"
+  else
+    ok PARITY "Preview and Deployment bootstrap providers match (known intentional differences only)"
   fi
 fi
 

@@ -32,6 +32,8 @@ Compatibility Policy (see [`SKILL.md`](SKILL.md)) applies to every edit — fix 
 
 Classify every finding using the Classification guide in [`checklist.md`](checklist.md) — block on any unresolved `must-change`.
 
+**Parity pass (mandatory, both paths):** for every file you changed, open its counterpart on the other path ([`preview-vs-deployment.md`](preview-vs-deployment.md) parity matrix — e.g. `runtime-dynamic/app.config.ts` ↔ `app.config.ts.hbs`) and record *same change applied* / *intentionally different (reason)* / *not applicable (reason)* in `current-state.md` → **Path Parity**. `pattern-review.sh` PARITY warns on unexplained differences between the two bootstrap files.
+
 After edits, run the automated check:
 
 ```bash
@@ -47,7 +49,7 @@ cd <NG_CODEGEN_PATH> && sh build.sh
 
 Record all edits in `current-state.md` → **Cross-repo Changes**.
 
-**Done when:** `pattern-review.sh` exit 0; every WARN item either fixed or explicitly deferred (record reason in `current-state.md` → **Pattern Findings**); no open `must-change`; ng-codegen `build.sh` exit 0; changes committed in both repos before proceeding to Step 7 (do not leave uncommitted upgrade changes).
+**Done when:** every changed file's counterpart is recorded in **Path Parity**; `pattern-review.sh` exit 0; every WARN item either fixed or explicitly deferred (record reason in `current-state.md` → **Pattern Findings**); no open `must-change`; ng-codegen `build.sh` exit 0; changes committed in both repos before proceeding to Step 7 (do not leave uncommitted upgrade changes).
 
 ---
 
@@ -60,6 +62,8 @@ sh scripts/build.sh
 ```
 
 **Done when:** `BUILD_CMD` exit 0; `verify-ngx-bootstrap-bundle.sh` pass (or `POST_BUILD_VERIFY_SCRIPT` not configured).
+
+**After changing rollup config or the UMD concat list** (`config/rollup*.mjs`, `build.sh` `bundleJS`): the Angular UMD step is skipped unless forced — run `sh build.sh -fl`. Then confirm the change is really in `dist/bundles/wmapp/scripts/wm-libs.js` / `wm-loader.js` (grep), because "No changes in runtime-dynamic" in the log is an incremental stamp check, not proof your edit was compiled (`patterns/runtime.md` §38 build notes).
 
 ---
 
@@ -94,6 +98,8 @@ Step 9 validates **every configured mode** in `VALIDATION_MODES` (`repo.config.s
 
 Follow [`local-angular-build.md`](../../commands/local-angular-build.md) — **upgrade mode** (Steps 2b → 3 → 4 → 5 → 6 → 7).
 
+**Preview and Deployment fail differently — validate both** (full comparison and a change→mode table: [`preview-vs-deployment.md`](preview-vs-deployment.md)). Deployment apps are webpack-built from generated code and never load the rollup UMD libs (`wm-libs.js`); Preview loads `wm-libs.js` + `wm-loader.js`, always installs the WM renderer override (deployment only under CSP), and boots via `runtime-dynamic/app.config.ts`. A green Deployment run says nothing about Preview (e.g. §38 NG0200 and the missing `rxjs-interop` UMD global only showed in Preview). For a blank/erroring Preview page follow the debug procedure in `patterns/runtime.md` §38 (`debugMode(true)`, unminified `wm-libs.js`, console repro), and diff against the reviewed sibling branch first.
+
 **WaveMaker Preview: no build step**
 
 Nothing to run — its URL is supplied directly in `repo.config.sh`/chat, same as a comparison URL. Go straight to the hand-off below.
@@ -122,7 +128,7 @@ G4 is the only check the AI can verify from build/deploy logs. G1–G3 and G5–
 
 **Fix loop (after user reports a failure in either mode):**
 
-Diagnose which check failed and which repo owns the code causing it. Fix the source there first — do not re-run the build before the source is corrected. Because both modes view the same underlying build, **re-verify every other already-passed mode too** after a fix, not just the one that surfaced the failure.
+Diagnose which check failed and which repo owns the code causing it. Fix the source there first — do not re-run the build before the source is corrected. Preview and Deployment are **different code paths** (they do not share a build), so a fix for one usually needs its counterpart on the other ([`preview-vs-deployment.md`](preview-vs-deployment.md)) — but shared library sources (`projects/*`) feed both, so **re-verify every other already-passed mode too** after a fix, not just the one that surfaced the failure.
 
 local-angular-build step reference: 1=Maven build, 2b=ng-runtime bundles, 3=build ng-codegen, 4=generate Angular app, 5=install+build generated app, 6=deploy WAR to Tomcat, 7=copy Angular dist.
 
@@ -136,13 +142,13 @@ local-angular-build step reference: 1=Maven build, 2b=ng-runtime bundles, 3=buil
 
 Deferrals block Step 10 unless explicitly accepted by the user.
 
-**Done when:** user confirms G1–G7 pass for **every configured (non-skipped) mode**.
+**Done when:** user confirms G1–G7 pass for **every configured (non-skipped) mode**, and `current-state.md` records evidence for **each path**: Deployment — dev build **and** prod build deployed and exercised; Preview — hard-refreshed, console clean. A path that was not tested must be listed as deferred (blocks Step 10 unless the user accepts it).
 
 ---
 
 ### Step 10 — Finalize & Reset
 
-Write `docs/{major}-upgrade.md` covering: Angular versions, date, branch names, references reviewed, package changes in both repos, breaking changes fixed, preview validation result, deferred items.
+Write `docs/{major}-upgrade.md` covering: Angular versions, date, branch names, references reviewed, package changes in both repos, breaking changes fixed, **the Path Parity table (Preview ↔ Deployment, every changed file)**, per-path validation results (Deployment dev + prod, Preview), deferred items.
 
 Confirm `docs/upgrade-log/{base}-to-{target}.md` exists and has an entry for every §N row edited during this run (Step 2/6). If no existing §N row was ever edited (only new §N entries were added), the file may not exist — that's fine, don't create an empty one.
 

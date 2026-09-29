@@ -113,8 +113,8 @@ For R1 and R3: every breaking change must appear in the Dual-repo change plan be
 
 ## Dual-Repo Change Plan (Step 2)
 
-| § / Ref | Repo | Files | Change | Breaking change source |
-|---------|------|-------|--------|----------------------|
+| § / Ref | Repo | Path (Preview / Deployment / Both) | Files | Change | Breaking change source |
+|---------|------|------|-------|--------|----------------------|
 
 ---
 
@@ -150,6 +150,15 @@ For R1 and R3: every breaking change must appear in the Dual-repo change plan be
 - likely-breakage:
 - needs-review:
 - safe:
+
+---
+
+## Path Parity (Step 6 → Step 9) — see `preview-vs-deployment.md`
+
+| Changed file | Counterpart on the other path | Result (same change applied / intentionally different (reason) / not applicable (reason)) |
+|--------------|-------------------------------|-------|
+
+Per-path evidence (Step 9): Deployment dev build: | Deployment prod build: | Preview: | CSP-on Deployment: tested / not tested
 
 ---
 

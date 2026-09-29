@@ -1,4 +1,4 @@
-# WaveMaker runtime patterns — ng-runtime §1–§38
+# WaveMaker runtime patterns — ng-runtime §1–§39
 
 Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/`) in Step 6. For codegen patterns see [`patterns/codegen.md`](codegen.md). Workflow: [`SKILL.md`](../SKILL.md). References: [`research.md`](../research.md) R12.
 
@@ -40,6 +40,7 @@ Applied to **ng-runtime source** (`projects/`, `tsconfig*.json`, `build-scripts/
 | [§36](#36-third-party-dependency-ngx-toastr--removed-componentfactoryresolver-usage-and-changed-toasttoastbases-constructor--signal-based-fields-angular-22) | `ngx-toastr` removed `ComponentFactoryResolver` (bump to 20.0.5) + `Toast`/`ToastBase` constructor/fields went signal-based — silent runtime bug, not just a compile error |
 | [§37](#37-projectspackagejson-peer-dependencies-still-declare-the-old-angular-major-every-major) | `projects/*/package.json` `peerDependencies` still declare the old Angular major — published libs would ship a stale peer range |
 | [§38](#38-angular-private-chunks-inlined-into-a-second-umd-entry--duplicate-di-tokens-ng0200-for-rendererfactory2-preview-only) | Angular private `_*-chunk.mjs` files get inlined into every UMD entry → duplicate DI tokens (NG0200 `RendererFactory2`, Preview only) |
+| [§39](#39-preview-runtime-dynamic-appconfigts-explicit-xhrfactory--httpxhrbackend-angular-22) | Preview `runtime-dynamic/app.config.ts`: explicit `XhrFactory` + `HttpXhrBackend` next to `withXhr()` (Angular 22) |
 
 ---
 
@@ -923,6 +924,8 @@ npx tsc --noEmit 2>&1 | rg 'NG1054|NG6008|NG6009'
 
 **Step 6 classification:** `must-change` — these are compile errors, not warnings; `build.sh -f` will not pass with them present.
 
+**Latent (found Angular 22, not fixed):** `runtime-dynamic/src/app/app.module.ts` (`AppModule`, exported from `public_api.ts`) still declares standalone components (`PageWrapperComponent`) and bootstraps a standalone `AppComponent` — Angular 22 rejects it when the module is actually loaded (`Unexpected "PageWrapperComponent" found in the "declarations" array…`). Preview boots via `bootstrapApplication(AppComponent, appConfig)` and never loads it, so nothing fails today; do not load `AppModule` in any new code path.
+
 ### 29. Standalone-by-default breaks inline test-harness components/pipes (Angular 19)
 
 **First required:** Angular 19 (official 19.0.0 breaking change: "Angular directives, components and pipes are now standalone by default"). Discovered via `npm test`, not the build — `build.sh -f` compiles clean even when every affected test fails, because this only surfaces at TestBed runtime, not AOT/ng-packagr compile time.
@@ -1291,4 +1294,38 @@ grep -n 'provide: RendererFactory2' projects/runtime-dynamic/src/app/app.config.
 
 **Step 6 classification:** `must-change` (Preview only — deployment mode will not show it; validate Preview).
 
+**How to debug Preview-only DI/bootstrap failures (worked for §38, no rebuild needed):**
+
+1. **Get the real message.** `runtime-dynamic/main.ts` calls `enableProdMode()` unless the `debugMode` session flag is set, and prod mode strips Angular's error text (`NG0200` with no token). In the preview tab console run `debugMode(true)` (reloads) — the message and token name come back (`Circular dependency detected for \`RendererFactory2\``). Turn it off with `debugMode(false)`.
+2. **The served `wm-libs.js` is readable.** It is the unminified `dist/bundles/wmapp/scripts/wm-libs.js` (same size). Grep it for provider lists (`provide:i0.RendererFactory2`, `class DomRendererFactory2` count — two copies means a duplicated private chunk).
+3. **Repro in the console.** The UMD libs are globals: `ng.core`, `ng.platformBrowser`, `ng.platformBrowser.animations`, `wm.runtime.base` (`WMDomRendererFactory2`, `WMDomSharedStylesHost`, `RuntimeBaseModule`), `wm.runtime.dynamic`. Build `ng.core.createEnvironmentInjector([...providers], ng.core.Injector.NULL)` with the stock platform-browser providers, then add the WM overrides / `provideAnimations()` one at a time and `get(ng.core.RendererFactory2)` — the failing combination is the culprit. (`No provider found for DomRendererFactory2` with the stock providers present = two token copies.)
+4. **Diff against the reviewed sibling branch** (`feature/angular-22-upgrade`, see `research.md` dual-repo map) before inventing a fix.
+
+**Build notes:** the UMD libs step only runs with force — after touching `config/rollup*.mjs` or the UMD concat list use `sh build.sh -fl` (libs only, keeps `dist/`), not a plain `sh build.sh`. "No changes in runtime-dynamic" in that log is the incremental check, not a failure — it means `runtime-dynamic`'s success stamp is newer than its sources; compare `dist/tmp/runtime-dynamic_BUILD_SUCCESS` against your last source edit and check the built `wm-loader.js` for your change before trusting it.
+
 **Related (same Preview-only UMD family) — `@angular/core/rxjs-interop` needs its own UMD global.** ngx-bootstrap 22's positioning code imports `takeUntilDestroyed` from `@angular/core/rxjs-interop`. With no `ng.core.rxjsInterop` global, rollup guessed `rxjsInterop` (undefined at runtime) → Preview: `TypeError: Cannot read properties of undefined (reading 'takeUntilDestroyed')` in `new PositioningService`. Fix (ported from `feature/angular-22-upgrade`): UMD entry `core-rxjs-interop.umd.js` in `rollup.ng-libs.config.mjs`, `'@angular/core/rxjs-interop': 'ng.core.rxjsInterop'` in `rollupGlobals` + `rollupExternals` (`rollup-utils.mjs`), and the bundle in `build.sh`'s `bundleJS` concat list right after `core.umd.js`. Caveat: that entry inlines Angular's private core chunks (§38's risk class) — fine for `takeUntilDestroyed(destroyRef)` with an explicit `DestroyRef` (only calls `onDestroy`), but do not rely on `toSignal`/`rxResource` from this UMD.
+
+---
+
+### 39. Preview `runtime-dynamic/app.config.ts`: explicit `XhrFactory` + `HttpXhrBackend` (Angular 22)
+
+**First required:** Angular 22. **Severity: behavior/reliability in Preview; no compile error.** Copied from the reviewed `feature/angular-22-upgrade` branch — not independently root-caused on classic.
+
+Angular 22 changed `provideHttpClient`'s default backend; `withXhr()` alone restores XHR (upload progress, §27). The reference branch additionally pins the backend so Preview's `HttpClient` always uses plain `XMLHttpRequest` regardless of the environment default:
+
+```typescript
+import { DatePipe, DecimalPipe, XhrFactory } from "@angular/common";
+import { HTTP_INTERCEPTORS, HttpXhrBackend, provideHttpClient, withInterceptorsFromDi, withXhr, withXsrfConfiguration } from "@angular/common/http";
+
+const WM_XHR_FACTORY: XhrFactory = { build: () => new XMLHttpRequest() } as XhrFactory;
+// providers:
+{ provide: XhrFactory, useValue: WM_XHR_FACTORY },
+provideHttpClient(withInterceptorsFromDi(), withXhr(), withXsrfConfiguration({...})),
+{ provide: HttpXhrBackend, useFactory: () => new HttpXhrBackend(WM_XHR_FACTORY) },
+```
+
+**Scope:** `runtime-dynamic/app.config.ts` only. The reference codegen template (`app.config.ts.hbs`) carries only `withXhr()`, not the explicit backend — do not add it there without evidence.
+
+**Step 6 check:** `grep -n 'HttpXhrBackend' projects/runtime-dynamic/src/app/app.config.ts`. **Automated:** `pattern-review.sh` §39 (WARN if missing).
+
+**Step 6 classification:** `needs-review` (verify in Preview: file upload progress, first API call).

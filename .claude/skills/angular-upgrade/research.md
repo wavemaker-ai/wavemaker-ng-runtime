@@ -100,10 +100,10 @@ Optional: `npm run owasp` when user asks.
 | Generated `tsconfig.json` | **`tsconfig.web-app.json`** → `@wavemaker-ai/angular-app` | `src/gen-tsconfig.js` (rename) |
 | Bootstrap | `runtime-dynamic/`, `runtime-base`, transpiler | **`templates/app.config.ts.hbs`** |
 | Page imports | **`transpiler/src/imports.ts`** + rebuild dependencies | via transpiler (no page `.hbs`) |
-| Prism styles | angular-app build | **`src/update-angular-json.js`** |
+| Prism styles | angular-app build | **`src/update-angular-json.js`** (foundation-css path — §20e; never add a build-output segment) |
 | ngx-bootstrap widgets | `components/`, patch, rollup | bootstrap template |
 | `.cjs.js` requires | `angular-app/dependencies/` names | `src/expr-parser-utils.js`, `wm-utils.js`, `pages-util.js` |
 
-**Layout:** sibling `../wavemaker-ng-codegen`. **Branches:** same name — `pattern-review.sh`. **Never** patch `~/Desktop/local-*` or generated app `src/`.
+**Layout:** sibling `../wavemaker-ng-codegen`. **Branches:** same name — `pattern-review.sh`. **Sibling reference branches (same ticket, already reviewed):** ng-runtime `feature/angular-22-upgrade` ↔ ng-codegen `WMS-32451` (both `stage-ai` lineage; classic branches are `feature/angular-22-upgrade-classic`). **Before designing a fix for a new failure, diff the same file on the reference branch** (`git show <branch>:<path>`) — several Preview fixes (§38/§39) were already solved there. Copy only Angular-22 hunks; the branches differ in lineage (§20g). **Never** patch `~/Desktop/local-*` or generated app `src/`.
 
-**Packages:** `@wavemaker-ai/angular-app` ships from ng-runtime. After major bump: align tsconfigs, update codegen templates/src, rebuild both, re-run codegen (§20).
+**Packages:** the `angular-app` package (`@wavemaker/angular-app` on the classic lineage, `@wavemaker-ai/angular-app` on `stage-ai` — check codegen `package.json`) ships from ng-runtime. After major bump: align tsconfigs, update codegen templates/src, rebuild both, re-run codegen (§20).

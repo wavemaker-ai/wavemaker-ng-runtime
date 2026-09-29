@@ -14,6 +14,7 @@ Workflow: [`SKILL.md`](./SKILL.md). References: [`research.md`](./research.md) R
 | [Error-message lookup](#error-message-lookup-step-6--7-diagnostics) → [`troubleshoot.md`](troubleshoot.md) | Error code → section map |
 | [Section version history](#section-version-history) | When each section first applied |
 | [Automated blockers](#automated-blockers-pattern-reviewsh) | What `pattern-review.sh` checks automatically |
+| **[preview-vs-deployment.md](preview-vs-deployment.md)** | Two code paths (Preview / Deployment): parity matrix + mandatory per-upgrade protocol |
 | [Dependency classification](#dependency-classification-this-repo) | What to upgrade / check / keep stable |
 | **[patterns/runtime.md](patterns/runtime.md)** | §1–§19, §26 — ng-runtime source patterns |
 | **[patterns/codegen.md](patterns/codegen.md)** | §20 — ng-codegen template/src patterns |
@@ -60,6 +61,10 @@ Classify findings: `safe` | `needs-review` | `likely-breakage` | `must-change` �
 
 **Dual-repo:** fix each `must-change` in the repo named in its section. §20 spans ng-runtime and/or ng-codegen — never patch `~/Desktop/local-*`. Step 2 → **Dual-repo change plan**; Step 6 → **Cross-repo changes**.
 
+### Dual-path parity gate (every upgrade)
+
+Before Step 10, all must be true: every changed file's counterpart on the other path is recorded (Path Parity table); both repos rebuilt and the app regenerated; Deployment dev **and** prod builds tested; Preview hard-refreshed and clean; any untested path (e.g. CSP-on Deployment) listed as deferred. Detail and the parity matrix: [`preview-vs-deployment.md`](preview-vs-deployment.md).
+
 ### Automated blockers (`pattern-review.sh`)
 
 When adding a **must-change** grep, update **both** the script and the matching § below.
@@ -81,7 +86,7 @@ When adding a **must-change** grep, update **both** the script and the matching 
 | `tsconfig.json` ↔ `tsconfig.web-app.json` (`moduleResolution`, `module`, `lib`) | runtime | §20a |
 | `gen-tsconfig.js`, `app.config.ts.hbs`, `update-angular-json.js` present | codegen | §20 |
 | No disallowed ngx-bootstrap `.forRoot()` in `app.config.ts.hbs` | codegen | §20b |
-| Correct foundation-css dist path in `update-angular-json.js` | codegen | §20e |
+| foundation-css path in `update-angular-json.js` is `.../foundation-css/foundation/foundation.css` (no build-output segment) | codegen | §20e |
 
 **WARN checks** (logged but do not block — review before Step 9):
 
@@ -170,6 +175,8 @@ When each section was first required. **Update "Last verified" when you confirm 
 | §32 | Angular 21 | Angular 21 | Blank page / stuck spinner — a property write gating an `@if` block (or, in one case, blocking clicks via a spinner overlay) via bare `setTimeout`/`.then()`/`.subscribe()` stops reliably triggering change detection; invisible to build/test, only found live in Step 9 (and one instance only via actual click-through interaction testing, not load-only checks). **7 confirmed instances** across `app.component.ts` (×2), `base-page.component.ts` (×2), `base-spa-page.component.ts` (×2), `base-partial.component.ts`, `base-prefab.component.ts`. Fixed by `this.cdr.detectChanges()` immediately after each flag write — **not** `ngZone.run(() => appRef.tick())` (an earlier, wrong iteration that reintroduces `NG0100`). Angular 21 zoneless-by-default investigated and ruled out as the cause (app is confirmed zone-based via source read). Re-check scope at the next hop — see `patterns/runtime.md` §32 for the full fix history and scan script |
 | §37 | Every major | Angular 22 | `projects/*/package.json` `peerDependencies` (this repo's *published* libs) never bumped by any prior hop — silent, found by manual grep after 18→22. Distinct from §22 (consumed `.yalc` packages). Automated in `pattern-review.sh` |
 | §38 | Angular 22 (re-check every major) | Angular 22 | Private `_*-chunk.mjs` imports get inlined into a 2nd UMD entry (`platform-browser/animations`) → duplicate `DomRendererFactory2`/`BrowserModule` → Preview NG0200 `RendererFactory2`; deployment mode unaffected. Fixed by providing `RendererFactory2` → `WMDomRendererFactory2` in `runtime-dynamic/app.config.ts` after `provideAnimations()` (as on `feature/angular-22-upgrade`) |
+| §39 | Angular 22 | Angular 22 | Preview `runtime-dynamic/app.config.ts` must provide `XhrFactory` + `{ provide: HttpXhrBackend, useFactory: () => new HttpXhrBackend(WM_XHR_FACTORY) }` next to `withXhr()` (copied from reviewed `feature/angular-22-upgrade`). Automated in `pattern-review.sh` |
+| §20g | Angular 22 | Angular 22 | Codegen templates: `ChangeDetectionStrategy.Eager` on 5 component templates + `provideZoneChangeDetection`/`withRouterConfig`/`withXhr` in `app.config.ts.hbs`; keep `NgCircleProgressModule.forRoot()` on classic (§20b). See `patterns/codegen.md` |
 
 ---
 

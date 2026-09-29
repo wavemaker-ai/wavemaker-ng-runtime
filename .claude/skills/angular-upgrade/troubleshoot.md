@@ -48,3 +48,7 @@ For the fix, open the file listed in **Section** and follow its instructions. Wo
 - §1–§19 → [`patterns/runtime.md`](patterns/runtime.md)
 - §20 → [`patterns/codegen.md`](patterns/codegen.md)
 - §21–§25 → [`checklist.md`](checklist.md)
+| `NG0200: Circular dependency detected for RendererFactory2` (blank Preview page; deployment fine) | §38 | WM renderer override vs `provideAnimations()` in the rollup UMD libs — bind `RendererFactory2` to `WMDomRendererFactory2` in `runtime-dynamic/app.config.ts`. Prod mode hides the token: run `debugMode(true)` in the preview tab |
+| `Cannot read properties of undefined (reading 'takeUntilDestroyed')` in `new PositioningService` (Preview) | §38 (related) | `@angular/core/rxjs-interop` has no UMD global — add `core-rxjs-interop.umd.js` entry, global/external mapping, `build.sh` concat |
+| `NG0200` / `NG0201` with no token name in a prod build | §38 | Reload with `debugMode(true)`; dev mode restores the message and path |
+| `NullInjectorError: No provider for CircleProgressOptions` | §20b | `NgCircleProgressModule.forRoot()` removed from a classic branch — restore it |

@@ -18,6 +18,8 @@ One Angular major per run. **Both repos** (`wavemaker-ng-runtime` + `wavemaker-n
 
 **Sibling repo:** `../wavemaker-ng-codegen` (`NG_CODEGEN_PATH` in `repo.config.sh`). Both repos stay on the same branch throughout.
 
+**Two code paths — Preview and Deployment — must both be changed and tested every upgrade:** [`preview-vs-deployment.md`](preview-vs-deployment.md) (parity matrix and protocol).
+
 **A third sibling repo, `../wavemaker-foundation-css`, sometimes needs its own fix.** It is not tracked by `repo.config.sh`, has no automated checks in this skill, and this skill does not manage its branch — but it holds the WM design-system CSS (via `.yalc`) that ngx-bootstrap-derived components render against. When a Step 9 visual regression looks exactly like a known ngx-bootstrap-patch symptom (e.g. modal/backdrop invisible) but `verify-ngx-bootstrap-bundle.sh` passes and the patch source looks correct, check foundation-css's own CSS before spending more time in ng-runtime — see [`patterns/runtime.md` §6](patterns/runtime.md#6-ngx-bootstrap-patch-and-widgets) for a confirmed real instance (18→19 hop). If a fix is needed there, switch that repo to the same branch, apply the CSS fix, and `npm run build` (auto-runs `yalc push` back into ng-runtime).
 
 **DO NOT invoke** for planning or scoping questions ("what would it take to upgrade?", "what breaks in Angular 21?", "should we upgrade?") — answer those inline without starting Step 0.
@@ -116,6 +118,7 @@ Config source: [`repo.config.sh`](repo.config.sh) (sourced by all scripts).
 | [`patterns/codegen.md`](patterns/codegen.md) | Step 6 — ng-codegen §20 greps |
 | [`checklist.md`](checklist.md) | Step 3 — dependency classification table; Step 6 — automated blockers, §21–§25, classification guide; Step 9 — extended checks |
 | [`troubleshoot.md`](troubleshoot.md) | Any step — error message → §N quick lookup |
+| [`preview-vs-deployment.md`](preview-vs-deployment.md) | Steps 6/9/10 — Preview vs Deployment parity protocol |
 | [`state.md`](state.md) | Template for `current-state.md` |
 | `docs/upgrade-log/{base}-to-{target}.md` | Step 2/6 — before editing an existing §N row/section; Step 10 — verify it's complete. Skeleton in [`templates.md`](templates.md#pattern-diff-log-skeleton-step-26--docsupgrade-logbase-to-targetmd) |
 | [`../../commands/local-angular-build.md`](../../commands/local-angular-build.md) | Step 9 — Tomcat build and deploy |
