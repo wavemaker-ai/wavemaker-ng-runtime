@@ -303,12 +303,12 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
                 this.bsTimeValue = newVal;
             }
         } // sometimes library is not returning the correct value when the min and max time are given, displaying the datavalue based on the value given by the user
-        else if (this.bsTimePicker?.min && this.bsTimePicker.max) {
-            minTimeMeridian = moment(new Date(this.bsTimePicker.min)).format('A');
-            timeValue = this.bsTimePicker.hours + ':' + (this.bsTimePicker.minutes || 0) + ':' + (this.bsTimePicker.seconds || 0) + (this.bsTimePicker.showMeridian ? (' ' + minTimeMeridian) : '');
+        else if (this.bsTimePicker?.min() && this.bsTimePicker.max()) {
+            minTimeMeridian = moment(new Date(this.bsTimePicker.min())).format('A');
+            timeValue = this.bsTimePicker.hours + ':' + (this.bsTimePicker.minutes || 0) + ':' + (this.bsTimePicker.seconds || 0) + (this.bsTimePicker.showMeridian() ? (' ' + minTimeMeridian) : '');
             timeInputValue = getNativeDateObject(timeValue, { pattern: this.loadNativeDateInput ? this.outputformat : undefined, isNativePicker: this.loadNativeDateInput });
             this.bsTimePicker.meridian = minTimeMeridian?.replace(this.meridians[0], this.am)?.replace(this.meridians[1], this.pm);
-            this.timeNotInRange =  this.bsTimePicker.min > timeInputValue || this.bsTimePicker.max < timeInputValue;
+            this.timeNotInRange =  this.bsTimePicker.min() > timeInputValue || this.bsTimePicker.max() < timeInputValue;
 
             if (this.timeNotInRange || this.invalidDateTimeFormat) {
                 this.bsTimeValue = this.getPrevDataValue();
@@ -317,7 +317,7 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
                     $(this.nativeElement).find('.display-input').val(this.safeReplaceMeridians(timeStr));
                 });
             }
-            this.setValidateType(this.bsTimePicker.min, this.bsTimePicker.max, timeInputValue);
+            this.setValidateType(this.bsTimePicker.min(), this.bsTimePicker.max(), timeInputValue);
             if (!this.timeNotInRange) {
                 this.bsTimeValue = timeInputValue;
             }

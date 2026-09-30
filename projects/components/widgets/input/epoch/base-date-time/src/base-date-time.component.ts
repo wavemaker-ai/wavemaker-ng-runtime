@@ -775,7 +775,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         // WMS-19382: update minutes and seconds to 0 when we enter hour value
         inputFields.first().on('keyup', evt => {
             const hourValue = (evt.target as any).value;
-            forEach(inputFields, (field, index) => {
+            forEach($el.find('.bs-timepicker-field'), (field, index) => {
                 // @ts-ignore
                 if (evt.target !== field && field.value === '' && hourValue.length) {
                     const fieldName = index === 1 ? 'minutes' : 'seconds';
@@ -812,14 +812,14 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                         stopPropogation = true;
                         preventDefault = true;
                     }
-                } else 
+                } else
                     if (event.key === 'Enter' || event.key === 'Escape') {
                         elementScope.setIsTimeOpen(false);
                         this.focus();
                         stopPropogation = true;
                         preventDefault = true;
                     }
-                
+
                 if (stopPropogation) {
                     event.stopPropagation();
                 }
