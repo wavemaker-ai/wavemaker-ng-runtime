@@ -1,4 +1,4 @@
-require('sonarqube-scanner').default(
+require('sonarqube-scanner')(
     {
         serverUrl: process.argv[2],
         options: {
