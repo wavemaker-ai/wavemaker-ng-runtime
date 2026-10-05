@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Injector, inject, OnDestroy, ViewChild, Directive, AfterViewChecked } from '@angular/core';
+import { Injector, inject, OnDestroy, ViewChild, Directive, AfterViewChecked } from '@angular/core';
 import { Subject } from 'rxjs';
 
 import {
@@ -37,7 +37,6 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     appLocale: any;
     @ViewChild(PrefabContainerDirective, { static: false }) prefabContainerDirective?: PrefabContainerDirective;
     scriptLoaderService: ScriptLoaderService;
-    cdr: ChangeDetectorRef;
     compileContent = false;
     pageDirective: PageDirective | SpaPageDirective;
     Viewport: Viewport;
@@ -59,7 +58,6 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
 
     init() {
         this.App = this.injector.get(App);
-        this.cdr = this.injector ? this.injector.get(ChangeDetectorRef) : inject(ChangeDetectorRef);
         //making the code compatible in both the JIT and AOT modes
         this.containerWidget = this.injector ? this.injector.get(WidgetRef) : inject(WidgetRef);
 
@@ -275,11 +273,7 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
         if (!this.scriptsLoaded && this.prefabContainerDirective) {
             this.scriptsLoaded = true;
             this.loadScripts().then(() => {
-                // Angular 21: same root cause as compilePageContent in base-page/base-spa-page
-                // (see patterns §32) — this flag gates the top-level `@if (compileContent)` block
-                // wrapping the prefab's template (see transpile/src/prefab/prefab-container/prefab-container.build.ts).
                 this.compileContent = true;
-                this.cdr.detectChanges();
                 this.registerChangeListeners();
                 setTimeout(() => {
                     // trigger viewInit$.complete after a timeout so that the widget listeners are ready before Variable xhr call.

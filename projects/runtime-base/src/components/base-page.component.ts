@@ -1,7 +1,6 @@
 import {
     AfterContentInit,
     AfterViewInit,
-    ChangeDetectorRef,
     Directive,
     HostListener,
     inject,
@@ -49,7 +48,6 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
     Actions: any;
     App: App;
     injector: Injector;
-    cdr: ChangeDetectorRef;
     pageName: string;
     activePageName: string;
     route: ActivatedRoute;
@@ -81,7 +79,6 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         muteWatchers();
 
         this.App = this.injector ? this.injector.get(App) : inject(App);
-        this.cdr = this.injector ? this.injector.get(ChangeDetectorRef) : inject(ChangeDetectorRef);
         this.route = this.injector ? this.injector.get(ActivatedRoute) : inject(ActivatedRoute);
         this.appManager = this.injector ? this.injector.get(AppManagerService) : inject(AppManagerService);
         this.navigationService = this.injector ? this.injector.get(AbstractNavigationService) : inject(AbstractNavigationService);
@@ -169,14 +166,8 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
                     this.appManager.notify('page-variables-data-loaded', {pageName: this.pageName});
                     this.startupVariablesLoaded = true;
                     // hide the loader only after the some setTimeout for smooth page load.
-                    // Angular 21: bare setTimeout no longer reliably triggers change detection for
-                    // this flag (same root cause as app.component.ts's startApp — see patterns
-                    // §32). ApplicationRef.tick() throws NG0100 for this exact first-activation
-                    // transition; ChangeDetectorRef.detectChanges() (scoped to this component,
-                    // skips the dev-mode checkNoChanges pass) renders correctly.
                     setTimeout(() => {
                         this.showPageContent = true;
-                        this.cdr.detectChanges();
                     }, 100);
                 });
             variableCollection.callback(variableCollection.Actions);
@@ -337,13 +328,7 @@ export abstract class BasePageComponent extends FragmentMonitor implements After
         this.loadScripts().then(() => {
             this.runPageTransition()
                 .then(() => {
-                    // Angular 21: same root cause as showPageContent below (see patterns §32) —
-                    // this flag gates the top-level `@if (compilePageContent)` block wrapping the
-                    // entire transpiled page template (see page.build.ts / page-content.build.ts).
-                    // Being set from a Promise .then() rather than a zone-patched setTimeout made
-                    // no difference — it still needs an explicit trigger to render.
                     (this as any).compilePageContent = true;
-                    this.cdr.detectChanges();
                     setTimeout(() => {
                         this.onPageContentReady = () => {
                             this.fragmentsLoaded$.subscribe(noop, noop, () => {
