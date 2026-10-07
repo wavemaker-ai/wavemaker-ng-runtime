@@ -364,7 +364,7 @@ describe('DateComponent', () => {
 
     /************************ Scenarios starts **************************************** */
 
-    xit('should close the caledar as soon as select the date and should select the date', waitForAsync(() => {
+    it('should close the caledar as soon as select the date and should select the date', waitForAsync(() => {
         onClickCheckTaglengthOnBody(fixture, '.btn-time', 'bs-datepicker-container', 1, (el) => {
             const datePickerRows = el[0].querySelectorAll('tbody tr');
             const eleRow = datePickerRows[1];

@@ -431,7 +431,7 @@ let providers = [
     { provide: ToDatePipe, useClass: ToDatePipe }
 ]
 
-// NOTE on `teardown: { destroyAfterEach: false }` (used throughout this file): with it disabled,
+// NOTE on `teardown: { destroyAfterEach: true }` (used throughout this file): with it disabled,
 // fixtures/components from earlier tests are never destroyed, so their real (non-fakeAsync)
 // setTimeout-based work (debounced validators, filters, etc.) can still fire during later,
 // unrelated tests -- this file has known residual, nondeterministic flakiness in a small
@@ -442,7 +442,7 @@ const testModuleDef: ITestModuleDef = {
     imports: [...declarations, ...imports],
     declarations: [TableWrapperComponent],
     providers: providers,
-    teardown: { destroyAfterEach: false }
+    teardown: { destroyAfterEach: true }
 };
 
 const componentDef: ITestComponentDef = {
@@ -784,7 +784,7 @@ describe("DataTable", () => {
                     imports: [...declarations, ...imports],
                     declarations: [InlineTableWrapperComponent],
                     providers: providers,
-                    teardown: { destroyAfterEach: false }
+                    teardown: { destroyAfterEach: true }
                 };
 
                 let wrapperComponent: InlineTableWrapperComponent;
@@ -1803,7 +1803,7 @@ describe("DataTable", () => {
                 describe('renderDynamicFilterColumn', () => {
                     beforeEach(() => {
                         (wmComponent as any).isdynamictable = false;
-                        (wmComponent as any).filterTmpl = { _results: [] };
+                        (wmComponent as any).filterTmpl = { _results: [], reset: jest.fn(), forEach: jest.fn() };
                     });
 
                     it('should add filter template ref for dynamic table', () => {
@@ -2201,7 +2201,7 @@ describe("DataTable", () => {
 
                     it('should clear fieldDefs and filterTmpl results when called', async () => {
                         wmComponent.fieldDefs = ['oldField'];
-                        wmComponent.filterTmpl = { _results: ['oldResult'] } as any;
+                        wmComponent.filterTmpl = { _results: ['oldResult'], reset: jest.fn(), forEach: jest.fn() } as any;
                         await wmComponent.generateDynamicColumns([]);
                         expect(wmComponent.fieldDefs).toEqual([]);
                         expect((wmComponent as any).filterTmpl._results).toEqual([]);
@@ -2384,7 +2384,7 @@ describe("DataTable", () => {
                     imports: [...declarations, ...imports],
                     declarations: [QuickEditTableWrapperComponent],
                     providers: providers,
-                    teardown: { destroyAfterEach: false }
+                    teardown: { destroyAfterEach: true }
                 };
 
                 let wrapperComponent: QuickEditTableWrapperComponent;
@@ -2459,8 +2459,8 @@ describe("DataTable", () => {
                     );
                 }));
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should trigger default regexp validator', waitForAsync(() => {
+                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: true }) can land mid-test here. Passes reliably in isolation; not a production bug.
+                it('should trigger default regexp validator', waitForAsync(() => {
                     const invalidTestValue = 'test';
                     const validTestValue = 'test@test.com';
                     defaultValidators(
@@ -2476,8 +2476,8 @@ describe("DataTable", () => {
                     );
                 }));
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should trigger default maxchars validator', waitForAsync(() => {
+                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: true }) can land mid-test here. Passes reliably in isolation; not a production bug.
+                it('should trigger default maxchars validator', waitForAsync(() => {
                     const invalidTestValue = 'test12345';
                     const validTestValue = 'test';
                     defaultValidators(
@@ -2493,8 +2493,8 @@ describe("DataTable", () => {
                     );
                 }));
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should trigger default minvalue validator', waitForAsync(() => {
+                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: true }) can land mid-test here. Passes reliably in isolation; not a production bug.
+                it('should trigger default minvalue validator', waitForAsync(() => {
                     const invalidTestValue = 15;
                     const validTestValue = 18;
                     defaultValidators(
@@ -2524,8 +2524,8 @@ describe("DataTable", () => {
                     ).toBeTruthy();
                 });
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should respect the mindate validation', waitForAsync(() => {
+                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: true }) can land mid-test here. Passes reliably in isolation; not a production bug.
+                it('should respect the mindate validation', waitForAsync(() => {
                     const invalidTestValue = '2019-11-02';
                     const validTestValue = '2019-12-05';
                     dateValidators(
@@ -2540,8 +2540,8 @@ describe("DataTable", () => {
                     );
                 }));
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should respect the maxdate validation', waitForAsync(() => {
+                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: true }) can land mid-test here. Passes reliably in isolation; not a production bug.
+                it('should respect the maxdate validation', waitForAsync(() => {
                     const invalidTestValue = '2019-12-05';
                     const validTestValue = '2019-11-02';
                     dateValidators(
@@ -2556,8 +2556,8 @@ describe("DataTable", () => {
                     );
                 }));
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should respect the excludedays validation', waitForAsync(() => {
+                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: true }) can land mid-test here. Passes reliably in isolation; not a production bug.
+                it('should respect the excludedays validation', waitForAsync(() => {
                     const invalidTestValue = '2019-12-30';
                     const validTestValue = '2019-12-29';
                     dateValidators(
@@ -2572,8 +2572,8 @@ describe("DataTable", () => {
                     );
                 }));
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should respect the excludedate validation', waitForAsync(() => {
+                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: true }) can land mid-test here. Passes reliably in isolation; not a production bug.
+                it('should respect the excludedate validation', waitForAsync(() => {
                     const invalidTestValue = '2020-01-01';
                     const validTestValue = '2020-01-02';
                     dateValidators(
@@ -2588,23 +2588,23 @@ describe("DataTable", () => {
                     );
                 }));
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should trigger custom validator(sync)', waitForAsync(() => {
+                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: true }) can land mid-test here. Passes reliably in isolation; not a production bug.
+                it('should trigger custom validator(sync)', waitForAsync(() => {
                     customValidatorSync(true, wmComponent, quick_edit_fixture);
                 }));
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should trigger default and custom validator', waitForAsync(() => {
+                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: true }) can land mid-test here. Passes reliably in isolation; not a production bug.
+                it('should trigger default and custom validator', waitForAsync(() => {
                     defaultAndCustomValidator(true, wmComponent, quick_edit_fixture);
                 }));
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should trigger observe validator', fakeAsync(() => {
+                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: true }) can land mid-test here. Passes reliably in isolation; not a production bug.
+                it('should trigger observe validator', fakeAsync(() => {
                     observeValidator(true, wmComponent, quick_edit_fixture);
                 }));
 
-                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: false }) can land mid-test here. Passes reliably in isolation; not a production bug.
-                it.skip('should trigger custom validator(async)', fakeAsync(() => {
+                // FLAKY (nondeterministic): real (non-fakeAsync) setTimeout-based work from earlier tests in this large suite (teardown: { destroyAfterEach: true }) can land mid-test here. Passes reliably in isolation; not a production bug.
+                it('should trigger custom validator(async)', fakeAsync(() => {
                     customValidatorAsync(true, wmComponent, quick_edit_fixture);
                 }));
 
@@ -2772,7 +2772,7 @@ describe("DataTable", () => {
                     imports: [...declarations, ...imports],
                     declarations: [SummaryRowWrapperComponent],
                     providers: providers,
-                    teardown: { destroyAfterEach: false }
+                    teardown: { destroyAfterEach: true }
                 };
 
                 let wrapperComponent: SummaryRowWrapperComponent;

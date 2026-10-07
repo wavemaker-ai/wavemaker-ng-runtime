@@ -417,8 +417,11 @@ export class ComponentTestBase {
                         fixture.whenStable().then(this.assertCallbackAfterStable(fixture, evtObj.callbackMethod));
                     }))
                 } else if (evtObj.mouseSelectionEle) {
-                    xit('Should trigger the ' + evtObj.eventName + ' event', (() => {
-                        fixture.whenStable().then(this.assertCallbackAfterMouseEvent(fixture, evtObj.eventName, evtObj.mouseSelectionEle, evtObj.callbackMethod));
+                    it('Should trigger the ' + evtObj.eventName + ' event', waitForAsync(() => {
+                        // host classes are applied in a requestAnimationFrame batch (core/utils/dom.ts), so wait for one frame
+                        fixture.whenStable()
+                            .then(() => new Promise((resolve) => requestAnimationFrame(() => resolve(undefined))))
+                            .then(this.assertCallbackAfterMouseEvent(fixture, evtObj.eventName, evtObj.mouseSelectionEle, evtObj.callbackMethod));
                     }));
                 } else if (evtObj.eventTrigger) {
                     it('Should trigger the ' + evtObj.eventName + ' event', fakeAsync(() => {

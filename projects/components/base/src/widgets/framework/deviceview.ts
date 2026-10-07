@@ -109,7 +109,7 @@ const bindSearchIconEvent = (searchElements, leftNavEle: HTMLElement) => {
         const searchEle = $('<a class="app-header-action"><i class="wi wi-search"></i></a>') as JQuery<HTMLElement>;
         $(ele).before(searchEle);
         // Tap icon to show/hide search box
-        bindTapEvtHandler(searchEle, () => toggleSearchContainer(ele, leftNavEle));
+        bindTapEvtHandler(searchEle[0], () => toggleSearchContainer(ele, leftNavEle));
     });
 
 };
