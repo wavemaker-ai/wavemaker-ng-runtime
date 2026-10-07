@@ -303,29 +303,33 @@ describe("DatetimeComponent", () => {
 
 
     // TypeError: Cannot read properties of undefined (reading 'querySelectorAll')
-    xit('should toggle the AM/PM', waitForAsync(() => {
+    // Skipped: the time picker popup renders in the document body with only the hours field in this fixture (no
+    // meridian button), so the AM/PM toggle cannot be exercised here. The original version of this test passed
+    // only because its assertions ran in a promise chain that was never awaited.
+    it.skip('should toggle the AM/PM', async () => {
         (wmComponent as any).getWidget().datepattern = 'MMM d, yyyy h:mm:ss a';
+        (wmComponent as any).ismeridian = true;
+        await fixture.whenStable();
+        // open the time dropdown through the component, the popup is rendered in the document body
+        wmComponent.toggleTimePicker(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        fixture.whenStable().then(() => {
-            onClickCheckTaglengthOnBody(fixture, '.btn-time', null, null);
+        let timepicker: HTMLElement = document.querySelector('timepicker');
+        for (let attempt = 0; !timepicker && attempt < 50; attempt++) {
+            await new Promise((resolve) => setTimeout(resolve, 20));
             fixture.detectChanges();
+            timepicker = document.querySelector('timepicker');
+        }
+        expect(timepicker).toBeTruthy();
+        const meridian = timepicker.querySelector('button.text-center') as HTMLElement;
+        expect(meridian).toBeTruthy();
+        const initialText = meridian.textContent.trim();
+        meridian.click();
+        fixture.detectChanges();
 
-            fixture.whenStable().then(() => {
-                const timepicker = fixture.debugElement.query(By.css('timepicker'));
-                const tbodyRows = timepicker.queryAll(By.css('tbody tr'));
-                const tdElement = tbodyRows[1].queryAll(By.css('td'))[6]
-                    .query(By.css('button')).nativeElement;
-
-                const initialText = tdElement.textContent.trim();
-                tdElement.click();
-                fixture.detectChanges();
-
-                expect(tdElement.textContent.trim()).toEqual(
-                    initialText === 'AM' ? 'PM' : 'AM'
-                );
-            });
-        });
-    }));
+        expect(meridian.textContent.trim()).toEqual(initialText === 'AM' ? 'PM' : 'AM');
+    });
 
     it('should autofocus the date control', fakeAsync(() => {
         fixture.detectChanges();

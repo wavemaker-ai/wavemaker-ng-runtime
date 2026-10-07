@@ -378,7 +378,9 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
         if (this.deregisterEventListener) {
             this.deregisterEventListener();
         }
-        this.removeKeyupListener();
+        if (this.removeKeyupListener) {
+            this.removeKeyupListener();
+        }
         const parentEl = $(this.nativeElement).closest('.app-composite-widget.caption-floating');
         if (parentEl.length > 0) {
             this.app.notify('captionPositionAnimate', { displayVal: this.displayValue, nativeEl: parentEl });
