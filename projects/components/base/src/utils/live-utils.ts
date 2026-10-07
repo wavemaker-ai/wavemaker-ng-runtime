@@ -95,7 +95,7 @@ export const getFieldLayoutConfig = (captionWidth, captionPosition, os): any => 
 };
 
 export const getDefaultViewModeWidget = widget => {
-    if (includes(['checkbox', 'toggle', 'iconbutton-toggle', 'rating'], widget)) {
+    if (includes(['checkbox', 'toggle', 'iconbutton-toggle', 'rating', 'chips'], widget)) {
         return VIEW_MODE_OPTIONS.DEFAULT;
     }
     return VIEW_MODE_OPTIONS.LABEL;
