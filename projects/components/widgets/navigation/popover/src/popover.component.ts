@@ -141,7 +141,15 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
             try {
                 // Check for special containers as before
                 const isInsideSpecialContainer = !!(
+                    // ngx-bootstrap renders date/time pickers in custom elements like
+                    // <bs-datepicker-container> (not always with a CSS class), so check
+                    // both tag and class selectors.
+                    target.closest('bs-datepicker-container') ||
                     target.closest('.bs-datepicker-container') ||
+                    target.closest('bs-daterangepicker-container') ||
+                    target.closest('.bs-daterangepicker-container') ||
+                    target.closest('bs-timepicker') ||
+                    target.closest('.bs-timepicker') ||
                     target.closest(".dropdown-menu")
                 );
 
