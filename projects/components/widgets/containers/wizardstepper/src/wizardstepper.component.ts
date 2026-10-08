@@ -130,7 +130,11 @@ export class WizardStepperComponent extends StylableComponent {
         return this.wizContext?.getWizardClass?.() || '';
     }
 
+    // The stepper's own authored stepstyle wins; unset falls back to the wizard's.
     get stepClass(): string {
+        if (this.stepstyle) {
+            return this.stepstyle === 'justified' ? 'nav-justified' : '';
+        }
         return this.wizContext?.getStepClass?.() || '';
     }
 

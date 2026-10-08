@@ -131,6 +131,31 @@ describe('wm-wizardstepper: bound to a wizContext', () => {
         expect(hostEl.classList.contains('app-wizard-heading')).toBe(true);
         expect(hostEl.getAttribute('role')).toBe('tab');
     });
+
+    describe('stepstyle resolution', () => {
+        const stepsList = () => fixture.nativeElement.querySelector('ul.app-wizard-steps');
+
+        it('falls back to the wizard\'s step class when the stepper sets no stepstyle', () => {
+            wizContext.getStepClass = () => 'nav-justified';
+            fixture.detectChanges();
+            expect(wmComponent.stepstyle).toBeUndefined();
+            expect(stepsList().classList.contains('nav-justified')).toBe(true);
+        });
+
+        it('its own auto stepstyle overrides a justified wizard', () => {
+            wizContext.getStepClass = () => 'nav-justified';
+            wmComponent.stepstyle = 'auto';
+            fixture.detectChanges();
+            expect(stepsList().classList.contains('nav-justified')).toBe(false);
+        });
+
+        it('its own justified stepstyle overrides an auto wizard', () => {
+            wizContext.getStepClass = () => '';
+            wmComponent.stepstyle = 'justified';
+            fixture.detectChanges();
+            expect(stepsList().classList.contains('nav-justified')).toBe(true);
+        });
+    });
 });
 
 /**

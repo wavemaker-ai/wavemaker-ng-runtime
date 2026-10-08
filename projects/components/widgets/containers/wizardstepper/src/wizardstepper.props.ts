@@ -8,7 +8,9 @@ export const registerProps = () => {
                 ['class', PROP_STRING],
                 ['name', PROP_STRING],
                 ['show', {value: true, ...PROP_BOOLEAN}],
-                ['stepstyle', {value: 'auto', ...PROP_STRING}],
+                // No registered default: an unset stepstyle falls back to the wizard's (see
+                // WizardStepperComponent.stepClass); the effective default is still 'auto'.
+                ['stepstyle', PROP_STRING],
                 ['tabindex', {value: 0, ...PROP_NUMBER}],
                 ['wizardname', PROP_STRING]
             ]
