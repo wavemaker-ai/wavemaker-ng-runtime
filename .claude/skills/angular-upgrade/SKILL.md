@@ -126,7 +126,7 @@ Config source: [`repo.config.sh`](repo.config.sh) (sourced by all scripts).
 
 ## Important Rules
 
-- **One confirmation only.** Step 0 is the sole gate. After the user confirms, Steps 1–10 run to completion — no further prompts for informational findings.
+- **One confirmation only.** Step 0 is the sole gate. After the user confirms, Steps 1–10 run to completion — no further prompts for informational findings. **Exception:** blanket mechanical edits spanning many files (e.g. `ChangeDetectionStrategy.Eager`, `provideZoneChangeDetection`) get one confirmation per distinct edit, then are applied to all files at once — see Step 6 in [`steps-6-10.md`](steps-6-10.md).
 - **Compatibility first.** Fix compile and runtime breaks caused by the Angular version change. Do not modernize (signals, zoneless, `inject()` style, standalone migration) unless it is required for compilation.
 - **Both repos together.** ng-runtime and ng-codegen are always upgraded on the same branch name. Never bump one without the other.
 - **`ng update --dry-run` before live.** Never run `ng update` without `--dry-run` first — it overwrites `build.sh -f` and other custom pipeline files.
