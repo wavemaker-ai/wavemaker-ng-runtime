@@ -207,7 +207,7 @@ describe('TimeComponent - additional behaviour', () => {
             jest.useFakeTimers();
             const min = at(8);
             const max = at(17);
-            cmp.bsTimePicker = { min, max, hours: '10', minutes: '30', seconds: '0', showMeridian: true };
+            cmp.bsTimePicker = { min: () => min, max: () => max, hours: '10', minutes: '30', seconds: '0', showMeridian: () => true };
             cmp.onTimeChange(undefined);
             expect(cmp.bsTimePicker.meridian).toBeDefined();
             expect(typeof cmp.timeNotInRange).toBe('boolean');
@@ -216,7 +216,7 @@ describe('TimeComponent - additional behaviour', () => {
 
         it('restores the previous value when the typed time is out of range', () => {
             jest.useFakeTimers();
-            cmp.bsTimePicker = { min: at(8), max: at(17), hours: '23', minutes: '0', seconds: '0', showMeridian: false };
+            cmp.bsTimePicker = { min: () => at(8), max: () => at(17), hours: '23', minutes: '0', seconds: '0', showMeridian: () => false };
             jest.spyOn(cmp, 'getPrevDataValue').mockReturnValue(at(9));
             cmp.onTimeChange(undefined);
             expect(cmp.timeNotInRange).toBe(true);
