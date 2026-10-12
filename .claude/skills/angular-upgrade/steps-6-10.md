@@ -45,6 +45,15 @@ sh scripts/pattern-review.sh
 cd <NG_CODEGEN_PATH> && sh build.sh
 ```
 
+**Blanket changes — confirm once, apply to all.** If a fix means the same mechanical edit across many files (e.g. adding `changeDetection: ChangeDetectionStrategy.Eager` to every `@Component`, adding `provideZoneChangeDetection(...)` to bootstrap/provider lists, a repeated import/rename/decorator-option change), do **not** ask per file and do not edit silently:
+
+1. Grep to list every affected file and count them.
+2. Show the user one confirmation: the exact before/after edit, the file count, and a sample of paths (plus any files you propose to exclude and why).
+3. On approval, apply it to **all** matched files in one pass, then re-grep to confirm zero remaining matches.
+4. Record it as a single row in `current-state.md` → **Cross-repo Changes** (edit, file count, repo).
+
+If the user declines or narrows the scope, follow their scope. Only ask again if a later blanket change is a different edit. This is the one exception to "one confirmation only" (see [`SKILL.md`](SKILL.md) Important Rules); all other findings still run without prompts.
+
 Record all edits in `current-state.md` → **Cross-repo Changes**.
 
 **Done when:** `pattern-review.sh` exit 0; every WARN item either fixed or explicitly deferred (record reason in `current-state.md` → **Pattern Findings**); no open `must-change`; ng-codegen `build.sh` exit 0; changes committed in both repos before proceeding to Step 7 (do not leave uncommitted upgrade changes).

@@ -111,6 +111,7 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
     defaultvalue;
     editWidgetType;
     filterwidget;
+    filteronfilter;
     field;
     formatpattern;
     custompipeformat;
@@ -504,6 +505,12 @@ export class TableColumnDirective extends BaseComponent implements OnInit, After
     }
 
     loadFilterData() {
+        // Skip re-populating with the full/unfiltered list when this filter is currently cascaded
+        // from another row-filter's value (via "Filter On Field").
+        const filterOnValue = this.filteronfilter && this.table?.rowFilter?.[this.filteronfilter]?.value;
+        if (isDefined(filterOnValue) && filterOnValue !== '') {
+            return;
+        }
         // If filterdataset is not bound, get the data implicitly
         if (this._isRowFilter && isDataSetWidget(this.filterwidget) && !this.bindfilterdataset) {
             // For live variable, get the data using distinct API

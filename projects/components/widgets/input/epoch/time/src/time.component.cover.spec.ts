@@ -97,7 +97,7 @@ describe('TimeComponent coverage', () => {
         });
 
         it('picker values use the output format when limits exist', () => {
-            cmp.bsTimePicker = { min: new Date(2000, 0, 1), max: new Date(2100, 0, 1), hours: '10', minutes: 0, seconds: undefined, showMeridian: false };
+            cmp.bsTimePicker = { min: () => new Date(2000, 0, 1), max: () => new Date(2100, 0, 1), hours: '10', minutes: 0, seconds: undefined, showMeridian: () => false };
             cmp.onTimeChange(undefined);
             expect(cmp.timeNotInRange).toBe(false);
             expect(cmp.bsTimeValue.getHours()).toBe(10);
@@ -152,7 +152,7 @@ describe('TimeComponent coverage', () => {
 
         it('uses the picker time when it is within limits and the format is valid', () => {
             cmp.invalidDateTimeFormat = false;
-            cmp.bsTimePicker = { min: new Date(2000, 0, 1), max: new Date(2100, 0, 1), hours: '10', minutes: 5, seconds: 7, showMeridian: true };
+            cmp.bsTimePicker = { min: () => new Date(2000, 0, 1), max: () => new Date(2100, 0, 1), hours: '10', minutes: 5, seconds: 7, showMeridian: () => true };
             cmp.onTimeChange(undefined);
             expect(cmp.timeNotInRange).toBe(false);
             expect(cmp.bsTimeValue).toBeInstanceOf(Date);
@@ -163,7 +163,7 @@ describe('TimeComponent coverage', () => {
             const prev = at(6);
             jest.spyOn(cmp, 'getPrevDataValue').mockReturnValue(prev);
             cmp.invalidDateTimeFormat = true;
-            cmp.bsTimePicker = { min: new Date(2000, 0, 1), max: new Date(2100, 0, 1), hours: '10', minutes: 5, seconds: 7, showMeridian: false };
+            cmp.bsTimePicker = { min: () => new Date(2000, 0, 1), max: () => new Date(2100, 0, 1), hours: '10', minutes: 5, seconds: 7, showMeridian: () => false };
             (getFormattedDate as jest.Mock).mockReturnValue(null);
             cmp.onTimeChange(undefined);
             (getFormattedDate as jest.Mock).mockReturnValue('');

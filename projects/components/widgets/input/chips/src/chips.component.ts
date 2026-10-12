@@ -621,7 +621,8 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
     private configureDnD() {
         const options = {
             items: '> li:not(.app-chip-search)',
-            placeholder: 'chip-placeholder'
+            placeholder: 'chip-placeholder',
+            cancel: '.app-chips.readonly'
         };
 
         configureDnD(this.$element, options, this.onReorderStart.bind(this), this.update.bind(this));
