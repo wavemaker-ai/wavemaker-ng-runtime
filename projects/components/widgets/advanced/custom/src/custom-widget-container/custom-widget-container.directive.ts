@@ -121,7 +121,7 @@ export class CustomWidgetContainerDirective extends DatasetAwareFormComponent im
         this.propsReady(resolveFn);
     }
 
-    private prepareProps(props = {}) {
+    private prepareProps(props) {
         const propsMap = new Map(customWidgetProps);
         Object.entries(props).forEach(([k, v]: [string, any]) => {
             let type = PROP_TYPE.STRING;

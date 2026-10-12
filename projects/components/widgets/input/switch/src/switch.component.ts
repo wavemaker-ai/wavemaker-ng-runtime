@@ -171,7 +171,7 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
 
         this.invokeOnTouched();
         // invoke on datavalue change.
-        this.invokeOnChange(this.datavalue, $event || {}, true);
+        this.invokeOnChange(this.datavalue, $event, true);
         $appDigest();
     }
 

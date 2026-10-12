@@ -175,6 +175,17 @@ describe('PopoverComponent - remaining branches', () => {
         });
     });
 
+    describe('destroy', () => {
+        it('clears a pending close timeout', () => {
+            jest.useFakeTimers();
+            popover.closePopoverTimeout = setTimeout(() => undefined, 1000);
+            const clear = jest.spyOn(global, 'clearTimeout');
+            popover.ngOnDestroy();
+            expect(clear).toHaveBeenCalled();
+            jest.useRealTimers();
+        });
+    });
+
     describe('applyVariantClass', () => {
         it('does nothing without a container and tolerates a missing class', () => {
             expect(() => popover.applyVariantClass(null)).not.toThrow();

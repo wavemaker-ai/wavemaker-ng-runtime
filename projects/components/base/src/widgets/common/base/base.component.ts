@@ -57,7 +57,7 @@ const updateClasses = (toAdd, toRemove, el) => {
 // To add and remove styles on the $el
 const updateStyles = (nv, ov, el) => {
     if (ov && isObject(ov)) {
-        const keys = Object.keys(ov || {});
+        const keys = Object.keys(ov);
         keys.forEach(function(key) {
             setCSS(el, key, '');
         });
@@ -211,7 +211,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         const elementRef = inj.get(ElementRef);
         this.nativeElement = elementRef.nativeElement;
         //making the code compatible in both the JIT and AOT modes
-        this.viewParentApp = inj ? inj.get(App) : inject(App);
+        this.viewParentApp = inj.get(App);
         this.widgetType = config.widgetType;
         this.widgetSubType = config.widgetSubType || config.widgetType;
         this.viewContainerRef = inj.get(ViewContainerRef);

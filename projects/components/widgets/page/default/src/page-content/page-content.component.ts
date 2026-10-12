@@ -60,12 +60,6 @@ export class PageContentComponent extends StylableComponent implements OnDestroy
                     this.app.notify('pulltorefresh');
                 }
             });
-            this.registerDestroyListener(() => {
-                if (this.pullToRefreshIns?.destroy) {
-                    this.pullToRefreshIns.destroy();
-                    this.pullToRefreshIns = null;
-                }
-            });
         }
     }
 

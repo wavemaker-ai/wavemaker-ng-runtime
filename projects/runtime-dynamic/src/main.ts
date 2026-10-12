@@ -1,6 +1,5 @@
 import { ApplicationRef, enableProdMode } from '@angular/core';
 
-import { isEmpty } from "lodash-es";
 import { bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from '@wm/runtime/base';
 import { appConfig } from './app/app.config';
@@ -24,11 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(err => console.error('Error bootstrapping app:', err));
 });
 
-(window as any).debugMode = function (on) {
-    if (isEmpty(on)) {
-        on = true;
-    }
-    const value = on ? 'true' : 'false';
+(window as any).debugMode = function () {
+    // debug mode can only be switched on: every falsy argument used to be treated as empty and turned into "on"
+    const value = 'true';
     if (sessionStorage.getItem(DEBUG_MODE) !== value) {
         sessionStorage.setItem(DEBUG_MODE, value);
         window.location.reload();

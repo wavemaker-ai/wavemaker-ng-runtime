@@ -426,16 +426,12 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
                 }
 
                 const parEle = this.partialRef.nativeElement;
-                let partialScope;
-
-                if (parEle) {
-                    partialScope  = parEle.widget;
-                    this.Widgets   = partialScope.Widgets;
-                    this.Variables = partialScope.Variables;
-                    this.Actions   = partialScope.Actions;
-                    this.invokeEventCallback('load');
-                    this.invokeEventCallback('show', {$event: {type: 'show'}});
-                }
+                const partialScope = parEle.widget;
+                this.Widgets   = partialScope.Widgets;
+                this.Variables = partialScope.Variables;
+                this.Actions   = partialScope.Actions;
+                this.invokeEventCallback('load');
+                this.invokeEventCallback('show', {$event: {type: 'show'}});
             });
         } else {
             this.Widgets   = this.viewParent.Widgets;
@@ -542,11 +538,6 @@ export class PopoverComponent extends StylableComponent implements OnInit, After
         if (index > -1) {
             PopoverComponent.activePopovers.splice(index, 1);
         }
-        // Clear timeout to prevent memory leak
-        if (this.closePopoverTimeout) {
-            clearTimeout(this.closePopoverTimeout);
-        }
-
         // Clear anchor event handlers
         if (this.anchorRef?.nativeElement) {
             this.anchorRef.nativeElement.onmouseenter = null;

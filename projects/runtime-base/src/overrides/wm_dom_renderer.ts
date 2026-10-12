@@ -30,7 +30,6 @@ export const NAMESPACE_URIS: {[ns: string]: string} = {
 };
 
 const COMPONENT_REGEX = /%COMP%/g;
-const NG_DEV_MODE = false;
 
 export const COMPONENT_VARIABLE = '%COMP%';
 export const HOST_ATTR = `_nghost-${COMPONENT_VARIABLE}`;
@@ -84,7 +83,6 @@ function decoratePreventDefault(eventHandler: Function): Function {
   };
 }
 
-let hasLoggedNativeEncapsulationWarning = false;
 
 @Injectable()
 export class WMDomRendererFactory2 implements RendererFactory2 {
@@ -117,16 +115,6 @@ export class WMDomRendererFactory2 implements RendererFactory2 {
       case 1:
       case ViewEncapsulation.ShadowDom:
         // TODO(FW-2290): remove the `case 1:` fallback logic and the warning in v12.
-        if (NG_DEV_MODE &&
-            // @ts-ignore TODO: Remove as part of FW-2290. TS complains about us dealing with an
-            // enum value that is not known (but previously was the value for
-            // ViewEncapsulation.Native)
-            !hasLoggedNativeEncapsulationWarning && type.encapsulation === 1) {
-          hasLoggedNativeEncapsulationWarning = true;
-          console.warn(
-              'ViewEncapsulation.Native is no longer supported. Falling back to ViewEncapsulation.ShadowDom. The fallback will be removed in v12.');
-        }
-
         return new ShadowDomRenderer(this.eventManager, this.sharedStylesHost, element, type, this.doc);
       default: {
         if (!this.rendererByCompId.has(type.id)) {
@@ -301,7 +289,6 @@ class WMDefaultDomRenderer2 implements Renderer2 {
     if (name && name.charCodeAt(0) === AT_CHARCODE) {
       return;
     }
-    NG_DEV_MODE && checkNoSyntheticProp(name, 'property');
     if (el != null) {
       el[name] = value;
     }
@@ -318,7 +305,6 @@ class WMDefaultDomRenderer2 implements Renderer2 {
       if (event && event.charCodeAt(0) === AT_CHARCODE) {
           return () => {};
       }
-      (typeof NG_DEV_MODE === 'undefined' || NG_DEV_MODE) && checkNoSyntheticProp(event, 'listener');
       if (typeof target === 'string') {
           target = getDOM().getGlobalEventTarget(this.doc, target);
           if (!target) {
@@ -331,15 +317,6 @@ class WMDefaultDomRenderer2 implements Renderer2 {
 }
 
 const AT_CHARCODE = (() => '@'.charCodeAt(0))();
-function checkNoSyntheticProp(name: string, nameKind: string) {
-  if (name.charCodeAt(0) === AT_CHARCODE) {
-    throw new Error(`Unexpected synthetic ${nameKind} ${name} found. Please make sure that:
-  - Either \`BrowserAnimationsModule\` or \`NoopAnimationsModule\` are imported in your application.
-  - There is corresponding configuration for the animation named \`${
-        name}\` defined in the \`animations\` field of the \`@Component\` decorator (see https://angular.io/api/core/Component#animations).`);
-  }
-}
-
 function isTemplateNode(node: any): node is HTMLTemplateElement {
   return node.tagName === 'TEMPLATE' && node.content !== undefined;
 }

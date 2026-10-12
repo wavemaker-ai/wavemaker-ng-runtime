@@ -47,8 +47,7 @@ const isValidMarkup = (m: string) => typeof m === 'string' && m.trim().length > 
 
 let counter = 1;
 
-const createDynamicComponent = (selector: string, template: string, css = ''): Type<unknown> => {
-    if (!isValidSelector(selector)) throw new Error(`Invalid selector: ${selector}`);
+const createDynamicComponent = (selector: string, template: string, css: string): Type<unknown> => {
     if (!isValidMarkup(template)) throw new Error('Invalid markup');
 
     class DynamicComponent {
@@ -86,7 +85,7 @@ export class DynamicComponentRefProviderService {
     private readonly injector = inject(Injector);
     private readonly appRef = inject(ApplicationRef);
 
-    private normalize(opts: DynamicOptions = {}): Required<DynamicOptions> {
+    private normalize(opts: DynamicOptions): Required<DynamicOptions> {
         return {
             selector: opts.selector ?? `wm-dynamic-component-${counter++}`,
             transpile: isDefined(opts.transpile) ? opts.transpile : true,

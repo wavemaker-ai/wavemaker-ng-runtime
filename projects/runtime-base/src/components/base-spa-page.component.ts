@@ -247,13 +247,11 @@ export abstract class BaseSpaPageComponent extends FragmentMonitor implements Af
     }
 
     private saveScrollPosition() {
-        const fn = ($el, key, recursive = true, $target = $el)  => {
-            if (recursive) {
-                $el.children().each((i, v) => fn($(v), key));
-            }
+        const fn = ($el, key)  => {
+            $el.children().each((i, v) => fn($(v), key));
             const scrollData = {
-                x: $target.scrollLeft(),
-                y: $target.scrollTop()
+                x: $el.scrollLeft(),
+                y: $el.scrollTop()
             };
             if(scrollData.x > 0 || scrollData.y > 0) {
                 $el.attr(key, scrollData.x + ',' + scrollData.y);

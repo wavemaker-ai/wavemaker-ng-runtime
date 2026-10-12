@@ -602,14 +602,7 @@ export const findValueOf = (obj, key, create?) => {
     const parts = key.split('.'),
         keys = [];
 
-    let skipProcessing;
-
     parts.forEach((part) => {
-        if (!parts.length) { // if the part of a key is not valid, skip the processing.
-            skipProcessing = true;
-            return false;
-        }
-
         const subParts = part.match(/\w+/g);
         let subPart;
 
@@ -618,10 +611,6 @@ export const findValueOf = (obj, key, create?) => {
             keys.push({ 'key': subPart, 'value': subParts.length ? [] : {} }); // determine whether to create an array or an object
         }
     });
-
-    if (skipProcessing) {
-        return undefined;
-    }
 
     keys.forEach((_key) => {
         let tempObj = obj[_key.key];
@@ -858,14 +847,6 @@ const getNode = selector => document.querySelector(selector);
 
 // function to check if the stylesheet is already loaded
 const isStyleSheetLoaded = href => !!getNode(`link[href="${href}"]`);
-
-// function to remove stylesheet if the stylesheet is already loaded
-const removeStyleSheet = href => {
-    const node = getNode(`link[href="${href}"]`);
-    if (node) {
-        node.remove();
-    }
-};
 
 // function to load a stylesheet
 export const loadStyleSheet = (url, attr) => {

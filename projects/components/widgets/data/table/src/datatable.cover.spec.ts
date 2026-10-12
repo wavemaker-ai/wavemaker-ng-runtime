@@ -1445,4 +1445,22 @@ describe('wm.datatable jQuery widget - branch coverage', () => {
             expect(ctx.options.searchHandler).toHaveBeenCalledWith(expect.objectContaining({ field: 'name', type: 'string' }), expect.anything(), 'search');
         });
     });
+
+    describe('leftover branches', () => {
+        it('does not append an empty grid template', () => {
+            ctx = mount();
+            jest.spyOn(ctx.instance, '_getGridTemplate').mockReturnValue('');
+            expect(() => ctx.instance._buildGridMarkup(false)).not.toThrow();
+        });
+
+        it('falls back to the default width for columns whose col width is already pixel based', () => {
+            ctx = mount();
+            ctx.$el.find('colgroup col').first().css('width', '120px');
+            ctx.instance.setColGroupWidths();
+            expect(ctx.$el.find('colgroup col')[0].style.width).toBe('120px');
+            ctx.$el.find('colgroup col').first().css('width', '70px');
+            ctx.instance.setColGroupWidths();
+            expect(ctx.$el.find('colgroup col')[0].style.width).toBeDefined();
+        });
+    });
 });

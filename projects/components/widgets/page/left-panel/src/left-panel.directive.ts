@@ -49,9 +49,6 @@ export class LeftPanelDirective extends StylableComponent implements OnDestroy {
         this.$ele = this.$element;
         this.$page = this.getAttr('spa') && layout?.$element || page?.$element;
         addClass(this.$page[0], 'left-panel-collapsed-container');
-        if (this.columnwidth) {
-            this.setLeftPanelWidth(['md', 'sm'], this.columnwidth);
-        }
         if (this.app.isTabletApplicationType) {
             addClass(this.nativeElement, 'wm-tablet-app-left-panel');
         }

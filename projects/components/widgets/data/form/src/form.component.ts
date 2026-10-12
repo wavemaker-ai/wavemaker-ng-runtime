@@ -707,7 +707,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             template = (type === 'error' && this.errormessage) ? this.errormessage : msg;
             if (this.messagelayout === 'Inline') {
                 template = this.checkAppServiceErrorMsg(type) || template;
-                this.statusMessage = {'caption': template || '', type: type};
+                this.statusMessage = {'caption': template, type: type};
                 if (this.messageRef) {
                     this.messageRef.showMessage(this.statusMessage.caption, this.statusMessage.type);
                 }

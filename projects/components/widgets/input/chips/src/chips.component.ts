@@ -251,7 +251,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
                 this.chipsList.push(itemFound);
             } else if (this.datafield !== ALLFIELDS) {
                 searchQuery.push(val);
-            } else if (this.datafield === ALLFIELDS) {
+            } else {
                 let dataObj, isCustom = false;
                 if (!isObject(val)) {
                     dataObj = this.createCustomDataModel(val);

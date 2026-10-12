@@ -303,7 +303,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
                         const parsed = JSON.parse(trimmed);
                         if (isArray(parsed)) {
                             nodes = getOrderedDataset(parsed, this.orderby);
-                        } else if (isObject(parsed)) {
+                        } else {
                             nodes = [parsed];
                         }
                     } catch {
@@ -419,7 +419,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             const icon = getEvaluatedData(node, { field: this.nodeicon, bindExpression: this.bindnodeicon }, this.viewParent) || node.icon;
             const nodeId = getEvaluatedData(node, { field: this.nodeid, bindExpression: this.bindnodeid }, this.viewParent);
             const children = getEvaluatedData(node, { field: this.nodechildren, bindExpression: this.bindnodechildren }, this.viewParent) || node.children;
-            zNode['name'] = name === undefined || name === null ? '' : String(name);
+            zNode['name'] = String(name);
             if(!this.template) {
                 zNode['icon'] = icon;
             }

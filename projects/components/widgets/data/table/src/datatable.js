@@ -1335,13 +1335,9 @@ $.widget('wm.datatable', {
             }
         });
         /*Select the given row. If rows is an array, loop through the array and set the row*/
-        if (_.isArray(_rows)) {
-            _.forEach(_rows, function (row) {
-                self.selectRow(row, true);
-            });
-        } else {
-            self.selectRow(_rows, true);
-        }
+        _.forEach(_rows, function (row) {
+            self.selectRow(row, true);
+        });
     },
     toggleRowFilter: function(show) {
         if (this.options.filtermode === this.CONSTANTS.MULTI_COLUMN && this.gridSearch) {
@@ -1484,7 +1480,7 @@ $.widget('wm.datatable', {
                                             width = width > 90 ? ((colLength === id + 1) ? width - 17 : width) : 90; //columnSanity check to prevent width being too small and Last column, adjust for the scroll width
                                         }
                                     } else {
-                                        width = width > 90 ? ((colLength === id + 1) ? width - 17 : width) : 90; // fallback to the older approach
+                                        width = 90; // fallback to the older approach, no width is available on this path
                                     }
                                 } else {
                                     width = width > 90 ? ((colLength === id + 1) ? width - 17 : width) : 90; //columnSanity check to prevent width being too small and Last column, adjust for the scroll width
@@ -2011,7 +2007,7 @@ $.widget('wm.datatable', {
     },
     focusNewRow: function () {
         const newRow = this.gridElement.find('tr.always-new-row');
-        const newRowInputs = newRow && newRow.find("input") || [];
+        const newRowInputs = newRow.find("input");
         newRowInputs.length && newRowInputs[0].focus();
     },
     disableActions: function (val) {
@@ -2048,9 +2044,7 @@ $.widget('wm.datatable', {
             if (!$firstEl.length) {
                 $firstEl = $($el).first().find('select');
             }
-            if(!($(e?.target).find('td').first().hasClass('td.cell-editing'))){
-                $firstEl=$el.find('td');
-            }
+            $firstEl=$el.find('td');
         }
         //Focus and select the first element
         if ($firstEl.length) {
@@ -2693,7 +2687,7 @@ $.widget('wm.datatable', {
         if (direction === 'asc') {
             $sortIcon.addClass(this.options.cssClassNames.ascIcon);
             $sortContainer.addClass('active');
-        } else if (direction === 'desc') {
+        } else {
             $sortIcon.addClass(this.options.cssClassNames.descIcon);
             $sortContainer.addClass('active');
         }
@@ -2712,9 +2706,7 @@ $.widget('wm.datatable', {
         sortInfo.direction = direction;
         sortInfo.field = this.preparedHeaderData && this.preparedHeaderData[e.currentTarget.getAttribute('data-col-id')].sortby || field;
         sortInfo.sortBy = this.preparedHeaderData && this.preparedHeaderData[e.currentTarget.getAttribute('data-col-id')].sortby ? field : '';
-        if (direction !== '') {
-            this.preparedHeaderData[id].sortInfo = {'sorted': true, 'direction': direction};
-        }
+        this.preparedHeaderData[id].sortInfo = {'sorted': true, 'direction': direction};
         this._setGridEditMode(false);
         this.closeEditedRow();
         this.options.sortHandler.call(this, this.options.sortInfo, e, 'sort');
@@ -2809,9 +2801,7 @@ $.widget('wm.datatable', {
             }
         }
         //Stop the enter keypress from submitting any parent form. If target is button, event should not be stopped as this stops click event on button
-        if (!$target.is('button')) {
-            event.stopPropagation();
-        }
+        event.stopPropagation();
     },
     // Handles keydown event on row items.
     onKeyDown: function (event) {
@@ -3582,16 +3572,12 @@ $.widget('wm.datatable', {
         this.options.setIsNextPageData(false);
 
         // Fix for [WMS-23263]: Adding data status container
-        if (!this.gridContainer.find('.overlay').length) {
-            this.dataStatusContainer = $(statusContainer);
-            this.gridContainer.append(this.dataStatusContainer);
-        }
+        this.dataStatusContainer = $(statusContainer);
+        this.gridContainer.append(this.dataStatusContainer);
 
         //  Fix for [WMS-23263]: clear the header template for removing existing colgroup in case of dynamictable
-        if (this.gridHeaderElement) {
-            this.gridHeaderElement.empty();
-            this.gridElement.find('colgroup').remove();
-        }
+        this.gridHeaderElement.empty();
+        this.gridElement.find('colgroup').remove();
         this._renderHeader();
         if (this.options.filtermode === this.CONSTANTS.SEARCH && (_.isEmpty(this.searchObj) || (this.searchObj && !this.searchObj.field && !this.searchObj.value))) {
             this._renderSearch();

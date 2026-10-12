@@ -167,7 +167,7 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
                 (this as any).tabsRef.selectDefaultPaneByIndex((this as any).tabsRef.defaultpaneindex);
             } else if (!nv && this.isActive) {
                 (this as any).tabsRef.next();
-            } else if (nv || !this.isActive) {
+            } else {
                 (this as any).tabsRef.tabsAnimator?.transitionTabIntoView();
             }
             this._isFirstLoad = false;

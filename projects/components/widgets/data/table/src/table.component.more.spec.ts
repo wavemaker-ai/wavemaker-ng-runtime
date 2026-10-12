@@ -545,4 +545,24 @@ describe('TableComponent - additional behaviour', () => {
             expect(table.dataNavigator.resetPageNavigation).toHaveBeenCalled();
         });
     });
+
+    describe('leftover branches', () => {
+        it('has no-op defaults for its internal callbacks', () => {
+            expect(table.onRowFilterChange()).toBeUndefined();
+            expect(table.documentClickBind()).toBeUndefined();
+            expect(table._searchSortHandler()).toBeUndefined();
+        });
+
+        it('wraps a single object result for client side search', () => {
+            jest.spyOn(table, 'isNavigationEnabled').mockReturnValue(false);
+            table._isClientSearch = true;
+            expect(() => table.populateGridData({ id: 1, name: 'only' })).not.toThrow();
+        });
+
+        it('clears its dynamic context when destroyed', () => {
+            table._dynamicContext = { a: 1 };
+            table.ngOnDestroy();
+            expect(table._dynamicContext).toBeNull();
+        });
+    });
 });

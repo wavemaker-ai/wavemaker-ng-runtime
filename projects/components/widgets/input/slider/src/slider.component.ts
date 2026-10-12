@@ -145,9 +145,7 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
         if (value <= min) {
             return;
         }
-        if (!isNaN(min)) {
-            value = Math.max(value, min);
-        }
+        value = Math.max(value, min);
 
         this.datavalue = value;
         this.handleChange()
@@ -169,9 +167,7 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
         value = value + step;
         if (value >= max)  return;
 
-        if (!isNaN(max)) {
-            value = Math.min(value, max);
-        }
+        value = Math.min(value, max);
 
         this.datavalue = value;
         this.handleChange()

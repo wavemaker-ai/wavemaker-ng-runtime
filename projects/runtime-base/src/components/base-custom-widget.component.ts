@@ -225,7 +225,8 @@ export abstract class BaseCustomWidgetComponent extends FragmentMonitor implemen
     }
 
     set datavalue(value) {
-        this.datavalue = value;
+        if(this['setDatavalue'])
+            this['setDatavalue'](value);
     }
 
     initUserScript() {

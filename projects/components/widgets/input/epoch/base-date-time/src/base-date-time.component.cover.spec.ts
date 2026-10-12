@@ -101,6 +101,15 @@ describe('BaseDateTimeComponent - coverage gaps', () => {
             expect(comp._dateOptions.clearButtonLabel).toBe('Wipe');
         });
 
+        it('only decorates the day cell whose text is exactly the active day', () => {
+            jest.useFakeTimers();
+            document.body.innerHTML = '<span id="exact">15</span><span id="partial">115</span>';
+            comp.setActiveDateFocus(new Date(2020, 5, 15), true);
+            jest.advanceTimersByTime(50);
+            expect(document.getElementById('exact')!.getAttribute('tabindex')).toBe('0');
+            expect(document.getElementById('partial')!.getAttribute('tabindex')).toBeNull();
+        });
+
         it('uses timepattern for format validation when datepattern is absent', () => {
             comp.datepattern = undefined;
             comp.timepattern = 'HH:mm';

@@ -332,8 +332,8 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
                             this.deletedatasource._deleteFileObservable = this.deleteFileObservable;
                             this.deletedatasource._deleteFileObservable.asObservable().subscribe((response) => {
                                 if(response.status === "success") {
-                                    this.selectedFiles = this.selectedFiles.filter((fileObj) => file !== fileObj) || [];
-                                    this.uploadedFiles = this.uploadedFiles.filter((fileObj) => file !== fileObj) || [];
+                                    this.selectedFiles = this.selectedFiles.filter((fileObj) => file !== fileObj);
+                                    this.uploadedFiles = this.uploadedFiles.filter((fileObj) => file !== fileObj);
                                 }
                             });
                         }

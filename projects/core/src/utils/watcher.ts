@@ -170,8 +170,6 @@ export const resetChangeFromWatch = () => changedByWatch = false;
 
 (<any>window).watchRegistry = registry;
 
-let skipWatchers;
-
 let scheduled = false,
     rerunRequested = false,
     isRunning = false,
@@ -297,24 +295,6 @@ function executeWatchers(ignoreMuted: boolean) {
         consecutiveReruns = 0;
     }
 }
-
-const debouncedTriggerWatchers = debounce(() => {
-    skipWatchers = true;
-    ngZone.runOutsideAngular(() => triggerWatchers());
-}, 100);
-
-/*export const $invokeWatchers = (force?: boolean, ignoreMuted?: boolean) => {
-    if (force) {
-        triggerWatchers(ignoreMuted);
-    } else {
-
-        if (skipWatchers) {
-            skipWatchers = false;
-            return;
-        }
-        debouncedTriggerWatchers();
-    }
-};*/
 
 export const $appDigest = (() => {
     let queued = false;

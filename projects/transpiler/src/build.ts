@@ -54,7 +54,6 @@ const quoteAttr = v => {
 
 const registry = new Map<string, any>();
 const htmlParser = new HtmlParser();
-const ignoreComments = true;
 
 const empty = () => '';
 
@@ -401,7 +400,7 @@ export const processNode = (node, importCollector: (i: ImportDef[]) => void, pro
                     } else if (showInDeviceAttr && deferLoadAttr) {
                         childContainer = showInDeviceContainer;
                         parentContainer = deferLoadContainer;
-                    } else if (accessRolesAttr && deferLoadAttr) {
+                    } else {
                         childContainer = deferLoadContainer;
                         parentContainer = accessRolesContainer;
                     }
@@ -434,10 +433,6 @@ export const processNode = (node, importCollector: (i: ImportDef[]) => void, pro
         
     } else if (node instanceof Text) {
         markup += node.value;
-    } else if (node instanceof Comment) {
-        if (!ignoreComments) {
-            markup += node.value;
-        }
     }
     importCollector(WIDGET_IMPORTS.get(node.name));
     if (nodeDef?.imports) {

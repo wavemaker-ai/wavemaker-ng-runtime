@@ -141,7 +141,7 @@ const createComponent = (name: string, type: ComponentType, template: string,
             if (type === ComponentType.PAGE) this.pageName = name;
             else if (type === ComponentType.PARTIAL) this.partialName = name;
             else if (type === ComponentType.PREFAB) this.prefabName = name;
-            else if (type === ComponentType.WIDGET) this.customWidgetName = name;
+            else this.customWidgetName = name;
 
             super.init();
         }

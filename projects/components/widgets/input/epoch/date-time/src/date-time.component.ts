@@ -321,9 +321,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
         }
         if (!this.dateNotInRange && !this.invalidDateTimeFormat) {
             this.proxyModel = newVal;
-            if (this.proxyModel) {
-                this.bsDateValue = this.bsTimeValue = newVal;
-            }
+            this.bsDateValue = this.bsTimeValue = newVal;
             if(this.datavalue=== this.getPrevDataValue()){
                 const time=getFormattedDate(this.datePipe, this.datavalue, this.datepattern, this.timeZone, null, null, this) || ''
                 $(this.nativeElement).find('.display-input').val(time?.replace(this.meridians[0], this.am)?.replace(this.meridians[1], this.pm)) ;}

@@ -125,9 +125,6 @@ function setAccessToken(provider, accesstoken) {
 function checkAuthenticationStatus(providerId, successCallback, removeProviderConfigCallBack, evt, http?, securityObj?) {
     const accessTokenKey = providerId + accessTokenSuffix,
         accessTokenOrCode = localStorage.getItem(accessTokenKey);
-    if (evt && evt.origin !== window.location.origin) {
-        return;
-    }
     if (accessTokenOrCode) {
         if (isPassedFlow(securityObj, pkceIdentifier)) {
             const req = 'client_id=' + securityObj.clientId + '&code=' + accessTokenOrCode + '&grant_type=authorization_code&code_verifier=' + code_verifier + '&redirect_uri=' + redirectUri;
@@ -335,9 +332,6 @@ function constructURLForImplicitOrPKCE(providerId, providerInfo, requestSourceTy
     let state;
     if (getWmProjectProperties().isTestRuntime === true) {
         redirectUri = location.protocol + '//' + window.location.host + '/studio/oAuthCallback.html';
-    }
-    if (requestSourceType === 'MOBILE') {
-        redirectUri = deployedURL + 'oAuthCallback.html';
     }
     const flow = isPassedFlow(providerInfo, implicitIdentifier) ? implicitIdentifier : pkceIdentifier;
     state = {providerId: providerId, suffix: accessTokenSuffix, requestSourceType: requestSourceType, flow: flow, scheme: customUriScheme};
