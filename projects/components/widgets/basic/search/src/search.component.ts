@@ -915,6 +915,9 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
                 }
             }
         }
+        if (key === 'minchars' && this.typeahead && isDefined(nv)) {
+            (this.typeahead as any)._typeaheadMinLengthValue = nv;
+        }
 
         super.onPropertyChange(key, nv, ov);
     }
