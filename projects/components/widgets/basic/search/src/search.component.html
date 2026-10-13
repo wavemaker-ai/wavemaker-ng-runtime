@@ -82,7 +82,7 @@
     [attr.aria-label]="arialabel || 'Search field'"/>
   <i class="btn-close wi wi-cancel" [hidden]="!showClosebtn" (click)="clearSearch($event);"></i>
 } @else {
-  <button type="button" class="btn btn-icon form-control-feedback back-btn" aria-hidden="true" (click)="closeSearch()"><i class="app-icon {{backsearchiconclass}}"></i></button>
+  <button type="button" class="btn btn-icon form-control-feedback back-btn"  aria-label="Back" aria-hidden="true" (click)="closeSearch()"><i class="app-icon {{backsearchiconclass}}"></i></button>
   <span class="sr-only">Back button</span>
   <input [title]="query || ''" type="text" class="app-textbox form-control list-of-objs app-search-input" [placeholder]="placeholder || ''"
     focus-target
@@ -118,11 +118,11 @@
     [dropup]="dropup"
     [attr.name]="name"
     [attr.aria-label]="arialabel || 'Search field'">
-  <input class="model-holder" ng-model="proxyModel" ng-required="required" tabindex="-1" aria-hidden="true">
+  <input class="model-holder" ng-model="proxyModel" ng-required="required" tabindex="-1" aria-label="Search value" aria-hidden="true">
   @if (_loadingItems) {
     <span aria-hidden="true" class="fa fa-circle-o-notch fa-spin form-control-feedback"></span>
   }
-  <button type="button" class="btn btn-icon form-control-feedback clear-btn" [ngClass]="{'show-btn': isQueryEntered()}" (click)="clearSearch($event, true)"><i class="app-icon {{clearsearchiconclass}}"></i></button>
+  <button type="button" class="btn btn-icon form-control-feedback clear-btn"  aria-label="Clear" [ngClass]="{'show-btn': isQueryEntered()}" (click)="clearSearch($event, true)"><i class="app-icon {{clearsearchiconclass}}"></i></button>
   <span class="sr-only">Clear button</span>
   @if (showsearchicon) {
     <span [ngClass]="{'disabled': disabled}" class="input-group-addon">
