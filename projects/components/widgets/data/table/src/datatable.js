@@ -345,6 +345,9 @@ $.widget('wm.datatable', {
             if (field === 'radio') {
                 $th.attr('aria-label', "Select row");
             }
+            if (field === '__expand') {
+                $th.append('<span class="sr-only">Expand row</span>');
+            }
             $th.append('<span class="header-data">' + headerLabel + '</span>');
             if (sortEnabled) { //If sort info is present, show the sort icon for that column on grid render
                 $sortSpan = $('<span class="sort-buttons-container"></span>');
@@ -720,6 +723,7 @@ $.widget('wm.datatable', {
             <label>
                 <input type="radio" rowSelectInput name="" value="" ${checked} ${disabled}>
                 <span class="caption"></span>
+                <span class="sr-only">Select row</span>
             </label>
         </div>`;
     },
