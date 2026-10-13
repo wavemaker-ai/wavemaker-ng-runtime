@@ -56,20 +56,31 @@ describe('runtime-dynamic main', () => {
     describe('window.debugMode', () => {
         beforeEach(() => load());
 
-        it('turns debug mode on (an empty/missing argument means "on") and reloads when it changes', () => {
+        it('turns debug mode on (a missing argument means "on") and reloads when it changes', () => {
             jest.spyOn(console, 'error').mockImplementation(() => {});
             (window as any).debugMode();
             expect(sessionStorage.getItem('debugMode')).toBe('true');
         });
 
-        it('treats falsy arguments as empty, so it can only ever switch debug mode on', () => {
-            // lodash isEmpty(false) is true, so debugMode(false) is turned into "on"
+        it('turns debug mode off with debugMode(false) and reloads when it changes', () => {
             jest.spyOn(console, 'error').mockImplementation(() => {});
+            sessionStorage.setItem('debugMode', 'true');
+            const set = jest.spyOn(Storage.prototype, 'setItem');
             (window as any).debugMode(false);
-            expect(sessionStorage.getItem('debugMode')).toBe('true');
+            expect(set).toHaveBeenCalledWith('debugMode', 'false');
+            expect(sessionStorage.getItem('debugMode')).toBe('false');
         });
 
-        it('keeps a non empty argument as the requested mode', () => {
+        it('keeps prod mode enabled on the next load after switching debug mode off', () => {
+            jest.spyOn(console, 'error').mockImplementation(() => {});
+            sessionStorage.setItem('debugMode', 'true');
+            (window as any).debugMode(false);
+            mockEnableProdMode.mockClear();
+            load();
+            expect(mockEnableProdMode).toHaveBeenCalledTimes(1);
+        });
+
+        it('treats a truthy argument as "on"', () => {
             jest.spyOn(console, 'error').mockImplementation(() => {});
             (window as any).debugMode('yes');
             expect(sessionStorage.getItem('debugMode')).toBe('true');

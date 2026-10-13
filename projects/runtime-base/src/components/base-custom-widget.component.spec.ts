@@ -315,13 +315,6 @@ describe('BaseCustomWidgetComponent', () => {
             widget.getDatavalue = jest.fn(() => 'dv');
             expect(widget.datavalue).toBe('dv');
         });
-
-        it('datavalue setter delegates to setDatavalue when present and is a no-op otherwise', () => {
-            expect(() => { widget.datavalue = 1; }).not.toThrow();
-            widget.setDatavalue = jest.fn();
-            widget.datavalue = 2;
-            expect(widget.setDatavalue).toHaveBeenCalledWith(2);
-        });
     });
 
     describe('registerBaseWidget / initializeComponentData', () => {

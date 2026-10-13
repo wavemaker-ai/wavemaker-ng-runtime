@@ -23,9 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(err => console.error('Error bootstrapping app:', err));
 });
 
-(window as any).debugMode = function () {
-    // debug mode can only be switched on: every falsy argument used to be treated as empty and turned into "on"
-    const value = 'true';
+// debugMode() or debugMode(true) switches debug mode on, debugMode(false) switches it off
+(window as any).debugMode = function (on = true) {
+    const value = on ? 'true' : 'false';
     if (sessionStorage.getItem(DEBUG_MODE) !== value) {
         sessionStorage.setItem(DEBUG_MODE, value);
         window.location.reload();

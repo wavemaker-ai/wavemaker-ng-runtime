@@ -86,6 +86,19 @@ describe('oAuth.utils flows', () => {
             expect(onSuccess).not.toHaveBeenCalled();
         });
 
+        it('ignores messages posted from another origin', () => {
+            const p = provider();
+            const onSuccess = jest.fn();
+            performAuthorization('https://auth/x', p, onSuccess, jest.fn(), {}, jest.fn(), jest.fn());
+
+            localStorage.setItem(`${p}.access_token`, 'tok');
+            window.dispatchEvent(new MessageEvent('message', { origin: 'https://evil.example.com' }));
+            jest.runOnlyPendingTimers();
+
+            expect(onSuccess).not.toHaveBeenCalled();
+            expect(localStorage.getItem(`${p}.access_token`)).toBe('tok');
+        });
+
         it('reports an error when the popup is closed before authorizing', () => {
             open.mockReturnValue({ closed: true } as any);
             const onSuccess = jest.fn();
@@ -344,6 +357,44 @@ describe('oAuth.utils flows', () => {
             expect(getAccessToken(p, false)).toBe('exchanged');
             expect(onSuccess).toHaveBeenCalledWith('exchanged');
             expect(removeProviderConfig).toHaveBeenCalledWith(p);
+        });
+
+        it('exchanges the code when an authorization url is passed along with a PKCE provider', async () => {
+            jest.useRealTimers();
+            open.mockReturnValue({ closed: true } as any);
+            const p = provider();
+            const onSuccess = jest.fn();
+            const http = { send: jest.fn().mockResolvedValue({ body: { access_token: 'exchanged' } }) };
+
+            performAuthorization('https://auth/x', p, onSuccess, jest.fn(), http, jest.fn(), jest.fn(), pkceInfo());
+
+            localStorage.setItem(`${p}.access_token`, 'auth-code');
+            sendMessage();
+            await new Promise((resolve) => setTimeout(resolve, 20));
+
+            expect(http.send).toHaveBeenCalledTimes(1);
+            expect(onSuccess).toHaveBeenCalledWith('exchanged');
+        });
+
+        it('logs instead of rejecting unhandled when the token request fails', async () => {
+            jest.useRealTimers();
+            open.mockReturnValue({ closed: true } as any);
+            const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+            const p = provider();
+            const onSuccess = jest.fn();
+            const http = { send: jest.fn().mockRejectedValue(new Error('invalid_grant')) };
+            const addProviderConfig = jest.fn();
+
+            performAuthorization(undefined, p, onSuccess, jest.fn(), http, addProviderConfig, jest.fn(), pkceInfo());
+            addProviderConfig.mock.calls[0][0].invoke();
+
+            localStorage.setItem(`${p}.access_token`, 'auth-code');
+            sendMessage();
+            await new Promise((resolve) => setTimeout(resolve, 20));
+
+            expect(consoleError).toHaveBeenCalledWith(expect.stringContaining(p), expect.any(Error));
+            expect(onSuccess).not.toHaveBeenCalled();
+            consoleError.mockRestore();
         });
 
         it('keeps waiting when the popup is closed during a PKCE flow', () => {

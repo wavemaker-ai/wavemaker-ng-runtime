@@ -170,6 +170,8 @@ export const resetChangeFromWatch = () => changedByWatch = false;
 
 (<any>window).watchRegistry = registry;
 
+let skipWatchers;
+
 let scheduled = false,
     rerunRequested = false,
     isRunning = false,
@@ -296,6 +298,24 @@ function executeWatchers(ignoreMuted: boolean) {
     }
 }
 
+const debouncedTriggerWatchers = debounce(() => {
+    skipWatchers = true;
+    ngZone.runOutsideAngular(() => triggerWatchers());
+}, 100);
+
+/*export const $invokeWatchers = (force?: boolean, ignoreMuted?: boolean) => {
+    if (force) {
+        triggerWatchers(ignoreMuted);
+    } else {
+
+        if (skipWatchers) {
+            skipWatchers = false;
+            return;
+        }
+        debouncedTriggerWatchers();
+    }
+};*/
+
 export const $appDigest = (() => {
     let queued = false;
     return (force?: boolean) => {
@@ -305,7 +325,7 @@ export const $appDigest = (() => {
         if (force) {
             ngZone.run(() => appRef.tick());
             queued = false;
-        } else 
+        } else
             if (queued) {
                 return;
             } else {
@@ -315,7 +335,7 @@ export const $appDigest = (() => {
                     queued = false;
                 });
             }
-        
+
     };
 })();
 
