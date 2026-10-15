@@ -78,7 +78,14 @@ export class WizardStepComponent extends StylableComponent implements OnInit, Af
     get currentClass() {
         return !this.isPrism && this.active;
     }
-    
+
+    // Matches react runtime: non-active step content carries the `hidden` attribute.
+    // `show` is folded in because this binding overrides base component's `hidden = !show`.
+    @HostBinding('hidden')
+    get isHidden() {
+        return !this.active || this.show === false;
+    }
+
     get isCurrent() {
         return this.active;
     }
