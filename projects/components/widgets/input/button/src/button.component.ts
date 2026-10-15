@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
+import {Component, HostBinding, Inject, Injector, Optional, ChangeDetectionStrategy} from '@angular/core';
 
 import {DISPLAY_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective, WmAppIconComponent} from '@wm/components/base';
 
@@ -13,6 +13,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: 'button[wmButton]',

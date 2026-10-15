@@ -57,7 +57,7 @@ const hidePageContainers = (leftNavEle: HTMLElement, searchEle?: HTMLElement) =>
 /**
  * binds the touch event for content
  */
-const bindContentEvents = (leftNavEle: HTMLElement, pageContainer: HTMLElement, searchContainer: any, isTablet = false) => {
+const bindContentEvents = (leftNavEle: HTMLElement, pageContainer: HTMLElement, searchContainer: any, isTablet: boolean) => {
     if (!isTablet) {
         // touch content to hide nav pane and left panel
         bindTapEvtHandler(pageContainer, hidePageContainers.bind(this, leftNavEle, searchContainer));
@@ -67,14 +67,12 @@ const bindContentEvents = (leftNavEle: HTMLElement, pageContainer: HTMLElement, 
 const bindLeftPanelEvents = (leftNavEle: HTMLElement, searchEle: HTMLElement) => {
     // tap left to show/hide left panel
     bindTapEvtHandler(roleSelector(CLASS_NAME.SWIPE_ELEM), () => {
-        if (leftNavEle) {
-            (leftNavEle as any).widget.toggle();
+        (leftNavEle as any).widget.toggle();
 
-            // Hide search container when left panel is open
-            if (leftNavEle.classList.contains('visible')) {
-                if (searchEle) {
-                    setCSS(searchEle, 'display', 'none');
-                }
+        // Hide search container when left panel is open
+        if (leftNavEle.classList.contains('visible')) {
+            if (searchEle) {
+                setCSS(searchEle, 'display', 'none');
             }
         }
     });
@@ -109,7 +107,7 @@ const bindSearchIconEvent = (searchElements, leftNavEle: HTMLElement) => {
         const searchEle = $('<a class="app-header-action"><i class="wi wi-search"></i></a>') as JQuery<HTMLElement>;
         $(ele).before(searchEle);
         // Tap icon to show/hide search box
-        bindTapEvtHandler(searchEle, () => toggleSearchContainer(ele, leftNavEle));
+        bindTapEvtHandler(searchEle[0], () => toggleSearchContainer(ele, leftNavEle));
     });
 
 };

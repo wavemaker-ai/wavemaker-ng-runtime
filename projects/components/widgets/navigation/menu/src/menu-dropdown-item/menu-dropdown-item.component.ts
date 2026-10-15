@@ -1,6 +1,6 @@
 import { MenuDropdownComponent } from '../menu-dropdown/menu-dropdown.component';
 import { NavigationControlDirective } from '../nav/navigation-control.directive';
-import { Component, ElementRef, forwardRef, HostListener, inject, Input, OnDestroy, OnInit, Optional } from '@angular/core';
+import { Component, ElementRef, forwardRef, HostListener, inject, Input, OnDestroy, OnInit, Optional, ChangeDetectionStrategy } from '@angular/core';
 
 import { addClass, triggerItemAction, UserDefinedExecutionContext, App, toggleClass } from '@wm/core';
 import { hasLinkToCurrentPage, TextContentDirective } from '@wm/components/base';
@@ -23,6 +23,7 @@ const MENU_LAYOUT_TYPE = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TextContentDirective, forwardRef(() => MenuDropdownComponent), NavigationControlDirective],
     selector: 'li[wmMenuDropdownItem]',

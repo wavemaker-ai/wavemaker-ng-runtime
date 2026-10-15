@@ -1,6 +1,6 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
 import { AbstractI18nService, App, AppDefaults, DataSource, setPipeProvider, isMobile } from '@wm/core';
-import { Component, QueryList, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, QueryList, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ListComponent } from './list.component';
@@ -41,6 +41,10 @@ jest.mock('jquery', () => jest.fn(() => ({
 
 @Component({
     standalone: false,
+    // Angular 22 changed the default changeDetection strategy for components with no
+    // explicit setting (see .claude/skills/angular-upgrade/patterns/runtime.md §27a).
+    // Pin it here to match the pre-22 default behavior these tests rely on.
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
         <div wmList template="true" itemsperrow="xs-1 sm-1 md-1 lg-1" class="media-list" name="testlist"
              dataset.bind="testdata" navigation="Basic"

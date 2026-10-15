@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import {Component, Inject, Injector, OnDestroy, Optional, ChangeDetectionStrategy} from '@angular/core';
 import { NG_VALUE_ACCESSOR, NG_VALIDATORS } from '@angular/forms';
 
 import {setListClass} from '@wm/core';
@@ -15,6 +15,7 @@ const DEFAULT_CLS = 'app-radioset list-group inline';
 const WIDGET_CONFIG = {widgetType: 'wm-radioset', hostClass: DEFAULT_CLS};
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective],
     selector: '[wmRadioset]',

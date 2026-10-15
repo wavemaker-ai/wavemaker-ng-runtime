@@ -1,4 +1,5 @@
 import {
+    ChangeDetectionStrategy,
     Component,
     ComponentRef,
     ApplicationRef,
@@ -46,8 +47,7 @@ const isValidMarkup = (m: string) => typeof m === 'string' && m.trim().length > 
 
 let counter = 1;
 
-const createDynamicComponent = (selector: string, template: string, css = ''): Type<unknown> => {
-    if (!isValidSelector(selector)) throw new Error(`Invalid selector: ${selector}`);
+const createDynamicComponent = (selector: string, template: string, css: string): Type<unknown> => {
     if (!isValidMarkup(template)) throw new Error('Invalid markup');
 
     class DynamicComponent {
@@ -66,6 +66,12 @@ const createDynamicComponent = (selector: string, template: string, css = ''): T
         // directives like [wmFormField] will be treated as unknown (and silently ignored due to schemas),
         // causing "directive not initialized" symptoms in dynamic wizard/tabs/accordion paths.
         imports: [CommonModule, FormsModule, ReactiveFormsModule, ...REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS],
+        // Angular 22 changed the default changeDetection strategy for components with no
+        // explicit setting (patterns/runtime.md §27a) -- without this pin, a component created
+        // through this factory gets inserted into the DOM (createComponent() "succeeds") but its
+        // template content never gets checked/rendered under the new default. Same root cause as
+        // component-ref-provider.service.ts's createComponent(); found via that fix first.
+        changeDetection: ChangeDetectionStrategy.Eager,
         schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA]
     })(DynamicComponent);
 };
@@ -79,7 +85,7 @@ export class DynamicComponentRefProviderService {
     private readonly injector = inject(Injector);
     private readonly appRef = inject(ApplicationRef);
 
-    private normalize(opts: DynamicOptions = {}): Required<DynamicOptions> {
+    private normalize(opts: DynamicOptions): Required<DynamicOptions> {
         return {
             selector: opts.selector ?? `wm-dynamic-component-${counter++}`,
             transpile: isDefined(opts.transpile) ? opts.transpile : true,

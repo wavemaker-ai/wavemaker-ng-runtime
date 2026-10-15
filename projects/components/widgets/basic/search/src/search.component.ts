@@ -14,7 +14,7 @@ import {
     Optional,
     QueryList,
     ViewChild,
-    ViewChildren
+    ViewChildren, ChangeDetectionStrategy
 } from '@angular/core';
 
 import { from, Observable, of } from 'rxjs';
@@ -67,6 +67,7 @@ import {
 const WIDGET_CONFIG = { widgetType: 'wm-search', hostClass: 'input-group' };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, FormsModule, ScrollableDirective, TypeaheadModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective, WmAppIconComponent],
     selector: '[wmSearch]',
@@ -653,14 +654,14 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
             this.queryModel = [selectedItem];
         } else if (this.datafield === ALLFIELDS && isObject(data)) {
             this.queryModel = this.getTransformedData(extractDataAsArray(data));
-        } else 
+        } else
             // resetting the queryModel only when prevDatavalue is equal to data
             if ((this as any).prevDatavalue !== data) {
                 this.queryModel = undefined;
                 this.query = '';
                 return;
             }
-        
+
         this.updateDatavalueFromQueryModel();
 
         // Show the label value on input.
@@ -922,6 +923,10 @@ export class SearchComponent extends DatasetAwareFormComponent implements OnInit
                     this.typeahead.hide();
                 }
             }
+        }
+
+        if (key === 'minchars' && this.typeahead && isDefined(nv)) {
+            (this.typeahead as any)._typeaheadMinLengthValue = nv;
         }
 
         super.onPropertyChange(key, nv, ov);

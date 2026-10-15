@@ -165,14 +165,7 @@ export const transformFormData = (context: any, dataSet: any, myDataField?: stri
         startIndex = 1;
     }
 
-    if (isString(dataSet)) {
-        dataSet = dataSet.split(',').map(str => str.trim());
-        dataSet.forEach((option, index) => {
-            const dataSetItem = {key: option, value: option, label: (isDefined(option) && option !== null) ? option.toString() : '', index: startIndex + index};
-            setGroupbyKey(scope, context, dataSetItem, 'value');
-            data.push(dataSetItem);
-        });
-    } else if (isArray(dataSet) && !isObject(dataSet[0])) { // array of primitive values only
+    if (isArray(dataSet) && !isObject(dataSet[0])) { // array of primitive values only
         dataSet.forEach((option, index) => {
             const dataSetItem = {key: option, value: option, label: (isDefined(option) && option !== null) ? option.toString() : '', index: startIndex + index};
             setGroupbyKey(scope, context, dataSetItem, 'value');

@@ -11,7 +11,7 @@ import {
     OnDestroy,
     ViewChild,
     ViewContainerRef,
-    ViewEncapsulation
+    ViewEncapsulation, ChangeDetectionStrategy
 } from '@angular/core';
 import {
     ActivatedRoute,
@@ -54,6 +54,7 @@ interface SPINNER {
     arialabel: string;
 }
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, RouterOutlet, AlertDialogComponent, ConfirmDialogComponent, DialogComponent, AppSpinnerComponent, ContainerDirective, PartialParamHandlerDirective , PartialContainerDirective],
     selector: 'app-root',

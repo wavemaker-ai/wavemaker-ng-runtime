@@ -325,7 +325,7 @@ export const $appDigest = (() => {
         if (force) {
             ngZone.run(() => appRef.tick());
             queued = false;
-        } else 
+        } else
             if (queued) {
                 return;
             } else {
@@ -335,7 +335,7 @@ export const $appDigest = (() => {
                     queued = false;
                 });
             }
-        
+
     };
 })();
 

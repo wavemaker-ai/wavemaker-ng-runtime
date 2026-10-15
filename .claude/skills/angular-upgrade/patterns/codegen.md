@@ -52,6 +52,8 @@ grep moduleResolution tsconfig.json tsconfig.web-app.json
 
 **Step 6 classification:** `tsconfig.json` = `bundler` but `tsconfig.web-app.json` = `node` → **`must-change`**.
 
+**Second-order effect confirmed at Step 9 (20→21 hop) — `moduleResolution: "bundler"` is strict about package.json `"exports"` maps in a way `"node"` never was.** `.yalc/@wavemaker/variables`'s `package.json` has a malformed `"exports": {".": "./index"}` (missing the `.js`/`.d.ts` extensions — the same bug already documented in `patterns/runtime.md` §30 for the rollup dependency-extraction context). Under legacy `"node"` resolution this was silently tolerated (implicit extension fallback); under `"bundler"` it fails hard: `TS2307: Cannot find module '@wavemaker/variables'` in the generated app's own build (`libraries/http/types/index.d.ts`, `libraries/variables/types/index.d.ts` — anything re-exporting from `@wavemaker/variables`). **The existing `local-angular-build.md` Step 5 workaround (`cp -R "${YALC_VARIABLES}" .../node_modules/@wavemaker/variables`) does NOT fix this** — it copies the exact same broken `package.json`. The actual `@wavemaker/variables` source repo was not available locally to fix at the root; worked around by hand-patching the `exports` field to a proper conditional map (`{"types": "./index.d.ts", "default": "./index.js"}`) in both `.yalc/@wavemaker/variables/package.json` (survives the next `yalc add` in any generated app) and the already-generated app's own `node_modules/@wavemaker/variables/package.json` copy. **This is a `.yalc`-cache-only fix, gitignored, not part of any commit** — if the real `@wavemaker/variables` source repo becomes available in a future hop, fix `exports` there instead and this workaround becomes unnecessary.
+
 #### 20b. Codegen Handlebars — ngx-bootstrap `forRoot()` (must-change)
 
 **This is a breaking change in ngx-bootstrap upstream, not a modernization.** ngx-bootstrap 21 removed `.forRoot()` from `ModalModule`, `BsDatepickerModule`, and `NgCircleProgressModule`. The generated app will not compile until these are removed from the template.
@@ -119,7 +121,7 @@ When `@wavemaker-ai/angular-app/dependencies/` filenames use a `.cjs.js` suffix,
 | Step 7 | `BUILD_CMD` (runtime) |
 | Step 9 | Codegen `build.sh`; local build; Tomcat; preview checklist below |
 
-Iteration table: [`SKILL.md`](../SKILL.md) Step 9 only.
+Iteration table: [`steps-6-10.md`](../steps-6-10.md) Step 9 only.
 
 #### 20e. Prism `foundation-css` path in `update-angular-json.js` — must-change
 
@@ -139,6 +141,8 @@ Iteration table: [`SKILL.md`](../SKILL.md) Step 9 only.
 
 **Prerequisite:** `foundation-css` yalc/npm package must ship `dist/` (build `wavemaker-foundation-css` before `bundle-angular-app-cli`).
 
+**Confirmed limitation, local yalc-linked dev workflow only (20→21 hop):** `dist/` is `.gitignore`d in `wavemaker-foundation-css`, and `yalc push` respects `.gitignore` when selecting what to publish (confirmed empirically — a genuinely fresh `npm run build && ` auto-`yalc push` still produced a `.yalc/@wavemaker/foundation-css/` snapshot with **no `dist/` folder at all**, even though `dist/styles/foundation/foundation.css` existed on disk in the source repo at push time). This means the `dist/styles/foundation/...` path this section requires **will never resolve via yalc-linking** in this repo's local preview workflow, only via a genuine `npm install` against a real registry-published version (where a `"files"` field or default npm-publish behavior — not gitignore — determines scope, and typically does include `dist/`). The fix above is still correct for real Prism/production builds and for `pattern-review.sh`'s check — don't revert it. But Step 9's local `local-angular-build.md` Step 5 (generated app `npm i`) will likely need the same manual workaround already used for `@wavemaker/variables` (`cp -R "${YALC_VARIABLES}" ...`) — copy `wavemaker-foundation-css/dist` into the generated app's `node_modules/@wavemaker/foundation-css/dist` directly — rather than assuming `npm i` + yalc alone resolves it.
+
 **Step 6:** enforced by `scripts/pattern-review.sh`.
 
 #### 20f. Generated app edit policy — must-follow
@@ -149,4 +153,4 @@ Iteration table: [`SKILL.md`](../SKILL.md) Step 9 only.
 
 **All fixes:** `wavemaker-ng-runtime` and/or `wavemaker-ng-codegen` → rebuild → re-run codegen (local-angular-build Steps 2–5).
 
-**Step 9 iteration:** see [`SKILL.md`](../SKILL.md) Step 9 only.
+**Step 9 iteration:** see [`steps-6-10.md`](../steps-6-10.md) Step 9 only.

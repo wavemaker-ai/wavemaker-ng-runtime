@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional} from '@angular/core';
+import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional, ChangeDetectionStrategy} from '@angular/core';
 
 import { Subject, Subscription } from 'rxjs';
 
@@ -18,6 +18,7 @@ const WIDGET_CONFIG = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, FileIconClassPipe, StateClassPipe, FileSizePipe, WmAppIconComponent],
     selector: '[wmFileUpload]',
@@ -331,8 +332,8 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
                             this.deletedatasource._deleteFileObservable = this.deleteFileObservable;
                             this.deletedatasource._deleteFileObservable.asObservable().subscribe((response) => {
                                 if(response.status === "success") {
-                                    this.selectedFiles = this.selectedFiles.filter((fileObj) => file !== fileObj) || [];
-                                    this.uploadedFiles = this.uploadedFiles.filter((fileObj) => file !== fileObj) || [];
+                                    this.selectedFiles = this.selectedFiles.filter((fileObj) => file !== fileObj);
+                                    this.uploadedFiles = this.uploadedFiles.filter((fileObj) => file !== fileObj);
                                 }
                             });
                         }

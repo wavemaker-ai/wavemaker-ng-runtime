@@ -1,8 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from "@angular/core";
+import { ChangeDetectionStrategy, DebugElement } from "@angular/core";
 
 export const compileTestComponent = (moduleDef, componentInstance): ComponentFixture<any> => {
+    // Angular 22 changed the default changeDetection strategy for components with no
+    // explicit setting (see patterns/runtime.md §27a). Widget components got pinned to
+    // Eager individually, but these dynamically-declared test wrapper components
+    // (`@Component({ template: markup })` in each *.wrapper.component.spec.ts) never got
+    // that pin -- pinning it here, once, for every test through this shared entry point,
+    // instead of editing 50+ individual spec files.
+    TestBed.overrideComponent(componentInstance, {
+        set: { changeDetection: ChangeDetectionStrategy.Eager }
+    });
+
     TestBed.configureTestingModule(moduleDef)
         .compileComponents();
 
@@ -26,14 +36,26 @@ export const getElementByTagOnDocQuery = (tagName: string) => {
     return document.getElementsByTagName(tagName);
 }
 
-export const checkElementClass = (fixture, cssquery: string, eleClass: string) => {
-    return fixture.whenStable().then(() => {
-        let dateControl = getHtmlSelectorElement(fixture, cssquery);
+export const checkElementClass = async (fixture, cssquery: string, eleClass: string) => {
+    await fixture.whenStable();
 
+    // The element/class we're waiting for can depend on async work (e.g. a validator
+    // status update) that isn't guaranteed to have settled by the time whenStable()
+    // resolves once -- this was previously flaky when run alongside other spec files
+    // (query happened before detectChanges() too, capturing a stale/null reference).
+    // Poll for a short window instead of asserting after a single check.
+    const maxAttempts = 10;
+    let dateControl;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
         fixture.detectChanges();
-        expect(dateControl.nativeElement.classList).toContain(eleClass);
+        dateControl = getHtmlSelectorElement(fixture, cssquery);
+        if (dateControl?.nativeElement.classList.contains(eleClass)) {
+            break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
 
-    });
+    expect(dateControl?.nativeElement.classList).toContain(eleClass);
 }
 
 export const checkCustomElementClass = (elem, toCheckClass) => {

@@ -681,12 +681,6 @@ export const initChart = (widgetContext, xDomainValues, yDomainValues, propertyV
     // Setting the legend type choosen by user or default it will be furious
     chart.legend.vers((propertyValueMap.legendtype?.toLowerCase()) || 'furious');
 
-    if (!includes(chartTypes, widgetContext.type)) {
-        chart = nv.models.multiBarChart()
-            .x(d => d.x)
-            .y(d => d.y);
-    }
-
 
     if (isPieType(widgetContext.type)) {
         // In case of pie/donut chart formatting the values of it

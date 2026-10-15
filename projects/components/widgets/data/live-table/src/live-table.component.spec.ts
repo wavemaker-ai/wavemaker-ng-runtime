@@ -131,6 +131,13 @@ describe('LiveTableComponent', () => {
             expect(focusSpy).not.toHaveBeenCalled();
         });
 
+        it('should cope with a form that has no fields', () => {
+            const focusSpy = jest.spyOn(wmComponent, 'focusFirstInput').mockImplementation(() => {});
+            mockForm.formFields = [];
+            wmComponent.onDialogOpen('add');
+            expect(focusSpy).toHaveBeenCalled();
+        });
+
         it('should focus the first input when action is add and there is no default value', () => {
             const focusSpy = jest.spyOn(wmComponent, 'focusFirstInput').mockImplementation(() => {});
             wmComponent.onDialogOpen('add');
@@ -241,6 +248,18 @@ describe('LiveTableComponent', () => {
         it('should highlight the current row on update', () => {
             wmComponent.onResult('update', { id: 1 }, false, false);
             expect(mockTable.initiateSelectItem).toHaveBeenCalledWith('current', { id: 1 });
+        });
+
+        it('should keep a layout dialog open without reopening the form after a delete with a new form', () => {
+            wmComponent.isLayoutDialog = true;
+            const closeSpy = jest.spyOn(wmComponent, 'closeDialog').mockImplementation(() => {});
+            wmComponent.onResult('delete', { id: 1 }, true, false);
+            expect(closeSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not treat a missing newForm as update mode', () => {
+            wmComponent.onResult('update', { id: 1 }, undefined, undefined);
+            expect(mockForm.isUpdateMode).toBe(false);
         });
 
         it('should call onRecordDelete on delete', () => {

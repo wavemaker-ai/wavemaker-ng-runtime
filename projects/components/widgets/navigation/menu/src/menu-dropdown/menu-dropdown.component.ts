@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { MenuDropdownItemComponent } from '../menu-dropdown-item/menu-dropdown-item.component';
-import { AfterViewInit, Component, ElementRef, inject, Input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, Input, ChangeDetectionStrategy } from '@angular/core';
 
 import { addClass } from '@wm/core';
 
@@ -33,6 +33,7 @@ const animationClasses = {
 const DEFAULT_CLS = 'dropdown-menu';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, MenuDropdownItemComponent],
     selector: 'ul[wmMenuDropdown]',

@@ -203,9 +203,7 @@ export class NavigationServiceImpl implements AbstractNavigationService {
                     return childSelector;
                 }
             });
-            if (selector) {
-                $el = $(selector);
-            }
+            $el = $(selector);
         }
         return $el;
     }
@@ -280,9 +278,6 @@ class PageInfo {
         this.transition = isEmpty(this.transition) ? null : this.transition;
     }
 
-    public isEqual(page1: PageInfo) {
-        return page1 && page1.name === this.name && isEqual(page1.urlParams, this.urlParams);
-    }
 }
 
 class History {
@@ -297,10 +292,6 @@ class History {
         return this.stack.length;
     }
 
-    public isLastVisitedPage(page: PageInfo) {
-        return this.getLastPage().isEqual(page);
-    }
-
     public push(pageInfo: PageInfo) {
         if (this.currentPage) {
             this.stack.push(this.currentPage);
@@ -311,9 +302,5 @@ class History {
     public pop() {
         this.currentPage = this.stack.pop();
         return this.currentPage;
-    }
-
-    public getLastPage() {
-        return this.stack.length > 0 ? this.stack[this.stack.length - 1] : undefined;
     }
 }

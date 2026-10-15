@@ -374,12 +374,8 @@ export class StatePersistence {
 
         // for Local and Session Storage, wrap state object inside page name so that widget name conflicts don't arise between pages.
         if (widget?.getAppInstance().activePageName && (mode.toLowerCase() === 'localstorage' || mode.toLowerCase() === 'sessionstorage')) {
-            if (stateObj) {
-                stateObj[widget.getAppInstance().activePageName] = parsedObj;
-                parsedObj = stateObj;
-            } else {
-                parsedObj = {[widget.getAppInstance().activePageName]: parsedObj};
-            }
+            stateObj[widget.getAppInstance().activePageName] = parsedObj;
+            parsedObj = stateObj;
 
         }
         if (mode.toLowerCase() === 'localstorage') {

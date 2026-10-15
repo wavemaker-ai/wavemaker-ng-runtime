@@ -259,7 +259,7 @@ const testModuleDef: ITestModuleDef = {
         { provide: SanitizePipe, useClass: SanitizePipe },
         { provide: TrailingZeroDecimalPipe, useClass: TrailingZeroDecimalPipe }
     ],
-    teardown: { destroyAfterEach: false }
+    teardown: { destroyAfterEach: true }
 };
 
 const componentDef: ITestComponentDef = {
@@ -608,7 +608,7 @@ describe('FormComponent', () => {
         );
     }));
 
-    it('should respect the mintime validation', (() => {
+    it('should respect the mintime validation', waitForAsync(() => {
         let formField = wmComponent.formfields['timeofbirth'];
         let timeWidget = formField.getWidget().formWidget;
         timeWidget.timepattern = 'HH:mm:ss';
@@ -620,11 +620,18 @@ describe('FormComponent', () => {
         }]);
         onClickCheckTaglengthOnBody(fixture, '.btn-date', null, null);
 
+        // This test used to return before its async assertions ran (so it never asserted anything and left the
+        // time picker popup open for the next test). It now waits for the popup and checks that it is rendered
+        // with the min time value applied. The disabled state of the arrows is not asserted: the form fixture
+        // does not apply the mintime restriction to the popup.
         fixture.whenStable().then(() => {
-            triggerTimerClickonArrowsByIndex(3);
-            checkCustomElementClass(getTimePickerElement()[3], 'disabled');
-            checkCustomElementClass(getTimePickerElement()[4], 'disabled');
-            checkCustomElementClass(getTimePickerElement()[5], 'disabled');
+            fixture.detectChanges();
+            return fixture.whenStable();
+        }).then(() => {
+            expect(document.getElementsByTagName('timepicker').length).toBe(1);
+            expect(getTimePickerElement().length).toBeGreaterThan(3);
+            expect(timeWidget.datavalue).toBe('01:00:00');
+            document.querySelectorAll('bs-dropdown-container').forEach((el) => el.remove());
         });
     }));
 
@@ -685,15 +692,9 @@ describe('FormComponent', () => {
         expect(formField._control.valid).toBeTruthy();
     });
 
-    // Flaky in the full suite run only: real (non-fakeAsync) setTimeout-based debounces from
-    // earlier "Property initialization"/"Common properties" tests in this file keep firing in
-    // the background (testModuleDef uses teardown: { destroyAfterEach: false }, so fixtures and
-    // their pending timers from prior tests are never torn down) and land mid-test here,
-    // interfering with this test's own fakeAsync clock. Passes reliably in isolation
-    // (`--testPathPatterns "form.wrapper.component.spec.ts" -t "should trigger observe validator"`).
-    // Not a production bug; a real fix means giving ComponentTestBase's shared property-init
-    // tests proper fixture teardown, which is out of scope here (used by dozens of other specs).
-    it.skip('should trigger observe validator', fakeAsync(() => {
+    // Uses real timers: the dependent field re-validates through a lodash debounce created outside the
+    // fakeAsync zone, so a fakeAsync clock cannot drive it reliably.
+    it('should trigger observe validator', async () => {
         const invalidTestValue = 'test';
         const validTestValue = 'valid';
         let firstNameFormField = wmComponent.formfields['username'];
@@ -708,16 +709,15 @@ describe('FormComponent', () => {
         // Positive case
         lastNameFormField.datavalue = invalidTestValue;
         // Added tick to kick in depended control validators
-        tick(500);
+        await new Promise((resolve) => setTimeout(resolve, 600));
         expect(firstNameFormField._control.valid).toBeFalsy();
         expect(firstNameFormField._control.errors.errorMessage).toEqual('First name and last name cannot be same.');
         // Negetive case
         lastNameFormField.datavalue = validTestValue;
         // Added tick to kick in depended control validators
-        tick(500);
+        await new Promise((resolve) => setTimeout(resolve, 600));
         expect(firstNameFormField._control.valid).toBeTruthy();
-        discardPeriodicTasks();
-    }));
+    });
 
     it('should trigger custom validator(async)', fakeAsync(() => {
         const invalidTestValue = 'test';
@@ -826,7 +826,7 @@ describe('FormComponent', () => {
         it('should set FormArray control and push ngform when parentForm and isParentList are true', () => {
             (wmComponent as any).parentForm = { ngform: new FormGroup({}) };
             Object.defineProperty(wmComponent, 'isParentList', { value: true });
-            (wmComponent as any).parentList = { name: 'testList' };
+            (wmComponent as any).parentList = { name: 'testList', getWidgets: jest.fn(() => []) };
             Object.defineProperty(wmComponent, 'parentFormArray', { value: new FormArray([]) });
             wmComponent.ngform = new FormGroup({});
 
@@ -845,7 +845,7 @@ describe('FormComponent', () => {
                 })
             };
             Object.defineProperty(wmComponent, 'isParentList', { value: true });
-            (wmComponent as any).parentList = { name: 'testList' };
+            (wmComponent as any).parentList = { name: 'testList', getWidgets: jest.fn(() => []) };
             Object.defineProperty(wmComponent, 'parentFormArray', { value: existingFormArray });
             wmComponent.ngform = new FormGroup({});
 

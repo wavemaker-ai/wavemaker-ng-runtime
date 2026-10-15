@@ -257,26 +257,6 @@ const downloadFilefromResponse = (response, headers, success, error) => {
     }
 };
 
-const getService = (serviceName) => {
-    if (!serviceName) {
-        return;
-    }
-    return serviceName;
-    // Todo: Shubham, uncomment below code
-    /* /!* get a reference to the element where ng-app is defined *!/
-     let appEl = WM.element('[id=ng-app]'), injector;
-     if (appEl) {
-     try {
-     injector = appEl.injector(); // get the angular injector
-     if (injector) {
-     return injector.get(serviceName); // return the service
-     }
-     } catch (e) {
-     return undefined;
-     }
-     }*/
-};
-
 /**
  * Construct the form data params from the URL
  * @param queryParams
@@ -434,31 +414,6 @@ const downloadThroughAnchor = (config, success, error) => {
 };
 
 /**
- * appends a timestamp on the passed filename to prevent caching
- * returns the modified file name
- * @param fileName
- * @param exportFormat
- * @returns {string}
- */
-const getModifiedFileName = (fileName, exportFormat) => {
-    let fileExtension;
-    const currentTimestamp = Date.now();
-
-    if (exportFormat) {
-        fileExtension = exportTypesMap[exportFormat];
-    } else {
-        fileExtension = '.' + last(split(fileName, '.'));
-        fileName = replace(fileName, fileExtension, '');
-    }
-    return fileName + '_' + currentTimestamp + fileExtension;
-};
-
-const getCookieByName = (name) => {
-    // Todo: Shubham Implement cookie native js
-    return 'cookie';
-};
-
-/**
  * This function returns the cookieValue if xsrf is enabled.
  * In device, xsrf cookie is stored in localStorage.
  * @returns xsrf cookie value
@@ -553,7 +508,6 @@ const applyMultiSlotValue = (targetObj, targetNodeKey, obj, value) => {
 const setValueToNode = (target, obj, root, variable, value, noUpdate?) => {
     const targetNodeKey = getTargetNodeKey(target),
         targetObj = getTargetObj(obj, root, variable);
-    value = !isUndefined(value) ? value : obj.value;
     /* sanity check, user can bind parent nodes to non-object values, so child node bindings may fail */
     if (targetObj) {
         // Multi query params: one slot per binding; rebinds replace that slot (not append).
@@ -631,14 +585,14 @@ const updateInternalNodes = (target, root, variable) => {
  */
 const processBindObject = (obj, scope, root, variable) => {
     const target = obj.target,
-        targetObj = getTargetObj(obj, root, variable),
-        targetNodeKey = getTargetNodeKey(target),
-        runMode = true;
+        targetNodeKey = getTargetNodeKey(target);
+    // resolving the target object also creates the intermediate nodes of the target path
+    getTargetObj(obj, root, variable);
     const destroyFn = scope.registerDestroyListener ? scope.registerDestroyListener.bind(scope) : noop;
 
     if (stringStartsWith(obj.value, 'bind:')) {
         const listener = (newVal, oldVal) => {
-            if ((newVal === oldVal && isUndefined(newVal)) || (isUndefined(newVal) && (!isUndefined(oldVal) || !isUndefined(targetObj[targetNodeKey])))) {
+            if ((newVal === oldVal && isUndefined(newVal)) || (isUndefined(newVal) && !isUndefined(oldVal))) {
                 return;
             }
             // Skip cloning for blob column
@@ -647,22 +601,20 @@ const processBindObject = (obj, scope, root, variable) => {
             }
             setValueToNode(target, obj, root, variable, newVal); // cloning newVal to keep the source clean
 
-            if (runMode) {
-                /*set the internal bound node map with the latest updated value*/
-                if (!internalBoundNodeMap.has(variable)) {
-                    internalBoundNodeMap.set(variable, {});
-                }
-                set(internalBoundNodeMap.get(variable), [variable.name, root, target], newVal);
-                /*update the internal nodes after internal node map is set*/
-                if (isObject(newVal)) {
-                    updateInternalNodes(target, root, variable);
-                }
+            /*set the internal bound node map with the latest updated value*/
+            if (!internalBoundNodeMap.has(variable)) {
+                internalBoundNodeMap.set(variable, {});
+            }
+            set(internalBoundNodeMap.get(variable), [variable.name, root, target], newVal);
+            /*update the internal nodes after internal node map is set*/
+            if (isObject(newVal)) {
+                updateInternalNodes(target, root, variable);
             }
         };
         destroyFn($watch(obj.value.replace('bind:', ''), scope, {}, listener, undefined, undefined, undefined, () => variable.isMuted));
     } else if (!isUndefined(obj.value)) {
         setValueToNode(target, obj, root, variable, obj.value, true);
-        if (runMode && root !== targetNodeKey) {
+        if (root !== targetNodeKey) {
             if (!internalBoundNodeMap.has(variable)) {
                 internalBoundNodeMap.set(variable, {});
             }

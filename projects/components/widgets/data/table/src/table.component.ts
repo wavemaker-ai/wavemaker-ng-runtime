@@ -19,7 +19,7 @@ import {
     QueryList,
     TemplateRef,
     ViewChild,
-    ViewContainerRef
+    ViewContainerRef, ChangeDetectionStrategy
 } from '@angular/core';
 import {ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {
@@ -139,6 +139,7 @@ const isInputBodyWrapper = target => {
 };
 
 @Component({
+      changeDetection: ChangeDetectionStrategy.Eager,
       standalone: true,
       imports: [CommonModule, AnchorComponent, PaginationComponent, ButtonComponent, BsDropdownModule, MenuComponent, WmAppIconComponent],
     selector: '[wmTable]',
@@ -1554,10 +1555,8 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             }
             return;
         }
-        if (newVal) {
-            this.populateGridData(newVal);
-            this.refreshRowFilterDataFromDataset();
-        }
+        this.populateGridData(newVal);
+        this.refreshRowFilterDataFromDataset();
         // when select widget options are loaded in search filter then initializing it
         const widgetState = this.statePersistence.getWidgetState(this);
         if (get(widgetState, 'search')) {
@@ -1649,14 +1648,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             } catch (e) {
                 // Ignore errors during destroy
             }
-        }
-
-        // MEMORY LEAK FIX: Clear dynamic context
-        if (this._dynamicContext) {
-            Object.keys(this._dynamicContext).forEach(key => {
-                delete this._dynamicContext[key];
-            });
-            this._dynamicContext = null;
         }
 
         // MEMORY LEAK FIX: Clear other data structures
@@ -1804,18 +1795,11 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     /* Check whether it is non-empty row. */
     isEmptyRecord(record) {
         const properties = Object.keys(record);
-        let data,
-            isDisplayed;
 
-        return properties.every((prop, index) => {
-            data = record[prop];
-            /* If fieldDefs are missing, show all columns in data. */
-            isDisplayed = (this.fieldDefs.length && isDefined(this.fieldDefs[index]) && this.showFieldBasedOnScreenType(this.fieldDefs[index])) || true;
-            /*Validating only the displayed fields*/
-            if (isDisplayed) {
-                return (data === null || data === undefined || data === '');
-            }
-            return true;
+        /* Every column of the record is validated, whether or not it is displayed on the current screen type. */
+        return properties.every(prop => {
+            const data = record[prop];
+            return (data === null || data === undefined || data === '');
         });
     }
 
@@ -2003,9 +1987,6 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         // Apply filter and sort, if data is refreshed through Refresh data method
         if (!this.isNavigationEnabled() && this._isClientSearch) {
             data = getClonedObject(serviceData);
-            if (isObject(data) && !isArray(data)) {
-                data = [data];
-            }
             if (get(this.datasource, 'category') === 'wm.Variable' && isArray(data)) {
                 for (let i = 0; i < data.length; i++) {
                     data[i].$$wmSourceListIndex = i;
@@ -2216,11 +2197,7 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
         /* if new columns to be rendered, prepare default fieldDefs for the data provided*/
         const columnData = getClonedObject(data);
-        if (isArray(columnData)) {
-            columnData.forEach(row => delete row['$$wmSourceListIndex']);
-        } else if (isObject(columnData)) {
-            delete columnData['$$wmSourceListIndex'];
-        }
+        columnData.forEach(row => delete row['$$wmSourceListIndex']);
         this.prepareColDefs(columnData);
 
         this.serverData = data;

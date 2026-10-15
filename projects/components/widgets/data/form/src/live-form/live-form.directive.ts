@@ -229,7 +229,7 @@ export class LiveFormDirective implements OnDestroy {
                 if (field.value) {
                     dateTime = getValidDateObject(field.value);
                     if (field.outputformat === DataType.TIMESTAMP || field.type === DataType.TIMESTAMP) {
-                        fieldValue = field.value ? dateTime : null;
+                        fieldValue = dateTime;
                     } else if (field.outputformat) {
                         fieldValue = this.datePipe.transform(dateTime, field.outputformat);
                     } else {

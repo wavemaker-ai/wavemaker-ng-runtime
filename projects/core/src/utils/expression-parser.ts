@@ -345,21 +345,6 @@ class ASTCompiler {
         return ast.expressions.map(e => this.build(e)).join(';');
     }
 
-    processPropertyWrite() {
-        const ast = this.cAst;
-        const stmts = this.cStmts;
-        let receiver, lhs;
-        if (ast.receiver instanceof ImplicitReceiver) {
-            lhs = `_ctx.${ast.name}`;
-        } else {
-            receiver = this.build(ast.receiver, stmts);
-            lhs = `${receiver}${receiver.length ? '.' : ''}${ast.name}`;
-        }
-
-        const rhs = this.build(ast.value, stmts);
-        stmts.push(`${lhs}=${rhs}`);
-    }
-
     processPipe() {
         const ast = this.cAst;
         const stmts = this.cStmts;

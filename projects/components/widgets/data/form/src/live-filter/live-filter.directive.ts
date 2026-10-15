@@ -9,7 +9,6 @@ import {find} from "lodash-es";
 const FILTER_CONSTANTS = {
     'EMPTY_KEY'   : 'EMPTY_NULL_FILTER'
 };
-const noop = () => {};
 
 @Directive({
   standalone: true,

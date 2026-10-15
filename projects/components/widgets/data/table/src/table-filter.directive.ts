@@ -62,7 +62,7 @@ const getSearchValue = (value, type) => {
 };
 
 // Filter the data based on the search value and conditions
-const getFilteredData = (data, searchObj, visibleCols = []) => {
+const getFilteredData = (data, searchObj, visibleCols) => {
     const searchVal = getSearchValue(searchObj.value, searchObj.type);
     let currentVal;
     // Return whole data if
@@ -369,7 +369,7 @@ export class TableFilterSortDirective implements OnDestroy {
         if (!isNaN(timestamp)) {
             return timestamp;
         } else { // Since Date.parse() doesn't support all date formats, manually validating the date.
-            const parts = dateString?.split(/[-/\s]+/)?.map(Number) || [];
+            const parts = dateString.split(/[-/\s]+/).map(Number);
             return  new Date(parts[2], parts[1] - 1, parts[0]).getTime();
         }
     }

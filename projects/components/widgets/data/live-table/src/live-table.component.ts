@@ -8,7 +8,7 @@ import {
     Inject,
     Injector,
     OnDestroy,
-    Optional
+    Optional, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {debounceTime} from 'rxjs/operators';
@@ -26,6 +26,7 @@ const DEFAULT_CLS = 'app-livegrid';
 const WIDGET_CONFIG = {widgetType: 'wm-livetable', hostClass: DEFAULT_CLS};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmLiveTable]',
     templateUrl: './live-table.component.html',

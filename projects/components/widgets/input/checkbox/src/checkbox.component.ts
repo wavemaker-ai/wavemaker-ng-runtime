@@ -11,7 +11,7 @@ import {
     OnDestroy,
     OnInit,
     Optional,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {isDefined, toggleClass} from '@wm/core';
@@ -50,6 +50,7 @@ export const unStringify = (val, defaultVal?) => {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FormsModule, WmAppIconComponent],
     selector: '[wmCheckbox]',

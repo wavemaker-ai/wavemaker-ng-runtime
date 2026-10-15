@@ -206,3 +206,236 @@ describe('expression-parser', () => {
         });
     });
 });
+
+describe('expression-parser - pure pipe caching', () => {
+    let transformCalls: number;
+
+    beforeAll(() => {
+        setPipeProvider({
+            getPipeNameVsIsPureMap: () => new Map([['countPure', true], ['countImpure', false]]),
+            meta: (name: string) => (name === 'countPure' ? { pure: true } : name === 'countImpure' ? { pure: false } : undefined),
+            getInstance: () => ({
+                transform: (...args: any[]) => {
+                    transformCalls++;
+                    return args.join('|');
+                }
+            })
+        });
+    });
+
+    beforeEach(() => {
+        transformCalls = 0;
+    });
+
+    // `<root> | countPure:a1:a2...` has (argCount + 1) pipe arguments in total.
+    // $parseExpr caches the compiled function (and its pure pipe cache) per expression,
+    // so every test uses its own root variable name to start from an empty cache.
+    const argNames = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10'];
+    let uid = 0;
+    const setup = (count: number) => {
+        const root = `root${++uid}`;
+        const expr = `${root} | countPure${argNames.slice(0, count).map((n) => ':' + n).join('')}`;
+        const buildCtx = (overrides: any = {}) => {
+            const ctx: any = { [root]: 'v' };
+            argNames.slice(0, count).forEach((n, i) => (ctx[n] = i));
+            return Object.assign(ctx, overrides);
+        };
+        return { fn: $parseExpr(expr), root, buildCtx };
+    };
+
+    for (let extra = 0; extra <= 9; extra++) {
+        const total = extra + 1;
+
+        it(`re-uses the cached result for ${total} pipe argument(s) while they are unchanged`, () => {
+            const { fn, buildCtx } = setup(extra);
+            fn(buildCtx());
+            fn(buildCtx());
+            expect(transformCalls).toBe(1);
+        });
+
+        it(`re-runs the pipe for ${total} pipe argument(s) when the first one changes`, () => {
+            const { fn, root, buildCtx } = setup(extra);
+            fn(buildCtx());
+            fn(buildCtx({ [root]: 'changed' }));
+            expect(transformCalls).toBe(2);
+        });
+
+        if (extra > 0) {
+            it(`re-runs the pipe for ${total} pipe argument(s) when the last one changes`, () => {
+                const { fn, buildCtx } = setup(extra);
+                fn(buildCtx());
+                fn(buildCtx({ [argNames[extra - 1]]: 'changed' }));
+                expect(transformCalls).toBe(2);
+            });
+        }
+    }
+
+    it('always re-runs the pipe when it has more than 10 arguments', () => {
+        const expr = 'v | countPure:a1:a2:a3:a4:a5:a6:a7:a8:a9:a10:a11';
+        const fn = $parseExpr(expr);
+        const ctx = { v: 1, a1: 1, a2: 1, a3: 1, a4: 1, a5: 1, a6: 1, a7: 1, a8: 1, a9: 1, a10: 1, a11: 1 };
+        fn(ctx);
+        fn(ctx);
+        expect(transformCalls).toBe(2);
+    });
+
+    it('treats NaN as unchanged but object arguments as always changed', () => {
+        const nanFn = $parseExpr('nanVal | countPure');
+        nanFn({ nanVal: NaN });
+        nanFn({ nanVal: NaN });
+        expect(transformCalls).toBe(1);
+
+        transformCalls = 0;
+        const objFn = $parseExpr('objVal | countPure');
+        const obj = { a: 1 };
+        objFn({ objVal: obj });
+        objFn({ objVal: obj });
+        expect(transformCalls).toBe(2);
+    });
+
+    it('never caches an impure pipe', () => {
+        const fn = $parseExpr('v | countImpure');
+        fn({ v: 1 });
+        fn({ v: 1 });
+        expect(transformCalls).toBe(2);
+    });
+});
+
+describe('expression-parser - invalid expressions', () => {
+    beforeAll(() => {
+        setPipeProvider({
+            getPipeNameVsIsPureMap: () => new Map(),
+            meta: () => undefined,
+            getInstance: () => ({ transform: (v: any) => v })
+        });
+    });
+
+    it('$parseExpr returns a no-op for an expression with syntax errors', () => {
+        expect($parseExpr('a +* b')({ a: 1, b: 2 })).toBeUndefined();
+    });
+
+    it('$parseEvent returns a no-op for an action with syntax errors', () => {
+        const ctx = { called: false };
+        expect($parseEvent('foo(')(ctx)).toBeUndefined();
+        expect(ctx.called).toBe(false);
+    });
+});
+
+describe('expression-parser - registered functions with pipes', () => {
+    beforeAll(() => {
+        setPipeProvider({
+            getPipeNameVsIsPureMap: () => new Map(),
+            meta: (name: string) => {
+                if (name === 'regPure') {
+                    return { pure: true };
+                }
+                if (name === 'regImpure') {
+                    return { pure: false };
+                }
+                return undefined;
+            },
+            getInstance: (name: string) => ({ transform: (v: any) => `${name}:${v}` })
+        });
+    });
+
+    it('binds pure, impure and unknown pipes into a registered binding function', () => {
+        const raw = function (_plus: any, _minus: any, _isDef: any, _getPPVal: any, _ppc: any, pure: any, impure: any, unknown: any, ctx: any) {
+            return [_ppc instanceof Map, pure.transform(ctx.v), impure.transform(ctx.v), unknown.transform(ctx.v)];
+        };
+        registerFnByExpr('regBind', raw, [['regPure', '_p0'], ['regImpure', '_p1'], ['regMissing', '_p2']]);
+
+        const result = getFnForBindExpr('regBind')({ v: 1 });
+
+        expect(result[0]).toBe(true);
+        expect(result[1]).toBe('regPure:1');
+        expect(result[2]).toBe('regImpure:1');
+        expect(result[3]).toBeUndefined();
+    });
+
+    it('does not create a pure pipe cache map when only impure pipes are used', () => {
+        const raw = function (_plus: any, _minus: any, _isDef: any, _getPPVal: any, _ppc: any, impure: any, ctx: any) {
+            return [_ppc, impure.transform(ctx.v)];
+        };
+        registerFnByExpr('regBindImpure', raw, [['regImpure', '_p0']]);
+        expect(getFnForBindExpr('regBindImpure')({ v: 2 })).toEqual([undefined, 'regImpure:2']);
+    });
+
+    it('binds pipes into a registered action function without the pure pipe helper', () => {
+        const raw = function (_plus: any, _minus: any, _isDef: any, _ppc: any, pure: any, ctx: any) {
+            ctx.out = pure.transform(ctx.v);
+        };
+        registerFnByExpr('regAction', raw, [['regPure', '_p0']]);
+        const ctx: any = { v: 3 };
+        getFnForEventExpr('regAction')(ctx);
+        expect(ctx.out).toBe('regPure:3');
+    });
+
+    it('re-uses the same pure pipe instance across registered functions', () => {
+        const seen: any[] = [];
+        const raw = function (_plus: any, _minus: any, _isDef: any, _getPPVal: any, _ppc: any, pure: any) {
+            seen.push(pure);
+        };
+        registerFnByExpr('regShare1', raw, [['regPure', '_p0']]);
+        registerFnByExpr('regShare2', raw, [['regPure', '_p0']]);
+        getFnForBindExpr('regShare1')({});
+        getFnForBindExpr('regShare2')({});
+        expect(seen[0]).toBe(seen[1]);
+    });
+});
+
+describe('expression-parser - CSP enabled', () => {
+    let parser: any;
+    const originalFunction = (global as any).Function;
+
+    beforeAll(() => {
+        jest.isolateModules(() => {
+            parser = require('./expression-parser');
+        });
+        parser.setPipeProvider({
+            getPipeNameVsIsPureMap: () => new Map(),
+            meta: () => undefined,
+            getInstance: () => ({ transform: (v: any) => v })
+        });
+        // simulate a Content-Security-Policy that blocks `new Function()`
+        (global as any).Function = function () {
+            throw new Error('CSP blocks Function constructor');
+        };
+    });
+
+    afterAll(() => {
+        (global as any).Function = originalFunction;
+    });
+
+    it('evaluates bind expressions through lodash get, using locals before the context', () => {
+        const fn = parser.$parseExpr('user.name');
+        expect(fn({ user: { name: 'ctx' } })).toBe('ctx');
+        expect(fn({ user: { name: 'ctx' } }, { user: { name: 'local' } })).toBe('local');
+    });
+
+    it('evaluates a simple function call event with arguments resolved from the context', () => {
+        const received: any[] = [];
+        const ctx = {
+            handler(...args: any[]) {
+                received.push(args);
+            },
+            a: 1,
+            b: 2
+        };
+        parser.$parseEvent('handler(a, b)')(ctx);
+        expect(received).toEqual([[1, 2]]);
+    });
+
+    it('resolves event arguments from locals and binds the function to the merged context', () => {
+        const ctx: any = {
+            tag: 'ctx',
+            handler(arg: any) {
+                return `${this.tag}:${arg}`;
+            }
+        };
+        expect(parser.$parseEvent('handler(item)')(ctx, { item: 'x', tag: 'local' })).toBe('local:x');
+    });
+
+    it('does nothing when the called function does not exist on the context', () => {
+        expect(parser.$parseEvent('missing(a)')({ a: 1 })).toBeUndefined();
+    });
+});

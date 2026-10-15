@@ -1,5 +1,5 @@
 import {CommonModule} from '@angular/common';
-import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import {NG_VALUE_ACCESSOR} from '@angular/forms';
 
 import {$appDigest, $unwatch, $watch, debounce, isAppleProduct, isDefined, toBoolean} from '@wm/core';
@@ -42,6 +42,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective, SearchComponent],
     selector: '[wmChips]',
@@ -250,7 +251,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
                 this.chipsList.push(itemFound);
             } else if (this.datafield !== ALLFIELDS) {
                 searchQuery.push(val);
-            } else if (this.datafield === ALLFIELDS) {
+            } else {
                 let dataObj, isCustom = false;
                 if (!isObject(val)) {
                     dataObj = this.createCustomDataModel(val);
@@ -620,7 +621,8 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
     private configureDnD() {
         const options = {
             items: '> li:not(.app-chip-search)',
-            placeholder: 'chip-placeholder'
+            placeholder: 'chip-placeholder',
+            cancel: '.app-chips.readonly'
         };
 
         configureDnD(this.$element, options, this.onReorderStart.bind(this), this.update.bind(this));

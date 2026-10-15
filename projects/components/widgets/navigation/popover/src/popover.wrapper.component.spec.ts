@@ -247,7 +247,7 @@ describe('PopoverComponent', () => {
         const mockPopoverLeftShift = 20;
         const mockNgZone = { onStable: { subscribe: (fn: Function) => fn() } };
 
-        (wmComponent as any).bsPopoverDirective = { _popover: { _ngZone: mockNgZone } } as any;
+        (wmComponent as any).ngZone = mockNgZone;
 
         wmComponent['adjustPopoverArrowPosition'](mockPopoverElem, mockPopoverLeftShift);
         expect(mockPopoverElem.find).toHaveBeenCalledWith('.popover-arrow');

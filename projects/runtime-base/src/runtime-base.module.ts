@@ -532,14 +532,14 @@ export class RuntimeBaseModule {
         });
     }
 
-    private getDeviceDetails(): Promise<any> {
+    private getDeviceDetails(win: Window = window): Promise<any> {
         return new Promise<any>(function (resolve, reject) {
             const msgContent = { key: 'on-load' };
             // Notify preview window that application is ready. Otherwise, identify the OS.
-            if (window.top !== window) {
-                window.top.postMessage(msgContent, '*');
+            if (win.top !== win) {
+                win.top.postMessage(msgContent, '*');
                 // This is for preview page
-                window.onmessage = function (msg) {
+                win.onmessage = function (msg) {
                     const data = msg.data;
                     if (isObject(data) && data.key === 'switch-device') {
                         resolve(data.device);

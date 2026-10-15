@@ -36,6 +36,15 @@ if ! cd "$REPO_ROOT" 2>/dev/null; then
   exit 1
 fi
 
+# Activate the Node version pinned in repo.config.sh (NODE_VERSION), if nvm is available.
+# A fresh shell's active `node` reflects this machine's PATH snapshot, not necessarily
+# this pin, and `nvm use` from a prior command does not persist to this one.
+if [ -n "$NODE_VERSION" ] && [ -s "$HOME/.nvm/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$HOME/.nvm/nvm.sh"
+  nvm use "$NODE_VERSION" >/dev/null 2>&1 || echo "warn: nvm could not activate Node $NODE_VERSION (not installed?) — run: nvm install $NODE_VERSION" >&2
+fi
+
 NG_CODEGEN_PATH="${NG_CODEGEN_PATH:-../wavemaker-ng-codegen}"
 if [ "${NG_CODEGEN_PATH#/}" = "$NG_CODEGEN_PATH" ]; then
   NG_CODEGEN="$(cd "$REPO_ROOT" && cd "$NG_CODEGEN_PATH" 2>/dev/null && pwd || echo "")"
@@ -66,6 +75,20 @@ warn() {
 }
 ok()    { echo "OK   [§${1}] ${2}"; }
 info()  { echo "INFO [§${1}] ${2}"; }
+
+# fail_or_warn_below SECTION THRESHOLD MSG — fail if ANGULAR_TARGET_VERSION >= THRESHOLD,
+# else warn (found, but not yet required — tracked, not blocking). Used for §N checks whose
+# pattern doc documents an explicit "not required until Angular <THRESHOLD>" gate (verified
+# against the actual installed @angular/* .d.ts, not assumed from the gate table alone) —
+# see checklist.md's "Verification Principle" and Section version history.
+fail_or_warn_below() {
+  _section="$1"; _threshold="$2"; _msg="$3"
+  if [ -n "${ANGULAR_TARGET_VERSION:-}" ] && [ "$ANGULAR_TARGET_VERSION" -ge "$_threshold" ] 2>/dev/null; then
+    fail "$_section" "$_msg"
+  else
+    warn "$_section" "$_msg (not required until Angular $_threshold — target is $ANGULAR_TARGET_VERSION; tracked, not blocking)"
+  fi
+}
 
 # search PATTERN [PATHS...] — 0=found, 1=not-found; uses rg when available
 search() {
@@ -102,7 +125,7 @@ echo ""
 # §1  Legacy runtime compiler
 # ─────────────────────────────────────────────────────────────────────────────
 if search 'compileModuleAndAllComponentsSync' projects/runtime-base 2>/dev/null; then
-  fail 1 "legacy compileModuleAndAllComponentsSync still present in runtime-base — must be removed"
+  warn 1 "legacy compileModuleAndAllComponentsSync still present in runtime-base — @deprecated but confirmed still present (not removed) in @angular/core@20.3.31's .d.ts, and confirmed via a real 0-error build that this compiles clean unmodified at Angular 20 (WMS-29275-adjacent hop). Real removal version not yet known — re-verify against the installed .d.ts every hop rather than trusting this threshold, and tighten back to a fail_or_warn_below gate once the actual removal version is confirmed. Runtime AOT-only tree-shaking risk still unverified by a compile-only check — Step 9 must exercise a dynamic-component path (custom widget/prefab/partial) before fully trusting this is safe to keep."
 else
   ok 1 "no legacy compileModuleAndAllComponentsSync"
 fi
@@ -112,7 +135,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # Positional args: createComponent(Cls, 0, inj) or createComponent(Cls, index, ...)
 if search 'createComponent([^,)]*,[[:space:]]*[0-9]' projects/ 2>/dev/null; then
-  fail 2 "createComponent() with positional numeric arg found — must use object syntax {environmentInjector,...}"
+  warn 2 "createComponent() with positional numeric arg found — @deprecated but confirmed still present (not removed) in ViewContainerRef.createComponent's .d.ts at @angular/core@20.3.31, and confirmed via a real 0-error build that this compiles clean unmodified at Angular 20. Coupled to §1 (same 2 files, same forcing function) — real removal version not yet known, re-verify against the installed .d.ts every hop rather than trusting this threshold. Runtime AOT-only tree-shaking risk still unverified by a compile-only check."
 else
   ok 2 "no positional createComponent() calls"
 fi
@@ -125,8 +148,12 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # §6  ngx-bootstrap .forRoot() in ng-runtime source (codegen checked in §20b)
 # ─────────────────────────────────────────────────────────────────────────────
-if search 'ModalModule\.forRoot\|BsDatepickerModule\.forRoot\|NgCircleProgressModule\.forRoot' projects/ 2>/dev/null; then
-  fail 6 "ngx-bootstrap .forRoot() on ModalModule/BsDatepickerModule/NgCircleProgressModule in projects/ — removed in ngx-bootstrap 21"
+# NgCircleProgressModule deliberately excluded — it ships from ng-circle-progress, a separate
+# package not bumped alongside ngx-bootstrap; its .forRoot() is unaffected and still required.
+# Confirmed at the 20->21 hop that ALL ngx-bootstrap modules lost .forRoot(), not just modal/
+# datepicker (prior version of this check only covered 2 of 10) — see patterns/runtime.md §8b.
+if search 'ModalModule\.forRoot\|BsDatepickerModule\.forRoot\|TimepickerModule\.forRoot\|BsDropdownModule\.forRoot\|PaginationModule\.forRoot\|TypeaheadModule\.forRoot\|ProgressbarModule\.forRoot\|CarouselModule\.forRoot\|PopoverModule\.forRoot\|TooltipModule\.forRoot' projects/ 2>/dev/null; then
+  fail_or_warn_below 6 21 "ngx-bootstrap .forRoot() found on a module that removed it at ngx-bootstrap 21 (all modules except NgCircleProgressModule, which is a separate package) — verify the ngx-bootstrap version this hop actually pins — .forRoot() may still be present in its .d.ts below that"
 else
   ok 6 "no disallowed ngx-bootstrap .forRoot() in projects/"
 fi
@@ -209,14 +236,19 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 NGXBS_POS="$(find node_modules/ngx-bootstrap/positioning -name 'ngx-bootstrap-positioning.mjs' 2>/dev/null | head -1)"
 if [ -n "$NGXBS_POS" ] && [ -f "$NGXBS_POS" ]; then
-  if grep -q 'takeUntilDestroyed(__destroyRef)' "$NGXBS_POS"; then
+  # Match the BARE takeUntilDestroyed() — the hazardous upstream form the patch fixes by
+  # injecting a DestroyRef and passing it explicitly. The previous check looked for
+  # `takeUntilDestroyed(__destroyRef)` in UPSTREAM, but `__destroyRef` is what the PATCH adds,
+  # so it never matched and this always printed the misleading "may no longer be needed" INFO.
+  # All of ngx-bootstrap 20.0.2 / 21.2.2 / 22.0.0 ship the bare form — the patch is still needed.
+  if grep -qE 'takeUntilDestroyed\(\s*\)' "$NGXBS_POS"; then
     if grep -q 'const __destroyRef\|DestroyRef' build-scripts/ngx-bootstrap-patch.mjs 2>/dev/null; then
-      ok 12 "upstream needs __destroyRef patch — patch file covers it"
+      ok 12 "upstream has bare takeUntilDestroyed() — patch file covers it"
     else
-      fail 12 "upstream PositioningService uses undeclared __destroyRef but patch does not inject it — preview will throw ReferenceError"
+      fail 12 "upstream PositioningService uses bare takeUntilDestroyed() but patch does not inject a DestroyRef — preview will throw NG0203"
     fi
   else
-    info 12 "upstream PositioningService does not use __destroyRef — patch injection may no longer be needed"
+    info 12 "upstream PositioningService has no bare takeUntilDestroyed() — re-verify §12 against this ngx-bootstrap version before assuming the patch is unnecessary"
   fi
 else
   warn 12 "ngx-bootstrap positioning bundle not found under node_modules/ngx-bootstrap/positioning/ — run npm install first (Step 4)"
@@ -287,7 +319,7 @@ EXPR_PARSER="projects/core/src/utils/expression-parser.ts"
 if [ -f "$EXPR_PARSER" ]; then
   # §19a: old-style string placeholder must NOT be present
   if grep -q "parseBinding.*'', 0\|parseAction.*'', 0\|parseAction.*false, ''" "$EXPR_PARSER"; then
-    fail "19a" "expression-parser.ts uses old string placeholder in parseBinding/parseAction — must use ParseSourceSpan"
+    fail_or_warn_below "19a" 20 "expression-parser.ts uses old string placeholder in parseBinding/parseAction — must use ParseSourceSpan (mandatory from Angular 20 per patterns/runtime.md §19a — the @angular/compiler \`Parser\` class's parseBinding/parseAction keep a string \`location\` param below that; do not assume ParseSourceSpan is required without checking the installed .d.ts, and do not confuse this with the unrelated BindingParser class's similarly-named method)"
   else
     ok "19a" "no old-style parseBinding/parseAction string placeholder"
   fi
@@ -356,7 +388,7 @@ if [ -f tsconfig.json ] && [ -f tsconfig.web-app.json ]; then
   MOD_ROOT=$(grep_tsconfig_field module tsconfig.json)
   MOD_WEB=$(grep_tsconfig_field  module tsconfig.web-app.json)
   if [ -n "$MOD_ROOT" ] && [ -n "$MOD_WEB" ] && [ "$MOD_ROOT" != "$MOD_WEB" ]; then
-    fail "20a" "tsconfig module mismatch: root=$MOD_ROOT  web-app=$MOD_WEB"
+    fail_or_warn_below "20a" 21 "tsconfig module mismatch: root=$MOD_ROOT  web-app=$MOD_WEB — part of the §20a moduleResolution:bundler transition bundle, resync together at that hop rather than piecemeal"
   else
     ok "20a" "tsconfig module aligned (${MOD_WEB:-n/a})"
   fi
@@ -383,8 +415,9 @@ if [ -n "$NG_CODEGEN" ] && [ -d "$NG_CODEGEN" ]; then
 
   HBS="$NG_CODEGEN/templates/app.config.ts.hbs"
   if [ -f "$HBS" ]; then
-    if grep -qE 'ModalModule\.forRoot|BsDatepickerModule\.forRoot|NgCircleProgressModule\.forRoot' "$HBS"; then
-      fail "20b" "app.config.ts.hbs calls disallowed ngx-bootstrap .forRoot() — removed in ngx-bootstrap 21"
+    # NgCircleProgressModule excluded — separate package, .forRoot() still valid, see §8b.
+    if grep -qE 'ModalModule\.forRoot|BsDatepickerModule\.forRoot' "$HBS"; then
+      fail_or_warn_below "20b" 21 "app.config.ts.hbs calls disallowed ngx-bootstrap .forRoot() — removed in ngx-bootstrap 21"
     else
       ok "20b" "app.config.ts.hbs — no disallowed ngx-bootstrap .forRoot()"
     fi
@@ -395,9 +428,9 @@ if [ -n "$NG_CODEGEN" ] && [ -d "$NG_CODEGEN" ]; then
   UAJ="$NG_CODEGEN/src/update-angular-json.js"
   if [ -f "$UAJ" ]; then
     if grep -q 'foundation-css/foundation/foundation\.css' "$UAJ"; then
-      fail "20e" "$UAJ uses wrong foundation-css path (must include dist/styles/foundation/)"
+      fail_or_warn_below "20e" 21 "$UAJ uses wrong foundation-css path (must include dist/styles/foundation/) — part of the §20 bootstrapApplication-era codegen bundle, gated with the rest of §20"
     elif ! grep -q 'foundation-css/dist/styles/foundation/foundation\.css' "$UAJ"; then
-      fail "20e" "$UAJ missing foundation-css dist path — Prism ng build will fail"
+      fail_or_warn_below "20e" 21 "$UAJ missing foundation-css dist path — Prism ng build will fail"
     else
       ok "20e" "update-angular-json.js foundation-css dist path correct"
     fi

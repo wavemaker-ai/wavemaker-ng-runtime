@@ -8,7 +8,7 @@ import {
     Injector,
     ViewEncapsulation,
     Optional,
-    Inject
+    Inject, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {
@@ -128,6 +128,7 @@ const angle = d => {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, SpinnerComponent, WmAppIconComponent],
     selector: 'div[wmChart]',
@@ -324,7 +325,7 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
                 dataPoint.size = size;
                 dataPoint.shape = shape || 'circle';
             }
-        } else if (isChartDataArray(this.type)) {
+        } else {
             dataPoint = [xVal, yVal];
         }
         // Adding actual unwrapped data to chart data to use at the time of selected data point of chart event
@@ -425,7 +426,7 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
             maxLength = max(map(queryResponse, obj => obj.length));
         }
         forEach(queryResponse, (values, groupKey) => {
-            groupValues = isAreaChart ? fill(new Array(maxLength), [0, 0]) : [];
+            groupValues = _isAreaChart ? fill(new Array(maxLength), [0, 0]) : [];
             forEachRight(values, (value, index) => {
                 groupValues[index] = this.valueFinder(value, this.xaxisdatakey, yAxisKey, index);
             });
@@ -447,7 +448,7 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
                 groupingExpression,
                 columns: any = [],
                 groupingColumnIndex;
-            const groupbyColumns = this.groupby && this.groupby !== NONE ? this.groupby.split(',') : [],
+            const groupbyColumns = this.groupby.split(','),
                 yAxisKeys = this.yaxisdatakey ? this.yaxisdatakey.split(',') : [];
 
             if (groupbyColumns.length > 1) {
@@ -467,9 +468,7 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
                     columns.push(visualGroupingColumn);
                 }
 
-                if (groupbyColumns.length) {
-                    columns = concat(columns, groupbyColumns);
-                }
+                columns = concat(columns, groupbyColumns);
             }
             // If x and y axis are not included in aggregation need to be included in groupby
             if (this.xaxisdatakey !== this.aggregationcolumn) {
@@ -970,31 +969,10 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
 
     // Function that iterates through all the columns and then fetching the numeric and non primary columns among them
     setNumericandNonPrimaryColumns() {
-        let columns,
-            type;
-        const propertiesMap = this.datasource.execute(DataSource.Operation.GET_PROPERTIES_MAP);
+        // TODO: fetch the numeric and non primary key columns from the properties map (fetchPropertiesMapColumns)
+        this.datasource.execute(DataSource.Operation.GET_PROPERTIES_MAP);
         this.numericColumns = [];
         this.nonPrimaryColumns = [];
-        // Fetching all the columns
-        if (this.dataset && !isEmpty(propertiesMap)) {
-            columns = []; // TODO: fetchPropertiesMapColumns(propertiesMap);
-        }
-
-        if (columns) {
-            // Iterating through all the columns and fetching the numeric and non primary key columns
-            forEach(Object.keys(columns), (key) => {
-                type = columns[key].type;
-                if (isNumberType(type)) {
-                    this.numericColumns.push(key);
-                }
-                // Hiding only table's primary key
-                if (columns[key].isRelatedPk === 'true' || !columns[key].isPrimaryKey) {
-                    this.nonPrimaryColumns.push(key);
-                }
-            });
-            this.numericColumns = this.numericColumns.sort();
-            this.nonPrimaryColumns = this.nonPrimaryColumns.sort();
-        }
     }
 
     // plot the chart
@@ -1129,7 +1107,7 @@ export class ChartComponent extends StylableComponent implements AfterViewInit, 
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER, ['fontsize', 'fontunit', 'color', 'fontfamily', 'fontweight', 'fontstyle', 'textdecoration']);
 
         // generate unique id for the component
-        this.$id = this.widgetId || Math.random();
+        this.$id = this.widgetId;
         // remove title attribute as the element on hover shows you the hint through-out the element
         removeAttr(this.nativeElement, 'title');
         this.chartReady = false;

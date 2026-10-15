@@ -1,7 +1,7 @@
 import {FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {DateTimePickerComponent} from '@wm/components/input/epoch/date-time-picker';
 import {CommonModule} from '@angular/common';
-import {Component, Inject, Injector, NgZone, OnDestroy, Optional} from '@angular/core';
+import {Component, Inject, Injector, NgZone, OnDestroy, Optional, ChangeDetectionStrategy} from '@angular/core';
 import {TimepickerConfig, TimepickerModule} from 'ngx-bootstrap/timepicker';
 import {
     $appDigest,
@@ -34,6 +34,7 @@ const DEFAULT_CLS = 'input-group app-timeinput';
 const WIDGET_CONFIG = { widgetType: 'wm-time', hostClass: DEFAULT_CLS };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [FormsModule, DateTimePickerComponent, BsDropdownModule, TimepickerModule,CommonModule],
     selector: '[wmTime]',
@@ -303,12 +304,12 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
                 this.bsTimeValue = newVal;
             }
         } // sometimes library is not returning the correct value when the min and max time are given, displaying the datavalue based on the value given by the user
-        else if (this.bsTimePicker?.min && this.bsTimePicker.max) {
-            minTimeMeridian = moment(new Date(this.bsTimePicker.min)).format('A');
-            timeValue = this.bsTimePicker.hours + ':' + (this.bsTimePicker.minutes || 0) + ':' + (this.bsTimePicker.seconds || 0) + (this.bsTimePicker.showMeridian ? (' ' + minTimeMeridian) : '');
+        else if (this.bsTimePicker?.min() && this.bsTimePicker.max()) {
+            minTimeMeridian = moment(new Date(this.bsTimePicker.min())).format('A');
+            timeValue = this.bsTimePicker.hours + ':' + (this.bsTimePicker.minutes || 0) + ':' + (this.bsTimePicker.seconds || 0) + (this.bsTimePicker.showMeridian() ? (' ' + minTimeMeridian) : '');
             timeInputValue = getNativeDateObject(timeValue, { pattern: this.loadNativeDateInput ? this.outputformat : undefined, isNativePicker: this.loadNativeDateInput });
             this.bsTimePicker.meridian = minTimeMeridian?.replace(this.meridians[0], this.am)?.replace(this.meridians[1], this.pm);
-            this.timeNotInRange =  this.bsTimePicker.min > timeInputValue || this.bsTimePicker.max < timeInputValue;
+            this.timeNotInRange =  this.bsTimePicker.min() > timeInputValue || this.bsTimePicker.max() < timeInputValue;
 
             if (this.timeNotInRange || this.invalidDateTimeFormat) {
                 this.bsTimeValue = this.getPrevDataValue();
@@ -317,7 +318,7 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
                     $(this.nativeElement).find('.display-input').val(this.safeReplaceMeridians(timeStr));
                 });
             }
-            this.setValidateType(this.bsTimePicker.min, this.bsTimePicker.max, timeInputValue);
+            this.setValidateType(this.bsTimePicker.min(), this.bsTimePicker.max(), timeInputValue);
             if (!this.timeNotInRange) {
                 this.bsTimeValue = timeInputValue;
             }
@@ -377,7 +378,9 @@ export class TimeComponent extends BaseDateTimeComponent implements OnDestroy {
         if (this.deregisterEventListener) {
             this.deregisterEventListener();
         }
-        this.removeKeyupListener();
+        if (this.removeKeyupListener) {
+            this.removeKeyupListener();
+        }
         const parentEl = $(this.nativeElement).closest('.app-composite-widget.caption-floating');
         if (parentEl.length > 0) {
             this.app.notify('captionPositionAnimate', { displayVal: this.displayValue, nativeEl: parentEl });

@@ -63,7 +63,7 @@ export class PaginationUtils {
         if (response.next) {
             variable.pagination['next'] = response.next;
             variable.pagination['prev'] = response.prev;
-            variable.pagination['last'] = response.next ? false : true;
+            variable.pagination['last'] = false;
             variable.pagination['first'] = response.prev ? false : true;
         } else {
             variable.pagination['first'] = variable.pagination['page'] <= 1 ? true : false;
@@ -381,7 +381,7 @@ export class PaginationUtils {
             } else {
                 res['hasMoreItems'] = '';
             }
-        } else if (resOutput) { // For cursor type pagination set next and prev keys in res object
+        } else { // For cursor type pagination set next and prev keys in res object
             this.setPaginationItems(resOutput.next, response, res, 'next', resHeaders);
             this.setPaginationItems(resOutput.prev, response, res, 'prev', resHeaders);
         }

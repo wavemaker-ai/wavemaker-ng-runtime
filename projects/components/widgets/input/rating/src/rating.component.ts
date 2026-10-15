@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 
 import {generateGUId, noop} from '@wm/core';
 import { getOrderedDataset, provideAs, provideAsWidgetRef, styler, WmAppIconComponent } from '@wm/components/base';
@@ -16,6 +16,7 @@ const MAX_RATING = 10;
 const DEFAULT_RATING = 5;
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FormsModule, WmAppIconComponent],
     selector: '[wmRating]',

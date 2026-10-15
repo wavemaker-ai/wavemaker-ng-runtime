@@ -9,7 +9,7 @@ import {
     OnInit,
     Optional,
     ViewChild,
-    ViewEncapsulation
+    ViewEncapsulation, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {AbstractI18nService, getClonedObject, getSessionStorageItem, isMobile} from '@wm/core';
@@ -65,24 +65,6 @@ const NEXT_DAY_THRESHOLD = {
     START: '00:00',
     END: '24:00'
 };
-const getEventMomentValue = (value, key) => {
-    let isDate = false;
-
-    dateFormats.forEach((format) => {
-        // moment supports uppercase formats
-        if (moment(value, format.toUpperCase(), true).isValid()) {
-            isDate = true;
-            return false;
-        }
-    });
-
-    // if the value is date then for end date the value should be end of the day as the calendar is approximating it to the start.
-    if (isDate && key === 'end') {
-        return moment(value).endOf('day');
-    }
-
-    return moment(value);
-};
 const getUTCDateTime = (dateObj) => {
     dateObj = moment(dateObj);
     const year = dateObj.format('YYYY'),
@@ -98,6 +80,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-calendar', hostClass: DEFAULT_CLS};
 const dateFormat = 'YYYY/MM/DD';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmCalendar]',
     templateUrl: './calendar.component.html',

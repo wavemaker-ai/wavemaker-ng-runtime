@@ -8,7 +8,7 @@ import {
     WmAppIconComponent
 } from "@wm/components/base";
 import {FormsModule, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
-import {Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import {Component, Inject, Injector, OnDestroy, Optional, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import {BaseFormCustomComponent} from '@wm/components/input/base-form-custom';
 
 import {registerProps} from './slider.props';
@@ -27,6 +27,7 @@ const RANGE_LABEL_POSITION: {[key: string]: string} = {
   bottom: 'range-label-bottom',
 };
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TextContentDirective, FormsModule, CommonModule, WmAppIconComponent],
     selector: '[wmSlider]',
@@ -144,9 +145,7 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
         if (value <= min) {
             return;
         }
-        if (!isNaN(min)) {
-            value = Math.max(value, min);
-        }
+        value = Math.max(value, min);
 
         this.datavalue = value;
         this.handleChange()
@@ -168,9 +167,7 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
         value = value + step;
         if (value >= max)  return;
 
-        if (!isNaN(max)) {
-            value = Math.min(value, max);
-        }
+        value = Math.min(value, max);
 
         this.datavalue = value;
         this.handleChange()

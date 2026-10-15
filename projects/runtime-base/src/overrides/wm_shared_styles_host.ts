@@ -71,6 +71,13 @@ export class WMDomSharedStylesHost extends SharedStylesHost implements OnDestroy
     });
   }
 
+  // Angular 22's DomRendererFactory2 calls removeStyles(styles, urls) on component destroy
+  // (REMOVE_STYLES_ON_COMPONENT_DESTROY defaults to true). This override has never tracked
+  // per-component style removal (styles persist for the app's lifetime, same as before this
+  // method existed), so this is a no-op to preserve that existing behavior and satisfy the
+  // interface the renderer now requires.
+  removeStyles(styles: string[], urls?: string[]): void {}
+
   ngOnDestroy(): void {
     this._hostNodes.forEach(styleNodes => styleNodes.forEach(removeStyle));
   }

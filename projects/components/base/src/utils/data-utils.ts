@@ -351,7 +351,7 @@ export function getDistinctValuesForField(dataSource, formField, options?) {
     if (isSearchWidgetType(formField[options.widget])) {
         const dataoptions = getDistinctFieldProperties(dataSource, formField);
         formField.dataoptions = dataoptions;
-        setDataFields(formField, Object.assign(options || {}, dataoptions));
+        setDataFields(formField, Object.assign(options, dataoptions));
         formField.datasource = dataSource;
     } else {
         interpolateBindExpressions(formField.viewParent, formField.filterexpressions, (filterexpressions) => {

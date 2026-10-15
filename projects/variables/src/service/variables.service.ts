@@ -93,16 +93,15 @@ export class VariablesService {
 
     processBindExp(d: any, scope: any, variable) {
         const root = getTarget(variable),
-            targetNodeKey = getTargetNodeKey(d.target),
-            runMode = true;
+            targetNodeKey = getTargetNodeKey(d.target);
         let v = isArray(d.value) ? d.value[0] : d.value;
         if (v) {
             if (v.startsWith?.('bind:')) {
                 const watchExpression = $watch(v.replace('bind:', ''), scope, {}, variable.invokeOnParamChange.bind(variable, d), undefined, undefined, d, () => variable.isMuted);
                 v = scope.registerDestroyListener ? scope.registerDestroyListener(watchExpression) : watchExpression;
-            } else if (!isUndefined(d.value)) {
+            } else {
                 setValueToNode(d.target, d, root, variable, d.value, true);
-                if (runMode && root !== targetNodeKey) {
+                if (root !== targetNodeKey) {
                     if (!internalBoundNodeMap.has(variable)) {
                         internalBoundNodeMap.set(variable, {});
                     }

@@ -7,7 +7,6 @@ import { PrefabConfigProvider } from '../types/types';
 import { getPrefabBaseUrl, isPrefabInPreview } from '../util/utils';
 import {endsWith} from "lodash-es";
 
-const prefabsWithError = new Set<string>();
 const inProgress = new Map<string, Promise<any>>();
 const resolvedPrefabs = new Set<string>();
 
@@ -83,10 +82,6 @@ export class PrefabManagerService {
 
         if (resolvedPrefabs.has(prefabName)) {
             return Promise.resolve();
-        }
-
-        if (prefabsWithError.has(prefabName)) {
-            return Promise.reject('');
         }
 
         if (inProgress.get(prefabName)) {

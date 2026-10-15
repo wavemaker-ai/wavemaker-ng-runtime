@@ -6,12 +6,13 @@ import {
     RendererFactory2,
     provideZoneChangeDetection
 } from "@angular/core";
-import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation } from "@angular/router";
+import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation, withRouterConfig } from "@angular/router";
 import {
     HTTP_INTERCEPTORS,
     HttpXhrBackend,
     provideHttpClient,
     withInterceptorsFromDi,
+    withXhr,
     withXsrfConfiguration
 } from "@angular/common/http";
 import { provideAnimations } from "@angular/platform-browser/animations";
@@ -152,10 +153,11 @@ export const appConfig: ApplicationConfig = {
         }),
         { provide: HTTP_INTERCEPTORS, useClass: HttpCallInterceptor, multi: true },
         // Provide Angular core services FIRST
-        provideRouter(routes, withHashLocation(), withComponentInputBinding()),
+        provideRouter(routes, withHashLocation(), withComponentInputBinding(), withRouterConfig({ paramsInheritanceStrategy: 'emptyOnly' })),
         provideAnimations(),
         { provide: XhrFactory, useValue: WM_XHR_FACTORY },
         provideHttpClient(
+            withXhr(),
             withInterceptorsFromDi(),
             withXsrfConfiguration({
                 cookieName: "wm_xsrf_token",

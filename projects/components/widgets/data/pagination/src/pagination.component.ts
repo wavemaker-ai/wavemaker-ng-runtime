@@ -10,7 +10,7 @@ import {
     Optional,
     Output,
     SkipSelf,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {
@@ -56,6 +56,7 @@ const sizeClasses = {
     }
 };
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
     imports: [CommonModule, FormsModule, PaginationModule, BsDropdownModule],
     selector: '[wmPagination]',
@@ -431,7 +432,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                         state.pagesize = this.maxResults;
                     }
                     this.parent.statePersistence.setWidgetState(this.parent, state);
-                } else if (this.parent.widgetType === 'wm-list' || this.parent.widgetType === 'wm-table') {
+                } else {
                     console.warn('Retain State handling on Widget ' + this.parent.name + ' is not supported for current pagination type.');
                 }
             

@@ -1,9 +1,10 @@
-import {Attribute, Component, Inject, Injector, Optional} from '@angular/core';
+import {Attribute, Component, Inject, Injector, Optional, ChangeDetectionStrategy} from '@angular/core';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 
 import { getRouteNameFromLink, getUrlParams, openLink } from '@wm/core';
 import { APPLY_STYLES_TYPE, provideAsWidgetRef, DatasetAwareNavComponent, NavNode, styler, TextContentDirective, WmAppIconComponent  } from '@wm/components/base';
+import { NavigationControlDirective } from '@wm/components/navigation/menu';
 
 import { registerProps } from './breadcrumb.props';
 
@@ -11,8 +12,9 @@ const DEFAULT_CLS = 'breadcrumb app-breadcrumb';
 const WIDGET_CONFIG = {widgetType: 'wm-breadcrumb', hostClass: DEFAULT_CLS};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
-    imports: [TextContentDirective, WmAppIconComponent],
+    imports: [TextContentDirective, WmAppIconComponent, NavigationControlDirective],
     selector: '[wmBreadcrumb]',
     templateUrl: './breadcrumb.component.html',
     providers: [

@@ -1,8 +1,9 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Injector, Input, Output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Injector, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 
 declare const $;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'wm-pickergroup',
     template: `
@@ -16,6 +17,7 @@ export class PickerGroupComponent {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'wm-picker',
     standalone: true,
     template: `

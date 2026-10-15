@@ -1,4 +1,4 @@
-import { ApplicationRef, Attribute, Component, ComponentRef, EnvironmentInjector, Inject, Injector, NgZone, OnDestroy, Optional, ViewEncapsulation, createComponent } from '@angular/core';
+import { ApplicationRef, Attribute, Component, ComponentRef, EnvironmentInjector, Inject, Injector, NgZone, OnDestroy, Optional, ViewEncapsulation, createComponent, ChangeDetectionStrategy } from '@angular/core';
 import { APPLY_STYLES_TYPE, getEvaluatedData, getOrderedDataset, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 import { registerProps } from './tree.props';
 import { $parseEvent, getClonedObject, StatePersistence } from "@wm/core";
@@ -15,6 +15,7 @@ const TREE_STATE_SELECTED_ID = 'selectedNodeId';
 const TREE_STATE_SELECTED_PATH = 'selectedNodePath';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'ul[wmTree]',
     templateUrl: './tree.component.html',
@@ -302,7 +303,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
                         const parsed = JSON.parse(trimmed);
                         if (isArray(parsed)) {
                             nodes = getOrderedDataset(parsed, this.orderby);
-                        } else if (isObject(parsed)) {
+                        } else {
                             nodes = [parsed];
                         }
                     } catch {
@@ -418,7 +419,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             const icon = getEvaluatedData(node, { field: this.nodeicon, bindExpression: this.bindnodeicon }, this.viewParent) || node.icon;
             const nodeId = getEvaluatedData(node, { field: this.nodeid, bindExpression: this.bindnodeid }, this.viewParent);
             const children = getEvaluatedData(node, { field: this.nodechildren, bindExpression: this.bindnodechildren }, this.viewParent) || node.children;
-            zNode['name'] = name === undefined || name === null ? '' : String(name);
+            zNode['name'] = String(name);
             if(!this.template) {
                 zNode['icon'] = icon;
             }

@@ -1,4 +1,4 @@
-import {Component, Inject, Injector, Optional} from '@angular/core';
+import {Component, Inject, Injector, Optional, ChangeDetectionStrategy} from '@angular/core';
 
 import {APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
 import {registerProps} from './header.props';
@@ -10,6 +10,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmHeader]',
     templateUrl: './header.component.html',

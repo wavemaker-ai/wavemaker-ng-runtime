@@ -17,7 +17,7 @@ import {
     Optional,
     SkipSelf,
     ViewChild,
-    ViewContainerRef
+    ViewContainerRef, ChangeDetectionStrategy
 } from '@angular/core';
 import {FormArray, FormBuilder, FormGroup} from '@angular/forms';
 
@@ -158,6 +158,7 @@ const setTouchedState = (self, ngForm, fieldName) => {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FilterPipe, AnchorComponent, ButtonComponent, MessageComponent, WmAppIconComponent],
     selector: 'form[wmForm]',
@@ -706,7 +707,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             template = (type === 'error' && this.errormessage) ? this.errormessage : msg;
             if (this.messagelayout === 'Inline') {
                 template = this.checkAppServiceErrorMsg(type) || template;
-                this.statusMessage = {'caption': template || '', type: type};
+                this.statusMessage = {'caption': template, type: type};
                 if (this.messageRef) {
                     this.messageRef.showMessage(this.statusMessage.caption, this.statusMessage.type);
                 }

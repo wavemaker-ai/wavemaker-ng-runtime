@@ -28,7 +28,11 @@ fi
 . "$SKILL_DIR/repo.config.sh"
 cd "$REPO_ROOT"
 
-NGX_BUNDLE="$REPO_ROOT/dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.bundle.js"
+# NOTE: filename was ngx-bootstrap.umd.js as of this repo's build.sh at Angular 19 (concatenated
+# via `cat ... > dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.umd.js`, not a rollup-produced
+# "bundle.js"). If a later hop's build.sh renames/restructures this artifact, update this path —
+# don't assume the ".bundle.js" name from whichever branch this script was ported from.
+NGX_BUNDLE="$REPO_ROOT/dist/tmp/libs/ngx-bootstrap/ngx-bootstrap.umd.js"
 WM_LIBS="$REPO_ROOT/dist/bundles/wmapp/scripts/wm-libs.js"
 UPSTREAM="$REPO_ROOT/node_modules/ngx-bootstrap/positioning/fesm2022/ngx-bootstrap-positioning.mjs"
 PATCH_SCRIPT="$REPO_ROOT/build-scripts/ngx-bootstrap-patch.mjs"
@@ -38,25 +42,38 @@ MISSING=0
 
 echo "=== ngx-bootstrap bundle verification (strict, repo: $REPO_ROOT) ==="
 
+# Whether the patch is even needed depends on whether upstream's PositioningService actually
+# calls takeUntilDestroyed(__destroyRef) without declaring it (checklist.md §12 — first required
+# at ngx-bootstrap 21/Angular 21). Check upstream FIRST so a missing patch script below a version
+# that doesn't need it yet is informational, not a hard FAIL.
+UPSTREAM_NEEDS_PATCH=0
+if [ -f "$UPSTREAM" ]; then
+  # Check for the BARE takeUntilDestroyed() — that is the hazardous upstream form the patch
+  # exists to fix (it injects a DestroyRef and passes it explicitly). Looking for
+  # `takeUntilDestroyed(__destroyRef)` here was inverted logic: `__destroyRef` is what the PATCH
+  # adds, so upstream never contains it, and the script always reported "patch not needed".
+  # Confirmed wrong at ngx-bootstrap 20.0.2 / 21.2.2 / 22.0.0 — all three ship the bare form.
+  if grep -qE 'takeUntilDestroyed\(\s*\)' "$UPSTREAM" 2>/dev/null; then
+    echo "INFO: upstream positioning uses bare takeUntilDestroyed() — bundle patch required"
+    UPSTREAM_NEEDS_PATCH=1
+  else
+    echo "INFO: upstream positioning has no bare takeUntilDestroyed() — re-verify §12 against this ngx-bootstrap version before trusting that the patch is unnecessary"
+  fi
+else
+  echo "WARN: upstream positioning fesm not found (npm install / ngx-bootstrap version?)"
+fi
+
 if [ -f "$PATCH_SCRIPT" ]; then
   if grep -q '__destroyRef' "$PATCH_SCRIPT" && grep -q 'takeUntilDestroyed' "$PATCH_SCRIPT"; then
     echo "OK: patch definitions present in build-scripts/ngx-bootstrap-patch.mjs"
   else
     echo "WARN: ngx-bootstrap-patch.mjs may be missing DestroyRef positioning patch"
   fi
-else
-  echo "FAIL: missing $PATCH_SCRIPT"
+elif [ "$UPSTREAM_NEEDS_PATCH" -eq 1 ]; then
+  echo "FAIL: missing $PATCH_SCRIPT (upstream needs it at this ngx-bootstrap version)"
   FAIL=1
-fi
-
-if [ -f "$UPSTREAM" ]; then
-  if grep -q 'takeUntilDestroyed(__destroyRef)' "$UPSTREAM" 2>/dev/null; then
-    echo "INFO: upstream positioning uses takeUntilDestroyed(__destroyRef) — bundle patch required"
-  else
-    echo "INFO: upstream positioning does not reference __destroyRef (patch may be noop)"
-  fi
 else
-  echo "WARN: upstream positioning fesm not found (npm install / ngx-bootstrap version?)"
+  echo "INFO: $PATCH_SCRIPT not present — not yet needed at this ngx-bootstrap version"
 fi
 
 verify_bundle() {

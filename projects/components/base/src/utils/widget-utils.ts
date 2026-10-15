@@ -339,12 +339,6 @@ export const getMatchModeMsgs = (appLocale) => {
 const getClassesArray = classVal => {
     let classes = [];
 
-    if (isArray(classVal)) {
-        classVal.forEach(v => {
-            classes = classes.concat(getClassesArray(v));
-        });
-        return classes;
-    }
     if (isObject(classVal)) {
         forEach(classVal, (val, key) => {
             if (val) {
@@ -362,7 +356,7 @@ export const getConditionalClasses = (nv, ov?) => {
     const classToAdd = nv.toAdd || nv;
     const classToRemove = nv.toRemove || ov;
     if (isObject(nv)) {
-        toAdd = isArray(classToAdd) ? classToAdd : getClassesArray(classToAdd || []);
+        toAdd = isArray(classToAdd) ? classToAdd : getClassesArray(classToAdd);
         toRemove = classToRemove ? (isArray(classToRemove) ? classToRemove : getClassesArray(classToRemove)) : [];
     } else {
         toAdd = classToAdd ? [classToAdd] : [];
@@ -380,9 +374,6 @@ const pushFieldDef = (dataObject, columnDefObj, namePrefix, options) => {
         relatedInfo,
         fieldName,
         isRelated;
-    if (!options) {
-        options = {};
-    }
     forEach(dataObject, (value, title) => {
         if (includes(title, '.')) {
             relatedInfo = split(title, '.');
@@ -409,8 +400,8 @@ const pushFieldDef = (dataObject, columnDefObj, namePrefix, options) => {
         } else {
             fieldName = modifiedTitle;
         }
-        const defObj = options.setBindingField ? {'displayName': fieldName, 'field': title, 'relatedTable': relatedTable, 'relatedField': relatedField || modifiedTitle}
-        : {'displayName': fieldName, 'relatedTable': relatedTable, 'relatedField': relatedField || modifiedTitle};
+        // prepareFieldDefs is the only entry point and always sets setBindingField, so the binding field is always included
+        const defObj = {'displayName': fieldName, 'field': title, 'relatedTable': relatedTable, 'relatedField': relatedField || modifiedTitle};
         /*if field is a leaf node, push it in the columnDefs*/
         if (!isObject(value) || (isArray(value) && !value[0])) {
             /*if the column counter has reached upperBound return*/

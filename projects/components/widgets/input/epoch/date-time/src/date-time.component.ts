@@ -10,7 +10,7 @@ import {
     NgZone,
     OnDestroy,
     Optional,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 import {BsDatepickerDirective, BsDatepickerModule} from 'ngx-bootstrap/datepicker';
 import {TimepickerConfig, TimepickerModule} from 'ngx-bootstrap/timepicker';
@@ -47,6 +47,7 @@ const WIDGET_CONFIG = { widgetType: 'wm-datetime', hostClass: DEFAULT_CLS };
 const CURRENT_DATE = 'CURRENT_DATE';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [FormsModule, DateTimePickerComponent, BsDropdownModule, BsDatepickerModule, TimepickerModule,CommonModule],
     selector: '[wmDateTime]',
@@ -320,9 +321,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
         }
         if (!this.dateNotInRange && !this.invalidDateTimeFormat) {
             this.proxyModel = newVal;
-            if (this.proxyModel) {
-                this.bsDateValue = this.bsTimeValue = newVal;
-            }
+            this.bsDateValue = this.bsTimeValue = newVal;
             if(this.datavalue=== this.getPrevDataValue()){
                 const time=getFormattedDate(this.datePipe, this.datavalue, this.datepattern, this.timeZone, null, null, this) || ''
                 $(this.nativeElement).find('.display-input').val(time?.replace(this.meridians[0], this.am)?.replace(this.meridians[1], this.pm)) ;}

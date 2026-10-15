@@ -30,7 +30,7 @@ const isBodyTypeQueryOrProcedure = (variable) => {
     return (includes(['QueryExecution', 'ProcedureExecution'], variable.controller)) && (includes(['put', 'post'], variable.operationType));
 };
 
-const appendQueryParam = (queryParams, paramName, paramValue, preEncoded = false) => {
+const appendQueryParam = (queryParams, paramName, paramValue, preEncoded) => {
     const encodedValue = preEncoded ? paramValue : encodeURIComponent(paramValue);
     const pair = `${paramName}=${encodedValue}`;
     return queryParams ? `${queryParams}&${pair}` : `?${pair}`;

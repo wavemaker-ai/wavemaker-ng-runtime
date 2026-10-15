@@ -9,7 +9,7 @@ import {
     Injector,
     OnDestroy,
     OnInit,
-    Optional
+    Optional, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {App, noop, removeAttr} from '@wm/core';
@@ -35,6 +35,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 
 @AutoLayout({ targetSelector: '.tab-body' })
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'div[wmTabPane]',
     templateUrl: './tab-pane.component.html',
@@ -166,7 +167,7 @@ export class TabPaneComponent extends StylableComponent implements OnInit, After
                 (this as any).tabsRef.selectDefaultPaneByIndex((this as any).tabsRef.defaultpaneindex);
             } else if (!nv && this.isActive) {
                 (this as any).tabsRef.next();
-            } else if (nv || !this.isActive) {
+            } else {
                 (this as any).tabsRef.tabsAnimator?.transitionTabIntoView();
             }
             this._isFirstLoad = false;

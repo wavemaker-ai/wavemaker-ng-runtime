@@ -78,7 +78,7 @@ Base/target from Step 0. **Block Step 2** if R1, R2, R3, R5, R8, R9, R10, R11, o
 | R10 | [ng-packagr](https://github.com/ng-packagr/ng-packagr) | Y | 2,7 | Compatible `ng-packagr` version for target Angular → pin in Step 3 | runtime `projects/*` |
 | R11 | [Node releases](https://nodejs.org/en/about/previous-releases) | Y | 2,3 | LTS Node version for target Angular → pin in `engines.node` in Step 3 | `engines.node` in `package.json` |
 | R12 | [`checklist.md`](./checklist.md) (meta + §21–§25), [`patterns/runtime.md`](./patterns/runtime.md) (§1–§19), [`patterns/codegen.md`](./patterns/codegen.md) (§20) | **Y** | 2,6,9 | must-change / likely-breakage items — §1–§19 in runtime file, §20 in codegen file, automated blockers + §21–§25 in meta file | both repos |
-| R13 | Prior `docs/{major}-upgrade.md` | — | 2 | **Context only** — do not copy patterns from prior docs unless the same breaking change applies to the current target version. Prior docs may include feature upgrades; skip those. | — |
+| R13 | Prior `docs/{major}-upgrade.md` and `docs/upgrade-log/*.md` | — | 2 | **Context only** — do not copy patterns from prior docs unless the same breaking change applies to the current target version. Prior upgrade docs may include feature upgrades; skip those. The diff logs in `docs/upgrade-log/` show what earlier runs found for a §N before a later run overwrote it in the pattern files — useful when the current pattern-file text doesn't explain *why* a gate is where it is. | — |
 
 **Record format** (one bullet per required row):
 

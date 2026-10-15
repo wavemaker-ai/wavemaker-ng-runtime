@@ -11,7 +11,7 @@ import {
     OnDestroy,
     OnInit,
     Optional,
-    Self
+    Self, ChangeDetectionStrategy
 } from '@angular/core';
 import {Router} from '@angular/router';
 
@@ -86,6 +86,7 @@ const AUTO_OPEN = {
 
 const WIDGET_CONFIG = { widgetType: 'wm-menu', hostClass: 'dropdown app-menu' };
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [BsDropdownModule, CommonModule, TextContentDirective, AnchorComponent, ButtonComponent, MenuDropdownComponent, WmAppIconComponent],
     selector: '[wmMenu]',

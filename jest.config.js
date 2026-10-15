@@ -10,13 +10,14 @@ const variablesEntry = [
 module.exports = {
   preset: "jest-preset-angular",
   testTimeout: 15000,
-  roots: ["<rootDir>/projects"],
+  roots: ["<rootDir>/projects", "<rootDir>/src"],
     testEnvironment: 'jest-environment-jsdom',
   transformIgnorePatterns: [
     '/node_modules/(?!(@wavemaker-ai/app-ng-runtime|lodash-es|@angular|angular-imask|ng-circle-progress|@wavemaker-ai/variables|@wavemaker-ai/foundation-css|@wavemaker-ai/custom-widgets-m3|ngx-toastr|ngx-bootstrap|ngx-color-picker|@fullcalendar|preact)/)',
   ],
   testMatch: [
-    "**/projects/**/*.spec.ts"
+    "**/projects/**/*.spec.ts",
+    "**/src/**/*.spec.ts"
   ],
   testPathIgnorePatterns: [
     '/node_modules/',
@@ -24,6 +25,24 @@ module.exports = {
   ],
   setupFilesAfterEnv: ["<rootDir>/src/setup-jest.js"],
   collectCoverage: true,
+  // Report every source file under projects/, not only the ones a test happens to import,
+  // so untested files show up as 0% instead of being silently missing.
+  collectCoverageFrom: [
+    "projects/**/*.{ts,js}",
+    "src/**/*.{ts,js}",
+    // the yalc-linked variables package was already measured before collectCoverageFrom existed
+    ".yalc/@wavemaker-ai/variables/src/**/*.js",
+    "!projects/**/*.spec.ts",
+    "!projects/**/*.d.ts",
+    "!src/**/*.d.ts",
+    "!src/**/*.spec.ts",
+    "!src/setup-jest.js",
+    "!projects/**/public_api*.ts",
+    "!projects/**/index.ts",
+    "!projects/**/src/test.ts",
+    "!projects/**/*.doc.ts",
+    "!projects/**/*.build.ts"
+  ],
   coverageReporters: ["html", "json-summary"],
   coveragePathIgnorePatterns: [
     // anything outside projects/, src/, libraries/ (and the .yalc ui-variables exception below)
@@ -56,6 +75,9 @@ module.exports = {
   ],
   coverageDirectory: "coverage",
   moduleNameMapper: {
+    "^@wm/transpiler$": "<rootDir>/projects/transpiler/src/build.ts",
+    "^@wm/runtime/base$": "<rootDir>/projects/runtime-base/src/public_api.ts",
+    "^@wm/build-task$": "<rootDir>/projects/components/transpile/src/public_api.ts",
     "@wavemaker-ai/variables": `<rootDir>/${variablesEntry || '.yalc/@wavemaker-ai/variables/index.js'}`,
     "@fullcalendar/(.*)$": "<rootDir>/node_modules/@fullcalendar/core/index.cjs",
     "^jQuery$": "jquery",

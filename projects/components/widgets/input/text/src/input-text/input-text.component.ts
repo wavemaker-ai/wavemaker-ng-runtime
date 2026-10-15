@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { IMaskModule, IMaskDirective } from 'angular-imask';
-import {Component, ElementRef, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild} from '@angular/core';
+import {Component, ElementRef, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 
 import {IWidgetConfig, provideAs, provideAsWidgetRef, WmAppIconComponent} from '@wm/components/base';
 import {registerProps} from './input-text.props';
@@ -13,6 +13,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FormsModule, IMaskModule, WmAppIconComponent],
     selector: 'wm-input[type="text"], wm-input:not([type]), wm-input[type="password"], wm-input[type="search"], wm-input[type="tel"], wm-input[type="url"]',

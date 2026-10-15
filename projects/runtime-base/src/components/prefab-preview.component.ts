@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { PrefabDirective } from '@wm/components/prefab';
 import { PrefabManagerService } from '../services/prefab-manager.service';
@@ -7,6 +7,7 @@ import { PrefabDirective as PrefabLoader } from '../directives/prefab.directive'
 const PREFAB = 'PREFAB';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [PrefabDirective, PrefabLoader],
     selector: 'wm-prefab-preview',
