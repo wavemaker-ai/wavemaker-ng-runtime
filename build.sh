@@ -523,8 +523,8 @@ bundleJS() {
         ./projects/components/widgets/data/table/src/datatable.js \
         ./projects/swipey/src/swipey.jquery.plugin.js \
         ./projects/jquery.ui.touch-punch/jquery.ui.touch-punch.min.js \
-        ../../../wavemaker-ui-variables/dist/umd/index.js \
-        ../../../custom-widgets-m3/dist/umd/index.js \
+        ../wavemaker-ui-variables/dist/umd/index.js \
+        ../custom-widgets-m3/dist/umd/index.js \
         ./node_modules/imask/dist/imask.min.js \
         ./node_modules/angular-imask/bundles/angular-imask.umd.js \
         ./node_modules/@metrichor/jmespath/dist/jmespath.umd.js \
