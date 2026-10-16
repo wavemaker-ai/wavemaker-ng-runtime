@@ -1,6 +1,6 @@
 import {Directive, Inject, Injector, OnDestroy, Optional, SecurityContext} from '@angular/core';
 
-import {setProperty, toggleClass} from '@wm/core';
+import {isIos, setProperty, toggleClass} from '@wm/core';
 import {
     DISPLAY_TYPE,
     IWidgetConfig,
@@ -48,7 +48,7 @@ export class LabelDirective extends StylableComponent implements OnDestroy {
             let bindContent = this.nativeElement.getAttribute('caption.bind');
             let safeValue = bindContent ? nv && bindContent.includes('trustAs:') : false;
             const insertZWSP = (value: any): string => {
-                if (typeof value !== 'string') return value;
+                if (typeof value !== 'string' || !isIos()) return value;
                 return value.replace(/\d{5,}/g, (match) => {
                     return match.replace(/(.{9})(?=.)/g, '$1\u200B');
                 });
