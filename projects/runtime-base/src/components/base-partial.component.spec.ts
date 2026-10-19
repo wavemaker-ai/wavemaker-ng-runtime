@@ -220,6 +220,7 @@ describe('BasePartialComponent', () => {
             partial.init();
             partial.viewInit$.complete();
             await wait();
+            expect(variableCollection.callback).toHaveBeenCalledWith(variableCollection.Actions);
         });
     });
 
@@ -229,7 +230,7 @@ describe('BasePartialComponent', () => {
             const fn = jest.fn();
             partial.registerDestroyListener(fn);
             partial.destroy$.complete();
-            expect(fn).toHaveBeenCalled();
+            expect(fn).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -300,10 +301,10 @@ describe('BasePartialComponent', () => {
             partial.Actions = { a: {} };
             partial.mute();
             partial.unmute();
-            expect(partial.Widgets.w.mute).toHaveBeenCalled();
-            expect(partial.Widgets.w.unmute).toHaveBeenCalled();
-            expect(v.mute).toHaveBeenCalled();
-            expect(v.unmute).toHaveBeenCalled();
+            expect(partial.Widgets.w.mute).toHaveBeenCalledTimes(1);
+            expect(partial.Widgets.w.unmute).toHaveBeenCalledTimes(1);
+            expect(v.mute).toHaveBeenCalledTimes(1);
+            expect(v.unmute).toHaveBeenCalledTimes(1);
         });
 
         it('ngOnAttach unmutes, refreshes startUpdate variables when asked, and notifies widgets', () => {
@@ -311,9 +312,9 @@ describe('BasePartialComponent', () => {
             partial.Variables = { v: { startUpdate: true, invoke }, skip: { startUpdate: false, invoke }, noInvoke: { startUpdate: true }, nul: null };
             partial.Actions = { a: { startUpdate: true, invoke } };
             partial.ngOnAttach(true);
-            expect(partial.Widgets.w.unmute).toHaveBeenCalled();
+            expect(partial.Widgets.w.unmute).toHaveBeenCalledTimes(1);
             expect(invoke).toHaveBeenCalledTimes(2);
-            expect(partial.Widgets.w.ngOnAttach).toHaveBeenCalled();
+            expect(partial.Widgets.w.ngOnAttach).toHaveBeenCalledTimes(1);
         });
 
         it('ngOnAttach without refresh leaves variables alone', () => {
@@ -325,8 +326,8 @@ describe('BasePartialComponent', () => {
 
         it('ngOnDetach mutes and notifies widgets', () => {
             partial.ngOnDetach();
-            expect(partial.Widgets.w.mute).toHaveBeenCalled();
-            expect(partial.Widgets.w.ngOnDetach).toHaveBeenCalled();
+            expect(partial.Widgets.w.mute).toHaveBeenCalledTimes(1);
+            expect(partial.Widgets.w.ngOnDetach).toHaveBeenCalledTimes(1);
         });
     });
 

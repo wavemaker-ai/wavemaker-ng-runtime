@@ -777,7 +777,7 @@ describe('FormComponent', () => {
 
             wmComponent.onFormDataSourceChange();
 
-            expect((wmComponent as any).updateFieldSource).toHaveBeenCalled();
+            expect((wmComponent as any).updateFieldSource).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -1044,7 +1044,7 @@ describe('FormComponent', () => {
             wmComponent.validationtype = 'default';
             wmComponent.ngform.setErrors({ invalid: true });
             wmComponent.validateFieldsOnSubmit();
-            expect(wmComponent.highlightInvalidFields).toHaveBeenCalled();
+            expect(wmComponent.highlightInvalidFields).toHaveBeenCalledTimes(1);
         });
 
         it('should focus on first invalid element', () => {
@@ -1099,7 +1099,7 @@ describe('FormComponent', () => {
         it('should call super.handleEvent for non-submit events', () => {
             const superHandleEvent = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(wmComponent)), 'handleEvent');
             (wmComponent as any).handleEvent(document.createElement('div'), 'click', jest.fn(), {});
-            expect(superHandleEvent).toHaveBeenCalled();
+            expect(superHandleEvent).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -1160,15 +1160,15 @@ describe('FormComponent', () => {
 
         it('should call appropriate methods for datasource and formdatasource changes', () => {
             wmComponent.onPropertyChange('datasource', {});
-            expect(wmComponent.onDataSourceChange).toHaveBeenCalled();
+            expect(wmComponent.onDataSourceChange).toHaveBeenCalledTimes(1);
 
             wmComponent.onPropertyChange('formdatasource', {});
-            expect(wmComponent.onFormDataSourceChange).toHaveBeenCalled();
+            expect(wmComponent.onFormDataSourceChange).toHaveBeenCalledTimes(1);
         });
 
         it('should call generateFormFields for metadata changes', () => {
             wmComponent.onPropertyChange('metadata', {});
-            expect(wmComponent.generateFormFields).toHaveBeenCalled();
+            expect(wmComponent.generateFormFields).toHaveBeenCalledTimes(1);
         });
 
         it('should handle dataset changes', () => {
@@ -1182,7 +1182,7 @@ describe('FormComponent', () => {
             };
             (wmComponent as any).getFormFields.mockReturnValue([mockField]);
             wmComponent.onPropertyChange('dataset', {});
-            expect(mockField.formWidget.dataset$.next).toHaveBeenCalled();
+            expect(mockField.formWidget.dataset$.next).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -1232,7 +1232,7 @@ describe('FormComponent', () => {
             wmComponent.validationtype = 'default';
             wmComponent.ngform.setErrors({ invalid: true });
             wmComponent.validateFieldsOnSubmit();
-            expect(wmComponent.highlightInvalidFields).toHaveBeenCalled();
+            expect(wmComponent.highlightInvalidFields).toHaveBeenCalledTimes(1);
         });
 
         it('should focus on first invalid element', () => {
@@ -1469,7 +1469,7 @@ describe('FormComponent', () => {
 
         it('should call constructDataObject', () => {
             wmComponent.updateDataOutput();
-            expect(wmComponent.constructDataObject).toHaveBeenCalled();
+            expect(wmComponent.constructDataObject).toHaveBeenCalledTimes(1);
         });
 
         it('should not call setValidationMsgs when form is untouched', () => {
@@ -1560,8 +1560,8 @@ describe('FormComponent', () => {
 
         it('should call setCustomValidationMessage for fields with fieldValidations', () => {
             wmComponent.setFormData(mockData, mockFormFields);
-            expect(mockFormFields[0].fieldValidations.setCustomValidationMessage).toHaveBeenCalled();
-            expect(mockFormFields[1].fieldValidations.setCustomValidationMessage).toHaveBeenCalled();
+            expect(mockFormFields[0].fieldValidations.setCustomValidationMessage).toHaveBeenCalledTimes(1);
+            expect(mockFormFields[1].fieldValidations.setCustomValidationMessage).toHaveBeenCalledTimes(1);
         });
 
         it('should call constructDataObject', () => {
@@ -1586,8 +1586,8 @@ describe('FormComponent', () => {
 
         it('should mark form as untouched and pristine', () => {
             wmComponent.resetFormState();
-            expect(wmComponent.ngform.markAsUntouched).toHaveBeenCalled();
-            expect(wmComponent.ngform.markAsPristine).toHaveBeenCalled();
+            expect(wmComponent.ngform.markAsUntouched).toHaveBeenCalledTimes(1);
+            expect(wmComponent.ngform.markAsPristine).toHaveBeenCalledTimes(1);
         });
 
         it('should not throw error if ngform is not defined', () => {

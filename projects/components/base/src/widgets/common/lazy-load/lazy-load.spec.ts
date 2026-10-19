@@ -66,6 +66,7 @@ describe('LazyLoadDirective', () => {
         fixture.detectChanges();
 
         expect(watchSpy).toHaveBeenCalled();
+        expect(watchSpy.mock.calls[watchSpy.mock.calls.length - 1][0]).toBe(true);
     });
 
     it('should create embedded view when condition becomes true', () => {
@@ -93,6 +94,6 @@ describe('LazyLoadDirective', () => {
 
         directive.ngOnDestroy();
 
-        expect(unsubscribeSpy).toHaveBeenCalled();
+        expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
     });
 });

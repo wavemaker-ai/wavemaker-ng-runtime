@@ -102,11 +102,11 @@ describe('MenuComponent - additional behaviour', () => {
     describe('keyboard and hover handling', () => {
         it('opens a closed menu on the down and right arrows and selects the first item', () => {
             cmp.onKeyDownArrowDown(key());
-            expect(dropdown.show).toHaveBeenCalled();
+            expect(dropdown.show).toHaveBeenCalledTimes(1);
             expect(cmp._selectFirstItem).toBe(true);
             dropdown.show.mockClear();
             cmp.onKeyDownArrowRight(key());
-            expect(dropdown.show).toHaveBeenCalled();
+            expect(dropdown.show).toHaveBeenCalledTimes(1);
         });
 
         it('focuses the first item of an open menu', () => {
@@ -115,7 +115,7 @@ describe('MenuComponent - additional behaviour', () => {
             jest.spyOn($.fn, 'find').mockReturnValue({ first: () => ({ find: () => ({ focus }) }) } as any);
             cmp.onKeyDownArrowDown(key());
             expect(dropdown.show).not.toHaveBeenCalled();
-            expect(focus).toHaveBeenCalled();
+            expect(focus).toHaveBeenCalledTimes(1);
         });
 
         it('toggles on enter and on mouse enter only when showing on hover', () => {
@@ -154,13 +154,13 @@ describe('MenuComponent - additional behaviour', () => {
         ])('reverses the arrows of %s menus (%s)', (position, action, expected) => {
             cmp.menuposition = position;
             cmp.onKeyDown(key(), action);
-            expect(dropdown[expected]).toHaveBeenCalled();
+            expect(dropdown[expected]).toHaveBeenCalledTimes(1);
         });
 
         it('prevents the default action', () => {
             const ev = key();
             cmp.onKeyDown(ev, 'OTHER');
-            expect(ev.preventDefault).toHaveBeenCalled();
+            expect(ev.preventDefault).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -174,7 +174,7 @@ describe('MenuComponent - additional behaviour', () => {
             cmp.onShow();
             expect(cmp._menuposition).toBe('up,left');
             jest.runAllTimers();
-            expect(focus).toHaveBeenCalled();
+            expect(focus).toHaveBeenCalledTimes(1);
         });
 
         it('does not focus when no first item was requested', () => {
@@ -249,7 +249,7 @@ describe('MenuComponent - additional behaviour', () => {
             jest.spyOn(Object.getPrototypeOf(MenuComponent.prototype), 'resetNodes').mockImplementation(() => undefined);
             cmp.autoopen = 'always';
             cmp.resetNodes();
-            expect(dropdown.show).toHaveBeenCalled();
+            expect(dropdown.show).toHaveBeenCalledTimes(1);
             dropdown.show.mockClear();
             cmp.autoopen = 'never';
             cmp.resetNodes();

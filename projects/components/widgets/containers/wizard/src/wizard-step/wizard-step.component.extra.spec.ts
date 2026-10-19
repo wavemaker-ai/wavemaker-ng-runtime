@@ -223,7 +223,7 @@ describe('WizardStepComponent - additional behaviour', () => {
             step1.onPropertyChange('content', 'x');
             expect(step1.$lazyLoad).not.toHaveBeenCalled();
             jest.advanceTimersByTime(150);
-            expect(step1.$lazyLoad).toHaveBeenCalled();
+            expect(step1.$lazyLoad).toHaveBeenCalledTimes(1);
         });
 
         it('forwards other property changes to the base class', () => {

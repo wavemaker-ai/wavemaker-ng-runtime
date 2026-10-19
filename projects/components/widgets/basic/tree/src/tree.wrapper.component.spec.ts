@@ -841,7 +841,7 @@ describe('wm-tree: Component Specific Tests', () => {
             // when this fixture is torn down after the test, and it would throw on a ref lacking one.
             (wmComponent as any).nodeTemplateRefs = [{ changeDetectorRef: { detectChanges }, destroy: jest.fn() }];
             (wmComponent as any).refreshTreeNodeTemplateHosts();
-            expect(detectChanges).toHaveBeenCalled();
+            expect(detectChanges).toHaveBeenCalledTimes(1);
         });
 
         it('should swallow errors from a destroyed host', () => {
@@ -1084,25 +1084,25 @@ describe('wm-tree: Component Specific Tests', () => {
             it('should restore by persisted id when present', () => {
                 jest.spyOn(wmComponent as any, 'findZTreeNodeByStoredNodeId').mockReturnValue(treeNode);
                 const result = (wmComponent as any).restoreTreeSelectionFromPersistedState({ selectedNodeId: 1 });
-                expect(result).toBeTruthy();
+                expect(result).toBe(true);
             });
 
             it('should fall back to the persisted path when no id match is found', () => {
                 jest.spyOn(wmComponent as any, 'findZTreeNodeByStoredNodeId').mockReturnValue(null);
                 jest.spyOn(wmComponent as any, 'findZTreeNodeByStoredPath').mockReturnValue(treeNode);
                 const result = (wmComponent as any).restoreTreeSelectionFromPersistedState({ selectedNodeId: 1, selectedNodePath: '/a' });
-                expect(result).toBeTruthy();
+                expect(result).toBe(true);
             });
 
             it('should return false when nothing matches', () => {
                 jest.spyOn(wmComponent as any, 'findZTreeNodeByStoredNodeId').mockReturnValue(null);
                 const result = (wmComponent as any).restoreTreeSelectionFromPersistedState({ selectedNodePath: '' });
-                expect(result).toBeFalsy();
+                expect(result).toBe(false);
             });
 
             it('should return false without a zTree or state', () => {
                 (wmComponent as any).zTree = null;
-                expect((wmComponent as any).restoreTreeSelectionFromPersistedState({})).toBeFalsy();
+                expect((wmComponent as any).restoreTreeSelectionFromPersistedState({})).toBe(false);
             });
         });
 
@@ -1112,7 +1112,7 @@ describe('wm-tree: Component Specific Tests', () => {
                 jest.spyOn(wmComponent as any, 'readPersistedTreeSelection').mockReturnValue({ selectedNodeId: 1 });
                 const restoreSpy = jest.spyOn(wmComponent as any, 'restoreTreeSelectionFromPersistedState').mockImplementation(() => true);
                 (wmComponent as any).restorePersistedSelectionAfterStatehandlerChange();
-                expect(restoreSpy).toHaveBeenCalled();
+                expect(restoreSpy).toHaveBeenCalledTimes(1);
             });
 
             it('should do nothing without a zTree', () => {
@@ -1128,7 +1128,7 @@ describe('wm-tree: Component Specific Tests', () => {
                 const restoreSpy = jest.spyOn(wmComponent as any, 'restorePersistedSelectionAfterStatehandlerChange').mockImplementation(() => undefined);
                 wmComponent.onPropertyChange('statehandler', 'url', 'none');
                 tick();
-                expect(restoreSpy).toHaveBeenCalled();
+                expect(restoreSpy).toHaveBeenCalledTimes(1);
             }));
 
             it('should not schedule a restore when switching to "none"', fakeAsync(() => {

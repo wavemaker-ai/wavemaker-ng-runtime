@@ -122,12 +122,12 @@ describe('CurrencyComponent', () => {
 
         // On blur should show '.00' formatting
         validateOnEvt('blur', '1,234.00');
-        setInputValue(fixture, '.app-currency-input', '1234').then(() => {
-            expect(currencyComp.displayValue).toEqual(getInputEl().value);
-        });
-
         // on blur, check blur callback is triggered
         expect(wrapperComponent.onBlur).toHaveBeenCalledTimes(1);
+
+        return setInputValue(fixture, '.app-currency-input', '1234').then(() => {
+            expect(currencyComp.displayValue).toEqual(getInputEl().value);
+        });
     });
 
     it('should not show formatted value when step is not provided', () => {
@@ -168,7 +168,7 @@ describe('CurrencyComponent', () => {
         currencyComp.isDefaultQuery = false;
         // When user enters a value show it in financial format
 
-        setInputValue(fixture, '.app-currency-input', '12').then(() => {
+        return setInputValue(fixture, '.app-currency-input', '12').then(() => {
             expect(currencyComp.displayValue).toEqual('0.12');
         });
     });

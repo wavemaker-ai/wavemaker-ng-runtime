@@ -11,6 +11,7 @@
         "test:coverage": "jest --coverage  && node jest-code-coverage-report.js",
         "test-prod": "jest --no-cache --no-color --ci --silent 2>&1 | sed 's/\\x1b\\[[0-9;]*m//g' > karma-test-report.txt",
         "lint": "eslint src/",
+        "check:specs": "node build-scripts/check-spec-quality.js",
         "e2e": "./node_modules/.bin/ng e2e",
         "generate-deps": "node generate-dependency-report.js",
         "optimizecss": "gulp --gulpfile build-scripts/optimize-css.gulpfile.js",

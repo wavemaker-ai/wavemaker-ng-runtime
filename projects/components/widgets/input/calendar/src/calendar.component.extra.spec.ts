@@ -99,11 +99,11 @@ describe('CalendarComponent - extra behaviour', () => {
         it('moves to the default date and across years', () => {
             cal.datavalue = new Date(2021, 1, 1);
             cal.gotoDate();
-            expect(full.gotoDate).toHaveBeenCalled();
+            expect(full.gotoDate).toHaveBeenCalledTimes(1);
             cal.gotoNextYear();
             cal.gotoPrevYear();
-            expect(full.nextYear).toHaveBeenCalled();
-            expect(full.prevYear).toHaveBeenCalled();
+            expect(full.nextYear).toHaveBeenCalledTimes(1);
+            expect(full.prevYear).toHaveBeenCalledTimes(1);
         });
 
         it('moves to a later and an earlier month', () => {
@@ -123,8 +123,8 @@ describe('CalendarComponent - extra behaviour', () => {
         it('re-renders and unselects', () => {
             cal.rerenderEvents();
             cal.unselect();
-            expect(full.render).toHaveBeenCalled();
-            expect(full.unselect).toHaveBeenCalled();
+            expect(full.render).toHaveBeenCalledTimes(1);
+            expect(full.unselect).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -381,7 +381,7 @@ describe('CalendarComponent - extra behaviour', () => {
             const cancel = jest.fn();
             cal.cancelLocaleChangeSubscription = cancel;
             cal.ngOnDestroy();
-            expect(cancel).toHaveBeenCalled();
+            expect(cancel).toHaveBeenCalledTimes(1);
         });
     });
 

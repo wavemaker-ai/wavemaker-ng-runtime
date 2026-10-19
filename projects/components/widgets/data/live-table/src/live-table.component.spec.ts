@@ -114,14 +114,14 @@ describe('LiveTableComponent', () => {
         it('should focus the first input when action is update', () => {
             const focusSpy = jest.spyOn(wmComponent, 'focusFirstInput').mockImplementation(() => {});
             wmComponent.onDialogOpen('update');
-            expect(focusSpy).toHaveBeenCalled();
+            expect(focusSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should focus the first input when the form has a bound default value', () => {
             const focusSpy = jest.spyOn(wmComponent, 'focusFirstInput').mockImplementation(() => {});
             mockForm.formFields[0].$attrs = new Map([['defaultvalue.bind', 'someExpr']]);
             wmComponent.onDialogOpen('add');
-            expect(focusSpy).toHaveBeenCalled();
+            expect(focusSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should not focus the first input when the first field is an autocomplete widget', () => {
@@ -135,13 +135,66 @@ describe('LiveTableComponent', () => {
             const focusSpy = jest.spyOn(wmComponent, 'focusFirstInput').mockImplementation(() => {});
             mockForm.formFields = [];
             wmComponent.onDialogOpen('add');
-            expect(focusSpy).toHaveBeenCalled();
+            expect(focusSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should focus the first input when action is add and there is no default value', () => {
             const focusSpy = jest.spyOn(wmComponent, 'focusFirstInput').mockImplementation(() => {});
             wmComponent.onDialogOpen('add');
-            expect(focusSpy).toHaveBeenCalled();
+            expect(focusSpy).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('focusFirstInput', () => {
+        const $ = (window as any).$;
+        let focus: jest.SpyInstance;
+        let select: jest.SpyInstance;
+
+        beforeEach(() => {
+            jest.useFakeTimers();
+            focus = jest.spyOn($.fn, 'focus').mockImplementation(function () { return this; });
+            select = jest.spyOn($.fn, 'select').mockImplementation(function () { return this; });
+        });
+
+        afterEach(() => {
+            focus.mockRestore();
+            select.mockRestore();
+            jest.useRealTimers();
+        });
+
+        it('focuses and selects the first input right away when it is visible', () => {
+            mockForm.$element = $('<form><input type="text"><input type="text"></form>');
+            const is = jest.spyOn($.fn, 'is').mockReturnValue(true);
+
+            wmComponent.focusFirstInput();
+
+            expect(focus).toHaveBeenCalledTimes(1);
+            expect(select).toHaveBeenCalledTimes(1);
+            expect(focus.mock.contexts[0].length).toBe(1);
+            is.mockRestore();
+        });
+
+        it('waits for the dialog to render before focusing when the first input is not visible', () => {
+            // jsdom has no layout, so the input is reported as not visible
+            mockForm.$element = $('<form><input type="text"></form>');
+
+            wmComponent.focusFirstInput();
+            expect(focus).not.toHaveBeenCalled();
+            expect(select).not.toHaveBeenCalled();
+
+            jest.advanceTimersByTime(200);
+            expect(focus).toHaveBeenCalledTimes(1);
+            expect(select).toHaveBeenCalledTimes(1);
+        });
+
+        it('waits and then focuses nothing when the form has no input', () => {
+            mockForm.$element = $('<form></form>');
+
+            wmComponent.focusFirstInput();
+            jest.advanceTimersByTime(200);
+
+            expect(focus).toHaveBeenCalledTimes(1);
+            expect(focus.mock.contexts[0].length).toBe(0);
         });
     });
 
@@ -162,8 +215,8 @@ describe('LiveTableComponent', () => {
     describe('addNewRow (non-dialog mode)', () => {
         it('should select the form, clear formdata and call form.new()', () => {
             wmComponent.addNewRow();
-            expect(mockForm.isSelected).toBeTruthy();
-            expect(mockForm.new).toHaveBeenCalled();
+            expect(mockForm.isSelected).toBe(true);
+            expect(mockForm.new).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -172,8 +225,8 @@ describe('LiveTableComponent', () => {
             const row = { id: 42 };
             wmComponent.updateRow(row, 'click');
             expect(mockForm.getWidget().formdata).toEqual(row);
-            expect(mockForm.isSelected).toBeTruthy();
-            expect(mockForm.edit).toHaveBeenCalled();
+            expect(mockForm.isSelected).toBe(true);
+            expect(mockForm.edit).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -181,7 +234,7 @@ describe('LiveTableComponent', () => {
         it('should set isUpdateMode to false', () => {
             mockForm.isUpdateMode = true;
             wmComponent.onCancel();
-            expect(mockForm.isUpdateMode).toBeFalsy();
+            expect(mockForm.isUpdateMode).toBe(false);
         });
 
         it('should not attempt to close a dialog outside dialog layout', () => {
@@ -216,14 +269,14 @@ describe('LiveTableComponent', () => {
         it('should call form.edit() when already in update mode', () => {
             mockForm.isUpdateMode = true;
             wmComponent.onSelectedItemChange([{ id: 1 }]);
-            expect(mockForm.edit).toHaveBeenCalled();
+            expect(mockForm.edit).toHaveBeenCalledTimes(1);
         });
 
         it('should clear selection and data when newValue is empty', () => {
             mockForm.isSelected = true;
             wmComponent.onSelectedItemChange([]);
-            expect(mockForm.isSelected).toBeFalsy();
-            expect(mockForm.clearData).toHaveBeenCalled();
+            expect(mockForm.isSelected).toBe(false);
+            expect(mockForm.clearData).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -231,7 +284,7 @@ describe('LiveTableComponent', () => {
         it('should mark isNewRowInserted on insert when nav type is scroll/ondemand', () => {
             mockTable.gridOptions.isNavTypeScrollOrOndemand.mockReturnValue(true);
             wmComponent.onResult('insert', { id: 1 }, false, false);
-            expect(mockTable.isNewRowInserted).toBeTruthy();
+            expect(mockTable.isNewRowInserted).toBe(true);
         });
 
         it('should highlight the inserted row without newForm', () => {
@@ -241,7 +294,7 @@ describe('LiveTableComponent', () => {
 
         it('should skip row highlight and reset gridfirstrowselect when newForm is true on insert', () => {
             wmComponent.onResult('insert', { id: 1 }, true, false);
-            expect(mockTable.gridfirstrowselect).toBeFalsy();
+            expect(mockTable.gridfirstrowselect).toBe(false);
             expect(mockTable.initiateSelectItem).toHaveBeenCalledWith('sortTarget', { id: 1 }, true);
         });
 
@@ -264,22 +317,22 @@ describe('LiveTableComponent', () => {
 
         it('should call onRecordDelete on delete', () => {
             wmComponent.onResult('delete', { id: 1 }, false, false);
-            expect(mockTable.onRecordDelete).toHaveBeenCalled();
+            expect(mockTable.onRecordDelete).toHaveBeenCalledTimes(1);
         });
 
         it('should always update the table variable', () => {
             wmComponent.onResult('delete', { id: 1 }, false, false);
-            expect(mockTable.updateVariable).toHaveBeenCalled();
+            expect(mockTable.updateVariable).toHaveBeenCalledTimes(1);
         });
 
         it('should default isUpdateMode based on newForm when updateMode is not provided', () => {
             wmComponent.onResult('update', { id: 1 }, true, undefined);
-            expect(mockForm.isUpdateMode).toBeTruthy();
+            expect(mockForm.isUpdateMode).toBe(true);
         });
 
         it('should use the explicit updateMode when provided', () => {
             wmComponent.onResult('update', { id: 1 }, true, false);
-            expect(mockForm.isUpdateMode).toBeFalsy();
+            expect(mockForm.isUpdateMode).toBe(false);
         });
     });
 
@@ -298,7 +351,7 @@ describe('LiveTableComponent', () => {
             wmComponent.onFormReady(mockForm);
             expect(wmComponent.form).toBe(mockForm);
             tick();
-            expect(queuedFn).toHaveBeenCalled();
+            expect(queuedFn).toHaveBeenCalledTimes(1);
         }));
     });
 
@@ -308,7 +361,7 @@ describe('LiveTableComponent', () => {
             (wmComponent as any).selectedItemChangeSubscription = { unsubscribe };
             (wmComponent as any).$queue = [jest.fn()];
             wmComponent.ngOnDestroy();
-            expect(unsubscribe).toHaveBeenCalled();
+            expect(unsubscribe).toHaveBeenCalledTimes(1);
             expect(wmComponent.table).toBeNull();
             expect((wmComponent as any).$queue).toEqual([]);
         });
@@ -397,34 +450,34 @@ describe('LiveTableComponent (dialog layout)', () => {
     });
 
     it('should be in dialog layout mode with the configured dialog id', () => {
-        expect(wmComponent.isLayoutDialog).toBeTruthy();
+        expect(wmComponent.isLayoutDialog).toBe(true);
         expect((wmComponent as any).dialogId).toEqual('liveTableDialog');
     });
 
     it('addNewRow should open the dialog and queue the add instead of running it immediately', () => {
         wmComponent.addNewRow();
-        expect(mockDialogService.open).toHaveBeenCalled();
+        expect(mockDialogService.open).toHaveBeenCalledWith('liveTableDialog', (wmComponent as any).viewParent);
         expect(mockForm.new).not.toHaveBeenCalled();
         expect((wmComponent as any).$queue.length).toEqual(1);
     });
 
     it('updateRow should open the dialog and queue the update instead of running it immediately', () => {
         wmComponent.updateRow({ id: 1 }, 'click');
-        expect(mockDialogService.open).toHaveBeenCalled();
+        expect(mockDialogService.open).toHaveBeenCalledWith('liveTableDialog', (wmComponent as any).viewParent);
         expect(mockForm.edit).not.toHaveBeenCalled();
         expect((wmComponent as any).$queue.length).toEqual(1);
     });
 
     it('onCancel should close the dialog', () => {
         wmComponent.onCancel();
-        expect(mockDialogService.close).toHaveBeenCalled();
+        expect(mockDialogService.close).toHaveBeenCalledWith('liveTableDialog', (wmComponent as any).viewParent);
     });
 
     it('should run the queued add once the form becomes ready', () => {
         wmComponent.addNewRow();
         const queuedFn = (wmComponent as any).$queue.pop();
         queuedFn();
-        expect(mockForm.new).toHaveBeenCalled();
+        expect(mockForm.new).toHaveBeenCalledTimes(1);
     });
 
     describe('running the queued update', () => {
@@ -434,8 +487,8 @@ describe('LiveTableComponent (dialog layout)', () => {
             const queuedFn = (wmComponent as any).$queue.pop();
             queuedFn();
             expect(mockForm.getWidget().formdata).toEqual({ id: 7 });
-            expect(mockForm.edit).toHaveBeenCalled();
-            expect(mockForm.isUpdateMode).toBeTruthy();
+            expect(mockForm.edit).toHaveBeenCalledTimes(1);
+            expect(mockForm.isUpdateMode).toBe(true);
             focusSpy.mockRestore();
         });
 
@@ -453,25 +506,25 @@ describe('LiveTableComponent (dialog layout)', () => {
     describe('onResult (dialog layout)', () => {
         it('should reopen a new form after inserting when newForm is true', () => {
             wmComponent.onResult('insert', { id: 1 }, true, false);
-            expect(mockForm.new).toHaveBeenCalled();
+            expect(mockForm.new).toHaveBeenCalledTimes(1);
             expect(mockDialogService.close).not.toHaveBeenCalled();
         });
 
         it('should switch the form back to edit mode after updating when newForm is true', () => {
             wmComponent.onResult('update', { id: 1 }, true, false);
-            expect(mockForm.edit).toHaveBeenCalled();
+            expect(mockForm.edit).toHaveBeenCalledTimes(1);
             expect(mockDialogService.close).not.toHaveBeenCalled();
         });
 
         it('should close the dialog when newForm is false', () => {
             wmComponent.onResult('insert', { id: 1 }, false, false);
-            expect(mockDialogService.close).toHaveBeenCalled();
+            expect(mockDialogService.close).toHaveBeenCalledWith('liveTableDialog', (wmComponent as any).viewParent);
         });
 
         it('should close the dialog on delete', () => {
             wmComponent.onResult('delete', { id: 1 }, false, false);
-            expect(mockTable.onRecordDelete).toHaveBeenCalled();
-            expect(mockDialogService.close).toHaveBeenCalled();
+            expect(mockTable.onRecordDelete).toHaveBeenCalledTimes(1);
+            expect(mockDialogService.close).toHaveBeenCalledWith('liveTableDialog', (wmComponent as any).viewParent);
         });
     });
 });

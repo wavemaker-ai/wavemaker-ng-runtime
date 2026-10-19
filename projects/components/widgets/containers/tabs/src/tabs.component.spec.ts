@@ -333,7 +333,7 @@ describe('TabsComponent', () => {
             const { fixture, tabs, panes } = setup();
             const e = key('ArrowRight');
             tabs.onkeydown(e);
-            expect(e.preventDefault).toHaveBeenCalled();
+            expect(e.preventDefault).toHaveBeenCalledTimes(1);
             const li = fixture.nativeElement.querySelector(`li[data-paneid="${panes()[1].widgetId}"]`);
             expect(li.classList.contains('select')).toBe(true);
             tabs.onkeydown(key('ArrowLeft'));
@@ -354,7 +354,7 @@ describe('TabsComponent', () => {
             const { tabs, panes } = setup();
             const e = key('Enter');
             tabs.onkeydown(e);
-            expect(e.preventDefault).toHaveBeenCalled();
+            expect(e.preventDefault).toHaveBeenCalledTimes(1);
             expect(tabs.getSelectedPaneIndex()).toBeGreaterThanOrEqual(0);
             expect(panes()[1].isActive || panes()[0].isActive).toBe(true);
         });
@@ -372,7 +372,7 @@ describe('TabsComponent', () => {
             panes()[2].disabled = true;
             const e = key('ArrowRight');
             tabs.onkeydown(e);
-            expect(e.preventDefault).toHaveBeenCalled();
+            expect(e.preventDefault).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -422,7 +422,7 @@ describe('TabsComponent', () => {
             const [p1] = panes();
             const remove = jest.spyOn(p1, 'remove');
             tabs.removePane('p1');
-            expect(remove).toHaveBeenCalled();
+            expect(remove).toHaveBeenCalledTimes(1);
             tabs.removePane('nope');
         });
     });
@@ -586,6 +586,10 @@ describe('TabsComponent', () => {
             (tabs as any).registerTabsScroll();
             jest.advanceTimersByTime(10);
             const ul = tabs.$element.find('> ul');
+            const idleWheel: any = new Event('mousewheel', { cancelable: true });
+            idleWheel.wheelDelta = 5;
+            ul[0].dispatchEvent(idleWheel);
+            expect(idleWheel.defaultPrevented).toBe(false);
             jest.spyOn($.fn, 'position' as any).mockReturnValue({ left: 1000 });
             jest.spyOn($.fn, 'width' as any).mockReturnValue(10);
             (tabs as any).registerTabsScroll();
@@ -594,6 +598,7 @@ describe('TabsComponent', () => {
             wheel.wheelDelta = 5;
             ul[0].dispatchEvent(wheel);
             fixture.detectChanges();
+            expect(wheel.defaultPrevented).toBe(true);
         });
 
         it('moves the header into view when animating', () => {
@@ -615,7 +620,7 @@ describe('TabsComponent', () => {
             (tabs as any)._dynamicContext = { a: 1 };
             (tabs as any).tabsAnimator = {};
             fixture.destroy();
-            expect(destroy).toHaveBeenCalled();
+            expect(destroy).toHaveBeenCalledTimes(1);
             expect(tabs.fieldDefs).toBeNull();
             expect((tabs as any).dynamicComponentRefs).toEqual([]);
         });
@@ -687,7 +692,7 @@ describe('TabsComponent', () => {
             panes().forEach(p => (p.disabled = true));
             const e = { key: 'Enter', preventDefault: jest.fn() };
             tabs.onkeydown(e as any);
-            expect(e.preventDefault).toHaveBeenCalled();
+            expect(e.preventDefault).toHaveBeenCalledTimes(1);
         });
 
         it('re-selects the default pane when the pane list changes', () => {

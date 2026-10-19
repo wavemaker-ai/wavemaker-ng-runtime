@@ -506,7 +506,7 @@ describe('AutoLayout decorator', () => {
         it('should call through to the original ngAfterViewInit', () => {
             const inst = createInstance();
             inst.ngAfterViewInit();
-            expect(afterViewInitSpy).toHaveBeenCalled();
+            expect(afterViewInitSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should mark the store as view-initialized', () => {
@@ -542,7 +542,7 @@ describe('AutoLayout decorator', () => {
             const inst = createInstance({}, {});
             inst.onStyleChange('padding', '4px');
             inst.ngAfterViewInit();
-            expect(afterViewInitSpy).toHaveBeenCalled();
+            expect(afterViewInitSpy).toHaveBeenCalledTimes(1);
             expect(inst.__al_store).toBeUndefined();
         });
     });

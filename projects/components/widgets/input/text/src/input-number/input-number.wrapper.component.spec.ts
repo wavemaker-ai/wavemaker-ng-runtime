@@ -72,7 +72,7 @@ describe('InputNumberComponent', () => {
         inputElement.dispatchEvent(event);
         fixture.detectChanges();
 
-        expect(onArrowPressSpyOn).toHaveBeenCalled();
+        expect(onArrowPressSpyOn).toHaveBeenCalledWith(event);
     });
 
     it('should validateInputEntry method called on keypress', () => {
@@ -83,7 +83,7 @@ describe('InputNumberComponent', () => {
         inputElement.dispatchEvent(event);
 
         fixture.detectChanges();
-        expect(validateInputEntrySpyOn).toHaveBeenCalled();
+        expect(validateInputEntrySpyOn).toHaveBeenCalledWith(event);
     });
     it('should return false when "e" is pressed and "e" already exists in the input', () => {
         const event = {
@@ -112,7 +112,7 @@ describe('InputNumberComponent', () => {
         };
         inputNumberComponent.step = 0;
         inputNumberComponent.onArrowPress(event);
-        expect(event.preventDefault).toHaveBeenCalled();
+        expect(event.preventDefault).toHaveBeenCalledTimes(1);
       });
     
       it('should not prevent default when step is not 0', () => {

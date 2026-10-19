@@ -210,7 +210,7 @@ describe("FormFieldDirective", () => {
 
         it('should call setAriaAttributes', () => {
             wmComponent._onBlurField(mockEvent);
-            expect(wmComponent.setAriaAttributes).toHaveBeenCalled();
+            expect(wmComponent.setAriaAttributes).toHaveBeenCalledTimes(1);
         });
 
         it('should set _activeField, _triggeredByUser, and _clicktriggeredByUser to false', () => {
@@ -339,8 +339,8 @@ describe("FormFieldDirective", () => {
 
                 wmComponent.notifyChanges();
 
-                expect(mockField1.fieldValidations.validate).toHaveBeenCalled();
-                expect(mockField2.fieldValidations.validate).toHaveBeenCalled();
+                expect(mockField1.fieldValidations.validate).toHaveBeenCalledTimes(1);
+                expect(mockField2.fieldValidations.validate).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -448,14 +448,14 @@ describe("FormFieldDirective", () => {
             wmComponent.formWidget = { resetDisplayInput: jest.fn() };
             wmComponent.value = undefined;
             wmComponent.resetDisplayInput();
-            expect(wmComponent.formWidget.resetDisplayInput).toHaveBeenCalled();
+            expect(wmComponent.formWidget.resetDisplayInput).toHaveBeenCalledTimes(1);
         });
 
         it('should call formWidget.resetDisplayInput when value is an empty string', () => {
             wmComponent.formWidget = { resetDisplayInput: jest.fn() };
             wmComponent.value = '';
             wmComponent.resetDisplayInput();
-            expect(wmComponent.formWidget.resetDisplayInput).toHaveBeenCalled();
+            expect(wmComponent.formWidget.resetDisplayInput).toHaveBeenCalledTimes(1);
         });
         it('should not throw error when formWidget is undefined', () => {
             wmComponent.formWidget = undefined;
@@ -842,7 +842,7 @@ describe("FormFieldDirective", () => {
         it('should call setAriaAttributes', () => {
             wmComponent.setAriaAttributes = jest.fn();
             wmComponent.onValueChange('test');
-            expect(wmComponent.setAriaAttributes).toHaveBeenCalled();
+            expect(wmComponent.setAriaAttributes).toHaveBeenCalledTimes(1);
         });
 
         it('should call form.onFieldValueChange', () => {
@@ -853,7 +853,7 @@ describe("FormFieldDirective", () => {
         it('should call notifyChanges', () => {
             wmComponent.notifyChanges = jest.fn();
             wmComponent.onValueChange('test');
-            expect(wmComponent.notifyChanges).toHaveBeenCalled();
+            expect(wmComponent.notifyChanges).toHaveBeenCalledTimes(1);
         });
         it('should mark field as touched when active and triggered by user', () => {
             (wmComponent as any)._triggeredByUser = true;

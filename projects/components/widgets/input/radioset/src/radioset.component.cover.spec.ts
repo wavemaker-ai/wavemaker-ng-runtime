@@ -41,7 +41,7 @@ describe('RadiosetComponent - cover', () => {
             component.datasetItems = [{ key: 'a', value: 'a', label: 'A' }];
             component.triggerInvokeOnChange('a', undefined);
             expect(updateDataValue).toHaveBeenCalledWith(component.datavalue);
-            expect(touched).toHaveBeenCalled();
+            expect(touched).toHaveBeenCalledTimes(1);
             expect(change).toHaveBeenCalledWith(component.datavalue, {}, true);
         });
 
@@ -73,7 +73,7 @@ describe('RadiosetComponent - cover', () => {
             expect(locals.$event).toBe(evt);
 
             component.ngOnDestroy();
-            expect(deregister).toHaveBeenCalled();
+            expect(deregister).toHaveBeenCalledTimes(1);
             expect(component.eventListeners).toBeNull();
         });
 

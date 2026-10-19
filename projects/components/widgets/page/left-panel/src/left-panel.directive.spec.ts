@@ -123,7 +123,7 @@ describe('LeftPanelDirective', () => {
             routerEvents.next({ type: 'other' });
             expect(collapse).not.toHaveBeenCalled();
             routerEvents.next(new NavigationStart(1, '/x'));
-            expect(collapse).toHaveBeenCalled();
+            expect(collapse).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -240,10 +240,10 @@ describe('LeftPanelDirective', () => {
             const collapse = jest.spyOn(panel, 'collapse').mockImplementation(() => { panel.expanded = false; });
             panel.toggle();
             jest.advanceTimersByTime(60);
-            expect(expand).toHaveBeenCalled();
+            expect(expand).toHaveBeenCalledTimes(1);
             panel.toggle();
             jest.advanceTimersByTime(60);
-            expect(collapse).toHaveBeenCalled();
+            expect(collapse).toHaveBeenCalledTimes(1);
         });
 
         it('reports whether gestures are enabled', () => {
@@ -490,7 +490,7 @@ describe('LeftPanelAnimator', () => {
         it('expands on upper', () => {
             const { animator, leftPanel } = make();
             animator.onUpper();
-            expect(leftPanel.expand).toHaveBeenCalled();
+            expect(leftPanel.expand).toHaveBeenCalledTimes(1);
         });
 
         it('does not reset when there are no animated elements', () => {

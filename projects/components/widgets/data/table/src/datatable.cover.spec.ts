@@ -230,7 +230,7 @@ describe('wm.datatable jQuery widget - branch coverage', () => {
             ctx.instance.options.isDatasetUpdated = false;
             ctx.instance.options.isDataUpdatedByUser = true;
             ctx.instance._handleCRUDForInfiniteScroll(ctx.instance.gridElement);
-            expect(ctx.options.clearCustomExpression).toHaveBeenCalled();
+            expect(ctx.options.clearCustomExpression).toHaveBeenCalledTimes(1);
         });
 
         it('shows the load more link only before the last page of on demand grids', () => {
@@ -672,7 +672,7 @@ describe('wm.datatable jQuery widget - branch coverage', () => {
             ctx.instance.preparedData[0]._selected = true;
             const e: any = { stopPropagation: jest.fn() };
             ctx.instance.toggleExpandRow(0, true, e);
-            expect(e.stopPropagation).toHaveBeenCalled();
+            expect(e.stopPropagation).toHaveBeenCalledTimes(1);
         });
 
         it('checks that an element has all classes', () => {

@@ -49,7 +49,7 @@ describe('NavItemDirective', () => {
         const mockInnerLink = { onActive: jest.fn() };
         directive['innerLink'] = mockInnerLink as any;
         directive.ngAfterViewInit();
-        expect(mockInnerLink.onActive).toHaveBeenCalled();
+        expect(mockInnerLink.onActive).toHaveBeenCalledWith(expect.any(Function));
     });
 
     describe('makeActive', () => {

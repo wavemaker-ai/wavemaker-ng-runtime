@@ -66,7 +66,7 @@ describe('DialogServiceImpl', () => {
         service.register('testDialog', dialogRef, scope);
         service.open('testDialog', scope);
 
-        expect(dialogRef.open).toHaveBeenCalled();
+        expect(dialogRef.open).toHaveBeenCalledWith(undefined);
     });
 
     it("should not open a dialog when dialogRef is undefined it should return nothing", () => {
@@ -83,7 +83,7 @@ describe('DialogServiceImpl', () => {
         service.register('testDialog', dialogRef, scope);
         service.close('testDialog', scope);
 
-        expect(dialogRef.close).toHaveBeenCalled();
+        expect(dialogRef.close).toHaveBeenCalledTimes(1);
     });
 
     it("should not close a dialog when dialogRef is undefined it should return nothing", () => {
@@ -102,8 +102,8 @@ describe('DialogServiceImpl', () => {
 
         service.closeAllDialogs();
 
-        expect(dialogRef1.close).toHaveBeenCalled();
-        expect(dialogRef2.close).toHaveBeenCalled();
+        expect(dialogRef1.close).toHaveBeenCalledTimes(1);
+        expect(dialogRef2.close).toHaveBeenCalledTimes(1);
     });
 
     it('should handle app confirm dialog', () => {
@@ -113,10 +113,10 @@ describe('DialogServiceImpl', () => {
         service.register('confirmDialog', dialogRef, {});
 
         service.showAppConfirmDialog();
-        expect(dialogRef.open).toHaveBeenCalled();
+        expect(dialogRef.open).toHaveBeenCalledWith(undefined);
 
         service.closeAppConfirmDialog();
-        expect(dialogRef.close).toHaveBeenCalled();
+        expect(dialogRef.close).toHaveBeenCalledTimes(1);
     });
 
     it('should add and remove dialogs from openedDialogs', () => {

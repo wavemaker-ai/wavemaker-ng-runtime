@@ -59,6 +59,7 @@ describe('NavigationControlDirective', () => {
         component.disableMenu = false;
         fixture.detectChanges();
 
+        expect(spy).toHaveBeenCalledTimes(1);
         expect(spy).toHaveBeenCalledWith('contextmenu', expect.any(Function));
     });
 
@@ -68,6 +69,6 @@ describe('NavigationControlDirective', () => {
 
         disableContextMenu(event);
 
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledTimes(1);
     });
 });

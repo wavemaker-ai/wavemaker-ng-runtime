@@ -158,7 +158,7 @@ describe('MenuDropdownItemComponent', () => {
             const { component } = createComponent({ $element: $(menuRoot) }, currentLi);
             const $event: any = { preventDefault: jest.fn(), stopPropagation: jest.fn() };
             component.onKeyDown($event, 'UP-ARROW');
-            expect($event.preventDefault).toHaveBeenCalled();
+            expect($event.preventDefault).toHaveBeenCalledTimes(1);
         });
 
         it('ESC should hide the bsDropdown', () => {
@@ -166,7 +166,7 @@ describe('MenuDropdownItemComponent', () => {
             const { component, menuRef } = createComponent({ $element: $(menuRoot) }, currentLi);
             const $event: any = { preventDefault: jest.fn(), stopPropagation: jest.fn() };
             component.onKeyDown($event, 'ESC');
-            expect(menuRef.bsDropdown.hide).toHaveBeenCalled();
+            expect(menuRef.bsDropdown.hide).toHaveBeenCalledTimes(1);
         });
 
         it('TAB on the last top-level item hides the dropdown', () => {
@@ -174,7 +174,7 @@ describe('MenuDropdownItemComponent', () => {
             const { component, menuRef } = createComponent({ $element: $(menuRoot) }, nextLi);
             const $event: any = { preventDefault: jest.fn(), stopPropagation: jest.fn() };
             component.onKeyDown($event, 'TAB');
-            expect(menuRef.bsDropdown.hide).toHaveBeenCalled();
+            expect(menuRef.bsDropdown.hide).toHaveBeenCalledTimes(1);
         });
 
         it('SHIFT-TAB on the first top-level item hides the dropdown', () => {
@@ -182,7 +182,7 @@ describe('MenuDropdownItemComponent', () => {
             const { component, menuRef } = createComponent({ $element: $(menuRoot) }, prevLi);
             const $event: any = { preventDefault: jest.fn(), stopPropagation: jest.fn() };
             component.onKeyDown($event, 'SHIFT-TAB');
-            expect(menuRef.bsDropdown.hide).toHaveBeenCalled();
+            expect(menuRef.bsDropdown.hide).toHaveBeenCalledTimes(1);
         });
 
         it('TAB on a middle item just stops propagation', () => {
@@ -191,7 +191,7 @@ describe('MenuDropdownItemComponent', () => {
             const $event: any = { preventDefault: jest.fn(), stopPropagation: jest.fn() };
             component.onKeyDown($event, 'TAB');
             expect(menuRef.bsDropdown.hide).not.toHaveBeenCalled();
-            expect($event.stopPropagation).toHaveBeenCalled();
+            expect($event.stopPropagation).toHaveBeenCalledTimes(1);
         });
 
         it('ENTER should focus its own link when the item has no link and no children', () => {
@@ -281,7 +281,7 @@ describe('MenuDropdownItemComponent', () => {
             const { component, menuRef } = createComponent({ $element: $(menuRoot), menuposition: 'up,right' }, nextLi);
             const $event: any = { preventDefault: jest.fn(), stopPropagation: jest.fn() };
             component.onKeyDown($event, 'DOWN-ARROW');
-            expect(menuRef.bsDropdown.hide).toHaveBeenCalled();
+            expect(menuRef.bsDropdown.hide).toHaveBeenCalledTimes(1);
         });
 
         it('DOWN-ARROW on the last item focuses the next sibling when the menu is horizontal', () => {
@@ -314,7 +314,7 @@ describe('MenuDropdownItemComponent', () => {
             component.item = { link: '#/home', target: undefined };
             const $event: any = { target: nativeElement, preventDefault: jest.fn(), stopPropagation: jest.fn() };
             component.onSelect($event, component.item);
-            expect($event.preventDefault).toHaveBeenCalled();
+            expect($event.preventDefault).toHaveBeenCalledTimes(1);
             expect(menuRef.onMenuItemSelect).toHaveBeenCalledWith({ $event, $item: component.item });
             expect(triggerItemAction).toHaveBeenCalledWith(component, expect.objectContaining({ link: '#/home', target: '_self' }));
         });
@@ -325,7 +325,7 @@ describe('MenuDropdownItemComponent', () => {
             component.item = { link: '#/home' };
             const $event: any = { target: nativeElement, preventDefault: jest.fn(), stopPropagation: jest.fn() };
             component.onSelect($event, component.item);
-            expect($event.stopPropagation).toHaveBeenCalled();
+            expect($event.stopPropagation).toHaveBeenCalledTimes(1);
         });
 
         it('should preserve an explicit item target over the menu linktarget default', () => {
@@ -388,7 +388,7 @@ describe('MenuDropdownItemComponent', () => {
             component.ngOnInit();
             const unsubscribeFn = app.subscribe.mock.results[0].value;
             component.ngOnDestroy();
-            expect(unsubscribeFn).toHaveBeenCalled();
+            expect(unsubscribeFn).toHaveBeenCalledTimes(1);
         });
 
         it('should be a no-op when there was no parent nav subscription', () => {

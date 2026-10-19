@@ -757,18 +757,18 @@ describe("DataTable", () => {
     describe("Create Operation", () => {
         describe("Read Only", () => {
             describe("Details Below", () => {
-                it("To Do", () => { });
+                it.todo("DataTable > Create Operation > Read Only > Details Below");
             });
             describe("Simple View Only", () => {
-                it("To Do", () => { });
+                it.todo("DataTable > Create Operation > Read Only > Simple View Only");
             });
         });
         describe("Editable", () => {
             describe("Form As Dialog", () => {
-                it("To Do", () => { });
+                it.todo("DataTable > Create Operation > Editable > Form As Dialog");
             });
             describe("Form Below", () => {
-                it("To Do", () => { });
+                it.todo("DataTable > Create Operation > Editable > Form Below");
             });
             describe("Inline Editable", () => {
                 @Component({
@@ -1244,7 +1244,7 @@ describe("DataTable", () => {
                     it('should call setLastActionToFilterCriteria when filterExpressions are not equal', () => {
                         wmComponent['compareFilterExpressions'] = jest.fn().mockReturnValue(false);
                         wmComponent['checkIfVarFiltersApplied']();
-                        expect(wmComponent['setLastActionToFilterCriteria']).toHaveBeenCalled();
+                        expect(wmComponent['setLastActionToFilterCriteria']).toHaveBeenCalledTimes(1);
                     });
 
                     it('should use dataBinding when filterExpressions.rules is empty', () => {
@@ -1305,7 +1305,7 @@ describe("DataTable", () => {
                     it('should call resetPageNavigation on dataNavigator if it exists', () => {
                         wmComponent.dataNavigator = { resetPageNavigation: jest.fn() };
                         wmComponent['resetPageNavigation']();
-                        expect(wmComponent.dataNavigator.resetPageNavigation).toHaveBeenCalled();
+                        expect(wmComponent.dataNavigator.resetPageNavigation).toHaveBeenCalledTimes(1);
                     });
 
                     it('should not throw error if dataNavigator does not exist', () => {
@@ -1749,8 +1749,8 @@ describe("DataTable", () => {
                     it('should call onDataSourceChange for each field definition that has it', () => {
                         wmComponent.onDataSourceChange();
 
-                        expect(wmComponent.fieldDefs[0].onDataSourceChange).toHaveBeenCalled();
-                        expect(wmComponent.fieldDefs[1].onDataSourceChange).toHaveBeenCalled();
+                        expect(wmComponent.fieldDefs[0].onDataSourceChange).toHaveBeenCalledTimes(1);
+                        expect(wmComponent.fieldDefs[1].onDataSourceChange).toHaveBeenCalledTimes(1);
                     });
 
                     it('should not throw an error for field definitions without onDataSourceChange', () => {
@@ -2163,7 +2163,7 @@ describe("DataTable", () => {
                     it('should call super.ngOnDetach()', () => {
                         const superSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(wmComponent)), 'ngOnDetach');
                         wmComponent.ngOnDetach();
-                        expect(superSpy).toHaveBeenCalled();
+                        expect(superSpy).toHaveBeenCalledTimes(1);
                     });
                 });
 
@@ -2670,23 +2670,23 @@ describe("DataTable", () => {
                     expect(modalEl).toBeDefined();
                 });
 
-                it("Tab out between columns", () => { });
-                it("Tab out of last columns with empty new-row", () => { });
-                it("Tab out of last columns with non empty new-row", () => { });
-                it("Tab out of last columns with non-empty exisiting row", () => { });
+                it.todo("Tab out between columns");
+                it.todo("Tab out of last columns with empty new-row");
+                it.todo("Tab out of last columns with non empty new-row");
+                it.todo("Tab out of last columns with non-empty exisiting row");
                 describe("Pagination", () => {
                     describe("Basic", () => {
                         // ADD COLUMNS STEP
-                        it("To Do", () => { });
+                        it.todo("DataTable > Create Operation > Editable > Quick Edit > Pagination > Basic");
                     });
                     describe("Pager", () => {
-                        it("To Do", () => { });
+                        it.todo("DataTable > Create Operation > Editable > Quick Edit > Pagination > Pager");
                     });
                     describe("Classic", () => {
-                        it("To Do", () => { });
+                        it.todo("DataTable > Create Operation > Editable > Quick Edit > Pagination > Classic");
                     });
                     describe("None", () => {
-                        it("To Do", () => { });
+                        it.todo("DataTable > Create Operation > Editable > Quick Edit > Pagination > None");
                     });
                 });
             });

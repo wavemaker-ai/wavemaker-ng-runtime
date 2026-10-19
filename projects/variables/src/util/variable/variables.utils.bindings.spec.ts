@@ -271,7 +271,7 @@ describe('variables.utils - debounceVariableCall', () => {
         debounceVariableCall(variable, 'run');
         jest.advanceTimersByTime(150);
         await Promise.resolve();
-        expect(variable.run).toHaveBeenCalled();
+        expect(variable.run).toHaveBeenCalledTimes(1);
     });
 });
 
@@ -493,8 +493,8 @@ describe('variables.utils - simulateFileDownload', () => {
             jest.advanceTimersByTime(900);
             jest.advanceTimersByTime(500);
 
-            expect((window.navigator as any).msSaveBlob).toHaveBeenCalled();
-            expect(success).toHaveBeenCalled();
+            expect((window.navigator as any).msSaveBlob).toHaveBeenCalledTimes(1);
+            expect(success).toHaveBeenCalledTimes(1);
             expect(createObjectURL).not.toHaveBeenCalled();
         });
 
@@ -507,7 +507,7 @@ describe('variables.utils - simulateFileDownload', () => {
             await Promise.resolve();
             jest.advanceTimersByTime(900);
 
-            expect(error).toHaveBeenCalled();
+            expect(error).toHaveBeenCalledTimes(1);
         });
     });
 
