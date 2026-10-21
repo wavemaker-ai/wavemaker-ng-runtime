@@ -172,9 +172,10 @@ describe('PaginationComponent - more', () => {
                     pagination: 1,
                     pagesize: 10,
                     actualpagesize: 5,
-                    selectedItem: [{ page: 2, index: 1 }],
+                    // 6th record: page 2 / index 1 at size 5 -> page 1 / index 6 at size 10
+                    selectedItem: [{ page: 1, index: 6 }],
                 });
-                expect(component.prevPageSize).toBeUndefined();
+                expect(component.prevPageSize).toBe(10);
             });
 
             it('uses the previous page size to remap a persisted selection', () => {
@@ -187,7 +188,7 @@ describe('PaginationComponent - more', () => {
                 component.onPropertyChange('dataset', [1, 2, 3, 4, 5], undefined);
 
                 const state = parent.statePersistence.setWidgetState.mock.calls[0][1];
-                expect(state.selectedItem).toEqual([{ page: 2, index: 2 }]);
+                expect(state.selectedItem).toEqual([{ page: 1, index: 7 }]);
             });
         });
     });
