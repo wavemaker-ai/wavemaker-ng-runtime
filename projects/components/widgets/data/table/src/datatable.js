@@ -742,10 +742,6 @@ $.widget('wm.datatable', {
             colExpression = colDef.customExpression,
             styles = "text-align: " + colDef.textAlignment + ";position: relative;"
 
-        if (!_.isUndefined(colDef.show) && !colDef.show) {
-            styles += "display: none;";
-        }
-
         $htm = $('<td class="' + classes + '" data-col-id="' + colId + '" role="cell" tabindex="0"></td>');
         this._setStyles($htm, styles);
 
@@ -1140,144 +1136,6 @@ $.widget('wm.datatable', {
         this.addOrRemoveScroll();
         this._setGridEditMode(false);
         this.toggleNewRowActions(false);
-    },
-    /*
-     * Updates internal state (options.data, preparedData, custom expressions,
-     * conditional class watchers, and summary row) without a full DOM re-render.
-     * Used during quickedit inline save for model variables to avoid focus loss.
-     */
-    softRefreshData: function (newData) {
-        // With pagination, navigator / selection can emit the same page twice in one
-        // save cycle. Full refresh skipped duplicate data via isEqual on option set;
-        // soft refresh must do the same or onDataRender (datarender) fires twice.
-        if (this.options.data && newData && _.isEqual(this.options.data, newData)) {
-            return;
-        }
-
-        var self = this,
-            isScrollOrOnDemand = this.options.isNavTypeScrollOrOndemand(),
-            pageStartIndex = this.getPageStartIndex(),
-            startRowIndex = this.options.startRowIndex || 0,
-            selectedMap = {},
-            preparedData;
-
-        // Preserve _selected state before _prepareData rebuilds preparedData
-        this.preparedData.forEach(function (data, i) {
-            if (data._selected) {
-                selectedMap[i] = true;
-            }
-        });
-
-        this.options.data = newData;
-        this._prepareData();
-
-        // Restore _selected state on new preparedData
-        Object.keys(selectedMap).forEach(function (i) {
-            if (self.preparedData[i]) {
-                self.preparedData[i]._selected = true;
-            }
-        });
-
-        if (isScrollOrOnDemand) {
-            preparedData = this.preparedData.slice(pageStartIndex);
-        } else {
-            preparedData = this.preparedData;
-        }
-
-        // Update existing custom expression view contexts in-place
-        // so Angular change detection picks up new data without DOM manipulation.
-        if (_.isFunction(this.options.updateCustomExpressionContexts)) {
-            this.options.updateCustomExpressionContexts(preparedData);
-        }
-
-        // Update plain text cells with fresh data from preparedData.
-        // hideRowEditMode runs before softRefreshData and may restore cells
-        // before preparedData is updated, leaving them with stale values.
-        self.gridElement.find('tr.' + self.options.cssClassNames.tableRow + ':not(.always-new-row)').each(function () {
-            var $row = $(this),
-                rowId = +$row.attr('data-row-id'),
-                rowData = self.preparedData[rowId];
-            if (!rowData) return;
-
-            $row.find('td.' + self.options.cssClassNames.tableCell + ':not(.cell-editing)').each(function () {
-                var $cell = $(this),
-                    colId = +$cell.attr('data-col-id'),
-                    colDef = self.preparedHeaderData[colId],
-                    value;
-
-                if (colDef && !colDef.customExpression && colDef.type !== 'custom') {
-                    value = _.get(rowData, colDef.field);
-                    var newText;
-                    if (self.Utils.isDefined(value) && value !== null) {
-                        newText = '' + value;
-                    } else if (self.options.filterNullRecords && value === null) {
-                        newText = 'null';
-                    } else {
-                        newText = '';
-                    }
-                    if ($cell.text() !== newText) {
-                        $cell.text(newText);
-                        $cell.attr('title', newText);
-                    }
-                }
-            });
-        });
-
-        // Re-register conditional class watchers with fresh row clones
-        _.forEach(preparedData, function (row, index) {
-            var _row = _.clone(row),
-                rowIndex = isScrollOrOnDemand ? startRowIndex + index - 1 : index;
-            _row.$index = rowIndex + 1;
-
-            self.options.registerRowNgClassWatcher(_row, rowIndex);
-
-            self.preparedHeaderData.forEach(function (colDef, colId) {
-                self.options.registerColNgClassWatcher(_row, colDef, rowIndex, colId);
-            });
-        });
-
-        // Reset action state flags (mirrors _getGridTemplate cleanup)
-        if (!this.options.isdynamictable) {
-            this.options.setLastActionPerformed(this.options.ACTIONS.DEFAULT);
-            this.options.setIsDataUpdatedByUser(false);
-            this.options.clearActionRowIndex();
-        }
-
-        // Refresh row action buttons and expansion buttons with updated row data.
-        // Scope to data rows only — exclude always-new-row which has no backing data entry.
-        var $dataRows = self.gridElement.find('tr.' + self.options.cssClassNames.tableRow + ':not(.always-new-row)');
-        this.options.clearRowActions();
-        this._appendRowExpansionButtons($dataRows);
-        this._appendRowActions($dataRows);
-        // Regenerated action / expansion DOM — re-bind handlers (attachEventHandlers only runs on full render).
-        this._bindRowActionsAndExpansionClickHandlers($dataRows);
-
-        // Re-render summary row if present
-        if (this.options.summaryRow) {
-            var $summaryRowHtm = $(this._getSummaryRowTemplate());
-            this.tableContainer.find('tfoot').remove();
-            if (this.options.data.length) {
-                this.tableContainer.append($summaryRowHtm);
-            }
-            this.gridFooter = this.tableContainer.find('tfoot');
-        }
-
-        // Invalidate row detail (expansion) cache so collapse+re-expand
-        // creates fresh views with updated data.
-        if (_.isFunction(this.options.invalidateRowDetailCache)) {
-            this.options.invalidateRowDetailCache(preparedData);
-        }
-
-        // Refresh this.items with fresh data references from the updated dataset
-        // so that selecteditem / currentItem reflect the new values.
-        if (_.isFunction(this.options.refreshSelectedItems)) {
-            this.options.refreshSelectedItems();
-        }
-
-        // Fire datarender event callback
-        if (_.isFunction(this.options.onDataRender)) {
-            this.options.onDataRender();
-        }
     },
     //Populate row data with default data
     setDefaultRowData: function (rowData) {
@@ -1701,12 +1559,6 @@ $.widget('wm.datatable', {
 
     /* Sets the options for the grid. */
     _setOption: function (key, value) {
-        const isSortEnabled = v => v !== false && v !== 'false';
-        let prev;
-
-        if (key === 'enableSort') {
-            prev = isSortEnabled(this.options.enableSort);
-        }
         this._super(key, value);
         switch (key) {
             case 'enableSort':
@@ -3078,28 +2930,6 @@ $.widget('wm.datatable', {
             this.sortHandler(event);
         }
     },
-    /**
-     * Binds jQuery handlers on save/cancel row-action buttons and row-expansion controls.
-     * Must run after DOM for those controls is replaced (e.g. softRefreshData).
-     */
-    _bindRowActionsAndExpansionClickHandlers: function ($scope) {
-        var self = this;
-        if (this.options.rowActions.length) {
-            $scope.find('.cancel-edit-row-button').off('click');
-            $scope.find('.save-edit-row-button').off('click');
-            $scope.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
-            $scope.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
-        }
-        $scope.find('[data-identifier="rowExpansionButtons"]').off('click');
-        $scope.find('[data-identifier="rowExpansionButtons"]').on('click', function (e) {
-            var $row = $(e.target).closest('tr.app-datagrid-row');
-            if ($(this).find('.app-button').attr('disabled')) {
-                return;
-            }
-            self.toggleExpandRow(+$row.attr('data-row-id'), undefined, e);
-        });
-    },
-
     /* Attaches all event handlers for the table. */
     attachEventHandlers: function ($htm) {
         const self = this;
@@ -3132,7 +2962,6 @@ $.widget('wm.datatable', {
             $htm.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
             $htm.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
         }
-        this._bindRowActionsAndExpansionClickHandlers($htm);
         if (self.options.editmode === self.CONSTANTS.QUICK_EDIT) {
             $htm.on('focus', 'tr.app-datagrid-row', function (e) {
                 const $row = $(e.currentTarget);

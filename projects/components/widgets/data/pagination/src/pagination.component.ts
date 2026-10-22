@@ -718,13 +718,11 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                     }else{
                         this.pageSizeOptions = range(this.actualPageSize,  Math.max(this.actualPageSize + 1, this.actualPageSize + totalElements), this.actualPageSize); // here data has only that page data and pagesize has totalNoof Elements
                     }
-                    if (widgetState?.selectedItem && widgetState.actualpagesize !== widgetState.pagesize
-                        && +this.prevPageSize !== +(widgetState.pagesize || this.maxResults)) {
-                        const newPageSize = +(widgetState.pagesize || this.maxResults);
+                    if (widgetState?.selectedItem && widgetState.actualpagesize !== widgetState.pagesize) {
                         if (!this.prevPageSize) {
-                            this.prevPageSize = widgetState.actualpagesize || this.actualPageSize || data?.length;
+                            this.prevPageSize = this.actualPageSize || data?.length;
                         }
-                        const updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, this.prevPageSize,newPageSize);
+                        const updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, this.prevPageSize, data?.length);
                         if (updatedItems) {
                             this.parent.statePersistence.setWidgetState(this.parent, {
                                 pagination: 1,
@@ -732,8 +730,8 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
                                 actualpagesize: this.actualPageSize || this.maxResults,
                                 selectedItem: updatedItems
                             })
+                            this.prevPageSize = undefined;
                         }
-                        this.prevPageSize = newPageSize;
                     }
                 } else {
                     pageSize = this.parent.getActualPageSize();
@@ -853,14 +851,12 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
     }
     onPageSizeChange($event, newPageSize) {
         const widgetState = this.parent.statePersistence.getWidgetState(this.parent);
-        let updatedItems;
-        const oldPageSize = widgetState?.pagesize || this.maxResults;
+            let updatedItems;
         if (widgetState?.selectedItem) {
-            updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, oldPageSize, +newPageSize);
+            updatedItems = this.handleStateParamsforNewPageSize(widgetState.selectedItem, this.maxResults, +newPageSize);
         }
-        this.actualPageSize = widgetState?.actualpagesize || this.actualPageSize || oldPageSize;
+        this.actualPageSize = this.actualPageSize || this.maxResults;
         this.maxResults = +newPageSize;
-        this.prevPageSize = +newPageSize;
         this.maxResultsEmitter.emit(this.maxResults);
         if (this.isDataSourceHasPaging() && this.datasource) {
             this.datasource.maxResults = this.maxResults;
