@@ -871,7 +871,7 @@ describe('TableComponent - coverage of the remaining branches', () => {
         });
 
         it('updates page size options with and without a selected page size change', () => {
-            table.dataNavigator = { widget: {}, options: {}, allowpagesizechange: false, pageSizeOptions: [5, 10], onPageSizeChange: jest.fn() };
+            table.dataNavigator = { widget: {}, options: {}, allowpagesizechange: false };
             const setDefault = jest.spyOn(table, 'setDefaultPageSize').mockImplementation(() => undefined);
             table.onPropertyChange('allowpagesizechange', false, true);
             expect(setDefault).not.toHaveBeenCalled();
@@ -911,20 +911,19 @@ describe('TableComponent - coverage of the remaining branches', () => {
             expect(table.pagesize).toBe(10);
         });
 
-        it('falls back to the first default option without options and does not touch a missing data source', () => {
+        it('keeps the given size without options and does not touch a missing data source', () => {
             jest.spyOn(table.statePersistence, 'getWidgetState').mockReturnValue(undefined);
             table.pagesizeoptions = '';
             table.datasource = undefined;
             jest.spyOn(table, 'isPageSizeOptionsChanged').mockReturnValue(true);
             table.setDefaultPageSize(50);
-            expect(table.updatedPageSize).toBe(5);
+            expect(table.updatedPageSize).toBe(50);
             expect(table.dataNavigator.pageSizeOptions).toBeDefined();
         });
 
         it('keeps the max results of a data source when no page size is known', () => {
             jest.spyOn(table.statePersistence, 'getWidgetState').mockReturnValue(undefined);
             table.pagesizeoptions = '';
-            table.prevPagesizeoptions = '';
             table.pagesize = undefined;
             table.datasource = { maxResults: 12 };
             table.setDefaultPageSize(50);
