@@ -1145,11 +1145,12 @@ describe('TableComponent - grid callbacks', () => {
             it('uses the size stored in the widget state when page size change is allowed', () => {
                 table.gridOptions.allowpagesizechange = true;
                 table.pagesizeoptions = '10,20';
-                table.prevPagesizeoptions = '10,20';
+                table.prevPagesizeoptions = '';
                 (table.statePersistence.getWidgetState as jest.Mock).mockReturnValue({ pagesize: 20 });
                 table.setDefaultPageSize(5);
                 expect(table.pagesize).toBe(20);
                 expect(table.updatedPageSize).toBe(20);
+                expect(table.dataNavigator.pageSizeOptions).toEqual([10, 20]);
             });
 
             it('falls back to the first configured option', () => {
@@ -1225,7 +1226,6 @@ describe('TableComponent - grid callbacks', () => {
 
         it('applies the page size options from a changed property', () => {
             const setDefault = jest.spyOn(table, 'setDefaultPageSize').mockImplementation(() => undefined);
-            table.dataNavigator = { pageSizeOptions: [10, 20], onPageSizeChange: jest.fn() };
             table.allowpagesizechange = true;
             table.pagesize = 10;
             table.onPropertyChange('pagesizeoptions', '20, 10', '5,10');

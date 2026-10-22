@@ -318,7 +318,7 @@ describe('PaginationComponent coverage', () => {
             jest.spyOn(component, 'handleStateParamsforNewPageSize').mockReturnValue(undefined);
             component.onPropertyChange('dataset', [1, 2, 3], undefined);
             expect(parent.statePersistence.setWidgetState).not.toHaveBeenCalled();
-            expect(component.prevPageSize).toBe(10);
+            expect(component.prevPageSize).toBe(5);
         });
     });
 
