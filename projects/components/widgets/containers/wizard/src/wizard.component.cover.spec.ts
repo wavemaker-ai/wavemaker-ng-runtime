@@ -53,14 +53,12 @@ describe('WizardComponent (cover)', () => {
             expect(wiz.enableNext).toBe(true);
         });
 
-        it('reads the host class from SVG-like className objects and falls back to an empty string', () => {
-            const orig = wiz.nativeElement;
-            wiz.class = undefined;
-            Object.defineProperty(wiz, 'nativeElement', { value: { className: { baseVal: 'iconstepper' } }, configurable: true });
+        it('reads the host class from the stepper header and falls back to an empty string', () => {
+            wiz.explicitHeader = { class: 'iconstepper' };
             expect(wiz.showWizardStepIcons).toBe(true);
-            Object.defineProperty(wiz, 'nativeElement', { value: { className: {} }, configurable: true });
+            wiz.explicitHeader = { class: undefined };
             expect(wiz.showWizardStepIcons).toBe(false);
-            Object.defineProperty(wiz, 'nativeElement', { value: orig, configurable: true });
+            wiz.explicitHeader = undefined;
         });
     });
 
@@ -127,7 +125,7 @@ describe('WizardComponent (cover)', () => {
         const before = wiz.currentStep;
         steps[2].done = false;
         const add = jest.spyOn(wiz, 'addMoreText').mockImplementation(() => undefined);
-        wiz.onWizardHeaderClick({}, steps[2]);
+        wiz.onWizardStepperClick({}, steps[2]);
         expect(wiz.currentStep).toBe(before);
         expect(add).not.toHaveBeenCalled();
     });
@@ -342,20 +340,20 @@ describe('WizardComponent (cover)', () => {
             };
 
             it('does nothing when the active item is outside the wizard header', () => {
-                const click = jest.spyOn(wiz, 'onWizardHeaderClick');
+                const click = jest.spyOn(wiz, 'onWizardStepperClick');
                 run(`<ul><li class="active" data-stepid="${steps[1].widgetId}"></li></ul>`);
                 expect(click).not.toHaveBeenCalled();
             });
 
             it('does nothing when the step is unknown or already current', () => {
-                const click = jest.spyOn(wiz, 'onWizardHeaderClick');
+                const click = jest.spyOn(wiz, 'onWizardStepperClick');
                 run('<div class="app-wizard-heading"><ul><li class="active" data-stepid="unknown"></li></ul></div>');
                 run(`<div class="app-wizard-heading"><ul><li class="active" data-stepid="${wiz.currentStep.widgetId}"></li></ul></div>`);
                 expect(click).not.toHaveBeenCalled();
             });
 
             it('selects another step even when its header item has no anchor', () => {
-                const click = jest.spyOn(wiz, 'onWizardHeaderClick').mockImplementation(() => undefined);
+                const click = jest.spyOn(wiz, 'onWizardStepperClick').mockImplementation(() => undefined);
                 const other = steps.find(s => s !== wiz.currentStep);
                 run(`<div class="app-wizard-heading"><ul><li class="active" data-stepid="${other.widgetId}"></li></ul></div>`);
                 expect(click).toHaveBeenCalledWith(expect.anything(), other);

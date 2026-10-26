@@ -616,8 +616,7 @@ describe('wm-wizard: Component Specific Tests', () => {
 
     describe('wizard header icon/stepper helpers', () => {
         function setHostClass(cls: string) {
-            wmComponent.class = cls;
-            wmComponent.getNativeElement().className = cls;
+            (wmComponent as any).explicitHeader = { class: cls };
         }
 
         it('showWizardStepIcons should be false when there is no class information at all', () => {
@@ -872,6 +871,17 @@ describe('wm-wizard: Component Specific Tests', () => {
     });
 
     describe('onkeydown newStep DOM update path', () => {
+        // The header items are rendered by a nested wm-wizardstepper, which this markup does not have
+        let heading: HTMLElement;
+        beforeEach(() => {
+            heading = document.createElement('div');
+            heading.className = 'app-wizard-heading';
+            heading.innerHTML = '<ul>' + wmComponent.steps.toArray().map((s, i) =>
+                `<li data-stepid="${s.widgetId}"${i === 0 ? ' class="active"' : ''}><a></a></li>`).join('') + '</ul>';
+            wmComponent.getNativeElement().appendChild(heading);
+        });
+        afterEach(() => heading.remove());
+
         it('should move the active class to the resolved step and focus it on ArrowDown', () => {
             wmComponent.autoActivation = false;
             const targetStep = wmComponent.getWidget().getStepRefByIndex(2);

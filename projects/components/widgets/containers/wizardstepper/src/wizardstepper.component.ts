@@ -9,7 +9,7 @@ import {
     TextContentDirective,
     WmAppIconComponent
 } from '@wm/components/base';
-import {ChangeDetectorRef, Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
 
 import {registerProps} from './wizardstepper.props';
 
@@ -46,6 +46,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: 'div[wmWizardStepper]',
     templateUrl: './wizardstepper.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     providers: [
         provideAsWidgetRef(WizardStepperComponent)
     ],
