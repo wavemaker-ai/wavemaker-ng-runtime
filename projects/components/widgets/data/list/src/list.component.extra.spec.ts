@@ -734,7 +734,7 @@ describe('ListComponent - extra behaviour', () => {
             list.toggleListItemSelection(item, true);
             expect(item.isActive).toBe(true);
             expect(list._items).toEqual([{ id: 1 }]);
-            expect(invoke).toHaveBeenCalledWith('select', { widget: item, $data: { id: 1 } });
+            expect(invoke).toHaveBeenCalledWith('select', { widget: list.widget, $data: { id: 1 } });
 
             list.toggleListItemSelection(item);
             expect(item.isActive).toBe(false);
