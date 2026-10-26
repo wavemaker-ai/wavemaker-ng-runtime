@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {AfterViewInit, Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import {AfterViewInit, Component, Inject, Injector, OnDestroy, Optional, ChangeDetectionStrategy} from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import {$appDigest, debounce, isDefined, setCSS, toBoolean} from '@wm/core';
@@ -15,6 +15,7 @@ const DEFAULT_CLS = 'app-switch';
 const WIDGET_CONFIG = {widgetType: 'wm-switch', hostClass: DEFAULT_CLS};
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, TextContentDirective, WmAppIconComponent],
     selector: '[wmSwitch]',
@@ -26,7 +27,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-switch', hostClass: DEFAULT_CLS};
     exportAs: 'wmSwitch'
 })
 export class SwitchComponent extends DatasetAwareFormComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     options = [];
     selectedItem: DataSetItem;
@@ -170,7 +171,7 @@ export class SwitchComponent extends DatasetAwareFormComponent implements AfterV
 
         this.invokeOnTouched();
         // invoke on datavalue change.
-        this.invokeOnChange(this.datavalue, $event || {}, true);
+        this.invokeOnChange(this.datavalue, $event, true);
         $appDigest();
     }
 

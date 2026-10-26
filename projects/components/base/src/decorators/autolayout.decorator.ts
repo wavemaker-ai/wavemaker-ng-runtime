@@ -106,7 +106,7 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
         // --- override for cleanup ---
         proto.ngOnDestroy = function () {
             const store = this.__al_store;
-            if (store && store.destroySub) {
+            if (store?.destroySub) {
                 store.destroySub.next();
                 store.destroySub.complete();
             }
@@ -410,7 +410,6 @@ export function AutoLayout(options: { targetSelector?: string, bindParent?: stri
                 } else {
                     styles['flex-grow'] = '';
                     styles['flex-shrink'] = '0';
-                    styles['flex-basis'] = '';
                     styles['flex-basis'] = '';
                     styles['align-self'] = '';
                     styles[minKey] = '';

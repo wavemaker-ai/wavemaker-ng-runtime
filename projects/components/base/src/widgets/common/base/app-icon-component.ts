@@ -1,4 +1,4 @@
-import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { Component, Input, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { NgClass, NgStyle } from '@angular/common';
 import { ImagePipe } from '../../../pipes/image.pipe';
 import { SvgIconDirective, isSvgIconUrl } from '../../../directives/svg-icon.directive';
@@ -27,6 +27,7 @@ import { SvgIconDirective, isSvgIconUrl } from '../../../directives/svg-icon.dir
  *   working - the wrapper element is layout-transparent.
  */
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'wm-app-icon',
     imports: [NgClass, NgStyle, SvgIconDirective, ImagePipe],

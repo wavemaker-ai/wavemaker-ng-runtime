@@ -345,21 +345,6 @@ class ASTCompiler {
         return ast.expressions.map(e => this.build(e)).join(';');
     }
 
-    processPropertyWrite() {
-        const ast = this.cAst;
-        const stmts = this.cStmts;
-        let receiver, lhs;
-        if (ast.receiver instanceof ImplicitReceiver) {
-            lhs = `_ctx.${ast.name}`;
-        } else {
-            receiver = this.build(ast.receiver, stmts);
-            lhs = `${receiver}${receiver.length ? '.' : ''}${ast.name}`;
-        }
-
-        const rhs = this.build(ast.value, stmts);
-        stmts.push(`${lhs}=${rhs}`);
-    }
-
     processPipe() {
         const ast = this.cAst;
         const stmts = this.cStmts;
@@ -577,7 +562,7 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
                         const pipeInfo = pipeProvider.meta(pipeName);
                         let pipeInstance;
                         if (!pipeInfo) {
-                            pipeInstance = nullPipe;
+                            pipeInstance = nullPipe();
                         } else {
                             if (pipeInfo.pure) {
                                 hasPurePipe = true;
@@ -622,7 +607,7 @@ function simpleFunctionEvaluator(expr, ctx, locals) {
         args = args.split(',');
         let computedArgs = [];
         args.forEach((arg)=> {
-            arg = arg && arg.trim();
+            arg = arg?.trim();
             computedArgs.push(get(_ctx, arg));
         });
         return computedFn.bind(_ctx)(...computedArgs);
@@ -699,7 +684,7 @@ const fnExecutor = (expr, exprType) => {
             const pipeInfo = pipeProvider.meta(pipeName);
             let pipeInstance;
             if (!pipeInfo) {
-                pipeInstance = nullPipe;
+                pipeInstance = nullPipe();
             } else {
                 if (pipeInfo.pure) {
                     hasPurePipe = true;
@@ -719,11 +704,11 @@ const fnExecutor = (expr, exprType) => {
 
         pipeArgs.unshift(hasPurePipe ? new Map() : undefined);
         fn = fn.bind(undefined, ...pipeArgs);
-    } else {
+    } else 
         if (exprType === ExpressionType.Binding) {
             fn = fn.bind(undefined, undefined);
         }
-    }
+    
 
     return fn;
 }

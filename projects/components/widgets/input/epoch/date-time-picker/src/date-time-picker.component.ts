@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, EventEmitter, Injector, Input, OnDestroy, Output, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Injector, Input, OnDestroy, Output, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { BsDatepickerConfig, BsDatepickerModule } from 'ngx-bootstrap/datepicker';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { App } from '@wm/core';
@@ -12,6 +12,7 @@ import * as momentLib  from 'moment';
 const moment = momentLib.default || window['moment'];
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, BsDatepickerModule, BsDropdownModule],
     selector: 'wm-datetimepicker',
@@ -63,13 +64,13 @@ const moment = momentLib.default || window['moment'];
     </ng-template>
     `
 })
-export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
+export class DateTimePickerComponent implements OnDestroy {
 
     private isDateOpen = true;
 
     private isTimeOpen = false;
 
-    private appLocale: any;
+    private readonly appLocale: any;
 
     @ViewChild('datetimepickerTemplate' , { static: true }) datetimepickerTemplate: TemplateRef<any>;
 
@@ -79,7 +80,6 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
     @Input()
     private placement: 'MODAL' | 'INLINE' = 'MODAL';
 
-    @Input("config")
     private _bsDatepickerConfig: BsDatepickerConfig;
 
     @Input()
@@ -104,7 +104,7 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
 
     constructor(
         protected inj: Injector,
-        private bsModalService: BsModalService) {
+        private readonly bsModalService: BsModalService) {
         this.appLocale = inj.get(App).appLocale || {};
     }
 
@@ -174,6 +174,7 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
         if (this._displayFormat) {
             return this._displayFormat;
         }
+        return undefined;
     }
     /**
      * This method is used to highlight the current date
@@ -282,10 +283,6 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    ngAfterViewInit(): void {
-
-    }
-
     ngOnDestroy(): void {
         this.hideModal();
     }
@@ -294,6 +291,7 @@ export class DateTimePickerComponent implements AfterViewInit, OnDestroy {
 
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'wm-timepicker',
     standalone: true,
     template: `
@@ -329,10 +327,10 @@ export class TimePickerComponent implements AfterViewInit {
     private value = new Date();
 
     @Input()
-    private min: Date = null;
+    private readonly min: Date = null;
 
     @Input()
-    private max: Date = null;
+    private readonly max: Date = null;
 
     @Output() change = new EventEmitter<Date>();
 
@@ -394,7 +392,7 @@ export class TimePickerComponent implements AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-
+        // Intentional no-op, kept so ngAfterViewInit is a stable, testable hook on this component.
     }
 
 }

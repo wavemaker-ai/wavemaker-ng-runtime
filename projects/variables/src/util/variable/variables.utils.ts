@@ -11,7 +11,7 @@ import {
     triggerFn
 } from '@wm/core';
 
-import {CONSTANTS, VARIABLE_CONSTANTS, WS_CONSTANTS} from '../../constants/variables.constants';
+import {VARIABLE_CONSTANTS, WS_CONSTANTS} from '../../constants/variables.constants';
 import {
     debounce, filter,
     forEach,
@@ -257,26 +257,6 @@ const downloadFilefromResponse = (response, headers, success, error) => {
     }
 };
 
-const getService = (serviceName) => {
-    if (!serviceName) {
-        return;
-    }
-    return serviceName;
-    // Todo: Shubham, uncomment below code
-    /* /!* get a reference to the element where ng-app is defined *!/
-     let appEl = WM.element('[id=ng-app]'), injector;
-     if (appEl) {
-     try {
-     injector = appEl.injector(); // get the angular injector
-     if (injector) {
-     return injector.get(serviceName); // return the service
-     }
-     } catch (e) {
-     return undefined;
-     }
-     }*/
-};
-
 /**
  * Construct the form data params from the URL
  * @param queryParams
@@ -377,7 +357,7 @@ const downloadThroughIframe = (requestParams, success, dataBinding,error) => {
         iFrameElement.on("load", function () {
             if (completed) return;
             const text = iFrameElement.contents().find('body').text();
-            if (text && text.trim()) {
+            if (text?.trim()) {
                 completed = true;
                 let message;
                 try {
@@ -431,31 +411,6 @@ const downloadThroughAnchor = (config, success, error) => {
     }, function (err) {
         triggerFn(error, err);
     });
-};
-
-/**
- * appends a timestamp on the passed filename to prevent caching
- * returns the modified file name
- * @param fileName
- * @param exportFormat
- * @returns {string}
- */
-const getModifiedFileName = (fileName, exportFormat) => {
-    let fileExtension;
-    const currentTimestamp = Date.now();
-
-    if (exportFormat) {
-        fileExtension = exportTypesMap[exportFormat];
-    } else {
-        fileExtension = '.' + last(split(fileName, '.'));
-        fileName = replace(fileName, fileExtension, '');
-    }
-    return fileName + '_' + currentTimestamp + fileExtension;
-};
-
-const getCookieByName = (name) => {
-    // Todo: Shubham Implement cookie native js
-    return 'cookie';
 };
 
 /**
@@ -528,17 +483,31 @@ const getTargetNodeKey = (target) => {
      */
     let targetNodeKey;
     if (DOT_EXPR_REX.test(target)) {
-        targetNodeKey = target.replace(/^(\[["'])|(["']\])$/g, '');
+        targetNodeKey = target.replace(/(^\[["'])|(["']\]$)/g, '');
     } else {
         targetNodeKey = target.split('.').pop();
     }
     return targetNodeKey;
 };
 
+const applyMultiSlotValue = (targetObj, targetNodeKey, obj, value) => {
+    let values = targetObj[targetNodeKey];
+    if (!isArray(values)) {
+        values = targetObj[targetNodeKey] = isUndefined(values) ? [] : [values];
+    }
+    const slot = obj.multiIndex !== undefined ? obj.multiIndex : obj.__multiSlotIndex;
+    if (slot === undefined) {
+        obj.__multiSlotIndex = values.length;
+        values.push(value);
+    } else {
+        obj.__multiSlotIndex = slot;
+        values[slot] = value;
+    }
+};
+
 const setValueToNode = (target, obj, root, variable, value, noUpdate?) => {
     const targetNodeKey = getTargetNodeKey(target),
         targetObj = getTargetObj(obj, root, variable);
-    value = !isUndefined(value) ? value : obj.value;
     /* sanity check, user can bind parent nodes to non-object values, so child node bindings may fail */
     if (targetObj) {
         // Multi query params: one slot per binding; rebinds replace that slot (not append).
@@ -546,18 +515,7 @@ const setValueToNode = (target, obj, root, variable, value, noUpdate?) => {
         // (e.g. `bind:['fire', 'water']`), assign it directly instead of treating it
         // as a single slot's value — same as the non-multi assignment below.
         if (obj.collectionFormat === 'multi' && !isArray(value)) {
-            let values = targetObj[targetNodeKey];
-            if (!isArray(values)) {
-                values = targetObj[targetNodeKey] = isUndefined(values) ? [] : [values];
-            }
-            let slot = obj.multiIndex !== undefined ? obj.multiIndex : obj.__multiSlotIndex;
-            if (slot === undefined) {
-                slot = obj.__multiSlotIndex = values.length;
-                values.push(value);
-            } else {
-                obj.__multiSlotIndex = slot;
-                values[slot] = value;
-            }
+            applyMultiSlotValue(targetObj, targetNodeKey, obj, value);
         } else {
             targetObj[targetNodeKey] = value;
         }
@@ -627,14 +585,14 @@ const updateInternalNodes = (target, root, variable) => {
  */
 const processBindObject = (obj, scope, root, variable) => {
     const target = obj.target,
-        targetObj = getTargetObj(obj, root, variable),
-        targetNodeKey = getTargetNodeKey(target),
-        runMode = true;
+        targetNodeKey = getTargetNodeKey(target);
+    // resolving the target object also creates the intermediate nodes of the target path
+    getTargetObj(obj, root, variable);
     const destroyFn = scope.registerDestroyListener ? scope.registerDestroyListener.bind(scope) : noop;
 
     if (stringStartsWith(obj.value, 'bind:')) {
         const listener = (newVal, oldVal) => {
-            if ((newVal === oldVal && isUndefined(newVal)) || (isUndefined(newVal) && (!isUndefined(oldVal) || !isUndefined(targetObj[targetNodeKey])))) {
+            if ((newVal === oldVal && isUndefined(newVal)) || (isUndefined(newVal) && !isUndefined(oldVal))) {
                 return;
             }
             // Skip cloning for blob column
@@ -643,22 +601,20 @@ const processBindObject = (obj, scope, root, variable) => {
             }
             setValueToNode(target, obj, root, variable, newVal); // cloning newVal to keep the source clean
 
-            if (runMode) {
-                /*set the internal bound node map with the latest updated value*/
-                if (!internalBoundNodeMap.has(variable)) {
-                    internalBoundNodeMap.set(variable, {});
-                }
-                set(internalBoundNodeMap.get(variable), [variable.name, root, target], newVal);
-                /*update the internal nodes after internal node map is set*/
-                if (isObject(newVal)) {
-                    updateInternalNodes(target, root, variable);
-                }
+            /*set the internal bound node map with the latest updated value*/
+            if (!internalBoundNodeMap.has(variable)) {
+                internalBoundNodeMap.set(variable, {});
+            }
+            set(internalBoundNodeMap.get(variable), [variable.name, root, target], newVal);
+            /*update the internal nodes after internal node map is set*/
+            if (isObject(newVal)) {
+                updateInternalNodes(target, root, variable);
             }
         };
         destroyFn($watch(obj.value.replace('bind:', ''), scope, {}, listener, undefined, undefined, undefined, () => variable.isMuted));
     } else if (!isUndefined(obj.value)) {
         setValueToNode(target, obj, root, variable, obj.value, true);
-        if (runMode && root !== targetNodeKey) {
+        if (root !== targetNodeKey) {
             if (!internalBoundNodeMap.has(variable)) {
                 internalBoundNodeMap.set(variable, {});
             }
@@ -687,13 +643,13 @@ const processBindObject = (obj, scope, root, variable) => {
 export const applyMultiIndexForDuplicateBindings = (bindMap: any[]) => {
     const targetOccurrences = {};
     bindMap.forEach(function (node) {
-        if (node && node.target) {
+        if (node?.target) {
             targetOccurrences[node.target] = (targetOccurrences[node.target] || 0) + 1;
         }
     });
     const nextMultiIndex = {};
     bindMap.forEach(function (node) {
-        if (node && node.target && targetOccurrences[node.target] > 1) {
+        if (node?.target && targetOccurrences[node.target] > 1) {
             if (!node.collectionFormat) {
                 node.collectionFormat = 'multi';
             }

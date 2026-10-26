@@ -11,7 +11,6 @@ import {SearchComponent} from './search.component';
 class TestComponent { }
 
 describe('ScrollableDirective', () => {
-    let component: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let directiveElement: DebugElement;
     let directive: ScrollableDirective;
@@ -41,7 +40,6 @@ describe('ScrollableDirective', () => {
         });
 
         fixture = TestBed.createComponent(TestComponent);
-        component = fixture.componentInstance;
         directiveElement = fixture.debugElement.query(By.directive(ScrollableDirective));
         directive = directiveElement.injector.get(ScrollableDirective);
     });

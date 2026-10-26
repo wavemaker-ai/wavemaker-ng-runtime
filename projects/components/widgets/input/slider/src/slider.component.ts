@@ -8,11 +8,11 @@ import {
     WmAppIconComponent
 } from "@wm/components/base";
 import {FormsModule, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
-import {Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import {Component, Inject, Injector, OnDestroy, Optional, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import {BaseFormCustomComponent} from '@wm/components/input/base-form-custom';
 
 import {registerProps} from './slider.props';
-import {App, isDefined, switchClass} from "@wm/core";
+import {App, switchClass} from "@wm/core";
 import { CommonModule } from "@angular/common";
 
 
@@ -27,6 +27,7 @@ const RANGE_LABEL_POSITION: {[key: string]: string} = {
   bottom: 'range-label-bottom',
 };
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TextContentDirective, FormsModule, CommonModule, WmAppIconComponent],
     selector: '[wmSlider]',
@@ -37,7 +38,7 @@ const RANGE_LABEL_POSITION: {[key: string]: string} = {
     ]
 })
 export class SliderComponent extends BaseFormCustomComponent implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public minvalue: number;
     public maxvalue: number;
@@ -49,7 +50,7 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
     public readonly: boolean;
     public hint: string;
     public arialabel: string;
-    public markerlabeltext: string
+    public markerlabeltext: any;
     public showmarkers: boolean;
     public showicons: boolean;
     public starticon: string;
@@ -107,7 +108,7 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
     private renderMarkers() {
         const sliderTrack = this.nativeElement.querySelector('.range-input') as HTMLElement;
         const trackWidth = sliderTrack?.offsetWidth-9|| 0;
-        const tickCount = this.step > 0 ? Math.floor((this.maxvalue||100 - this.minvalue||0) / this.step) + 1 : 0;
+        const tickCount = this.step > 0 ? Math.floor(((this.maxvalue||100) - (this.minvalue||0)) / this.step) + 1 : 0;
         const labels = convertDataToObject(this.markerlabeltext);
         this.markerItems = [];
         for (let i = 0; i < tickCount; i++) {
@@ -144,9 +145,7 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
         if (value <= min) {
             return;
         }
-        if (!isNaN(min)) {
-            value = Math.max(value, min);
-        }
+        value = Math.max(value, min);
 
         this.datavalue = value;
         this.handleChange()
@@ -168,9 +167,7 @@ export class SliderComponent extends BaseFormCustomComponent implements OnDestro
         value = value + step;
         if (value >= max)  return;
 
-        if (!isNaN(max)) {
-            value = Math.min(value, max);
-        }
+        value = Math.min(value, max);
 
         this.datavalue = value;
         this.handleChange()

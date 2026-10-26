@@ -9,7 +9,7 @@ import {
     Optional,
     Self,
     TemplateRef,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {toBoolean} from '@wm/core';
@@ -24,6 +24,7 @@ const DIALOG_CLS = 'app-dialog modal-dialog';
 const WIDGET_INFO = {widgetType: 'wm-dialog'};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [DialogBodyDirective, DialogHeaderComponent, NgTemplateOutlet],
     selector: 'div[wmDialog]',
@@ -35,7 +36,7 @@ const WIDGET_INFO = {widgetType: 'wm-dialog'};
     ]
 })
 export class DialogComponent extends BaseDialog implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     isDialogComponent: boolean = true;
 
     @ViewChild('dialogTemplate', { static: true, read: TemplateRef }) dialogTemplate: TemplateRef<any>;

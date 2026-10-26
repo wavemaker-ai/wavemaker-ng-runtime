@@ -42,8 +42,8 @@
           "description": "Does not run scripts/reset-state.sh or overwrite current-state.md when the user says Resume (not Start)"
         },
         {
-          "name": "progress-banner-shown",
-          "description": "Prints the step start progress banner for the resumed step (format: ━━━ ▶ Step N/10 — Name ━━━)"
+          "name": "progress-indicator-shown",
+          "description": "Clearly announces the step being resumed into (number and name), e.g. via the Step Status table plus a one-line resume statement — SKILL.md defines no glyph/banner format (confirmed by full-directory search), only the plain Step Status table and a one-line announcement, so this checks for a clear announcement rather than a specific format"
         }
       ]
     },
@@ -62,7 +62,7 @@
         },
         {
           "name": "step-10-documents-skip",
-          "description": "Step 10 upgrade doc notes that preview validation was skipped"
+          "description": "Step 10's upgrade doc and completion message omit the skipped preview mode(s) entirely rather than showing them as failed/blank (per templates.md's explicit omission rule) — current-state.md is the file that keeps an explicit 'skipped' record, not the Step 10 doc"
         },
         {
           "name": "compatible-changes-only",

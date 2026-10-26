@@ -7,8 +7,8 @@ import {
     TemplateRef,
     ViewChild,
     HostListener,
-    Optional, 
-    Inject
+    Optional,
+    Inject, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {toBoolean} from '@wm/core';
@@ -22,6 +22,7 @@ const DIALOG_CLS = 'app-dialog modal-dialog app-confirm-dialog';
 const WIDGET_INFO = {widgetType: 'wm-confirmdialog'};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
     selector: 'div[wmConfirmDialog]',
@@ -32,7 +33,7 @@ const WIDGET_INFO = {widgetType: 'wm-confirmdialog'};
     ]
 })
 export class ConfirmDialogComponent extends BaseDialog implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate: TemplateRef<any>;
 
     constructor(

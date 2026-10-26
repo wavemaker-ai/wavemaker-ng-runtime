@@ -30,7 +30,7 @@ export class TrailingZeroDecimalPipe implements PipeTransform {
         return this.decimalPipe.transform(value, numberfilter, localefilter || locale || selectedLocale);
     }
 
-    constructor(private decimalPipe: DecimalPipe) { }
+    constructor(private readonly decimalPipe: DecimalPipe) { }
 
 }
 
@@ -79,9 +79,9 @@ export class ToDatePipe extends WmPipe implements PipeTransform {
     }
 
     constructor(
-        private datePipe: DatePipe,
-        private i18nService: AbstractI18nService,
-        private app: App,
+        private readonly datePipe: DatePipe,
+        private readonly i18nService: AbstractI18nService,
+        private readonly app: App,
         protected customPipeManager: CustomPipeManager
     ) {
         super('toDate', customPipeManager);
@@ -98,12 +98,12 @@ export class ToNumberPipe implements PipeTransform {
             fracSize = '1.' + fracSize + '-' + fracSize;
         }
         if (!isNaN(+data)) {
-            const locale = this.i18nService && this.i18nService.getwidgetLocale() ? this.i18nService.getwidgetLocale() : undefined;
+            const locale = this.i18nService?.getwidgetLocale() ? this.i18nService.getwidgetLocale() : undefined;
             const formattedLocale = locale ? locale['number'] : null;
             return this.decimalPipe.transform(data, fracSize, formattedLocale);
         }
     }
-    constructor(private decimalPipe: DecimalPipe,  @Inject(AbstractI18nService) private i18nService: AbstractI18nService) {
+    constructor(private readonly decimalPipe: DecimalPipe,  @Inject(AbstractI18nService) private readonly i18nService: AbstractI18nService) {
     }
 }
 
@@ -113,7 +113,7 @@ export class ToNumberPipe implements PipeTransform {
 })
 export class ToCurrencyPipe implements PipeTransform {
     transform(data, currencySymbol, fracSize) {
-        const _currencySymbol = (CURRENCY_INFO[currencySymbol] || {}).symbol || currencySymbol || '';
+        const _currencySymbol = (CURRENCY_INFO[currencySymbol]?.symbol) || currencySymbol || '';
         let _val = new ToNumberPipe(this.decimalPipe, this.i18nService).transform(data, fracSize);
         const isNegativeNumber = startsWith(_val, '-');
         if (isNegativeNumber) {
@@ -122,7 +122,7 @@ export class ToCurrencyPipe implements PipeTransform {
         return _val ? isNegativeNumber ? '-'+ _currencySymbol +_val :_currencySymbol + _val : '';
     }
 
-    constructor(private decimalPipe: DecimalPipe, @Inject(AbstractI18nService) private i18nService: AbstractI18nService) {
+    constructor(private readonly decimalPipe: DecimalPipe, @Inject(AbstractI18nService) private readonly i18nService: AbstractI18nService) {
     }
 }
 
@@ -155,7 +155,7 @@ export class SuffixPipe implements PipeTransform {
     name: 'custom'
 })
 export class CustomPipe implements PipeTransform {
-    constructor(private app: App, private custmeUserPipe: CustomPipeManager) {
+    constructor(private readonly app: App, private readonly custmeUserPipe: CustomPipeManager) {
 
     }
     transform(data, pipename) {

@@ -30,11 +30,8 @@ import { FormsModule } from '@angular/forms';
 import { ToDatePipe } from '../../../../../base/src/pipes/custom-pipes';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import {
-    getTimeFieldValue,
-    triggerTimerClickonArrowsByIndex,
     datepatternTest,
-    outputpatternTest,
-    localizedTimePickerTest, localizedValueOnInputTest, MockAbstractI18nService, MockAbstractI18nServiceDe, MockAbstractI18nServiceRO
+    localizedValueOnInputTest, MockAbstractI18nService, MockAbstractI18nServiceDe, MockAbstractI18nServiceRO
 } from '../../../../../base/src/test/util/date-test-util';
 import localeDE from '@angular/common/locales/de';
 import localeRO from '@angular/common/locales/ro';
@@ -223,15 +220,17 @@ describe("DatetimeComponent", () => {
         expect(dateInputControl.nativeElement.getAttribute('accesskey')).toEqual('t');
     }));
 
-    it('should show the date pattern as yyyy-MM-ddTHH:mm:ss format', fakeAsync(() => {
-        (wmComponent as any).datepattern = 'yyyy-MM-ddTHH:mm:ss';
+    it('should show the date pattern as yyyy-MM-ddTHH:mm:ss format', async () => {
+        // getFormattedDate is jest.mock()'d at the top of this file (returns undefined by
+        // default), so the widget's displayValue/datavalue getters need it stubbed here to
+        // actually render a value that can be checked against the datepattern.
+        (getFormattedDate as jest.Mock).mockReturnValue('2023-01-01T10:30:00');
         fixture.detectChanges();
-        tick();  // Allow time for changes to be applied
-        datepatternTest(fixture, '.app-datetime', '.app-textbox');
-        tick();  // Allow time for the whenStable promise to resolve
-    }));
+        await datepatternTest(fixture, '.app-datetime', '.app-textbox');
+        (getFormattedDate as jest.Mock).mockReset();
+    });
 
-    xit('should be disabled mode', waitForAsync(() => {
+    it('should be disabled mode', waitForAsync(() => {
         (wmComponent as any).getWidget().disabled = true;
         fixture.detectChanges();
 
@@ -241,7 +240,7 @@ describe("DatetimeComponent", () => {
         });
     }));
 
-    xit('should be disabled mode (picker button)', waitForAsync(() => {
+    it('should be disabled mode (picker button)', waitForAsync(() => {
         (wmComponent as any).getWidget().disabled = true;
         fixture.detectChanges();
         hasAttributeCheck(fixture, '.btn-time', 'disabled');
@@ -271,14 +270,14 @@ describe("DatetimeComponent", () => {
 
     /************************* Validation starts ****************************************** **/
 
-    xit('should be required validation ', waitForAsync(() => {
+    it('should be required validation ', waitForAsync(() => {
         fixture.whenStable().then(() => {
             let dateInputControl = getHtmlSelectorElement(fixture, '.app-textbox');
             expect(dateInputControl.nativeElement.hasAttribute('required')).toBe(true);
         });
     }));
 
-    xit('should respect the mindate validation', waitForAsync(() => {
+    it('should respect the mindate validation', waitForAsync(() => {
         (wmComponent as any).getWidget().datavalue = getFormatedDate('2019-11-01');
 
         checkElementClass(fixture, '.app-datetime', 'ng-invalid');
@@ -286,7 +285,7 @@ describe("DatetimeComponent", () => {
     }));
 
 
-    xit('should ignore the  excluded days', waitForAsync(() => {
+    it('should ignore the  excluded days', waitForAsync(() => {
         (wmComponent as any).getWidget().excludedays = '1,6';
         (wmComponent as any).getWidget().datavalue = getFormatedDate('2019-12-30');
         checkElementClass(fixture, '.app-datetime', 'ng-invalid');
@@ -304,29 +303,33 @@ describe("DatetimeComponent", () => {
 
 
     // TypeError: Cannot read properties of undefined (reading 'querySelectorAll')
-    xit('should toggle the AM/PM', waitForAsync(() => {
+    // Skipped: the time picker popup renders in the document body with only the hours field in this fixture (no
+    // meridian button), so the AM/PM toggle cannot be exercised here. The original version of this test passed
+    // only because its assertions ran in a promise chain that was never awaited.
+    it.skip('should toggle the AM/PM', async () => {
         (wmComponent as any).getWidget().datepattern = 'MMM d, yyyy h:mm:ss a';
+        (wmComponent as any).ismeridian = true;
+        await fixture.whenStable();
+        // open the time dropdown through the component, the popup is rendered in the document body
+        wmComponent.toggleTimePicker(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        fixture.whenStable().then(() => {
-            onClickCheckTaglengthOnBody(fixture, '.btn-time', null, null);
+        let timepicker: HTMLElement = document.querySelector('timepicker');
+        for (let attempt = 0; !timepicker && attempt < 50; attempt++) {
+            await new Promise((resolve) => setTimeout(resolve, 20));
             fixture.detectChanges();
+            timepicker = document.querySelector('timepicker');
+        }
+        expect(timepicker).toBeTruthy();
+        const meridian = timepicker.querySelector('button.text-center') as HTMLElement;
+        expect(meridian).toBeTruthy();
+        const initialText = meridian.textContent.trim();
+        meridian.click();
+        fixture.detectChanges();
 
-            fixture.whenStable().then(() => {
-                const timepicker = fixture.debugElement.query(By.css('timepicker'));
-                const tbodyRows = timepicker.queryAll(By.css('tbody tr'));
-                const tdElement = tbodyRows[1].queryAll(By.css('td'))[6]
-                    .query(By.css('button')).nativeElement;
-
-                const initialText = tdElement.textContent.trim();
-                tdElement.click();
-                fixture.detectChanges();
-
-                expect(tdElement.textContent.trim()).toEqual(
-                    initialText === 'AM' ? 'PM' : 'AM'
-                );
-            });
-        });
-    }));
+        expect(meridian.textContent.trim()).toEqual(initialText === 'AM' ? 'PM' : 'AM');
+    });
 
     it('should autofocus the date control', fakeAsync(() => {
         fixture.detectChanges();
@@ -431,7 +434,7 @@ describe(('Datetime Component with Localization'), () => {
     }));
 
     it('should update the datavalue without error when we type "de" format datetime in inputbox with "24H" format', fakeAsync(() => {
-        const datetime = '2020, 21 Februar 15:15:00', datepattern = 'yyyy, dd MMMM HH:mm:ss';
+        const datepattern = 'yyyy, dd MMMM HH:mm:ss';
         (wmComponent as any).getWidget().datepattern = datepattern;
         localizedValueOnInputTest(fixture, '2020, 21 Februar 15:15:00', wmComponent, datepattern);
     }));
@@ -594,7 +597,6 @@ describe(('Datetime Component with Localization'), () => {
 
     describe('addTimepickerClickListener', () => {
         let originalSetTimeout;
-        let mockBodyElement;
         let mockDropdownElement;
         let originalJQuery;
 
@@ -602,7 +604,6 @@ describe(('Datetime Component with Localization'), () => {
             originalSetTimeout = global.setTimeout;
             global.setTimeout = jest.fn().mockImplementation(cb => cb()) as any;
 
-            mockBodyElement = document.createElement('body');
             mockDropdownElement = document.createElement('div');
 
             // Store the original jQuery

@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
-import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import { FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
+import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 
 import {AbstractI18nService} from '@wm/core';
 import {IWidgetConfig, provideAs, provideAsWidgetRef, TrailingZeroDecimalPipe} from '@wm/components/base';
@@ -15,6 +14,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FormsModule],
     selector: '[wmNumber]',
@@ -26,7 +26,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class NumberComponent extends NumberLocale implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public required: boolean;
     public regexp: string;

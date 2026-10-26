@@ -1,5 +1,5 @@
 import {IMaskDirective, IMaskModule} from 'angular-imask';
-import {ChangeDetectorRef, Component, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, Inject, Injector, Optional, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import {NG_VALIDATORS, NG_VALUE_ACCESSOR} from '@angular/forms';
 import {BsDatepickerDirective, BsDatepickerModule} from 'ngx-bootstrap/datepicker';
 import {
@@ -31,6 +31,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [DateTimePickerComponent, IMaskModule, BsDatepickerModule],
     selector: '[wmDate]',
@@ -42,11 +43,11 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class DateComponent extends BaseDateTimeComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public bsDataValue;
     public showdropdownon: string;
-    private dateContainerCls: string;
+    private readonly dateContainerCls: string;
     public isOpen: boolean = false;
     private isEnterPressedOnDateInput = false;
     private _bsDefaultLoadCheck: boolean;
@@ -109,8 +110,8 @@ export class DateComponent extends BaseDateTimeComponent {
     // TODO use BsLocaleService to set the current user's locale to see the localized labels
     constructor(
         inj: Injector,
-        private cdRef: ChangeDetectorRef,
-        private appDefaults: AppDefaults,
+        private readonly cdRef: ChangeDetectorRef,
+        private readonly appDefaults: AppDefaults,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);
@@ -196,7 +197,12 @@ export class DateComponent extends BaseDateTimeComponent {
         $('.bs-calendar-container').removeAttr('role');
         const datePickerContainer = $('.bs-datepicker-container')[0];
         this.focusTrap = setFocusTrap(datePickerContainer, true);
-        this.focusTrap.activate();
+        try {
+            // focus-trap throws if the container has no tabbable node yet (e.g. calendar still rendering);
+            // that shouldn't stop the picker from opening.
+            this.focusTrap.activate();
+        } catch (e) {
+        }
         this.addDatepickerKeyboardEvents(this, false);
         adjustContainerPosition($('bs-datepicker-container'), this.nativeElement, this.bsDatePickerDirective._datepicker);
         adjustContainerRightEdges($('bs-datepicker-container'), this.nativeElement, this.bsDatePickerDirective._datepicker);

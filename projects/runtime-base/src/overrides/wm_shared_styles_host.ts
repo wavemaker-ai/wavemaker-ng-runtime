@@ -34,9 +34,9 @@ export class SharedStylesHost {
 @Injectable()
 export class WMDomSharedStylesHost extends SharedStylesHost implements OnDestroy {
   // Maps all registered host nodes to a list of style nodes that have been added to the host node.
-  private _hostNodes = new Map<Node, Node[]>();
+  private readonly _hostNodes = new Map<Node, Node[]>();
 
-  constructor(@Inject(DOCUMENT) private _doc: any) {
+  constructor(@Inject(DOCUMENT) private readonly _doc: any) {
     super();
     this._hostNodes.set(_doc.head, []);
   }
@@ -70,6 +70,13 @@ export class WMDomSharedStylesHost extends SharedStylesHost implements OnDestroy
       this._addStylesToHost(additions, hostNode, styleNodes);
     });
   }
+
+  // Angular 22's DomRendererFactory2 calls removeStyles(styles, urls) on component destroy
+  // (REMOVE_STYLES_ON_COMPONENT_DESTROY defaults to true). This override has never tracked
+  // per-component style removal (styles persist for the app's lifetime, same as before this
+  // method existed), so this is a no-op to preserve that existing behavior and satisfy the
+  // interface the renderer now requires.
+  removeStyles(styles: string[], urls?: string[]): void {}
 
   ngOnDestroy(): void {
     this._hostNodes.forEach(styleNodes => styleNodes.forEach(removeStyle));

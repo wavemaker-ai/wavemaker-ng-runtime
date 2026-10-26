@@ -1,5 +1,5 @@
 import {CommonModule} from '@angular/common';
-import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild} from '@angular/core';
+import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import {NG_VALUE_ACCESSOR} from '@angular/forms';
 
 import {$appDigest, $unwatch, $watch, debounce, isAppleProduct, isDefined, toBoolean} from '@wm/core';
@@ -42,6 +42,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective, SearchComponent],
     selector: '[wmChips]',
@@ -52,30 +53,30 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class ChipsComponent extends DatasetAwareFormComponent implements OnInit, AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     public allowonlyselect: boolean;
     public enablereorder: boolean;
     public maxsize: number;
     public inputwidth: any;
-    private debouncetime: number;
+    private readonly debouncetime: number;
 
     public chipsList: Array<any> = [];
     private readonly maxSizeReached = 'Max size reached';
     private saturate: boolean;
     private nextItemIndex: number;
     private getTransformedData: (data, itemIndex?) => DataSetItem[];
-    private inputposition: string;
-    private showsearchicon: boolean;
+    private readonly inputposition: string;
+    private readonly showsearchicon: boolean;
 
     @ViewChild(SearchComponent, /* TODO: add static flag */ {static: true}) searchComponent: SearchComponent;
     private _datasource: any;
     private _unsubscribeDv = false;
-    private searchkey: string;
+    private readonly searchkey: string;
     private _debounceUpdateQueryModel: any = null;
-    private limit: number;
+    private readonly limit: number;
     private _classExpr: any;
-    private minchars: number;
-    private matchmode: string;
+    private readonly minchars: number;
+    private readonly matchmode: string;
 
     // getter setter is added to pass the datasource to searchcomponent.
     get datasource () {
@@ -92,12 +93,12 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
 
     constructor(
         inj: Injector,
-        @Attribute('displayfield.bind') private bindDisplayField,
-        @Attribute('displayexpression.bind') private bindDisplayExpr,
-        @Attribute('displayimagesrc.bind') private bindDisplayImgSrc,
-        @Attribute('datafield.bind') private bindDataField,
-        @Attribute('dataset.bind') private bindDataSet,
-        @Attribute('chipclass.bind') private bindChipclass,
+        @Attribute('displayfield.bind') private readonly bindDisplayField,
+        @Attribute('displayexpression.bind') private readonly bindDisplayExpr,
+        @Attribute('displayimagesrc.bind') private readonly bindDisplayImgSrc,
+        @Attribute('datafield.bind') private readonly bindDataField,
+        @Attribute('dataset.bind') private readonly bindDataSet,
+        @Attribute('chipclass.bind') private readonly bindChipclass,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, WIDGET_CONFIG, explicitContext);
@@ -250,7 +251,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
                 this.chipsList.push(itemFound);
             } else if (this.datafield !== ALLFIELDS) {
                 searchQuery.push(val);
-            } else if (this.datafield === ALLFIELDS) {
+            } else {
                 let dataObj, isCustom = false;
                 if (!isObject(val)) {
                     dataObj = this.createCustomDataModel(val);
@@ -468,7 +469,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
     }
 
     public onInputClear($event: Event) {
-        if (!this.chipsList || !this.chipsList.length || this.searchComponent.query) {
+        if (!this.chipsList?.length || this.searchComponent.query) {
             return;
         }
         this.$element.find('li.chip-item > a.app-chip').last().focus();
@@ -620,7 +621,8 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
     private configureDnD() {
         const options = {
             items: '> li:not(.app-chip-search)',
-            placeholder: 'chip-placeholder'
+            placeholder: 'chip-placeholder',
+            cancel: '.app-chips.readonly'
         };
 
         configureDnD(this.$element, options, this.onReorderStart.bind(this), this.update.bind(this));
@@ -744,7 +746,7 @@ export class ChipsComponent extends DatasetAwareFormComponent implements OnInit,
             // setting the autofocus on the input once after dom is updated
             setTimeout(() => {
                 const $chipsList = this.$element.find('.app-chip-input > input.app-textbox');
-                if ($chipsList && $chipsList.length) {
+                if ($chipsList?.length) {
                     this.focusSearchBox();
                 }
             });

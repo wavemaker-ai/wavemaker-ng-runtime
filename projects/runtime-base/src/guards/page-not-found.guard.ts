@@ -8,8 +8,8 @@ import { AppManagerService } from '../services/app.manager.service';
 export class PageNotFoundGuard {
 
     constructor(
-        private app: App,
-        private appManager: AppManagerService
+        private readonly app: App,
+        private readonly appManager: AppManagerService
     ) {}
 
     canActivate(route: ActivatedRouteSnapshot): Promise<boolean> {

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement, Injector } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DebugElement, Injector } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ButtonGroupDirective } from './button-group.directive';
 import { App } from '@wm/core';
@@ -7,6 +7,11 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 
 @Component({
     standalone: false,
+    // Angular 22 changed the default changeDetection strategy for components with no
+    // explicit setting (see .claude/skills/angular-upgrade/patterns/runtime.md §27a).
+    // This inline test component was never swept by that fix, so it silently picked up
+    // the new default, and a second fixture.detectChanges() stopped re-checking it.
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
       <div wmButtonGroup>
         <button class="app-button">Button 1</button>
@@ -18,7 +23,6 @@ import { mockApp } from 'projects/components/base/src/test/util/component-test-u
 class TestComponent { }
 
 describe('ButtonGroupDirective', () => {
-    let component: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let buttonGroupElement: DebugElement;
     let buttonGroupDirective: ButtonGroupDirective;
@@ -33,7 +37,6 @@ describe('ButtonGroupDirective', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(TestComponent);
-        component = fixture.componentInstance;
         buttonGroupElement = fixture.debugElement.query(By.directive(ButtonGroupDirective));
         buttonGroupDirective = buttonGroupElement.injector.get(ButtonGroupDirective);
         fixture.detectChanges();

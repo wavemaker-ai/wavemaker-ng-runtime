@@ -1,5 +1,4 @@
-import { DataSource, debounce, processFilterExpBindNode } from '@wm/core';
-import { FormWidgetType, isDefined, MatchMode } from '@wm/core';
+import { DataSource, debounce, processFilterExpBindNode, FormWidgetType, isDefined, MatchMode } from '@wm/core';
 
 import { isDataSetWidget } from './widget-utils';
 import {
@@ -130,7 +129,7 @@ export function fetchRelatedFieldData(dataSource, formField, options) {
     primaryKeys = dataSource.execute(DataSource.Operation.GET_RELATED_PRIMARY_KEYS, relatedField);
     formField.datafield = datafield;
     formField._primaryKey = isEmpty(primaryKeys) ? undefined : primaryKeys[0];
-    formField.compareby = primaryKeys && primaryKeys.join(',');
+    formField.compareby = primaryKeys?.join(',');
 
     displayField = datafield === ALLFIELDS ? undefined : datafield;
     formField.displayfield = displayField = (formField.displayfield || displayField || formField._primaryKey);
@@ -352,7 +351,7 @@ export function getDistinctValuesForField(dataSource, formField, options?) {
     if (isSearchWidgetType(formField[options.widget])) {
         const dataoptions = getDistinctFieldProperties(dataSource, formField);
         formField.dataoptions = dataoptions;
-        setDataFields(formField, Object.assign(options || {}, dataoptions));
+        setDataFields(formField, Object.assign(options, dataoptions));
         formField.datasource = dataSource;
     } else {
         interpolateBindExpressions(formField.viewParent, formField.filterexpressions, (filterexpressions) => {
@@ -520,7 +519,7 @@ export function applyFilterOnField(dataSource, filterDef, formFields, newVal, op
             return;
         }
         // For related fields, add lookupfield for query generation
-        if (filterDef && filterDef['is-related']) {
+        if (filterDef?.['is-related']) {
             filterOn += '.' + lookUpField;
         }
         if (isDefined(newVal)) {
@@ -596,7 +595,7 @@ export function transformData(dataObject, variableName) {
             dataObject = newObject;
         }
         dataObject = [dataObject];
-    } else {
+    } else 
         /*if the dataObject is an array and each value is a string, then lite-transform the string to an object
          * lite-transform: just checking if the first value is string and then transforming the object, instead of traversing through the whole array
          * */
@@ -609,6 +608,6 @@ export function transformData(dataObject, variableName) {
             });
             dataObject = tempArr;
         }
-    }
+    
     return dataObject;
 }

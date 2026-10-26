@@ -1,4 +1,4 @@
-import {Attribute, Component, Inject, Injector, Optional} from '@angular/core';
+import {Attribute, Component, Inject, Injector, Optional, ChangeDetectionStrategy} from '@angular/core';
 
 import {findValueOf, isDefined} from '@wm/core';
 import {IWidgetConfig, provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
@@ -33,6 +33,7 @@ interface IProgressInfo {
 }
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmProgressBar]',
     templateUrl: './progress-bar.component.html',
@@ -41,7 +42,7 @@ interface IProgressInfo {
     ]
 })
 export class ProgressBarComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public displayformat: string;
     public datavalue: string;
@@ -53,7 +54,7 @@ export class ProgressBarComponent extends StylableComponent {
     public arialabel: string;
     public tabindex: string;
 
-    private _prepareData: Function;
+    private readonly _prepareData: Function;
     private readonly hasDataset: boolean;
 
     // progress-bar data, ngFor in the template iterates on this
@@ -90,7 +91,7 @@ export class ProgressBarComponent extends StylableComponent {
         val = parseFloat('' + val);
         val = (val.toFixed(getDecimalCount(format)));
 
-        if (format && format.includes('%')) {
+        if (format?.includes('%')) {
             val = `${val}%`;
         }
         return val;
@@ -117,14 +118,11 @@ export class ProgressBarComponent extends StylableComponent {
             let displayVal: string | number = 0;
             if (this.datavalue) {
                 if (isPercentageValue(this.datavalue)) {
-                    const val = (this.datavalue || '0%');
-                    width = displayVal = val;
+                    width = displayVal = this.datavalue;
                 } else {
-                    if (isDefined(this.datavalue)) {
-                        const denominator = (+this.maxvalue - +this.minvalue) || 1;
-                        const val = ((+this.datavalue - +this.minvalue) * 100) / denominator + '%';
-                        width = displayVal = val;
-                    }
+                    const denominator = (+this.maxvalue - +this.minvalue) || 1;
+                    const val = ((+this.datavalue - +this.minvalue) * 100) / denominator + '%';
+                    width = displayVal = val;
                 }
             }
             this.data[0].displayValue = this.getFormattedDisplayVal(displayVal as string);

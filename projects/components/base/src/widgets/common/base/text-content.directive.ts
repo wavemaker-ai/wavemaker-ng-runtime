@@ -15,5 +15,5 @@ export class TextContentDirective {
         this.elRef.nativeElement.textContent = v;
     }
 
-    constructor(private elRef: ElementRef) {}
+    constructor(private readonly elRef: ElementRef) {}
 }

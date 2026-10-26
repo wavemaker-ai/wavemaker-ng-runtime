@@ -39,7 +39,7 @@ export abstract class BaseVariableManager {
     httpCall(requestParams, variable, params?: any) {
         return new Promise((resolve, reject) => {
             variable._observable = httpService.sendCallAsObservable(requestParams, params).subscribe((response: any) => {
-                if (response && response.type) {
+                if (response?.type) {
                     this.setRequestTrackId(response, variable);
                     resolve(response);
                 }

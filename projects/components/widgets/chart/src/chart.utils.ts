@@ -481,8 +481,8 @@ export const getNumberFormatedData = (numberFormat, d) => {
 
 
         // Getting the respective divider[1000,1000000,1000000000] based on the number format choosen
-        divider = (tickformats[numberFormat] && tickformats[numberFormat].divider) || 0;
-        prefix = tickformats[numberFormat] && tickformats[numberFormat].prefix;
+        divider = (tickformats[numberFormat]?.divider) || 0;
+        prefix = tickformats[numberFormat]?.prefix;
         if (prefix && divider !== 0) {
             formattedData = d3.format('.2f')(d / divider) + prefix;
         }
@@ -517,7 +517,7 @@ export const modifyLegendPosition = (widgetContext, position, id) => {
     if (position === 'bottom') {
         const legendWrapHeight = legendWrap['_groups'][0][0].getBoundingClientRect().height,
             wrap = d3.select(chart_Id + ' .nv-wrap'),
-            wrapTransform = (wrap && wrap.attr('transform')) ? wrap.attr('transform').replace(/, /g, ',') : '',
+            wrapTransform = (wrap?.attr('transform')) ? wrap.attr('transform').replace(/, /g, ',') : '',
             coordinates = /translate\(\s*([^\s,)]+)[ ,]([^\s,)]+)/.exec(wrapTransform),
             getChartHeight = () => {
                 let chartHeight = $(chart_Id + ' svg>.nvd3.nv-wrap')[0].getBoundingClientRect().height;
@@ -679,13 +679,7 @@ export const initChart = (widgetContext, xDomainValues, yDomainValues, propertyV
     }
 
     // Setting the legend type choosen by user or default it will be furious
-    chart.legend.vers((propertyValueMap.legendtype && propertyValueMap.legendtype.toLowerCase()) || 'furious');
-
-    if (!includes(chartTypes, widgetContext.type)) {
-        chart = nv.models.multiBarChart()
-            .x(d => d.x)
-            .y(d => d.y);
-    }
+    chart.legend.vers((propertyValueMap.legendtype?.toLowerCase()) || 'furious');
 
 
     if (isPieType(widgetContext.type)) {
@@ -738,12 +732,12 @@ export const initChart = (widgetContext, xDomainValues, yDomainValues, propertyV
             }
         } else if (propertyValueMap.xnumberformat) {
             chart.xAxis.tickFormat(d => getNumberFormatedData(propertyValueMap.xnumberformat, d));
-        } else {
+        } else 
             if (isLineTypeChart(widgetContext.type)) {
                 // get the actual value
                 chart.xAxis.tickFormat(d => widgetContext.xDataKeyArr[d]);
             }
-        }
+        
         chart.yAxis
             .axisLabel(yaxislabel)
             .axisLabelDistance(propertyValueMap.yaxislabeldistance)

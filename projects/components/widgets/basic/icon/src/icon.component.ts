@@ -1,4 +1,4 @@
-import {Component, HostBinding, Inject, Injector, Optional} from '@angular/core';
+import {Component, HostBinding, Inject, Injector, Optional, ChangeDetectionStrategy} from '@angular/core';
 
 import {IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TextContentDirective, WmAppIconComponent} from '@wm/components/base';
 import {registerProps} from './icon.props';
@@ -10,6 +10,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TextContentDirective, WmAppIconComponent],
     selector: '[wmIcon]',
@@ -19,7 +20,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class IconComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public iconclass: any;
     public caption: string;

@@ -6,13 +6,13 @@ description: Build wavemaker-ng-runtime + wavemaker-ng-codegen, generate an Angu
 
 Run this workflow **step by step, in order**. Execute each step fully before moving to the next. Stop and report errors if any step fails.
 
-**Scope note:** this workflow only ever produces the **Angular Deployment** validation target (Tomcat WAR + Angular dist). It has no automation for **WaveMaker Preview** — that mode's URL is supplied directly via `LOCAL_PREVIEW_URL`/`WAVEMAKER_PREVIEW_URL` in `repo.config.sh` (see angular-upgrade `SKILL.md` Step 9) and does not need this command to run at all. Both are first-class validation modes in Step 9; this file is the automation for exactly one of them.
+**Scope note:** this workflow only ever produces the **Angular Deployment** validation target (Tomcat WAR + Angular dist). It has no automation for **WaveMaker Preview** — that mode's URL is supplied directly via `LOCAL_PREVIEW_URL`/`WAVEMAKER_PREVIEW_URL` in `repo.config.sh` (see angular-upgrade `steps-6-10.md` Step 9) and does not need this command to run at all. Both are first-class validation modes in Step 9; this file is the automation for exactly one of them.
 
 ## Invocation modes & who collects inputs
 
 | Mode | Invoke | Inputs |
 |------|--------|--------|
-| **Standalone** | `/local-angular-build` | [`inputs.md`](../skills/angular-upgrade/inputs.md) — standalone gate |
+| **Standalone** | `/local-angular-build` | **Standalone input gate** below |
 | **Upgrade Step 9** | invoked from the `angular-upgrade` skill (Steps 0–7 done) | `current-state.md` only — **no re-prompt** |
 
 | Mode | ng-runtime build | Steps to run | Browser verify |
@@ -36,9 +36,16 @@ All product fixes go in **`wavemaker-ng-runtime`** and **`wavemaker-ng-codegen`*
 
 ## Standalone input gate
 
-**Skip when running as upgrade Step 9.** Follow **Standalone workflow** in [`inputs.md`](../skills/angular-upgrade/inputs.md): show defaults, parse message, print effective config, block until `confirm` / `proceed with defaults`.
+**Skip when running as upgrade Step 9** — that mode reuses `current-state.md` from the `angular-upgrade` skill's own Step 0 and never re-prompts.
 
-For upgrade, use the canonical Start message in [`examples.md`](../skills/angular-upgrade/examples.md) — Step 0 collects all URLs and flags.
+When invoked standalone, do all of this in a single pass before running any step:
+
+1. Source `repo.config.sh` and parse the user's trigger message for `project name <name>`, `preview url <url>`, `comparison url <url>`, `skip preview yes|no`.
+2. Resolve effective values: chat override wins, otherwise the `repo.config.sh` default (`PROJECT_NAME`, `LOCAL_DEPLOYMENT_URL`, `WAVEMAKER_DEPLOYMENT_URL`).
+3. Print the **Configuration** table below with resolved values (not the raw formulas) and a Status column (`ok`, or `⚠` with the action needed — e.g. Tomcat not running, `${PROJECT_WAR}` missing).
+4. Ask once: "Confirm to start, or fix the issues above first." Accept `confirm`, `yes`, or `proceed with defaults`. Do not re-prompt after this point.
+
+For upgrade Step 9, use the canonical Start message in [`templates.md`](../skills/angular-upgrade/templates.md) instead — the `angular-upgrade` skill's own Step 0 collects all URLs and flags; this gate does not run.
 
 ## Configuration — edit these values
 
@@ -46,7 +53,7 @@ Set **`PROJECT_NAME`** (or `project name` in chat). Other `PROJECT_*` paths **de
 
 | Variable | Value (derived from `PROJECT_NAME`) |
 |---|---|
-| `PROJECT_NAME` | `SearchWidgetScenarios` |
+| `PROJECT_NAME` | from `repo.config.sh` (currently `WMTheme`) or chat override — must match the project segment in `LOCAL_DEPLOYMENT_URL`/`WAVEMAKER_DEPLOYMENT_URL` |
 | `PROJECT_WAR` | `~/Desktop/${PROJECT_NAME}.war` |
 | `PROJECT_ZIP` | `~/Desktop/${PROJECT_NAME}.zip` |
 | `UNZIPPED_PROJECT_PATH` | `~/Desktop/${PROJECT_NAME}` |
@@ -63,10 +70,18 @@ Set **`PROJECT_NAME`** (or `project name` in chat). Other `PROJECT_*` paths **de
 | `NPM_REGISTRY` | `https://repository.wavemaker.com/repository/wavemaker-npm-repo/` |
 | `TOMCAT_PORT` | `8080` |
 | `APP_URL` | `http://localhost:${TOMCAT_PORT}/${PROJECT_NAME}/` |
-| `LOCAL_DEPLOYMENT_URL` | from `repo.config.sh` or chat override (see `inputs.md`) |
+| `LOCAL_DEPLOYMENT_URL` | from `repo.config.sh` or chat override (see **Standalone input gate** above) |
 | `WAVEMAKER_DEPLOYMENT_URL` | from `repo.config.sh` or chat override |
 
 Tomcat is running locally on **port `${TOMCAT_PORT}`**.
+
+**If `${TOMCAT_WEBAPPS}` doesn't exist or is empty:** the `${CATALINA_HOME:-$HOME/tomcat}` default guess is frequently wrong on a dev machine with multiple Tomcat installs (Homebrew Cellar, `/Applications`, IDE-bundled, etc.) — a blind `find / -iname "*tomcat*"` filesystem scan is slow and often still misses the right one. Instead, read it directly off the running process, which is authoritative and fast:
+
+```bash
+ps aux | grep '[t]omcat' | grep -o '\-Dcatalina\.base=[^ ]*'
+```
+
+Use that path's `webapps/` as the real `TOMCAT_WEBAPPS`, re-export `APACHE_TOMCAT_PATH`/`TOMCAT_WEBAPPS`/`TOMCAT_APP` from it, and continue.
 
 `NG_RUNTIME` and `NG_CODEGEN` are relative to the **ng-runtime workspace root** (where this command is invoked).
 
@@ -79,7 +94,7 @@ SKILL_ROOT="${NG_RUNTIME}/.claude/skills/angular-upgrade"
 # shellcheck source=/dev/null
 . "${SKILL_ROOT}/repo.config.sh"
 
-export PROJECT_NAME="${PROJECT_NAME:-SearchWidgetScenarios}"
+export PROJECT_NAME="${PROJECT_NAME:-WMTheme}"
 export PROJECT_WAR="${PROJECT_WAR:-$HOME/Desktop/${PROJECT_NAME}.war}"
 export PROJECT_ZIP="${PROJECT_ZIP:-$HOME/Desktop/${PROJECT_NAME}.zip}"
 export UNZIPPED_PROJECT_PATH="${UNZIPPED_PROJECT_PATH:-$HOME/Desktop/${PROJECT_NAME}}"
@@ -247,15 +262,19 @@ cp "${GENERATED_APP}/dist/index.html" "${TOMCAT_APP}/"
 cp -R "${GENERATED_APP}/dist/ng-bundle" "${TOMCAT_APP}/"
 ```
 
+**Checking both dev and prod builds side by side:** `${GENERATED_APP}/dist/` is overwritten by every `build.js` run (dev or prod), so only one build's output exists on disk at a time — deploying one to `${TOMCAT_APP}` and then rebuilding the other overwrites it there too, forcing you to alternate. If both need to stay live simultaneously (e.g. for the user to manually check each independently), deploy them to **two separate Tomcat webapp folders** instead of reusing `${TOMCAT_APP}` for both: copy `${TOMCAT_APP}` (its extracted WAR backend — `META-INF`/`WEB-INF`/`resources`) to a second folder (e.g. `${TOMCAT_APP}-dev`), then build+copy dev's `dist/index.html`+`dist/ng-bundle` into that second folder while prod stays in `${TOMCAT_APP}`. No `context.xml` path is hardcoded in a project WAR's `META-INF` (confirmed empirically) — Tomcat derives the context path from the folder name, so the copy is served at `/{ProjectName}-dev/` automatically, no config edit needed. Verify the two are genuinely different builds, not the same content copied twice, by checking the referenced main bundle filename in each `index.html` — dev is unhashed (`main.js`), prod is content-hashed (`main.<hash>.js`).
+
+**Syncing a stale second webapp with no source changes since the last build:** if `${GENERATED_APP}/dist/` already holds a build newer than the second webapp folder and nothing in `${NG_RUNTIME}`/`${NG_CODEGEN}`/the generated app has changed since, just re-copy the existing `dist/index.html` + `dist/ng-bundle` into the stale folder (mtimes make this easy to confirm — compare `dist/index.html`'s mtime against each webapp folder's). This is a plain file copy, not a rebuild, so it's fine to do even when builds/tests are off-limits for the agent to run. It does mean both webapp folders now serve the *same* build config (e.g. both prod-hashed) rather than one dev + one prod — acceptable when the goal is just "make the other URL show the same upgraded app," not "verify the dev build config specifically."
+
 ---
 
 ## Browser verify (after Step 7 deploy)
 
 **Standalone:** if effective `LOCAL_DEPLOYMENT_URL` is `skip` or empty, smoke-check `${APP_URL}` only and stop.
 
-**With URLs:** load `${WAVEMAKER_DEPLOYMENT_URL}` then `${LOCAL_DEPLOYMENT_URL}` (or `${APP_URL}`). Pass/fail: **Preview validation checklist** in [`wavemaker-runtime-patterns.md`](../skills/angular-upgrade/wavemaker-runtime-patterns.md) (gate G1–G4 required; extended E1–E13 where applicable).
+**With URLs:** load `${WAVEMAKER_DEPLOYMENT_URL}` then `${LOCAL_DEPLOYMENT_URL}` (or `${APP_URL}`). Pass/fail: **Preview validation** checklist in [`checklist.md`](../skills/angular-upgrade/checklist.md#preview-validation-step-9) (gate G1–G7 required; extended E1–E13 where applicable).
 
-On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUNTIME` or `NG_CODEGEN`; re-run affected steps. **Upgrade:** `SKILL.md` Step 9 iteration table. **Standalone:** same matrix (runtime fix → 2a; codegen fix → 3→4→5→7; both → 2a→3→4→5→7).
+On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUNTIME` or `NG_CODEGEN`; re-run affected steps. **Upgrade:** `steps-6-10.md` Step 9 iteration table. **Standalone:** same matrix (runtime fix → 2a; codegen fix → 3→4→5→7; both → 2a→3→4→5→7).
 
 ---
 
@@ -270,11 +289,11 @@ On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUN
 
 ### Standalone
 
-1. Run standalone gate per [`inputs.md`](../skills/angular-upgrade/inputs.md).
+1. Run **Standalone input gate** above.
 2. Source `repo.config.sh`; set `PROJECT_NAME` from chat if given; derive `PROJECT_*` paths per export block; re-export `LOCAL_DEPLOYMENT_URL` / `WAVEMAKER_DEPLOYMENT_URL` if chat overrides differ from repo.config.
 3. Run the export block (Configuration table formulas).
 4. Run **prerequisites** + Steps **1–7** (Step **2a**; skip Step 1 when WAR + Tomcat app already exist).
-5. **Browser verify** per patterns § Preview validation checklist unless `skip preview yes`.
+5. **Browser verify** per [`checklist.md`](../skills/angular-upgrade/checklist.md#preview-validation-step-9) § Preview validation checklist unless `skip preview yes`.
 
 ### Upgrade Step 9
 
@@ -282,7 +301,7 @@ On failure: do not edit `~/Desktop/local-*` or generated app source. Fix `NG_RUN
 2. Read `current-state.md` — require `Inputs confirmed: yes`; use effective preview/comparison/skip preview from upgrade Step 0.
 3. Export variables (`PROJECT_NAME` + derived paths, effective URLs from current-state).
 4. Run Steps **1, 2b, 3–7** only (skip Step 1 when WAR + Tomcat app already exist).
-5. **Browser verify** per patterns § Preview validation checklist unless `skip preview yes`.
+5. **Browser verify** per [`checklist.md`](../skills/angular-upgrade/checklist.md#preview-validation-step-9) § Preview validation checklist unless `skip preview yes`.
 
 ### Both modes
 

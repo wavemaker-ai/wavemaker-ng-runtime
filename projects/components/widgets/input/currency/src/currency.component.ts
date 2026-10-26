@@ -1,6 +1,5 @@
-import { FormsModule } from '@angular/forms';
-import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild} from '@angular/core';
-import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
+import { FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
+import {Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 
 import {AbstractI18nService, AppDefaults, CURRENCY_INFO} from '@wm/core';
 import {IWidgetConfig, provideAs, provideAsWidgetRef, TextContentDirective, TrailingZeroDecimalPipe} from '@wm/components/base';
@@ -16,6 +15,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [TextContentDirective, FormsModule],
     selector: '[wmCurrency]',
@@ -27,7 +27,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class CurrencyComponent extends NumberLocale implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     currencyCode: string;
     currencySymbol: string;
@@ -44,7 +44,7 @@ export class CurrencyComponent extends NumberLocale implements OnDestroy {
     @ViewChild(NgModel, {static: true}) ngModel: NgModel;
     @ViewChild('input', { static: true, read: ElementRef }) inputEl: ElementRef;
 
-    constructor(inj: Injector,  private appDefaults: AppDefaults, i18nService: AbstractI18nService, trailingZeroDecimalPipe: TrailingZeroDecimalPipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector,  private readonly appDefaults: AppDefaults, i18nService: AbstractI18nService, trailingZeroDecimalPipe: TrailingZeroDecimalPipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, i18nService, trailingZeroDecimalPipe, explicitContext);
         this.currencyCode = this.appDefaults.currencyCode || 'USD';
         this.currencySymbol = CURRENCY_INFO[this.appDefaults.currencyCode || "USD"].symbol;

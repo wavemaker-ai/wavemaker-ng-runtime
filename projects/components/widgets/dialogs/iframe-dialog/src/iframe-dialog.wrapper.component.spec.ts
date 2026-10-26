@@ -1,5 +1,5 @@
 import { Component, NO_ERRORS_SCHEMA, ViewChild, TemplateRef } from '@angular/core';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { IframeDialogComponent } from './iframe-dialog.component';
 import { Context, provideAsWidgetRef } from '@wm/components/base';

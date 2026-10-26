@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild, OnDestroy} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Inject, Injector, Optional, ViewChild, OnDestroy, ChangeDetectionStrategy} from '@angular/core';
 
 import { APPLY_STYLES_TYPE, ImagePipe, styler, StylableComponent, provideAsWidgetRef, TextContentDirective, TrustAsPipe, WmAppIconComponent } from '@wm/components/base';
 
@@ -11,6 +11,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-navbar', hostClass: DEFAULT_CLS};
 declare const $;
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective, TrustAsPipe, ImagePipe, WmAppIconComponent],
     selector: '[wmNavbar]',
@@ -20,7 +21,7 @@ declare const $;
     ]
 })
 export class NavbarComponent extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public menuiconclass: any;
     public menuiconurl: string;

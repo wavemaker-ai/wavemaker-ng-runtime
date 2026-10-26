@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {Component, HostListener, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import {Component, HostListener, Inject, Injector, OnDestroy, Optional, ChangeDetectionStrategy} from '@angular/core';
 import { NG_VALUE_ACCESSOR, NG_VALIDATORS } from '@angular/forms';
 
 import {setListClass} from '@wm/core';
@@ -15,6 +15,7 @@ const DEFAULT_CLS = 'app-checkboxset list-group inline';
 const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-checkboxset', hostClass: DEFAULT_CLS};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective],
     selector: '[wmCheckboxset]',
@@ -28,7 +29,7 @@ const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-checkboxset', hostClass: D
 })
 
 export class CheckboxsetComponent extends DatasetAwareFormComponent implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public layout = '';
     public collapsible: boolean;
@@ -38,7 +39,7 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent implements O
 
     public disabled: boolean;
     public itemsperrow: string;
-    private itemsPerRowClass: string;
+    private readonly itemsPerRowClass: string;
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
@@ -49,7 +50,7 @@ export class CheckboxsetComponent extends DatasetAwareFormComponent implements O
     triggerInvokeOnChange(keys, $event) {
         this.modelByKey = keys;
 
-        if(this.viewParent.containerWidget && this.viewParent.containerWidget.updateDataValue)
+        if(this.viewParent.containerWidget?.updateDataValue)
             this.viewParent.containerWidget.updateDataValue(this.datavalue);
 
         this.invokeOnTouched();

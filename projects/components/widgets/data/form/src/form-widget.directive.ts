@@ -41,7 +41,7 @@ export class FormWidgetDirective implements OnInit, OnDestroy {
         if (!fieldName) {
             return undefined;
         }
-        return this.ngform && this.ngform.controls[fieldName];
+        return this.ngform?.controls[fieldName];
     }
 
     addControl(fieldName) {

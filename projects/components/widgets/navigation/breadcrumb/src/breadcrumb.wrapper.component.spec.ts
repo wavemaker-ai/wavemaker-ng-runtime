@@ -1,4 +1,4 @@
-import { Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NO_ERRORS_SCHEMA, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { BreadcrumbComponent } from './breadcrumb.component';
@@ -14,6 +14,10 @@ const markup = `<div wmBreadcrumb name="breadcrumb1" aria-label="breadcrumb"></d
 
 @Component({
     standalone: false,
+    // Angular 22 changed the default changeDetection strategy for components with no
+    // explicit setting (see .claude/skills/angular-upgrade/patterns/runtime.md §27a).
+    // Pin it here to match the pre-22 default behavior these tests rely on.
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: markup
 })
 class BreadcrumbWrapperComponent {
@@ -53,14 +57,13 @@ describe('BreadcrumbComponent', () => {
     let breadcrumbComponent: BreadcrumbComponent;
     let fixture: ComponentFixture<BreadcrumbWrapperComponent>;
     let router: Router;
-    let location: Location;
 
     beforeEach(waitForAsync(() => {
         fixture = TestBed.configureTestingModule(testModuleDef).createComponent(BreadcrumbWrapperComponent);
         wrapperComponent = fixture.componentInstance;
         breadcrumbComponent = wrapperComponent.wmComponent;
         router = TestBed.inject(Router);
-        location = TestBed.inject(Location);
+        TestBed.inject(Location);
         jest.spyOn(breadcrumbComponent, 'invokeEventCallback').mockReturnValue(true);
         fixture.detectChanges();
     }));

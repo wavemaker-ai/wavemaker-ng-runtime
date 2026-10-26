@@ -4,8 +4,8 @@ import { App, setPipeProvider } from "@wm/core";
 
 @Injectable({ providedIn: 'root' })
 export class PipeService {
-    constructor(private pipeProvider: PipeProvider,
-                private $app: App) {
+    constructor(private readonly pipeProvider: PipeProvider,
+                private readonly $app: App) {
                     // setting pipe provider, to be used for variables watcher in expression parser
         setPipeProvider(pipeProvider);
         if(this.$app.isApplicationType) {
@@ -13,7 +13,7 @@ export class PipeService {
         }
     }
 
-    private supportedPipes = [ "toDate", "toCurrency", "prefix", "suffix", "numberToString", "stringToNumber", "timeFromNow", "trustAs", "sanitize"];
+    private readonly supportedPipes = [ "toDate", "toCurrency", "prefix", "suffix", "numberToString", "stringToNumber", "timeFromNow", "trustAs", "sanitize"];
 
     public getPipe(name: string) {
         if(this.supportedPipes.includes(name)) {

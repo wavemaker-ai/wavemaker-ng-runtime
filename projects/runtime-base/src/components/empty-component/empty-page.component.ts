@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { App, getWmProjectProperties } from '@wm/core';
@@ -7,6 +7,7 @@ import { SecurityService } from '@wm/security';
 import { AppManagerService } from '../../services/app.manager.service';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'app-empty-page',
     template: '<div></div>'
@@ -14,11 +15,11 @@ import { AppManagerService } from '../../services/app.manager.service';
 export class EmptyPageComponent implements OnInit {
 
     constructor(
-        private route: ActivatedRoute,
-        private securityService: SecurityService,
-        private router: Router,
-        private app: App,
-        private appManger: AppManagerService
+        private readonly route: ActivatedRoute,
+        private readonly securityService: SecurityService,
+        private readonly router: Router,
+        private readonly app: App,
+        private readonly appManger: AppManagerService
     ) { }
 
     private parseSearchParams(search: string): Record<string, string> {

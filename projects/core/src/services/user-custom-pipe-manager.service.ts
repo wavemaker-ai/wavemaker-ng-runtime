@@ -2,7 +2,7 @@ import { Injectable } from "@angular/core";
 
 @Injectable({ providedIn: 'root' })
 export class CustomPipeManager {
-    private customPipes: any = new Map();
+    private readonly customPipes: any = new Map();
 
     public setCustomPipe(key: string, value: any) {
         this.customPipes.set(key, value);

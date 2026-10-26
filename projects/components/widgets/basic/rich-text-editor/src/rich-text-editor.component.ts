@@ -1,4 +1,4 @@
-import {Component, Inject, Injector, NgZone, OnDestroy, OnInit, Optional, SecurityContext} from '@angular/core';
+import {Component, Inject, Injector, NgZone, OnDestroy, OnInit, Optional, SecurityContext, ChangeDetectionStrategy} from '@angular/core';
 import {NG_VALUE_ACCESSOR} from '@angular/forms';
 
 import {setAttr, setCSS, setHtml} from '@wm/core';
@@ -48,6 +48,7 @@ const overrideSummerNote = () => {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'div[wmRichTextEditor]',
     templateUrl: './rich-text-editor.component.html',
@@ -58,7 +59,7 @@ const overrideSummerNote = () => {
     exportAs: 'wmRichTextEditor'
 })
 export class RichTextEditorComponent extends BaseFormCustomComponent implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     $richTextEditor;
     $hiddenInputEle;
@@ -127,7 +128,7 @@ export class RichTextEditorComponent extends BaseFormCustomComponent implements 
         }
     }
 
-    constructor(inj: Injector, private sanitizePipe: SanitizePipe, private ngZone: NgZone, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private readonly sanitizePipe: SanitizePipe, private readonly ngZone: NgZone, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_INFO, explicitContext);
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER, ['height']);
         overrideSummerNote();

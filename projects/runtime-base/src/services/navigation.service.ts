@@ -11,11 +11,11 @@ const parentSelector = 'body >app-root';
 
 @Injectable()
 export class NavigationServiceImpl implements AbstractNavigationService {
-    private history = new History();
+    private readonly history = new History();
     private transition: string;
     private isPageAddedToHistory = false;
 
-    constructor(private app: App, private router: Router, public zone: NgZone) {
+    constructor(private readonly app: App, private readonly router: Router, public zone: NgZone) {
         this.router.events.subscribe(event => {
             if (event instanceof NavigationStart) {
                 const url = event.url;
@@ -113,12 +113,12 @@ export class NavigationServiceImpl implements AbstractNavigationService {
         const transition = options.transition || '';
         const $event = options.$event;
         const activePage = this.app.activePage;
-        const prefabName = variable && variable._context && variable._context.prefabName;
+        const prefabName = variable?._context?.prefabName;
 
         // Check if app is Prefab
         if (this.app.isPrefabType) {
             this.goToElementView($(parentSelector).find('[name="' + viewName + '"]'), viewName, pageName, variable);
-        } else {
+        } else 
             // checking if the element is present in the page or not, if no show an error toaster
             // if yes check if it is inside a partial/prefab in the page and then highlight the respective element
             // else goto the page in which the element exists and highlight the element
@@ -149,7 +149,7 @@ export class NavigationServiceImpl implements AbstractNavigationService {
             } else {
                 this.app.notifyApp(CONSTANTS.WIDGET_DOESNT_EXIST, 'error');
             }
-        }
+        
     }
 
     /*
@@ -203,9 +203,7 @@ export class NavigationServiceImpl implements AbstractNavigationService {
                     return childSelector;
                 }
             });
-            if (selector) {
-                $el = $(selector);
-            }
+            $el = $(selector);
         }
         return $el;
     }
@@ -280,13 +278,10 @@ class PageInfo {
         this.transition = isEmpty(this.transition) ? null : this.transition;
     }
 
-    public isEqual(page1: PageInfo) {
-        return page1 && page1.name === this.name && isEqual(page1.urlParams, this.urlParams);
-    }
 }
 
 class History {
-    private stack: Array<PageInfo> = [];
+    private readonly stack: Array<PageInfo> = [];
     private currentPage: PageInfo;
 
     public getCurrentPage() {
@@ -295,10 +290,6 @@ class History {
 
     public getPagesCount() {
         return this.stack.length;
-    }
-
-    public isLastVisitedPage(page: PageInfo) {
-        return this.getLastPage().isEqual(page);
     }
 
     public push(pageInfo: PageInfo) {
@@ -311,9 +302,5 @@ class History {
     public pop() {
         this.currentPage = this.stack.pop();
         return this.currentPage;
-    }
-
-    public getLastPage() {
-        return this.stack.length > 0 ? this.stack[this.stack.length - 1] : undefined;
     }
 }

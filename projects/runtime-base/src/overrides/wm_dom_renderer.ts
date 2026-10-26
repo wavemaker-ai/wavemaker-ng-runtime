@@ -8,9 +8,9 @@
 
 import {
     APP_ID,
-    inject,
-    Inject,
+        Inject,
     Injectable,
+    Optional,
     Renderer2,
     RendererFactory2,
     RendererStyleFlags2,
@@ -18,7 +18,7 @@ import {
     ViewEncapsulation
 } from '@angular/core';
 
-import {EventManager, ɵSharedStylesHost} from '@angular/platform-browser';
+import {CssVarNamespacer, EventManager, ɵSharedStylesHost} from '@angular/platform-browser';
 import {DOCUMENT, ɵgetDOM as getDOM} from '@angular/common';
 
 export const NAMESPACE_URIS: {[ns: string]: string} = {
@@ -31,7 +31,10 @@ export const NAMESPACE_URIS: {[ns: string]: string} = {
 };
 
 const COMPONENT_REGEX = /%COMP%/g;
-const NG_DEV_MODE = false;
+// Angular 22+ adds a `%NS%` placeholder to CSS variable names.
+// The default DomRenderer replaces `%NS%` with the configured namespace,
+// or leaves it empty if `provideCssVarNamespacing` is not configured.
+const CSS_VAR_NS_REGEX = /%NS%/g;
 
 export const COMPONENT_VARIABLE = '%COMP%';
 export const HOST_ATTR = `_nghost-${COMPONENT_VARIABLE}`;
@@ -46,14 +49,14 @@ export function shimHostAttribute(componentShortId: string): string {
 }
 
 export function flattenStyles(
-    compId: string, styles: Array<any|any[]>, target: string[]): string[] {
+    compId: string, styles: Array<any|any[]>, target: string[], cssVarNamespace = ''): string[] {
   for (let i = 0; i < styles.length; i++) {
     let style = styles[i];
 
     if (Array.isArray(style)) {
-      flattenStyles(compId, style, target);
+      flattenStyles(compId, style, target, cssVarNamespace);
     } else {
-      style = style.replace(COMPONENT_REGEX, compId);
+      style = style.replace(COMPONENT_REGEX, compId).replace(CSS_VAR_NS_REGEX, cssVarNamespace);
       target.push(style);
     }
   }
@@ -85,17 +88,21 @@ function decoratePreventDefault(eventHandler: Function): Function {
   };
 }
 
-let hasLoggedNativeEncapsulationWarning = false;
 
 @Injectable()
 export class WMDomRendererFactory2 implements RendererFactory2 {
-  private rendererByCompId = new Map<string, Renderer2>();
-  private defaultRenderer: Renderer2;
+  private readonly rendererByCompId = new Map<string, Renderer2>();
+  private readonly defaultRenderer: Renderer2;
+  private readonly cssVarNamespace: string;
 
   constructor(
-      private eventManager: EventManager, private sharedStylesHost: ɵSharedStylesHost,
-      @Inject(APP_ID) private appId: string, @Inject(DOCUMENT) private readonly doc: Document,) {
-    this.defaultRenderer = new WMDefaultDomRenderer2(eventManager, doc);
+      private readonly eventManager: EventManager, private readonly sharedStylesHost: ɵSharedStylesHost,
+      @Inject(APP_ID) private readonly appId: string, @Inject(DOCUMENT) private readonly doc: Document,
+      @Optional() cssVarNamespacer?: CssVarNamespacer) {
+// CssVarNamespacer provides the namespace prefix configured through
+// `provideCssVarNamespacing`, or an empty string if no namespace is configured.
+    this.cssVarNamespace = cssVarNamespacer ? cssVarNamespacer.namespace('--').substring('--'.length) : '';
+    this.defaultRenderer = new WMDefaultDomRenderer2(eventManager, doc, this.cssVarNamespace);
   }
 
   createRenderer(element: any, type: RendererType2|null): Renderer2 {
@@ -107,7 +114,7 @@ export class WMDomRendererFactory2 implements RendererFactory2 {
         let renderer = this.rendererByCompId.get(type.id);
         if (!renderer) {
           renderer = new EmulatedEncapsulationDomRenderer2(
-              this.eventManager, this.sharedStylesHost, type, this.appId, this.doc);
+              this.eventManager, this.sharedStylesHost, type, this.appId, this.doc, this.cssVarNamespace);
           this.rendererByCompId.set(type.id, renderer);
         }
         (<EmulatedEncapsulationDomRenderer2>renderer).applyToHost(element);
@@ -118,20 +125,10 @@ export class WMDomRendererFactory2 implements RendererFactory2 {
       case 1:
       case ViewEncapsulation.ShadowDom:
         // TODO(FW-2290): remove the `case 1:` fallback logic and the warning in v12.
-        if (NG_DEV_MODE &&
-            // @ts-ignore TODO: Remove as part of FW-2290. TS complains about us dealing with an
-            // enum value that is not known (but previously was the value for
-            // ViewEncapsulation.Native)
-            !hasLoggedNativeEncapsulationWarning && type.encapsulation === 1) {
-          hasLoggedNativeEncapsulationWarning = true;
-          console.warn(
-              'ViewEncapsulation.Native is no longer supported. Falling back to ViewEncapsulation.ShadowDom. The fallback will be removed in v12.');
-        }
-
-        return new ShadowDomRenderer(this.eventManager, this.sharedStylesHost, element, type, this.doc);
+        return new ShadowDomRenderer(this.eventManager, this.sharedStylesHost, element, type, this.doc, this.cssVarNamespace);
       default: {
         if (!this.rendererByCompId.has(type.id)) {
-          const styles = flattenStyles(type.id, type.styles, []);
+          const styles = flattenStyles(type.id, type.styles, [], this.cssVarNamespace);
           this.sharedStylesHost.addStyles(styles);
           this.rendererByCompId.set(type.id, this.defaultRenderer);
         }
@@ -146,7 +143,8 @@ export class WMDomRendererFactory2 implements RendererFactory2 {
 
 class WMDefaultDomRenderer2 implements Renderer2 {
   data: {[key: string]: any} = Object.create(null);
-  constructor(private eventManager: EventManager, @Inject(DOCUMENT) protected readonly doc: Document,) {}
+  constructor(private readonly eventManager: EventManager, @Inject(DOCUMENT) protected readonly doc: Document,
+              protected readonly cssVarNamespace = '') {}
 
   destroy(): void {}
 
@@ -230,7 +228,12 @@ class WMDefaultDomRenderer2 implements Renderer2 {
           property = parts[0].trim();
           value = parts[1].trim();
 
-          element.style[property] = value;
+          // css variables can only be set through setProperty
+          if (property.startsWith('--')) {
+            element.style.setProperty(property, value);
+          } else {
+            element.style[property] = value;
+          }
         }
       });
       return styleString;
@@ -246,14 +249,14 @@ class WMDefaultDomRenderer2 implements Renderer2 {
       } else {
         el.setAttribute(name, value);
       }
-    } else {
+    } else 
       if (name === 'style') {
         this.resetStyles(el);
         this.applyStyles(el, value);
       } else {
         el.setAttribute(name, value);
       }
-    }
+    
   }
 
   removeAttribute(el: any, name: string, namespace?: string): void {
@@ -278,7 +281,11 @@ class WMDefaultDomRenderer2 implements Renderer2 {
   }
 
   setStyle(el: any, style: string, value: any, flags: RendererStyleFlags2): void {
-    if (flags & (RendererStyleFlags2.DashCase | RendererStyleFlags2.Important)) {
+    const isVariable = style.startsWith('--');
+    if (isVariable) {
+      style = style.replace(CSS_VAR_NS_REGEX, this.cssVarNamespace);
+    }
+    if (isVariable || flags & (RendererStyleFlags2.DashCase | RendererStyleFlags2.Important)) {
       el.style.setProperty(style, value, flags & RendererStyleFlags2.Important ? 'important' : '');
     } else {
       el.style[style] = value;
@@ -286,7 +293,11 @@ class WMDefaultDomRenderer2 implements Renderer2 {
   }
 
   removeStyle(el: any, style: string, flags: RendererStyleFlags2): void {
-    if (flags & RendererStyleFlags2.DashCase) {
+    const isVariable = style.startsWith('--');
+    if (isVariable) {
+      style = style.replace(CSS_VAR_NS_REGEX, this.cssVarNamespace);
+    }
+    if (isVariable || flags & RendererStyleFlags2.DashCase) {
       el.style.removeProperty(style);
     } else {
       // IE requires '' instead of null
@@ -302,7 +313,6 @@ class WMDefaultDomRenderer2 implements Renderer2 {
     if (name && name.charCodeAt(0) === AT_CHARCODE) {
       return;
     }
-    NG_DEV_MODE && checkNoSyntheticProp(name, 'property');
     if (el != null) {
       el[name] = value;
     }
@@ -319,7 +329,6 @@ class WMDefaultDomRenderer2 implements Renderer2 {
       if (event && event.charCodeAt(0) === AT_CHARCODE) {
           return () => {};
       }
-      (typeof NG_DEV_MODE === 'undefined' || NG_DEV_MODE) && checkNoSyntheticProp(event, 'listener');
       if (typeof target === 'string') {
           target = getDOM().getGlobalEventTarget(this.doc, target);
           if (!target) {
@@ -332,28 +341,20 @@ class WMDefaultDomRenderer2 implements Renderer2 {
 }
 
 const AT_CHARCODE = (() => '@'.charCodeAt(0))();
-function checkNoSyntheticProp(name: string, nameKind: string) {
-  if (name.charCodeAt(0) === AT_CHARCODE) {
-    throw new Error(`Unexpected synthetic ${nameKind} ${name} found. Please make sure that:
-  - Either \`BrowserAnimationsModule\` or \`NoopAnimationsModule\` are imported in your application.
-  - There is corresponding configuration for the animation named \`${
-        name}\` defined in the \`animations\` field of the \`@Component\` decorator (see https://angular.io/api/core/Component#animations).`);
-  }
-}
-
 function isTemplateNode(node: any): node is HTMLTemplateElement {
   return node.tagName === 'TEMPLATE' && node.content !== undefined;
 }
 
 class EmulatedEncapsulationDomRenderer2 extends WMDefaultDomRenderer2 {
-  private contentAttr: string;
-  private hostAttr: string;
+  private readonly contentAttr: string;
+  private readonly hostAttr: string;
 
   constructor(
       eventManager: EventManager, sharedStylesHost: ɵSharedStylesHost,
-      private component: RendererType2, appId: string, @Inject(DOCUMENT) protected readonly doc: Document) {
-    super(eventManager, doc);
-    const styles = flattenStyles(appId + '-' + component.id, component.styles, []);
+      private readonly component: RendererType2, appId: string, @Inject(DOCUMENT) protected readonly doc: Document,
+      cssVarNamespace = '') {
+    super(eventManager, doc, cssVarNamespace);
+    const styles = flattenStyles(appId + '-' + component.id, component.styles, [], cssVarNamespace);
     sharedStylesHost.addStyles(styles);
 
     this.contentAttr = shimContentAttribute(appId + '-' + component.id);
@@ -372,15 +373,16 @@ class EmulatedEncapsulationDomRenderer2 extends WMDefaultDomRenderer2 {
 }
 
 class ShadowDomRenderer extends WMDefaultDomRenderer2 {
-  private shadowRoot: any;
+  private readonly shadowRoot: any;
 
   constructor(
-      eventManager: EventManager, private sharedStylesHost: ɵSharedStylesHost,
-      private hostEl: any, component: RendererType2, @Inject(DOCUMENT) protected readonly doc: Document,) {
-    super(eventManager, doc);
+      eventManager: EventManager, private readonly sharedStylesHost: ɵSharedStylesHost,
+      private readonly hostEl: any, component: RendererType2, @Inject(DOCUMENT) protected readonly doc: Document,
+      cssVarNamespace = '') {
+    super(eventManager, doc, cssVarNamespace);
     this.shadowRoot = (hostEl as any).attachShadow({mode: 'open'});
     this.sharedStylesHost.addHost(this.shadowRoot);
-    const styles = flattenStyles(component.id, component.styles, []);
+    const styles = flattenStyles(component.id, component.styles, [], cssVarNamespace);
     for (let i = 0; i < styles.length; i++) {
       const styleEl = document.createElement('style');
       styleEl.textContent = styles[i];

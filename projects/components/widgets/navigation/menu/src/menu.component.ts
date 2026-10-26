@@ -11,7 +11,7 @@ import {
     OnDestroy,
     OnInit,
     Optional,
-    Self
+    Self, ChangeDetectionStrategy
 } from '@angular/core';
 import {Router} from '@angular/router';
 
@@ -86,6 +86,7 @@ const AUTO_OPEN = {
 
 const WIDGET_CONFIG = { widgetType: 'wm-menu', hostClass: 'dropdown app-menu' };
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [BsDropdownModule, CommonModule, TextContentDirective, AnchorComponent, ButtonComponent, MenuDropdownComponent, WmAppIconComponent],
     selector: '[wmMenu]',
@@ -96,7 +97,7 @@ const WIDGET_CONFIG = { widgetType: 'wm-menu', hostClass: 'dropdown app-menu' };
     ]
 })
 export class MenuComponent extends DatasetAwareNavComponent implements OnInit, OnDestroy, AfterViewInit {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public menualign: string;
     public menuposition: string;
@@ -114,7 +115,7 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
     public hint: string;
     public arialabel: string;
 
-    private itemActionFn: Function;
+    private readonly itemActionFn: Function;
     private menuCaret = 'fa-caret-down';
     private _selectFirstItem = false;
 
@@ -193,10 +194,10 @@ export class MenuComponent extends DatasetAwareNavComponent implements OnInit, O
     constructor(
         inj: Injector,
         public route: Router,
-        private userDefinedExecutionContext: UserDefinedExecutionContext,
-        private app: App,
+        private readonly userDefinedExecutionContext: UserDefinedExecutionContext,
+        private readonly app: App,
         @Self() @Optional() public bsDropdown: BsDropdownDirective,
-        @Optional() private parentNav: NavComponent,
+        @Optional() private readonly parentNav: NavComponent,
         @Attribute('select.event') public selectEventCB: string,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {

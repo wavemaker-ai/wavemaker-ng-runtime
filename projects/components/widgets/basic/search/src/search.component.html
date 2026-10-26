@@ -82,7 +82,7 @@
     [attr.aria-label]="arialabel || 'Search field'"/>
   <i class="btn-close wi wi-cancel" [hidden]="!showClosebtn" (click)="clearSearch($event);"></i>
 } @else {
-  <button type="button" class="btn btn-icon form-control-feedback back-btn" aria-hidden="true" (click)="closeSearch()">
+  <button type="button" class="btn btn-icon form-control-feedback back-btn" aria-hidden="true" aria-label="Back" (click)="closeSearch()">
     <wm-app-icon [iconclass]="backsearchiconclass" [iconurl]="backsearchiconurl" alt="Back"></wm-app-icon>
   </button>
   <span class="sr-only">Back button</span>
@@ -120,11 +120,11 @@
     [dropup]="dropup"
     [attr.name]="name"
     [attr.aria-label]="arialabel || 'Search field'">
-  <input class="model-holder" ng-model="proxyModel" ng-required="required" tabindex="-1" aria-hidden="true">
+  <input  aria-label="Search value" class="model-holder" ng-model="proxyModel" ng-required="required" tabindex="-1" aria-hidden="true">
   @if (_loadingItems) {
     <span aria-hidden="true" class="fa fa-circle-o-notch fa-spin form-control-feedback"></span>
   }
-  <button type="button" class="btn btn-icon form-control-feedback clear-btn" [ngClass]="{'show-btn': isQueryEntered()}" (click)="clearSearch($event, true)">
+  <button type="button" class="btn btn-icon form-control-feedback clear-btn" aria-label="Clear" [ngClass]="{'show-btn': isQueryEntered()}" (click)="clearSearch($event, true)">
     <wm-app-icon [iconclass]="clearsearchiconclass" [iconurl]="clearsearchiconurl" alt="Clear"></wm-app-icon>
   </button>
   <span class="sr-only">Clear button</span>

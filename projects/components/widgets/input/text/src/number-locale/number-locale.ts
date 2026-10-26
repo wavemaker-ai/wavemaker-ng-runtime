@@ -9,17 +9,17 @@ import { BaseInput } from '../base-input/base-input';
 import {includes, intersection, isNull, isString, isUndefined, round, toArray} from "lodash-es";
 
 export abstract class NumberLocale extends BaseInput implements Validator {
-    private DECIMAL: string;
-    private GROUP: string;
-    private selectedLocale: string;
+    private readonly DECIMAL: string;
+    private readonly GROUP: string;
+    private readonly selectedLocale: string;
     private proxyModel: number;
     private numberNotInRange: boolean;
     private isInvalidNumber: boolean;
     private isDefaultQuery: boolean = true;
     private decimalValue: string = '';
     public displayValue: string;
-    private numberfilter: string;
-    private localefilter: string;
+    private readonly numberfilter: string;
+    private readonly localefilter: string;
     public readonly: boolean;
 
     public placeholder: string;
@@ -38,8 +38,8 @@ export abstract class NumberLocale extends BaseInput implements Validator {
     constructor(
         inj: Injector,
         config: IWidgetConfig,
-        private i18nService: AbstractI18nService,
-        private trailingZeroDecimalPipe: TrailingZeroDecimalPipe,
+        private readonly i18nService: AbstractI18nService,
+        private readonly trailingZeroDecimalPipe: TrailingZeroDecimalPipe,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
         super(inj, config, explicitContext);
@@ -83,7 +83,7 @@ export abstract class NumberLocale extends BaseInput implements Validator {
                     (value as any) = isLocalizedNumber ? parts[0] : this.transformNumber(parts[0]);
                 }
                 if(decimalplaces > 0) {
-                    this.decimalValue = parts[1] && parts[1].substring(0, decimalplaces) || '';
+                    this.decimalValue = parts[1]?.substring(0, decimalplaces) || '';
                     if(isLocalizedNumber) {
                         (value as any) = this.decimalValue.length ? `${parts[0]}${this.DECIMAL}${this.decimalValue}` : parts[0];
                     } else {
@@ -214,9 +214,6 @@ export abstract class NumberLocale extends BaseInput implements Validator {
         // WMS-22179: split number based on the decimal separator in the val
         // splits string into two parts. decimal and number.
         const parts = val.split(this.inputmode === INPUTMODE.FINANCIAL ? (val.indexOf(this.DECIMAL) > -1 ? this.DECIMAL : '.') : this.DECIMAL);
-        if (!parts.length) {
-            return null;
-        }
         if (parts.length > 2) {
             return NaN;
         }
@@ -306,11 +303,11 @@ export abstract class NumberLocale extends BaseInput implements Validator {
                     if (!((prevDataValue == undefined && this.datavalue == null) || (prevDataValue == this.datavalue))) {
                         this.handleChange(value);
                     }
-                } else {
+                } else
                     if (!(prevDataValue == undefined && this.datavalue == null)) {
                         this.handleChange(value);
                     }
-                }
+
             } else { // currency widget
                 this.handleChange(value);
             }
@@ -433,14 +430,14 @@ export abstract class NumberLocale extends BaseInput implements Validator {
                 proxyModel = inputValue;
                 this.resetValidations();
             }
-        } else {
+        } else
             if (isUndefined(proxyModel) || isNull(proxyModel)) {
                 proxyModel = value = this.getValueInRange((this.minvalue || 0));
                 this.resetValidations();
             } else {
                 value = this.getValueInRange(proxyModel + (key === 'UP' ? this.step : -this.step));
             }
-        }
+
         if ((key === 'UP' && proxyModel <= value) || (key === 'DOWN' && proxyModel >= value)) {
             const decimalRoundValue = Math.max(this.countDecimals(proxyModel), this.countDecimals(this.step));
 
@@ -499,7 +496,7 @@ export abstract class NumberLocale extends BaseInput implements Validator {
         const inputValue = $event.target?.value||"";
 
         // when input mode is financial, do not restrict user on entering the value when step value limit is reached.
-        const skipStepValidation = this.inputmode === INPUTMODE.FINANCIAL;
+        // const skipStepValidation = this.inputmode === INPUTMODE.FINANCIAL;
 
         // Validates if user eneters more than 16 digits
         if (inputValue) {
@@ -509,7 +506,7 @@ export abstract class NumberLocale extends BaseInput implements Validator {
                 // user selects a range of digits and presses a key.
                 // Do not throw validation of exceeded number as selected range value will be deleted.
                 const selectedVal = window.getSelection();
-                if (selectedVal && selectedVal.toString() && selectedVal.focusNode === this.nativeElement) {
+                if (selectedVal?.toString() && selectedVal.focusNode === this.nativeElement) {
                     return true;
                 }
                 return false;

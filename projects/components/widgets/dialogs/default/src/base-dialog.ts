@@ -10,43 +10,39 @@ import { BaseComponent, IDialog, IWidgetConfig, WidgetConfig } from '@wm/compone
 
 
 const invokeOpenedCallback = (ref) => {
-    if (ref) {
-        setTimeout(() => {
-            const root = findRootContainer(ref.$element);
-            // if page styles have to be applied to dialog then dialog has to be child of page element.
-            if (root) {
-                $('body > modal-container > div').wrap('<' + root + '/>');
-            }
-            ref.invokeEventCallback('opened', { $event: { type: 'opened' } });
-            // Focusing the first focusable element when the dialog is opened
-            const container = $('[aria-labelledby= ' + ref.titleId + ']')[0];
-            const keyboardFocusableElements = [container.querySelectorAll(
-                'a, button, input, textarea, select, details, iframe, embed, object, summary dialog, audio[controls], video[controls], [contenteditable], [tabindex]:not([tabindex="-1"])'
-            )].filter(el => {
-                return (
-                    !el[0].hasAttribute('disabled') && !el[0].hasAttribute('hidden'));
-            })[0];
-            $(keyboardFocusableElements[0]).focus();
+    setTimeout(() => {
+        const root = findRootContainer(ref.$element);
+        // if page styles have to be applied to dialog then dialog has to be child of page element.
+        if (root) {
+            $('body > modal-container > div').wrap('<' + root + '/>');
+        }
+        ref.invokeEventCallback('opened', { $event: { type: 'opened' } });
+        // Focusing the first focusable element when the dialog is opened
+        const container = $('[aria-labelledby= ' + ref.titleId + ']')[0];
+        const keyboardFocusableElements = [container.querySelectorAll(
+            'a, button, input, textarea, select, details, iframe, embed, object, summary dialog, audio[controls], video[controls], [contenteditable], [tabindex]:not([tabindex="-1"])'
+        )].filter(el => {
+            return (
+                !el[0].hasAttribute('disabled') && !el[0].hasAttribute('hidden'));
+        })[0];
+        $(keyboardFocusableElements[0]).focus();
 
-            const openedDialogs = ref.dialogService.getOpenedDialogs();
-            if (openedDialogs.length > 1) {
-                const zIndex = Number($("[aria-labelledby= " + openedDialogs[openedDialogs.length - 2].titleId + "]").css('z-index'));
-                $('[aria-labelledby= ' + ref.dialogService.getLastOpenedDialog().titleId + ']').css('z-index', zIndex + 2);
-                $('bs-modal-backdrop').css('z-index', zIndex + 1);
-            }
-        });
-    }
+        const openedDialogs = ref.dialogService.getOpenedDialogs();
+        if (openedDialogs.length > 1) {
+            const zIndex = Number($("[aria-labelledby= " + openedDialogs[openedDialogs.length - 2].titleId + "]").css('z-index'));
+            $('[aria-labelledby= ' + ref.dialogService.getLastOpenedDialog().titleId + ']').css('z-index', zIndex + 2);
+            $('bs-modal-backdrop').css('z-index', zIndex + 1);
+        }
+    });
 };
 
 const invokeClosedCallback = (ref) => {
-    if (ref) {
-        ref.invokeEventCallback('close');
-        ref.dialogRef = undefined;
-        const openedDialogs = ref.dialogService.getOpenedDialogs();
-        if (openedDialogs.length >= 1) {
-            const zIndex: any = Number($("[aria-labelledby= " + openedDialogs[openedDialogs.length - 1].titleId + "]").css('z-index'));
-            $('bs-modal-backdrop').css('z-index', zIndex - 1);
-        }
+    ref.invokeEventCallback('close');
+    ref.dialogRef = undefined;
+    const openedDialogs = ref.dialogService.getOpenedDialogs();
+    if (openedDialogs.length >= 1) {
+        const zIndex: any = Number($("[aria-labelledby= " + openedDialogs[openedDialogs.length - 1].titleId + "]").css('z-index'));
+        $('bs-modal-backdrop').css('z-index', zIndex - 1);
     }
 };
 
@@ -63,7 +59,7 @@ export abstract class BaseDialog extends BaseComponent implements IDialog, OnDes
     public titleId: string = 'wmdialog-' + generateGUId();
     public sheet: string | boolean;
     public sheetPosition: string;
-    private dialogOriginFocusStack: HTMLElement[] = [];
+    private readonly dialogOriginFocusStack: HTMLElement[] = [];
 
     protected constructor(
         inj: Injector,

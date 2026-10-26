@@ -8,7 +8,7 @@ import {
     Optional,
     OnDestroy,
     QueryList,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import { APPLY_STYLES_TYPE, MessageComponent, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
@@ -21,6 +21,7 @@ import {includes} from "lodash-es";
 const WIDGET_INFO = {widgetType: 'wm-login', hostClass: 'app-login'};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true, 
     imports: [ MessageComponent ],
     selector: 'div[wmLogin]',
@@ -30,7 +31,7 @@ const WIDGET_INFO = {widgetType: 'wm-login', hostClass: 'app-login'};
     ]
 })
 export class LoginComponent extends StylableComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     loginBtnCmp: ButtonComponent;
 
     @ContentChild(FormComponent) formCmp: FormComponent;

@@ -1,4 +1,4 @@
-import {Component, Inject, Injector, Optional, SecurityContext} from '@angular/core';
+import {Component, Inject, Injector, Optional, SecurityContext, ChangeDetectionStrategy} from '@angular/core';
 
 import {appendNode, createElement, removeNode, transformFileURI} from '@wm/core';
 import {DISPLAY_TYPE, ImagePipe, provideAsWidgetRef, StylableComponent, styler, TrustAsPipe} from '@wm/components/base';
@@ -13,6 +13,7 @@ const WIDGET_CONFIG = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TrustAsPipe, ImagePipe],
     selector: '[wmVideo]',
@@ -22,7 +23,7 @@ const WIDGET_CONFIG = {
     ]
 })
 export class VideoComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     /**
      * subtitle language property eg: en
      */
@@ -40,7 +41,7 @@ export class VideoComponent extends StylableComponent {
     public arialabel: string;
     public tabindex: string;
 
-    constructor(inj: Injector, private trustAsPipe: TrustAsPipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private readonly trustAsPipe: TrustAsPipe, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
     }

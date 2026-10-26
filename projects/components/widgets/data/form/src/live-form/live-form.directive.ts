@@ -22,7 +22,7 @@ const getValidTime = val => {
     selector: '[wmLiveForm]'
 })
 export class LiveFormDirective implements OnDestroy {
-    static  initializeProps = registerLiveFormProps();
+    static  readonly initializeProps = registerLiveFormProps();
     private _triggeredByUser: boolean;
     private _debouncedSavePrevDataValues = debounce(() => {
         this.savePrevDataValues();
@@ -36,7 +36,7 @@ export class LiveFormDirective implements OnDestroy {
         @Self() @Inject(FormComponent) private form,
         @Optional() liveTable: LiveTableComponent,
         public datePipe: ToDatePipe,
-        private dialogService: AbstractDialogService,
+        private readonly dialogService: AbstractDialogService,
         @Attribute('formlayout') formlayout: string
     ) {
         // If parent live table is present and this form is first child of live table, set this form instance on livetable
@@ -229,7 +229,7 @@ export class LiveFormDirective implements OnDestroy {
                 if (field.value) {
                     dateTime = getValidDateObject(field.value);
                     if (field.outputformat === DataType.TIMESTAMP || field.type === DataType.TIMESTAMP) {
-                        fieldValue = field.value ? dateTime : null;
+                        fieldValue = dateTime;
                     } else if (field.outputformat) {
                         fieldValue = this.datePipe.transform(dateTime, field.outputformat);
                     } else {
@@ -271,7 +271,7 @@ export class LiveFormDirective implements OnDestroy {
     findOperationType() {
         let operation;
         let isPrimary = false;
-        const sourceOperation = this.form.datasource && this.form.datasource.execute(DataSource.Operation.GET_OPERATION_TYPE);
+        const sourceOperation = this.form.datasource?.execute(DataSource.Operation.GET_OPERATION_TYPE);
         if (sourceOperation && sourceOperation !== 'read') {
             return sourceOperation;
         }
@@ -424,7 +424,7 @@ export class LiveFormDirective implements OnDestroy {
             if (isValid === false) {
                 return;
             }
-            if (isValid && isValid.error) {
+            if (isValid?.error) {
                 this.form.toggleMessage(true, isValid.error, 'error');
                 return;
             }
@@ -435,7 +435,7 @@ export class LiveFormDirective implements OnDestroy {
         }
 
         // If operation is update, form is not touched and current data and previous data is same, Show no changes detected message
-        if (this.form.operationType === Live_Operations.UPDATE && this.form.ngform && this.form.ngform.pristine &&
+        if (this.form.operationType === Live_Operations.UPDATE && this.form.ngform?.pristine &&
             (this.form.isSelected && isEqual(data, prevData))) {
             this.form.toggleMessage(true, this.form.appLocale.MESSAGE_NO_CHANGES, 'info', '');
             $appDigest();

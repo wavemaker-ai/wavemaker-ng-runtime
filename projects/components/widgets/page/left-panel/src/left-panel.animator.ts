@@ -12,7 +12,7 @@ export class LeftPanelAnimator extends SwipeAnimation {
     private _pageContainerWidth: number;
     private _width: number;
 
-    constructor(private leftPanel: LeftPanelDirective) {
+    constructor(private readonly leftPanel: LeftPanelDirective) {
         super();
         this.init(this.leftPanel.$ele, this.leftPanel.$page);
     }
@@ -37,7 +37,7 @@ export class LeftPanelAnimator extends SwipeAnimation {
         if (this.leftPanel.app.isTabletApplicationType) {
             offset = 53.32;
         }
-        if (e && (e.pageX || (e.touches && e.touches[0].pageX)) > offset + 100) {
+        if (e && (e.pageX || (e.touches?.[0].pageX)) > offset + 100) {
             return {
                 strict: true
             };

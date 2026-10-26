@@ -1,6 +1,6 @@
 import { MenuDropdownComponent } from '../menu-dropdown/menu-dropdown.component';
 import { NavigationControlDirective } from '../nav/navigation-control.directive';
-import { Component, ElementRef, forwardRef, HostListener, inject, Input, OnDestroy, OnInit, Optional } from '@angular/core';
+import { Component, ElementRef, forwardRef, HostListener, inject, Input, OnDestroy, OnInit, Optional, ChangeDetectionStrategy } from '@angular/core';
 
 import { addClass, triggerItemAction, UserDefinedExecutionContext, App, toggleClass } from '@wm/core';
 import { hasLinkToCurrentPage, TextContentDirective } from '@wm/components/base';
@@ -23,6 +23,7 @@ const MENU_LAYOUT_TYPE = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TextContentDirective, forwardRef(() => MenuDropdownComponent), NavigationControlDirective],
     selector: 'li[wmMenuDropdownItem]',
@@ -32,7 +33,7 @@ export class MenuDropdownItemComponent implements OnInit, OnDestroy {
 
     public menualign: string;
 
-    private itemActionFn: Function;
+    private readonly itemActionFn: Function;
 
     @Input() item;
 
@@ -40,8 +41,8 @@ export class MenuDropdownItemComponent implements OnInit, OnDestroy {
     private highlightActiveLinkSubscription: () => void;
     public menuRef =  inject(MenuComponent);
     constructor(
-        private app: App,
-        private userDefinedExecutionContext: UserDefinedExecutionContext,
+        private readonly app: App,
+        private readonly userDefinedExecutionContext: UserDefinedExecutionContext,
         @Optional() private parentNav: NavComponent,
         elRef: ElementRef,
     ) {
@@ -66,22 +67,16 @@ export class MenuDropdownItemComponent implements OnInit, OnDestroy {
 
     getInitialKeyMovements() {
         const KEY_MOVEMENTS = clone(KEYBOARD_MOVEMENTS);
-        if (this.menuRef.menulayout === MENU_LAYOUT_TYPE.HORIZONTAL) {
+        if (this.menuRef.menulayout === MENU_LAYOUT_TYPE.HORIZONTAL || this.menuRef.menuposition === 'inline') {
             KEY_MOVEMENTS.MOVE_UP = 'LEFT-ARROW';
             KEY_MOVEMENTS.MOVE_LEFT = 'UP-ARROW';
             KEY_MOVEMENTS.MOVE_RIGHT = 'DOWN-ARROW';
             KEY_MOVEMENTS.MOVE_DOWN = 'RIGHT-ARROW';
-        } else {
-            if (this.menuRef.menuposition === MENU_POSITION.DOWN_LEFT || this.menuRef.menuposition === MENU_POSITION.UP_LEFT) {
-                KEY_MOVEMENTS.MOVE_LEFT = 'RIGHT-ARROW';
-                KEY_MOVEMENTS.MOVE_RIGHT = 'LEFT-ARROW';
-            } else if (this.menuRef.menuposition === 'inline') {
-                KEY_MOVEMENTS.MOVE_UP = 'LEFT-ARROW';
-                KEY_MOVEMENTS.MOVE_LEFT = 'UP-ARROW';
-                KEY_MOVEMENTS.MOVE_RIGHT = 'DOWN-ARROW';
-                KEY_MOVEMENTS.MOVE_DOWN = 'RIGHT-ARROW';
-            }
+        } else if (this.menuRef.menuposition === MENU_POSITION.DOWN_LEFT || this.menuRef.menuposition === MENU_POSITION.UP_LEFT) {
+            KEY_MOVEMENTS.MOVE_LEFT = 'RIGHT-ARROW';
+            KEY_MOVEMENTS.MOVE_RIGHT = 'LEFT-ARROW';
         }
+
         return KEY_MOVEMENTS;
     }
 

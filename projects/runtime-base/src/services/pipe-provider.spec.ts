@@ -2,8 +2,7 @@ import { PipeProvider } from './pipe-provider.service'; // Adjust the path accor
 import { Compiler, Injector } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { AbstractI18nService, CustomPipeManager } from '@wm/core';
-import { DatePipe, UpperCasePipe } from '@angular/common';
-import { ToDatePipe } from '@wm/components/base';
+import { UpperCasePipe } from '@angular/common';
 
 describe('PipeProvider', () => {
     let pipeProvider: PipeProvider;

@@ -8,7 +8,7 @@ import {
     Inject,
     Injector,
     OnDestroy,
-    Optional
+    Optional, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {debounceTime} from 'rxjs/operators';
@@ -20,12 +20,13 @@ import {TableComponent} from '@wm/components/data/table';
 
 import {registerProps} from './live-table.props';
 
-declare var $: any;
+declare const $: any;
 
 const DEFAULT_CLS = 'app-livegrid';
 const WIDGET_CONFIG = {widgetType: 'wm-livetable', hostClass: DEFAULT_CLS};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmLiveTable]',
     templateUrl: './live-table.component.html',
@@ -34,17 +35,17 @@ const WIDGET_CONFIG = {widgetType: 'wm-livetable', hostClass: DEFAULT_CLS};
     ]
 })
 export class LiveTableComponent extends StylableComponent implements AfterContentInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     @ContentChild(TableComponent) table: TableComponent;
 
     form;
     isLayoutDialog: boolean;
 
-    private dialogId;
+    private readonly dialogId;
     private $queue = [];
     private selectedItemChangeSubscription: Subscription;
 
-    private tableOptions: any = {
+    private readonly tableOptions: any = {
         'multiselect': false,
         'setGridEditMode': ''
     };
@@ -53,8 +54,8 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
         inj: Injector,
         elRef: ElementRef,
         cdr: ChangeDetectorRef,
-        private dialogService: AbstractDialogService,
-        private app: App,
+        private readonly dialogService: AbstractDialogService,
+        private readonly app: App,
         @Attribute('formlayout') layoutType: string,
         @Attribute('dialogid') dialogId: string,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
@@ -71,7 +72,7 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
         super.ngAfterContentInit();
         if (this.table) {
             this.table._liveTableParent = this;
-            
+
             // Defer live-table configuration to ensure parent table datatable is initialized (Angular 20 timing)
             const configureLiveTable = () => {
                 if (typeof this.table.datagridElement.datatable === 'function' && this.table.datagridElement.datatable('instance')) {
@@ -114,8 +115,12 @@ export class LiveTableComponent extends StylableComponent implements AfterConten
 
     focusFirstInput() {
         const $firstInput = $(this.form.$element).find('input').first();
-        $firstInput.focus();
-        $firstInput.select();
+        if (!$firstInput.length || !$firstInput.is(':visible')) {
+            setTimeout(()=>{$firstInput.focus();  $firstInput.select();},200);
+        }else{
+            $firstInput.focus();
+            $firstInput.select();
+        }
     }
 
     onDialogOpen(action) {

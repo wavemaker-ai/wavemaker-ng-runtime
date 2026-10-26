@@ -1,6 +1,6 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
-import { AbstractI18nService, App, AppDefaults, DataSource, setPipeProvider } from '@wm/core';
-import { Component, QueryList, ViewChild } from '@angular/core';
+import { AbstractI18nService, App, AppDefaults, DataSource, setPipeProvider, isMobile } from '@wm/core';
+import { ChangeDetectionStrategy, Component, QueryList, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ListComponent } from './list.component';
@@ -8,12 +8,10 @@ import { ListItemDirective } from './list-item.directive';
 import { PaginationModule } from 'ngx-bootstrap/pagination';
 import { PipeProvider } from '../../../../../runtime-base/src/services/pipe-provider.service';
 import { PaginationComponent as WmPaginationModule } from '@wm/components/data/pagination';
-import { ToDatePipe, NAVIGATION_TYPE, TextContentDirective } from '@wm/components/base';
+import { ToDatePipe, NAVIGATION_TYPE, TextContentDirective, configureDnD } from '@wm/components/base';
 import { MockAbstractI18nService } from 'projects/components/base/src/test/util/date-test-util';
 import { DatePipe } from '@angular/common';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
-import { configureDnD } from '@wm/components/base';
-import { isMobile } from '@wm/core';
 import { ListAnimator } from './list.animator';
 import { ButtonComponent } from '@wm/components/input/button';
 
@@ -43,6 +41,10 @@ jest.mock('jquery', () => jest.fn(() => ({
 
 @Component({
     standalone: false,
+    // Angular 22 changed the default changeDetection strategy for components with no
+    // explicit setting (see .claude/skills/angular-upgrade/patterns/runtime.md §27a).
+    // Pin it here to match the pre-22 default behavior these tests rely on.
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
         <div wmList template="true" itemsperrow="xs-1 sm-1 md-1 lg-1" class="media-list" name="testlist"
              dataset.bind="testdata" navigation="Basic"
@@ -160,7 +162,6 @@ describe('ListComponent', () => {
         expect(liElem.nativeElement.classList).toContain('active');
     });
 
-
     it('should apply disable-item class to li element', () => {
         // Set disableitem property
         listComponent.disableitem = true;
@@ -270,7 +271,6 @@ describe('ListComponent', () => {
 
         expect(directiveIndex).toEqual(1);
     });
-
 
     /*
     it('should invoke on-before-render and on-render in sequence', fakeAsync(() => {
@@ -511,7 +511,6 @@ describe('ListComponent', () => {
             expect(mockDatasource.execute).toHaveBeenCalledWith(mockOperation, mockOptions);
         });
     });
-
 
     describe('handleKeyDown', () => {
         let mockEvent: any;
@@ -942,7 +941,6 @@ describe('ListComponent', () => {
             listComponent.onPropertyChange('datasource', 'some-datasource');
             expect((listComponent as any).onDataSetChange).toHaveBeenCalledWith([1, 2, 3]);
         });
-
 
         it('should update pagination options when key is "pagesize"', () => {
             listComponent.dataNavigator = { options: {}, widget: { maxResults: 0 }, maxResults: 0 };
@@ -1936,7 +1934,6 @@ describe('ListComponent With groupby', () => {
         listComponent.onPropertyChange('dataset', listComponent.dataset);
         fixture.detectChanges();
     }));
-
 
     it('should select item by model from the script with groupby property in on-render event', () => {
         jest.spyOn(wrapperComponent, 'onRender');

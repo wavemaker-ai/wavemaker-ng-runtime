@@ -275,14 +275,14 @@ export class PaginationService {
         if (!iScroll) {
             const iScrollSubscription = app.subscribe('iscroll-update', (_el) => {
                 if (!isEmpty(_el) && _el.isSameNode($scrollParent[0])) {
-                    this.setIscrollHandlers($scrollParent[0], dataNavigator, debounceNum);
+                    this.setIscrollHandlers($scrollParent[0], dataNavigator, debounceNum, parent);
                     iScrollSubscription();
                 }
             });
             app.notify('no-iscroll', $scrollParent[0]);
             return;
         }
-        this.setIscrollHandlers($scrollParent[0], dataNavigator, debounceNum);
+        this.setIscrollHandlers($scrollParent[0], dataNavigator, debounceNum, parent);
     }
 
     /**
@@ -291,10 +291,11 @@ export class PaginationService {
      * @param {object} el scrollable element scope
      * @param {object} dataNavigator pagination instance
      * @param {number} debounceNum provided to lodash debounce
+     * @param {object} parent list instance
      * @returns null
      */
-    public setIscrollHandlers(el, dataNavigator, debounceNum) {
-        const list = $(el).find('[wmList]').first();  
+    public setIscrollHandlers(el, dataNavigator, debounceNum, parent?) {
+        const list = $(el).find('[wmList]').first();
         const isHorizontal = list.attr('direction') === 'row';
 
         if (isHorizontal) {

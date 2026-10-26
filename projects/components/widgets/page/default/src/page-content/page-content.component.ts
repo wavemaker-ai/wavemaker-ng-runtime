@@ -1,4 +1,4 @@
-import {Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import {Component, Inject, Injector, OnDestroy, Optional, ChangeDetectionStrategy} from '@angular/core';
 
 import {App, switchClass} from '@wm/core';
 import { APPLY_STYLES_TYPE, PullToRefresh, provideAsWidgetRef, StylableComponent, styler, AutoLayout } from '@wm/components/base';
@@ -10,6 +10,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-page-content', hostClass: DEFAULT_CLS};
 
 @AutoLayout()
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmPageContent]',
     templateUrl: './page-content.component.html',
@@ -18,13 +19,13 @@ const WIDGET_CONFIG = {widgetType: 'wm-page-content', hostClass: DEFAULT_CLS};
     ]
 })
 export class PageContentComponent extends StylableComponent implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public pullToRefreshIns: PullToRefresh;
-    private pulltorefresh: boolean;
+    private readonly pulltorefresh: boolean;
     private childPullToRefresh: boolean;
 
-    constructor(inj: Injector, private app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private readonly app: App, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
 
         styler(this.nativeElement, this, APPLY_STYLES_TYPE.CONTAINER);
@@ -59,19 +60,13 @@ export class PageContentComponent extends StylableComponent implements OnDestroy
                     this.app.notify('pulltorefresh');
                 }
             });
-            this.registerDestroyListener(() => {
-                if (this.pullToRefreshIns && this.pullToRefreshIns.destroy) {
-                    this.pullToRefreshIns.destroy();
-                    this.pullToRefreshIns = null;
-                }
-            });
         }
     }
 
     ngOnDestroy() {
         // MEMORY LEAK FIX: Clean up pullToRefresh instance
         // This is already handled by registerDestroyListener, but adding explicit cleanup as backup
-        if (this.pullToRefreshIns && this.pullToRefreshIns.destroy) {
+        if (this.pullToRefreshIns?.destroy) {
             this.pullToRefreshIns.destroy();
             this.pullToRefreshIns = null;
         }

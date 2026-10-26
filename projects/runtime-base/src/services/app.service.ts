@@ -58,7 +58,7 @@ const getHttpDependency = function () {
     const httpService = this.httpService;
     const fn = function (key, options?) {
         const args = Array.from(arguments).slice(1);
-        return Promise.resolve(httpService[key].apply(httpService, args));
+        return Promise.resolve(httpService[key](...args));
     };
     const $http = function () {
         return fn.apply(undefined, ['send', ...Array.from(arguments)]);
@@ -108,12 +108,12 @@ export class AppRef implements OnDestroy {
     }
 
     constructor(
-        private inj: Injector,
-        private i18nService: AbstractI18nService,
-        private statePersistence: StatePersistence,
-        private httpService: AbstractHttpService,
-        private securityService: SecurityService,
-        private routeReuseStrategy: RouteReuseStrategy
+        private readonly inj: Injector,
+        private readonly i18nService: AbstractI18nService,
+        private readonly statePersistence: StatePersistence,
+        private readonly httpService: AbstractHttpService,
+        private readonly securityService: SecurityService,
+        private readonly routeReuseStrategy: RouteReuseStrategy
     ) {
 
         const wmProjectProperties = getWmProjectProperties();
@@ -140,7 +140,7 @@ export class AppRef implements OnDestroy {
     }
 
     public notify(eventName: string, ...data: Array<any>) {
-        this._eventNotifier.notify.apply(this._eventNotifier, arguments);
+        this._eventNotifier.notify(eventName, ...data);
     }
 
     public importModule(moduleName: string) {

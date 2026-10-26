@@ -8,18 +8,18 @@ declare const $;
     selector: '[wmCaptionPosition]'
 })
 export class CaptionPositionDirective implements AfterViewInit, OnInit, OnDestroy {
-    private elementRef: ElementRef;
+    private readonly elementRef: ElementRef;
     private inputEl;
-    private nativeEl;
+    private readonly nativeEl;
     private compositeEle;
-    private app: App;
+    private readonly app: App;
     private labelAnimationSubscription;
     private placeholder;
     private _attrObserver;
     private _isPlaceholderBound;
 
     // skip floating caption for the below form fields
-    private skipFloatPositionWidgets: string[] = ['radioset', 'checkboxset', 'richtext', 'switch', 'chips', 'checkbox', 'slider', 'rating', 'toggle', 'upload'];
+    private readonly skipFloatPositionWidgets: string[] = ['radioset', 'checkboxset', 'richtext', 'switch', 'chips', 'checkbox', 'slider', 'rating', 'toggle', 'upload'];
 
     constructor(inj: Injector, app: App) {
         this.elementRef = inj.get(ElementRef);
@@ -51,7 +51,7 @@ export class CaptionPositionDirective implements AfterViewInit, OnInit, OnDestro
     // For select widget, display placeholder only on focus else remove the text of the option selected.
     private checkForSelectPlaceholder() {
         const selectElPlaceholderOption = this.nativeEl.querySelector('#placeholderOption');
-        if (selectElPlaceholderOption && selectElPlaceholderOption.textContent && !$(this.nativeEl).find('select').is(':focus') &&
+        if (selectElPlaceholderOption?.textContent && !$(this.nativeEl).find('select').is(':focus') &&
             !$(this.inputEl.closest('[widget-id]')).attr('datavalue')) {
             selectElPlaceholderOption.textContent = '';
         }
@@ -151,7 +151,7 @@ export class CaptionPositionDirective implements AfterViewInit, OnInit, OnDestro
             // In case of form fields, when the field is in focus, isFocused will be set as true
             // isSelectMultiple is set to true when for select widget, multiple option is enabled
             // Checking inputEl focus - when form is represented as dialog and the first field is automatically in focus
-            const isInputElFocused = this.inputEl && this.inputEl.is(':focus');
+            const isInputElFocused = this.inputEl?.is(':focus');
             if (data.displayVal || data.isFocused || data.isSelectMultiple || isInputElFocused) {
                 data.nativeEl.addClass('float-active');
                 if (!data.displayVal && isInputElFocused) {

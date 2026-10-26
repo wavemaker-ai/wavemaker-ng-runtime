@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { TextContentDirective, TrustAsPipe, WmAppIconComponent } from "@wm/components/base";
+import { TextContentDirective, TrustAsPipe, WmAppIconComponent, APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, RedrawableDirective, styler } from '@wm/components/base';
 import {
     AfterContentInit,
     Component,
@@ -10,12 +10,11 @@ import {
     OnDestroy,
     OnInit,
     Optional,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import { $appDigest, noop, removeAttr, setCSS, toggleClass } from '@wm/core';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
-import { APPLY_STYLES_TYPE, IWidgetConfig, provideAsWidgetRef, RedrawableDirective, styler } from '@wm/components/base';
 import { MenuAdapterComponent, MenuComponent } from '@wm/components/navigation/menu';
 import { registerProps } from './panel.props';
 import { omit } from "lodash-es";
@@ -24,6 +23,7 @@ const DEFAULT_CLS = 'app-panel panel';
 const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAULT_CLS };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [BsDropdownModule, CommonModule, TextContentDirective, TrustAsPipe, MenuComponent, WmAppIconComponent],
     selector: '[wmPanel]',
@@ -35,7 +35,7 @@ const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-panel', hostClass: DEFAUL
 })
 
 export class PanelComponent extends MenuAdapterComponent implements OnInit, AfterContentInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public $lazyLoad = noop;
     public iconurl: string;
@@ -54,8 +54,8 @@ export class PanelComponent extends MenuAdapterComponent implements OnInit, Afte
 
     public helpClass = '';
     public helptext = '';
-    private fullScreenTitle: string;
-    private expandCollapseTitle: string;
+    private readonly fullScreenTitle: string;
+    private readonly expandCollapseTitle: string;
 
     @ViewChild('panelHeading', { static: false }) private panelHeader: ElementRef;
     @ViewChild('panelContent', { static: true }) private panelContent: ElementRef;

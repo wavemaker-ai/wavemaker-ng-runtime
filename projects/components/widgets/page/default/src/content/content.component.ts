@@ -1,4 +1,4 @@
-import {Component, Inject, Injector, Optional} from '@angular/core';
+import {Component, Inject, Injector, Optional, ChangeDetectionStrategy} from '@angular/core';
 
 import { IWidgetConfig, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 
@@ -8,6 +8,7 @@ const DEFAULT_CLS = 'app-content clearfix';
 const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-content', hostClass: DEFAULT_CLS};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmContent]',
     templateUrl: './content.component.html',
@@ -16,7 +17,7 @@ const WIDGET_CONFIG: IWidgetConfig = {widgetType: 'wm-content', hostClass: DEFAU
     ]
 })
 export class ContentComponent extends StylableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);

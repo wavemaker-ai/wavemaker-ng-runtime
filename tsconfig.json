@@ -1,6 +1,9 @@
 {
     "compileOnSave": false,
     "compilerOptions": {
+        "ignoreDeprecations": "6.0",
+        "strict": false,
+        "noUncheckedSideEffectImports": false,
         "baseUrl": "./",
         "downlevelIteration": true,
         "outDir": "./dist/out-tsc",

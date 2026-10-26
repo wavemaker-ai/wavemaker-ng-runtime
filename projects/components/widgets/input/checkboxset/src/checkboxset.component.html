@@ -74,7 +74,7 @@
     </li>
   }
 }
-<input [disabled]="disabled || readonly" hidden class="model-holder">
+<input [disabled]="disabled || readonly" hidden class="model-holder" aria-hidden="true" aria-label="Checkbox set value">
 @if (readonly || disabled) {
   <div class="readonly-wrapper"></div>
 }

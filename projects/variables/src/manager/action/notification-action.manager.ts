@@ -42,7 +42,7 @@ export class NotificationActionManager extends BaseActionManager {
             if (toaster && !toaster._subscriptions) {
                 toaster._subscriptions = [];
             }
-            if (toaster && toaster._subscriptions) {
+            if (toaster?._subscriptions) {
                 toaster._subscriptions.push(onClickSubscription);
             }
         }
@@ -52,7 +52,7 @@ export class NotificationActionManager extends BaseActionManager {
             if (toaster && !toaster._subscriptions) {
                 toaster._subscriptions = [];
             }
-            if (toaster && toaster._subscriptions) {
+            if (toaster?._subscriptions) {
                 toaster._subscriptions.push(onHideSubscription);
             }
         }

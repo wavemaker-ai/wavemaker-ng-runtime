@@ -54,7 +54,7 @@ export class LogoutActionManager extends BaseActionManager {
                     });
 
                     // In case of CAS response will be the redirectUrl
-                    if (redirectUrl && redirectUrl.result) {
+                    if (redirectUrl?.result) {
                         window.location.href = redirectUrl.result;
                     } else if (variable.useDefaultSuccessHandler) {
                         redirectPage = variable.redirectTo;

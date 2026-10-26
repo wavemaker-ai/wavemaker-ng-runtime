@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, TemplateRef, ViewContainerRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewContainerRef, ViewChild } from '@angular/core';
 import { LazyLoadDirective } from './lazy-load.directive';
 import { App } from '@wm/core';
 
@@ -13,6 +13,10 @@ jest.mock('@wm/core', () => ({
 // Test component
 @Component({
     standalone: false,
+    // Angular 22 changed the default changeDetection strategy for components with no
+    // explicit setting (see .claude/skills/angular-upgrade/patterns/runtime.md §27a).
+    // Pin it here to match the pre-22 default behavior these tests rely on.
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: '<ng-template [lazyLoad]="condition">Lazy loaded content</ng-template>'
 })
 class TestComponent {

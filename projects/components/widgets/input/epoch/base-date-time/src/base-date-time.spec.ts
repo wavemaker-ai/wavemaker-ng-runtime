@@ -1,12 +1,13 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Component, Injector, LOCALE_ID } from '@angular/core';
-import { AbstractI18nService, App, AppDefaults, isIos } from '@wm/core';
+import { AbstractI18nService, App, AppDefaults } from '@wm/core';
 import { BaseDateTimeComponent, getTimepickerConfig } from './base-date-time.component';
 import { ToDatePipe } from '@wm/components/base';
-import { DatePipe, FormStyle, getLocaleDayPeriods, TranslationWidth } from '@angular/common';
+import { DatePipe, getLocaleDayPeriods } from '@angular/common';
 import { mockApp } from 'projects/components/base/src/test/util/component-test-util';
 import { MockAbstractI18nService } from 'projects/components/base/src/test/util/date-test-util';
 import { AbstractControl, FormControl } from '@angular/forms';
+import { setAttr } from '@wm/core';
 
 const createMockJQueryElement = () => ({
     attr: jest.fn(),
@@ -24,7 +25,8 @@ const createMockJQueryElement = () => ({
     css: jest.fn(),
     length: 0,
     closest: jest.fn().mockReturnThis(),
-    focus: jest.fn()
+    focus: jest.fn(),
+    parents: jest.fn().mockReturnValue({ closest: jest.fn().mockReturnValue({ length: 0 }) })
 });
 
 const mockJQuery = jest.fn().mockImplementation(() => createMockJQueryElement());
@@ -33,6 +35,9 @@ const mockJQuery = jest.fn().mockImplementation(() => createMockJQueryElement())
 jest.mock('@wm/core', () => ({
     ...jest.requireActual('@wm/core'),
     isIos: jest.fn(),
+    // setAttr defers its actual DOM mutation via requestAnimationFrame (unless sync=true), which
+    // fakeAsync's tick() can't reliably flush here - assert the call instead of the DOM side effect.
+    setAttr: jest.fn(),
 }));
 
 jest.mock('@angular/common', () => ({
@@ -150,6 +155,13 @@ describe('BaseDateTimeComponent', () => {
         (component as any).i18nService = { getLocalizedMessage: jest.fn(msg => msg) } as any;
         mockJQuery.mockClear();
         jest.clearAllMocks();
+    });
+
+    // Several tests below reassign (global as any).$ to a narrower ad-hoc mock for their own
+    // assertions. Restore the shared default afterward so it doesn't leak into the next test's
+    // component construction (which calls this.$element.attr(...) and needs the full mock).
+    afterEach(() => {
+        (global as any).$ = mockJQuery;
     });
 
     it('should create', () => {
@@ -1018,5 +1030,321 @@ describe('BaseDateTimeComponent', () => {
         });
 
     });
- 
+
+    describe('safeReplaceMeridians', () => {
+        beforeEach(() => {
+            (component as any).meridians = ['AM', 'PM'];
+            component.am = 'am';
+            component.pm = 'pm';
+        });
+
+        it('should replace internal meridians with the localized display ones for strings', () => {
+            expect((component as any).safeReplaceMeridians('10:00 AM')).toEqual('10:00 am');
+            expect((component as any).safeReplaceMeridians('05:00 PM')).toEqual('05:00 pm');
+        });
+
+        it('should pass through non-string values unchanged', () => {
+            const date = new Date('2023-06-15');
+            expect((component as any).safeReplaceMeridians(date)).toBe(date);
+            expect((component as any).safeReplaceMeridians(undefined)).toBeUndefined();
+        });
+    });
+
+    describe('showValidation', () => {
+        it('should warn and reset the input to the last valid display value for native pickers', () => {
+            const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+            const val = jest.fn();
+            (global as any).$ = jest.fn().mockReturnValue({ val });
+            const $event = { target: {} };
+            (component as any).showValidation($event, '2023-06-15', true, 'out of range');
+            expect(warnSpy).toHaveBeenCalledWith('min max date validation failed ', 'out of range');
+            expect(val).toHaveBeenCalledWith('2023-06-15');
+            warnSpy.mockRestore();
+        });
+
+        it('should do nothing for non-native pickers', () => {
+            const val = jest.fn();
+            (global as any).$ = jest.fn().mockReturnValue({ val });
+            (component as any).showValidation({ target: {} }, '2023-06-15', false, 'msg');
+            expect(val).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('resetDisplayInput', () => {
+        it('should clear the display-input value', () => {
+            const val = jest.fn();
+            (global as any).$ = jest.fn().mockReturnValue({ find: jest.fn().mockReturnValue({ val }) });
+            component.resetDisplayInput();
+            expect(val).toHaveBeenCalledWith('');
+        });
+    });
+
+    describe('focusOnInputEl', () => {
+        it('should focus the textbox after a delay when inside a floating caption', fakeAsync(() => {
+            const focus = jest.fn();
+            (global as any).$ = jest.fn().mockReturnValue({
+                closest: jest.fn().mockReturnValue({ length: 1 }),
+                find: jest.fn().mockReturnValue({ focus })
+            });
+            (component as any).focusOnInputEl();
+            tick(100);
+            expect(focus).toHaveBeenCalled();
+        }));
+
+        it('should do nothing outside a floating caption', fakeAsync(() => {
+            const focus = jest.fn();
+            (global as any).$ = jest.fn().mockReturnValue({
+                closest: jest.fn().mockReturnValue({ length: 0 }),
+                find: jest.fn().mockReturnValue({ focus })
+            });
+            (component as any).focusOnInputEl();
+            tick(100);
+            expect(focus).not.toHaveBeenCalled();
+        }));
+    });
+
+    describe('blurDateInput', () => {
+        it('should blur the display input when the picker is open', fakeAsync(() => {
+            const blur = jest.fn();
+            (component as any).nativeElement = { querySelector: jest.fn().mockReturnValue({ blur }) };
+            component.blurDateInput(true);
+            tick();
+            expect(blur).toHaveBeenCalled();
+        }));
+
+        it('should do nothing when the picker is not open', fakeAsync(() => {
+            const blur = jest.fn();
+            (component as any).nativeElement = { querySelector: jest.fn().mockReturnValue({ blur }) };
+            component.blurDateInput(false);
+            tick();
+            expect(blur).not.toHaveBeenCalled();
+        }));
+    });
+
+    describe('focusBlurDatePickerHeadButtons', () => {
+        it('should wire focus/blur handlers onto the datepicker head buttons', () => {
+            const on = jest.fn();
+            (global as any).$ = jest.fn().mockReturnValue({ on });
+            (component as any).focusBlurDatePickerHeadButtons();
+            expect(on).toHaveBeenCalledWith('focus', expect.any(Function));
+            expect(on).toHaveBeenCalledWith('blur', expect.any(Function));
+        });
+    });
+
+    describe('focusTimePickerPopover', () => {
+        it('should focus the first timepicker input outside Angular after a delay', fakeAsync(() => {
+            const focus = jest.fn();
+            (global as any).$ = jest.fn().mockReturnValue({
+                first: jest.fn().mockReturnThis(),
+                find: jest.fn().mockReturnValue([{ focus }])
+            });
+            const runOutsideAngular = jest.fn((fn) => fn());
+            (component as any).focusTimePickerPopover({ ngZone: { runOutsideAngular } });
+            tick(10);
+            expect(runOutsideAngular).toHaveBeenCalled();
+            expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+        }));
+    });
+
+    describe('bindTimePickerKeyboardEvents', () => {
+        it('should wire tabindex and keyboard events onto the timepicker popup', fakeAsync(() => {
+            const attr = jest.fn();
+            const timepickerPopup = { attr };
+            const addEventsSpy = jest.spyOn(component as any, 'addEventsOnTimePicker').mockImplementation(() => undefined);
+            (global as any).$ = jest.fn().mockReturnValue({ find: jest.fn().mockReturnValue(timepickerPopup) });
+            (component as any).bindTimePickerKeyboardEvents();
+            tick();
+            expect(attr).toHaveBeenCalledWith('tabindex', 0);
+            expect(addEventsSpy).toHaveBeenCalledWith(timepickerPopup);
+        }));
+    });
+
+    describe('ngAfterViewInit', () => {
+        it('should set the container target class and read-only state, and size a mobile input if present', fakeAsync(() => {
+            (component as any).dataentrymode = 'picker';
+            jest.spyOn(component as any, 'isDataEntryModeEnabledOnInput').mockReturnValue(false);
+            const mobileInput = { style: {} } as HTMLElement;
+            jest.spyOn(component, 'getMobileInput').mockReturnValue(mobileInput as any);
+            component.ngAfterViewInit();
+            tick();
+            expect((component as any).isReadOnly).toBeTruthy();
+            expect(mobileInput.style.width).toEqual('100%');
+            expect(mobileInput.style.height).toEqual('100%');
+        }));
+
+        it('should not throw when there is no mobile input', fakeAsync(() => {
+            jest.spyOn(component, 'getMobileInput').mockReturnValue(undefined as any);
+            expect(() => { component.ngAfterViewInit(); tick(); }).not.toThrow();
+        }));
+    });
+
+    describe('ngOnInit', () => {
+        it('should leave the display value alone when there is no validation error', () => {
+            (component as any).dateNotInRange = false;
+            (component as any).timeNotInRange = false;
+            (component as any).invalidDateTimeFormat = false;
+            const invokeOnChangeSpy = jest.spyOn(component, 'invokeOnChange').mockImplementation(() => undefined);
+            component.ngOnInit();
+            expect(invokeOnChangeSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reformat the display value and re-validate when the value is out of range', fakeAsync(() => {
+            (component as any).dateNotInRange = true;
+            component.datavalue = '2023-07-15' as any;
+            const val = jest.fn();
+            (global as any).$ = jest.fn().mockReturnValue({ find: jest.fn().mockReturnValue({ val }) });
+            const invokeOnChangeSpy = jest.spyOn(component, 'invokeOnChange').mockImplementation(() => undefined);
+            const validateSpy = jest.spyOn(component as any, 'minDateMaxDateValidationOnInput').mockImplementation(() => undefined);
+            component.ngOnInit();
+            expect(component.datavalue).toBeUndefined();
+            tick();
+            expect(val).toHaveBeenCalled();
+            expect(validateSpy).toHaveBeenCalled();
+            expect(invokeOnChangeSpy).toHaveBeenCalledWith('2023-07-15', {}, false);
+        }));
+    });
+
+    describe('addDatepickerKeyboardEvents / loadDays', () => {
+        it('should wire the container keydown handler and load the visible days', fakeAsync(() => {
+            const container = document.createElement('div');
+            container.className = 'app-date-container';
+            document.body.appendChild(container);
+            const scope = { dateContainerCls: 'app-date-container', nativeElement: document.createElement('div'), hideDatepickerDropdown: jest.fn() };
+            const loadDaysSpy = jest.spyOn(component as any, 'loadDays').mockImplementation(() => undefined);
+            const setActiveDateFocusSpy = jest.spyOn(component as any, 'setActiveDateFocus').mockImplementation(() => undefined);
+
+            (component as any).addDatepickerKeyboardEvents(scope, false);
+            tick();
+
+            expect(setAttr).toHaveBeenCalledWith(container, 'tabindex', '0');
+            expect(loadDaysSpy).toHaveBeenCalled();
+            expect(setActiveDateFocusSpy).toHaveBeenCalled();
+            document.body.removeChild(container);
+        }));
+
+        it('should hide the dropdown and return focus to the display input on Escape', fakeAsync(() => {
+            const container = document.createElement('div');
+            container.className = 'app-date-container-2';
+            document.body.appendChild(container);
+            const displayInput = document.createElement('input');
+            displayInput.className = 'display-input';
+            const scopeNativeElement = document.createElement('div');
+            scopeNativeElement.appendChild(displayInput);
+            const scope = { dateContainerCls: 'app-date-container-2', nativeElement: scopeNativeElement, hideDatepickerDropdown: jest.fn() };
+            jest.spyOn(component as any, 'loadDays').mockImplementation(() => undefined);
+            jest.spyOn(component as any, 'setActiveDateFocus').mockImplementation(() => undefined);
+            const focusSpy = jest.spyOn(displayInput, 'focus');
+
+            (component as any).addDatepickerKeyboardEvents(scope, false);
+            container.onkeydown!({ key: 'Escape' } as any);
+            tick();
+
+            expect(scope.hideDatepickerDropdown).toHaveBeenCalled();
+            expect(focusSpy).toHaveBeenCalled();
+            document.body.removeChild(container);
+        }));
+
+        it('loadDays should tag non-other-month days with tabindex and wire their events', fakeAsync(() => {
+            const attr = jest.fn();
+            (global as any).$ = jest.fn().mockReturnValue({ not: jest.fn().mockReturnValue({ attr }) });
+            const keyboardEventsSpy = jest.spyOn(component as any, 'addKeyBoardEventsForDays').mockImplementation(() => undefined);
+            const mouseEventsSpy = jest.spyOn(component as any, 'addDatepickerMouseEvents').mockImplementation(() => undefined);
+            (component as any).loadDays();
+            tick();
+            expect(attr).toHaveBeenCalledWith('tabindex', '0');
+            expect(keyboardEventsSpy).toHaveBeenCalled();
+            expect(mouseEventsSpy).toHaveBeenCalled();
+        }));
+    });
+
+    describe('addKeyBoardEventsForDays / addKeyBoardEventsForMonths / addKeyBoardEventsForYears', () => {
+        const captureKeydownHandler = () => {
+            let handler: (event: any) => void;
+            (global as any).$ = jest.fn((selector?: any) => ({
+                keydown: jest.fn((cb) => { handler = cb; }),
+                first: jest.fn().mockReturnThis(),
+                last: jest.fn().mockReturnThis(),
+                click: jest.fn(),
+                hasClass: jest.fn().mockReturnValue(false),
+                parent: jest.fn().mockReturnThis(),
+                attr: jest.fn(),
+                focus: jest.fn(),
+                text: jest.fn().mockReturnValue('2024'),
+                on: jest.fn()
+            }));
+            return () => handler;
+        };
+
+        it('addKeyBoardEventsForDays should move active-date focus on ArrowDown', () => {
+            const getHandler = captureKeydownHandler();
+            jest.spyOn(component as any, 'focusBlurDatePickerHeadButtons').mockImplementation(() => undefined);
+            const setActiveDateFocusSpy = jest.spyOn(component as any, 'setActiveDateFocus').mockImplementation(() => undefined);
+            (component as any).activeDate = new Date('2023-06-15');
+            (component as any).addKeyBoardEventsForDays();
+            getHandler()({ key: 'ArrowDown', preventDefault: jest.fn() });
+            expect(setActiveDateFocusSpy).toHaveBeenCalled();
+        });
+
+        it('addKeyBoardEventsForDays should ignore keys it does not handle', () => {
+            const getHandler = captureKeydownHandler();
+            jest.spyOn(component as any, 'focusBlurDatePickerHeadButtons').mockImplementation(() => undefined);
+            (component as any).activeDate = new Date('2023-06-15');
+            (component as any).addKeyBoardEventsForDays();
+            expect(() => getHandler()({ key: 'a' })).not.toThrow();
+        });
+
+        it('addKeyBoardEventsForMonths should move active-month focus on ArrowRight', () => {
+            const getHandler = captureKeydownHandler();
+            jest.spyOn(component as any, 'focusBlurDatePickerHeadButtons').mockImplementation(() => undefined);
+            const setActiveMonthFocusSpy = jest.spyOn(component as any, 'setActiveMonthFocus').mockImplementation(() => undefined);
+            (component as any).activeDate = new Date('2023-06-15');
+            (component as any).addKeyBoardEventsForMonths();
+            getHandler()({ key: 'ArrowRight', preventDefault: jest.fn() });
+            expect(setActiveMonthFocusSpy).toHaveBeenCalled();
+        });
+
+        it('addKeyBoardEventsForYears should move active-year focus on ArrowLeft', () => {
+            const getHandler = captureKeydownHandler();
+            jest.spyOn(component as any, 'focusBlurDatePickerHeadButtons').mockImplementation(() => undefined);
+            const setActiveYearFocusSpy = jest.spyOn(component as any, 'setActiveYearFocus').mockImplementation(() => undefined);
+            (component as any).activeDate = new Date('2023-06-15');
+            (component as any).addKeyBoardEventsForYears();
+            getHandler()({ key: 'ArrowLeft', preventDefault: jest.fn() });
+            expect(setActiveYearFocusSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('setActiveYearFocus', () => {
+        it('should update the active date and schedule the focus DOM update', fakeAsync(() => {
+            const attr = jest.fn();
+            const focus = jest.fn();
+            (global as any).$ = jest.fn().mockReturnValue({
+                first: jest.fn().mockReturnValue({ text: jest.fn().mockReturnValue('2020') }),
+                last: jest.fn().mockReturnValue({ text: jest.fn().mockReturnValue('2030') }),
+                attr,
+                focus
+            });
+            (component as any).activeDate = new Date('2023-06-15');
+            const goToOtherSpy = jest.spyOn(component as any, 'goToOtherMonthOryear').mockImplementation(() => undefined);
+            (component as any).setActiveYearFocus(new Date('2025-01-01'));
+            tick();
+            expect((component as any).activeDate).toEqual(new Date('2025-01-01'));
+            expect(goToOtherSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should navigate to the next year block when the new year is past the visible range', fakeAsync(() => {
+            (global as any).$ = jest.fn().mockReturnValue({
+                first: jest.fn().mockReturnValue({ text: jest.fn().mockReturnValue('2020') }),
+                last: jest.fn().mockReturnValue({ text: jest.fn().mockReturnValue('2023') }),
+                attr: jest.fn(),
+                focus: jest.fn()
+            });
+            (component as any).activeDate = new Date('2023-06-15');
+            const goToOtherSpy = jest.spyOn(component as any, 'goToOtherMonthOryear').mockImplementation(() => undefined);
+            (component as any).setActiveYearFocus(new Date('2025-01-01'));
+            tick();
+            expect(goToOtherSpy).toHaveBeenCalledWith('next', 'year');
+        }));
+    });
+
 });

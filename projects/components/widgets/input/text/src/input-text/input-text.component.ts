@@ -1,13 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { IMaskModule } from 'angular-imask';
-import {Component, ElementRef, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild} from '@angular/core';
-import {NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel} from '@angular/forms';
+import { FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
+import { IMaskModule, IMaskDirective } from 'angular-imask';
+import {Component, ElementRef, Inject, Injector, OnDestroy, OnInit, Optional, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 
 import {IWidgetConfig, provideAs, provideAsWidgetRef, WmAppIconComponent} from '@wm/components/base';
 import {registerProps} from './input-text.props';
 import {BaseInput} from '../base-input/base-input';
-import {IMaskDirective} from 'angular-imask';
 
 const WIDGET_CONFIG: IWidgetConfig = {
     widgetType: 'wm-input-text',
@@ -15,6 +13,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FormsModule, IMaskModule, WmAppIconComponent],
     selector: 'wm-input[type="text"], wm-input:not([type]), wm-input[type="password"], wm-input[type="search"], wm-input[type="tel"], wm-input[type="url"]',
@@ -26,7 +25,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public required: boolean;
     public maxchars: number;
@@ -103,7 +102,7 @@ export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
         if (this.displayformat) {
             this.isFocused = (($event && $event.type === 'focus') || this.datavalue) ? true : false;
             // Do not show format placeholder when no value is present on blur
-            if (!this.isFocused && this.imask && this.imask.maskRef) {
+            if (!this.isFocused && this.imask?.maskRef) {
                 this.imask.maskRef.updateOptions({ lazy: true });
                 // on blur, when no value is present assign maskref to null, as in some cases (where format palceholder starts with pranthesis) the format placeholder is still shown. WMS-20124
                 if (!this.datavalue && this.imask.maskRef.value) {
@@ -113,7 +112,7 @@ export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
                 // when display format is dynamically populated, cursor position is at the end of the format, readjusting the cursor position based on masked input value
                 // Adding timeout, as the below code should be on hold until imask model is generated
                 setTimeout(() => {
-                    if (this.imask && this.imask.maskRef && this.imask.maskRef.value) {
+                    if (this.imask?.maskRef?.value) {
                         const maskValIndex = this.imask.maskRef.value.indexOf('_');
                         const enteredMaskVal = maskValIndex >= 0 ? this.imask.maskRef.value.slice(0, maskValIndex).length : this.imask.maskRef.value.length;
                         if (enteredMaskVal !== this.imask.maskRef.cursorPos) {
@@ -122,7 +121,7 @@ export class InputTextComponent extends BaseInput implements OnInit, OnDestroy {
                     }
                 }, 50);
             }
-        } else if (this.imask && this.imask.maskRef) { // When display format is bound via condition, remove the placeholder when the format is not applicable
+        } else if (this.imask?.maskRef) { // When display format is bound via condition, remove the placeholder when the format is not applicable
             this.imask.maskRef.updateOptions({ lazy: true });
             // when display format is removed assign input value to the datavalue attr. WMS-20124
             this.inputEl.nativeElement.value = this.datavalue;

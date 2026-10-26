@@ -7,8 +7,8 @@ import { App } from '@wm/core';
 export class AppBeforeLoadResolve {
 
     constructor(
-        private appManager: AppManagerService,
-        private app: App
+        private readonly appManager: AppManagerService,
+        private readonly app: App
     ) { }
 
     resolve() {

@@ -1,5 +1,4 @@
 import { DataSource, FormWidgetType, MatchMode, processFilterExpBindNode } from '@wm/core';
-import * as _ from 'lodash-es';
 import {
     isSearchWidgetType,
     performDataOperation,
@@ -10,7 +9,6 @@ import {
     createArrayFrom,
     transformData,
     refreshDataSource,
-    fetchRelatedFieldData,
     Live_Operations,
     interpolateBindExpressions,
     getDistinctValues,

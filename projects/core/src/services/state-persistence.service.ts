@@ -4,8 +4,8 @@ import {clone, get, includes, isArray, isEmpty, isObject, merge} from "lodash-es
 @Injectable({ providedIn: 'root' })
 export class StatePersistence {
     private HISTORY_HANDLER = 'replace';
-    private HISTORY_HANDLER_TYPES = {'push': 'pushState', 'replace': 'replaceState'};
-    private WIDGET_STATE_KEY = 'ws';
+    private readonly HISTORY_HANDLER_TYPES = {'push': 'pushState', 'replace': 'replaceState'};
+    private readonly WIDGET_STATE_KEY = 'ws';
 
     /**
      * Sets the passed value as the History handler if it exists in the History_Handler_Types object
@@ -80,7 +80,7 @@ export class StatePersistence {
             return;
         }
         let parsedStateInfo = this.getStateInformation(mode);
-        if (parsedStateInfo && widget  && widget.getAppInstance().activePageName && (mode.toLowerCase() === 'localstorage' || mode.toLowerCase() === 'sessionstorage')) {
+        if (parsedStateInfo && widget?.getAppInstance().activePageName && (mode.toLowerCase() === 'localstorage' || mode.toLowerCase() === 'sessionstorage')) {
             parsedStateInfo = parsedStateInfo[widget.getAppInstance().activePageName];
         }
         if (get(parsedStateInfo, this.WIDGET_STATE_KEY)) {
@@ -268,7 +268,7 @@ export class StatePersistence {
             }
         }
         // for Local and Session Storage, wrap state object inside page name so that widget name conflicts don't arise between pages.
-        if (widget && widget.getAppInstance().activePageName && (mode.toLowerCase() === 'localstorage' || mode.toLowerCase() === 'sessionstorage')) {
+        if (widget?.getAppInstance().activePageName && (mode.toLowerCase() === 'localstorage' || mode.toLowerCase() === 'sessionstorage')) {
             if (stateObj) {
                 stateObj[widget.getAppInstance().activePageName] = parsedObj;
                 parsedObj = stateObj;
@@ -356,7 +356,7 @@ export class StatePersistence {
         }
         // Fix for [WMS-24698]: when table is inside a prefab, state persistence key is like "TestLabel_11.TestLabel_1.staticVariable1Table1"
         // get(parsedObj, stateParam + '.' + key) is undefined so using (parsedObj && parsedObj[stateParam] && parsedObj[stateParam][key]) condition.
-        if (get(parsedObj, stateParam + '.' + key) || (parsedObj && parsedObj[stateParam] && parsedObj[stateParam][key])) {
+        if (get(parsedObj, stateParam + '.' + key) || (parsedObj?.[stateParam]?.[key])) {
             if (subParam) {
                 delete parsedObj[stateParam][key][subParam];
             } else {
@@ -373,13 +373,9 @@ export class StatePersistence {
         }
 
         // for Local and Session Storage, wrap state object inside page name so that widget name conflicts don't arise between pages.
-        if (widget && widget.getAppInstance().activePageName && (mode.toLowerCase() === 'localstorage' || mode.toLowerCase() === 'sessionstorage')) {
-            if (stateObj) {
-                stateObj[widget.getAppInstance().activePageName] = parsedObj;
-                parsedObj = stateObj;
-            } else {
-                parsedObj = {[widget.getAppInstance().activePageName]: parsedObj};
-            }
+        if (widget?.getAppInstance().activePageName && (mode.toLowerCase() === 'localstorage' || mode.toLowerCase() === 'sessionstorage')) {
+            stateObj[widget.getAppInstance().activePageName] = parsedObj;
+            parsedObj = stateObj;
 
         }
         if (mode.toLowerCase() === 'localstorage') {

@@ -95,7 +95,7 @@ export const getFieldLayoutConfig = (captionWidth, captionPosition, os): any => 
 };
 
 export const getDefaultViewModeWidget = widget => {
-    if (includes(['checkbox', 'toggle', 'iconbutton-toggle', 'rating'], widget)) {
+    if (includes(['checkbox', 'toggle', 'iconbutton-toggle', 'rating', 'chips'], widget)) {
         return VIEW_MODE_OPTIONS.DEFAULT;
     }
     return VIEW_MODE_OPTIONS.LABEL;
@@ -169,7 +169,7 @@ export const getFieldTypeWidgetTypesMap = () => {
 
 // Get filter widget applicable to the given type
 export const getDataTableFilterWidget = type => {
-    let widget = fieldTypeWidgetTypeMap[type] && fieldTypeWidgetTypeMap[type][0];
+    let widget = fieldTypeWidgetTypeMap[type]?.[0];
     if (type === DataType.BOOLEAN) {
         widget = FormWidgetType.SELECT;
     }
@@ -195,7 +195,7 @@ export const getEditModeWidget = colDef => {
     if (colDef['related-entity-name'] && colDef['primary-key']) {
         return FormWidgetType.SELECT;
     }
-    return (fieldTypeWidgetTypeMap[colDef.type] && fieldTypeWidgetTypeMap[colDef.type][0]) || FormWidgetType.TEXT;
+    return (fieldTypeWidgetTypeMap[colDef.type]?.[0]) || FormWidgetType.TEXT;
 };
 
 /**

@@ -12,7 +12,7 @@ export class PullToRefresh extends SwipeAnimation {
     public cancelSubscription: () => void;
     private animationInProgress: boolean;
 
-    constructor(private $el: JQuery<HTMLElement>, private app: App, private onPullToRefresh: () => void) {
+    constructor(private readonly $el: JQuery<HTMLElement>, private readonly app: App, private readonly onPullToRefresh: () => void) {
         super();
         const template = '<div class="refresh-container"></div>';
         this.$el.prepend(template);
@@ -173,7 +173,7 @@ interface Spinner {
 
 // Android Spinner implementation
 class AndroidSpinner implements Spinner {
-    private options: object;
+    private readonly options: object;
     private initialized: boolean;
     private cx: number;
     private cy: number;
@@ -182,7 +182,7 @@ class AndroidSpinner implements Spinner {
     private intervalId;
     private container: JQuery<HTMLElement>;
 
-    constructor(private $el: JQuery<HTMLElement>, options?: object) {
+    constructor(private readonly $el: JQuery<HTMLElement>, options?: object) {
         this.options = options || {};
     }
 
@@ -269,7 +269,7 @@ class IOSSpinner implements Spinner {
     private svg: JQuery<SVGElement>;
     private intervalId: any;
 
-    constructor(private $el) {}
+    constructor(private readonly $el) {}
 
     // create the iOS spinner using svg
     private init() {

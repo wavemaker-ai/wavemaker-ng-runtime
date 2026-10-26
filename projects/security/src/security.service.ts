@@ -12,8 +12,7 @@ import {
 import {each, forEach, get, isEmpty, join, set} from "lodash-es";
 declare const _WM_APP_PROPERTIES;
 // Todo[Shubham]: Move below constants to a common file
-const XSRF_COOKIE_NAME = 'wm_xsrf_token',
-    isApplicationType = true;
+const XSRF_COOKIE_NAME = 'wm_xsrf_token';
 
 @Injectable()
 export class SecurityService implements OnDestroy {
@@ -26,11 +25,11 @@ export class SecurityService implements OnDestroy {
     private appSubscriptions: Array<() => void> = []; // MEMORY LEAK FIX: Track App subscriptions
 
     constructor(
-        private injector: Injector,
-        private $http: AbstractHttpService,
-        private routerService: Router,
-        private activatedRoute: ActivatedRoute,
-        private _location: Location
+        private readonly injector: Injector,
+        private readonly $http: AbstractHttpService,
+        private readonly routerService: Router,
+        private readonly activatedRoute: ActivatedRoute,
+        private readonly _location: Location
     ) {}
 
     isLoaded() {
@@ -158,7 +157,7 @@ export class SecurityService implements OnDestroy {
     }
 
     getLastLoggedInUsername() {
-        return this.lastLoggedInUser && this.lastLoggedInUser.userName;
+        return this.lastLoggedInUser?.userName;
     }
 
     /**
@@ -197,28 +196,21 @@ export class SecurityService implements OnDestroy {
         const that = this;
         return new Promise((resolve) => {
             let page;
-            if (!isApplicationType) {
-                if (that.isNoPageLoaded()) {
-                    page = getWmProjectProperties().homePage;
-                    resolve(page);
-                }
-            } else {
-                that.getConfig((config) => {
-                    if (config.securityEnabled && config.authenticated) {
-                        page = config.userInfo.landingPage || getWmProjectProperties().homePage;
-                        // override the default xsrf cookie name and xsrf header names with WaveMaker specific values
-                        if (that.isXsrfEnabled()) {
-                            // this.$http.defaults.xsrfCookieName = XSRF_COOKIE;
-                            // this.$http.defaults.xsrfHeaderName = config.csrfHeaderName;
-                        }
-                    } else {
-                        page = getWmProjectProperties().homePage;
+            that.getConfig((config) => {
+                if (config.securityEnabled && config.authenticated) {
+                    page = config.userInfo.landingPage || getWmProjectProperties().homePage;
+                    // override the default xsrf cookie name and xsrf header names with WaveMaker specific values
+                    if (that.isXsrfEnabled()) {
+                        // this.$http.defaults.xsrfCookieName = XSRF_COOKIE;
+                        // this.$http.defaults.xsrfHeaderName = config.csrfHeaderName;
                     }
-                    resolve(page);
-                }, function () {
-                    resolve(getWmProjectProperties().homePage);
-                });
-            }
+                } else {
+                    page = getWmProjectProperties().homePage;
+                }
+                resolve(page);
+            }, function () {
+                resolve(getWmProjectProperties().homePage);
+            });
         });
     }
 
@@ -428,7 +420,7 @@ export class SecurityService implements OnDestroy {
     getLoggedInUser() {
         return new Promise<any>((resolve, reject) => {
             this.getConfig((config) => {
-                if (config && config.userInfo) {
+                if (config?.userInfo) {
                     resolve(config.userInfo);
                 } else {
                     reject();
@@ -449,7 +441,7 @@ export class SecurityService implements OnDestroy {
     ngOnDestroy() {
         // MEMORY LEAK FIX: Unsubscribe from all query params subscriptions
         this.queryParamsSubscriptions.forEach(sub => {
-            if (sub && sub.unsubscribe) {
+            if (sub?.unsubscribe) {
                 sub.unsubscribe();
             }
         });

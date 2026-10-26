@@ -7,7 +7,7 @@ import {
     NgZone,
     OnDestroy,
     OnInit,
-    ViewContainerRef} from '@angular/core';
+    ViewContainerRef, ChangeDetectionStrategy} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { Subscription } from 'rxjs';
@@ -18,6 +18,7 @@ import { SecurityService } from '@wm/security';
 import { AppManagerService, BasePageComponent, ComponentRefProvider, ComponentType } from '@wm/runtime/base';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true, 
     selector: 'app-page-outlet',
     template: '<div></div>'
@@ -28,20 +29,20 @@ export class PageWrapperComponent implements OnInit, OnDestroy {
     instance: any;
 
     constructor(
-        private injector: Injector,
-        private envInjector: EnvironmentInjector,
-        private route: ActivatedRoute,
-        private vcRef: ViewContainerRef,
-        private appRef: ApplicationRef,
-        private metadataService: MetadataService,
-        private securityService: SecurityService,
-        private appManager: AppManagerService,
-        private app: App,
-        private ngZone: NgZone,
-        private elRef: ElementRef,
-        private spinnerService: AbstractSpinnerService,
-        private componentRefProvider: ComponentRefProvider,
-        private router: Router
+        private readonly injector: Injector,
+        private readonly envInjector: EnvironmentInjector,
+        private readonly route: ActivatedRoute,
+        private readonly vcRef: ViewContainerRef,
+        private readonly appRef: ApplicationRef,
+        private readonly metadataService: MetadataService,
+        private readonly securityService: SecurityService,
+        private readonly appManager: AppManagerService,
+        private readonly app: App,
+        private readonly ngZone: NgZone,
+        private readonly elRef: ElementRef,
+        private readonly spinnerService: AbstractSpinnerService,
+        private readonly componentRefProvider: ComponentRefProvider,
+        private readonly router: Router
     ) {}
 
     getTargetNode() {

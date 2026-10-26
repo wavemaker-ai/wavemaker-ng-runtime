@@ -17,7 +17,7 @@ export class DialogServiceImpl {
      * @type {Map<any, any>}
      * Ex Map[[dialogName, [[dialogScope, dialogRef]]]]
      */
-    private dialogRefsCollection = new Map<any, any>();
+    private readonly dialogRefsCollection = new Map<any, any>();
     private appConfirmDialog = '_app-confirm-dialog';
 
     constructor() {}
@@ -81,13 +81,13 @@ export class DialogServiceImpl {
                     console.error('No dialog with the name "' + name + '" found in the given scope.');
                 }
             }
-        } else {
+        } else 
             if (dialogRefMap.size === 1) {
                 dialogRef = dialogRefMap.entries().next().value[1];
             } else {
                 console.error('There are multiple instances of this dialog name. Please provide the Page/Partial/App instance in which the dialog exists.');
             }
-        }
+        
         return dialogRef;
     }
 

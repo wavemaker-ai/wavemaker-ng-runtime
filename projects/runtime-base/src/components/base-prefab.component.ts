@@ -1,4 +1,4 @@
-import { Injector, inject, OnDestroy, ViewChild, Directive, AfterViewChecked } from '@angular/core';
+import { Injector, OnDestroy, ViewChild, Directive, AfterViewChecked } from '@angular/core';
 import { Subject } from 'rxjs';
 
 import {
@@ -59,12 +59,12 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     init() {
         this.App = this.injector.get(App);
         //making the code compatible in both the JIT and AOT modes
-        this.containerWidget = this.injector ? this.injector.get(WidgetRef) : inject(WidgetRef);
+        this.containerWidget = this.injector.get(WidgetRef);
 
-        this.prefabMngr = this.injector ? this.injector.get(PrefabManagerService) : inject(PrefabManagerService);
-        this.i18nService = this.injector ? this.injector.get(AbstractI18nService) : inject(AbstractI18nService);
-        this.scriptLoaderService = this.injector ? this.injector.get(ScriptLoaderService) : inject(ScriptLoaderService);
-        this.Viewport = this.injector ? this.injector.get(Viewport) : inject(Viewport);
+        this.prefabMngr = this.injector.get(PrefabManagerService);
+        this.i18nService = this.injector.get(AbstractI18nService);
+        this.scriptLoaderService = this.injector.get(ScriptLoaderService);
+        this.Viewport = this.injector.get(Viewport);
 
         this.viewParent = this.containerWidget.viewParent;
 
@@ -74,9 +74,9 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
 
         if (this.spa) {
             // Resolve optionally because prefabs can initialize before a page exists
-            this.pageDirective = this.injector ? this.injector.get(SpaPageDirective, null) : (inject as any)(SpaPageDirective, { optional: true });
+            this.pageDirective = this.injector.get(SpaPageDirective, null);
         } else {
-            this.pageDirective = this.injector ? this.injector.get(PageDirective, null) : (inject as any)(PageDirective, { optional: true });
+            this.pageDirective = this.injector.get(PageDirective, null);
         }
         if (this.pageDirective) {
             this.registerDestroyListener(this.pageDirective.subscribe('attach', data => this.ngOnAttach(data.refreshData)));
@@ -161,7 +161,7 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
                             this.containerWidget[key] = (...args) => {
                                 try {
                                     if (this[key]) {
-                                        return this[key].apply(this, args);
+                                        return this[key](...args);
                                     }
                                 } catch (e) {
                                     console.warn(`error in executing prefab-${this.prefabName} method-${key}`);
@@ -242,14 +242,14 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     }
 
     mute() {
-        const m = o => { o && o.mute && o.mute(); };
+        const m = o => { o?.mute?.(); };
         each(this.Widgets, m);
         each(this.Variables, m);
         each(this.Actions, m);
     }
 
     unmute() {
-        const um = o => { o && o.unmute && o.unmute(); };
+        const um = o => { o?.unmute?.(); };
         each(this.Widgets, um);
         each(this.Variables, um);
         each(this.Actions, um);
@@ -258,16 +258,16 @@ export abstract class BasePrefabComponent extends FragmentMonitor implements Aft
     ngOnAttach(refreshData) {
         this.unmute();
         if(refreshData) {
-            const refresh = v => { v && v.startUpdate && v.invoke && v.invoke(); };
+            const refresh = v => { v?.startUpdate && v?.invoke?.(); };
             each(this.Variables, refresh);
             each(this.Actions, refresh);
         }
-        each(this.Widgets, w => w && w.ngOnAttach && w.ngOnAttach());
+        each(this.Widgets, w => w?.ngOnAttach?.());
     }
 
     ngOnDetach() {
         this.mute();
-        each(this.Widgets, w => w && w.ngOnDetach && w.ngOnDetach());
+        each(this.Widgets, w => w?.ngOnDetach?.());
     }
 
     ngAfterViewChecked(): void {

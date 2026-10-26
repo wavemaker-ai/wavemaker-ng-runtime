@@ -1,8 +1,7 @@
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { ColorPickerService, ColorPickerDirective } from 'ngx-color-picker';
-import { Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, Injector, OnDestroy, Optional, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from "@angular/common";
-import { NG_VALIDATORS, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 
 import { addClass, removeClass } from '@wm/core';
 import { AUTOCLOSE_TYPE, IWidgetConfig, provideAs, provideAsWidgetRef, styler } from '@wm/components/base';
@@ -17,6 +16,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, FormsModule, ColorPickerDirective],
     selector: '[wmColorPicker]',
@@ -29,7 +29,7 @@ const WIDGET_CONFIG: IWidgetConfig = {
     ]
 })
 export class ColorPickerComponent extends BaseFormCustomComponent implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public required: boolean;
     public readonly: boolean;

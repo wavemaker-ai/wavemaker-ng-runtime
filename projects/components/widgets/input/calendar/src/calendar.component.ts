@@ -9,7 +9,7 @@ import {
     OnInit,
     Optional,
     ViewChild,
-    ViewEncapsulation
+    ViewEncapsulation, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {AbstractI18nService, getClonedObject, getSessionStorageItem, isMobile} from '@wm/core';
@@ -65,24 +65,6 @@ const NEXT_DAY_THRESHOLD = {
     START: '00:00',
     END: '24:00'
 };
-const getEventMomentValue = (value, key) => {
-    let isDate = false;
-
-    dateFormats.forEach((format) => {
-        // moment supports uppercase formats
-        if (moment(value, format.toUpperCase(), true).isValid()) {
-            isDate = true;
-            return false;
-        }
-    });
-
-    // if the value is date then for end date the value should be end of the day as the calendar is approximating it to the start.
-    if (isDate && key === 'end') {
-        return moment(value).endOf('day');
-    }
-
-    return moment(value);
-};
 const getUTCDateTime = (dateObj) => {
     dateObj = moment(dateObj);
     const year = dateObj.format('YYYY'),
@@ -98,6 +80,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-calendar', hostClass: DEFAULT_CLS};
 const dateFormat = 'YYYY/MM/DD';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: '[wmCalendar]',
     templateUrl: './calendar.component.html',
@@ -108,7 +91,7 @@ const dateFormat = 'YYYY/MM/DD';
     encapsulation: ViewEncapsulation.None
 })
 export class CalendarComponent extends StylableComponent implements AfterContentInit, AfterViewInit, OnInit, OnDestroy, IRedrawableComponent {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     // The calendar element reference
     @ViewChild('calendar') _calendar: ElementRef;
     @ViewChild('datepicker') _datepicker: ElementRef;
@@ -126,9 +109,9 @@ export class CalendarComponent extends StylableComponent implements AfterContent
     public eventallday;
     public eventclass;
 
-    private eventSources: Array<any> = [];
+    private readonly eventSources: Array<any> = [];
 
-    private dataSetEvents = {
+    private readonly dataSetEvents = {
         events: []
     };
     private oldData;
@@ -136,12 +119,12 @@ export class CalendarComponent extends StylableComponent implements AfterContent
     private $fullCalendar;
     // model to the mobile calendar
     private proxyModel;
-    private eventData;
-    private events;
-    private changesStack = [];
+    private readonly eventData;
+    private readonly events;
+    private readonly changesStack = [];
 
     // calendarOptions to the calendar
-    private calendarOptions: any = {
+    private readonly calendarOptions: any = {
         calendar: {
             height: 600,
             eventSources: this.eventSources,
@@ -170,8 +153,8 @@ export class CalendarComponent extends StylableComponent implements AfterContent
         }
     };
     public view: string;
-    private dayClass: Array<any> = [];
-    private cancelLocaleChangeSubscription;
+    private readonly dayClass: Array<any> = [];
+    private readonly cancelLocaleChangeSubscription;
 
     // this function selects the default date given for the calendar
     selectDate() {
@@ -476,7 +459,6 @@ export class CalendarComponent extends StylableComponent implements AfterContent
                 break;
             case 'dataset':
                 let dataSet;
-                const self = this;
                 this.dataset = nv;
                 dataSet = createArrayFrom(getClonedObject(nv));
                 dataSet = this.constructCalendarDataset(dataSet);
@@ -603,7 +585,7 @@ export class CalendarComponent extends StylableComponent implements AfterContent
      */
     overrideDefaults(options) {
         if (isObject(options)) {
-            Object.entries(options).map(option => this.$fullCalendar.setOption(option[0], option[1]));
+            Object.entries(options).forEach(option => this.$fullCalendar.setOption(option[0], option[1]));
         }
     }
 

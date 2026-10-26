@@ -10,43 +10,81 @@ const variablesEntry = [
 module.exports = {
   preset: "jest-preset-angular",
   testTimeout: 15000,
-  roots: ["<rootDir>/projects"],
+  roots: ["<rootDir>/projects", "<rootDir>/src"],
     testEnvironment: 'jest-environment-jsdom',
   transformIgnorePatterns: [
     '/node_modules/(?!(@wavemaker-ai/app-ng-runtime|lodash-es|@angular|angular-imask|ng-circle-progress|@wavemaker-ai/variables|@wavemaker-ai/foundation-css|@wavemaker-ai/custom-widgets-m3|ngx-toastr|ngx-bootstrap|ngx-color-picker|@fullcalendar|preact)/)',
   ],
   testMatch: [
-    "**/projects/**/*.spec.ts"
+    "**/projects/**/*.spec.ts",
+    "**/src/**/*.spec.ts"
   ],
   testPathIgnorePatterns: [
-    'projects/components/widgets/data/table/src/table.wrapper.component.spec.ts',
-    'projects/components/widgets/data/form/src/form.wrapper.component.spec.ts',
     '/node_modules/',
     '/dist/',
   ],
   setupFilesAfterEnv: ["<rootDir>/src/setup-jest.js"],
   collectCoverage: true,
+  // Report every source file under projects/, not only the ones a test happens to import,
+  // so untested files show up as 0% instead of being silently missing.
+  collectCoverageFrom: [
+    "projects/**/*.{ts,js}",
+    "src/**/*.{ts,js}",
+    // the yalc-linked variables package was already measured before collectCoverageFrom existed
+    ".yalc/@wavemaker-ai/variables/src/**/*.js",
+    "!projects/**/*.spec.ts",
+    "!projects/**/*.d.ts",
+    "!src/**/*.d.ts",
+    "!src/**/*.spec.ts",
+    "!src/setup-jest.js",
+    "!projects/**/public_api*.ts",
+    "!projects/**/index.ts",
+    "!projects/**/src/test.ts",
+    "!projects/**/*.doc.ts",
+    "!projects/**/*.build.ts"
+  ],
   coverageReporters: ["html", "json-summary"],
   coveragePathIgnorePatterns: [
-    "libraries/scripts/tree-keyboard-navigation",
-    "libraries/scripts/jquery.ui.touch-punch",
-    "libraries/scripts/swipey",
-    ".yalc/@wavemaker-ai/variables/src/",
-    ".yalc/@wavemaker-ai/foundation-css",
+    // anything outside projects/, src/, libraries/ (and the .yalc ui-variables exception below)
+    "/node_modules/",
+    "/build-helpers/",
+    "/build-scripts/",
+    "/config/",
+    "/dependency-check-bin/",
+    "/dependency-check-reports/",
+    "<rootDir>/dist/",
+    "/docs/",
+    "/documentation/",
+    "/out-tsc/",
+    "/pwa-assets/",
+    "/tools/",
+    // any "scripts" folder anywhere (top-level scripts/, libraries/scripts/, vendored build scripts)
+    "/scripts/",
+    // libraries/swipey stays excluded; projects/swipey stays included except the vendored plugin file below
+    "libraries/swipey/",
+    // other .yalc-linked packages; @wavemaker-ai/variables is intentionally NOT excluded
+    ".yalc/@wavemaker/",
+    ".yalc/@wavemaker-ai/angular-app",
     ".yalc/@wavemaker-ai/custom-widgets-m3",
+    ".yalc/@wavemaker-ai/foundation-css",
+    // vendored third-party files inside projects/
+    "projects/components/widgets/basic/tree/src/keyboard-navigation.js",
+    "projects/jquery.ui.touch-punch/jquery.ui.touch-punch.min.js",
+    "projects/swipey/src/swipey.jquery.plugin.js",
     "projects/components/base/src/test/"
   ],
-  // collectCoverageFrom: [
-  //     '**/*.{ts,tsx}',
-  //     '!**/node_modules/**',
-  //     '!**/dist/**'
-  // ],
   coverageDirectory: "coverage",
   moduleNameMapper: {
+    "^@wm/transpiler$": "<rootDir>/projects/transpiler/src/build.ts",
+    "^@wm/runtime/base$": "<rootDir>/projects/runtime-base/src/public_api.ts",
+    "^@wm/build-task$": "<rootDir>/projects/components/transpile/src/public_api.ts",
     "@wavemaker-ai/variables": `<rootDir>/${variablesEntry || '.yalc/@wavemaker-ai/variables/index.js'}`,
     "@fullcalendar/(.*)$": "<rootDir>/node_modules/@fullcalendar/core/index.cjs",
     "^jQuery$": "jquery",
     "@wm/security": "<rootDir>/projects/security/src/public_api.ts",
+    "@wm/variables": "<rootDir>/projects/variables/src/public_api.ts",
+    "@wm/oAuth": "<rootDir>/projects/oAuth/src/public_api.ts",
+    "@wm/http": "<rootDir>/projects/http-service/src/public_api.ts",
     "@wm/swipey": "<rootDir>/projects/swipey/src/public_api.ts",
     "@swipey": "<rootDir>/projects/swipey/src/public_api.ts",
     "@wm/components/base": "<rootDir>/projects/components/base/index.ts",

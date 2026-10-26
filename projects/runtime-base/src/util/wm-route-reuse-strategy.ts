@@ -23,9 +23,9 @@ export const MAX_CACHE_AGE = 'REUSE_ROUTE_STRATEGY.MAX_CACHE_AGE';
 
 /* Base Strategy with Default implementations */
 export class WmDefaultRouteReuseStrategy {
-    private cache: LRUCache<DetachedRouteHandle>;
+    private readonly cache: LRUCache<DetachedRouteHandle>;
     private currentRouteKey: string;
-    private paramsToIgnore = [
+    private readonly paramsToIgnore = [
         'wm_state', // state persistence,
         CACHE_PAGE // to use page cache
     ];
@@ -45,7 +45,7 @@ export class WmDefaultRouteReuseStrategy {
         const queryParams = Object.keys(route.queryParams)
             .filter(k => !this.paramsToIgnore.includes(k))
             .map(k => k + '=' + route.queryParams[k])
-            .sort().join('&');
+            .sort((a, b) => a.localeCompare(b)).join('&');
         let pageName = route.params.pageName;
         if (route.data.pageName && route.routeConfig.path === route.data.pageName) {
             pageName = route.data.pageName;
@@ -120,7 +120,7 @@ export class WmDefaultRouteReuseStrategy {
     reset(pageName?: string) {
         if (pageName) {
             this.cache.delete(pageName);
-            const pageWithParams = pageName += '?';
+            const pageWithParams = pageName + '?';
             const entriesToDelete = [];
             for(let k of this.cache.keys()) {
                 if (k.startsWith(pageWithParams)) {
@@ -187,14 +187,11 @@ export class WmNgRouteReuseStrategy extends WmDefaultRouteReuseStrategy
         if (future.routeConfig !== current.routeConfig) {
             return false;
         }
-        if (future.routeConfig === current.routeConfig) {
-            //No need to compare query params for layout routeConfig
-            if(future.data.layoutName && current.data.layoutName)  {
-                return  true;
-            }
-            return this.isSameQueryParams(future, current);
+        //No need to compare query params for layout routeConfig
+        if(future.data.layoutName && current.data.layoutName)  {
+            return  true;
         }
-        return true;
+        return this.isSameQueryParams(future, current);
     }
     shouldReuseRoute(
         future: ActivatedRouteSnapshot,

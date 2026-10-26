@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {Component, Inject, Injector, OnDestroy, Optional} from '@angular/core';
+import {Component, Inject, Injector, OnDestroy, Optional, ChangeDetectionStrategy} from '@angular/core';
 import { NG_VALUE_ACCESSOR, NG_VALIDATORS } from '@angular/forms';
 
 import {setListClass} from '@wm/core';
@@ -15,6 +15,7 @@ const DEFAULT_CLS = 'app-radioset list-group inline';
 const WIDGET_CONFIG = {widgetType: 'wm-radioset', hostClass: DEFAULT_CLS};
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, TextContentDirective, ItemTemplateDirective, PartialParamHandlerDirective, PartialContainerDirective],
     selector: '[wmRadioset]',
@@ -27,12 +28,12 @@ const WIDGET_CONFIG = {widgetType: 'wm-radioset', hostClass: DEFAULT_CLS};
     ]
 })
 export class RadiosetComponent extends DatasetAwareFormComponent implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     public layout = '';
     public disabled: boolean;
     public itemsperrow: string;
-    private itemsPerRowClass: string;
+    private readonly itemsPerRowClass: string;
 
     constructor(inj: Injector, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
@@ -43,7 +44,7 @@ export class RadiosetComponent extends DatasetAwareFormComponent implements OnDe
     triggerInvokeOnChange(key, $event) {
         this.modelByKey = key;
 
-        if(this.viewParent.containerWidget && this.viewParent.containerWidget.updateDataValue)
+        if(this.viewParent.containerWidget?.updateDataValue)
             this.viewParent.containerWidget.updateDataValue(this.datavalue);
 
         this.invokeOnTouched();

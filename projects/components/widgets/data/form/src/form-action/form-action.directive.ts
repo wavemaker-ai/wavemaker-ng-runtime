@@ -16,7 +16,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-form-action', hostClass: ''};
     ]
 })
 export class FormActionDirective extends BaseComponent implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     accessroles;
     action;

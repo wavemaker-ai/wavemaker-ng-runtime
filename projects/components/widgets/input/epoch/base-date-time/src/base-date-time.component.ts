@@ -82,8 +82,8 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
 
     public am:string;
     public pm: string;
-    private dateOnShowSubscription: Subscription;
-    private cancelLocaleChangeSubscription;
+    private readonly dateOnShowSubscription: Subscription;
+    private readonly cancelLocaleChangeSubscription;
     public get timeZone() { return this.inj.get(AbstractI18nService).getTimezone(this); }
 
     formatsByLocale = {'timezone': ''};
@@ -371,9 +371,6 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         setTimeout(() => {
             const newDay = newDate.getDate().toString();
             filter($(`span:contains(${newDay})`).not('.is-other-month'), (obj) => {
-                const activeMonth = $(`.bs-datepicker-head .current`).first().text();
-                const activeYear =  $(".bs-datepicker-head .current").eq(1).text();
-                const monthName = new Date().toLocaleString('default', { month: 'long' });
                 if ($(obj).text() === newDay) {
                     if ($(obj).hasClass('selected')) {
                         $(obj).parent().attr('aria-selected', 'true');
@@ -778,7 +775,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
         // WMS-19382: update minutes and seconds to 0 when we enter hour value
         inputFields.first().on('keyup', evt => {
             const hourValue = (evt.target as any).value;
-            forEach(inputFields, (field, index) => {
+            forEach($el.find('.bs-timepicker-field'), (field, index) => {
                 // @ts-ignore
                 if (evt.target !== field && field.value === '' && hourValue.length) {
                     const fieldName = index === 1 ? 'minutes' : 'seconds';
@@ -815,14 +812,14 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
                         stopPropogation = true;
                         preventDefault = true;
                     }
-                } else {
+                } else
                     if (event.key === 'Enter' || event.key === 'Escape') {
                         elementScope.setIsTimeOpen(false);
                         this.focus();
                         stopPropogation = true;
                         preventDefault = true;
                     }
-                }
+
                 if (stopPropogation) {
                     event.stopPropagation();
                 }
@@ -931,7 +928,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
             if (event.originalEvent) {
                 this.setFocusForDate(-1);
             }
-            var prevMon = this.getMonth(this.activeDate, -1);
+            const prevMon = this.getMonth(this.activeDate, -1);
             // const current = new Date();
             // if(prevMon.date.getMonth()===current.getMonth() && prevMon.date.getFullYear()===current.getFullYear()) {
             //     this.hightlightToday(new Date());
@@ -958,7 +955,7 @@ export abstract class BaseDateTimeComponent extends BaseFormCustomComponent impl
             if (event.originalEvent) {
                 this.setFocusForDate(1);
             }
-            var nextMon = this.getMonth(this.activeDate, 1);
+            const nextMon = this.getMonth(this.activeDate, 1);
             // const current = new Date();
             // if (nextMon.date.getMonth() === current.getMonth() && nextMon.date.getFullYear() === current.getFullYear()) {
             //     this.hightlightToday(current);

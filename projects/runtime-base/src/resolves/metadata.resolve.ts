@@ -9,7 +9,7 @@ let metadataResolved = false;
     providedIn: 'root'
 })
 export class MetadataResolve {
-    constructor(private appManager: AppManagerService) {}
+    constructor(private readonly appManager: AppManagerService) {}
 
     resolve() {
         return metadataResolved || this.appManager.loadMetadata().then(() => metadataResolved = true);

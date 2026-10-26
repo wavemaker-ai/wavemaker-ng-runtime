@@ -7,7 +7,7 @@ import {
     OnDestroy,
     Optional,
     TemplateRef,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import { App, toBoolean } from '@wm/core';
@@ -29,6 +29,7 @@ const alertMap: Record<string, string> = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [TextContentDirective, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
     selector: 'div[wmAlertDialog]',
@@ -39,7 +40,7 @@ const alertMap: Record<string, string> = {
     ]
 })
 export class AlertDialogComponent extends BaseDialog implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     isPrism: boolean;
     alerttype: any;
 

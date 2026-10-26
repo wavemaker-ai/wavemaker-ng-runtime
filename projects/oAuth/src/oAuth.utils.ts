@@ -125,6 +125,7 @@ function setAccessToken(provider, accesstoken) {
 function checkAuthenticationStatus(providerId, successCallback, removeProviderConfigCallBack, evt, http?, securityObj?) {
     const accessTokenKey = providerId + accessTokenSuffix,
         accessTokenOrCode = localStorage.getItem(accessTokenKey);
+    // only the same-origin oAuthCallback page may trigger the token handoff
     if (evt && evt.origin !== window.location.origin) {
         return;
     }
@@ -140,6 +141,8 @@ function checkAuthenticationStatus(providerId, successCallback, removeProviderCo
                 data: req
             }).then(function(response) {
                 triggerAccessTokenSuccessCallback(providerId, successCallback, removeProviderConfigCallBack, accessTokenKey, response.body.access_token);
+            }).catch(function(error) {
+                console.error('OAuth: access token request failed for provider ' + providerId, error);
             });
         } else {
             triggerAccessTokenSuccessCallback(providerId, successCallback, removeProviderConfigCallBack, accessTokenKey, accessTokenOrCode);
@@ -203,7 +206,7 @@ function checkForWindowExistence(oAuthWindow, provider, callback, providerInfo?)
     if (oAuthWindow && listeners[provider]) {
         if (!oAuthWindow.closed) { // .closed is supported across major browser vendors however for IE the user has to enable protected mode from security options
             setTimeout(checkForWindowExistence.bind(undefined, oAuthWindow, provider, callback, providerInfo), 3000);
-        } else {
+        } else 
             if (!isPassedFlow(providerInfo, pkceIdentifier)) {
                 window.removeEventListener('message', listeners[provider]);
                 delete listeners[provider];
@@ -211,7 +214,7 @@ function checkForWindowExistence(oAuthWindow, provider, callback, providerInfo?)
                     callback('error');
                 }
             }
-        }
+        
     }
 }
 /**
@@ -253,7 +256,7 @@ function isPassedFlow(providerInfo, flow) {
  * @param callback
  */
 function onAuthWindowOpen(provider, callback, removeProviderConfigCallBack, http?, securityObj?) {
-    listeners[provider] = checkAuthenticationStatus.bind(undefined, provider, callback, removeProviderConfigCallBack, null, http, securityObj);
+    listeners[provider] = (evt: MessageEvent) => checkAuthenticationStatus(provider, callback, removeProviderConfigCallBack, evt, http, securityObj);
     window.addEventListener('message', listeners[provider], false);
 }
 
@@ -335,9 +338,6 @@ function constructURLForImplicitOrPKCE(providerId, providerInfo, requestSourceTy
     let state;
     if (getWmProjectProperties().isTestRuntime === true) {
         redirectUri = location.protocol + '//' + window.location.host + '/studio/oAuthCallback.html';
-    }
-    if (requestSourceType === 'MOBILE') {
-        redirectUri = deployedURL + 'oAuthCallback.html';
     }
     const flow = isPassedFlow(providerInfo, implicitIdentifier) ? implicitIdentifier : pkceIdentifier;
     state = {providerId: providerId, suffix: accessTokenSuffix, requestSourceType: requestSourceType, flow: flow, scheme: customUriScheme};
@@ -432,9 +432,9 @@ export const performAuthorization = (url, providerId, onSuccess, onError, http, 
         if (isIE()) { // handling for IE
             handleLoginForIE(url, providerId, onSuccess, onError, removeProviderConfigCallBack);
         } else {
-            postGetAuthorizationURL(url, providerId, onSuccess, removeProviderConfigCallBack, securityObj, requestSourceType, http);
+            postGetAuthorizationURL(url, providerId, onSuccess, removeProviderConfigCallBack, securityObj, requestSourceType, customUriScheme, deployedURL, http);
         }
-    } else {
+    } else 
         if (isPassedFlow(securityObj, implicitIdentifier) || isPassedFlow(securityObj, pkceIdentifier)) {
             triggerProviderConfigCallBack(url, providerId, onSuccess, onError, http, addProviderConfigCallBack, removeProviderConfigCallBack, securityObj, requestSourceType, customUriScheme, deployedURL);
         } else {
@@ -445,5 +445,5 @@ export const performAuthorization = (url, providerId, onSuccess, onError, http, 
                 triggerProviderConfigCallBack(response, providerId, onSuccess, onError, http, addProviderConfigCallBack, removeProviderConfigCallBack, securityObj, requestSourceType, customUriScheme, deployedURL);
             });
         }
-    }
+    
 };

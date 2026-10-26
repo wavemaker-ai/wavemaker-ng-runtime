@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional} from '@angular/core';
+import {AfterViewInit, Attribute, Component, Inject, Injector, OnDestroy, OnInit, Optional, ChangeDetectionStrategy} from '@angular/core';
 
 import { Subject, Subscription } from 'rxjs';
 
@@ -18,6 +18,7 @@ const WIDGET_CONFIG = {
 };
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [CommonModule, FileIconClassPipe, StateClassPipe, FileSizePipe, WmAppIconComponent],
     selector: '[wmFileUpload]',
@@ -28,7 +29,7 @@ const WIDGET_CONFIG = {
 })
 
 export class FileUploadComponent extends StylableComponent implements OnInit, AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     selectedFiles: any = [];
     uploadedFiles: any = [];
     selectedFolders: any = [];
@@ -78,8 +79,8 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
     showprogressbarpercentage;
     deleteiconhint;
     private uploadProgressSubscription: Subscription;
-    private deleteProgressSubscription: Subscription;
-    private idGenerator = new IDGenerator('file-');
+    private readonly deleteProgressSubscription: Subscription;
+    private readonly idGenerator = new IDGenerator('file-');
     // MEMORY LEAK FIX: Store bound functions for proper cleanup
     private boundDragOverCb: (e: Event) => void;
     private boundDropCb: () => void;
@@ -331,8 +332,8 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
                             this.deletedatasource._deleteFileObservable = this.deleteFileObservable;
                             this.deletedatasource._deleteFileObservable.asObservable().subscribe((response) => {
                                 if(response.status === "success") {
-                                    this.selectedFiles = this.selectedFiles.filter((fileObj) => file !== fileObj) || [];
-                                    this.uploadedFiles = this.uploadedFiles.filter((fileObj) => file !== fileObj) || [];
+                                    this.selectedFiles = this.selectedFiles.filter((fileObj) => file !== fileObj);
+                                    this.uploadedFiles = this.uploadedFiles.filter((fileObj) => file !== fileObj);
                                 }
                             });
                         }
@@ -364,7 +365,7 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
         const filesData = $event.dataTransfer.items;
         if (filesData.length > 0) {
             // Use DataTransferItemList interface to access the file(s)
-            for (var i = 0; i < filesData.length; i++) {
+            for (let i = 0; i < filesData.length; i++) {
                  // Get all the files and push them into an array
                 if (filesData[i].webkitGetAsEntry().isFile) {
                     listOfFiles.push(filesData[i].getAsFile());
@@ -436,7 +437,7 @@ export class FileUploadComponent extends StylableComponent implements OnInit, Af
         super.onPropertyChange(key, nv, ov);
     }
 
-    constructor(inj: Injector, private app: App, @Attribute('select.event') public onSelectEvt, private dialogService: AbstractDialogService, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, private readonly app: App, @Attribute('select.event') public onSelectEvt, private readonly dialogService: AbstractDialogService, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
         super(inj, WIDGET_CONFIG, explicitContext);
         // styler(this.nativeElement, this);
     }

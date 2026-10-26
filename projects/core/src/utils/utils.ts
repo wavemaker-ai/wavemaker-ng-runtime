@@ -151,7 +151,7 @@ export const isMobile = () => isAndroid() || isIos() || isAndroidTablet() || $('
 
 export const isTablet = () => {
     const scope = document.querySelector('.app-page').widget;
-    return scope && scope.viewParent.Viewport.isTabletType;
+    return scope?.viewParent.Viewport.isTabletType;
 };
 
 
@@ -193,7 +193,7 @@ export const encodeUrlParams = (url: string): string => {
             queryParams = queryParamsString.split('&');
             queryParams.forEach(function (param) {
                 let decodedParamValue;
-                const i = includes(param, '=') ? param.indexOf('=') : (param && param.length),
+                const i = includes(param, '=') ? param.indexOf('=') : (param?.length),
                     paramName = param.substr(0, i),
                     paramValue = param.substr(i + 1);
 
@@ -384,7 +384,7 @@ export function triggerFn(fn, ...argmnts) {
     }
 
     if (isFunction(fn)) {
-        return fn.apply(null, args);
+        return fn(...args);
     }
 }
 
@@ -422,7 +422,7 @@ export const getFormattedDate = (datePipe, dateObj, format, timeZone?, isTimeSta
 export const hasOffsetStr = (dateStr) => {
     if (typeof dateStr !== 'string') return;
     const matches = dateStr.match(REGEX.ISO_DATE_FORMAT);
-    if (matches && matches[4]) {
+    if (matches?.[4]) {
         return true;
     }
 }
@@ -432,9 +432,9 @@ export const hasOffsetStr = (dateStr) => {
  */
 export const getDateObj = (value, options?, timezone?): Date => {
     // Handling localization
-    if (options && options.pattern && options.pattern !== 'timestamp') {
+    if (options?.pattern && options.pattern !== 'timestamp') {
         // Fix for WMS-19601, invalid date is returned on date selection.
-        const isNativePicker = (options && options.hasOwnProperty('isNativePicker')) ? get(options, 'isNativePicker') : isMobile();
+        const isNativePicker = (options?.hasOwnProperty('isNativePicker')) ? get(options, 'isNativePicker') : isMobile();
         const pattern =  isNativePicker ? 'YYYY/MM/DD HH:mm:ss' : momentPattern(options.pattern);
         value = moment(value, pattern).toDate();
     }
@@ -511,7 +511,7 @@ export const getClonedObject = (object) => {
 
 export const getFiles = (formName, fieldName, isList) => {
     const files = get(document.forms, [formName, fieldName, 'files']);
-    return isList ? map(files, identity) : files && files[0];
+    return isList ? map(files, identity) : files?.[0];
 };
 
 /*Function to generate a random number*/
@@ -532,7 +532,7 @@ export const validateAccessRoles = (roleExp, loggedInUser) => {
 
     if (roleExp && loggedInUser) {
 
-        roles = roleExp && roleExp.split(',').map(Function.prototype.call, String.prototype.trim);
+        roles = roleExp?.split(',').map(Function.prototype.call, String.prototype.trim);
 
         return intersection(roles, loggedInUser.userRoles).length;
     }
@@ -602,14 +602,7 @@ export const findValueOf = (obj, key, create?) => {
     const parts = key.split('.'),
         keys = [];
 
-    let skipProcessing;
-
     parts.forEach((part) => {
-        if (!parts.length) { // if the part of a key is not valid, skip the processing.
-            skipProcessing = true;
-            return false;
-        }
-
         const subParts = part.match(/\w+/g);
         let subPart;
 
@@ -618,10 +611,6 @@ export const findValueOf = (obj, key, create?) => {
             keys.push({ 'key': subPart, 'value': subParts.length ? [] : {} }); // determine whether to create an array or an object
         }
     });
-
-    if (skipProcessing) {
-        return undefined;
-    }
 
     keys.forEach((_key) => {
         let tempObj = obj[_key.key];
@@ -648,8 +637,8 @@ export const extractType = (typeRef: string): string => {
     if (!typeRef) {
         return DataType.STRING;
     }
-    type = typeRef && typeRef.substring(typeRef.lastIndexOf('.') + 1);
-    type = type && type.toLowerCase();
+    type = typeRef?.substring(typeRef.lastIndexOf('.') + 1);
+    type = type?.toLowerCase();
     type = type === DataType.LOCALDATETIME ? DataType.DATETIME : type;
     return type;
 };
@@ -680,7 +669,7 @@ export const scrollToElement = (element) => {
 
 // Function will return whether the given element is in viewport or not
 export const isElementInViewport = (element) => {
-    var rect = element.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
     return (
         rect.top >= 0 &&
         rect.left >= 0 &&
@@ -704,7 +693,7 @@ export const isPageable = (obj: any): boolean => {
     };
     // paginated object may or may not contain 'empty' property. In either case, Pageable should return as true.
     const paginatedObj = omit(obj, 'empty');
-    return (isEqual(keys(pageable), keys(paginatedObj).sort()));
+    return (isEqual(keys(pageable), keys(paginatedObj).sort((a, b) => a.localeCompare(b))));
 };
 
 /*
@@ -749,17 +738,17 @@ export const getValidDateObject = (val, options?) => {
    const defaultMeridian = ['AM', 'PM'];
    const momentMeridian = (moment() as any)._locale.meridiem();
     // Updating localized meridians with default meridians when moment meridian is not defined
-    if (options && options.meridians && includes(defaultMeridian, momentMeridian)) {
+    if (options?.meridians && includes(defaultMeridian, momentMeridian)) {
         forEach(options.meridians, (meridian, index) => {
             if (includes(val, meridian)) {
                 val = val.replace(meridian, defaultMeridian[index]);
             }
         });
     }
-    const isNativePicker = (options && options.hasOwnProperty('isNativePicker')) ? get(options, 'isNativePicker') : isMobile();
+    const isNativePicker = (options?.hasOwnProperty('isNativePicker')) ? get(options, 'isNativePicker') : isMobile();
     const pattern = isNativePicker ? (get(options, 'pattern') || 'YYYY/MM/DD HH:mm:ss') : (momentPattern(get(options, 'pattern')) || '');
     // Handling localization
-    if (options && options.pattern && options.pattern !== 'timestamp') {
+    if (options?.pattern && options.pattern !== 'timestamp') {
         if (!isNaN(moment(val, pattern).valueOf())) { // Fix for [WMS-27658]: Date() doesn't support some formats like 'dd/MM/yyyy'  so using moment() to format the value
             // check whether val is a valid date or not
             if (isIos()) {
@@ -784,13 +773,13 @@ export const getValidDateObject = (val, options?) => {
     /*if the value is a timestamp string, convert it to a number*/
     if (!isNaN(val)) {
         val = parseInt(val, 10);
-    } else {
+    } else
         /*if the value is in HH:mm:ss format, it returns a wrong date. So append the date to the given value to get date*/
         if (!(new Date(val).getTime())) {
             val = moment((moment().format('YYYY-MM-DD') + ' ' + val), 'YYYY-MM-DD HH:mm:ss A');
 
         }
-    }
+
     return new Date(moment(val).valueOf());
 };
 
@@ -859,14 +848,6 @@ const getNode = selector => document.querySelector(selector);
 // function to check if the stylesheet is already loaded
 const isStyleSheetLoaded = href => !!getNode(`link[href="${href}"]`);
 
-// function to remove stylesheet if the stylesheet is already loaded
-const removeStyleSheet = href => {
-    const node = getNode(`link[href="${href}"]`);
-    if (node) {
-        node.remove();
-    }
-};
-
 // function to load a stylesheet
 export const loadStyleSheet = (url, attr) => {
     if (isStyleSheetLoaded(url)) {
@@ -875,7 +856,7 @@ export const loadStyleSheet = (url, attr) => {
     const link = document.createElement('link');
     link.href = url;
     // To add attributes to link tag
-    if (attr && attr.name) {
+    if (attr?.name) {
         link.setAttribute(attr.name, attr.value);
     }
     link.setAttribute('rel', 'stylesheet');
@@ -978,7 +959,7 @@ export const setSessionStorageItem = (key, value) => {
  */
 export const getSessionStorageItem = key => {
     // sanity check for this to work with ng-codegen
-    let item = window && window.sessionStorage && window.sessionStorage.getItem(_WM_APP_PROJECT.id);
+    let item = window?.sessionStorage?.getItem(_WM_APP_PROJECT.id);
 
     if (item) {
         item = JSON.parse(item);
@@ -1025,8 +1006,8 @@ export const openLink = (link: string, target: string = '_self') => {
 /* util function to load the content from a url */
 export const fetchContent = (dataType, url: string, inSync: boolean = false, success?, error?): Promise<any> => {
     return $.ajax({ type: 'get', dataType: dataType, url: url, async: !inSync })
-        .done(response => success && success(response))
-        .fail(reason => error && error(reason));
+        .done(response => success?.(response))
+        .fail(reason => error?.(reason));
 };
 
 /**
@@ -1452,7 +1433,7 @@ export const adjustContainerPosition = (containerElem, parentElem, ref, ele?) =>
     * @param containerElem elemet for the WebKitCSSMatrix
     */
     export const getWebkitTraslationMatrix = (containerElem) => {
-        if (!containerElem || !containerElem[0]) {
+        if (!containerElem?.[0]) {
             return null;
         }
         const computedStyle = window.getComputedStyle(containerElem[0]);
@@ -1674,31 +1655,29 @@ export const getFontConfig = () => {
 }
 
 export const adjustVerticalPosition = (containerElem, parentElem: HTMLElement, ref, ele?): void => {
-    const zoneRef = ref._ngZone || ref.ngZone;
+    runAfterStable(ref, () => {
+        const containerHeight = ele
+            ? parseInt(ele.css('height'), 10)
+            : parseInt(containerElem.css('height'), 10);
 
-    zoneRef.onStable.subscribe(() => {
-            const containerHeight = ele
-                ? parseInt(ele.css('height'), 10)
-                : parseInt(containerElem.css('height'), 10);
+        const rect = parentElem.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
 
-            const rect = parentElem.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
+        const spaceBelow = viewportHeight - rect.bottom;
+        const spaceAbove = rect.top;
 
-            const spaceBelow = viewportHeight - rect.bottom;
-            const spaceAbove = rect.top;
+        if (spaceBelow < containerHeight && spaceAbove >= containerHeight) {
+            const matrix = getWebkitTraslationMatrix(containerElem);
 
-            if (spaceBelow < containerHeight && spaceAbove >= containerHeight) {
-                const matrix = getWebkitTraslationMatrix(containerElem);
+            matrix.m42 = matrix.m42 - containerHeight - rect.height;
 
-                matrix.m42 = matrix.m42 - containerHeight - rect.height;
-
-                if (matrix.m42 < 0) {
-                    matrix.m42 = 0;
-                }
-
-                setTranslation3dPosition(containerElem, matrix);
+            if (matrix.m42 < 0) {
+                matrix.m42 = 0;
             }
-        });
+
+            setTranslation3dPosition(containerElem, matrix);
+        }
+    });
 };
 /*export const getParent = (parent: any) => {
     if(parent.hasOwnProperty("isDynamicComponent") || parent.hasOwnProperty("isPageComponent")) {

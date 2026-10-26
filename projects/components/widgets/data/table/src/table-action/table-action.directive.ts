@@ -16,7 +16,7 @@ const WIDGET_CONFIG = {widgetType: 'wm-table-action', hostClass: ''};
     ]
 })
 export class TableActionDirective extends BaseComponent implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     accessroles;
     action;
@@ -54,7 +54,7 @@ export class TableActionDirective extends BaseComponent implements OnInit, OnDes
             title: isUndefined(this.title) ? (this['display-name'] || '') : this.title,
             action: this.action,
             accessroles: this.accessroles,
-            shortcutkey: this.shortcutkey,
+            shortcutkey: this.shortcutkey || undefined,
             disabled: this.disabled,
             tabindex: this.tabindex,
             icon: this.icon,
@@ -81,6 +81,8 @@ export class TableActionDirective extends BaseComponent implements OnInit, OnDes
 
         if (key === 'display-name') {
             this.buttonDef.displayName = nv;
+        } else if (key === 'shortcutkey') {
+            this.buttonDef.shortcutkey = nv || undefined;
         } else {
             this.buttonDef[key] = nv;
         }

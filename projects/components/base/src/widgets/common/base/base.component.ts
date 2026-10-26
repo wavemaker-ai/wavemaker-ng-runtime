@@ -46,10 +46,10 @@ declare const $;
 
 // Gets list of classes to add and remove and applies on the $el
 const updateClasses = (toAdd, toRemove, el) => {
-    if (toRemove && toRemove.length) {
+    if (toRemove?.length) {
         removeClass(el, join(toRemove, ' '));
     }
-    if (toAdd && toAdd.length) {
+    if (toAdd?.length) {
         addClass(el, join(toAdd, ' '));
     }
 };
@@ -57,7 +57,7 @@ const updateClasses = (toAdd, toRemove, el) => {
 // To add and remove styles on the $el
 const updateStyles = (nv, ov, el) => {
     if (ov && isObject(ov)) {
-        const keys = Object.keys(ov || {});
+        const keys = Object.keys(ov);
         keys.forEach(function(key) {
             setCSS(el, key, '');
         });
@@ -152,7 +152,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     /**
      * Map of event handler callbacks
      */
-    private eventHandlers = new Map<string, {callback: Function, locals: any}>();
+    private readonly eventHandlers = new Map<string, {callback: Function, locals: any}>();
 
     /**
      * context of the widget
@@ -182,13 +182,13 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      * Holds the event registration functions.
      * these functions needs to be executed after onViewInit
      */
-    private toBeSetupEventsQueue: Array<Function> = [];
+    private readonly toBeSetupEventsQueue: Array<Function> = [];
 
     public __cloneable__ = false;
 
     public widgetProps: Map<string, any>;
 
-    private $attrs = new Map<string, string>();
+    private readonly $attrs = new Map<string, string>();
 
     private isMuted = false;
 
@@ -211,7 +211,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         const elementRef = inj.get(ElementRef);
         this.nativeElement = elementRef.nativeElement;
         //making the code compatible in both the JIT and AOT modes
-        this.viewParentApp = inj ? inj.get(App) : inject(App);
+        this.viewParentApp = inj.get(App);
         this.widgetType = config.widgetType;
         this.widgetSubType = config.widgetSubType || config.widgetType;
         this.viewContainerRef = inj.get(ViewContainerRef);
@@ -288,7 +288,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
 
                 this.initWidget();
                 this.setInitProps();
-                resolveFn && resolveFn()
+                resolveFn?.()
             });
         }
         if(explicitContext) {
@@ -455,6 +455,8 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
             this.nativeElement.hidden = !nv;
         } else if (key === 'hint') {
             setAttr(this.nativeElement, 'title', nv);
+        } else if (key === 'arialabel') {
+            setAttr(this.nativeElement, 'aria-label', nv);
         } else if (key === 'class') {
             switchClass(this.nativeElement, nv, ov);
         } else if (key === 'name' || key === 'tabindex') {
@@ -699,7 +701,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
     protected getAttributes() {
         let _tNodeAttrs = (this.inj as any)._tNode.attrs, actualAttrs = Array.from(this.nativeElement.attributes).map(attr => attr.name);
         if(_tNodeAttrs === null) {
-            return actualAttrs.sort();
+            return actualAttrs.sort((a, b) => a.localeCompare(b));
         }
         forEach(_tNodeAttrs, (attr, i: any) => {
             if (typeof attr === 'number') {
@@ -721,7 +723,7 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
         If array is sorted, placeholder.bind value will be set finally.
         This is caused because of the way we are storing attribute names in watcher registry map
          */
-        return actualAttrs.sort();
+        return actualAttrs.sort((a, b) => a.localeCompare(b));
     }
 
     /**
@@ -799,6 +801,9 @@ export abstract class BaseComponent implements OnDestroy, OnInit, AfterViewInit,
      * Sets the focus on the widget
      */
     protected focus(): void {
+        if (!this.$element?.[0]) {
+            return;
+        }
         /**
          * Check for the nodes having focus-target attribute inside the element
          * If found, focus the first node (eg, date widget)

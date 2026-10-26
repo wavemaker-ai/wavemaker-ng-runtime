@@ -7,7 +7,7 @@ import {
     OnDestroy,
     Optional,
     TemplateRef,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 
 import {toBoolean} from '@wm/core';
@@ -22,6 +22,7 @@ const DIALOG_CLS = 'app-dialog modal-dialog app-iframe-dialog';
 const WIDGET_INFO = {widgetType: 'wm-iframedialog'};
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [IframeComponent, DialogBodyDirective, DialogFooterDirective, DialogHeaderComponent, ButtonComponent],
     selector: 'div[wmIframeDialog]',
@@ -32,7 +33,7 @@ const WIDGET_INFO = {widgetType: 'wm-iframedialog'};
     ]
 })
 export class IframeDialogComponent extends BaseDialog implements OnInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     @ViewChild('dialogTemplate' , { static: true }) dialogTemplate: TemplateRef<any>;
 

@@ -1,4 +1,4 @@
-import { ApplicationRef, Attribute, Component, ComponentRef, EnvironmentInjector, Inject, Injector, NgZone, OnDestroy, Optional, ViewEncapsulation, createComponent } from '@angular/core';
+import { ApplicationRef, Attribute, Component, ComponentRef, EnvironmentInjector, Inject, Injector, NgZone, OnDestroy, Optional, ViewEncapsulation, createComponent, ChangeDetectionStrategy } from '@angular/core';
 import { APPLY_STYLES_TYPE, getEvaluatedData, getOrderedDataset, provideAsWidgetRef, StylableComponent, styler } from '@wm/components/base';
 import { registerProps } from './tree.props';
 import { $parseEvent, getClonedObject, StatePersistence } from "@wm/core";
@@ -15,6 +15,7 @@ const TREE_STATE_SELECTED_ID = 'selectedNodeId';
 const TREE_STATE_SELECTED_PATH = 'selectedNodePath';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     selector: 'ul[wmTree]',
     templateUrl: './tree.component.html',
@@ -24,7 +25,7 @@ const TREE_STATE_SELECTED_PATH = 'selectedNodePath';
     encapsulation: ViewEncapsulation.None
 })
 export class TreeComponent extends StylableComponent implements OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
 
     private nodes: Array<any>;
     private zTreeNodes: Array<any>;
@@ -74,11 +75,11 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
 
     constructor(
         inj: Injector,
-        @Attribute('datavalue.bind') private binddatavalue,
-        @Attribute('nodelabel.bind') private bindnodelabel,
-        @Attribute('nodeicon.bind') private bindnodeicon,
-        @Attribute('nodechildren.bind') private bindnodechildren,
-        @Attribute('nodeid.bind') private bindnodeid,
+        @Attribute('datavalue.bind') private readonly binddatavalue,
+        @Attribute('nodelabel.bind') private readonly bindnodelabel,
+        @Attribute('nodeicon.bind') private readonly bindnodeicon,
+        @Attribute('nodechildren.bind') private readonly bindnodechildren,
+        @Attribute('nodeid.bind') private readonly bindnodeid,
         statePersistence: StatePersistence,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
@@ -150,7 +151,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     // set tree node template
     public setTemplate(partialName: string) {
         this.template = partialName;
-        if (this.viewParent && this.viewParent.prefabName) {
+        if (this.viewParent?.prefabName) {
             this['prefabName'] = this.viewParent.prefabName;
         }
         this.renderTree();
@@ -220,7 +221,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
         this.nodeTemplateRefs.push(ref);
     }
 
-    private addDiyDom = (_treeId: string, treeNode: any) => {
+    private readonly addDiyDom = (_treeId: string, treeNode: any) => {
         if (!this.template) {
             return;
         }
@@ -282,7 +283,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     private getNodesFromString(value) {
         return value.split(',').map((item) => {
             return {
-                'label': item && item.trim()
+                'label': item?.trim()
             };
         });
     }
@@ -302,7 +303,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
                         const parsed = JSON.parse(trimmed);
                         if (isArray(parsed)) {
                             nodes = getOrderedDataset(parsed, this.orderby);
-                        } else if (isObject(parsed)) {
+                        } else {
                             nodes = [parsed];
                         }
                     } catch {
@@ -359,7 +360,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             return;
         }
         if(this.nodeclick === "expand") {
-            var nodes = this.zTree.getSelectedNodes();
+            const nodes = this.zTree.getSelectedNodes();
             if (nodes.length>0) {
                 this.expandNode(nodes[0], !nodes[0].open, true);
             }
@@ -418,7 +419,7 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
             const icon = getEvaluatedData(node, { field: this.nodeicon, bindExpression: this.bindnodeicon }, this.viewParent) || node.icon;
             const nodeId = getEvaluatedData(node, { field: this.nodeid, bindExpression: this.bindnodeid }, this.viewParent);
             const children = getEvaluatedData(node, { field: this.nodechildren, bindExpression: this.bindnodechildren }, this.viewParent) || node.children;
-            zNode['name'] = name === undefined || name === null ? '' : String(name);
+            zNode['name'] = String(name);
             if(!this.template) {
                 zNode['icon'] = icon;
             }
@@ -528,6 +529,9 @@ export class TreeComponent extends StylableComponent implements OnDestroy {
     /** String / number variants for zTree <code>getNodeByParam('nodeId', …)</code> and flatten fallback. */
     private nodeIdLookupCandidates(raw: any): any[] {
         const out: any[] = [];
+        if (raw === undefined || raw === null || raw === '') {
+            return out;
+        }
         const push = (v: any) => {
             if (v !== undefined && v !== null && v !== '' && !out.includes(v)) {
                 out.push(v);

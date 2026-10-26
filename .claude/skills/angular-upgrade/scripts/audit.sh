@@ -27,6 +27,15 @@ fi
 . "$SKILL_DIR/repo.config.sh"
 cd "$REPO_ROOT"
 
+# Activate the Node version pinned in repo.config.sh (NODE_VERSION), if nvm is available.
+# A fresh shell's active `node` reflects this machine's PATH snapshot, not necessarily
+# this pin, and `nvm use` from a prior command does not persist to this one.
+if [ -n "$NODE_VERSION" ] && [ -s "$HOME/.nvm/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$HOME/.nvm/nvm.sh"
+  nvm use "$NODE_VERSION" >/dev/null 2>&1 || echo "warn: nvm could not activate Node $NODE_VERSION (not installed?) — run: nvm install $NODE_VERSION" >&2
+fi
+
 # --- helper: get installed version from node_modules ---
 pkg_version() {
   pkg="$1"
@@ -116,9 +125,14 @@ ANG_PKGS_AFTER=$(angular_pins_from_pkg)
 major_ver() { echo "$1" | cut -d. -f1; }
 
 if [ "$ANG_PKGS" != "$ANG_PKGS_AFTER" ]; then
-  # Show what changed
-  diff <(echo "$ANG_PKGS") <(echo "$ANG_PKGS_AFTER") 2>/dev/null | grep '^[<>]' \
+  # Show what changed (avoid <() process substitution — not portable to plain /bin/sh)
+  BEFORE_TMP=$(mktemp)
+  AFTER_TMP=$(mktemp)
+  printf '%s\n' "$ANG_PKGS" > "$BEFORE_TMP"
+  printf '%s\n' "$ANG_PKGS_AFTER" > "$AFTER_TMP"
+  diff "$BEFORE_TMP" "$AFTER_TMP" 2>/dev/null | grep '^[<>]' \
     | sed 's/^</  before: /; s/^>/  after:  /' || true
+  rm -f "$BEFORE_TMP" "$AFTER_TMP"
   # Strip minor.patch — only flag if the major version changed
   ANG_MAJORS_BEFORE=$(echo "$ANG_PKGS"       | sed 's/=\([0-9]*\)\.[0-9.]*$/=\1/' | sort)
   ANG_MAJORS_AFTER=$(echo  "$ANG_PKGS_AFTER" | sed 's/=\([0-9]*\)\.[0-9.]*$/=\1/' | sort)

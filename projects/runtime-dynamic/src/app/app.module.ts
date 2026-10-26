@@ -48,11 +48,7 @@ import { NumberComponent } from "@wm/components/input/number";
 import { RadiosetComponent } from "@wm/components/input/radioset";
 import { SelectComponent } from "@wm/components/input/select";
 import { SwitchComponent } from "@wm/components/input/switch";
-import { InputCalendarComponent } from "@wm/components/input/text";
-import { InputColorComponent } from "@wm/components/input/text";
-import { InputEmailComponent } from "@wm/components/input/text";
-import { InputNumberComponent } from "@wm/components/input/text";
-import { InputTextComponent } from "@wm/components/input/text";
+import { InputCalendarComponent, InputColorComponent, InputEmailComponent, InputNumberComponent, InputTextComponent } from "@wm/components/input/text";
 import { TextareaComponent } from "@wm/components/input/textarea";
 
 import { CalendarComponent } from '@wm/components/input/calendar';
@@ -63,10 +59,8 @@ import { CurrencyComponent } from '@wm/components/input/currency';
 import { DateComponent } from '@wm/components/input/epoch/date';
 import { DatetimeComponent } from '@wm/components/input/epoch/date-time';
 import { TimeComponent } from '@wm/components/input/epoch/time';
-import { DateTimePickerComponent } from '@wm/components/input/epoch/date-time-picker';
-import { TimePickerComponent } from '@wm/components/input/epoch/date-time-picker';
-import { PickerComponent } from '@wm/components/input/epoch/picker';
-import { PickerGroupComponent } from '@wm/components/input/epoch/picker';
+import { DateTimePickerComponent, TimePickerComponent } from '@wm/components/input/epoch/date-time-picker';
+import { PickerComponent, PickerGroupComponent } from '@wm/components/input/epoch/picker';
 
 import { FileUploadComponent } from '@wm/components/input/file-upload';
 import { RatingComponent } from '@wm/components/input/rating';
@@ -149,13 +143,11 @@ import { TopNavDirective } from '@wm/components/page/top-nav';
 import { PrefabDirective, PrefabContainerDirective } from '@wm/components/prefab';
 
 import {
-    AppComponent,
     AppJSProvider,
     AppVariablesProvider,
     ComponentRefProvider,
     PrefabConfigProvider,
     WmRouteReuseStrategy,
-    WM_MODULES_FOR_ROOT,
     CustomwidgetConfigProvider,
     REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS,
     AppExtensionProvider
@@ -321,15 +313,14 @@ REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(...componentsModule as any);
 REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule as any, ReactiveFormsModule as any);
 
 @NgModule({
-    declarations: [
-        PageWrapperComponent
-    ],
+    declarations: [],
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
         CommonModule,
         RouterModule,
         HttpClientModule,
+        PageWrapperComponent,
 
         ModalModule,
         BsDatepickerModule,
@@ -345,8 +336,7 @@ REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule as any, ReactiveFormsMo
 
         routerModule,
         toastrModule,
-        httpClientXsrfModule,
-        WM_MODULES_FOR_ROOT
+        httpClientXsrfModule
     ],
     providers: [
         AppResourceManagerService,
@@ -360,10 +350,9 @@ REQUIRED_MODULES_FOR_DYNAMIC_COMPONENTS.push(FormsModule as any, ReactiveFormsMo
         { provide: PrefabConfigProvider, useClass: PrefabConfigProviderService },
         { provide: RouteReuseStrategy, useClass: WmRouteReuseStrategy },
         { provide: AbstractHttpService, useClass: HttpServiceImpl }
-    ],
-    bootstrap: [AppComponent]
+    ]
 })
 export class AppModule {
-    constructor(private app: App, private inj: Injector, private componentRefProvider: ComponentRefProvider) {
+    constructor(private readonly app: App, private readonly inj: Injector, private readonly componentRefProvider: ComponentRefProvider) {
     }
 }

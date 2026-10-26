@@ -10,7 +10,7 @@ import {
     NgZone,
     OnDestroy,
     Optional,
-    ViewChild
+    ViewChild, ChangeDetectionStrategy
 } from '@angular/core';
 import {BsDatepickerDirective, BsDatepickerModule} from 'ngx-bootstrap/datepicker';
 import {TimepickerConfig, TimepickerModule} from 'ngx-bootstrap/timepicker';
@@ -20,8 +20,7 @@ import {
     addClass,
     addEventListenerOnElement,
     adjustContainerPosition,
-    adjustContainerRightEdges,
-    App,
+        App,
     AppDefaults,
     EVENT_LIFE,
     FormWidgetType,
@@ -48,6 +47,7 @@ const WIDGET_CONFIG = { widgetType: 'wm-datetime', hostClass: DEFAULT_CLS };
 const CURRENT_DATE = 'CURRENT_DATE';
 
 @Component({
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
     imports: [FormsModule, DateTimePickerComponent, BsDropdownModule, BsDatepickerModule, TimepickerModule,CommonModule],
     selector: '[wmDateTime]',
@@ -60,16 +60,16 @@ const CURRENT_DATE = 'CURRENT_DATE';
     ]
 })
 export class DatetimeComponent extends BaseDateTimeComponent implements AfterViewInit, OnDestroy {
-    static initializeProps = registerProps();
+    static readonly initializeProps = registerProps();
     /**
      * The below propeties prefixed with "bs" always holds the value that is selected from the datepicker.
      * The bsDateTimeValue = bsDateValue + bsTimeValue.
      */
-    private bsDateTimeValue: any;
+    private readonly bsDateTimeValue: any;
     public bsDateValue;
     private bsTimeValue;
     private proxyModel;
-    private app: App;
+    private readonly app: App;
     public hint: string;
     public arialabel: string;
     public showdropdownon: string;
@@ -121,9 +121,9 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
      */
     public isCurrentDate = false;
 
-    private _debouncedOnChange: Function = debounce(this.invokeOnChange, 10);
+    private readonly _debouncedOnChange: Function = debounce(this.invokeOnChange, 10);
 
-    private dateContainerCls: string;
+    private readonly dateContainerCls: string;
 
     // @ts-ignore
     get datavalue(): any {
@@ -152,9 +152,9 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
 
     constructor(
         inj: Injector,
-        private ngZone: NgZone,
-        private cdRef: ChangeDetectorRef,
-        private appDefaults: AppDefaults,
+        private readonly ngZone: NgZone,
+        private readonly cdRef: ChangeDetectorRef,
+        private readonly appDefaults: AppDefaults,
         app: App,
         @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any
     ) {
@@ -321,9 +321,7 @@ export class DatetimeComponent extends BaseDateTimeComponent implements AfterVie
         }
         if (!this.dateNotInRange && !this.invalidDateTimeFormat) {
             this.proxyModel = newVal;
-            if (this.proxyModel) {
-                this.bsDateValue = this.bsTimeValue = newVal;
-            }
+            this.bsDateValue = this.bsTimeValue = newVal;
             if(this.datavalue=== this.getPrevDataValue()){
                 const time=getFormattedDate(this.datePipe, this.datavalue, this.datepattern, this.timeZone, null, null, this) || ''
                 $(this.nativeElement).find('.display-input').val(time?.replace(this.meridians[0], this.am)?.replace(this.meridians[1], this.pm)) ;}

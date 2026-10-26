@@ -168,7 +168,7 @@ $.widget('wm.datatable', {
             return value !== null && typeof value === 'object';
         },
         getObjectIndex: function (data, obj) {
-            var matchIndex = -1;
+            let matchIndex = -1;
             if (!Array.isArray(data)) {
                 return -1;
             }
@@ -181,12 +181,12 @@ $.widget('wm.datatable', {
             return matchIndex;
         },
         generateGuid: function () {
-            var random = this.random;
+            const random = this.random;
             return random() + random() + '-' + random() + '-' + random() + '-' +
                 random() + '-' + random() + random() + random();
         },
         isValidHtml: function (htm) {
-            var validHtmlRegex = /<[a-z][\s\S]*>/i;
+            const validHtmlRegex = /<[a-z][\s\S]*>/i;
             return validHtmlRegex.test(htm);
         },
         isMac: function () {
@@ -209,10 +209,10 @@ $.widget('wm.datatable', {
         if (!styleString) {
             return;
         }
-        var styles = styleString.split(';');
+        const styles = styleString.split(';');
         styles.forEach(function (styleBit) {
-            var parts = styleBit.split(':');
-            var property, value;
+            const parts = styleBit.split(':');
+            let property, value;
             if (parts.length === 2) {
                 property = parts[0].trim();
                 value = parts[1].trim();
@@ -223,7 +223,7 @@ $.widget('wm.datatable', {
     },
 
     _getColumnSortDirection: function (field) {
-        var sortInfo = this.options.sortInfo;
+        const sortInfo = this.options.sortInfo;
         return field === sortInfo.field ? sortInfo.direction : '';
     },
     /*Based on the spacing property, add or remove classes*/
@@ -249,10 +249,10 @@ $.widget('wm.datatable', {
     },
     //Method to calculate and get the column span of the header cells
     _getColSpan: function (cols) {
-        var colSpan = 0,
+        let colSpan = 0,
             self = this;
         _.forEach(cols, function (col) {
-            var colDef;
+            let colDef;
             if (col.isGroup) {
                 colSpan += self._getColSpan(col.columns);
             } else {
@@ -265,7 +265,7 @@ $.widget('wm.datatable', {
     },
     //Method to set the column span of the header cells in the config
     _setColSpan: function (config) {
-        var self = this;
+        const self = this;
         _.forEach(config, function (col) {
             if (col.isGroup) {
                 col.colspan = self._getColSpan(col.columns);
@@ -277,7 +277,7 @@ $.widget('wm.datatable', {
     /* Returns the table header template. */
     _getHeaderTemplate: function () {
 
-        var $colgroup = $('<colgroup></colgroup>'),
+        let $colgroup = $('<colgroup></colgroup>'),
             $htm = this.gridHeaderElement.empty(),
             isDefined = this.Utils.isDefined,
             sortInfo = this.options.sortInfo,
@@ -289,7 +289,7 @@ $.widget('wm.datatable', {
             $row;
 
         function generateHeaderCell(value, index) {
-            var id = index,
+            let id = index,
                 field = value.field,
                 headerLabel = self.Utils.isDefined(value.displayName) ? value.displayName : (field || ''),
                 titleLabel = headerLabel,
@@ -347,6 +347,9 @@ $.widget('wm.datatable', {
             if (field === 'radio') {
                 $th.attr('aria-label', "Select row");
             }
+            if (field === '__expand') {
+                $th.append('<span class="sr-only">Expand row</span>');
+            }
             $th.append('<span class="header-data">' + headerLabel + '</span>');
             if (sortEnabled) { //If sort info is present, show the sort icon for that column on grid render
                 $sortSpan = $('<span class="sort-buttons-container"></span>');
@@ -363,9 +366,9 @@ $.widget('wm.datatable', {
 
         //Method to generate the header row based on the column group config
         function generateRow(cols, i) {
-            var $thList = [];
+            const $thList = [];
             _.forEach(cols, function (col) {
-                var index,
+                let index,
                     value,
                     classes,
                     styles,
@@ -411,7 +414,7 @@ $.widget('wm.datatable', {
             rowTemplates.forEach(function($thList, index) {
                 $row = $('<tr role="row" tabindex="0"></tr>');
                 // To fix ADA issue "Tables headers in datatable must refer to data cells"
-                var rowSpan = rowTemplates.length - index;
+                const rowSpan = rowTemplates.length - index;
                 //append all t-heads to the tr
                 $thList.forEach(function($th) {
                     // if rowspan > 1, apply it to all non-group t-heads
@@ -429,7 +432,7 @@ $.widget('wm.datatable', {
 
     /* Returns the seachbox template. */
     _getSearchEl: function () {
-        var htm,
+        let htm,
             sel = '<select name="wm-datatable" data-element="dgFilterValue" ' +
                 'class="form-control app-select">' +
                 '<option value="" selected class="placeholder">' + this.options.messages.selectField + '</option>',
@@ -454,21 +457,21 @@ $.widget('wm.datatable', {
             '</button></span>' +
             '</div>' +
             '</div></form>';
-        var $htm = $(htm);
+        const $htm = $(htm);
         this._setStyles($htm.find('[data-element="dgSearchText"]'), "display: inline-block;");
         return $htm;
     },
     _appendRowExpansionButtons: function ($htm) {
-        var self = this;
+        const self = this;
         $htm.find("[data-identifier='rowExpansionButtons']").each(function (index) {
-            var _rowData, $row, rowId, rowIndex = index;
+            let _rowData, $row, rowId, rowIndex = index;
             $row = $(this).closest('tr.app-datagrid-row');
             rowId = parseInt($row.attr('data-row-id'), 10);
             _rowData = _.clone(self.options.data[rowId]);
             _rowData.$index = rowIndex + 1;
             self.options.generateRowExpansionCell(_rowData, rowIndex);
             $(this).empty().append(self.options.getRowExpansionAction(rowIndex));
-            var expandtitleExpr = $(this).children()[0].getAttribute('expandtitle.bind'),
+            const expandtitleExpr = $(this).children()[0].getAttribute('expandtitle.bind'),
                 collapsetitleExpr = $(this).children()[0].getAttribute('collapsetitle.bind');
 
             if(expandtitleExpr) {
@@ -494,7 +497,7 @@ $.widget('wm.datatable', {
 
     /* Returns the tbody markup. */
     _getSummaryRowTemplate: function () {
-        var self = this,
+        const self = this,
             $tfoot = $('<tfoot class="' + this.options.cssClassNames.gridFooter + '"></tfoot>');
         this._setStyles($tfoot, "border-top: 3px solid #eee;");
 
@@ -510,9 +513,9 @@ $.widget('wm.datatable', {
     /* function to get start index of the current active page */
     getPageStartIndex: function() {
         // Guard against undefined getCurrentPage or getPageSize functions
-        var getCurrentPageFn = this.options.getCurrentPage;
-        var getPageSizeFn = this.options.getPageSize;
-        var currentPage, pagesize;
+        const getCurrentPageFn = this.options.getCurrentPage;
+        const getPageSizeFn = this.options.getPageSize;
+        let currentPage, pagesize;
         if (!getCurrentPageFn || typeof getCurrentPageFn !== 'function') {
             // Default to page 1 if getCurrentPage is not available
             currentPage = 1;
@@ -525,8 +528,8 @@ $.widget('wm.datatable', {
         } else {
             pagesize = getPageSizeFn();
         }
-        var isPrevPageUpdated = this.options.actionRowPage < currentPage;
-        var pageIndex = isPrevPageUpdated ? this.options.actionRowPage : currentPage;
+        const isPrevPageUpdated = this.options.actionRowPage < currentPage;
+        const pageIndex = isPrevPageUpdated ? this.options.actionRowPage : currentPage;
         return ((pageIndex - 1) * pagesize);
     },
 
@@ -535,7 +538,7 @@ $.widget('wm.datatable', {
      */
     _getPreparedDataForInfiniteScroll : function ($tbody, preparedData) {
         preparedData = preparedData.filter(function(row, index) {
-            var isExists = $tbody.find('tr.app-datagrid-row[data-row-id=' + row.$$pk + ']');
+            const isExists = $tbody.find('tr.app-datagrid-row[data-row-id=' + row.$$pk + ']');
             if (!isExists.length) { return row;}
         })
         return preparedData;
@@ -543,11 +546,11 @@ $.widget('wm.datatable', {
 
     // when the edit action is performed, update the tr with the new data
     _updateTrData : function ($tbody) {
-        var  editedRow,updatedRowData, self = this;
+        let  editedRow,updatedRowData, self = this;
         editedRow = $tbody.find('tr.app-datagrid-row[data-row-id=' + self.options.actionRowIndex + ']');
         updatedRowData = self.preparedData[self.options.actionRowIndex];
         self.options.generateCustomExpressions(updatedRowData, self.options.actionRowIndex);
-        var rowTemplate = self._getRowTemplate(updatedRowData, self.options.actionRowIndex);
+        const rowTemplate = self._getRowTemplate(updatedRowData, self.options.actionRowIndex);
         editedRow.replaceWith(rowTemplate[0]);
     },
 
@@ -557,7 +560,7 @@ $.widget('wm.datatable', {
         -> when the edit is performed update the tr with newly updated data
      */
     _handleCRUDForInfiniteScroll : function ($tbody) {
-        var self = this;
+        const self = this;
 
         //When search or sort applied or dataset is updated, clear the tbody and render with filtered data
         // Fix for [WMS-23263] 'isDataUpdatedByUser' flag is true when dataset is updated from script
@@ -582,11 +585,11 @@ $.widget('wm.datatable', {
     /* Returns the tbody markup. */
     _getGridTemplate: function () {
 
-        var self = this, preparedData,$tbody,pageStartIndex = self.getPageStartIndex(),
+        let self = this, preparedData,$tbody,pageStartIndex = self.getPageStartIndex(),
             startRowIndex = self.options.startRowIndex,
             isScrollorOnDemand = self.options.isNavTypeScrollOrOndemand();
-            var $activeRow = self.gridElement.find('tr.row-editing:not(.always-new-row)').first();
-            var index = $activeRow.index();
+            const $activeRow = self.gridElement.find('tr.row-editing:not(.always-new-row)').first();
+            const index = $activeRow.index();
             if(isScrollorOnDemand) {
                 $tbody = this.gridElement;
                 if(this.renderTableOnViewLess) {
@@ -614,16 +617,16 @@ $.widget('wm.datatable', {
             preparedData = this.preparedData;
         }
         _.forEach(preparedData, function (row, index) {
-            var _row = _.clone(row), rowIndex = (isScrollorOnDemand) ? startRowIndex + index - 1 : index, rowTemplate;
+            let _row = _.clone(row), rowIndex = (isScrollorOnDemand) ? startRowIndex + index - 1 : index, rowTemplate;
             _row.$index = rowIndex + 1;
             self.options.generateCustomExpressions(_row, rowIndex);
             self.options.registerRowNgClassWatcher(_row, rowIndex);
             rowTemplate = self._getRowTemplate(row, rowIndex);
             $tbody.append(rowTemplate);
             if (self.options.rowExpansionEnabled) {
-                var rowHeight = self.options.rowDef.height;
-                var colSpanLength = _.filter(self.preparedHeaderData, function(c) {return c.show}).length;
-                var $tr = $('<tr class="app-datagrid-detail-row" tabindex="0" role="row" data-row-id="' + row.$$pk + '"><td colspan="' + colSpanLength + '" class="app-datagrid-row-details-cell">' +
+                const rowHeight = self.options.rowDef.height;
+                const colSpanLength = _.filter(self.preparedHeaderData, function(c) {return c.show}).length;
+                const $tr = $('<tr class="app-datagrid-detail-row" tabindex="0" role="row" data-row-id="' + row.$$pk + '"><td colspan="' + colSpanLength + '" class="app-datagrid-row-details-cell">' +
                     '<div class="row-overlay"><div class="row-status"><i class="' + self.options.loadingicon + '"></i></div></div><div class="details-section"></div>' +
                     '</td></tr>');
                 if (rowHeight) {
@@ -657,7 +660,7 @@ $.widget('wm.datatable', {
 
     /* Returns the table row template. */
     _getRowTemplate: function (row, rowIndex, summaryRow) {
-        var $htm,
+        let $htm,
             self = this,
             gridOptions = self.options;
 
@@ -669,7 +672,7 @@ $.widget('wm.datatable', {
     },
 
     _getRowActionsColumnDefIndex: function () {
-        var i, len = this.preparedHeaderData.length;
+        let i, len = this.preparedHeaderData.length;
         for (i = 0; i < len; i += 1) {
             if (this.preparedHeaderData[i].field === 'rowOperations') {
                 return i;
@@ -679,7 +682,7 @@ $.widget('wm.datatable', {
     },
 
     _getRowActionsColumnDef: function () {
-        var index = this._getRowActionsColumnDefIndex();
+        const index = this._getRowActionsColumnDefIndex();
         if (index !== -1) {
             return this.preparedHeaderData[index];
         }
@@ -688,7 +691,7 @@ $.widget('wm.datatable', {
 
     /* Returns the checkbox template. */
     _getCheckboxTemplate: function (row, isMultiSelectCol) {
-        var checked = row._checked === true ? ' checked' : '',
+        const checked = row._checked === true ? ' checked' : '',
             disabled = row.disabed ? ' disabled' : '',
             chkBoxName = isMultiSelectCol ? 'gridMultiSelect' : '',
             labelClass = row._checked === true ? '' : 'unchecked';
@@ -716,19 +719,20 @@ $.widget('wm.datatable', {
     },
     /* Returns the radio template. */
     _getRadioTemplate: function (row) {
-        var checked = row._checked === true ? ' checked' : '',
+        const checked = row._checked === true ? ' checked' : '',
             disabled = row.disabed ? ' disabled' : '';
         return `<div class="radio app-radio">
             <label>
                 <input type="radio" rowSelectInput name="" value="" ${checked} ${disabled}>
                 <span class="caption"></span>
+                <span class="sr-only">Select row</span>
             </label>
         </div>`;
     },
 
     /* Returns the table cell template. */
     _getColumnTemplate: function (row, colId, colDef, rowIndex, summaryRow) {
-        var $htm,
+        let $htm,
             columnValue,
             columnValueObject,
             cellPreloader = '<div class="overlay"><span aria-hidden="true" class="form-field-spinner fa fa-circle-o-notch fa-spin form-control-feedback"></span></div>',
@@ -824,7 +828,7 @@ $.widget('wm.datatable', {
     },
     //Get event related template for editable widget
     _getEventTemplate: function (colDef) {
-        var events = _.filter(_.keys(colDef), function (key) {
+        let events = _.filter(_.keys(colDef), function (key) {
                 return _.startsWith(key, 'on');
             }),
             changeEvt,
@@ -842,7 +846,7 @@ $.widget('wm.datatable', {
         return template;
     },
     _insertFieldInHeaderConfig: function (headerConfig, fieldName, position) {
-        var index = _.findIndex(headerConfig, {field: position}),
+        const index = _.findIndex(headerConfig, {field: position}),
             self = this;
         if (index === -1) {
             _.forEach(headerConfig, function (config) {
@@ -858,7 +862,7 @@ $.widget('wm.datatable', {
         if (_.isEmpty(this.options.headerConfig)) {
             return;
         }
-        var fieldName = this.customColumnDefs[name].field;
+        const fieldName = this.customColumnDefs[name].field;
         _.remove(this.options.headerConfig, {'field': fieldName});
         if (position === '0') {
             this.options.headerConfig.unshift({'field': fieldName, 'isPredefined': true});
@@ -873,7 +877,7 @@ $.widget('wm.datatable', {
         if (_.isEmpty(this.preparedHeaderData)) {
             return;
         }
-        var rowExpandPosition,
+        let rowExpandPosition,
             rowExpandCol;
         if (this.options.rowExpansionEnabled) {
             rowExpandPosition = this.options.rowDef.position;
@@ -885,7 +889,7 @@ $.widget('wm.datatable', {
                 } else if (rowExpandPosition === '0') {
                     this.preparedHeaderData.unshift(rowExpandCol);
                 } else {
-                    var index = _.findIndex(this.preparedHeaderData, {field: rowExpandPosition});
+                    const index = _.findIndex(this.preparedHeaderData, {field: rowExpandPosition});
                     this.preparedHeaderData.splice(index + 1, 0, rowExpandCol);
                 }
             }
@@ -920,12 +924,12 @@ $.widget('wm.datatable', {
 
     /* Generates default column definitions from given data. */
     _generateCustomColDefs: function () {
-        var colDefs = [],
+        const colDefs = [],
             generatedColDefs = {};
 
         function generateColumnDef(key) {
             if (!generatedColDefs[key]) {
-                var colDef = {
+                const colDef = {
                     'type': 'string',
                     'field': key
                 };
@@ -944,7 +948,7 @@ $.widget('wm.datatable', {
 
     /* Prepares the grid data by adding a primary key to each row's data. */
     _prepareData: function () {
-        var data = [],
+        let data = [],
             colDefs = this.options.colDefs,
             self = this,
             gridData = [],
@@ -956,12 +960,12 @@ $.widget('wm.datatable', {
         }
         gridData = this.options.isNavTypeScrollOrOndemand() ? this.options.data.slice(pageStartIndex) : this.options.data;
         gridData.forEach(function (item, i) {
-            var rowData = $.extend(true, {}, item);
+            const rowData = $.extend(true, {}, item);
             colDefs.forEach(function (colDef) {
                 if (!colDef.field) {
                     return;
                 }
-                var fields = colDef.field.split('.'),
+                let fields = colDef.field.split('.'),
                     text = item,
                     j,
                     len = fields.length,
@@ -1009,7 +1013,7 @@ $.widget('wm.datatable', {
             // else update the existing data (if any edit action is performed) or push data (if the data is not present) to preparedData list.
             else if (self.preparedData.length) {
                 data.forEach(function (rowData, index) {
-                    var rowId = pageStartIndex + index;
+                    const rowId = pageStartIndex + index;
                     // assigning updated value to prepareData list
                     if (self.preparedData[rowId] && rowData.$$index === self.preparedData[rowId].$$index) {
                         self.preparedData[rowId] = rowData;
@@ -1029,7 +1033,7 @@ $.widget('wm.datatable', {
 
     /* Select previously selected columns after refreshing grid data. */
     _reselectColumns: function () {
-        var selectedColumns = [],
+        let selectedColumns = [],
             self = this;
         //If enableColumnSelection is set to true, reselect the columns on data refresh
         if (this.gridHeaderElement && this.options.enableColumnSelection) {
@@ -1112,7 +1116,7 @@ $.widget('wm.datatable', {
     * */
     callRenderGridForInfiniteScroll: function() {
         this.gridFooter.remove();
-        var $alwaysNewRow = this.gridElement.find('> tr.app-datagrid-row.always-new-row');
+        const $alwaysNewRow = this.gridElement.find('> tr.app-datagrid-row.always-new-row');
         if ($alwaysNewRow.length) {
             $alwaysNewRow.remove();
         }
@@ -1141,7 +1145,7 @@ $.widget('wm.datatable', {
     },
     /* Inserts a new blank row in the table. */
     addNewRow: function (skipFocus, alwaysNewRow) {
-        var rowId = this.gridElement.find('> tr.app-datagrid-row:visible').length || 99999, //Dummy value if rows are not there
+        let rowId = this.gridElement.find('> tr.app-datagrid-row:visible').length || 99999, //Dummy value if rows are not there
             self = this,
             rowData = {},
             $row,
@@ -1159,9 +1163,9 @@ $.widget('wm.datatable', {
             this.setFocusOnElement(undefined, $alwaysNewRow);
             // QUICK EDIT MODE | On Add Click on new row, trigger save action
             if(this.options.editmode===this.CONSTANTS.QUICK_EDIT){
-                var $qTarget = $alwaysNewRow.find("input").length>0?$($alwaysNewRow.find("input")[0]):null;
+                const $qTarget = $alwaysNewRow.find("input").length>0?$($alwaysNewRow.find("input")[0]):null;
                 if($qTarget!==null){
-                    var event = $.Event("keydown");
+                    const event = $.Event("keydown");
                     event.which = 13;
                     $qTarget.trigger(event);
                 }
@@ -1217,10 +1221,10 @@ $.widget('wm.datatable', {
     /* Inserts a load more button at the end of the table when the pagination selected is on demand */
     addLoadMoreBtn : function (onDemandMsg, loadingdatamsg, cb, infScroll) {
         // Show Load more button only if it not the last page
-        var $btnEl;
+        let $btnEl;
         if (!this.options.isLastPage || infScroll) {
-            var self = this;
-            var $parenEl = $('<div class="on-demand-datagrid"><a class="app-button btn btn-block on-demand-load-btn"></a></div>');
+            const self = this;
+            const $parenEl = $('<div class="on-demand-datagrid"><a class="app-button btn btn-block on-demand-load-btn"></a></div>');
             $btnEl = $parenEl.find('a');
             $btnEl.append(onDemandMsg);
             // Adding load more button in case of on demand pagination
@@ -1234,7 +1238,7 @@ $.widget('wm.datatable', {
             // Adding click event to the button
             $btnEl.on('click', function (e) {
                 // when the button is clicked, hide the button and show loading indicator
-                var lastPage = (self.options.getCurrentPage() == self.options.getPageCount());
+                const lastPage = (self.options.getCurrentPage() == self.options.getPageCount());
                 if(!lastPage) {
                     self.showLoadingIndicator(loadingdatamsg, false);
                 }
@@ -1265,8 +1269,8 @@ $.widget('wm.datatable', {
 
     /* Shows loading indicator when clicked on load more button or in case of infinite scroll event is triggered */
     showLoadingIndicator: function (loadingdatamsg, infScroll) {
-        var hasLoadingEl = this.element.find('.loading-data-msg');
-        var $dataGrid = this.element.find('.on-demand-datagrid');
+        const hasLoadingEl = this.element.find('.loading-data-msg');
+        const $dataGrid = this.element.find('.on-demand-datagrid');
         if (hasLoadingEl.length && !infScroll) {
             // in case of on demand pagination, show the loading ele which was hidden
             hasLoadingEl.show();
@@ -1276,13 +1280,13 @@ $.widget('wm.datatable', {
         } else {
             // if the loading indicator ele is not created, create it and append it to grid ele if it is already present.
             // If not create grid ele and then append the loading indicator to grid ele
-            var $loadingEl = $('<div class="loading-data-msg spin-icon-in-center"><span><i class="app-icon panel-icon fa-spin ' + this.options.loadingicon + '"></i>' +
+            const $loadingEl = $('<div class="loading-data-msg spin-icon-in-center"><span><i class="app-icon panel-icon fa-spin ' + this.options.loadingicon + '"></i>' +
                 '<span class="sr-only">Loading</span><span class="loading-text"></span></span></div>');
             $loadingEl.find('.loading-text').html(loadingdatamsg);
             if ($dataGrid.length) {
                 $dataGrid.append($loadingEl);
             } else {
-                var gridEl = $('<div class="on-demand-datagrid">' + $loadingEl[0].outerHTML + '</div>');
+                const gridEl = $('<div class="on-demand-datagrid">' + $loadingEl[0].outerHTML + '</div>');
                 this.element.find('.app-grid-header-inner').append(gridEl);
             }
         }
@@ -1314,7 +1318,7 @@ $.widget('wm.datatable', {
     /* Returns the selected rows in the table. */
     getSelectedRows: function () {
         this.getSelectedColumns();
-        var selectedRowsData = [],
+        const selectedRowsData = [],
             self = this;
 
         this.preparedData.forEach(function (data, i) {
@@ -1326,8 +1330,8 @@ $.widget('wm.datatable', {
     },
     /* Sets the selected rows in the table. */
     selectRows: function (rows) {
-        var self = this;
-        var _rows = _.isArray(rows) ? rows.slice() : [rows];
+        const self = this;
+        const _rows = _.isArray(rows) ? rows.slice() : [rows];
         /*Deselect all the previous selected rows in the table*/
         self.gridElement.find('tr.app-datagrid-row').each(function (index) {
             if (self.preparedData[index] && self.preparedData[index]._selected === true) {
@@ -1335,13 +1339,9 @@ $.widget('wm.datatable', {
             }
         });
         /*Select the given row. If rows is an array, loop through the array and set the row*/
-        if (_.isArray(_rows)) {
-            _.forEach(_rows, function (row) {
-                self.selectRow(row, true);
-            });
-        } else {
-            self.selectRow(_rows, true);
-        }
+        _.forEach(_rows, function (row) {
+            self.selectRow(row, true);
+        });
     },
     toggleRowFilter: function(show) {
         if (this.options.filtermode === this.CONSTANTS.MULTI_COLUMN && this.gridSearch) {
@@ -1360,8 +1360,8 @@ $.widget('wm.datatable', {
     },
     /*Set the default widths for the colgroup*/
     setColGroupWidths: function () {
-        var self = this,
-            headerCols = this.options.isMobile ? this.tableContainer.find('col') : this.tableContainer.find('col'),
+        const self = this,
+            headerCols = this.tableContainer.find('col'),
             bodyCols = this.tableContainer.find('col'),
             headerCells = this.options.showHeader ? this.gridContainer.find('th.app-datagrid-header-cell') : this.gridElement.find('tr.app-datagrid-row').first().find('td'),
             colLength = this.preparedHeaderData.length,
@@ -1375,10 +1375,10 @@ $.widget('wm.datatable', {
         this.toggleRowFilter();
 
         // Find if cols of colgroup has any width defined, if yes remove those columns from colsLen
-        var definedColWidth = 0;
-        var colsLen = headerCols.length;
+        let definedColWidth = 0;
+        let colsLen = headerCols.length;
         headerCols.each(function () {
-            var eachColWidth = $(this).width();
+            const eachColWidth = $(this).width();
             if (eachColWidth) {
                 definedColWidth = definedColWidth + eachColWidth;
                 colsLen =  colsLen - 1;
@@ -1388,7 +1388,7 @@ $.widget('wm.datatable', {
 
         //First Hide or show the column based on the show property so that width is calculated correctly
         headerCells.each(function () {
-            var id = Number($(this).attr('data-col-id')),
+            let id = Number($(this).attr('data-col-id')),
                 colDef = self.preparedHeaderData[id],
                 $headerCell = self.gridContainer.find('th[data-col-id="' + id + '"]'),
                 $tdCell = self.gridElement.find('td.app-datagrid-cell[data-col-id="' + id + '"]'),
@@ -1424,7 +1424,7 @@ $.widget('wm.datatable', {
         });
         //setting the header col width based on the content width
         headerCells.each(function () {
-            var $header = $(this),
+            let $header = $(this),
                 id = Number($header.attr('data-col-id')),
                 colDef = self.preparedHeaderData[id],
                 definedWidth,
@@ -1453,9 +1453,9 @@ $.widget('wm.datatable', {
                                  * In such cases, calculating the width of column cells against the closest parent whose width is available
                                 */
                                 if (width <= 0) {
-                                    var currentNode = $header;
-                                    var elemWidth = width;
-                                    var padding = 0;
+                                    let currentNode = $header;
+                                    let elemWidth = width;
+                                    let padding = 0;
                                     while (elemWidth <= 0) {
                                         currentNode = currentNode.parent();
                                         elemWidth = currentNode.width();
@@ -1472,19 +1472,19 @@ $.widget('wm.datatable', {
 
                                         // If the width is provided in % for inactive panes, convert % to pixel
                                         if (_.includes(tempWidth, '%')) {
-                                            var widthPercent = parseInt(tempWidth);
-                                            var pixelWidth = (elemWidth)*(widthPercent/100);
+                                            const widthPercent = parseInt(tempWidth);
+                                            const pixelWidth = (elemWidth)*(widthPercent/100);
                                             width = pixelWidth;
                                         } else { // Else divide the parent width by the number of columns available
                                             // If any columns have defined width, remove that width from parent elem width
-                                            var parentWidth = (definedColWidth && definedColWidth > 0) ? elemWidth - definedColWidth : elemWidth;
+                                            const parentWidth = (definedColWidth && definedColWidth > 0) ? elemWidth - definedColWidth : elemWidth;
                                             // ColsLen has length of columns whose width is undefined
-                                            var totalCols = colsLen ? colsLen : headerCols.length;
+                                            const totalCols = colsLen ? colsLen : headerCols.length;
                                             width = parentWidth / totalCols;
                                             width = width > 90 ? ((colLength === id + 1) ? width - 17 : width) : 90; //columnSanity check to prevent width being too small and Last column, adjust for the scroll width
                                         }
                                     } else {
-                                        width = width > 90 ? ((colLength === id + 1) ? width - 17 : width) : 90; // fallback to the older approach
+                                        width = 90; // fallback to the older approach, no width is available on this path
                                     }
                                 } else {
                                     width = width > 90 ? ((colLength === id + 1) ? width - 17 : width) : 90; //columnSanity check to prevent width being too small and Last column, adjust for the scroll width
@@ -1508,7 +1508,7 @@ $.widget('wm.datatable', {
 
     /* Returns the selected columns in the table. */
     getSelectedColumns: function () {
-        var selectedColsData = {},
+        let selectedColsData = {},
             headerData = [],
             self = this,
             multiSelectColIndex,
@@ -1544,7 +1544,7 @@ $.widget('wm.datatable', {
         }
 
         headerData.forEach(function (colDef) {
-            var field = colDef.field;
+            const field = colDef.field;
             if (colDef.selected) {
                 selectedColsData[field] = {
                     'colDef': colDef,
@@ -1629,8 +1629,8 @@ $.widget('wm.datatable', {
             case 'showRowIndex':
                 this.refreshGrid();
                 break;
-            case 'cssClassNames':
-                var gridClass = this.options.cssClassNames.gridDefault + ' ' + this.options.cssClassNames.grid;
+            case 'cssClassNames': {
+                let gridClass = this.options.cssClassNames.gridDefault + ' ' + this.options.cssClassNames.grid;
                 if (this.options.rowExpansionEnabled) {
                     gridClass =  gridClass + ' ' + this.options.cssClassNames.gridRowExpansionClass;
                 }
@@ -1640,6 +1640,7 @@ $.widget('wm.datatable', {
                     this._toggleSpacingClasses('condensed');
                 }
                 break;
+            }
             case 'spacing':
                 this._toggleSpacingClasses(value);
                 break;
@@ -1694,7 +1695,7 @@ $.widget('wm.datatable', {
     },
     /* Marks the first row as selected. */
     selectFirstRow: function (value, visible) {
-        var $row,
+        let $row,
             id;
         //If visible flag is true, select the first visible row item (Do not select the always new row)
         if (visible && this.gridElement.find('tr').is(':visible')) {
@@ -1714,7 +1715,7 @@ $.widget('wm.datatable', {
 
     /* Selects a row. */
     selectRow: function (row, value,index) {
-        var rowIndex =index?index:( _.isNumber(row) ? row : this.Utils.getObjectIndex(this.options.data, row)),
+        let rowIndex =index?index:( _.isNumber(row) ? row : this.Utils.getObjectIndex(this.options.data, row)),
             selector,
             $row;
         if (rowIndex !== -1) {
@@ -1744,7 +1745,7 @@ $.widget('wm.datatable', {
             return;
         }
 
-        var rowId = $row.attr('data-row-id'),
+        let rowId = $row.attr('data-row-id'),
             $checkbox,
             $radio;
         if (!this.preparedData[rowId]) {
@@ -1785,7 +1786,7 @@ $.widget('wm.datatable', {
         }
         //As rows visibility is checked, remove loading icon
         this.__setStatus();
-        var $headerCheckbox = this.gridHeaderElement.find('th.app-datagrid-header-cell input:checkbox'),
+        const $headerCheckbox = this.gridHeaderElement.find('th.app-datagrid-header-cell input:checkbox'),
             $tbody = this.gridElement,
             checkedItemsLength = $tbody.find('tr.app-datagrid-row:visible input[name="gridMultiSelect"]:checkbox:checked').length,
             visibleRowsLength = $tbody.find('tr.app-datagrid-row:visible').length;
@@ -1817,12 +1818,12 @@ $.widget('wm.datatable', {
             }
         }
         $row = $row || $(e.target).closest('tr.app-datagrid-row');
-        var gridRow = this.gridElement.find($row);
+        const gridRow = this.gridElement.find($row);
         // WMS-21139 trigger selectedItems change when the captured click is on the current table but not on child table
         if (gridRow.length && gridRow.closest('tbody').attr('id') === this.gridElement.attr('id')) {
-            var rowId = $row.attr('data-row-id');
-            var rowData = this.preparedData[rowId];
-            var data = this.options.data[rowId];
+            const rowId = $row.attr('data-row-id');
+            const rowData = this.preparedData[rowId];
+            const data = this.options.data[rowId];
             this.options.assignSelectedItems(data, e, {'rowId': rowId, '_selected': rowData?._selected});
         }
     },
@@ -1842,7 +1843,7 @@ $.widget('wm.datatable', {
             }
         }
         options = options || {};
-        var rowId,
+        let rowId,
             rowData,
             data,
             selected,
@@ -1896,7 +1897,7 @@ $.widget('wm.datatable', {
     rowDblClickHandler: function (e, $row) {
         e.stopPropagation();
         $row = $row || $(e.target).closest('tr.app-datagrid-row');
-        var rowData, rowId = $row.attr('data-row-id');
+        let rowData, rowId = $row.attr('data-row-id');
         rowData = this.preparedData[rowId];
         if (!rowData) {
             return;
@@ -1918,7 +1919,7 @@ $.widget('wm.datatable', {
         });
     },
     headerClickHandler: function (e) {
-        var $th = $(e.target).closest('th.app-datagrid-header-cell'),
+        const $th = $(e.target).closest('th.app-datagrid-header-cell'),
             id = $th.attr('data-col-id');
         //Closing the popovers if any present when clicked on header or while sorting
         this.closePopover();
@@ -1929,7 +1930,7 @@ $.widget('wm.datatable', {
         if (e) {
             e.stopImmediatePropagation();
         }
-        var $th = e ? $(e.target).closest('th.app-datagrid-header-cell') : $headerCell,
+        let $th = e ? $(e.target).closest('th.app-datagrid-header-cell') : $headerCell,
             id = $th.attr('data-col-id'),
             colDef = this.preparedHeaderData[id],
             field = colDef.field,
@@ -1969,7 +1970,7 @@ $.widget('wm.datatable', {
         return _.get(document.forms, [$el.find('form').attr('name'), fieldName, 'files', 0]);
     },
     isDataModified: function ($editableElements, rowData, alwaysNewRow) {
-        var isDataChanged = false,
+        let isDataChanged = false,
             self = this;
 
         function getEpoch(val) {
@@ -1977,7 +1978,7 @@ $.widget('wm.datatable', {
         }
 
         $editableElements.each(function () {
-            var $el = $(this),
+            const $el = $(this),
                 colId = $el.attr('data-col-id'),
                 colDef = self.preparedHeaderData[colId],
                 text = self.getTextValue(colDef.field, alwaysNewRow),
@@ -2009,12 +2010,12 @@ $.widget('wm.datatable', {
             this.gridElement.find('tr.app-datagrid-row.active').focus();
     },
     focusNewRow: function () {
-        var newRow = this.gridElement.find('tr.always-new-row');
-        var newRowInputs = newRow && newRow.find("input") || [];
+        const newRow = this.gridElement.find('tr.always-new-row');
+        const newRowInputs = newRow.find("input");
         newRowInputs.length && newRowInputs[0].focus();
     },
     disableActions: function (val) {
-        var $deleteBtns = this.gridElement.find('.delete-row-button'),
+        const $deleteBtns = this.gridElement.find('.delete-row-button'),
             $editBtns = this.gridElement.find('.edit-row-button');
         if (val) {
             //Disable edit and delete actions while editing a row
@@ -2027,7 +2028,7 @@ $.widget('wm.datatable', {
     },
     //Function to the first input element in a row
     setFocusOnElement: function (e, $el, skipDelay) {
-        var $firstEl,
+        let $firstEl,
             $target = e && $(e.target),
             $focusEl;
         //If focused directly on the cell, focus the input in the cell
@@ -2047,9 +2048,7 @@ $.widget('wm.datatable', {
             if (!$firstEl.length) {
                 $firstEl = $($el).first().find('select');
             }
-            if(!($(e?.target).find('td').first().hasClass('td.cell-editing'))){
-                $firstEl=$el.find('td');
-            }
+            $firstEl=$el.find('td');
         }
         //Focus and select the first element
         if ($firstEl.length) {
@@ -2090,10 +2089,9 @@ $.widget('wm.datatable', {
     },
     //Method to make row editable with widgets
     makeRowEditable: function ($row, rowData, alwaysNewRow) {
-        var self = this,
+        const self = this,
             $originalElements = $row.find('td.app-datagrid-cell'),
             rowId = parseInt($row.attr('data-row-id'), 10),
-            $editableElements,
             _rowData = _.clone(rowData);
 
         _rowData.$index = rowId + 1;
@@ -2102,7 +2100,7 @@ $.widget('wm.datatable', {
         this.options.generateInlineEditRow(_rowData, alwaysNewRow);
 
         $originalElements.each(function () {
-            var $el = $(this),
+            let $el = $(this),
                 cellText = $el.text(),
                 id = $el.attr('data-col-id'),
                 colDef = self.preparedHeaderData[id],
@@ -2142,7 +2140,6 @@ $.widget('wm.datatable', {
             }
         });
 
-        $editableElements = $row.find('td.cell-editing');
         // PERFORMANCE FIX: Use event delegation on row instead of individual cell listeners
         $row.on('click.cellEdit', 'td.cell-editing', function (e) {
             e.stopPropagation();
@@ -2156,7 +2153,7 @@ $.widget('wm.datatable', {
     },
     // WMS-18568 changes added Save and Cancel buttons for Inline Data Table with no actions
     toggleNewRowActions: function (saveInd) {
-        var self = this,
+        const self = this,
             $gridActions = $(this.element).siblings('div.panel-footer, div.panel-heading').find('div.app-datagrid-actions'),
             $newRow = this.gridElement.find('tr.app-datagrid-row.row-editing'),
             $newRowButton = $gridActions.find('i.wi-plus').closest('.app-button');
@@ -2186,11 +2183,11 @@ $.widget('wm.datatable', {
         }
     },
     _isNewRow: function ($row) {
-        var rowId = parseInt($row.attr('data-row-id'), 10);
+        const rowId = parseInt($row.attr('data-row-id'), 10);
         return rowId >= this.preparedData.length || $row.hasClass('always-new-row');
     },
     _getWmVariableRowLocator: function (rowId) {
-        var liveRow = this.options.data[parseInt(rowId, 10)];
+        const liveRow = this.options.data[parseInt(rowId, 10)];
         return (liveRow && liveRow.$$wmSourceListIndex != null) ? liveRow.$$wmSourceListIndex : parseInt(rowId, 10);
     },
     /* Toggles the edit state of a row. */
@@ -2205,7 +2202,7 @@ $.widget('wm.datatable', {
         }
         //Closing the popovers if clicked on any row for Quick edit
         this.closePopover();
-        var $row = options.$row || $(e.target).closest('tr.app-datagrid-row'),
+        let $row = options.$row || $(e.target).closest('tr.app-datagrid-row'),
             $editButton = $row.find('.edit-row-button'),
             $cancelButton = $row.find('.cancel-edit-row-button'),
             $saveButton = $row.find('.save-edit-row-button'),
@@ -2312,7 +2309,7 @@ $.widget('wm.datatable', {
 
                 if (isDataChanged) {
                     $editableElements.each(function () {
-                        var $el = $(this),
+                        let $el = $(this),
                             colId = $el.attr('data-col-id'),
                             colDef = self.preparedHeaderData[colId],
                             fields = _.split(colDef.field, '.'),
@@ -2354,7 +2351,7 @@ $.widget('wm.datatable', {
                     //If required fields are present and value is not filled, return here
                     if ($requiredEls.length > 0) {
                         $requiredEls.each(function (index) {
-                            var $invalidTd = $(this).closest('td.app-datagrid-cell');
+                            const $invalidTd = $(this).closest('td.app-datagrid-cell');
                             if (index === 0) {
                                 $invalidTd.find('[focus-target]').focus();
                             }
@@ -2398,7 +2395,7 @@ $.widget('wm.datatable', {
                                 return;
                             }
                         }
-                        var ds = this.options.getDataSource && this.options.getDataSource();
+                        const ds = this.options.getDataSource && this.options.getDataSource();
                         if (ds && ds.category === 'wm.Variable') {
                             editOptions.rowindex = self._getWmVariableRowLocator(rowindex);
                         }
@@ -2427,7 +2424,7 @@ $.widget('wm.datatable', {
         this.addOrRemoveScroll();
     },
     cancelEdit: function ($row) {
-        var self = this,
+        const self = this,
             $editableElements = $row.find('td.cell-editing'),
             $cancelButton = $row.find('.cancel-edit-row-button'),
             $saveButton = $row.find('.save-edit-row-button'),
@@ -2442,7 +2439,7 @@ $.widget('wm.datatable', {
         $row.off('.cellEdit');
         $editableElements.off('click');
         $editableElements.each(function () {
-            var $el = $(this),
+            const $el = $(this),
                 value = $el.data('originalValue');
             // Fix for [WMS-27289]: Reassigning `tabindex` and `title` attributes to the `<td>` element when the cancel button is clicked in Edit mode.
             $el.attr('tabindex', 0);
@@ -2462,7 +2459,7 @@ $.widget('wm.datatable', {
     },
     //Function to close the current editing row
     closeEditedRow: function () {
-        var $row = this.gridElement.find('tr.app-datagrid-row.row-editing');
+        const $row = this.gridElement.find('tr.app-datagrid-row.row-editing');
         if ($row.length) {
             //If new row, remove the row. Else, cancel the row edit
             if (this._isNewRow($row)) {
@@ -2482,7 +2479,7 @@ $.widget('wm.datatable', {
             this.resetNewRow($row);
             return;
         }
-        var $editableElements = $row.find('td.cell-editing'),
+        const $editableElements = $row.find('td.cell-editing'),
             $editButton = $row.find('.edit-row-button'),
             $cancelButton = $row.find('.cancel-edit-row-button'),
             $saveButton = $row.find('.save-edit-row-button'),
@@ -2494,7 +2491,7 @@ $.widget('wm.datatable', {
         this.disableActions(false);
         this._setGridEditMode(false);
         $editableElements.each(function () {
-            var $el = $(this),
+            let $el = $(this),
                 value = $el.data('originalValue'),
                 text,
                 colDef;
@@ -2518,7 +2515,7 @@ $.widget('wm.datatable', {
     /* Deletes a row. */
     deleteRow: function (e) {
         e.stopPropagation();
-        var $row = $(e.target).closest('tr.app-datagrid-row'),
+        let $row = $(e.target).closest('tr.app-datagrid-row'),
             rowId = $row.attr('data-row-id'),
             rowData = this.options.data[rowId],
             isNewRow = this._isNewRow($row),
@@ -2553,7 +2550,7 @@ $.widget('wm.datatable', {
                 return;
             }
         }
-        var deleteDs = this.options.getDataSource && this.options.getDataSource();
+        const deleteDs = this.options.getDataSource && this.options.getDataSource();
         if (deleteDs && deleteDs.category === 'wm.Variable') {
             options.rowindex = this._getWmVariableRowLocator(rowId);
         }
@@ -2572,9 +2569,9 @@ $.widget('wm.datatable', {
                 self.addOrRemoveScroll();
             }, e, function (skipFocus, error) {
                 if (self.options.isNavTypeScrollOrOndemand()) {
-                    var rowId = +$(e.target).closest("tr.app-datagrid-row").attr("data-row-id");
+                    let rowId = +$(e.target).closest("tr.app-datagrid-row").attr("data-row-id");
                     // remove existing row from tbody
-                    var $row = self.gridElement.find('tr.app-datagrid-row[data-row-id="' + rowId + '"]');
+                    const $row = self.gridElement.find('tr.app-datagrid-row[data-row-id="' + rowId + '"]');
                     self.options.setDeletedRowIndex(rowId);
                     // remove data
                     self.preparedData.splice(rowId,1);
@@ -2600,7 +2597,7 @@ $.widget('wm.datatable', {
                 }
                 //Call set status, so that the rows are visible for fom operations
                 self.__setStatus();
-                var rowID,
+                let rowID,
                     $nextRow;
                 if (error) {
                     return;
@@ -2624,11 +2621,11 @@ $.widget('wm.datatable', {
 
     /* Keeps a track of the currently selected row, and deselects the previous row, if multiselect is false. */
     _deselectPreviousSelection: function ($row, e) {
-        var selectedRows = this.gridElement.find('tr.app-datagrid-row.active'),
+        const selectedRows = this.gridElement.find('tr.app-datagrid-row.active'),
             rowId = $row.attr('data-row-id'),
             self = this;
         selectedRows.each(function () {
-            var id = $(this).attr('data-row-id'),
+            const id = $(this).attr('data-row-id'),
                 preparedData = self.preparedData[id];
             if (id !== rowId && preparedData) {
                 $(this).find('input[rowSelectInput]:radio').prop('checked', false);
@@ -2641,7 +2638,7 @@ $.widget('wm.datatable', {
     //Method to remove sort icons from the column header cells
     resetSortIcons: function ($el) {
         this.isResetSortIconsDone = true;
-        var $sortContainer;
+        let $sortContainer;
         //If sort icon is not passed, find out the sort icon from the active class
         if (!$el && this.gridHeaderElement) {
             $sortContainer = this.gridHeaderElement.find('.sort-buttons-container.active');
@@ -2675,7 +2672,7 @@ $.widget('wm.datatable', {
             this.columnSelectionHandler(e);
             this.headerClickHandler(e);
         }
-        var $e = $(e.target),
+        let $e = $(e.target),
             $th = $e.closest('th.app-datagrid-header-cell'),
             id = $th.attr('data-col-id'),
             $sortContainer = $th.find('.sort-buttons-container'),
@@ -2694,7 +2691,7 @@ $.widget('wm.datatable', {
         if (direction === 'asc') {
             $sortIcon.addClass(this.options.cssClassNames.ascIcon);
             $sortContainer.addClass('active');
-        } else if (direction === 'desc') {
+        } else {
             $sortIcon.addClass(this.options.cssClassNames.descIcon);
             $sortContainer.addClass('active');
         }
@@ -2713,17 +2710,15 @@ $.widget('wm.datatable', {
         sortInfo.direction = direction;
         sortInfo.field = this.preparedHeaderData && this.preparedHeaderData[e.currentTarget.getAttribute('data-col-id')].sortby || field;
         sortInfo.sortBy = this.preparedHeaderData && this.preparedHeaderData[e.currentTarget.getAttribute('data-col-id')].sortby ? field : '';
-        if (direction !== '') {
-            this.preparedHeaderData[id].sortInfo = {'sorted': true, 'direction': direction};
-        }
+        this.preparedHeaderData[id].sortInfo = {'sorted': true, 'direction': direction};
         this._setGridEditMode(false);
         this.closeEditedRow();
         this.options.sortHandler.call(this, this.options.sortInfo, e, 'sort');
     },
     //Method to handle up and next key presses
     processUpDownKeys: function (event, $row, direction) {
-        var self = this;
-        var rowData = $row.find('input').val();
+        const self = this;
+        const rowData = $row.find('input').val();
         if ($row.hasClass('row-editing') && self.options.editmode === self.CONSTANTS.QUICK_EDIT && rowData) {
             self.toggleEditRow(event, {
                 'action': 'save',
@@ -2742,7 +2737,7 @@ $.widget('wm.datatable', {
     },
     //Reset new row data
     resetNewRow: function ($row) {
-        var rowData = {},
+        const rowData = {},
             self = this;
 
         this.options.clearForm(true);
@@ -2751,7 +2746,7 @@ $.widget('wm.datatable', {
 
         //Set the default values for widgets in the row
         $row.find('[data-field-name]').each(function () {
-            var $input = $(this),
+            const $input = $(this),
                 fieldName = $input.attr('data-field-name') + '_new';
             self.options.setFieldValue(fieldName, rowData[$input.attr('data-field-name')] || '')
         });
@@ -2759,7 +2754,7 @@ $.widget('wm.datatable', {
         self.setFocusOnElement(undefined, $row, true);
     },
     _onEnter: function ($target, $row, quickEdit, event) {
-        var self = this;
+        const self = this;
         if($target.is('button')){
             return;
         }
@@ -2782,11 +2777,11 @@ $.widget('wm.datatable', {
                             }
                             self.options.timeoutCall(function () {
                                 if(quickEdit){
-                                    var rowId = $editingRow[0]?.getAttribute('data-row-id');
+                                    let rowId = $editingRow[0]?.getAttribute('data-row-id');
                                     if($editingRow.hasClass("always-new-row")){
                                         rowId= self.gridElement[0].querySelector("tr.always-new-row")?.getAttribute('data-row-id')-1;
                                     }
-                                    var matchingRow = self.gridElement[0].querySelector("tr[data-row-id='" + rowId + "']");
+                                    const matchingRow = self.gridElement[0].querySelector("tr[data-row-id='" + rowId + "']");
                                     if($(matchingRow).hasClass('always-new-row')){return;}
                                     if (matchingRow) {
                                         if (!self.options.multiselect) {
@@ -2810,13 +2805,11 @@ $.widget('wm.datatable', {
             }
         }
         //Stop the enter keypress from submitting any parent form. If target is button, event should not be stopped as this stops click event on button
-        if (!$target.is('button')) {
-            event.stopPropagation();
-        }
+        event.stopPropagation();
     },
     // Handles keydown event on row items.
     onKeyDown: function (event) {
-        var $target = $(event.target),
+        let $target = $(event.target),
             $row = $target.closest('tr.app-datagrid-row'),
             self = this,
             quickEdit = this.options.editmode === this.CONSTANTS.QUICK_EDIT,
@@ -2868,7 +2861,7 @@ $.widget('wm.datatable', {
         }
     },
     editSuccessHandler: function (skipFocus, error, e, $row, isSameRow, direction) {
-        var self = this,
+        let self = this,
             rowID,
             $nextRow;
         //Call set status, so that the rows are visible for fom operations
@@ -2913,7 +2906,7 @@ $.widget('wm.datatable', {
     },
     //Method to check if the docus is on last column
     isLastColumn: function ($target) {
-        var $cell = $target.closest('td.app-datagrid-cell'),
+        let $cell = $target.closest('td.app-datagrid-cell'),
             $editCells;
 
         if ($cell.is(':last-child') || $cell.nextAll('td.app-datagrid-cell:visible').length === 0) {
@@ -2928,8 +2921,8 @@ $.widget('wm.datatable', {
         return false;
     },
     getColInfo: function(event) {
-        var column = $(event.target).closest('td.app-datagrid-cell');
-        var colId = column.attr('data-col-id');
+        const column = $(event.target).closest('td.app-datagrid-cell');
+        const colId = column.attr('data-col-id');
         return colId;
     },
     keydownHandler: function(event) {
@@ -2939,7 +2932,7 @@ $.widget('wm.datatable', {
     },
     /* Attaches all event handlers for the table. */
     attachEventHandlers: function ($htm) {
-        var self = this;
+        const self = this;
 
         if (this.options.enableRowSelection) {
             $htm[0].removeEventListener('click', this.rowClickHandlerOnCapture.bind(this));
@@ -2971,7 +2964,7 @@ $.widget('wm.datatable', {
         }
         if (self.options.editmode === self.CONSTANTS.QUICK_EDIT) {
             $htm.on('focus', 'tr.app-datagrid-row', function (e) {
-                var $row = $(e.currentTarget);
+                const $row = $(e.currentTarget);
                 if (!$row.hasClass('row-editing')) {
                     if(e.target===e.currentTarget && (e.which===0||!e.which)) {
                         return;
@@ -2981,7 +2974,7 @@ $.widget('wm.datatable', {
             });
             //On tab out of a row, save the current row and make next row editable
             $htm.on('focusout', 'tr.app-datagrid-row','thead.table-header', function (e) {
-                var $target = $(e.target),
+                const $target = $(e.target),
                     $row = $target.closest('tr.app-datagrid-row'),
                     $relatedTarget = $(e.relatedTarget),
                     isLastColumn = self.isLastColumn($target, $relatedTarget),
@@ -3048,7 +3041,7 @@ $.widget('wm.datatable', {
         // row selection
         $htm.find('[data-identifier="rowExpansionButtons"]').off("click");
         $htm.find('[data-identifier="rowExpansionButtons"]').on('click', function (e) {
-            var $row = $(e.target).closest('tr.app-datagrid-row');
+            const $row = $(e.target).closest('tr.app-datagrid-row');
             if ($(this).find('.app-button').attr('disabled')) {
                 return;
             }
@@ -3060,7 +3053,7 @@ $.widget('wm.datatable', {
      * Needed when table header is rebuilt (e.g. showHeader toggle) without a full _renderGrid
      */
     _attachHeaderEventHandlers: function () {
-        var $header = this.gridHeaderElement;
+        const $header = this.gridHeaderElement;
         if (!$header || !$header.length) {
             return;
         }
@@ -3101,7 +3094,7 @@ $.widget('wm.datatable', {
         return classNames && classNames.every(cls => element.hasClass(cls));
     },
     _collapseRow: function(e, rowData, rowId, $nextDetailRow, $icon) {
-        var self = this,
+        const self = this,
             $tbody = self.gridElement,
             $row = $($tbody.find('> tr.app-datagrid-row[data-row-id="'+ rowId +'"]'));
         $row.removeClass(self.options.cssClassNames.expandedRowClass);
@@ -3116,7 +3109,7 @@ $.widget('wm.datatable', {
         this.options.onRowCollapse(e, rowData)
     },
     toggleExpandRow: function(rowId, isExpand, e) {
-        var self = this,
+        const self = this,
             $tbody = self.gridElement,
             $row = $($tbody.find('> tr.app-datagrid-row[data-row-id="'+ rowId +'"]')),
             rowData = _.clone(self.options.data[rowId]),
@@ -3143,7 +3136,7 @@ $.widget('wm.datatable', {
             }
             if (self.options.rowDef.closeothers) {
                 $tbody.find('> tr.app-datagrid-detail-row:visible').each(function() {
-                    var $otherDetailRow = $(this),
+                    const $otherDetailRow = $(this),
                         $otherIcon = $otherDetailRow.prev('tr.app-datagrid-row').find('[data-identifier="rowExpansionButtons"] i.app-icon'),
                         otherRowId = +$otherDetailRow.attr('data-row-id'),
                         otherRowData = self.options.data[otherRowId];
@@ -3171,11 +3164,11 @@ $.widget('wm.datatable', {
         if (!this.gridElement) {
             return;
         }
-        var $compiledCells = this.gridElement.find('td[data-compiled-template]'),
+        const $compiledCells = this.gridElement.find('td[data-compiled-template]'),
             self = this;
 
         $compiledCells.each(function () {
-            var $cell = $(this),
+            const $cell = $(this),
                 id = $cell.attr('data-compiled-template');
 
             $cell.replaceWith(self.compiledCellTemplates[id]);
@@ -3184,13 +3177,13 @@ $.widget('wm.datatable', {
 
     /* Renders the search box. */
     _renderSearch: function () {
-        var $htm = $(this._getSearchEl()),
+        let $htm = $(this._getSearchEl()),
             self = this,
             $searchBox;
 
         function search(e) {
             e.stopPropagation();
-            var searchText = $htm.find('[data-element="dgSearchText"]')[0].value,
+            const searchText = $htm.find('[data-element="dgSearchText"]')[0].value,
                 $filterField = $htm.find('[data-element="dgFilterValue"]'),
                 field = $filterField[0].value,
                 colDefIndex = $htm.find('option:selected').attr('data-coldef-index'),
@@ -3239,13 +3232,13 @@ $.widget('wm.datatable', {
     },
     //Generate the row level filter
     _renderRowFilter: function () {
-        var $row = $('<tr class="filter-row"></tr>'),
+        const $row = $('<tr class="filter-row"></tr>'),
             self = this,
             $headerElement = (this.options.isMobile && !this.options.showHeader) ? this.gridElement : this.gridHeaderElement;
         $headerElement.find('.filter-row').remove();
         this.options.generateFilterRow();
         this.preparedHeaderData.forEach(function (field, index) {
-            var fieldName = field.field,
+            const fieldName = field.field,
                 $th = $('<th data-col-id="' + index + '"></th>');
             if (!field.searchable) {
                 $row.append($th);
@@ -3257,17 +3250,13 @@ $.widget('wm.datatable', {
         if (this.options.showHeader) {
             this.gridHeaderElement.append($row);
         } else {
-            if (this.options.isMobile) {
-                $headerElement.empty().append($row);
-            } else {
-                $headerElement.empty().append($row);
-            }
+            $headerElement.empty().append($row);
         }
         this.gridSearch = $headerElement.find('.filter-row');
     },
     /* Renders the table header. */
     _renderHeader: function () {
-        var headerTemplate = this._getHeaderTemplate(),
+        let headerTemplate = this._getHeaderTemplate(),
             $colgroup = headerTemplate.colgroup,
             self = this,
             $header;
@@ -3279,7 +3268,6 @@ $.widget('wm.datatable', {
             this.tableContainer.find('colgroup').remove(); // Remove the colgroup from the table container when showHeader is false
             this.tableContainer.append($colgroup);
             this.gridHeaderElement.hide();
-            //this.gridElement.prepend($colgroup.clone());
             return;
         } else {
             /* _toggleHeader() removes thead from the DOM when toggling showHeader; gridHeaderElement
@@ -3294,13 +3282,13 @@ $.widget('wm.datatable', {
         $header = headerTemplate.header;
 
         function toggleSelectAll(e) {
-            var $checkboxes = $('tr.app-datagrid-row:not(.always-new-row):visible td input[name="gridMultiSelect"]:checkbox', self.gridElement),
+            const $checkboxes = $('tr.app-datagrid-row:not(.always-new-row):visible td input[name="gridMultiSelect"]:checkbox', self.gridElement),
                 checked = this.checked,
                 $headerCheckbox = self.gridHeaderElement.find("th.app-datagrid-header-cell input:checkbox");
             $headerCheckbox.siblings('span.sr-only').text(checked ? 'All Rows Selected' : 'All Rows Deselected');
             $checkboxes.prop('checked', checked);
             $checkboxes.each(function () {
-                var $row = $(this).closest('tr.app-datagrid-row'),
+                const $row = $(this).closest('tr.app-datagrid-row'),
                     rowId = $row.attr('data-row-id'),
                     rowData = self.options.data[rowId];
                 self.toggleRowSelection($row, checked, e, true);
@@ -3322,10 +3310,10 @@ $.widget('wm.datatable', {
         }
 
         // WMS-17629: Hiding the table header column when show property is set to false
-        var headerCells = $header.find("th.app-datagrid-header-cell");
-        var headerCols = $colgroup.find('col');
+        const headerCells = $header.find("th.app-datagrid-header-cell");
+        const headerCols = $colgroup.find('col');
         headerCells.each(function () {
-            var id = Number($(this).attr('data-col-id')),
+            const id = Number($(this).attr('data-col-id')),
                 colDef = self.preparedHeaderData[id],
                 $headerCol = $(headerCols[id]);
             if (!colDef) {
@@ -3339,14 +3327,9 @@ $.widget('wm.datatable', {
         });
         this.tableContainer.find('colgroup').remove(); // Remove the colgroup from the table container when showHeader is false
         /*For mobile view, append header to the main table only*/
-        if (this.options.isMobile) {
-            this.tableContainer.append($colgroup);
-        } else {
-            /**Append the colgroup to the header and the body.
-             * Colgroup is used to maintain the consistent widths between the header table and body table**/
-            this.tableContainer.append($colgroup);
-            /**As jquery references the colgroup, clone the colgroup and add it to the table body**/
-        }
+        /**Append the colgroup to the header and the body.
+         * Colgroup is used to maintain the consistent widths between the header table and body table**/
+        this.tableContainer.append($colgroup);
         /**Add event handler, to the select all checkbox on the header**/
         $header.on('click', '.app-datagrid-header-cell input:checkbox', toggleSelectAll);
         $header.on('keydown', '.app-datagrid-header-cell input:checkbox', function(event) {
@@ -3363,7 +3346,7 @@ $.widget('wm.datatable', {
             this.gridHeaderElement.find('th.app-datagrid-header-cell').on('click', this.headerClickHandler.bind(this));
             this.gridHeaderElement.find('th.app-datagrid-header-cell').on('keydown', function (e) {
                 if (e.key === 'Enter' || e.keyCode === 13) {
-                    var $target = $(e.target);
+                    const $target = $(e.target);
                     // Only run if on the checkbox column
                     if ($target.attr('data-col-field') === 'checkbox') {
                         e.preventDefault();
@@ -3382,7 +3365,7 @@ $.widget('wm.datatable', {
                 /* This is needed because if width is initially set on col from coldefs,
                  * then that column was not getting resized.*/
                 resize: function (evt, ui) {
-                    var $colElement,
+                    let $colElement,
                         $colHeaderElement,
                         $cellElements,
                         colIndex = +ui.helper.attr('data-col-id') + 1,
@@ -3416,7 +3399,7 @@ $.widget('wm.datatable', {
         }
     },
     addOrRemoveScroll: function () {
-        var gridContent = this.gridContainer.find('tbody'),
+        const gridContent = this.gridContainer.find('tbody'),
             gridHeader = this.gridContainer.find('.table-header');
         /*If scroll bar is present on the grid content, add padding to the header*/
         if ((gridContent.scrollHeight > gridContent.clientHeight) && !this.Utils.isMac()) {
@@ -3433,7 +3416,7 @@ $.widget('wm.datatable', {
 
     //Generates markup for row operations
     _setActionsEnabled: function () {
-        var self = this;
+        const self = this;
         _.forEach(this.options.rowActions, function (def) {
             if (_.includes(def.action, 'editRow(')) {
                 self.options.actionsEnabled.edit = true;
@@ -3445,13 +3428,13 @@ $.widget('wm.datatable', {
 
     //Appends row operations markup to grid template
     _appendRowActions: function ($htm, isNewRow, rowData) {
-        var self,
+        let self,
             rowOperationsCol = this._getRowActionsColumnDef();
         if (this.options.rowActions.length || rowOperationsCol) {
             this._setActionsEnabled();
             self = this;
             $htm.find("[data-identifier='actionButtons']").each(function (index) {
-                var _rowData, $row, rowId, rowIndex = index;
+                let _rowData, $row, rowId, rowIndex = index;
                 if (isNewRow) {
                     _rowData = rowData;
                 } else {
@@ -3465,36 +3448,42 @@ $.widget('wm.datatable', {
             });
         }
     },
-    /* Renders the table body. */
-    _renderGrid: function (isCreated) {
-        var $htm, isScrollorOnDemand = this.options.isNavTypeScrollOrOndemand(), pageStartIndex = this.getPageStartIndex();
-        $('table.table-bordered').parents('.app-grid-header-inner').addClass('table_border');
-        if(isScrollorOnDemand) {
-            var $tbody = this.gridElement;
+    /* Builds the grid body markup for the current navigation mode. */
+    _buildGridMarkup: function (isScrollorOnDemand) {
+        let $htm;
+        if (isScrollorOnDemand) {
+            const $tbody = this.gridElement;
             // get markup for new rows and append it to tbod
-            var template = this._getGridTemplate();
+            const template = this._getGridTemplate();
             $htm = $(template);
             if (template && !$tbody.length) {
                 // initally append tbody to gridElement
                 this.gridElement.append($htm);
             }
-
         } else {
-            var templates = this._getGridTemplate();
+            const templates = this._getGridTemplate();
             $htm = $(templates);
-            if(templates) {
+            if (templates) {
                 this.gridElement.append($htm);
             }
         }
+        return $htm;
+    },
 
-        if (this.options.summaryRow) {
-            var $summaryRowHtm = $(this._getSummaryRowTemplate());
-            this.tableContainer.find('tfoot').remove();
-            if (this.options.data.length){
-                this.tableContainer.append($summaryRowHtm);
-            }
+    /* Renders the summary row (tfoot) when the summaryRow option is enabled. */
+    _renderSummaryRowIfNeeded: function () {
+        if (!this.options.summaryRow) {
+            return;
         }
-        // Set proper data status messages after the grid is rendered.
+        const $summaryRowHtm = $(this._getSummaryRowTemplate());
+        this.tableContainer.find('tfoot').remove();
+        if (this.options.data.length) {
+            this.tableContainer.append($summaryRowHtm);
+        }
+    },
+
+    /* Sets the proper data status messages after the grid is rendered. */
+    _updateStatusAfterRender: function (isCreated) {
         if (!this.options.data.length && this.dataStatus.state === 'nodata') {
             this.setStatus('nodata');
         } else {
@@ -3502,6 +3491,29 @@ $.widget('wm.datatable', {
             this.dataStatus.message = this.dataStatus.message || this.options.dataStates.loading;
             this.setStatus(this.dataStatus.state, this.dataStatus.message, isCreated);
         }
+    },
+
+    /* Selects the first row after render, when selectFirstRow is enabled. */
+    _selectFirstRowAfterRender: function () {
+        if (this.options.multiselect) {
+            //Set selectFirstRow to false, to prevent first item being selected in next page
+            this.options.selectFirstRow = false;
+        }
+        if (this.gridElement.find('tr.app-datagrid-row.active').length <= 0) {
+            this.selectFirstRow(true, true);
+        }
+    },
+
+    /* Renders the table body. */
+    _renderGrid: function (isCreated) {
+        const isScrollorOnDemand = this.options.isNavTypeScrollOrOndemand();
+        $('table.table-bordered').parents('.app-grid-header-inner').addClass('table_border');
+        const $htm = this._buildGridMarkup(isScrollorOnDemand);
+
+        this._renderSummaryRowIfNeeded();
+        // Set proper data status messages after the grid is rendered.
+        this._updateStatusAfterRender(isCreated);
+
         this.gridBody = this.gridElement.find('tbody');
         this.gridFooter = this.tableContainer.find('tfoot');
         this._findAndReplaceCompiledTemplates();
@@ -3522,13 +3534,7 @@ $.widget('wm.datatable', {
             this.options.onDataRender();
         }
         if (!isCreated && this.options.selectFirstRow) {
-            if (this.options.multiselect) {
-                //Set selectFirstRow to false, to prevent first item being selected in next page
-                this.options.selectFirstRow = false;
-            }
-            if (this.gridElement.find('tr.app-datagrid-row.active').length <= 0) {
-                this.selectFirstRow(true, true);
-            }
+            this._selectFirstRowAfterRender();
         }
     },
 
@@ -3537,8 +3543,7 @@ $.widget('wm.datatable', {
         if (!this.tableId) {
             this.tableId = this.Utils.generateGuid();
         }
-        var overflow = (this.options.isNavTypeScrollOrOndemand() && (this.options.height === '100%' || this.options.height === 'auto')) ? 'hidden' : 'auto';
-        var statusContainer =
+        const statusContainer =
                 '<div class="overlay">' +
                 '<div class="status"><i class="' + this.options.loadingicon + '"></i><span class="message"></span></div>' +
                 '</div>',
@@ -3571,16 +3576,12 @@ $.widget('wm.datatable', {
         this.options.setIsNextPageData(false);
 
         // Fix for [WMS-23263]: Adding data status container
-        if (!this.gridContainer.find('.overlay').length) {
-            this.dataStatusContainer = $(statusContainer);
-            this.gridContainer.append(this.dataStatusContainer);
-        }
+        this.dataStatusContainer = $(statusContainer);
+        this.gridContainer.append(this.dataStatusContainer);
 
         //  Fix for [WMS-23263]: clear the header template for removing existing colgroup in case of dynamictable
-        if (this.gridHeaderElement) {
-            this.gridHeaderElement.empty();
-            this.gridElement.find('colgroup').remove();
-        }
+        this.gridHeaderElement.empty();
+        this.gridElement.find('colgroup').remove();
         this._renderHeader();
         if (this.options.filtermode === this.CONSTANTS.SEARCH && (_.isEmpty(this.searchObj) || (this.searchObj && !this.searchObj.field && !this.searchObj.value))) {
             this._renderSearch();
@@ -3607,8 +3608,74 @@ $.widget('wm.datatable', {
             }
         }
     },
+    /* Shows/hides the data status container and the on-demand "load more" link for the given state. */
+    _updateDataStatusContainerVisibility: function (state) {
+        if (state === 'ready') {
+            this.dataStatusContainer.hide();
+        } else {
+            // [WMS-23839] always show load more btn if show view less btn is true
+            if (this.options.isNavTypeScrollOrOndemand() &&
+                (state === 'nodata' ||
+                 (this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                  this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
+                  (this.options.getCurrentPage() == this.options.getPageCount()) && !this.options.showviewlessbutton))) {
+                this.element.find('.on-demand-datagrid a').hide();
+            }
+            this.dataStatusContainer.show();
+        }
+    },
+
+    /* Adjusts the status container height for the nodata/loading/error states, when applicable. */
+    _updateStatusContainerHeightIfNeeded: function (state) {
+        if (this.options.height === '100%' || this.options.height === 'auto') { //If height is auto or 100%, Set the loading overlay height as present grid content height
+            if (state === 'nodata') {
+                this.dataStatusContainer.css('height', 'auto');
+                this.dataStatus.contentHeight = 0;
+            }  else if (this.options.isNavTypeScrollOrOndemand() &&
+                       this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+                       this.options.getCurrentPage() > 1){
+                // showing the loading icon only for the first page
+                // from second page there is another loader which is being shown instead of LoadMore btn
+                this.dataStatusContainer.hide();
+            } else {
+                this.dataStatus.height = this.dataStatus.height || this.dataStatusContainer.outerHeight();
+                this.dataStatus.contentHeight = this.gridElement.outerHeight() || this.dataStatus.contentHeight;
+                this.dataStatusContainer.css('height', this.dataStatus.height > this.dataStatus.contentHeight ? 'auto' : this.dataStatus.contentHeight);
+            }
+        }
+    },
+
+    /* Toggles the "show-msg"/"hidden" classes on the grid for the nodata/loading/error states. */
+    _toggleGridContentVisibilityForStatus: function (state, isScrollOrOndemand) {
+        if (!isScrollOrOndemand || (isScrollOrOndemand &&
+            this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
+            this.options.getCurrentPage() === 1)) {
+            this.gridContainer.addClass("show-msg");
+
+            if (state === 'loading' && !isScrollOrOndemand &&
+                this.options.lastActionPerformed !== this.options.ACTIONS.EDIT &&
+                this.options.lastActionPerformed !== this.options.ACTIONS.DELETE) {
+                this.gridElement.addClass('hidden');
+            }
+        }
+    },
+
+    /* Restores normal grid display once the status leaves nodata/loading/error. */
+    _clearStatusStateForReadyGrid: function () {
+        this.gridContainer.removeClass('show-msg');
+        this.gridElement.removeClass('hidden');
+
+        // In case of quickeditmode, if active row is found, focus the row and bind the event listeners to the row
+        if (this.options.editmode === this.CONSTANTS.QUICK_EDIT) {
+            if (this.options.activeRow) {
+                this.attachHandlersToActiveRow(this.options.activeRow);
+            }
+            this.options.activeRow = undefined;
+        }
+    },
+
     __setStatus: function (isCreated) {
-        var loadingIndicator = this.dataStatusContainer.find('i'),
+        const loadingIndicator = this.dataStatusContainer.find('i'),
             state = this.dataStatus.state,
             isScrollOrOndemand = this.options.isNavTypeScrollOrOndemand();
         this.dataStatusContainer.find('.message').text(this.dataStatus.message);
@@ -3617,58 +3684,12 @@ $.widget('wm.datatable', {
         } else {
             loadingIndicator.addClass('hidden');
         }
-        if (state === 'ready') {
-            this.dataStatusContainer.hide();
-        } else {
-            // [WMS-23839] always show load more btn if show view less btn is true
-            if (this.options.isNavTypeScrollOrOndemand() && 
-                (state === 'nodata' || 
-                 (this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
-                  this.options.getPageCount && typeof this.options.getPageCount === 'function' &&
-                  (this.options.getCurrentPage() == this.options.getPageCount()) && !this.options.showviewlessbutton))) {
-                this.element.find('.on-demand-datagrid a').hide();
-            }
-            this.dataStatusContainer.show();
-        }
+        this._updateDataStatusContainerVisibility(state);
         if (state === 'nodata' || state === 'loading' || state === 'error') {
-            if (this.options.height === '100%' || this.options.height === 'auto') { //If height is auto or 100%, Set the loading overlay height as present grid content height
-                if (state === 'nodata') {
-                    this.dataStatusContainer.css('height', 'auto');
-                    this.dataStatus.contentHeight = 0;
-                }  else if (this.options.isNavTypeScrollOrOndemand() && 
-                           this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
-                           this.options.getCurrentPage() > 1){
-                    // showing the loading icon only for the first page
-                    // from second page there is another loader which is being shown instead of LoadMore btn
-                    this.dataStatusContainer.hide();
-                } else {
-                    this.dataStatus.height = this.dataStatus.height || this.dataStatusContainer.outerHeight();
-                    this.dataStatus.contentHeight = this.gridElement.outerHeight() || this.dataStatus.contentHeight;
-                    this.dataStatusContainer.css('height', this.dataStatus.height > this.dataStatus.contentHeight ? 'auto' : this.dataStatus.contentHeight);
-                }
-            }
-            if (!isScrollOrOndemand || (isScrollOrOndemand && 
-                this.options.getCurrentPage && typeof this.options.getCurrentPage === 'function' &&
-                this.options.getCurrentPage() === 1)) {
-                this.gridContainer.addClass("show-msg");
-
-                if (state === 'loading' && !isScrollOrOndemand &&
-                    this.options.lastActionPerformed !== this.options.ACTIONS.EDIT &&
-                    this.options.lastActionPerformed !== this.options.ACTIONS.DELETE) {
-                    this.gridElement.addClass('hidden');
-                }
-            }
+            this._updateStatusContainerHeightIfNeeded(state);
+            this._toggleGridContentVisibilityForStatus(state, isScrollOrOndemand);
         } else {
-            this.gridContainer.removeClass('show-msg');
-            this.gridElement.removeClass('hidden');
-
-            // In case of quickeditmode, if active row is found, focus the row and bind the event listeners to the row
-            if (this.options.editmode === this.CONSTANTS.QUICK_EDIT) {
-                if (this.options.activeRow) {
-                    this.attachHandlersToActiveRow(this.options.activeRow);
-                }
-                this.options.activeRow = undefined;
-            }
+            this._clearStatusStateForReadyGrid();
         }
         if (!isCreated) {
             this.setColGroupWidths();
@@ -3682,8 +3703,8 @@ $.widget('wm.datatable', {
      * If object is recieved, node extraction will be done and if found operations on the row are performed
      */
     attachHandlersToActiveRow(rowObj) {
-        var rowIndex = this.Utils.getObjectIndex(this.options.data, rowObj);
-        var row = this.gridElement.find('tr.app-datagrid-row[data-row-id=' + rowIndex + ']');
+        const rowIndex = this.Utils.getObjectIndex(this.options.data, rowObj);
+        const row = this.gridElement.find('tr.app-datagrid-row[data-row-id=' + rowIndex + ']');
         if (!row.length) {
             return;
         } else if (!row.hasClass('active')) {
@@ -3698,7 +3719,7 @@ $.widget('wm.datatable', {
     },
     //This method is used to show or hide data loading/ no data found overlay
     setStatus: function (state, message, isCreated) {
-        var $newRow;
+        let $newRow;
         //If state is nodata and always new row is present, change state to ready
         if (state === 'nodata') {
             $newRow = this.gridElement && this.gridElement.find('tr.app-datagrid-row.always-new-row');
@@ -3723,16 +3744,7 @@ $.widget('wm.datatable', {
         }
         this.options[key] = value;
         if (key === 'height') {
-            //  if(this.dataStatus.state != 'loading') {
-            var elements = this.gridHeaderElement.find('th');
-            // this._setStyles(this.tableContainer, 'border-collapse: separate;');
-
-            // for (var i = 0; i < elements.length; i += 1) {
-            //     this._setStyles($(elements[i]), 'border: 1px solid #eee');
-            // }
-            //}
             this.gridContainer.find('.app-grid-header-inner').css(key, value);
-            // this.gridContainer.find('.app-grid-header-inner').css('border', '1px solid #eee');
             if (this.options.isNavTypeScrollOrOndemand() && (this.options.height != '100%' && this.options.height != 'auto')) {
                 this.gridContainer.find('.app-grid-header-inner').css('overflow', 'auto');
             }
@@ -3742,7 +3754,7 @@ $.widget('wm.datatable', {
     },
     /*Change the column header title. function will be called if display name changes in runmode*/
     setColumnProp: function (fieldName, property, val, isGroup) {
-        var $col;
+        let $col;
         if (property === 'displayName') {
             if (isGroup) {
                 $col = this.gridHeaderElement.find('th[data-col-group="' + fieldName + '"]');
@@ -3760,14 +3772,14 @@ $.widget('wm.datatable', {
     },
 
     applyRowNgClass: function (val, index) {
-        var $row = this.gridElement.find('tr.app-datagrid-row[data-row-id="' + index + '"]');
+        const $row = this.gridElement.find('tr.app-datagrid-row[data-row-id="' + index + '"]');
         $row.removeClass(val.toRemove);
         $row.addClass(val.toAdd);
     },
 
     applyColNgClass: function (val, rowIndex, colIndex) {
-        var $cell = this.gridElement.find('tr.app-datagrid-row[data-row-id="' + rowIndex + '"] td.app-datagrid-cell[data-col-id="' + colIndex + '"]');
-        var $head = this.tableContainer.find('thead tr th.app-datagrid-header-cell[data-col-id="' + colIndex + '"]');
+        const $cell = this.gridElement.find('tr.app-datagrid-row[data-row-id="' + rowIndex + '"] td.app-datagrid-cell[data-col-id="' + colIndex + '"]');
+        const $head = this.tableContainer.find('thead tr th.app-datagrid-header-cell[data-col-id="' + colIndex + '"]');
         $cell.removeClass(val.toRemove);
         $cell.addClass(val.toAdd);
         $head.removeClass(val.toRemove);
@@ -3780,7 +3792,7 @@ $.widget('wm.datatable', {
         //     this.gridElement[0].removeEventListener('click', this.boundRowClickHandlerOnCapture, true);
         //     this.boundRowClickHandlerOnCapture = null;
         // }
-        
+
         // MEMORY LEAK FIX: Remove all jQuery event handlers
         if (this.gridHeaderElement) {
             this.gridHeaderElement.off();
@@ -3797,12 +3809,12 @@ $.widget('wm.datatable', {
         if (this.gridContainer) {
             this.gridContainer.off();
         }
-        
+
         // MEMORY LEAK FIX: Clear all internal structures
         this.preparedData = [];
         this.preparedHeaderData = [];
         this.compiledCellTemplates = {};
-        
+
         this.element.text('');
         window.clearTimeout(this.refreshGridTimeout);
     }

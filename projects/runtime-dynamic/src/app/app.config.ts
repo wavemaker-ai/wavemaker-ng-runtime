@@ -6,12 +6,13 @@ import {
     RendererFactory2,
     provideZoneChangeDetection
 } from "@angular/core";
-import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation } from "@angular/router";
+import { provideRouter, RouteReuseStrategy, withComponentInputBinding, withHashLocation, withRouterConfig } from "@angular/router";
 import {
     HTTP_INTERCEPTORS,
     HttpXhrBackend,
     provideHttpClient,
     withInterceptorsFromDi,
+    withXhr,
     withXsrfConfiguration
 } from "@angular/common/http";
 import { provideAnimations } from "@angular/platform-browser/animations";
@@ -107,12 +108,12 @@ const WM_XHR_FACTORY: XhrFactory = { build: () => new XMLHttpRequest() } as XhrF
 export const xsrfHeaderName = getWmProjectProperties().xsrf_header_name || "X-WM-XSRF-TOKEN";
 
 export const initializeProjectDetails = () => {
-    let cdnUrl = document.querySelector('[name="deployUrl"]') && document.querySelector('[name="deployUrl"]').getAttribute('content');
+    let cdnUrl = document.querySelector('[name="deployUrl"]')?.getAttribute('content');
     _WM_APP_PROJECT.isPreview = cdnUrl ? false : true;
-    const apiUrl = document.querySelector('[name="apiUrl"]') && document.querySelector('[name="apiUrl"]').getAttribute('content');
+    const apiUrl = document.querySelector('[name="apiUrl"]')?.getAttribute('content');
     //for preview
     if (!cdnUrl) {
-        cdnUrl = document.querySelector('[name="cdnUrl"]') && document.querySelector('[name="cdnUrl"]').getAttribute('content');
+        cdnUrl = document.querySelector('[name="cdnUrl"]')?.getAttribute('content');
     }
     _WM_APP_PROJECT.id = location.href.split('/')[3];
     // Integration with third party apps like in SSPA/WebComponents, this meta tag with cdnUrl will not be there then default it to ng-bundle/
@@ -152,10 +153,11 @@ export const appConfig: ApplicationConfig = {
         }),
         { provide: HTTP_INTERCEPTORS, useClass: HttpCallInterceptor, multi: true },
         // Provide Angular core services FIRST
-        provideRouter(routes, withHashLocation(), withComponentInputBinding()),
+        provideRouter(routes, withHashLocation(), withComponentInputBinding(), withRouterConfig({ paramsInheritanceStrategy: 'emptyOnly' })),
         provideAnimations(),
         { provide: XhrFactory, useValue: WM_XHR_FACTORY },
         provideHttpClient(
+            withXhr(),
             withInterceptorsFromDi(),
             withXsrfConfiguration({
                 cookieName: "wm_xsrf_token",

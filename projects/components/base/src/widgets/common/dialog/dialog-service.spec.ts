@@ -45,7 +45,6 @@ describe('DialogServiceImpl', () => {
     });
 
     it("should not de-register a dialog when name is not provided", () => {
-        const dialogRef = { open: jest.fn() };
         const scope = { pageName: 'testPage' };
         service.deRegister('', scope);
         expect(service.getDialogRefsCollection().get('')).toBeUndefined();

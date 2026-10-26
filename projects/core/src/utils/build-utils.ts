@@ -6,7 +6,7 @@ import {includes, isArray, startsWith} from "lodash-es";
 const getUploadEventTmpl = (attrs, counter?, fieldName?) => {
     let eventTmpl = '';
     attrs.forEach((val, key) => {
-       if (key && key.endsWith('.event')) {
+       if (key?.endsWith('.event')) {
            const eventName = key.split('.')[0];
            const counterTl = counter ? `${counter}.` : '';
            eventTmpl = ` ${eventTmpl} (${eventName})="${counterTl}triggerUploadEvent($event, '${eventName}', '${fieldName}', row)" `;
@@ -98,7 +98,7 @@ export const getFormWidgetTemplate = (widgetType: string, innerTmpl: string, att
             const counter = options.counter;
             const pCounter = options.pCounter;
             const uploadProps = options.uploadProps;
-            const eventTmpl = getUploadEventTmpl(attrs, counter, uploadProps && uploadProps.name);
+            const eventTmpl = getUploadEventTmpl(attrs, counter, uploadProps?.name);
             if (uploadProps) {
                 tmpl = `<form name="${uploadProps.formName}" ${innerTmpl}>
                             <input focus-target class="file-upload" type="file" name="${uploadProps.name}" ${eventTmpl} ${showTmpl}/>
@@ -196,7 +196,7 @@ const addDatasetBoundExprAttribute = (childNode: Element, attr: Attribute, attrV
 export const checkIsCustomPipeExpression = function(exp){
     let customRegEx = /(custom(\s*:))/g;
     let matches = exp.match(customRegEx);
-    return matches && matches.length;
+    return matches?.length;
 }
 
 
@@ -232,7 +232,7 @@ export const updateTemplateAttrs = (rootNode: Element | Array<Element>, parentDa
             const parentDataSetLengthRegex =  new RegExp('bind:\\s*\\(*' + parentDataSet + '\\)*\\.length\\)*');
             childNode.attrs.forEach((attr) => {
                 // trim the extra spaces in bindings
-                let value = attr.value && attr.value.trim();
+                let value = attr.value?.trim();
                 if (startsWith(value, 'bind:')) {
                     // The markup of root node(table, list, carousel) attributes conatains same dataset variable binding then those attributes need to be updated only for specific properties mentioned in widgetList map.
                     if (!widgetList[nodeName] || (widgetList[nodeName] && widgetList[nodeName].indexOf(attr.name) > -1)) {
@@ -252,7 +252,7 @@ export const updateTemplateAttrs = (rootNode: Element | Array<Element>, parentDa
                         }
                     }
                     // Replace item if widget property is bound to livelist currentItem
-                    if (currentItemRegEx && currentItemRegEx.test(value)) {
+                    if (currentItemRegEx?.test(value)) {
                         // Change value from 'bind:Widgets.formName.formWidgets.listName.currentItem' to 'bind:Widgets.listName.currentItem'
                         if (value.includes('.formWidgets') || value.includes('.filterWidgets')) {
                             value = value.replace(formWidgetsRegex, 'Widgets');
@@ -260,7 +260,7 @@ export const updateTemplateAttrs = (rootNode: Element | Array<Element>, parentDa
                         addDatasetBoundExprAttribute(childNode, attr, value);
                         value = value.replace(currentItemRegEx, referenceName);
                     }
-                    if (currentItemWidgetsRegEx && currentItemWidgetsRegEx.test(value)) {
+                    if (currentItemWidgetsRegEx?.test(value)) {
                         value = value.replace(currentItemWidgetsRegEx, `${instance}currentItemWidgets`);
                     }
 

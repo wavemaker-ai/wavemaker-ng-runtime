@@ -34,7 +34,7 @@ dependency-check-reports/
 /.angular/cache
 /.sass-cache
 /connect.lock
-/coverage
+coverage/
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
@@ -58,3 +58,9 @@ dependency-report.html
 # Local Cursor AI rules (personal, not committed)
 .cursor/rules/karpathy-guidelines.mdc
 
+
+# angular-upgrade session state (template: .claude/skills/angular-upgrade/state.md)
+.claude/skills/angular-upgrade/current-state.md
+
+# local scratch tooling (not repo source)
+tools/

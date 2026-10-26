@@ -17,7 +17,7 @@ import {
     Optional,
     SkipSelf,
     ViewChild,
-    ViewContainerRef
+    ViewContainerRef, ChangeDetectionStrategy
 } from '@angular/core';
 import {FormArray, FormBuilder, FormGroup} from '@angular/forms';
 
@@ -113,7 +113,7 @@ const findInvalidElement = ($formEle, ngForm) => {
     let formObj = ngForm;
     // If element is form, find out the first invalid element in this form
     if ($ele.is('form')) {
-        formObj = ngForm && ngForm.controls[$ele.attr('formControlName') || $ele.attr('name')];
+        formObj = ngForm?.controls[$ele.attr('formControlName') || $ele.attr('name')];
         if (formObj) {
             return findInvalidElement($ele, formObj);
         }
@@ -130,10 +130,8 @@ const getActiveElement = (element) => {
     switch (widgetType) {
         case 'select':
             return element.querySelector('select');
-            break;
         case 'textarea':
             return element.querySelector('textarea');
-            break;
         default:
             return element.querySelector('input');
     }
@@ -160,6 +158,7 @@ const setTouchedState = (self, ngForm, fieldName) => {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FilterPipe, AnchorComponent, ButtonComponent, MessageComponent, WmAppIconComponent],
     selector: 'form[wmForm]',
@@ -169,7 +168,7 @@ const setTouchedState = (self, ngForm, fieldName) => {
     ]
 })
 export class FormComponent extends StylableComponent implements OnDestroy, AfterContentInit, AfterViewInit {
-    static  initializeProps = registerFormProps();
+    static  readonly initializeProps = registerFormProps();
     @ViewChild('dynamicForm', { static: true, read: ViewContainerRef }) dynamicFormRef: ViewContainerRef;
     @ViewChild(MessageComponent) messageRef;
     // this is the reference to the component refs inside the form-group
@@ -250,7 +249,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     private validationMessages = [];
     private formGroupName;
     private formArrayIndex;
-    private bindingValue;
+    private readonly bindingValue;
     private _formIsInList;
     private _triggeredByUser: boolean;
 
@@ -319,12 +318,12 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
 
     constructor(
         inj: Injector,
-        private envInjector: EnvironmentInjector,
-        private fb: FormBuilder,
-        private app: App,
-        private dialogService: AbstractDialogService,
-        private dynamicComponentProvider: DynamicComponentRefProvider,
-        private ngZone: NgZone,
+        private readonly envInjector: EnvironmentInjector,
+        private readonly fb: FormBuilder,
+        private readonly app: App,
+        private readonly dialogService: AbstractDialogService,
+        private readonly dynamicComponentProvider: DynamicComponentRefProvider,
+        private readonly ngZone: NgZone,
         @Optional() public parentList: ListComponent,
         @SkipSelf() @Optional() public parentForm: FormComponent,
         @SkipSelf() @Optional() public parentPrefab: PrefabDirective,
@@ -333,7 +332,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         @Attribute('submit.event') public onSubmitEvt,
         @Attribute('beforerender.event') public onBeforeRenderEvt,
         @Attribute('dataset.bind') public binddataset,
-        @Attribute('formdata.bind') private bindformdata,
+        @Attribute('formdata.bind') private readonly bindformdata,
         @Attribute('wmLiveForm') isLiveForm,
         @Attribute('wmLiveFilter') isLiveFilter,
         @Attribute('data-role') role,
@@ -373,7 +372,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     }
 
     ngAfterViewInit() {
-        if (this.parentForm && this.parentForm.ngform && this.isParentList) {
+        if (this.parentForm?.ngform && this.isParentList) {
             // setting formArray control on ngform.
             if (!get(this.parentForm.ngform.controls, this.parentList.name)) {
                 this.parentForm.ngform.setControl(this.parentList.name, new FormArray([]));
@@ -391,7 +390,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     findOperationType() {}
 
     private addInnerNgFormToForm(binding) {
-        if (this.parentForm && this.parentForm.ngform) {
+        if (this.parentForm?.ngform) {
             // handling as formArray when parent is list. Hence returning here from adding to parentForm again.
             if (this.isParentList) {
                 return;
@@ -553,7 +552,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     }
 
     private updateFieldSource() {
-        if (this.formdatasource && this.formdatasource.execute(DataSource.Operation.IS_API_AWARE)) {
+        if (this.formdatasource?.execute(DataSource.Operation.IS_API_AWARE)) {
             return;
         } else if (this.formdatasource && !this.formdatasource.twoWayBinding) {
             return;
@@ -574,7 +573,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
         this.setValidationMsgs();
         // Disable the form submit if form is in invalid state. For delete operation, do not check the validation.
         if (this.operationType !== 'delete' && (this.validationtype === 'html' || this.validationtype === 'default')
-                && this.ngform && this.ngform.invalid) {
+                && this.ngform?.invalid) {
 
             if (this.ngform.invalid) {
                 if (this.validationtype === 'default') {
@@ -592,13 +591,13 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
                     if (!$invalidEle.hasClass('app-search-input')) {
                         $invalidEle.focus();
                     }
-                    const ngEle = $invalidForm && $invalidForm.controls[$invalidEle.attr('formControlName') || $invalidEle.attr('name')];
-                    if (ngEle && ngEle.markAsTouched) {
+                    const ngEle = $invalidForm?.controls[$invalidEle.attr('formControlName') || $invalidEle.attr('name')];
+                    if (ngEle?.markAsTouched) {
                         ngEle.markAsTouched();
                     }
                     $appDigest();
                     return true;
-                } else if ($target && $target.length) {
+                } else if ($target?.length) {
                     $target.focus();
                 }
                 return true;
@@ -708,7 +707,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
             template = (type === 'error' && this.errormessage) ? this.errormessage : msg;
             if (this.messagelayout === 'Inline') {
                 template = this.checkAppServiceErrorMsg(type) || template;
-                this.statusMessage = {'caption': template || '', type: type};
+                this.statusMessage = {'caption': template, type: type};
                 if (this.messageRef) {
                     this.messageRef.showMessage(this.statusMessage.caption, this.statusMessage.type);
                 }
@@ -1331,7 +1330,7 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     }
 
     get dirty() {
-        return this.ngform && this.ngform.dirty;
+        return this.ngform?.dirty;
     }
 
     /**
@@ -1353,19 +1352,19 @@ export class FormComponent extends StylableComponent implements OnDestroy, After
     }
 
     get invalid() {
-        return this.ngform && this.ngform.invalid;
+        return this.ngform?.invalid;
     }
 
     get touched() {
-        return this.ngform && this.ngform.touched;
+        return this.ngform?.touched;
     }
 
     get valid() {
-        return this.ngform && this.ngform.valid;
+        return this.ngform?.valid;
     }
 
     get pristine() {
-        return this.ngform && this.ngform.pristine;
+        return this.ngform?.pristine;
     }
 
     /**

@@ -10,7 +10,7 @@ let securityConfigLoaded = false;
 @Injectable()
 export class AuthGuard {
 
-    constructor(private securityService: SecurityService, private appManager: AppManagerService) {}
+    constructor(private readonly securityService: SecurityService, private readonly appManager: AppManagerService) {}
 
     loadSecurityConfig(): Promise<boolean> {
         if (securityConfigLoaded) {

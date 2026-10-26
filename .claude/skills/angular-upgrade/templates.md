@@ -104,7 +104,7 @@ Reset state:
 sh scripts/reset-state.sh
 ```
 
-Omit a mode's line entirely if it was skipped (no URL configured) rather than showing it as failed/blank.
+Omit a mode's line entirely if it was skipped (no URL configured) rather than showing it as failed/blank. This omission rule is specific to this user-facing completion message — `current-state.md`'s own Preview Validation section always keeps both mode subsections and writes an explicit `Status: skipped` (see `state.md`), since that file is the audit/resume record, not a user summary.
 
 After showing this, run:
 
@@ -145,7 +145,7 @@ Branch: <branch> (ng-runtime + ng-codegen)
 
 ## Preview Validation
 
-One subsection per configured validation mode (`VALIDATION_MODES` in `repo.config.sh`). Omit a mode's subsection entirely if it was skipped (no URL configured) — do not show it as failed.
+One subsection per configured validation mode (`VALIDATION_MODES` in `repo.config.sh`). Omit a mode's subsection entirely if it was skipped (no URL configured) — do not show it as failed. Like the completion message above, this omission rule applies only to this final upgrade doc — `current-state.md` always keeps both subsections (see `state.md`).
 
 ### Angular Deployment
 
@@ -164,6 +164,35 @@ One subsection per configured validation mode (`VALIDATION_MODES` in `repo.confi
 ## Deferred Items
 
 <list any needs-review findings deferred with user acceptance, or "none">
+```
+
+## Pattern diff log skeleton (Step 2/6 — `docs/upgrade-log/{base}-to-{target}.md`)
+
+Append-only. Create on the **first** edit to an existing §N row/section during this run (Verification Principle step 4 in `checklist.md`) — don't wait for Step 10. One file per base→target pair; never edited by a later run.
+
+```markdown
+# Angular {base} → {target} — Pattern Diff Log
+
+Permanent record of what changed in the shared pattern files (`patterns/runtime.md`,
+`patterns/codegen.md`, `checklist.md` § Section Version History) during this run.
+The pattern files themselves only hold the current understanding — this file is where
+prior runs' values survive being overwritten. Narrative summary: `docs/{target}-upgrade.md`.
+
+## §N changes
+
+| § | Before | After | Evidence |
+|---|--------|-------|----------|
+| §12 | First required: Angular 21; Last verified: Angular 21 | Last verified: Angular {target}; <what changed> | <grep output / .d.ts ref / commit sha> |
+
+## New §N sections added
+
+| § | Title | Reason |
+|---|-------|--------|
+
+## §N sections re-verified unchanged (no edit needed)
+
+| § | Evidence |
+|---|----------|
 ```
 
 ---
