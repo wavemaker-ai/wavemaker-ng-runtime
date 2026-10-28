@@ -263,13 +263,13 @@ describe('ListComponent - more behaviour', () => {
             return ul.querySelector('#in') as HTMLElement;
         };
 
-        it('invokes the click callback with the list as widget', () => {
+        it('invokes the click callback with the list as widget and the clicked item', () => {
             const invoke = jest.spyOn(list, 'invokeEventCallback').mockImplementation(() => undefined);
             const inner = attach({ item: { id: 1 } });
             list.handleEvent(list.nativeElement, 'click', jest.fn(), {});
             const evt = new MouseEvent('click', { bubbles: true });
             inner.dispatchEvent(evt);
-            expect(invoke).toHaveBeenCalledWith('click', { widget: list.widget, $event: evt });
+            expect(invoke).toHaveBeenCalledWith('click', { widget: list.widget, $event: evt, item: { id: 1 } });
         });
 
         it('does not invoke the click callback for clicks outside a list item', () => {

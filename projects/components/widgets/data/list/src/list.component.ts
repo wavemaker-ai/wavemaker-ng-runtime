@@ -912,7 +912,12 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                 (evt) => {
                     const target = $(evt.target).closest('.app-list-item');
                     if (target.length) {
-                        this.invokeEventCallback(eventName, {widget: this.widget, $event: evt});
+                        const listItemContext: ListItemDirective = target.data('listItemContext');
+                        this.invokeEventCallback(eventName, {
+                            widget: this.widget,
+                            $event: evt,
+                            item: listItemContext.item
+                        });
                     }
                 }
             );
