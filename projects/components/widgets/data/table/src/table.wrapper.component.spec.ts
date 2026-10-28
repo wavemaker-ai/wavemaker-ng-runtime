@@ -2061,7 +2061,7 @@ describe("DataTable", () => {
                         };
                         wmComponent.$element[0].contains.mockReturnValue(true);
                         wmComponent['_documentClickBind'](mockEvent);
-                        expect(spy).toHaveBeenCalledWith('saveRow');
+                        expect(spy).toHaveBeenCalledWith('saveRow', undefined, true);
                     });
 
                     it('should not call saveRow when click is on doctype', () => {
@@ -2083,7 +2083,7 @@ describe("DataTable", () => {
                         };
                         wmComponent.$element[0].contains.mockReturnValue(false);
                         wmComponent['_documentClickBind'](mockEvent);
-                        expect(spy).toHaveBeenCalledWith('saveRow');
+                        expect(spy).toHaveBeenCalledWith('saveRow', undefined, true);
                     });
 
                     it('should call saveRow when click is outside the grid and not on input body wrapper', () => {
@@ -2096,7 +2096,7 @@ describe("DataTable", () => {
                         };
                         wmComponent.$element[0].contains.mockReturnValue(false);
                         wmComponent['_documentClickBind'](mockEvent);
-                        expect(spy).toHaveBeenCalledWith('saveRow');
+                        expect(spy).toHaveBeenCalledWith('saveRow', undefined, true);
                     });
                 });
 

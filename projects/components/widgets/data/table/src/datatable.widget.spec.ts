@@ -2015,18 +2015,14 @@ describe('wm.datatable jQuery widget', () => {
             $('<div class="app-grid" widget-id="grid-b"><input class="other"></div>').appendTo(document.body);
         };
 
-        it('saves the row when the focus moves to another grid', () => {
+        it('does not save a regular row on focusout when the focus moves to another grid', () => {
+            // [WMS-31104] the other grid's row click / the document click handler saves this row instead
             ctx = quick();
             wrapInGrid();
             row(0).find('td').first().trigger('focusin');
             const spy = jest.spyOn(ctx.instance, 'toggleEditRow').mockImplementation(() => undefined);
             focusOut(row(0).find('td').eq(1)[0], $('.other')[0]);
-            expect(ctx.options.timeoutCall).toHaveBeenCalled();
-            expect(spy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: 'save', noMsg: true }));
-            const success = (spy.mock.calls as any)[0][1].success;
-            const next = jest.spyOn(ctx.instance, 'editSuccessHandler').mockImplementation(() => undefined);
-            success(false, undefined, false);
-            expect(next).not.toHaveBeenCalled();
+            expect(spy).not.toHaveBeenCalled();
         });
 
         it('does not save when the focus leaves the grids or stays in the same row', () => {
@@ -2057,7 +2053,7 @@ describe('wm.datatable jQuery widget', () => {
         it('saves and moves on when tabbing out of the last column of the same grid', () => {
             ctx = quick();
             wrapInGrid();
-            const sameGridInput = $('<input class="same">').appendTo(ctx.$el.closest('.app-grid'));
+            const sameGridInput = $('<input class="same">').appendTo(row(1).find('td').first());
             row(0).find('td').first().trigger('focusin');
             const spy = jest.spyOn(ctx.instance, 'toggleEditRow').mockImplementation(() => undefined);
             jest.spyOn(ctx.instance, 'isLastColumn').mockReturnValue(true);

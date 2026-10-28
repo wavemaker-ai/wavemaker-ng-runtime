@@ -762,7 +762,7 @@ describe('wm.datatable jQuery widget - branch coverage', () => {
             expect(ctx.options.onRowInsert).toHaveBeenCalled();
         });
 
-        it('reports save results and refocuses the row', () => {
+        it('reports save results and refocuses the row unless focus is skipped', () => {
             ctx = editable();
             const success = jest.fn();
             row(0).trigger('click', [undefined, { action: 'edit' }]);
@@ -772,6 +772,9 @@ describe('wm.datatable jQuery widget - branch coverage', () => {
             const done = ctx.options.afterRowUpdate.mock.calls[0][2];
             done(true, undefined);
             expect(success).toHaveBeenCalledWith(true, undefined);
+            expect(focus).not.toHaveBeenCalled();
+            done(false, undefined);
+            expect(success).toHaveBeenCalledWith(false, undefined);
             expect(focus).toHaveBeenCalled();
         });
 
