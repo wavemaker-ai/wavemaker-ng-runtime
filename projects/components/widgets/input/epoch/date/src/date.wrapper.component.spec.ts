@@ -241,14 +241,12 @@ describe('DateComponent', () => {
     });
 
     it('should show the date patten as yyyy-mm-dd format ', (() => {
-        datepatternTest(fixture, '.app-date', '.app-dateinput');
-
+        return datepatternTest(fixture, '[wmDate]', '.app-dateinput');
     }));
 
     it('should get the date outputformat as yyyy-mm-dd ', (() => {
         wmComponent.outputformat = 'yyyy-MM-dd';
-        outputpatternTest(fixture, '.app-date', dateWrapperComponent.wmComponent.datavalue);
-
+        return outputpatternTest(fixture, '[wmDate]', dateWrapperComponent.wmComponent.datavalue);
     }));
 
     it('should be autofocus the element ', waitForAsync(() => {
@@ -407,7 +405,7 @@ describe('DateComponent', () => {
             const setDataValueSpy = jest.spyOn((wmComponent as any), 'setDataValue');
             const event = { target: { value: 'invalid-date' } };
             wmComponent.onDisplayDateChange(event);
-            expect(formatValidationSpy).toHaveBeenCalled();
+            expect(formatValidationSpy).toHaveBeenCalledTimes(1);
             expect(setDataValueSpy).not.toHaveBeenCalled();
         });
 
@@ -416,7 +414,7 @@ describe('DateComponent', () => {
             const setDataValueSpy = jest.spyOn((wmComponent as any), 'setDataValue');
             const event = { target: { value: '2023-01-01' } };
             wmComponent.onDisplayDateChange(event, true);
-            expect(minMaxValidationSpy).toHaveBeenCalled();
+            expect(minMaxValidationSpy).toHaveBeenCalledTimes(1);
             expect(setDataValueSpy).not.toHaveBeenCalled();
         });
 
@@ -426,7 +424,7 @@ describe('DateComponent', () => {
             jest.spyOn((wmComponent as any), 'formatValidation').mockReturnValue(true);
             jest.spyOn((wmComponent as any), 'minDateMaxDateValidationOnInput').mockReturnValue(false);
             wmComponent.onDisplayDateChange(event);
-            expect(setDataValueSpy).toHaveBeenCalled();
+            expect(setDataValueSpy).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -443,21 +441,21 @@ describe('DateComponent', () => {
         });
         it('should stop propagation if dropdown display is enabled', () => {
             wmComponent.onDisplayKeydown(mockEvent);
-            expect(mockEvent.stopPropagation).toHaveBeenCalled();
+            expect(mockEvent.stopPropagation).toHaveBeenCalledTimes(1);
         });
 
         it('should handle Enter key press correctly', () => {
             jest.spyOn(wmComponent, 'toggleDpDropdown');
             wmComponent.onDisplayKeydown(mockEvent);
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-            expect(wmComponent.toggleDpDropdown).toHaveBeenCalled();
+            expect(mockEvent.preventDefault).toHaveBeenCalledTimes(1);
+            expect(wmComponent.toggleDpDropdown).toHaveBeenCalledTimes(1);
         });
 
         it('should hide datepicker dropdown for non-Enter key press', () => {
             mockEvent.key = 'ArrowDown';
             jest.spyOn(wmComponent, 'hideDatepickerDropdown');
             wmComponent.onDisplayKeydown(mockEvent);
-            expect(wmComponent.hideDatepickerDropdown).toHaveBeenCalled();
+            expect(wmComponent.hideDatepickerDropdown).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -477,7 +475,7 @@ describe('DateComponent', () => {
             const updateIMaskSpy = jest.spyOn(wmComponent, 'updateIMask');
             wmComponent.datepattern = 'yyyy-MM-dd';
             wmComponent.onPropertyChange('showdateformatasplaceholder', true);
-            expect(updateIMaskSpy).toHaveBeenCalled();
+            expect(updateIMaskSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should call super.onPropertyChange for other keys', () => {

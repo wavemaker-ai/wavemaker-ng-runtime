@@ -92,7 +92,11 @@ describe('DateTimePickerComponent', () => {
 
     it('should show modal when show() is called', () => {
         component.show();
-        expect(mockBsModalService.show).toHaveBeenCalled();
+        expect(mockBsModalService.show).toHaveBeenCalledWith(component.datetimepickerTemplate, {
+            animated: true,
+            backdrop: 'static',
+            class: 'date-picker-modal modal-dialog-centered'
+        });
     });
 
     it('should clear values when clear() is called', () => {
@@ -196,8 +200,8 @@ describe('DateTimePickerComponent', () => {
             jest.spyOn(component, 'triggerChange');
             jest.spyOn(component, 'hideModal');
             component.onOkClick();
-            expect(component.triggerChange).toHaveBeenCalled();
-            expect(component.hideModal).toHaveBeenCalled();
+            expect(component.triggerChange).toHaveBeenCalledTimes(1);
+            expect(component.hideModal).toHaveBeenCalledTimes(1);
         });
 
         it('should only hide modal if selected date is invalid', () => {
@@ -206,7 +210,7 @@ describe('DateTimePickerComponent', () => {
             jest.spyOn(component, 'hideModal');
             component.onOkClick();
             expect(component.triggerChange).not.toHaveBeenCalled();
-            expect(component.hideModal).toHaveBeenCalled();
+            expect(component.hideModal).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -448,7 +452,7 @@ describe('TimePickerComponent', () => {
     it('should emit change event when time is set', () => {
         jest.spyOn(component.change, 'emit');
         component.set({ index: 0, value: '10' }, 'HOUR');
-        expect(component.change.emit).toHaveBeenCalled();
+        expect(component.change.emit).toHaveBeenCalledTimes(1);
     });
 
     it('should not allow setting time before min', () => {

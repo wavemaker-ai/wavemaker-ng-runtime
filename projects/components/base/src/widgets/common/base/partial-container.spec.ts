@@ -212,7 +212,7 @@ describe('PartialContainerDirective', () => {
 
     describe('constructor', () => {
         it('should register property change listener', () => {
-            expect(componentInstanceMock.registerPropertyChangeListener).toHaveBeenCalled();
+            expect(componentInstanceMock.registerPropertyChangeListener).toHaveBeenCalledTimes(1);
         });
 
         it('should call renderPartial when content property changes', () => {
@@ -267,7 +267,7 @@ describe('PartialContainerDirective', () => {
         });
 
         it('should register destroy listener that unsubscribes from params$', (done) => {
-            expect(componentInstanceMock.registerDestroyListener).toHaveBeenCalled();
+            expect(componentInstanceMock.registerDestroyListener).toHaveBeenCalledTimes(1);
             const destroyListener = componentInstanceMock.registerDestroyListener.mock.calls[0][0];
 
             // Simulate contentInitialized to true to ensure subscription is created

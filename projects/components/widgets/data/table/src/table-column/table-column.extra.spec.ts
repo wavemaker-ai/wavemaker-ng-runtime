@@ -103,7 +103,7 @@ describe('TableColumnDirective - additional behaviour', () => {
             directive.observeOnFields = ['x'];
             directive.applyValidations();
             expect(fv.setValidators).toHaveBeenCalledWith([{ s: 1 }]);
-            expect(fv.setUpValidators).toHaveBeenCalled();
+            expect(fv.setUpValidators).toHaveBeenCalledTimes(1);
             expect(fv.setAsyncValidators).toHaveBeenCalledWith([{ a: 1 }]);
             expect(fv.observeOn).toHaveBeenCalledWith(['x'], 'columns');
         });
@@ -128,16 +128,16 @@ describe('TableColumnDirective - additional behaviour', () => {
             const control = { clearValidators: jest.fn(), clearAsyncValidators: jest.fn(), updateValueAndValidity: jest.fn() };
             jest.spyOn(directive, 'getFormControl').mockReturnValue(control);
             directive.removeValidations();
-            expect(table.ngform.markAsUntouched).toHaveBeenCalled();
-            expect(control.clearValidators).toHaveBeenCalled();
-            expect(control.clearAsyncValidators).toHaveBeenCalled();
-            expect(control.updateValueAndValidity).toHaveBeenCalled();
+            expect(table.ngform.markAsUntouched).toHaveBeenCalledTimes(1);
+            expect(control.clearValidators).toHaveBeenCalledTimes(1);
+            expect(control.clearAsyncValidators).toHaveBeenCalledTimes(1);
+            expect(control.updateValueAndValidity).toHaveBeenCalledTimes(1);
         });
 
         it('only marks the form untouched when the control is missing', () => {
             jest.spyOn(directive, 'getFormControl').mockReturnValue(undefined);
             directive.removeValidations();
-            expect(table.ngform.markAsUntouched).toHaveBeenCalled();
+            expect(table.ngform.markAsUntouched).toHaveBeenCalledTimes(1);
         });
 
         it('guards validation removal after destroy or without a form', () => {
@@ -159,9 +159,9 @@ describe('TableColumnDirective - additional behaviour', () => {
             directive.asyncValidators = [{ a: 1 }];
             directive.observeOnFields = ['x'];
             directive.applyNewRowValidations();
-            expect(fvNew.setValidators).toHaveBeenCalled();
-            expect(fvNew.setUpValidators).toHaveBeenCalled();
-            expect(fvNew.setAsyncValidators).toHaveBeenCalled();
+            expect(fvNew.setValidators).toHaveBeenCalledWith([{ s: 1 }]);
+            expect(fvNew.setUpValidators).toHaveBeenCalledTimes(1);
+            expect(fvNew.setAsyncValidators).toHaveBeenCalledWith([{ a: 1 }]);
             expect(fvNew.observeOn).toHaveBeenCalledWith(['x'], 'columns');
         });
 
@@ -170,7 +170,7 @@ describe('TableColumnDirective - additional behaviour', () => {
             directive.applyNewRowValidations();
             directive.removeNewRowValidations();
             expect(fvNew.setUpValidators).not.toHaveBeenCalled();
-            expect(table.ngform.markAsUntouched).toHaveBeenCalled();
+            expect(table.ngform.markAsUntouched).toHaveBeenCalledTimes(1);
         });
 
         it('clears the validators of the new row control', () => {
@@ -179,7 +179,7 @@ describe('TableColumnDirective - additional behaviour', () => {
             const get = jest.spyOn(directive, 'getFormControl').mockReturnValue(control);
             directive.removeNewRowValidations();
             expect(get).toHaveBeenCalledWith('_new');
-            expect(control.clearValidators).toHaveBeenCalled();
+            expect(control.clearValidators).toHaveBeenCalledTimes(1);
             get.mockReturnValue(undefined);
             directive.removeNewRowValidations();
         });
@@ -187,8 +187,8 @@ describe('TableColumnDirective - additional behaviour', () => {
         it('sets up the validators of both rows', () => {
             jest.spyOn(directive, '_checkNewEditableRowControl').mockReturnValue(true);
             directive.setUpValidators();
-            expect(fv.setUpValidators).toHaveBeenCalled();
-            expect(fvNew.setUpValidators).toHaveBeenCalled();
+            expect(fv.setUpValidators).toHaveBeenCalledTimes(1);
+            expect(fvNew.setUpValidators).toHaveBeenCalledTimes(1);
         });
 
         it('stores cloned validators and observed fields', () => {
@@ -207,9 +207,9 @@ describe('TableColumnDirective - additional behaviour', () => {
             directive.notifyForFields = [dependent];
             directive._isNewEditableRow = true;
             directive.notifyChanges('_new');
-            expect(dependent.fieldValidations_new.validate).toHaveBeenCalled();
+            expect(dependent.fieldValidations_new.validate).toHaveBeenCalledTimes(1);
             directive.notifyChanges();
-            expect(dependent.fieldValidations.validate).toHaveBeenCalled();
+            expect(dependent.fieldValidations.validate).toHaveBeenCalledTimes(1);
         });
 
         it('shows the pending spinner according to the status', () => {
@@ -318,7 +318,7 @@ describe('TableColumnDirective - additional behaviour', () => {
             directive.onValueChange('v', 'inlineInstance');
             expect(directive.activeControlType).toBe('inlineInstance');
             expect(directive.notifyChanges).toHaveBeenCalledWith();
-            expect(directive.fieldValidations.setCustomValidationMessage).toHaveBeenCalled();
+            expect(directive.fieldValidations.setCustomValidationMessage).toHaveBeenCalledTimes(1);
         });
 
         it('validates the new row widget once the form is touched', () => {
@@ -326,7 +326,7 @@ describe('TableColumnDirective - additional behaviour', () => {
             directive._isNewEditableRow = true;
             directive.onValueChange('v', 'inlineInstanceNew');
             expect(directive.notifyChanges).toHaveBeenCalledWith('_new');
-            expect(directive.fieldValidations_new.setCustomValidationMessage).toHaveBeenCalled();
+            expect(directive.fieldValidations_new.setCustomValidationMessage).toHaveBeenCalledTimes(1);
         });
 
         it('does nothing for new row widgets of plain rows', () => {
@@ -367,6 +367,33 @@ describe('TableColumnDirective - additional behaviour', () => {
             expect(table.datasource.execute).not.toHaveBeenCalled();
         });
 
+        it('keeps the cascaded list while another row filter this one depends on has a value', () => {
+            table.datasource.execute.mockImplementation((op: any) => op === DataSource.Operation.SUPPORTS_DISTINCT_API);
+            directive.filteronfilter = 'dept';
+            table.rowFilter = { dept: { value: 'HR' } };
+
+            directive.loadFilterData();
+
+            expect(table.datasource.execute).not.toHaveBeenCalled();
+        });
+
+        it('loads the full list when the row filter it depends on is empty or missing', async () => {
+            table.datasource.execute.mockImplementation((op: any) => op === DataSource.Operation.SUPPORTS_DISTINCT_API);
+            (getDistinctValues as jest.Mock).mockResolvedValue({ data: ['a'] });
+            directive.filterInstance = {};
+            directive.filteronfilter = 'dept';
+
+            table.rowFilter = { dept: { value: '' } };
+            directive.loadFilterData();
+            expect(table.datasource.execute).toHaveBeenCalledWith(DataSource.Operation.SUPPORTS_DISTINCT_API);
+
+            table.datasource.execute.mockClear();
+            table.rowFilter = {};
+            directive.loadFilterData();
+            expect(table.datasource.execute).toHaveBeenCalledWith(DataSource.Operation.SUPPORTS_DISTINCT_API);
+            await Promise.resolve();
+        });
+
         it('loads distinct values for select widgets and marks related columns', async () => {
             table.datasource.execute.mockImplementation((op: any) => op === DataSource.Operation.SUPPORTS_DISTINCT_API);
             (getDistinctValues as jest.Mock).mockResolvedValue({ data: ['a', 'b'] });
@@ -403,7 +430,7 @@ describe('TableColumnDirective - additional behaviour', () => {
             const register = jest.spyOn(directive, 'registerDestroyListener').mockImplementation(() => undefined);
             table.datasource.execute.mockReturnValue(false);
             directive.loadFilterData();
-            expect(register).toHaveBeenCalled();
+            expect(register).toHaveBeenCalledTimes(1);
         });
 
         it('only sets the filter dataset on an existing instance', () => {
@@ -437,7 +464,7 @@ describe('TableColumnDirective - additional behaviour', () => {
         it('fetches distinct values when the data source supports them', () => {
             table.datasource.execute.mockImplementation((op: any) => op === DataSource.Operation.SUPPORTS_DISTINCT_API);
             directive.loadInlineWidgetData();
-            expect(getDistinctValuesForField).toHaveBeenCalled();
+            expect(getDistinctValuesForField).toHaveBeenCalledTimes(1);
         });
 
         it('does nothing without distinct api support, for bound or readonly widgets', () => {
@@ -455,11 +482,11 @@ describe('TableColumnDirective - additional behaviour', () => {
             const filter = jest.spyOn(directive, 'loadFilterData').mockImplementation(() => undefined);
             const inline = jest.spyOn(directive, 'loadInlineWidgetData').mockImplementation(() => undefined);
             directive.onDataSourceChange();
-            expect(filter).toHaveBeenCalled();
+            expect(filter).toHaveBeenCalledTimes(1);
             expect(inline).not.toHaveBeenCalled();
             table.editmode = 'quickedit';
             directive.onDataSourceChange();
-            expect(inline).toHaveBeenCalled();
+            expect(inline).toHaveBeenCalledTimes(1);
         });
     });
 

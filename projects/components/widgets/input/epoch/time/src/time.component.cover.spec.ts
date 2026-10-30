@@ -129,7 +129,7 @@ describe('TimeComponent coverage', () => {
         const notify = jest.spyOn(cmp.app, 'notify').mockImplementation(() => undefined);
         const ev = { stopImmediatePropagation: jest.fn() };
         cmp.preventTpClose(ev);
-        expect(ev.stopImmediatePropagation).toHaveBeenCalled();
+        expect(ev.stopImmediatePropagation).toHaveBeenCalledTimes(1);
         expect(notify).not.toHaveBeenCalled();
     });
 

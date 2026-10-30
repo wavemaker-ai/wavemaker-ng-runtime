@@ -124,7 +124,7 @@ describe('BreadcrumbComponent - additional behaviour', () => {
             const open = jest.spyOn(window, 'open').mockImplementation(() => null);
             click({ link: 'https://example.com', target: '_blank', value: {} });
             expect(router.navigate).not.toHaveBeenCalled();
-            expect(open).toHaveBeenCalled();
+            expect(open).toHaveBeenCalledWith('https://example.com', '_blank');
             router.navigate.mockClear();
             click({ link: '#/Orders', target: '_blank', value: {} });
             expect(router.navigate).not.toHaveBeenCalled();

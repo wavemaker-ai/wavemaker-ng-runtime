@@ -312,7 +312,7 @@ describe('WizardComponent (cover)', () => {
             const before = jest.spyOn(wiz, 'getSelectableStepBeforeIndex');
             const e = key('ArrowLeft');
             wiz.onkeydown(e);
-            expect(e.preventDefault).toHaveBeenCalled();
+            expect(e.preventDefault).toHaveBeenCalledTimes(1);
             expect(before).not.toHaveBeenCalled();
         });
 

@@ -160,7 +160,7 @@ describe('BasePageComponent', () => {
             const err = jest.spyOn(console, 'error').mockImplementation(() => {});
             page.evalUserScript.mockImplementation(() => { throw new Error('bad'); });
             expect(() => page.init()).not.toThrow();
-            expect(err).toHaveBeenCalled();
+            expect(err).toHaveBeenCalledWith(expect.stringContaining('script'), expect.objectContaining({ message: 'bad' }));
         });
 
         it('registerDestroyListener runs on destroy$ completion; params subscription is cleaned', () => {
@@ -168,7 +168,7 @@ describe('BasePageComponent', () => {
             const fn = jest.fn();
             page.registerDestroyListener(fn);
             page.destroy$.complete();
-            expect(fn).toHaveBeenCalled();
+            expect(fn).toHaveBeenCalledTimes(1);
         });
 
         it('setTimezone delegates to the i18n service', () => {
@@ -327,7 +327,7 @@ describe('BasePageComponent', () => {
         it('calls onBeforePageReady', () => {
             const spy = jest.spyOn(page, 'onBeforePageReady');
             page.ngAfterContentInit();
-            expect(spy).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(1);
         });
 
         it('no-op hooks', () => {

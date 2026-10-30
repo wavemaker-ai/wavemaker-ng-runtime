@@ -209,7 +209,7 @@ describe('TableComponent - coverage of the remaining branches', () => {
             const restore = jest.spyOn(table, 'handleStateParams').mockReturnValue({ restored: true } as any);
             table.variableInflight = undefined;
             handlers['toggle-variable-state']({ variable: { name: 'mine', execute: jest.fn(() => 'id') } });
-            expect(restore).toHaveBeenCalled();
+            expect(restore).toHaveBeenCalledTimes(1);
             expect(table.handleLoading).toHaveBeenCalledWith({ restored: true });
         });
 
@@ -219,7 +219,7 @@ describe('TableComponent - coverage of the remaining branches', () => {
             const setOption = jest.spyOn(table, 'setDataGridOption').mockImplementation(() => undefined);
             handlers['toggle-variable-state']({ variable: { name: 'mine', execute: jest.fn(() => 'id') } });
             expect(setOption).toHaveBeenCalledWith('selectFirstRow', table.gridfirstrowselect);
-            expect(table.debouncedHandleLoading).toHaveBeenCalled();
+            expect(table.debouncedHandleLoading).toHaveBeenCalledTimes(1);
         });
 
         it('ignores events of other data sources', () => {
@@ -488,7 +488,7 @@ describe('TableComponent - coverage of the remaining branches', () => {
             it('reports a missing container for the dynamic table', async () => {
                 jest.spyOn($.fn, 'find').mockReturnValue([] as any);
                 await table.generateDynamicColumns([{ field: 'a' }]);
-                expect(table.dynamicTableRef.createComponent).toHaveBeenCalled();
+                expect(table.dynamicTableRef.createComponent).toHaveBeenCalledTimes(1);
                 expect(console.error).toHaveBeenCalledWith('Dynamic table container element not found');
             });
 
@@ -769,7 +769,7 @@ describe('TableComponent - coverage of the remaining branches', () => {
             table.variableInflight = false;
             table.watchVariableDataSet({ a: 1 });
             expect(populate).toHaveBeenCalledWith({ a: 1 });
-            expect(refresh).toHaveBeenCalled();
+            expect(refresh).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -852,7 +852,7 @@ describe('TableComponent - coverage of the remaining branches', () => {
             table.parentList = {};
             table.binddataset = 'item.rows';
             table.onPropertyChange('dataset', [{ a: 1 }], undefined);
-            expect(watch).toHaveBeenCalled();
+            expect(watch).toHaveBeenCalledTimes(1);
             watch.mockClear();
             table.parentList = {};
             table.binddataset = 'Variables.v';
@@ -878,7 +878,7 @@ describe('TableComponent - coverage of the remaining branches', () => {
             table.pagesize = undefined;
             table.actualPageSize = undefined;
             table.onPropertyChange('allowpagesizechange', true, false);
-            expect(setDefault).toHaveBeenCalled();
+            expect(setDefault).toHaveBeenCalledTimes(1);
             setDefault.mockClear();
             table.allowpagesizechange = false;
             table.onPropertyChange('pagesizeoptions', '5,10', '5');
@@ -887,7 +887,7 @@ describe('TableComponent - coverage of the remaining branches', () => {
             table.pagesize = undefined;
             table.actualPageSize = undefined;
             table.onPropertyChange('pagesizeoptions', '5,10', '5');
-            expect(setDefault).toHaveBeenCalled();
+            expect(setDefault).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -982,7 +982,7 @@ describe('TableComponent - coverage of the remaining branches', () => {
             const next = jest.spyOn(table.selectedItemChange, 'next');
             table.gridOptions.selectAllRows(true, {});
             expect(table.statePersistence.setWidgetState).toHaveBeenCalledWith(table, { selectedItem: [{ page: 1, index: 0 }, { page: 1, index: 1 }, { page: 2, index: 0 }] });
-            expect(next).toHaveBeenCalled();
+            expect(next).toHaveBeenCalledWith([{ a: 1 }]);
             expect(table.items).toHaveLength(3);
         });
 
@@ -1095,9 +1095,9 @@ describe('TableComponent - coverage of the remaining branches', () => {
     describe('dataset errors and persisted selection', () => {
         it('shows an error message of the data set only when there is one', () => {
             table.dataset = { data: { error: true } };
-            expect(table.isDataValid()).toBeDefined();
+            expect(table.isDataValid()).toBe(true);
             table.dataset = { data: { error: true, errorMessage: 'bad' } };
-            expect(table.isDataValid()).toBeDefined();
+            expect(table.isDataValid()).toBe(false);
         });
 
         it('does not reselect items of other pages', () => {
@@ -1125,7 +1125,7 @@ describe('TableComponent - coverage of the remaining branches', () => {
             const restore = jest.spyOn(table, 'handleStateParams');
             handlers['toggle-variable-state']({ variable: { name: 'mine', execute: jest.fn(() => 'id') } });
             expect(restore).not.toHaveBeenCalled();
-            expect(table.handleLoading).toHaveBeenCalled();
+            expect(table.handleLoading).toHaveBeenCalledTimes(1);
             table._pageLoad = true;
             jest.spyOn(table, 'getConfiguredState').mockReturnValue('none');
             handlers['toggle-variable-state']({ variable: { name: 'mine', execute: jest.fn(() => 'id') } });

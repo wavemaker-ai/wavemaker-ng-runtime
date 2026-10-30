@@ -193,14 +193,14 @@ export class ListItemDirective  extends StylableComponent implements OnInit, Aft
         if (this.listComponent.mouseEnterCB) {
             // MEMORY LEAK FIX: Store bound handler for cleanup
             this.boundMouseEnterHandler = ($event: Event) => {
-                this.listComponent.invokeEventCallback('mouseenter', {widget: this, $event});
+                this.listComponent.invokeEventCallback('mouseenter', {widget: this.listComponent['widget'], $event});
             };
             this.nativeElement.addEventListener('mouseenter', this.boundMouseEnterHandler);
         }
         if (this.listComponent.mouseLeaveCB) {
             // MEMORY LEAK FIX: Store bound handler for cleanup
             this.boundMouseLeaveHandler = ($event: Event) => {
-                this.listComponent.invokeEventCallback('mouseleave', {widget: this, $event});
+                this.listComponent.invokeEventCallback('mouseleave', {widget: this.listComponent['widget'], $event});
             };
             this.nativeElement.addEventListener('mouseleave', this.boundMouseLeaveHandler);
         }

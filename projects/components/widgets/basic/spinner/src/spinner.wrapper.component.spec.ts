@@ -232,7 +232,7 @@ describe('SpinnerComponent', () => {
 
             component.ngOnInit();
 
-            expect(superNgOnInitSpy).toHaveBeenCalled();
+            expect(superNgOnInitSpy).toHaveBeenCalledTimes(1);
             expect(setInitPropsSpy).toHaveBeenCalled();
         });
 

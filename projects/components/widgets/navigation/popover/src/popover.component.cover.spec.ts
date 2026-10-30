@@ -178,10 +178,11 @@ describe('PopoverComponent - remaining branches', () => {
     describe('destroy', () => {
         it('clears a pending close timeout', () => {
             jest.useFakeTimers();
-            popover.closePopoverTimeout = setTimeout(() => undefined, 1000);
+            const timeoutId = setTimeout(() => undefined, 1000);
+            popover.closePopoverTimeout = timeoutId;
             const clear = jest.spyOn(global, 'clearTimeout');
             popover.ngOnDestroy();
-            expect(clear).toHaveBeenCalled();
+            expect(clear).toHaveBeenCalledWith(timeoutId);
             jest.useRealTimers();
         });
     });

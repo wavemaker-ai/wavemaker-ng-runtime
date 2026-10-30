@@ -103,6 +103,7 @@ describe('TableComponent - grid callbacks', () => {
     }));
 
     afterEach(() => {
+        jest.useRealTimers();
         jest.restoreAllMocks();
         (core.$watch as jest.Mock).mockClear();
         (core.$unwatch as jest.Mock).mockClear();
@@ -283,7 +284,7 @@ describe('TableComponent - grid callbacks', () => {
             callGrid.mockReturnValue([data[0]]);
             table.navigation = 'Scroll';
             table.gridOptions.onRowSelect(data[0], {});
-            expect(warn).toHaveBeenCalled();
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining('is not supported for current pagination type'));
         });
 
         it('only deselects rows in multi select tables and removes them from the state', () => {
@@ -323,7 +324,7 @@ describe('TableComponent - grid callbacks', () => {
             table.multiselect = true;
             table.navigation = 'On-Demand';
             table.gridOptions.onRowDeselect(data[0], {});
-            expect(warn).toHaveBeenCalled();
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining('is not supported for current pagination type'));
         });
 
         it('replaces the items for single select and keeps them for multi select', () => {
@@ -442,10 +443,11 @@ describe('TableComponent - grid callbacks', () => {
 
         it('un-mutes the watchers shortly after an update', () => {
             jest.useFakeTimers();
+            (core.unMuteWatchers as jest.Mock).mockClear();
             jest.spyOn(table, 'updateRecord').mockImplementation(() => undefined);
             table.gridOptions.afterRowUpdate(data[0], 'evt', jest.fn(), {});
             jest.advanceTimersByTime(20);
-            expect(core.unMuteWatchers).toHaveBeenCalled();
+            expect(core.unMuteWatchers).toHaveBeenCalledTimes(1);
             jest.useRealTimers();
         });
 

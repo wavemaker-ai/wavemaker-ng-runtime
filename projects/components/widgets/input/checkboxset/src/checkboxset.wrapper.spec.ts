@@ -75,7 +75,7 @@ describe('CheckboxSet component', () => {
         const checkboxElement = getHtmlSelectorElement(fixture, '[wmCheckboxset]');
         const mockTarget = { click: jest.fn() };
         checkboxElement.triggerEventHandler('keydown.enter', { preventDefault: () => { }, target: mockTarget });
-        fixture.whenStable().then(() => {
+        return fixture.whenStable().then(() => {
             expect(mockTarget.click).toHaveBeenCalled();
         });
     });
@@ -130,8 +130,8 @@ describe('CheckboxSet component', () => {
                 });
 
             checkboxsetComponent['handleEvent'](mockNode, 'click', mockCallback, {});
-            expect(addEventListenerSpy).toHaveBeenCalled();
-            expect(mockCallback).toHaveBeenCalled();
+            expect(addEventListenerSpy).toHaveBeenCalledWith(mockNode, 'click', expect.any(Function));
+            expect(mockCallback).toHaveBeenCalledTimes(1);
         });
 
         it('should not call callback for click events on non-input elements', () => {
@@ -146,7 +146,7 @@ describe('CheckboxSet component', () => {
 
             checkboxsetComponent['handleEvent'](mockNode, 'click', mockCallback, {});
 
-            expect(addEventListenerSpy).toHaveBeenCalled();
+            expect(addEventListenerSpy).toHaveBeenCalledWith(mockNode, 'click', expect.any(Function));
             expect(mockCallback).not.toHaveBeenCalled();
         });
 

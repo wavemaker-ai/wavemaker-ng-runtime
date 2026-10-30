@@ -85,7 +85,7 @@ describe('MenuDropdownItemComponent - cover branches', () => {
         const { component, menuRef } = createComponent({ $element: $(menuRoot), menuposition: 'up,left' }, nextLi);
         // with a left opening menu the arrows keep the vertical meaning for up and down
         component.onKeyDown(event(), 'DOWN-ARROW');
-        expect(menuRef.bsDropdown.hide).toHaveBeenCalled();
+        expect(menuRef.bsDropdown.hide).toHaveBeenCalledTimes(1);
     });
 
     it('DOWN-ARROW on the last item of a downward menu does not hide it', () => {

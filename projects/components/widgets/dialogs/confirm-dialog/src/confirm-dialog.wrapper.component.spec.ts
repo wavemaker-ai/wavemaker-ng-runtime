@@ -96,7 +96,7 @@ describe('ConfirmDialogComponent', () => {
     it('should close the dialog correctly', () => {
         const closeSpy = jest.spyOn(dialogComponent, 'close');
         dialogComponent.close();
-        expect(closeSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalledTimes(1);
     });
 
 });
