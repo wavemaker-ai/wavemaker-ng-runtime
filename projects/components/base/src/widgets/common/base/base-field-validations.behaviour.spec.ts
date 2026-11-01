@@ -348,7 +348,7 @@ describe('BaseFieldValidations - behaviour', () => {
             validations.validate();
 
             expect(update).toHaveBeenCalled();
-            expect(markAsTouched).toHaveBeenCalled();
+            expect(markAsTouched).toHaveBeenCalledTimes(1);
         });
 
         it('only applies validators when no async validation is configured', () => {

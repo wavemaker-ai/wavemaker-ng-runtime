@@ -116,7 +116,7 @@ describe('BaseDateTimeComponent - more behaviour', () => {
             const load = jest.spyOn(comp, 'loadMonths').mockImplementation(() => undefined);
             const focus = jest.spyOn(comp, 'setActiveMonthFocus').mockImplementation(() => undefined);
             comp.setFocusForCurrentMonthOryear();
-            expect(load).toHaveBeenCalled();
+            expect(load).toHaveBeenCalledTimes(1);
             expect(focus).toHaveBeenCalledWith(comp.activeDate, true);
         });
 
@@ -125,7 +125,7 @@ describe('BaseDateTimeComponent - more behaviour', () => {
             const load = jest.spyOn(comp, 'loadYears').mockImplementation(() => undefined);
             const focus = jest.spyOn(comp, 'setActiveYearFocus').mockImplementation(() => undefined);
             comp.setFocusForCurrentMonthOryear();
-            expect(load).toHaveBeenCalled();
+            expect(load).toHaveBeenCalledTimes(1);
             expect(focus).toHaveBeenCalledWith(comp.activeDate, true);
         });
     });
@@ -187,8 +187,8 @@ describe('BaseDateTimeComponent - more behaviour', () => {
             comp.loadMonths();
             expect(kb).not.toHaveBeenCalled();
             jest.runAllTimers();
-            expect(kb).toHaveBeenCalled();
-            expect(mouse).toHaveBeenCalled();
+            expect(kb).toHaveBeenCalledTimes(1);
+            expect(mouse).toHaveBeenCalledTimes(1);
         });
 
         it('attaches the year keyboard and mouse events after a tick', () => {
@@ -196,8 +196,8 @@ describe('BaseDateTimeComponent - more behaviour', () => {
             const mouse = jest.spyOn(comp, 'addDatepickerMouseEvents').mockImplementation(() => undefined);
             comp.loadYears();
             jest.runAllTimers();
-            expect(kb).toHaveBeenCalled();
-            expect(mouse).toHaveBeenCalled();
+            expect(kb).toHaveBeenCalledTimes(1);
+            expect(mouse).toHaveBeenCalledTimes(1);
         });
     });
 

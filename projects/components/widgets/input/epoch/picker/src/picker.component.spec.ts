@@ -44,7 +44,7 @@ describe('PickerComponent', () => {
             const { picker } = createPicker();
             const reRenderSpy = jest.spyOn(picker, 'reRender');
             picker.options = [{ label: 'One' }];
-            expect(reRenderSpy).toHaveBeenCalled();
+            expect(reRenderSpy).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -54,7 +54,7 @@ describe('PickerComponent', () => {
             const reRenderSpy = jest.spyOn(picker, 'reRender');
             picker.selectedValue = 'One';
             expect(picker.selectedValue).toEqual('One');
-            expect(reRenderSpy).toHaveBeenCalled();
+            expect(reRenderSpy).toHaveBeenCalledTimes(1);
         });
     });
 

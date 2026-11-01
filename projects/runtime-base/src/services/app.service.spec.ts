@@ -213,7 +213,7 @@ describe('AppRef', () => {
             const cb = jest.fn();
             app.onSessionTimeout = cb;
             http.registerOnSessionTimeout.mock.calls[0][0]();
-            expect(cb).toHaveBeenCalled();
+            expect(cb).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -228,7 +228,7 @@ describe('AppRef', () => {
         it('warns when the appNotification action is missing', () => {
             delete app.Actions.appNotification;
             app.notifyApp('m', 'error', 't');
-            expect(console.warn).toHaveBeenCalled();
+            expect(console.warn).toHaveBeenCalledWith('The default Action "appNotification" doesn\'t exist in the app. App notified following error:\n', 'm');
         });
 
         it('skips excluded messages with a console warning', () => {

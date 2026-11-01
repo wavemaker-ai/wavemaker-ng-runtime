@@ -184,14 +184,14 @@ describe('SecurityService - extra paths', () => {
             expect(request.headers['Content-Type']).toBe('application/x-www-form-urlencoded');
             expect(request.data).toBe('j_username=a%20b&j_password=p%26q');
             expect(app.notify).toHaveBeenCalledWith('userLoggedIn', {});
-            expect(success).toHaveBeenCalled();
+            expect(success).toHaveBeenCalledWith({ body: { wm_xsrf_token: 'abc' } });
         });
 
         it('copes with an empty response body', async () => {
             http.send.mockResolvedValue({ body: null });
             const success = jest.fn();
             await service.appLogin({}, success, jest.fn());
-            expect(success).toHaveBeenCalled();
+            expect(success).toHaveBeenCalledWith({ body: null });
         });
 
         it('passes failures to the failure callback', async () => {

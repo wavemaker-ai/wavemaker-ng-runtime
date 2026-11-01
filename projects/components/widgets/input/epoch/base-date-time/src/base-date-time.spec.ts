@@ -199,7 +199,7 @@ describe('BaseDateTimeComponent', () => {
         component.mindate = '2023-06-01';
         component.maxdate = '2023-06-30';
         (component as any).minDateMaxDateValidationOnInput(testDate);
-        expect((component as any).dateNotInRange).toBeFalsy();
+        expect((component as any).dateNotInRange).toBe(false);
     });
 
     it('should invalidate date before mindate', () => {
@@ -207,7 +207,7 @@ describe('BaseDateTimeComponent', () => {
         component.mindate = '2023-06-01';
         component.maxdate = '2023-06-30';
         (component as any).minDateMaxDateValidationOnInput(testDate);
-        expect((component as any).dateNotInRange).toBeTruthy();
+        expect((component as any).dateNotInRange).toBe(true);
     });
 
     it('should invalidate date after maxdate', () => {
@@ -215,35 +215,35 @@ describe('BaseDateTimeComponent', () => {
         component.mindate = '2023-06-01';
         component.maxdate = '2023-06-30';
         (component as any).minDateMaxDateValidationOnInput(testDate);
-        expect((component as any).dateNotInRange).toBeTruthy();
+        expect((component as any).dateNotInRange).toBe(true);
     });
 
     it('should validate excluded dates', () => {
         const testDate = new Date('2023-06-15');
         component.excludedates = '2023-06-10,2023-06-20';
         (component as any).minDateMaxDateValidationOnInput(testDate);
-        expect((component as any).dateNotInRange).toBeFalsy();
+        expect((component as any).dateNotInRange).toBe(false);
     });
 
     it('should invalidate excluded date', () => {
         const testDate = new Date('2023-06-10');
         component.excludedates = '2023-06-10,2023-06-20';
         (component as any).minDateMaxDateValidationOnInput(testDate);
-        expect((component as any).dateNotInRange).toBeTruthy();
+        expect((component as any).dateNotInRange).toBe(true);
     });
 
     it('should validate excluded days', () => {
         const testDate = new Date('2023-06-15'); // Thursday
         component.excludedays = '0,6'; // Sunday and Saturday
         (component as any).minDateMaxDateValidationOnInput(testDate);
-        expect((component as any).dateNotInRange).toBeFalsy();
+        expect((component as any).dateNotInRange).toBe(false);
     });
 
     it('should invalidate excluded day', () => {
         const testDate = new Date('2023-06-18'); // Sunday
         component.excludedays = '0,6'; // Sunday and Saturday
         (component as any).minDateMaxDateValidationOnInput(testDate);
-        expect((component as any).dateNotInRange).toBeTruthy();
+        expect((component as any).dateNotInRange).toBe(true);
     });
 
     it('should validate date format', () => {
@@ -404,11 +404,11 @@ describe('BaseDateTimeComponent', () => {
 
             expect((component as any).activeDate).toEqual(mockDate);
             expect((component as any).setNextData).toHaveBeenCalledWith(mockDate);
-            expect(component.datetimepickerComponent.show).toHaveBeenCalled();
+            expect(component.datetimepickerComponent.show).toHaveBeenCalledTimes(1);
 
             jest.runAllTimers();
 
-            expect((component as any).addDatepickerMouseEvents).toHaveBeenCalled();
+            expect((component as any).addDatepickerMouseEvents).toHaveBeenCalledTimes(1);
             expect((component as any).setActiveDateFocus).toHaveBeenCalledWith(mockDate, true);
 
             jest.useRealTimers();
@@ -511,14 +511,14 @@ describe('BaseDateTimeComponent', () => {
             const mockUnsubscribe = jest.fn();
             (component as any).dateOnShowSubscription = { unsubscribe: mockUnsubscribe };
             component.ngOnDestroy();
-            expect(mockUnsubscribe).toHaveBeenCalled();
+            expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
         });
 
         it('should call cancelLocaleChangeSubscription if it exists', () => {
             const mockCancel = jest.fn();
             (component as any).cancelLocaleChangeSubscription = mockCancel;
             component.ngOnDestroy();
-            expect(mockCancel).toHaveBeenCalled();
+            expect(mockCancel).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -527,7 +527,7 @@ describe('BaseDateTimeComponent', () => {
             const mockHideModal = jest.fn();
             component.datetimepickerComponent = { hideModal: mockHideModal };
             component.ngOnDetach();
-            expect(mockHideModal).toHaveBeenCalled();
+            expect(mockHideModal).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -634,7 +634,7 @@ describe('BaseDateTimeComponent', () => {
             if (onCall) {
                 const clickHandler = onCall[2];
                 clickHandler({ originalEvent: {} });
-                expect((component as any).setFocusForCurrentMonthOryear).toHaveBeenCalled();
+                expect((component as any).setFocusForCurrentMonthOryear).toHaveBeenCalledTimes(1);
             }
         });
 
@@ -645,8 +645,8 @@ describe('BaseDateTimeComponent', () => {
                 const clickHandler = onCall[2];
                 const mockEvent = { stopPropagation: jest.fn(), originalEvent: {} };
                 clickHandler(mockEvent);
-                expect(mockEvent.stopPropagation).toHaveBeenCalled();
-                expect((component as any).setFocusForMonthOrDay).toHaveBeenCalled();
+                expect(mockEvent.stopPropagation).toHaveBeenCalledTimes(1);
+                expect((component as any).setFocusForMonthOrDay).toHaveBeenCalledTimes(1);
             }
         });
 
@@ -685,9 +685,9 @@ describe('BaseDateTimeComponent', () => {
 
             component.onDateTimeInputBlur();
 
-            expect(mockChild1.classList.contains('add-opacity')).toBeFalsy();
-            expect(mockChild2.classList.contains('add-opacity')).toBeFalsy();
-            expect(mockInput.classList.contains('remove-opacity')).toBeFalsy();
+            expect(mockChild1.classList.contains('add-opacity')).toBe(false);
+            expect(mockChild2.classList.contains('add-opacity')).toBe(false);
+            expect(mockInput.classList.contains('remove-opacity')).toBe(false);
         });
 
     });
@@ -713,9 +713,9 @@ describe('BaseDateTimeComponent', () => {
             });
             component.onDateTimeInputFocus(true);
 
-            expect(mockChild1.classList.contains('add-opacity')).toBeTruthy();
-            expect(mockChild2.classList.contains('add-opacity')).toBeTruthy();
-            expect(mockInput.classList.contains('remove-opacity')).toBeTruthy();
+            expect(mockChild1.classList.contains('add-opacity')).toBe(true);
+            expect(mockChild2.classList.contains('add-opacity')).toBe(true);
+            expect(mockInput.classList.contains('remove-opacity')).toBe(true);
         });
 
         it('should focus and click input when not skipping focus', () => {
@@ -730,8 +730,8 @@ describe('BaseDateTimeComponent', () => {
 
             component.onDateTimeInputFocus();
 
-            expect(mockInput.focus).toHaveBeenCalled();
-            expect(mockInput.click).toHaveBeenCalled();
+            expect(mockInput.focus).toHaveBeenCalledTimes(1);
+            expect(mockInput.click).toHaveBeenCalledTimes(1);
         });
 
         it('should do nothing when loadNativeDateInput is false', () => {
@@ -781,7 +781,7 @@ describe('BaseDateTimeComponent', () => {
             expect(mockEl.find().value).toBe('00');
 
             jest.runAllTimers();
-            expect((component as any).bsTimePicker.updateMinutes).toHaveBeenCalled();
+            expect((component as any).bsTimePicker.updateMinutes).toHaveBeenCalledWith({ value: '00' });
         });
 
         it('should update seconds correctly', () => {
@@ -798,7 +798,7 @@ describe('BaseDateTimeComponent', () => {
             expect(mockEl.find).toHaveBeenCalledWith('input[aria-label="minutes"]');
             expect(mockEl.find).toHaveBeenCalledWith('input[aria-label="seconds"]');
             expect(mockEl.find().value).toBe('00');
-            expect((component as any).bsTimePicker.updateSeconds).toHaveBeenCalled();
+            expect((component as any).bsTimePicker.updateSeconds).toHaveBeenCalledWith({ value: '00' });
         });
     });
 
@@ -891,7 +891,7 @@ describe('BaseDateTimeComponent', () => {
 
             expect(jQueryMock.attr).toHaveBeenCalledWith('disabled');
             expect(jQueryMock.trigger).toHaveBeenCalledWith('click');
-            expect((component as any).loadDays).toHaveBeenCalled();
+            expect((component as any).loadDays).toHaveBeenCalledTimes(1);
             expect((component as any).loadMonths).not.toHaveBeenCalled();
             expect((component as any).loadYears).not.toHaveBeenCalled();
         });
@@ -904,7 +904,7 @@ describe('BaseDateTimeComponent', () => {
             expect(jQueryMock.attr).toHaveBeenCalledWith('disabled');
             expect(jQueryMock.trigger).toHaveBeenCalledWith('click');
             expect((component as any).loadDays).not.toHaveBeenCalled();
-            expect((component as any).loadMonths).toHaveBeenCalled();
+            expect((component as any).loadMonths).toHaveBeenCalledTimes(1);
             expect((component as any).loadYears).not.toHaveBeenCalled();
         });
 
@@ -917,7 +917,7 @@ describe('BaseDateTimeComponent', () => {
             expect(jQueryMock.trigger).toHaveBeenCalledWith('click');
             expect((component as any).loadDays).not.toHaveBeenCalled();
             expect((component as any).loadMonths).not.toHaveBeenCalled();
-            expect((component as any).loadYears).toHaveBeenCalled();
+            expect((component as any).loadYears).toHaveBeenCalledTimes(1);
         });
 
         it('should use correct selector for previous button', () => {
@@ -1088,7 +1088,7 @@ describe('BaseDateTimeComponent', () => {
             });
             (component as any).focusOnInputEl();
             tick(100);
-            expect(focus).toHaveBeenCalled();
+            expect(focus).toHaveBeenCalledTimes(1);
         }));
 
         it('should do nothing outside a floating caption', fakeAsync(() => {
@@ -1109,7 +1109,7 @@ describe('BaseDateTimeComponent', () => {
             (component as any).nativeElement = { querySelector: jest.fn().mockReturnValue({ blur }) };
             component.blurDateInput(true);
             tick();
-            expect(blur).toHaveBeenCalled();
+            expect(blur).toHaveBeenCalledTimes(1);
         }));
 
         it('should do nothing when the picker is not open', fakeAsync(() => {
@@ -1167,7 +1167,7 @@ describe('BaseDateTimeComponent', () => {
             jest.spyOn(component, 'getMobileInput').mockReturnValue(mobileInput as any);
             component.ngAfterViewInit();
             tick();
-            expect((component as any).isReadOnly).toBeTruthy();
+            expect((component as any).isReadOnly).toBe(true);
             expect(mobileInput.style.width).toEqual('100%');
             expect(mobileInput.style.height).toEqual('100%');
         }));
@@ -1217,8 +1217,8 @@ describe('BaseDateTimeComponent', () => {
             tick();
 
             expect(setAttr).toHaveBeenCalledWith(container, 'tabindex', '0');
-            expect(loadDaysSpy).toHaveBeenCalled();
-            expect(setActiveDateFocusSpy).toHaveBeenCalled();
+            expect(loadDaysSpy).toHaveBeenCalledTimes(1);
+            expect(setActiveDateFocusSpy).toHaveBeenCalledWith((component as any).activeDate, undefined, true);
             document.body.removeChild(container);
         }));
 
@@ -1239,8 +1239,8 @@ describe('BaseDateTimeComponent', () => {
             container.onkeydown!({ key: 'Escape' } as any);
             tick();
 
-            expect(scope.hideDatepickerDropdown).toHaveBeenCalled();
-            expect(focusSpy).toHaveBeenCalled();
+            expect(scope.hideDatepickerDropdown).toHaveBeenCalledTimes(1);
+            expect(focusSpy).toHaveBeenCalledTimes(1);
             document.body.removeChild(container);
         }));
 
@@ -1252,8 +1252,8 @@ describe('BaseDateTimeComponent', () => {
             (component as any).loadDays();
             tick();
             expect(attr).toHaveBeenCalledWith('tabindex', '0');
-            expect(keyboardEventsSpy).toHaveBeenCalled();
-            expect(mouseEventsSpy).toHaveBeenCalled();
+            expect(keyboardEventsSpy).toHaveBeenCalledTimes(1);
+            expect(mouseEventsSpy).toHaveBeenCalledTimes(1);
         }));
     });
 
@@ -1282,7 +1282,7 @@ describe('BaseDateTimeComponent', () => {
             (component as any).activeDate = new Date('2023-06-15');
             (component as any).addKeyBoardEventsForDays();
             getHandler()({ key: 'ArrowDown', preventDefault: jest.fn() });
-            expect(setActiveDateFocusSpy).toHaveBeenCalled();
+            expect(setActiveDateFocusSpy).toHaveBeenCalledWith(new Date('2023-06-22'));
         });
 
         it('addKeyBoardEventsForDays should ignore keys it does not handle', () => {
@@ -1300,7 +1300,7 @@ describe('BaseDateTimeComponent', () => {
             (component as any).activeDate = new Date('2023-06-15');
             (component as any).addKeyBoardEventsForMonths();
             getHandler()({ key: 'ArrowRight', preventDefault: jest.fn() });
-            expect(setActiveMonthFocusSpy).toHaveBeenCalled();
+            expect(setActiveMonthFocusSpy).toHaveBeenCalledWith(new Date('2023-07-15'));
         });
 
         it('addKeyBoardEventsForYears should move active-year focus on ArrowLeft', () => {
@@ -1310,7 +1310,7 @@ describe('BaseDateTimeComponent', () => {
             (component as any).activeDate = new Date('2023-06-15');
             (component as any).addKeyBoardEventsForYears();
             getHandler()({ key: 'ArrowLeft', preventDefault: jest.fn() });
-            expect(setActiveYearFocusSpy).toHaveBeenCalled();
+            expect(setActiveYearFocusSpy).toHaveBeenCalledWith(new Date('2022-06-15'));
         });
     });
 

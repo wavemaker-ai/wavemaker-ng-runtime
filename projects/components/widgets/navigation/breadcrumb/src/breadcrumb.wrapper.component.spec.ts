@@ -165,7 +165,7 @@ describe('BreadcrumbComponent', () => {
 
             breadcrumbComponent.onItemClick(event, item);
 
-            expect(preventDefault).toHaveBeenCalled();
+            expect(preventDefault).toHaveBeenCalledTimes(1);
         });
 
         it('should not navigate when itemLink is falsy', () => {
@@ -213,7 +213,7 @@ describe('BreadcrumbComponent', () => {
             // Test case 1: itemLink is falsy
             let item = { value: { link: '', target: '_self' } };
             breadcrumbComponent.onItemClick(event, item);
-            expect(preventDefault).toHaveBeenCalled();
+            expect(preventDefault).toHaveBeenCalledTimes(1);
             expect(router.navigate).not.toHaveBeenCalled();
 
             // Reset mocks
@@ -224,7 +224,7 @@ describe('BreadcrumbComponent', () => {
             item = { value: { link: '#/test', target: '_self' } };
             (breadcrumbComponent.invokeEventCallback as jest.Mock).mockReturnValueOnce(false);
             breadcrumbComponent.onItemClick(event, item);
-            expect(preventDefault).toHaveBeenCalled();
+            expect(preventDefault).toHaveBeenCalledTimes(1);
             expect(router.navigate).not.toHaveBeenCalled();
         });
     });

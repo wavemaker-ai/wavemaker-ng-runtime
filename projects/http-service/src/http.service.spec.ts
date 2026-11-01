@@ -148,8 +148,8 @@ describe('HttpServiceImpl', () => {
             const v = { _observable: { unsubscribe: jest.fn() } };
             const f = { _uploadProgress: { unsubscribe: jest.fn() } };
             service.cancel(v, f);
-            expect(v._observable.unsubscribe).toHaveBeenCalled();
-            expect(f._uploadProgress.unsubscribe).toHaveBeenCalled();
+            expect(v._observable.unsubscribe).toHaveBeenCalledTimes(1);
+            expect(f._uploadProgress.unsubscribe).toHaveBeenCalledTimes(1);
         });
 
         it('tolerates missing observable and file', () => {
@@ -262,7 +262,7 @@ describe('HttpServiceImpl', () => {
                 const cb = jest.fn();
                 service.pushToSessionFailureQueue(cb);
                 service.executeSessionFailureRequests();
-                expect(cb).toHaveBeenCalled();
+                expect(cb).toHaveBeenCalledTimes(1);
                 expect(service.sessionTimeoutQueue).toEqual([]);
             });
 

@@ -284,7 +284,7 @@ describe('TableFilterSortDirective - additional behaviour', () => {
             table.getConfiguredState.mockReturnValue('session');
             table.navigation = 'Scroll';
             directive.searchSortHandler({ field: 'a', value: 'x' }, undefined, 'search');
-            expect(warn).toHaveBeenCalled();
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining('is not supported for current pagination type'));
             warn.mockRestore();
         });
 
@@ -352,7 +352,7 @@ describe('TableFilterSortDirective - additional behaviour', () => {
         it('stops propagating change events of search inputs', () => {
             const event: any = { type: 'change', stopPropagation: jest.fn() };
             directive.searchSortHandler({ field: 'a', value: 'x' }, event, 'search');
-            expect(event.stopPropagation).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalledTimes(1);
             table.filtermode = 'multicolumn';
             directive.searchSortHandler({ field: 'a', value: 'x' }, event, 'search');
             expect(table.gridOptions.setLastActionPerformed).toHaveBeenCalledWith('search_or_sort');
@@ -380,8 +380,8 @@ describe('TableFilterSortDirective - additional behaviour', () => {
             table.fieldDefs = [{ resetFilter }, {}];
             table.onRowFilterChange = jest.fn();
             directive.clearFilter();
-            expect(resetFilter).toHaveBeenCalled();
-            expect(table.onRowFilterChange).toHaveBeenCalled();
+            expect(resetFilter).toHaveBeenCalledTimes(1);
+            expect(table.onRowFilterChange).toHaveBeenCalledTimes(1);
             table.onRowFilterChange.mockClear();
             directive.clearFilter(true);
             expect(table.onRowFilterChange).not.toHaveBeenCalled();
@@ -391,7 +391,7 @@ describe('TableFilterSortDirective - additional behaviour', () => {
             jest.useFakeTimers();
             directive.adjustContainer('firstname');
             jest.runAllTimers();
-            expect(adjustContainerRightEdges).toHaveBeenCalled();
+            expect(adjustContainerRightEdges).toHaveBeenCalledTimes(1);
             jest.useRealTimers();
         });
     });

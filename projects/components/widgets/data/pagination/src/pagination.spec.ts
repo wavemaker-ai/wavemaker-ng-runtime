@@ -835,55 +835,83 @@ describe('PaginationComponent', () => {
         });
     });
 
-    describe('_debouncedPageChanged', () => {
+    describe('pageChanged (real debounced handler)', () => {
         beforeEach(() => {
-            (component as any).widget = { dataset: undefined };
+            jest.useFakeTimers();
+            // the debounce helper schedules through the un-patched zone timers, so route them to the jest fake timers
+            (window as any).__zone_symbol__setTimeout = (fn: any, wait: number) => setTimeout(fn, wait);
+            (window as any).__zone_symbol__clearTimeout = (id: any) => clearTimeout(id);
             component.dn = { currentPage: 1 };
+            component.maxResults = 10;
             component.goToPage = jest.fn();
             component['_setAriaForBasicNavigation'] = jest.fn();
+            jest.spyOn(component.maxResultsEmitter, 'emit');
             component.parent = {
                 ...component.parent,
                 invokeEventCallback: jest.fn()
             };
-
-            // We need to recreate the debounced function to skip the actual debounce in tests
-            component['_debouncedPageChanged'] = (event) => {
-                const currentPage = event?.page;
-                if (currentPage !== component.dn.currentPage) {
-                    const inst = component.parent || component;
-                    component.dn.currentPage = currentPage;
-                    inst.invokeEventCallback('paginationchange', { $event: undefined, $index: component.dn.currentPage });
-                    component.goToPage();
-                    if (component.navigation === 'Basic') {
-                        component['_setAriaForBasicNavigation']();
-                    }
-                }
-            };
         });
 
-        it('should not update currentPage if it has not changed', () => {
-            component['_debouncedPageChanged']({ page: 1 });
+        afterEach(() => {
+            jest.useRealTimers();
+            delete (window as any).__zone_symbol__setTimeout;
+            delete (window as any).__zone_symbol__clearTimeout;
+        });
+
+        it('does nothing until the debounce time has elapsed', () => {
+            component.pageChanged({ page: 2, itemsPerPage: 10 });
+            jest.advanceTimersByTime(249);
+            expect(component.goToPage).not.toHaveBeenCalled();
+            jest.advanceTimersByTime(1);
+            expect(component.goToPage).toHaveBeenCalledTimes(1);
+        });
+
+        it('should not update currentPage if neither the page nor the page size changed', () => {
+            component.pageChanged({ page: 1, itemsPerPage: 10 });
+            jest.advanceTimersByTime(250);
             expect(component.dn.currentPage).toBe(1);
             expect(component.parent.invokeEventCallback).not.toHaveBeenCalled();
             expect(component.goToPage).not.toHaveBeenCalled();
+            expect(component.maxResultsEmitter.emit).not.toHaveBeenCalled();
+        });
+
+        it('should update the page, notify the parent and go to the page when the page changes', () => {
+            component.pageChanged({ page: 2, itemsPerPage: 10 });
+            jest.advanceTimersByTime(250);
+            expect(component.dn.currentPage).toBe(2);
+            expect(component.parent.invokeEventCallback).toHaveBeenCalledWith('paginationchange', { $event: undefined, $index: 2 });
+            expect(component.goToPage).toHaveBeenCalledTimes(1);
+        });
+
+        it('should also react when only the page size changes', () => {
+            component.pageChanged({ page: 1, pagesize: 25 });
+            jest.advanceTimersByTime(250);
+            expect(component.maxResults).toBe(25);
+            expect(component.maxResultsEmitter.emit).toHaveBeenCalledWith(25);
+            expect(component.goToPage).toHaveBeenCalledTimes(1);
+        });
+
+        it('should only act on the latest event when several arrive within the debounce time', () => {
+            component.pageChanged({ page: 2, itemsPerPage: 10 });
+            jest.advanceTimersByTime(100);
+            component.pageChanged({ page: 3, itemsPerPage: 10 });
+            jest.advanceTimersByTime(250);
+            expect(component.dn.currentPage).toBe(3);
+            expect(component.goToPage).toHaveBeenCalledTimes(1);
         });
 
         it('should not call _setAriaForBasicNavigation if navigation is not Basic', () => {
             component.navigation = 'Advanced';
-            component['_debouncedPageChanged']({ page: 2 });
+            component.pageChanged({ page: 2, itemsPerPage: 10 });
+            jest.advanceTimersByTime(250);
             expect(component['_setAriaForBasicNavigation']).not.toHaveBeenCalled();
-        });
-
-        it('should call goToPage when page changes', () => {
-            component['_debouncedPageChanged']({ page: 2 });
-            expect(component.dn.currentPage).toBe(2);
-            expect(component.goToPage).toHaveBeenCalled();
         });
 
         it('should call _setAriaForBasicNavigation when navigation is Basic', () => {
             component.navigation = 'Basic';
-            component['_debouncedPageChanged']({ page: 2 });
-            expect(component['_setAriaForBasicNavigation']).toHaveBeenCalled();
+            component.pageChanged({ page: 2, itemsPerPage: 10 });
+            jest.advanceTimersByTime(250);
+            expect(component['_setAriaForBasicNavigation']).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -1178,7 +1206,7 @@ describe('PaginationComponent', () => {
         it('should close the dropdown on Escape', () => {
             const event = { key: 'Escape', preventDefault: jest.fn() };
             component.onDropdownKeydown(event, 1);
-            expect(component.closeDropdown).toHaveBeenCalled();
+            expect(component.closeDropdown).toHaveBeenCalledTimes(1);
         });
 
         it('should ignore any other key', () => {
@@ -1195,8 +1223,8 @@ describe('PaginationComponent', () => {
             (component as any).bsDropdown = { hide };
             jest.spyOn(global, '$' as any).mockReturnValue({ focus });
             component.closeDropdown();
-            expect(hide).toHaveBeenCalled();
-            expect(focus).toHaveBeenCalled();
+            expect(hide).toHaveBeenCalledTimes(1);
+            expect(focus).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -1242,8 +1270,8 @@ describe('PaginationComponent', () => {
             (component as any).bsDropdown = { hide: jest.fn() };
             const event = { stopPropagation: jest.fn() };
             component.onPageSizeChange(event as any, '15');
-            expect(event.stopPropagation).toHaveBeenCalled();
-            expect((component as any).bsDropdown.hide).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalledTimes(1);
+            expect((component as any).bsDropdown.hide).toHaveBeenCalledTimes(1);
             document.body.removeChild(popover);
         });
     });
@@ -1287,7 +1315,7 @@ describe('PaginationComponent', () => {
             component.ngAfterViewInit();
             const event = { stopPropagation: jest.fn() };
             (component as any).nativeElement.onclick(event);
-            expect(event.stopPropagation).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalledTimes(1);
         });
     });
 

@@ -182,7 +182,7 @@ describe('Fileupload Component', () => {
 
         it('should prevent default event behavior', () => {
             wmComponent.onFileDrop(mockEvent);
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(mockEvent.preventDefault).toHaveBeenCalledTimes(1);
         });
 
         it('should not call onFileSelect when no files are dropped', () => {
@@ -616,7 +616,7 @@ describe('Fileupload Component', () => {
 
         it('should call stopPropagation on the event', () => {
             wmComponent.onFileElemClick(mockEvent);
-            expect(mockEvent.stopPropagation).toHaveBeenCalled();
+            expect(mockEvent.stopPropagation).toHaveBeenCalledTimes(1);
         });
 
         it('should add a focus event listener to the window', () => {
@@ -632,7 +632,7 @@ describe('Fileupload Component', () => {
             wmComponent.onFileElemClick(mockEvent);
             const listener = (window.addEventListener as jest.Mock).mock.calls[0][1];
             listener();
-            expect(wmComponent.disableDropZone).toHaveBeenCalled();
+            expect(wmComponent.disableDropZone).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -658,8 +658,8 @@ describe('Fileupload Component', () => {
 
             wmComponent.dragOverHandler(mockEvent as any);
 
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-            expect(mockEvent.stopPropagation).toHaveBeenCalled();
+            expect(mockEvent.preventDefault).toHaveBeenCalledTimes(1);
+            expect(mockEvent.stopPropagation).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -740,7 +740,7 @@ describe('Fileupload Component', () => {
             (global as any).$ = mockJQuery;
 
             wmComponent.triggerFileSelect();
-            expect(fileInput.click).toHaveBeenCalled();
+            expect(fileInput.click).toHaveBeenCalledTimes(1);
         });
     });
 });

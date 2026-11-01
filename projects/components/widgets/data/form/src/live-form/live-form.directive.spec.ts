@@ -100,20 +100,20 @@ describe('LiveFormDirective', () => {
     describe('constructor', () => {
         it('should set isLayoutDialog based on the formlayout attribute when there is no live table', () => {
             const { directive } = createDirective(form, null, 'dialog');
-            expect(form.isLayoutDialog).toBeTruthy();
+            expect(form.isLayoutDialog).toBe(true);
             expect(directive).toBeTruthy();
         });
 
         it('should default isLayoutDialog to false when formlayout is not "dialog"', () => {
             createDirective(form, null, undefined);
-            expect(form.isLayoutDialog).toBeFalsy();
+            expect(form.isLayoutDialog).toBe(false);
         });
 
         it('should link up to the live table when present and this form has no parent form', () => {
             const liveTable = { isLayoutDialog: true, onFormReady: jest.fn() };
             createDirective(form, liveTable);
             expect(form._liveTableParent).toBe(liveTable);
-            expect(form.isLayoutDialog).toBeTruthy();
+            expect(form.isLayoutDialog).toBe(true);
             expect(liveTable.onFormReady).toHaveBeenCalledWith(form);
         });
 
@@ -149,8 +149,8 @@ describe('LiveFormDirective', () => {
             const { directive } = createDirective(form);
             const field = createMockField({ key: 'related', isDataSetBound: false, 'is-related': true });
             directive.registerFormFields(field);
-            expect(field.isDataSetBound).toBeTruthy();
-            expect(fetchRelatedFieldData).toHaveBeenCalled();
+            expect(field.isDataSetBound).toBe(true);
+            expect(fetchRelatedFieldData).toHaveBeenCalledTimes(1);
         });
 
         it('should not touch the field when the datasource has not been updated yet', () => {
@@ -170,9 +170,9 @@ describe('LiveFormDirective', () => {
             form.formFields = [field];
             const { directive } = createDirective(form);
             directive.onDataSourceChange();
-            expect(form.isDataSourceUpdated).toBeTruthy();
-            expect(getDistinctValuesForField).toHaveBeenCalled();
-            expect(applyFilterOnField).toHaveBeenCalled();
+            expect(form.isDataSourceUpdated).toBe(true);
+            expect(getDistinctValuesForField).toHaveBeenCalledTimes(1);
+            expect(applyFilterOnField).toHaveBeenCalledTimes(1);
         });
 
         it('should skip fields that are not dataset widgets', () => {
@@ -213,7 +213,7 @@ describe('LiveFormDirective', () => {
             form.dirty = true;
             const { directive } = createDirective(form);
             directive.onFieldDefaultValueChange(createMockField(), 'v');
-            expect(form.markAsPristine).toHaveBeenCalled();
+            expect(form.markAsPristine).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -250,7 +250,7 @@ describe('LiveFormDirective', () => {
             });
             const { directive } = createDirective(form);
             const href = directive.getBlobURL({ id: 1 }, 'photo', 'somevalue');
-            expect(href.startsWith('/blob/1?')).toBeTruthy();
+            expect(href.startsWith('/blob/1?')).toBe(true);
         });
     });
 
@@ -285,8 +285,8 @@ describe('LiveFormDirective', () => {
         it('should always save previous data values and reconstruct the data object', () => {
             const { directive } = createDirective(form);
             directive.setFormData({ firstname: 'Ram' });
-            expect(form.prevDataValues).toBeDefined();
-            expect(form.updateFormDataOutput).toHaveBeenCalled();
+            expect(form.prevDataValues).toEqual([{ key: 'firstname', value: undefined }]);
+            expect(form.updateFormDataOutput).toHaveBeenCalledTimes(1);
         });
 
         it('should convert a time-type field value into a timestamp via getValidTime', () => {
@@ -310,16 +310,16 @@ describe('LiveFormDirective', () => {
         it('should call form.new() for a new form', () => {
             const { directive } = createDirective(form);
             directive.onDataSourceUpdate({}, true, undefined);
-            expect(form.new).toHaveBeenCalled();
-            expect(form.isUpdateMode).toBeTruthy();
+            expect(form.new).toHaveBeenCalledTimes(1);
+            expect(form.isUpdateMode).toBe(true);
         });
 
         it('should set form data and close the dialog when it is not a new form', () => {
             const { directive, dialogService } = createDirective(form, null, 'dialog');
             directive.onDataSourceUpdate({ id: 1 }, false, false);
-            expect(form.updateFormDataOutput).toHaveBeenCalled();
+            expect(form.updateFormDataOutput).toHaveBeenCalledTimes(1);
             expect(dialogService.close).toHaveBeenCalledWith(form.dialogId);
-            expect(form.isUpdateMode).toBeFalsy();
+            expect(form.isUpdateMode).toBe(false);
         });
     });
 
@@ -375,7 +375,7 @@ describe('LiveFormDirective', () => {
             form.getFormFields = jest.fn().mockReturnValue([field]);
             const { directive, datePipe } = createDirective(form);
             const result = directive.constructDataObject();
-            expect(datePipe.transform).toHaveBeenCalled();
+            expect(datePipe.transform).toHaveBeenCalledWith(expect.anything(), 'yyyy-MM-dd');
             expect(result).toBe(form.dataoutput);
         });
 
@@ -526,7 +526,7 @@ describe('LiveFormDirective', () => {
             const { directive } = createDirective(form);
             directive.getPrevDataValues();
             expect(field.value).toEqual('Ram');
-            expect(field.resetDisplayInput).toHaveBeenCalled();
+            expect(field.resetDisplayInput).toHaveBeenCalledTimes(1);
         });
 
         it('should snapshot current field key/value pairs', () => {
@@ -543,7 +543,7 @@ describe('LiveFormDirective', () => {
             const { directive } = createDirective(form);
             directive.clearData();
             expect(form.toggleMessage).toHaveBeenCalledWith(false);
-            expect(form.emptyDataModel).toHaveBeenCalled();
+            expect(form.emptyDataModel).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -553,7 +553,7 @@ describe('LiveFormDirective', () => {
             form.formFields = [field];
             const { directive } = createDirective(form);
             directive.setReadonlyFields();
-            expect(field.setReadOnlyState).toHaveBeenCalled();
+            expect(field.setReadOnlyState).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -564,7 +564,7 @@ describe('LiveFormDirective', () => {
             form.prevDataValues = [{ key: 'photo', value: 'old.png' }];
             const { directive } = createDirective(form);
             directive.reset();
-            expect(form.resetFormState).toHaveBeenCalled();
+            expect(form.resetFormState).toHaveBeenCalledTimes(1);
             expect(form.resetFileUploadWidget).toHaveBeenCalledWith(field, true);
         });
     });
@@ -592,7 +592,7 @@ describe('LiveFormDirective', () => {
             form.prevformFields = [{ key: 'firstname', value: 'original' }];
             const { directive } = createDirective(form);
             directive.cancel();
-            expect(form.clearMessage).toHaveBeenCalled();
+            expect(form.clearMessage).toHaveBeenCalledTimes(1);
             expect(field.value).toEqual('original');
         });
 
@@ -601,7 +601,7 @@ describe('LiveFormDirective', () => {
             form._liveTableParent = liveTableParent;
             const { directive, dialogService } = createDirective(form);
             directive.cancel();
-            expect(liveTableParent.onCancel).toHaveBeenCalled();
+            expect(liveTableParent.onCancel).toHaveBeenCalledTimes(1);
             expect(dialogService.close).not.toHaveBeenCalled();
         });
 
@@ -708,7 +708,7 @@ describe('LiveFormDirective', () => {
             await new Promise(process.nextTick);
             await new Promise(process.nextTick);
             expect(liveTableParent.onResult).toHaveBeenCalledWith(Live_Operations.INSERT, { id: 1 }, undefined, undefined);
-            expect(form.onResultCb).toHaveBeenCalled();
+            expect(form.onResultCb).toHaveBeenCalledWith({ id: 1 }, true, undefined);
         });
 
         it('should refresh the list and update the form when there is no live table parent', async () => {
@@ -738,8 +738,8 @@ describe('LiveFormDirective', () => {
             directive.save();
             await new Promise(process.nextTick);
             await new Promise(process.nextTick);
-            expect(form.emptyDataModel).toHaveBeenCalled();
-            expect(form.isSelected).toBeFalsy();
+            expect(form.emptyDataModel).toHaveBeenCalledTimes(1);
+            expect(form.isSelected).toBe(false);
         });
     });
 
@@ -749,7 +749,7 @@ describe('LiveFormDirective', () => {
             const cancelFn = jest.fn();
             (directive as any)._debouncedSavePrevDataValues = Object.assign(jest.fn(), { cancel: cancelFn });
             directive.ngOnDestroy();
-            expect(cancelFn).toHaveBeenCalled();
+            expect(cancelFn).toHaveBeenCalledTimes(1);
             expect(directive.ngOnDestroy).toBeDefined();
         });
     });

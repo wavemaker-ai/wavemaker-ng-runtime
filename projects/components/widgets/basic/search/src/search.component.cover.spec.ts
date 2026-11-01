@@ -145,11 +145,11 @@ describe('SearchComponent - cover branches', () => {
             const trigger = jest.spyOn(search, 'triggerSearch').mockImplementation(() => undefined);
             search.onDropdownOpen();
             expect(search.typeahead.hide).not.toHaveBeenCalled();
-            expect(render).toHaveBeenCalled();
-            expect(insertAfter).toHaveBeenCalled();
+            expect(render).toHaveBeenCalledTimes(1);
+            expect(insertAfter).toHaveBeenCalledTimes(1);
             expect(css).toHaveBeenCalledWith(expect.objectContaining({ position: 'relative' }));
             expect(search.showClosebtn).toBe(true);
-            expect(trigger).toHaveBeenCalled();
+            expect(trigger).toHaveBeenCalledTimes(1);
         });
         it('skips rendering when already full screen and does not trigger on the last page', () => {
             search.$element.addClass('full-screen');
@@ -243,7 +243,7 @@ describe('SearchComponent - cover branches', () => {
             search.typeaheadOnSelect({ item: item('a', 'A') } as any, undefined);
             expect(search.invokeOnChange).toHaveBeenCalledWith('a', {});
             expect(update).toHaveBeenCalledWith('a');
-            expect(closeSearch).toHaveBeenCalled();
+            expect(closeSearch).toHaveBeenCalledTimes(1);
         });
         it('does not update the bound variable when the value is unchanged', () => {
             jest.spyOn(search, 'invokeOnChange').mockImplementation(() => undefined);

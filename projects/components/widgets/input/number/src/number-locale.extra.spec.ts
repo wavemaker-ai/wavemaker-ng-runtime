@@ -553,7 +553,7 @@ describe('NumberLocale (via NumberComponent) - additional behaviour', () => {
             cmp.onPaste(ok);
             expect(ok.preventDefault).not.toHaveBeenCalled();
             cmp.onPaste(bad);
-            expect(bad.preventDefault).toHaveBeenCalled();
+            expect(bad.preventDefault).toHaveBeenCalledTimes(1);
         });
 
         it('handles datavalue and regexp property changes', () => {

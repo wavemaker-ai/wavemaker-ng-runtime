@@ -108,7 +108,7 @@ describe('DatetimeComponent - additional behaviour', () => {
             jest.spyOn(cmp, 'timeZone', 'get').mockReturnValue('Asia/Kolkata');
             cmp.setTimeInterval();
             jest.advanceTimersByTime(1100);
-            expect(update).toHaveBeenCalled();
+            expect(update).toHaveBeenCalledTimes(1);
             cmp.clearTimeInterval();
             cmp.clearTimeInterval();
         });
@@ -187,7 +187,7 @@ describe('DatetimeComponent - additional behaviour', () => {
             cmp.showdropdownon = 'button';
             const ev: any = { type: 'focus', target: document.createElement('input'), stopPropagation: jest.fn() };
             cmp.toggleDpDropdown(ev);
-            expect(ev.stopPropagation).toHaveBeenCalled();
+            expect(ev.stopPropagation).toHaveBeenCalledTimes(1);
             expect(directive.toggle).not.toHaveBeenCalled();
         });
 
@@ -198,7 +198,7 @@ describe('DatetimeComponent - additional behaviour', () => {
             cmp.addBodyClickListener(true);
             jest.advanceTimersByTime(400);
             (addEventListenerOnElement as jest.Mock).mock.calls[0][5]();
-            expect(directive.hide).toHaveBeenCalled();
+            expect(directive.hide).toHaveBeenCalledTimes(1);
             (addEventListenerOnElement as jest.Mock).mockClear();
             cmp.addBodyClickListener(false);
             jest.advanceTimersByTime(400);
@@ -242,7 +242,7 @@ describe('DatetimeComponent - additional behaviour', () => {
         it('prevents the timepicker from closing while changing values', () => {
             const ev: any = { stopImmediatePropagation: jest.fn() };
             cmp.preventTpClose(ev);
-            expect(ev.stopImmediatePropagation).toHaveBeenCalled();
+            expect(ev.stopImmediatePropagation).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -389,13 +389,13 @@ describe('DatetimeComponent - additional behaviour', () => {
         it('hides the dropdowns when the dropdown is not allowed on the input', () => {
             cmp.showdropdownon = 'button';
             cmp.onDisplayKeydown(key('Enter', ''));
-            expect(cmp.hideDatepickerDropdown).toHaveBeenCalled();
-            expect(cmp.hideTimepickerDropdown).toHaveBeenCalled();
+            expect(cmp.hideDatepickerDropdown).toHaveBeenCalledTimes(1);
+            expect(cmp.hideTimepickerDropdown).toHaveBeenCalledTimes(1);
         });
 
         it('hides the dropdowns for other keys', () => {
             cmp.onDisplayKeydown(key('a', 'x'));
-            expect(cmp.hideDatepickerDropdown).toHaveBeenCalled();
+            expect(cmp.hideDatepickerDropdown).toHaveBeenCalledTimes(1);
         });
 
         it('accepts a valid typed value on enter', () => {
@@ -415,7 +415,7 @@ describe('DatetimeComponent - additional behaviour', () => {
         it('validates timestamps numerically', () => {
             cmp.datepattern = 'timestamp';
             cmp.onDisplayKeydown(key('Enter', '12345'));
-            expect(cmp.toggleDpDropdown).toHaveBeenCalled();
+            expect(cmp.toggleDpDropdown).toHaveBeenCalledTimes(1);
         });
 
         it('clears the picker value for an empty entry', () => {

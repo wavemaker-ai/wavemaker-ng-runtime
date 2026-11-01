@@ -742,6 +742,10 @@ $.widget('wm.datatable', {
             colExpression = colDef.customExpression,
             styles = "text-align: " + colDef.textAlignment + ";position: relative;"
 
+        if (!_.isUndefined(colDef.show) && !colDef.show) {
+            styles += "display: none;";
+        }
+
         $htm = $('<td class="' + classes + '" data-col-id="' + colId + '" role="cell" tabindex="0"></td>');
         this._setStyles($htm, styles);
 
@@ -1136,6 +1140,144 @@ $.widget('wm.datatable', {
         this.addOrRemoveScroll();
         this._setGridEditMode(false);
         this.toggleNewRowActions(false);
+    },
+    /*
+     * Updates internal state (options.data, preparedData, custom expressions,
+     * conditional class watchers, and summary row) without a full DOM re-render.
+     * Used during quickedit inline save for model variables to avoid focus loss.
+     */
+    softRefreshData: function (newData) {
+        // With pagination, navigator / selection can emit the same page twice in one
+        // save cycle. Full refresh skipped duplicate data via isEqual on option set;
+        // soft refresh must do the same or onDataRender (datarender) fires twice.
+        if (this.options.data && newData && _.isEqual(this.options.data, newData)) {
+            return;
+        }
+
+        var self = this,
+            isScrollOrOnDemand = this.options.isNavTypeScrollOrOndemand(),
+            pageStartIndex = this.getPageStartIndex(),
+            startRowIndex = this.options.startRowIndex || 0,
+            selectedMap = {},
+            preparedData;
+
+        // Preserve _selected state before _prepareData rebuilds preparedData
+        this.preparedData.forEach(function (data, i) {
+            if (data._selected) {
+                selectedMap[i] = true;
+            }
+        });
+
+        this.options.data = newData;
+        this._prepareData();
+
+        // Restore _selected state on new preparedData
+        Object.keys(selectedMap).forEach(function (i) {
+            if (self.preparedData[i]) {
+                self.preparedData[i]._selected = true;
+            }
+        });
+
+        if (isScrollOrOnDemand) {
+            preparedData = this.preparedData.slice(pageStartIndex);
+        } else {
+            preparedData = this.preparedData;
+        }
+
+        // Update existing custom expression view contexts in-place
+        // so Angular change detection picks up new data without DOM manipulation.
+        if (_.isFunction(this.options.updateCustomExpressionContexts)) {
+            this.options.updateCustomExpressionContexts(preparedData);
+        }
+
+        // Update plain text cells with fresh data from preparedData.
+        // hideRowEditMode runs before softRefreshData and may restore cells
+        // before preparedData is updated, leaving them with stale values.
+        self.gridElement.find('tr.' + self.options.cssClassNames.tableRow + ':not(.always-new-row)').each(function () {
+            var $row = $(this),
+                rowId = +$row.attr('data-row-id'),
+                rowData = self.preparedData[rowId];
+            if (!rowData) return;
+
+            $row.find('td.' + self.options.cssClassNames.tableCell + ':not(.cell-editing)').each(function () {
+                var $cell = $(this),
+                    colId = +$cell.attr('data-col-id'),
+                    colDef = self.preparedHeaderData[colId],
+                    value;
+
+                if (colDef && !colDef.customExpression && colDef.type !== 'custom') {
+                    value = _.get(rowData, colDef.field);
+                    var newText;
+                    if (self.Utils.isDefined(value) && value !== null) {
+                        newText = '' + value;
+                    } else if (self.options.filterNullRecords && value === null) {
+                        newText = 'null';
+                    } else {
+                        newText = '';
+                    }
+                    if ($cell.text() !== newText) {
+                        $cell.text(newText);
+                        $cell.attr('title', newText);
+                    }
+                }
+            });
+        });
+
+        // Re-register conditional class watchers with fresh row clones
+        _.forEach(preparedData, function (row, index) {
+            var _row = _.clone(row),
+                rowIndex = isScrollOrOnDemand ? startRowIndex + index - 1 : index;
+            _row.$index = rowIndex + 1;
+
+            self.options.registerRowNgClassWatcher(_row, rowIndex);
+
+            self.preparedHeaderData.forEach(function (colDef, colId) {
+                self.options.registerColNgClassWatcher(_row, colDef, rowIndex, colId);
+            });
+        });
+
+        // Reset action state flags (mirrors _getGridTemplate cleanup)
+        if (!this.options.isdynamictable) {
+            this.options.setLastActionPerformed(this.options.ACTIONS.DEFAULT);
+            this.options.setIsDataUpdatedByUser(false);
+            this.options.clearActionRowIndex();
+        }
+
+        // Refresh row action buttons and expansion buttons with updated row data.
+        // Scope to data rows only — exclude always-new-row which has no backing data entry.
+        var $dataRows = self.gridElement.find('tr.' + self.options.cssClassNames.tableRow + ':not(.always-new-row)');
+        this.options.clearRowActions();
+        this._appendRowExpansionButtons($dataRows);
+        this._appendRowActions($dataRows);
+        // Regenerated action / expansion DOM — re-bind handlers (attachEventHandlers only runs on full render).
+        this._bindRowActionsAndExpansionClickHandlers($dataRows);
+
+        // Re-render summary row if present
+        if (this.options.summaryRow) {
+            var $summaryRowHtm = $(this._getSummaryRowTemplate());
+            this.tableContainer.find('tfoot').remove();
+            if (this.options.data.length) {
+                this.tableContainer.append($summaryRowHtm);
+            }
+            this.gridFooter = this.tableContainer.find('tfoot');
+        }
+
+        // Invalidate row detail (expansion) cache so collapse+re-expand
+        // creates fresh views with updated data.
+        if (_.isFunction(this.options.invalidateRowDetailCache)) {
+            this.options.invalidateRowDetailCache(preparedData);
+        }
+
+        // Refresh this.items with fresh data references from the updated dataset
+        // so that selecteditem / currentItem reflect the new values.
+        if (_.isFunction(this.options.refreshSelectedItems)) {
+            this.options.refreshSelectedItems();
+        }
+
+        // Fire datarender event callback
+        if (_.isFunction(this.options.onDataRender)) {
+            this.options.onDataRender();
+        }
     },
     //Populate row data with default data
     setDefaultRowData: function (rowData) {
@@ -2031,8 +2173,8 @@ $.widget('wm.datatable', {
         let $firstEl,
             $target = e && $(e.target),
             $focusEl;
-        //If focused directly on the cell, focus the input in the cell
-        if ($target && $target.hasClass('app-datagrid-cell')) {
+        //If focused directly on the cell, focus the input in the cell (only when the element is still in the DOM)
+        if ($target && $target.hasClass('app-datagrid-cell') && document.body.contains($target[0])) {
             $firstEl = $target.find('input');
         } else {
             if (!$el) {
@@ -2082,9 +2224,9 @@ $.widget('wm.datatable', {
         this.toggleNewRowActions(false);
     },
     //Method to save a row which is in editable state
-    saveRow: function (callBack) {
+    saveRow: function (callBack, skipFocus) {
         this.gridElement.find('tr.app-datagrid-row.row-editing:not(.always-new-row)').each(function () {
-            $(this).trigger('click', [undefined, {action: 'save', skipSelect: true, noMsg: true, success: callBack}]);
+            $(this).trigger('click', [undefined, {action: 'save', skipSelect: true, noMsg: true, skipFocus: skipFocus, success: callBack}]);
         });
     },
     //Method to make row editable with widgets
@@ -2229,7 +2371,8 @@ $.widget('wm.datatable', {
             if (_.isFunction(options.success)) {
                 options.success(skipFocus, error);
             }
-            if (!advancedEdit || self.options.actionsEnabled.edit) {
+            // [WMS-31104] Do not refocus this table when the save was initiated from outside (e.g. clicking another table).
+            if (!skipFocus && !options.skipFocus && (!advancedEdit || self.options.actionsEnabled.edit)) {
                 self.focusActiveRow();
             }
         }
@@ -2255,6 +2398,43 @@ $.widget('wm.datatable', {
                     self.editSuccessHandler(skipFocus, error, e, $row, true);
                 });
                 return;
+            }
+            if (advancedEdit) {
+                // [WMS-31104] Close/save row in another quick-edit table before editing this row.
+                $(document).find('tr.app-datagrid-row.always-new-row.row-editing').filter(function () {
+                    return $(this).closest(self.element).length === 0;
+                }).each(function () {
+                    var $newRow = $(this),
+                        $otherGrid = $newRow.closest('.app-datagrid');
+                    if ($otherGrid.length) {
+                        $otherGrid.datatable('resetNewRow', $newRow);
+                    }
+                });
+                // [WMS-31104] Save the editing row in another table before opening the clicked row in this table.
+                var $otherEditingRow = $(document).find('tr.app-datagrid-row.row-editing:not(.always-new-row)').filter(function () {
+                    return $(this).closest(self.element).length === 0;
+                }).first();
+                if ($otherEditingRow.length) {
+                    var rowId = $row.attr('data-row-id');
+                    $otherEditingRow.trigger('click', [undefined, {
+                        action: 'save',
+                        $row: $otherEditingRow,
+                        skipSelect: true,
+                        noMsg: true,
+                        skipFocus: true,
+                        success: function () {
+                            var $liveRow = self.gridElement.find('tr.app-datagrid-row[data-row-id="' + rowId + '"]');
+                            var $targetRow = $liveRow.length ? $liveRow : $row;
+                            self.toggleEditRow(e, _.extend({}, options, {
+                                action: 'edit',
+                                $row: $targetRow,
+                                skipFocus: true,
+                                focusAfterCrossTableSave: true
+                            }));
+                        }
+                    }]);
+                    return;
+                }
             }
             $row.addClass('row-editing');
             if (_.isFunction(this.options.beforeRowUpdate)) {
@@ -2296,6 +2476,12 @@ $.widget('wm.datatable', {
             if (_.isFunction(this.options.onFormRender)) {
                 this.options.onFormRender($row, e, options.operation || action, $row.hasClass('always-new-row'));
             }
+            // [WMS-31104] Focus target row after widgets render when edit opened from another table save.
+            if (options.focusAfterCrossTableSave) {
+                self.options.timeoutCall(function () {
+                    self.setFocusOnElement(undefined, $row.find('td.cell-editing'), true);
+                });
+            }
         } else {
             $editableElements = $row.find('td.cell-editing');
             isNewRow = self._isNewRow($row);
@@ -2308,6 +2494,10 @@ $.widget('wm.datatable', {
                 }
 
                 if (isDataChanged) {
+                    editOptions.skipFocus = options.skipFocus;
+                    if (options.skipFocus) {
+                        self.options.activeRow = undefined;
+                    }
                     $editableElements.each(function () {
                         let $el = $(this),
                             colId = $el.attr('data-col-id'),
@@ -2930,6 +3120,28 @@ $.widget('wm.datatable', {
             this.sortHandler(event);
         }
     },
+    /**
+     * Binds jQuery handlers on save/cancel row-action buttons and row-expansion controls.
+     * Must run after DOM for those controls is replaced (e.g. softRefreshData).
+     */
+    _bindRowActionsAndExpansionClickHandlers: function ($scope) {
+        var self = this;
+        if (this.options.rowActions.length) {
+            $scope.find('.cancel-edit-row-button').off('click');
+            $scope.find('.save-edit-row-button').off('click');
+            $scope.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
+            $scope.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
+        }
+        $scope.find('[data-identifier="rowExpansionButtons"]').off('click');
+        $scope.find('[data-identifier="rowExpansionButtons"]').on('click', function (e) {
+            var $row = $(e.target).closest('tr.app-datagrid-row');
+            if ($(this).find('.app-button').attr('disabled')) {
+                return;
+            }
+            self.toggleExpandRow(+$row.attr('data-row-id'), undefined, e);
+        });
+    },
+
     /* Attaches all event handlers for the table. */
     attachEventHandlers: function ($htm) {
         const self = this;
@@ -2956,12 +3168,7 @@ $.widget('wm.datatable', {
 
         this._attachHeaderEventHandlers();
 
-        if (this.options.rowActions.length) {
-            $htm.find('.cancel-edit-row-button').off('click');
-            $htm.find('.save-edit-row-button').off('click');
-            $htm.find('.cancel-edit-row-button').on('click', {action: 'cancel'}, this.toggleEditRow.bind(this));
-            $htm.find('.save-edit-row-button').on('click', {action: 'save'}, this.toggleEditRow.bind(this));
-        }
+        this._bindRowActionsAndExpansionClickHandlers($htm);
         if (self.options.editmode === self.CONSTANTS.QUICK_EDIT) {
             $htm.on('focus', 'tr.app-datagrid-row', function (e) {
                 const $row = $(e.currentTarget);
@@ -2987,6 +3194,25 @@ $.widget('wm.datatable', {
                     relatedGridId = relatedGrid ? $(relatedGrid).attr('widget-id') : null,
                     isRelatedGridDifferent = relatedGrid && relatedGridId !== currentGridId,
                     invalidTargets = '.row-editing:not(".always-new-row"), .row-action-button, .app-datagrid-cell, .caption, button.btn-time, button.btn-date';
+
+                // [WMS-31104] Do not insert the new row when focus moves to another table; that table's row-click handler will reset it.
+                if ($row.hasClass('always-new-row')
+                        && $relatedTarget.length
+                        && !$relatedTarget.closest(self.element).length
+                        && $relatedTarget.closest('.app-datagrid').length) {
+                    return;
+                }
+                // Focus moved to a date/time picker — the row is still being edited, do not save.
+                if ($relatedTarget.closest('bs-datepicker-container, .btn-date, .btn-time').length) {
+                    return;
+                }
+                // [WMS-31104] For regular rows, do not save on focusout when focus leaves this table; the outside-click handler handles it.
+                // The new row (always-new-row) is excluded from this guard so Tab-key save still works when focus moves to pagination.
+                if (!$row.hasClass('always-new-row')
+                        && $relatedTarget.length
+                        && !$relatedTarget.closest(self.element).length) {
+                    return;
+                }
 
                 //Check if the focus out element is outside the grid or some special elements
                 function isInvalidTarget() {
@@ -3037,16 +3263,6 @@ $.widget('wm.datatable', {
                 });
             });
         }
-
-        // row selection
-        $htm.find('[data-identifier="rowExpansionButtons"]').off("click");
-        $htm.find('[data-identifier="rowExpansionButtons"]').on('click', function (e) {
-            const $row = $(e.target).closest('tr.app-datagrid-row');
-            if ($(this).find('.app-button').attr('disabled')) {
-                return;
-            }
-            self.toggleExpandRow(+$row.attr('data-row-id'), undefined, e);
-        });
     },
     /**
      * Function which attaches all event handlers specifically for the table header.

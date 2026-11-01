@@ -71,7 +71,8 @@ describe('LazyLoadDirective', () => {
             ($watch as jest.Mock).mockReturnValueOnce(unsub1).mockReturnValueOnce(unsub2);
             directive.lazyLoad = 'expr1';
             directive.lazyLoad = 'expr2';
-            expect(unsub1).toHaveBeenCalled();
+            expect(unsub1).toHaveBeenCalledTimes(1);
+            expect(unsub2).not.toHaveBeenCalled();
         });
 
         it('should tolerate the previous watcher unsubscribe function throwing', () => {
@@ -90,7 +91,7 @@ describe('LazyLoadDirective', () => {
             const listener = ($watch as jest.Mock).mock.calls[0][3];
             listener(true, false);
             expect(viewContainer.createEmbeddedView).toHaveBeenCalledWith(templateRef, (directive as any).context);
-            expect(unsub).toHaveBeenCalled();
+            expect(unsub).toHaveBeenCalledTimes(1);
         });
 
         it('should not create the embedded view again on a subsequent truthy emission', () => {
@@ -129,7 +130,7 @@ describe('LazyLoadDirective', () => {
             ($watch as jest.Mock).mockReturnValue(unsub);
             directive.lazyLoad = 'someExpr';
             directive.ngOnDestroy();
-            expect(unsub).toHaveBeenCalled();
+            expect(unsub).toHaveBeenCalledTimes(1);
         });
 
         it('should clear and null out the context object', () => {

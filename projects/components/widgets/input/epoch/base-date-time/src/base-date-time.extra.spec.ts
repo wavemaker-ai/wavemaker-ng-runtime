@@ -178,7 +178,7 @@ describe('BaseDateTimeComponent - extra behaviour', () => {
             expect(comp.formatValidation(new Date(2020, 0, 5), '05/01/2020')).toBe(false);
             expect(comp.invalidDateTimeFormat).toBe(true);
             expect(comp.validateType).toBe('incorrectformat');
-            expect(onChange).toHaveBeenCalled();
+            expect(onChange).toHaveBeenCalledWith(comp.datavalue, undefined, false);
         });
 
         it('validates timestamps numerically', () => {
@@ -211,7 +211,7 @@ describe('BaseDateTimeComponent - extra behaviour', () => {
             comp.dateNotInRange = true;
             comp.minDateMaxDateValidationOnInput(new Date(2020, 5, 5));
             expect(comp.dateNotInRange).toBe(false);
-            expect(onChange).toHaveBeenCalled();
+            expect(onChange).toHaveBeenCalledWith(comp.datavalue, undefined, false);
         });
 
         it('leaves the flag of native pickers alone', () => {
@@ -242,7 +242,7 @@ describe('BaseDateTimeComponent - extra behaviour', () => {
             comp.minDateMaxDateValidationOnInput(new Date(2020, 7, 1), {} as any, '2020-08-01');
             expect(comp.validateType).toBe('maxdate');
             expect(comp.dateNotInRange).toBe(true);
-            expect(showValidation).toHaveBeenCalled();
+            expect(showValidation).toHaveBeenCalledWith({}, '2020-08-01', undefined, expect.stringContaining('2020-06-01'));
         });
 
         it('restores the maximum in native pickers when it is the displayed value', () => {
@@ -348,8 +348,8 @@ describe('BaseDateTimeComponent - extra behaviour', () => {
             comp.loadNativeDateInput = true;
             comp._triggeredByUser = true;
             comp.onDateTimeInputFocus();
-            expect(focus).toHaveBeenCalled();
-            expect(click).toHaveBeenCalled();
+            expect(focus).toHaveBeenCalledTimes(1);
+            expect(click).toHaveBeenCalledTimes(1);
         });
 
         it('blurs the display input when the picker opens', () => {
@@ -361,7 +361,7 @@ describe('BaseDateTimeComponent - extra behaviour', () => {
             expect(blur).not.toHaveBeenCalled();
             comp.blurDateInput(true);
             jest.runAllTimers();
-            expect(blur).toHaveBeenCalled();
+            expect(blur).toHaveBeenCalledTimes(1);
             jest.useRealTimers();
         });
 
@@ -429,7 +429,7 @@ describe('BaseDateTimeComponent - extra behaviour', () => {
             Object.defineProperty(document, 'activeElement', { configurable: true, get: () => day });
             press('Enter');
             expect(click).toHaveBeenCalled();
-            expect(comp.elementScope.hideDatepickerDropdown).toHaveBeenCalled();
+            expect(comp.elementScope.hideDatepickerDropdown).toHaveBeenCalledTimes(1);
             jest.runAllTimers();
             delete (document as any).activeElement;
             jest.useRealTimers();
@@ -705,7 +705,7 @@ describe('BaseDateTimeComponent - extra behaviour', () => {
             const hideModal = jest.fn();
             comp.datetimepickerComponent = { hideModal };
             comp.ngOnDetach();
-            expect(hideModal).toHaveBeenCalled();
+            expect(hideModal).toHaveBeenCalledTimes(1);
         });
 
         it('delegates the timezone to the i18n service', () => {
@@ -721,8 +721,8 @@ describe('BaseDateTimeComponent - extra behaviour', () => {
             comp.dateOnShowSubscription = { unsubscribe };
             comp.cancelLocaleChangeSubscription = cancel;
             comp.ngOnDestroy();
-            expect(unsubscribe).toHaveBeenCalled();
-            expect(cancel).toHaveBeenCalled();
+            expect(unsubscribe).toHaveBeenCalledTimes(1);
+            expect(cancel).toHaveBeenCalledTimes(1);
         });
 
         it('stretches the mobile input after the view init', () => {
@@ -775,7 +775,7 @@ describe('BaseDateTimeComponent - extra behaviour', () => {
 
         it('closes the dropdown on escape', () => {
             key(field(0), 'Escape');
-            expect(scope.hideTimepickerDropdown).toHaveBeenCalled();
+            expect(scope.hideTimepickerDropdown).toHaveBeenCalledTimes(1);
             expect(scope.setIsTimeOpen).toHaveBeenCalledWith(false);
         });
 
@@ -900,8 +900,8 @@ describe('BaseDateTimeComponent - extra behaviour', () => {
         it('accepts valid dates only', () => {
             expect(comp.isValidDate(new Date())).toBe(true);
             expect(comp.isValidDate(new Date('x'))).toBe(false);
-            expect(comp.isValidDate('2020-01-01')).toBeFalsy();
-            expect(comp.isValidDate(undefined)).toBeFalsy();
+            expect(comp.isValidDate('2020-01-01')).toBe(false);
+            expect(comp.isValidDate(undefined)).toBeUndefined();
         });
 
         it('re-validates the typed time and reports the change when it is valid', () => {
@@ -915,7 +915,7 @@ describe('BaseDateTimeComponent - extra behaviour', () => {
             jest.spyOn(comp, 'formatValidation').mockReturnValue(true);
             comp.timeFormatValidation();
             expect(comp.invalidDateTimeFormat).toBe(false);
-            expect(onChange).toHaveBeenCalled();
+            expect(onChange).toHaveBeenCalledWith(comp.datavalue, undefined, false);
         });
 
         it('stops when the typed time has the wrong format', () => {

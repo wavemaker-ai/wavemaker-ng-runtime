@@ -34,8 +34,8 @@ describe('VariablesService', () => {
                 c: { notCancel: true },
             };
             service.bulkCancel(collection);
-            expect(collection.a.cancel).toHaveBeenCalled();
-            expect(collection.b.cancel).toHaveBeenCalled();
+            expect(collection.a.cancel).toHaveBeenCalledTimes(1);
+            expect(collection.b.cancel).toHaveBeenCalledTimes(1);
         });
     });
 

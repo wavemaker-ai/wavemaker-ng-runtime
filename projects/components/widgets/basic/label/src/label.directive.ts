@@ -1,6 +1,6 @@
 import {Directive, Inject, Injector, OnDestroy, Optional, SecurityContext} from '@angular/core';
 
-import {setProperty, toggleClass} from '@wm/core';
+import {isIos, setProperty, toggleClass} from '@wm/core';
 import {
     DISPLAY_TYPE,
     IWidgetConfig,
@@ -48,7 +48,7 @@ export class LabelDirective extends StylableComponent implements OnDestroy {
             let bindContent = this.nativeElement.getAttribute('caption.bind');
             let safeValue = bindContent ? nv && bindContent.includes('trustAs:') : false;
             const insertZWSP = (value: any): string => {
-                if (typeof value !== 'string') return value;
+                if (typeof value !== 'string' || !isIos()) return value;
                 return value.replace(/\d{5,}/g, (match) => {
                     return match.replace(/(.{9})(?=.)/g, '$1\u200B');
                 });
@@ -57,7 +57,7 @@ export class LabelDirective extends StylableComponent implements OnDestroy {
                 setProperty(this.nativeElement, 'textContent', JSON.stringify(nv));
             } else if (isObject(nv) && safeValue) {
                 setProperty(this.nativeElement, 'innerHTML', nv[Object.keys(nv)[0]]);
-            }  else 
+            }  else
                 // Guard against sanitizePipe being null/undefined (e.g., after ngOnDestroy)
                 if (this.sanitizePipe) {
                     setProperty(this.nativeElement, 'innerHTML', this.sanitizePipe.transform(insertZWSP(nv), SecurityContext.HTML));
@@ -65,7 +65,7 @@ export class LabelDirective extends StylableComponent implements OnDestroy {
                     // Fallback to textContent if sanitizePipe is not available
                     setProperty(this.nativeElement, 'textContent', insertZWSP(nv));
                 }
-            
+
 
         } else if (key === 'required') {
             toggleClass(this.nativeElement, 'required', nv);

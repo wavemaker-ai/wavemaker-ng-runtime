@@ -26,7 +26,7 @@ describe('AccessrolesDirective', () => {
         it('copes with a missing security config', () => {
             const d = create(undefined);
             d.accessroles = 'Admin';
-            expect(vcRef.createEmbeddedView).toHaveBeenCalled();
+            expect(vcRef.createEmbeddedView).toHaveBeenCalledWith(templateRef, {});
         });
     });
 
@@ -40,7 +40,7 @@ describe('AccessrolesDirective', () => {
         it('grants access to Everyone', () => {
             const d = create(config(false));
             d.accessroles = 'Everyone';
-            expect(vcRef.createEmbeddedView).toHaveBeenCalled();
+            expect(vcRef.createEmbeddedView).toHaveBeenCalledWith(templateRef, {});
         });
 
         it('grants Anonymous access only to unauthenticated users', () => {
@@ -68,7 +68,7 @@ describe('AccessrolesDirective', () => {
         it('matches specific roles for authenticated users, with trimming and encoded commas', () => {
             const d = create(config(true, ['Admin', 'a,b']));
             d.accessroles = ' Other , a&#44;b ';
-            expect(vcRef.createEmbeddedView).toHaveBeenCalled();
+            expect(vcRef.createEmbeddedView).toHaveBeenCalledWith(templateRef, {});
         });
 
         it('denies when no role matches or the user is not authenticated', () => {
