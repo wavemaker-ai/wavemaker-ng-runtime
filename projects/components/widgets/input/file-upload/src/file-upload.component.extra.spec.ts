@@ -169,7 +169,7 @@ describe('FileUploadComponent - additional behaviour', () => {
             const click = jest.fn();
             cmp.$element.find('.file-input').on('click', click);
             cmp.triggerFileSelect();
-            expect(click).toHaveBeenCalled();
+            expect(click).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -334,8 +334,8 @@ describe('FileUploadComponent - additional behaviour', () => {
         it('prevents the default drag over behaviour', () => {
             const e = { preventDefault: jest.fn(), stopPropagation: jest.fn() };
             cmp.dragOverHandler(e);
-            expect(e.preventDefault).toHaveBeenCalled();
-            expect(e.stopPropagation).toHaveBeenCalled();
+            expect(e.preventDefault).toHaveBeenCalledTimes(1);
+            expect(e.stopPropagation).toHaveBeenCalledTimes(1);
         });
 
         it('splits dropped items into files and folders', () => {

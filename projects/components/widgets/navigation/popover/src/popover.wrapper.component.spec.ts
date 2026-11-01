@@ -140,7 +140,7 @@ describe('PopoverComponent', () => {
         wmComponent.ngOnDetach();
 
         // Verify that the hide method was called
-        expect(bsPopoverDirectiveSpy).toHaveBeenCalled();
+        expect(bsPopoverDirectiveSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should set focus to the anchor element when setFocusToPopoverLink is called', () => {
@@ -161,7 +161,7 @@ describe('PopoverComponent', () => {
         jest.advanceTimersByTime(10);
 
         // Verify that the focus method was called after the timeout
-        expect(wmComponent.anchorRef.nativeElement.focus).toHaveBeenCalled();
+        expect(wmComponent.anchorRef.nativeElement.focus).toHaveBeenCalledTimes(1);
 
         // Clean up timers
         jest.useRealTimers();
@@ -222,7 +222,7 @@ describe('PopoverComponent', () => {
     it('should call showPopover when open() is called', () => {
         const showPopoverSpy = jest.spyOn((wmComponent as any), 'showPopover').mockImplementation(() => {});
         wmComponent.open();
-        expect(showPopoverSpy).toHaveBeenCalled();
+        expect(showPopoverSpy).toHaveBeenCalledTimes(1);
     });
 
     // Test case for the close() method
@@ -270,9 +270,9 @@ describe('PopoverComponent', () => {
             jest.spyOn(event, 'stopPropagation');
             jest.spyOn(event, 'preventDefault');
             wmComponent.onPopoverAnchorKeydown(event);
-            expect(event.stopPropagation).toHaveBeenCalled();
-            expect(event.preventDefault).toHaveBeenCalled();
-            expect((wmComponent as any).showPopover).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalledTimes(1);
+            expect(event.preventDefault).toHaveBeenCalledTimes(1);
+            expect((wmComponent as any).showPopover).toHaveBeenCalledTimes(1);
         });
 
         it('should not show popover when a key other than Enter is pressed', () => {
@@ -536,7 +536,7 @@ describe('PopoverComponent', () => {
         it('should trigger popover events', () => {
             wmComponent.onShown();
             jest.runAllTimers();
-            expect(wmComponent['triggerPopoverEvents']).toHaveBeenCalled();
+            expect(wmComponent['triggerPopoverEvents']).toHaveBeenCalledTimes(1);
         });
     });
 

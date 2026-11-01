@@ -492,7 +492,7 @@ describe('MenuComponent', () => {
 
         it('should open dropdown on DOWN-ARROW when closed', () => {
             wmComponent.onKeyDown(mockEvent, 'DOWN-ARROW');
-            expect(wmComponent.bsDropdown.show).toHaveBeenCalled();
+            expect(wmComponent.bsDropdown.show).toHaveBeenCalledTimes(1);
             expect((wmComponent as any)._selectFirstItem).toBe(true);
         });
 
@@ -509,37 +509,37 @@ describe('MenuComponent', () => {
 
         it('should hide dropdown on UP-ARROW', () => {
             wmComponent.onKeyDown(mockEvent, 'UP-ARROW');
-            expect(wmComponent.bsDropdown.hide).toHaveBeenCalled();
+            expect(wmComponent.bsDropdown.hide).toHaveBeenCalledTimes(1);
         });
 
         it('should hide dropdown on MOUSE-LEAVE when autoclose is ALWAYS and showonhover is true', () => {
             wmComponent.autoclose = AUTOCLOSE_TYPE.ALWAYS;
             wmComponent.showonhover = true;
             wmComponent.onKeyDown(mockEvent, 'MOUSE-LEAVE');
-            expect(wmComponent.bsDropdown.hide).toHaveBeenCalled();
+            expect(wmComponent.bsDropdown.hide).toHaveBeenCalledTimes(1);
         });
 
         it('should adjust key mappings for UP_RIGHT menu position', () => {
             wmComponent.menuposition = MENU_POSITION.UP_RIGHT;
             wmComponent.onKeyDown(mockEvent, 'UP-ARROW');
-            expect(wmComponent.bsDropdown.show).toHaveBeenCalled();
+            expect(wmComponent.bsDropdown.show).toHaveBeenCalledTimes(1);
         });
 
         it('should adjust key mappings for UP_LEFT menu position', () => {
             wmComponent.menuposition = MENU_POSITION.UP_LEFT;
             wmComponent.onKeyDown(mockEvent, 'LEFT-ARROW');
-            expect(wmComponent.bsDropdown.show).toHaveBeenCalled();
+            expect(wmComponent.bsDropdown.show).toHaveBeenCalledTimes(1);
         });
 
         it('should adjust key mappings for DOWN_LEFT menu position', () => {
             wmComponent.menuposition = MENU_POSITION.DOWN_LEFT;
             wmComponent.onKeyDown(mockEvent, 'LEFT-ARROW');
-            expect(wmComponent.bsDropdown.show).toHaveBeenCalled();
+            expect(wmComponent.bsDropdown.show).toHaveBeenCalledTimes(1);
         });
 
         it('should prevent default event behavior', () => {
             wmComponent.onKeyDown(mockEvent, 'UP-ARROW');
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(mockEvent.preventDefault).toHaveBeenCalledTimes(1);
         });
     });
 });

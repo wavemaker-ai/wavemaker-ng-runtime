@@ -130,8 +130,8 @@ describe('wm-carousel: Widget specific test cases', () => {
 
         component.carousel.ngAfterContentInit();
 
-        expect(setupHandlersSpy).toHaveBeenCalled();
-        expect(subscribespy).toHaveBeenCalled();
+        expect(setupHandlersSpy).toHaveBeenCalledTimes(1);
+        expect(subscribespy).toHaveBeenCalledTimes(1);
     });
 
     it('should trigger animation when slides change', () => {

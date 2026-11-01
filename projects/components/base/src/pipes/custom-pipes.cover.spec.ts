@@ -31,7 +31,7 @@ describe('custom-pipes remaining branches', () => {
             const pipe = build(null);
             const spy = jest.spyOn((pipe as any).datePipe, 'transform');
             pipe.transform('2020-01-01', 'yyyy', 'Fixed/Nine');
-            expect(spy).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(1);
         });
 
         it('returns the data unchanged when a custom formatter is given no args', () => {

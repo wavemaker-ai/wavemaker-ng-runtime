@@ -66,21 +66,21 @@ describe('WebSocketVariableManager', () => {
             const handler = jest.fn().mockReturnValue('modified');
             const variable: any = { onBeforeMessageSend: 'handler()', _context: { handler } };
             expect(manager._onBeforeSend(variable, 'msg')).toBe('modified');
-            expect(handler).toHaveBeenCalled();
+            expect(handler).toHaveBeenCalledTimes(1);
         });
 
         it('_onBeforeSocketClose should invoke the onBeforeClose handler', () => {
             const handler = jest.fn();
             const variable: any = { onBeforeClose: 'handler()', _context: { handler } };
             manager._onBeforeSocketClose(variable, { data: 'x' });
-            expect(handler).toHaveBeenCalled();
+            expect(handler).toHaveBeenCalledTimes(1);
         });
 
         it('_onBeforeSocketOpen should invoke the onBeforeOpen handler', () => {
             const handler = jest.fn();
             const variable: any = { onBeforeOpen: 'handler()', _context: { handler } };
             manager._onBeforeSocketOpen(variable);
-            expect(handler).toHaveBeenCalled();
+            expect(handler).toHaveBeenCalledTimes(1);
         });
 
         it('_onSocketOpen should mark the variable connected and invoke onOpen', () => {
@@ -88,7 +88,7 @@ describe('WebSocketVariableManager', () => {
             const variable: any = { onOpen: 'handler()', _context: { handler }, startUpdate: false };
             manager._onSocketOpen(variable, {});
             expect(variable._socketConnected).toBe(true);
-            expect(handler).toHaveBeenCalled();
+            expect(handler).toHaveBeenCalledTimes(1);
         });
 
         it('_onSocketOpen should schedule a send of the RequestBody when startUpdate is true', () => {
@@ -108,7 +108,7 @@ describe('WebSocketVariableManager', () => {
             manager._onSocketClose(variable, {});
             expect(variable._socketConnected).toBe(false);
             expect(manager.scope_var_socket_map.has(variable)).toBe(false);
-            expect(handler).toHaveBeenCalled();
+            expect(handler).toHaveBeenCalledTimes(1);
         });
 
         it('_onSocketError should mark disconnected and invoke onError with a default message', () => {
@@ -116,7 +116,7 @@ describe('WebSocketVariableManager', () => {
             const variable: any = { onError: 'handler()', _context: { handler }, service: 'MySvc' };
             manager._onSocketError(variable, {});
             expect(variable._socketConnected).toBe(false);
-            expect(handler).toHaveBeenCalled();
+            expect(handler).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -141,7 +141,7 @@ describe('WebSocketVariableManager', () => {
             const variable: any = { onBeforeOpen: 'blockOpen()', _context: { blockOpen: () => false } };
             const getSocketSpy = jest.spyOn(manager, 'getSocket');
             manager.open(variable, jest.fn(), error);
-            expect(error).toHaveBeenCalled();
+            expect(error).toHaveBeenCalledTimes(1);
             expect(getSocketSpy).not.toHaveBeenCalled();
         });
 
@@ -152,7 +152,7 @@ describe('WebSocketVariableManager', () => {
             const variable: any = { _context: {} };
             const result = manager.open(variable, success, jest.fn());
             expect(result).toBe(fakeSocket);
-            expect(success).toHaveBeenCalled();
+            expect(success).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -163,7 +163,7 @@ describe('WebSocketVariableManager', () => {
             const freeSpy = jest.spyOn(manager, 'freeSocket');
             const variable: any = { _context: {} };
             manager.close(variable);
-            expect(fakeSocket.close).toHaveBeenCalled();
+            expect(fakeSocket.close).toHaveBeenCalledTimes(1);
             expect(freeSpy).toHaveBeenCalledWith(variable);
         });
 

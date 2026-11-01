@@ -316,14 +316,14 @@ describe('ChipsComponent - extra behaviour', () => {
             chips.searchComponent.query = 'typed';
             chips.addItem({}, undefined);
             expect(chips.chipsList).toHaveLength(1);
-            expect(reset).toHaveBeenCalled();
+            expect(reset).toHaveBeenCalledTimes(1);
         });
 
         it('stops the enter key from submitting a form', () => {
             const stop = jest.spyOn(chips, 'stopEvent').mockImplementation(() => undefined);
             chips.searchComponent.query = 'typed';
             chips.addItem({ key: 'Enter' }, undefined);
-            expect(stop).toHaveBeenCalled();
+            expect(stop).toHaveBeenCalledTimes(1);
         });
 
         it('only stops events that carry input', () => {

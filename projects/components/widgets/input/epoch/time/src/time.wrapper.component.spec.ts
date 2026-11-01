@@ -266,7 +266,7 @@ describe("TimeComponent", () => {
 
     it('should get the time outputformat as hh:mm:ss ', (() => {
         wmComponent.outputformat = 'hh:mm:ss';
-        outputpatternTest(fixture, '.app-timeinput', wmComponent.datavalue, true);
+        return outputpatternTest(fixture, '[wmTime]', wmComponent.datavalue, true);
     }));
 
     /************************* Properties ends ****************************************** **/
@@ -554,7 +554,7 @@ describe("TimeComponent", () => {
             (wmComponent as any).loadNativeDateInput = true;
             const focusSpy = jest.spyOn(wmComponent, 'onDateTimeInputFocus').mockImplementation(() => undefined);
             wmComponent.toggleDropdown({ type: 'click' });
-            expect(focusSpy).toHaveBeenCalled();
+            expect(focusSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should skip focusing for native pickers when skipFocus is true', () => {
@@ -570,7 +570,7 @@ describe("TimeComponent", () => {
             (wmComponent as any).status.isopen = false;
             wmComponent.toggleDropdown({ type: 'click' });
             expect(invokeSpy).toHaveBeenCalledWith('click', { $event: { type: 'click' } });
-            expect((wmComponent as any).status.isopen).toBeTruthy();
+            expect((wmComponent as any).status.isopen).toBe(true);
         });
 
         it('should not toggle when the click target is an input and dropdown-on-input is disabled', () => {
@@ -579,7 +579,7 @@ describe("TimeComponent", () => {
             (wmComponent as any).status.isopen = false;
             const input = document.createElement('input');
             wmComponent.toggleDropdown({ type: 'click', target: input });
-            expect((wmComponent as any).status.isopen).toBeFalsy();
+            expect((wmComponent as any).status.isopen).toBe(false);
         });
     });
 
@@ -627,14 +627,14 @@ describe("TimeComponent", () => {
             const hideSpy = jest.spyOn(wmComponent, 'hideTimepickerDropdown').mockImplementation(() => undefined);
             const event = { key: 'a', stopPropagation: jest.fn() };
             wmComponent.onDisplayKeydown(event);
-            expect(hideSpy).toHaveBeenCalled();
+            expect(hideSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should hide the dropdown when dropdown-on-input is disabled', () => {
             (wmComponent as any).showdropdownon = 'button';
             const hideSpy = jest.spyOn(wmComponent, 'hideTimepickerDropdown').mockImplementation(() => undefined);
             wmComponent.onDisplayKeydown({ key: 'Enter' });
-            expect(hideSpy).toHaveBeenCalled();
+            expect(hideSpy).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -651,8 +651,8 @@ describe("TimeComponent", () => {
             const onTimeChangeSpy = jest.spyOn(wmComponent as any, 'onTimeChange').mockImplementation(() => undefined);
             (wmComponent as any).invalidDateTimeFormat = true;
             wmComponent.onDisplayTimeChange({ target: { value: '10:30 AM' } });
-            expect((wmComponent as any).invalidDateTimeFormat).toBeFalsy();
-            expect(onTimeChangeSpy).toHaveBeenCalled();
+            expect((wmComponent as any).invalidDateTimeFormat).toBe(false);
+            expect(onTimeChangeSpy).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -661,7 +661,7 @@ describe("TimeComponent", () => {
             const invokeOnTouchedSpy = jest.spyOn(wmComponent, 'invokeOnTouched').mockImplementation(() => undefined);
             const invokeEventCallbackSpy = jest.spyOn(wmComponent, 'invokeEventCallback').mockImplementation(() => undefined as any);
             wmComponent.onInputBlur({ relatedTarget: document.createElement('div') });
-            expect(invokeOnTouchedSpy).toHaveBeenCalled();
+            expect(invokeOnTouchedSpy).toHaveBeenCalledTimes(1);
             expect(invokeEventCallbackSpy).toHaveBeenCalledWith('blur', expect.anything());
         });
 
@@ -744,8 +744,9 @@ describe("TimeComponent", () => {
 
         it('should delegate other events to the base implementation', () => {
             const superSpy = jest.spyOn(Object.getPrototypeOf(Object.getPrototypeOf(wmComponent)), 'handleEvent');
-            (wmComponent as any).handleEvent(document.createElement('div'), 'mouseenter', jest.fn(), {});
-            expect(superSpy).toHaveBeenCalled();
+            const node = document.createElement('div');
+            (wmComponent as any).handleEvent(node, 'mouseenter', jest.fn(), {});
+            expect(superSpy).toHaveBeenCalledWith(node, 'mouseenter', expect.any(Function), {});
         });
     });
 
@@ -758,9 +759,9 @@ describe("TimeComponent", () => {
             const blurSpy = jest.spyOn(wmComponent, 'blurDateInput').mockImplementation(() => undefined);
             (wmComponent as any).status.isopen = true;
             wmComponent.hideTimepickerDropdown();
-            expect(invokeOnTouchedSpy).toHaveBeenCalled();
+            expect(invokeOnTouchedSpy).toHaveBeenCalledTimes(1);
             expect((wmComponent as any).status.isopen).toBeFalsy();
-            expect(deregisterSpy).toHaveBeenCalled();
+            expect(deregisterSpy).toHaveBeenCalledTimes(1);
             expect(blurSpy).toHaveBeenCalledWith(true);
         });
 

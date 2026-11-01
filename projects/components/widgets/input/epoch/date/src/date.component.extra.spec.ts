@@ -193,7 +193,7 @@ describe('DateComponent - additional behaviour', () => {
             const ev: any = { type: 'click', target: document.createElement('button'), stopPropagation: jest.fn() };
             cmp.toggleDpDropdown(ev);
             expect(callback).toHaveBeenCalledWith('click', { $event: ev });
-            expect(cmp.bsDatePickerDirective.toggle).toHaveBeenCalled();
+            expect(cmp.bsDatePickerDirective.toggle).toHaveBeenCalledTimes(1);
         });
 
         it('does not toggle for clicks inside the input when only the button opens the dropdown', () => {

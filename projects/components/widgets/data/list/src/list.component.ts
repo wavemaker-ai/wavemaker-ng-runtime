@@ -913,13 +913,11 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                     const target = $(evt.target).closest('.app-list-item');
                     if (target.length) {
                         const listItemContext: ListItemDirective = target.data('listItemContext');
-                        if (!listItemContext.disableItem) {
-                            this.invokeEventCallback(eventName, {
-                                widget: listItemContext,
-                                $event: evt,
-                                item: listItemContext.item
-                            });
-                        }
+                        this.invokeEventCallback(eventName, {
+                            widget: this.widget,
+                            $event: evt,
+                            item: listItemContext.item
+                        });
                     }
                 }
             );
@@ -1264,7 +1262,7 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
                     this.clearSelectedItems();
                 }
                 this._items.push(item);
-                this.invokeEventCallback('select', {widget: $listItem, $data: item});
+                this.invokeEventCallback('select', {widget:this.widget, $data: item});
                 $listItem.isActive = true;
             }
             this.updateSelectedItemsWidgets(statePersistenceTriggered);

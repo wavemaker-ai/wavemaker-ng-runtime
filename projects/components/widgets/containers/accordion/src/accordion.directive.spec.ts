@@ -291,7 +291,7 @@ describe('AccordionDirective', () => {
             const { accordion, panes } = setup();
             const remove = jest.spyOn(panes()[0], 'remove');
             accordion.removePane('a1');
-            expect(remove).toHaveBeenCalled();
+            expect(remove).toHaveBeenCalledTimes(1);
             accordion.removePane('missing');
         });
     });

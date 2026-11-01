@@ -30,8 +30,6 @@ module.exports = {
   collectCoverageFrom: [
     "projects/**/*.{ts,js}",
     "src/**/*.{ts,js}",
-    // the yalc-linked variables package was already measured before collectCoverageFrom existed
-    ".yalc/@wavemaker-ai/variables/src/**/*.js",
     "!projects/**/*.spec.ts",
     "!projects/**/*.d.ts",
     "!src/**/*.d.ts",
@@ -62,7 +60,7 @@ module.exports = {
     "/scripts/",
     // libraries/swipey stays excluded; projects/swipey stays included except the vendored plugin file below
     "libraries/swipey/",
-    // other .yalc-linked packages; @wavemaker-ai/variables is intentionally NOT excluded
+    // other .yalc-linked packages (their source and tests live in their own repos)
     ".yalc/@wavemaker/",
     ".yalc/@wavemaker-ai/angular-app",
     ".yalc/@wavemaker-ai/custom-widgets-m3",

@@ -290,7 +290,7 @@ describe('wm-chips: Component Specific Tests', () => {
         wmComponent.getWidget().limit = 2;
         fixture.detectChanges();
         const testValue = 'java';
-        addItem(testValue, 'keydown').then(() => {
+        return addItem(testValue, 'keydown').then(() => {
             expect(wmComponent.chipsList.length).toEqual(1);
         });
     });
@@ -304,7 +304,7 @@ describe('wm-chips: Component Specific Tests', () => {
     it('should enable order property', () => {
         wmComponent.enablereorder = true;
         fixture.detectChanges();
-        expect(wmComponent.enablereorder).toBeTruthy();
+        expect(wmComponent.enablereorder).toBe(true);
     });
 
     it('should set displayimagesrc property', () => {
@@ -382,7 +382,7 @@ describe('wm-chips: Component Specific Tests', () => {
 
             wmComponent.onInputClear(mockEvent);
 
-            expect(lastChipMock.focus).toHaveBeenCalled();
+            expect(lastChipMock.focus).toHaveBeenCalledTimes(1);
             expect(wmComponent.stopEvent).toHaveBeenCalledWith(mockEvent);
         });
 
@@ -457,7 +457,7 @@ describe('wm-chips: Component Specific Tests', () => {
 
             (wmComponent as any).handleChipClick(mockEvent, mockChip);
 
-            expect(mockEvent.currentTarget.focus).toHaveBeenCalled();
+            expect(mockEvent.currentTarget.focus).toHaveBeenCalledTimes(1);
             expect(wmComponent['invokeEventCallback']).toHaveBeenCalledWith('chipclick', {
                 $event: mockEvent,
                 $item: mockChip
@@ -725,7 +725,7 @@ describe('wm-chips: Component Specific Tests', () => {
         it('should do nothing if newIndex equals oldIndex', () => {
             mockUi.item.index.mockReturnValue(2); // newIndex will be 1 after adjustment
             wmComponent['update'](mockEvent, mockUi);
-            expect(wmComponent['resetReorder']).toHaveBeenCalled();
+            expect(wmComponent['resetReorder']).toHaveBeenCalledTimes(1);
             expect(wmComponent['swapElementsInArray']).not.toHaveBeenCalled();
         });
 
@@ -754,7 +754,7 @@ describe('wm-chips: Component Specific Tests', () => {
             mockUi.item.index.mockReturnValue(3);
             (wmComponent.invokeEventCallback as jest.Mock).mockReturnValueOnce(false);
             wmComponent['update'](mockEvent, mockUi);
-            expect(wmComponent['resetReorder']).toHaveBeenCalled();
+            expect(wmComponent['resetReorder']).toHaveBeenCalledTimes(1);
             expect(wmComponent['swapElementsInArray']).not.toHaveBeenCalled();
         });
 
@@ -810,7 +810,7 @@ describe('wm-chips: Component Specific Tests', () => {
 
             wmComponent.onPropertyChange('enablereorder', true, false);
 
-            expect(configureDnDSpy).toHaveBeenCalled();
+            expect(configureDnDSpy).toHaveBeenCalledTimes(1);
             expect(mockJQueryObject.removeClass).toHaveBeenCalledWith('no-drag');
             expect(mockJQueryObject.off).toHaveBeenCalledWith('dragstart');
 
@@ -828,7 +828,7 @@ describe('wm-chips: Component Specific Tests', () => {
 
             // Call the handler and verify it prevents default
             const result = dragStartHandler(mockEvent);
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(mockEvent.preventDefault).toHaveBeenCalledTimes(1);
             expect(result).toBe(false);
         });
 
@@ -854,7 +854,7 @@ describe('wm-chips: Component Specific Tests', () => {
             const focusSearchBoxSpy = jest.spyOn((wmComponent as any), 'focusSearchBox').mockImplementation();
             wmComponent.onPropertyChange('autofocus', true, false);
             setTimeout(() => {
-                expect(focusSearchBoxSpy).toHaveBeenCalled();
+                expect(focusSearchBoxSpy).toHaveBeenCalledTimes(1);
                 focusSearchBoxSpy.mockRestore();
                 done();
             }, 0);

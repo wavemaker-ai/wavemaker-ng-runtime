@@ -299,8 +299,7 @@ describe('SearchComponent', () => {
     it('should be readonly mode ', () => {
         wmComponent.getWidget().readonly = true;
         fixture.detectChanges();
-        hasAttributeCheck(fixture, '.app-search-input', 'readonly');
-
+        return hasAttributeCheck(fixture, '.app-search-input', 'readonly');
     });
 
     /******************************** Properties end ********************************** */
@@ -378,7 +377,7 @@ describe('SearchComponent', () => {
         // by calling it manually to verify it works
         wmComponent.getTransformedData('test');
         
-        expect(wmComponent.getTransformedData).toHaveBeenCalled();
+        expect(wmComponent.getTransformedData).toHaveBeenCalledWith('test');
     }));
     /*********************************** Method invoking end ************************** */
 
@@ -531,28 +530,28 @@ describe('SearchComponent', () => {
 
         it('should reset _domUpdated if it was true', () => {
             (wmComponent as any).closeSearch();
-            expect((wmComponent as any)._domUpdated).toBeFalsy();
+            expect((wmComponent as any)._domUpdated).toBe(false);
         });
 
         it('should not change _domUpdated if it was already false', () => {
             (wmComponent as any)._domUpdated = false;
             (wmComponent as any).closeSearch();
-            expect((wmComponent as any)._domUpdated).toBeFalsy();
+            expect((wmComponent as any)._domUpdated).toBe(false);
         });
 
         it('should set listenQuery to false', () => {
             (wmComponent as any).closeSearch();
-            expect((wmComponent as any).listenQuery).toBeFalsy();
+            expect((wmComponent as any).listenQuery).toBe(false);
         });
 
         it('should set _unsubscribeDv to true', () => {
             (wmComponent as any).closeSearch();
-            expect((wmComponent as any)._unsubscribeDv).toBeTruthy();
+            expect((wmComponent as any)._unsubscribeDv).toBe(true);
         });
 
         it('should call typeahead.hide()', () => {
             (wmComponent as any).closeSearch();
-            expect(wmComponent.typeahead.hide).toHaveBeenCalled();
+            expect(wmComponent.typeahead.hide).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -1387,7 +1386,7 @@ describe('SearchComponent', () => {
 
             wmComponent['onSearchSelect'](mockEvent);
 
-            expect(wmComponent.typeaheadContainer.selectActiveMatch).toHaveBeenCalled();
+            expect(wmComponent.typeaheadContainer.selectActiveMatch).toHaveBeenCalledTimes(1);
         });
 
         it('should update queryModel and invoke submit callback when no matches are available', () => {

@@ -27,7 +27,7 @@ export const datepatternTest = (fixture, selector: string, inputSelector: string
 };
 
 export const outputpatternTest = (fixture, selector: string, datavalue, isLower?: boolean, hrFormat?: boolean) => {
-    fixture.whenStable().then(() => {
+    return fixture.whenStable().then(() => {
         let dateInputControl = getHtmlSelectorElement(fixture, selector);
         let attrVal = dateInputControl.nativeElement.getAttribute('outputformat');
         if (!isLower) {

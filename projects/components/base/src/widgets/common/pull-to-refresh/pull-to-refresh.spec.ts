@@ -162,8 +162,8 @@ describe('PullToRefresh', () => {
 
     pullToRefresh.onAnimation();
 
-    expect(mockSpinner.start).toHaveBeenCalled();
-    expect(mockOnPullToRefresh).toHaveBeenCalled();
+    expect(mockSpinner.start).toHaveBeenCalledTimes(1);
+    expect(mockOnPullToRefresh).toHaveBeenCalledTimes(1);
   });
 
   test('stopAnimation stops spinner and hides infoContainer', () => {
@@ -325,7 +325,7 @@ describe('PullToRefresh', () => {
       pullToRefresh['runAnimation'] = false;
       pullToRefresh.onAnimation();
       jest.runAllTimers();
-      expect(stopSpy).toHaveBeenCalled();
+      expect(stopSpy).toHaveBeenCalledTimes(1);
     });
 
     test('does not call stopAnimation when runAnimation is true', () => {

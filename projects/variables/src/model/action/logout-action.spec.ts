@@ -31,8 +31,10 @@ describe('LogoutAction', () => {
         mockManager();
         const action = new LogoutAction({});
         const logoutSpy = jest.spyOn(action, 'logout');
-        action.invoke({}, jest.fn(), jest.fn());
-        expect(logoutSpy).toHaveBeenCalled();
+        const success = jest.fn();
+        const error = jest.fn();
+        action.invoke({}, success, error);
+        expect(logoutSpy).toHaveBeenCalledWith({}, success, error);
     });
 
     it('cancel() should not throw', () => {

@@ -100,7 +100,7 @@ describe('AlertDialogComponent', () => {
     it('should close the dialog correctly', () => {
         const closeSpy = jest.spyOn(dialogComponent, 'close');
         dialogComponent.close();
-        expect(closeSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalledTimes(1);
     });
     it('should render the dialog dialog component', () => {
         const dialogElement = fixture.debugElement.query(By.css('[wmAlertDialog]'));
@@ -149,7 +149,7 @@ describe('AlertDialogComponent', () => {
             (dialogComponent as any).dialogRef = { hide };
             const dialogService: MockAbstractDialogService = (dialogComponent as any).dialogService;
             dialogComponent.close();
-            expect(hide).toHaveBeenCalled();
+            expect(hide).toHaveBeenCalledTimes(1);
             expect(dialogService.addToClosedDialogs).toHaveBeenCalledWith(dialogComponent);
         });
 
@@ -168,7 +168,7 @@ describe('AlertDialogComponent', () => {
             (dialogComponent as any).dialogRef = { hide: jest.fn() };
             const focusSpy = jest.spyOn(origin, 'focus');
             dialogComponent.close();
-            expect(focusSpy).toHaveBeenCalled();
+            expect(focusSpy).toHaveBeenCalledTimes(1);
             document.body.removeChild(origin);
         });
     });
@@ -243,7 +243,7 @@ describe('AlertDialogComponent', () => {
             expect((dialogComponent as any).dialogId).toBeNull();
             expect(dialogService.removeFromOpenedDialogs).toHaveBeenCalledWith(dialogComponent);
             expect(invokeSpy).toHaveBeenCalledWith('close');
-            expect(closeCallBackFn).toHaveBeenCalled();
+            expect(closeCallBackFn).toHaveBeenCalledTimes(1);
         });
 
         it('should resolve the ref via the last opened dialog on an escape/backdrop close', () => {
@@ -265,7 +265,7 @@ describe('AlertDialogComponent', () => {
             const router: MockRouter = (dialogComponent as any).inj.get(Router);
             const closeSpy = jest.spyOn(dialogComponent, 'close').mockImplementation(() => undefined);
             router.events.next(new NavigationEnd(1, '/a', '/a'));
-            expect(closeSpy).toHaveBeenCalled();
+            expect(closeSpy).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -274,7 +274,7 @@ describe('AlertDialogComponent', () => {
             const closeSpy = jest.spyOn(dialogComponent, 'close');
             const deRegisterSpy = jest.spyOn(dialogComponent as any, 'deRegister');
             dialogComponent.ngOnDestroy();
-            expect(closeSpy).toHaveBeenCalled();
+            expect(closeSpy).toHaveBeenCalledTimes(1);
             expect(deRegisterSpy).toHaveBeenCalledWith((dialogComponent as any).viewParent);
         });
 

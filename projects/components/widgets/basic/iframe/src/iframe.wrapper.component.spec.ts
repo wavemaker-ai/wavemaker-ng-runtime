@@ -109,11 +109,8 @@ describe('IframeComponent', () => {
         //     });
         // });
 
-        it('should show content load error for insecure URLs when page is loaded over HTTPS', () => {
-            // Since we can't mock location.href directly, let's skip this test
-            // as it requires a proper HTTPS environment
-            expect(true).toBe(true); // Placeholder test
-        });
+        // jsdom does not let a test replace window.location, so this needs a spec file that runs under an https url
+        it.todo('should show content load error for insecure URLs when page is loaded over HTTPS');
 
         it('should not show content load error for secure URLs when page is loaded over HTTPS', () => {
             component.iframesrc = 'https://secure-example.com';

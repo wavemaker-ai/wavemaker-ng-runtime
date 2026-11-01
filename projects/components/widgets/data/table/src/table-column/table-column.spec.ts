@@ -118,7 +118,7 @@ describe('TableColumnDirective', () => {
     it('should set up validators', () => {
         (directive as any).fieldValidations = { setUpValidators: jest.fn() };
         directive.setUpValidators();
-        expect((directive as any).fieldValidations.setUpValidators).toHaveBeenCalled();
+        expect((directive as any).fieldValidations.setUpValidators).toHaveBeenCalledTimes(1);
     });
 
     it('should aggregate column data', () => {
@@ -136,14 +136,14 @@ describe('TableColumnDirective', () => {
     it('should call loadFilterData on onDataSourceChange', () => {
         jest.spyOn(directive, 'loadFilterData');
         directive.onDataSourceChange();
-        expect(directive.loadFilterData).toHaveBeenCalled();
+        expect(directive.loadFilterData).toHaveBeenCalledTimes(1);
     });
 
     it('should call loadInlineWidgetData on onDataSourceChange when in quick edit mode', () => {
         jest.spyOn(directive, 'loadInlineWidgetData');
         mockTable.editmode = 'quickedit';
         directive.onDataSourceChange();
-        expect(directive.loadInlineWidgetData).toHaveBeenCalled();
+        expect(directive.loadInlineWidgetData).toHaveBeenCalledTimes(1);
     });
 
     it('should set the filter widget data set', () => {
@@ -160,7 +160,7 @@ describe('TableColumnDirective', () => {
     it('should remove new row validations and mark form as untouched', () => {
         const markAsUntouchedSpy = jest.spyOn(mockTable.ngform, 'markAsUntouched');
         directive.removeNewRowValidations();
-        expect(markAsUntouchedSpy).toHaveBeenCalled();
+        expect(markAsUntouchedSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should set up inline edit control if _isInlineEditable is true and editWidgetType is not UPLOAD', () => {
@@ -394,7 +394,7 @@ describe('TableColumnDirective', () => {
         it('should notify changes for all fields without quickEdit', () => {
             directive.notifyChanges();
             (directive as any).notifyForFields.forEach(field => {
-                expect(field.fieldValidations.validate).toHaveBeenCalled();
+                expect(field.fieldValidations.validate).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -402,7 +402,7 @@ describe('TableColumnDirective', () => {
             (directive as any)._isNewEditableRow = true;
             directive.notifyChanges(true);
             (directive as any).notifyForFields.forEach(field => {
-                expect(field.fieldValidations_new.validate).toHaveBeenCalled();
+                expect(field.fieldValidations_new.validate).toHaveBeenCalledTimes(1);
             });
         });
     });

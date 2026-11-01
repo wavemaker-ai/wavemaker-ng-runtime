@@ -73,7 +73,7 @@ describe('PaginationUtils - additional paths', () => {
         it('warns when a nested header expression cannot be evaluated', () => {
             const res: any = {};
             PaginationUtils.setPaginationItems('$header.pagination.[', {}, res, 'x', headers([['pagination', '{"total": 42}']]));
-            expect(warn).toHaveBeenCalled();
+            expect(warn).toHaveBeenCalledWith('$header.pagination.[ expression needs to be corrected as per JMES guidelines');
         });
     });
 
