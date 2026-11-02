@@ -8,6 +8,7 @@ describe('EventNotifier', () => {
             notifier.subscribe('evt', cb);
             notifier.notify('evt', 1, 2);
             expect(cb).toHaveBeenCalledWith(1, 2);
+            expect(cb).toHaveBeenCalledTimes(1);
         });
 
         it('should not start automatically when constructed with start=false', () => {
@@ -28,6 +29,7 @@ describe('EventNotifier', () => {
             expect(cb).not.toHaveBeenCalled();
             notifier.start();
             expect(cb).toHaveBeenCalledWith('queued');
+            expect(cb).toHaveBeenCalledTimes(1);
         });
 
         it('should be a no-op to call start twice', () => {
@@ -48,6 +50,7 @@ describe('EventNotifier', () => {
             notifier.subscribe('b', cbB);
             notifier.notify('a', 1);
             expect(cbA).toHaveBeenCalledWith(1);
+            expect(cbA).toHaveBeenCalledTimes(1);
             expect(cbB).not.toHaveBeenCalled();
         });
 
@@ -57,6 +60,7 @@ describe('EventNotifier', () => {
             notifier.subscribe('evt', cb);
             notifier.notify('evt', 1, 'two', { three: 3 });
             expect(cb).toHaveBeenCalledWith(1, 'two', { three: 3 });
+            expect(cb).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -86,7 +90,9 @@ describe('EventNotifier', () => {
             notifier.subscribe('evt', cb2);
             notifier.notify('evt', 'x');
             expect(cb1).toHaveBeenCalledWith('x');
+            expect(cb1).toHaveBeenCalledTimes(1);
             expect(cb2).toHaveBeenCalledWith('x');
+            expect(cb2).toHaveBeenCalledTimes(1);
         });
     });
 

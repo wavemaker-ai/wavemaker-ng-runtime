@@ -80,19 +80,19 @@ describe('wm-colorpicker: Component Specific Tests', () => {
         wmComponent.colorPickerOpen('');
         container.click();
 
-        expect(wmComponent.cpDirective.closeDialog).toHaveBeenCalled();
+        expect(wmComponent.cpDirective.closeDialog).toHaveBeenCalledTimes(1);
     });
 
     it('should open color picker', () => {
         wmComponent.cpDirective = { openDialog: jest.fn() } as any;
         wmComponent.open();
-        expect(wmComponent.cpDirective.openDialog).toHaveBeenCalled();
+        expect(wmComponent.cpDirective.openDialog).toHaveBeenCalledTimes(1);
     });
 
     it('should close color picker', () => {
         wmComponent.cpDirective = { closeDialog: jest.fn() } as any;
         wmComponent.close();
-        expect(wmComponent.cpDirective.closeDialog).toHaveBeenCalled();
+        expect(wmComponent.cpDirective.closeDialog).toHaveBeenCalledTimes(1);
     });
 
     it('should handle change event', () => {

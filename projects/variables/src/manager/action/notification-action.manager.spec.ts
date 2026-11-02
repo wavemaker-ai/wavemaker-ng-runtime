@@ -18,19 +18,23 @@ describe('NotificationActionManager', () => {
         it('should route to the toaster for a toast operation', () => {
             const variable: any = { operation: 'toast', dataBinding: {} };
             manager.notify(variable, {}, undefined, undefined);
-            expect(toasterService.show).toHaveBeenCalled();
+            expect(toasterService.show).toHaveBeenCalledTimes(1);
+            expect(toasterService.show).toHaveBeenCalledWith('info', undefined, null, { positionClass: 'toast-bottom-right', timeOut: 0, enableHtml: true });
+            expect(dialogService.open).not.toHaveBeenCalled();
         });
 
         it('should route to the dialog for a non-toast operation', () => {
             const variable: any = { operation: 'confirm', dataBinding: {} };
             manager.notify(variable, {}, undefined, undefined);
-            expect(dialogService.open).toHaveBeenCalled();
+            expect(dialogService.open).toHaveBeenCalledTimes(1);
+            expect(dialogService.open).toHaveBeenCalledWith(expect.stringMatching(/ConfirmDialog$/), undefined, expect.anything());
+            expect(toasterService.show).not.toHaveBeenCalled();
         });
 
         it('should default options to an empty object when not provided', () => {
             const variable: any = { operation: 'toast', dataBinding: {} };
             expect(() => manager.notify(variable, undefined, undefined, undefined)).not.toThrow();
-            expect(toasterService.show).toHaveBeenCalled();
+            expect(toasterService.show).toHaveBeenCalledTimes(1);
         });
     });
 

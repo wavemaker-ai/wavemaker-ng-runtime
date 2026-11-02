@@ -272,7 +272,7 @@ describe('CalendarComponent', () => {
         it('should call unselect on $fullCalendar', () => {
             wmComponent['$fullCalendar'] = { unselect: jest.fn() };
             wmComponent.unselect();
-            expect(wmComponent['$fullCalendar'].unselect).toHaveBeenCalled();
+            expect(wmComponent['$fullCalendar'].unselect).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -507,7 +507,7 @@ describe('CalendarComponent', () => {
             it('should call updateCalendarHeaderOptions', () => {
                 const updateSpy = jest.spyOn(wmComponent as any, 'updateCalendarHeaderOptions');
                 wmComponent.onPropertyChange('controls', {});
-                expect(updateSpy).toHaveBeenCalled();
+                expect(updateSpy).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -605,7 +605,7 @@ describe('CalendarComponent', () => {
         it('should rerender the events', () => {
             const renderSpy = jest.spyOn((wmComponent as any).$fullCalendar, 'render');
             wmComponent.rerenderEvents();
-            expect(renderSpy).toHaveBeenCalled();
+            expect(renderSpy).toHaveBeenCalledTimes(1);
         });
     });
 });

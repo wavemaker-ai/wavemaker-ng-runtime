@@ -264,7 +264,7 @@ describe('TableFilterSortDirective', () => {
             directive.clearFilter(false);
 
             (directive as any).table.fieldDefs.forEach(col => {
-                expect(col.resetFilter).toHaveBeenCalled();
+                expect(col.resetFilter).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -656,7 +656,7 @@ describe('TableFilterSortDirective', () => {
 
             directive.clearRowFilter('name');
 
-            expect((tableComponent as any).columns.name.resetFilter).toHaveBeenCalled();
+            expect((tableComponent as any).columns.name.resetFilter).toHaveBeenCalledTimes(1);
             expect(directive.onRowFilterChange).toHaveBeenCalledWith('name');
         });
 
@@ -692,19 +692,19 @@ describe('TableFilterSortDirective', () => {
 
             tableComponent.rowFilter.name.value = 'John';
             directive.onFilterConditionSelect('name', 'contains');
-            expect(tableComponent.onRowFilterChange).toHaveBeenCalled();
+            expect(tableComponent.onRowFilterChange).toHaveBeenCalledTimes(1);
         });
 
         it('should reset filter and call onRowFilterChange for empty match mode', () => {
             directive.onFilterConditionSelect('name', 'isNull');
-            expect((tableComponent as any).columns.name.resetFilter).toHaveBeenCalled();
-            expect(tableComponent.onRowFilterChange).toHaveBeenCalled();
+            expect((tableComponent as any).columns.name.resetFilter).toHaveBeenCalledTimes(1);
+            expect(tableComponent.onRowFilterChange).toHaveBeenCalledTimes(1);
         });
 
         it('should focus on filter instance for non-empty match mode without value', (done) => {
             directive.onFilterConditionSelect('name', 'contains');
             setTimeout(() => {
-                expect((tableComponent as any).columns.name.filterInstance.focus).toHaveBeenCalled();
+                expect((tableComponent as any).columns.name.filterInstance.focus).toHaveBeenCalledTimes(1);
                 done();
             });
         });
@@ -737,19 +737,19 @@ describe('TableFilterSortDirective', () => {
         it('should stop propagation for change event when filtermode is not multicolumn', () => {
             tableComponent.filtermode = 'singlecolumn';
             directive.searchSortHandler(mockSearchSortObj, mockEvent, 'search');
-            expect(mockEvent.stopPropagation).toHaveBeenCalled();
+            expect(mockEvent.stopPropagation).toHaveBeenCalledTimes(1);
             expect(directive.setLastActionPerformedToSearchSort).not.toHaveBeenCalled();
         });
 
         it('should call setLastActionPerformedToSearchSort for non-change events', () => {
             mockEvent.type = 'click';
             directive.searchSortHandler(mockSearchSortObj, mockEvent, 'search');
-            expect(directive.setLastActionPerformedToSearchSort).toHaveBeenCalled();
+            expect(directive.setLastActionPerformedToSearchSort).toHaveBeenCalledTimes(1);
         });
 
         it('should handle null event', () => {
             directive.searchSortHandler(mockSearchSortObj, null, 'sort');
-            expect(directive.setLastActionPerformedToSearchSort).toHaveBeenCalled();
+            expect(directive.setLastActionPerformedToSearchSort).toHaveBeenCalledTimes(1);
             expect((directive as any).sortHandler).toHaveBeenCalledWith(mockSearchSortObj, null, 'sort', undefined);
         });
     });

@@ -72,7 +72,7 @@ describe('variables.utils - more', () => {
             const success = jest.fn();
             const error = jest.fn();
             await run(success, error, {});
-            expect(error).toHaveBeenCalled();
+            expect(error).toHaveBeenCalledTimes(1);
             expect(success).not.toHaveBeenCalled();
         });
 
@@ -114,8 +114,8 @@ describe('variables.utils - more', () => {
             it('navigates the current window when the popup is blocked', async () => {
                 const success = jest.fn();
                 await run(success, jest.fn(), { 'Content-Disposition': 'attachment; filename=a.csv', 'Content-Type': 'text/csv' });
-                expect(open).toHaveBeenCalled();
-                expect(success).toHaveBeenCalled();
+                expect(open).toHaveBeenCalledWith('data:attachment/file;base64,QQ==', '_blank');
+                expect(success).toHaveBeenCalledTimes(1);
             });
         });
     });

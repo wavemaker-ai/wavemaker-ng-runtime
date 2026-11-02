@@ -129,7 +129,7 @@ describe('FormComponent (cover)', () => {
             const ele = fakeEle(true, { name: 'inner' });
             defGet('$element', { find: () => ({ first: () => ele }) });
             expect(form.validateFieldsOnSubmit()).toBe(true);
-            expect(form.highlightInvalidFields).toHaveBeenCalled();
+            expect(form.highlightInvalidFields).toHaveBeenCalledTimes(1);
         });
 
         it('recurses into an inner form found by its formControlName', () => {
@@ -248,7 +248,7 @@ describe('FormComponent (cover)', () => {
             form.submitForm('e');
             await settle();
             expect(close).not.toHaveBeenCalled();
-            expect(form.datasource.execute).toHaveBeenCalled();
+            expect(form.datasource.execute).toHaveBeenCalledTimes(1);
         });
 
         it('reports a plain error value as the message when no error message is configured', async () => {

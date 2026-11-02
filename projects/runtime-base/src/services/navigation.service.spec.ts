@@ -91,7 +91,7 @@ describe('NavigationServiceImpl', () => {
     describe('goToPage', () => {
         it('navigates inside the zone with query params', () => {
             service.goToPage('Home', { urlParams: { a: 1 } } as any);
-            expect(zone.run).toHaveBeenCalled();
+            expect(zone.run).toHaveBeenCalledTimes(1);
             expect(router.navigate).toHaveBeenCalledWith(['/Home'], { queryParams: { a: 1 } });
             expect(history().getCurrentPage().name).toBe('Home');
         });
@@ -111,7 +111,7 @@ describe('NavigationServiceImpl', () => {
             service.goToPage('B', { transition: 'slide' } as any);
             service.goToPrevious();
             expect(service.getPageTransition()).toBe('slide-exit');
-            expect(back).toHaveBeenCalled();
+            expect(back).toHaveBeenCalledTimes(1);
             expect(history().getCurrentPage().name).toBe('A');
             back.mockRestore();
         });
@@ -159,7 +159,7 @@ describe('NavigationServiceImpl', () => {
             // subscribe returns before callback fires in real life; emulate the later emission
             cb({});
             expect(w.expanded).toBe(true);
-            expect(unsub).toHaveBeenCalled();
+            expect(unsub).toHaveBeenCalledTimes(1);
         });
 
         it('handles missing options', () => {
@@ -226,14 +226,14 @@ describe('NavigationServiceImpl', () => {
             const select = jest.fn();
             addWidget(root, '<div name="v1"></div>', { widgetType: 'wm-tabpane', select });
             go();
-            expect(select).toHaveBeenCalled();
+            expect(select).toHaveBeenCalledTimes(1);
         });
 
         it('segment content navigates', () => {
             const navigate = jest.fn();
             addWidget(root, '<div name="v1"></div>', { widgetType: 'wm-segment-content', navigate });
             go();
-            expect(navigate).toHaveBeenCalled();
+            expect(navigate).toHaveBeenCalledTimes(1);
         });
 
         it('unknown widget types are ignored', () => {

@@ -118,7 +118,7 @@ describe('ListComponent - extra behaviour', () => {
             list._items = [{ a: 1 }];
             list.selecteditem = [1, 2];
             expect(list._items).toEqual([]);
-            expect(deselect).toHaveBeenCalled();
+            expect(deselect).toHaveBeenCalledTimes(1);
             expect(select).toHaveBeenCalledTimes(2);
             list.selecteditem = 3;
             expect(select).toHaveBeenLastCalledWith(3);
@@ -132,7 +132,7 @@ describe('ListComponent - extra behaviour', () => {
 
             list.selectItem(0, true);
             expect(toggle).toHaveBeenCalledWith(item, true);
-            expect(focus).toHaveBeenCalled();
+            expect(focus).toHaveBeenCalledTimes(1);
 
             toggle.mockClear();
             item.isActive = true;
@@ -461,7 +461,7 @@ describe('ListComponent - extra behaviour', () => {
             const subscribe = jest.spyOn(list, 'subscribeToPullToRefresh').mockImplementation(() => undefined);
             list.onPropertyChange('pulltorefresh', true);
             expect(notify).toHaveBeenCalledWith('pullToRefresh:enable');
-            expect(subscribe).toHaveBeenCalled();
+            expect(subscribe).toHaveBeenCalledTimes(1);
         });
 
         it('updates the navigation class of the paginator later', () => {
@@ -535,7 +535,7 @@ describe('ListComponent - extra behaviour', () => {
         it('selects the clicked item exclusively', () => {
             const item: any = fakeItem(0);
             list.onItemClick({}, item);
-            expect(clear).toHaveBeenCalled();
+            expect(clear).toHaveBeenCalledTimes(1);
             expect(toggle).toHaveBeenCalledWith(item);
             expect(list.lastSelectedItem).toBe(item);
         });
@@ -566,7 +566,7 @@ describe('ListComponent - extra behaviour', () => {
             list.multiselect = true;
             jest.spyOn(list, 'checkSelectionLimit').mockReturnValue(false);
             list.onItemClick({ ctrlKey: true }, fakeItem(0, { isActive: true }));
-            expect(toggle).toHaveBeenCalled();
+            expect(toggle).toHaveBeenCalledTimes(1);
         });
 
         it('selects the range between the first selected item and the clicked item on shift', () => {
@@ -575,7 +575,7 @@ describe('ListComponent - extra behaviour', () => {
             jest.spyOn(list, 'checkSelectionLimit').mockReturnValue(true);
             list.firstSelectedItem = items[1];
             list.onItemClick({ shiftKey: true }, items[3]);
-            expect(clear).toHaveBeenCalled();
+            expect(clear).toHaveBeenCalledTimes(1);
             expect(toggle.mock.calls.map((c) => (c[0] as any).context.index)).toEqual([1, 2, 3]);
             expect(list.lastSelectedItem).toBe(items[3]);
         });
@@ -734,7 +734,7 @@ describe('ListComponent - extra behaviour', () => {
             list.toggleListItemSelection(item, true);
             expect(item.isActive).toBe(true);
             expect(list._items).toEqual([{ id: 1 }]);
-            expect(invoke).toHaveBeenCalledWith('select', { widget: item, $data: { id: 1 } });
+            expect(invoke).toHaveBeenCalledWith('select', { widget: list.widget, $data: { id: 1 } });
 
             list.toggleListItemSelection(item);
             expect(item.isActive).toBe(false);
@@ -1094,7 +1094,7 @@ describe('ListComponent - extra behaviour', () => {
             list.subscribeToPullToRefresh();
             list.datasource = { listRecords: jest.fn() };
             handler();
-            expect(list.datasource.listRecords).toHaveBeenCalled();
+            expect(list.datasource.listRecords).toHaveBeenCalledTimes(1);
             list.datasource = {};
             expect(() => handler()).not.toThrow();
             expect(list._listenerDestroyers.length).toBe(1);

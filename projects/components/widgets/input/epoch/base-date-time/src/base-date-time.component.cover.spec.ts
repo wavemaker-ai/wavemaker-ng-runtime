@@ -123,7 +123,7 @@ describe('BaseDateTimeComponent - coverage gaps', () => {
             jest.spyOn(comp, 'addDatepickerMouseEvents').mockImplementation(() => undefined);
             jest.spyOn(comp, 'setActiveDateFocus').mockImplementation(() => undefined);
             comp.showDatePickerModal(undefined);
-            expect(comp.datetimepickerComponent.show).toHaveBeenCalled();
+            expect(comp.datetimepickerComponent.show).toHaveBeenCalledTimes(1);
             expect(comp.activeDate instanceof Date).toBe(true);
             expect(Math.abs(comp.activeDate.getTime() - Date.now())).toBeLessThan(5000);
             jest.advanceTimersByTime(600);
@@ -160,7 +160,7 @@ describe('BaseDateTimeComponent - coverage gaps', () => {
             document.body.innerHTML = '<table><tr><td id="td"><span id="d">15</span></td></tr></table>';
             comp.setActiveDateFocus(new Date(2020, 5, 15), true);
             jest.advanceTimersByTime(50);
-            expect($('#d').attr('aria-label')).toBeTruthy();
+            expect($('#d').attr('aria-label')).toBe('Monday, June 15th 2020');
             expect($('#td').attr('aria-selected')).toBeUndefined();
             expect($('#d').attr('tabindex')).toBe('0');
         });
@@ -270,7 +270,7 @@ describe('BaseDateTimeComponent - coverage gaps', () => {
             expect(click).not.toHaveBeenCalled();
             comp._triggeredByUser = true;
             comp.onDateTimeInputFocus();
-            expect(click).toHaveBeenCalled();
+            expect(click).toHaveBeenCalledTimes(1);
         });
     });
 

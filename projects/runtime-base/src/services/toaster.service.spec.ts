@@ -127,7 +127,7 @@ describe('ToasterServiceImpl', () => {
         it('warns for invalid options', () => {
             const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
             service.setToasterConfig('bad');
-            expect(warn).toHaveBeenCalled();
+            expect(warn).toHaveBeenCalledWith('Please pass a valid options object, For Example : {maxOpened: 1, autoDismiss: true}');
             warn.mockRestore();
         });
     });

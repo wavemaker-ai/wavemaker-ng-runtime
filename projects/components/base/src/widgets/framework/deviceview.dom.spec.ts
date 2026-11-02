@@ -53,7 +53,7 @@ describe('updateDeviceView with a real DOM', () => {
         updateDeviceView(root);
         search.style.display = 'inline-table';
         page.click();
-        expect(leftNav.widget.collapse).toHaveBeenCalled();
+        expect(leftNav.widget.collapse).toHaveBeenCalledTimes(1);
         expect(setCSS).toHaveBeenCalledWith(search, 'display', 'none');
     });
 
@@ -82,7 +82,7 @@ describe('updateDeviceView with a real DOM', () => {
         updateDeviceView(root);
         const icon = root.querySelector('[data-role="page-left-panel-icon"]') as HTMLElement;
         icon.click();
-        expect(leftNav.widget.toggle).toHaveBeenCalled();
+        expect(leftNav.widget.toggle).toHaveBeenCalledTimes(1);
         expect(setCSS).not.toHaveBeenCalledWith(search, 'display', 'none');
         leftNav.classList.add('visible');
         icon.click();
@@ -118,7 +118,7 @@ describe('updateDeviceView with a real DOM', () => {
         expect(icon.nextElementSibling).toBe(search);
         search.style.display = 'none';
         icon.click();
-        expect(leftNav.widget.collapse).toHaveBeenCalled();
+        expect(leftNav.widget.collapse).toHaveBeenCalledTimes(1);
         expect(setCSS).toHaveBeenCalledWith(search, 'display', 'inline-table');
         search.style.display = 'inline-table';
         icon.click();

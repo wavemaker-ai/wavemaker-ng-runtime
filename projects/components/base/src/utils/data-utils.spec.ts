@@ -639,14 +639,14 @@ describe('interpolateBindExpressions', () => {
 
     it('should register a destroy listener', () => {
         interpolateBindExpressions(mockContext, mockFilterExpressions, mockCallbackFn);
-        expect(mockContext.registerDestroyListener).toHaveBeenCalled();
+        expect(mockContext.registerDestroyListener).toHaveBeenCalledWith(expect.any(Function));
     });
 
     it('should unsubscribe when destroy listener is called', () => {
         interpolateBindExpressions(mockContext, mockFilterExpressions, mockCallbackFn);
         const destroyFn = mockContext.registerDestroyListener.mock.calls[0][0];
         destroyFn();
-        expect(mockSubscription.unsubscribe).toHaveBeenCalled();
+        expect(mockSubscription.unsubscribe).toHaveBeenCalledTimes(1);
     });
 
     it('should handle string input for filterexpressions', () => {

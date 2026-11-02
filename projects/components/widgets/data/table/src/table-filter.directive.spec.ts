@@ -172,8 +172,8 @@ describe('TableFilterSortDirective', () => {
             // the constructor rebinds table.onRowFilterChange to the real directive method - spy on it post-construction
             const onChangeSpy = jest.spyOn(table, 'onRowFilterChange').mockImplementation(() => undefined);
             directive.clearFilter(false);
-            expect(col.resetFilter).toHaveBeenCalled();
-            expect(onChangeSpy).toHaveBeenCalled();
+            expect(col.resetFilter).toHaveBeenCalledTimes(1);
+            expect(onChangeSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should skip triggering the filter change when skipFilter is true (multicolumn)', () => {
@@ -221,7 +221,7 @@ describe('TableFilterSortDirective', () => {
             const directive = createDirective(table);
             const resetSpy = jest.spyOn(directive, 'resetSortStatus').mockImplementation(() => undefined);
             directive.checkFiltersApplied(undefined);
-            expect(resetSpy).toHaveBeenCalled();
+            expect(resetSpy).toHaveBeenCalledWith(undefined);
         });
     });
 
@@ -317,13 +317,13 @@ describe('TableFilterSortDirective', () => {
         it('should show the clear icon only when a defined, non-empty value is set', () => {
             table.rowFilter.firstname = { value: 'Ram' };
             const directive = createDirective(table);
-            expect(directive.showClearIcon('firstname')).toBeTruthy();
+            expect(directive.showClearIcon('firstname')).toBe(true);
         });
 
         it('should not show the clear icon for an empty value', () => {
             table.rowFilter.firstname = { value: '' };
             const directive = createDirective(table);
-            expect(directive.showClearIcon('firstname')).toBeFalsy();
+            expect(directive.showClearIcon('firstname')).toBe(false);
         });
 
         it('clearRowFilter should reset the column filter and notify the change', () => {
@@ -332,7 +332,7 @@ describe('TableFilterSortDirective', () => {
             const directive = createDirective(table);
             const onChangeSpy = jest.spyOn(directive, 'onRowFilterChange').mockImplementation(() => undefined);
             directive.clearRowFilter('firstname');
-            expect(table.columns.firstname.resetFilter).toHaveBeenCalled();
+            expect(table.columns.firstname.resetFilter).toHaveBeenCalledTimes(1);
             expect(onChangeSpy).toHaveBeenCalledWith('firstname');
         });
 
@@ -352,8 +352,8 @@ describe('TableFilterSortDirective', () => {
             const directive = createDirective(table);
             const onChangeSpy = jest.spyOn(table, 'onRowFilterChange').mockImplementation(() => undefined);
             directive.onFilterConditionSelect('firstname', 'null');
-            expect(table.columns.firstname.resetFilter).toHaveBeenCalled();
-            expect(onChangeSpy).toHaveBeenCalled();
+            expect(table.columns.firstname.resetFilter).toHaveBeenCalledTimes(1);
+            expect(onChangeSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should trigger the filter change immediately when a value is already present', () => {
@@ -361,7 +361,7 @@ describe('TableFilterSortDirective', () => {
             const directive = createDirective(table);
             const onChangeSpy = jest.spyOn(table, 'onRowFilterChange').mockImplementation(() => undefined);
             directive.onFilterConditionSelect('firstname', 'start');
-            expect(onChangeSpy).toHaveBeenCalled();
+            expect(onChangeSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should focus the field input when no value is present yet', () => {
@@ -370,7 +370,7 @@ describe('TableFilterSortDirective', () => {
             const directive = createDirective(table);
             directive.onFilterConditionSelect('firstname', 'start');
             jest.runAllTimers();
-            expect(table.columns.firstname.filterInstance.focus).toHaveBeenCalled();
+            expect(table.columns.firstname.filterInstance.focus).toHaveBeenCalledTimes(1);
             jest.useRealTimers();
         });
     });
@@ -393,7 +393,7 @@ describe('TableFilterSortDirective', () => {
             const directive = createDirective(table);
             const spy = jest.spyOn(directive as any, 'getFilterOnFieldValues');
             directive.onRowFilterChange('firstname');
-            expect(spy).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledWith({ field: 'firstname', type: 'string', filteronfilter: undefined });
         });
     });
 
@@ -423,7 +423,7 @@ describe('TableFilterSortDirective', () => {
             const directive = createDirective(table);
             const searchSpy = jest.spyOn(directive as any, 'searchHandler').mockImplementation(() => undefined);
             directive.searchSortHandler({}, undefined, 'search');
-            expect(searchSpy).toHaveBeenCalled();
+            expect(searchSpy).toHaveBeenCalledWith({}, undefined, 'search', undefined);
             expect(table.gridOptions.setLastActionPerformed).toHaveBeenCalledWith('search_or_sort');
         });
 
@@ -431,7 +431,7 @@ describe('TableFilterSortDirective', () => {
             const directive = createDirective(table);
             const sortSpy = jest.spyOn(directive as any, 'sortHandler').mockImplementation(() => undefined);
             directive.searchSortHandler({}, undefined, 'sort');
-            expect(sortSpy).toHaveBeenCalled();
+            expect(sortSpy).toHaveBeenCalledWith({}, undefined, 'sort', undefined);
         });
 
         it('should stop propagation on a change event outside multicolumn mode instead of dispatching', () => {
@@ -439,7 +439,7 @@ describe('TableFilterSortDirective', () => {
             const searchSpy = jest.spyOn(directive as any, 'searchHandler');
             const event = { type: 'change', stopPropagation: jest.fn() };
             directive.searchSortHandler({}, event, 'search');
-            expect(event.stopPropagation).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalledTimes(1);
             expect(searchSpy).not.toHaveBeenCalled();
         });
     });
@@ -459,7 +459,7 @@ describe('TableFilterSortDirective', () => {
             const directive = createDirective(table);
             const serverSortSpy = jest.spyOn(directive as any, 'handleSeverSideSort').mockImplementation(() => undefined);
             (directive as any).sortHandler({ field: 'age', direction: 'asc' }, undefined, 'sort');
-            expect(serverSortSpy).toHaveBeenCalled();
+            expect(serverSortSpy).toHaveBeenCalledWith({ field: 'age', direction: 'asc' }, undefined, undefined);
         });
 
         it('should fall back to client-side sort when the datasource is not sortable', () => {
@@ -467,7 +467,7 @@ describe('TableFilterSortDirective', () => {
             const directive = createDirective(table);
             const clientSpy = jest.spyOn(directive as any, 'handleClientSideSortSearch').mockImplementation(() => undefined);
             (directive as any).sortHandler({ field: 'age', direction: 'asc' }, undefined, 'sort');
-            expect(clientSpy).toHaveBeenCalled();
+            expect(clientSpy).toHaveBeenCalledWith({ field: 'age', direction: 'asc' }, undefined, 'sort');
         });
     });
 
@@ -477,7 +477,7 @@ describe('TableFilterSortDirective', () => {
             table.isNavigationEnabled.mockReturnValue(false);
             const directive = createDirective(table);
             (directive as any).handleClientSideSortSearch({ field: 'firstname', value: 'Ram' }, undefined, 'search');
-            expect(table.setGridData).toHaveBeenCalled();
+            expect(table.setGridData).toHaveBeenCalledTimes(1);
         });
 
         it('should update the data navigator when navigation is enabled', () => {
@@ -485,7 +485,7 @@ describe('TableFilterSortDirective', () => {
             table.isNavigationEnabled.mockReturnValue(true);
             const directive = createDirective(table);
             (directive as any).handleClientSideSortSearch({}, undefined, 'search');
-            expect(table.dataNavigator.setPagingValues).toHaveBeenCalled();
+            expect(table.dataNavigator.setPagingValues).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -495,7 +495,7 @@ describe('TableFilterSortDirective', () => {
             (refreshDataSource as jest.Mock).mockReturnValue(Promise.resolve());
             const directive = createDirective(table);
             (directive as any).searchHandler({ field: 'firstname', value: 'Ram' }, undefined, 'search');
-            expect(refreshDataSource).toHaveBeenCalled();
+            expect(refreshDataSource).toHaveBeenCalledWith(table.datasource, expect.objectContaining({ page: 1 }));
         });
     });
 

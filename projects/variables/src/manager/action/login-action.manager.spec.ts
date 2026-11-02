@@ -106,7 +106,7 @@ describe('LoginActionManager', () => {
             await Promise.resolve();
             jest.runAllTimers();
             expect(routerService.navigate).not.toHaveBeenCalled();
-            expect(appManager.executeSessionFailureRequests).toHaveBeenCalled();
+            expect(appManager.executeSessionFailureRequests).toHaveBeenCalledTimes(1);
             jest.useRealTimers();
         });
 

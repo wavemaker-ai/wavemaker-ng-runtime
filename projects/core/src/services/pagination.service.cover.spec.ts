@@ -78,7 +78,7 @@ describe('PaginationService (cover)', () => {
             service.bindScrollEvt(t.parent, 'tbody', 10);
             const ev1 = { target: scrollTarget({ [posProp as string]: 0 }), stopPropagation: jest.fn() };
             t.handlers[scrollEvt as string].call(document.createElement('div'), ev1);
-            expect(ev1.stopPropagation).toHaveBeenCalled();
+            expect(ev1.stopPropagation).toHaveBeenCalledTimes(1);
 
             const t2 = build({ direction, scrollable: true, widgetType: 'wm-table', navScroll: false });
             service.bindScrollEvt(t2.parent, 'tbody', 10);
