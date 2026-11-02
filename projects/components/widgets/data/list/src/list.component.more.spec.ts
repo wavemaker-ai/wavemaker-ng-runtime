@@ -263,26 +263,29 @@ describe('ListComponent - more behaviour', () => {
             return ul.querySelector('#in') as HTMLElement;
         };
 
-        it('invokes the click callback with the item context for enabled items only', () => {
+        it('invokes the click callback with the list as widget and the clicked item', () => {
             const invoke = jest.spyOn(list, 'invokeEventCallback').mockImplementation(() => undefined);
-            const ctx: any = { disableItem: false, item: { id: 1 } };
-            const inner = attach(ctx);
+            const inner = attach({ item: { id: 1 } });
             list.handleEvent(list.nativeElement, 'click', jest.fn(), {});
-            inner.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-            expect(invoke).toHaveBeenCalledWith('click', expect.objectContaining({ widget: ctx, item: ctx.item }));
+            const evt = new MouseEvent('click', { bubbles: true });
+            inner.dispatchEvent(evt);
+            expect(invoke).toHaveBeenCalledWith('click', { widget: list.widget, $event: evt, item: { id: 1 } });
+        });
 
-            invoke.mockClear();
-            ctx.disableItem = true;
-            inner.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        it('does not invoke the click callback for clicks outside a list item', () => {
+            const invoke = jest.spyOn(list, 'invokeEventCallback').mockImplementation(() => undefined);
+            attach({ item: {} });
+            list.handleEvent(list.nativeElement, 'click', jest.fn(), {});
+            list.nativeElement.querySelector('ul.app-livelist-container').dispatchEvent(new MouseEvent('click', { bubbles: true }));
             expect(invoke).not.toHaveBeenCalled();
         });
 
         it('maps tap to click', () => {
             const invoke = jest.spyOn(list, 'invokeEventCallback').mockImplementation(() => undefined);
-            const inner = attach({ disableItem: false, item: {} });
+            const inner = attach({ item: {} });
             list.handleEvent(list.nativeElement, 'tap', jest.fn(), {});
             inner.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-            expect(invoke).toHaveBeenCalledWith('tap', expect.any(Object));
+            expect(invoke).toHaveBeenCalledWith('tap', expect.objectContaining({ widget: list.widget }));
         });
 
         it('resolves the owning list item of a click inside a nested list item', () => {

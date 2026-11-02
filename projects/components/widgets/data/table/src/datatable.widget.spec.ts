@@ -349,7 +349,7 @@ describe('wm.datatable jQuery widget', () => {
             expect(ctx.$el.find('th input:checkbox').prop('checked')).toBe(true);
             rows.eq(1).find('td').eq(0).trigger('click');
             expect(rows.eq(1).find('.sr-only').first().text()).toBe('Row Deselected');
-            expect(ctx.options.onRowDeselect).toHaveBeenCalled();
+            expect(ctx.options.onRowDeselect).toHaveBeenCalledWith(expect.objectContaining({ id: 2, name: 'Bob' }), expect.anything());
             expect(ctx.$el.find('th input:checkbox').prop('checked')).toBe(false);
         });
 
@@ -386,7 +386,7 @@ describe('wm.datatable jQuery widget', () => {
             expect(ctx.$el.find('tr.app-datagrid-row').eq(2).hasClass('active')).toBe(true);
             ctx.$el.datatable('deselectRow', 2);
             expect(ctx.$el.find('tr.app-datagrid-row').eq(2).hasClass('active')).toBe(false);
-            expect(ctx.options.callOnRowDeselectEvent).toHaveBeenCalled();
+            expect(ctx.options.callOnRowDeselectEvent).toHaveBeenCalledWith(ctx.instance.preparedData[2]);
             ctx.$el.datatable('selectRow', { id: 99 }, true);
             expect(ctx.$el.find('tr.app-datagrid-row.active').length).toBe(0);
         });
@@ -396,7 +396,7 @@ describe('wm.datatable jQuery widget', () => {
             ctx.$el.datatable('selectFirstRow', true);
             expect(ctx.$el.find('tr.app-datagrid-row').eq(0).hasClass('active')).toBe(true);
             ctx.$el.datatable('selectFirstRow', false, true);
-            expect(ctx.options.onRowSelect).toHaveBeenCalled();
+            expect(ctx.options.onRowSelect).toHaveBeenCalledWith(ctx.options.data[0], expect.anything());
         });
 
         it('selects the first row after render when the option is set', () => {
@@ -408,13 +408,13 @@ describe('wm.datatable jQuery widget', () => {
         it('handles double clicks', () => {
             ctx = mount();
             ctx.$el.find('tr.app-datagrid-row').eq(1).trigger('dblclick');
-            expect(ctx.options.onRowDblClick).toHaveBeenCalled();
+            expect(ctx.options.onRowDblClick).toHaveBeenCalledWith(ctx.instance.preparedData[1], expect.anything());
         });
 
         it('returns selected rows', () => {
             ctx = mount();
             ctx.$el.find('tr.app-datagrid-row').eq(1).trigger('click');
-            expect(ctx.$el.datatable('getSelectedRows')).toBeDefined();
+            expect(ctx.$el.datatable('getSelectedRows')).toEqual([ctx.options.data[1]]);
         });
     });
 
@@ -465,7 +465,7 @@ describe('wm.datatable jQuery widget', () => {
         it('returns the sort direction of a column', () => {
             ctx = mount({ sortInfo: { field: 'name', direction: 'asc' } });
             expect(ctx.instance._getColumnSortDirection('name')).toBe('asc');
-            expect(ctx.instance._getColumnSortDirection('id')).toBeFalsy();
+            expect(ctx.instance._getColumnSortDirection('id')).toBe('');
         });
     });
 
@@ -474,15 +474,15 @@ describe('wm.datatable jQuery widget', () => {
             ctx = mount({ enableColumnSelection: true, enableSort: false });
             const th = ctx.$el.find('th.app-datagrid-header-cell').eq(1);
             th.find('.header-data').first().trigger('click');
-            expect(ctx.options.onColumnSelect).toHaveBeenCalled();
+            expect(ctx.options.onColumnSelect).toHaveBeenCalledWith(expect.objectContaining({ data: ['Alice', 'Bob', 'Carol'] }), expect.anything());
             th.find('.header-data').first().trigger('click');
-            expect(ctx.options.onColumnDeselect).toHaveBeenCalled();
+            expect(ctx.options.onColumnDeselect).toHaveBeenCalledWith(expect.objectContaining({ data: ['Alice', 'Bob', 'Carol'] }), expect.anything());
         });
 
         it('raises header clicks', () => {
             ctx = mount({ enableColumnSelection: true });
             ctx.$el.find('th.app-datagrid-header-cell').eq(0).trigger('click');
-            expect(ctx.options.onHeaderClick).toHaveBeenCalled();
+            expect(ctx.options.onHeaderClick).toHaveBeenCalledWith(ctx.instance.preparedHeaderData[0], expect.anything());
         });
     });
 
@@ -569,8 +569,8 @@ describe('wm.datatable jQuery widget', () => {
             ctx.$el.datatable('expandRow', 0);
             detailRow().show();
             ctx.$el.datatable('collapseRow', 0);
-            expect(ctx.options.onBeforeRowCollapse).toHaveBeenCalled();
-            expect(ctx.options.onRowCollapse).toHaveBeenCalled();
+            expect(ctx.options.onBeforeRowCollapse).toHaveBeenCalledTimes(1);
+            expect(ctx.options.onRowCollapse).toHaveBeenCalledTimes(1);
         });
 
         it('keeps the row expanded when the collapse is cancelled', () => {
@@ -596,7 +596,7 @@ describe('wm.datatable jQuery widget', () => {
             ctx.$el.datatable('expandRow', 0);
             ctx.$el.find('tr.app-datagrid-detail-row').eq(0).show();
             ctx.$el.datatable('expandRow', 1);
-            expect(ctx.options.onRowCollapse).toHaveBeenCalled();
+            expect(ctx.options.onRowCollapse).toHaveBeenCalledTimes(1);
         });
 
         it('toggles from the expansion button', () => {
@@ -665,7 +665,7 @@ describe('wm.datatable jQuery widget', () => {
                 colDefs: [defaultCol('id', { searchable: false }), defaultCol('name'), defaultCol('age')],
                 getFilterWidget: jest.fn((field: string) => `<input class="flt" data-f="${field}">`),
             });
-            expect(ctx.options.generateFilterRow).toHaveBeenCalled();
+            expect(ctx.options.generateFilterRow).toHaveBeenCalledTimes(1);
             expect(ctx.options.getFilterWidget).toHaveBeenCalledTimes(2);
             expect(ctx.$el.find('tr.filter-row th')).toHaveLength(3);
             expect(ctx.$el.find('.flt')).toHaveLength(2);
@@ -768,7 +768,7 @@ describe('wm.datatable jQuery widget', () => {
             ctx.instance.options.actionRowIndex = 1;
             ctx.instance.preparedData[1].name = 'Changed';
             ctx.instance._handleCRUDForInfiniteScroll(ctx.instance.gridElement);
-            expect(ctx.options.generateCustomExpressions).toHaveBeenCalled();
+            expect(ctx.options.generateCustomExpressions).toHaveBeenCalledWith(ctx.instance.preparedData[1], 1);
             expect(ctx.$el.find('tr.app-datagrid-row[data-row-id="1"] td').eq(1).text()).toBe('Changed');
         });
 
@@ -788,7 +788,7 @@ describe('wm.datatable jQuery widget', () => {
             expect(ctx.options.addLoadMoreBtn).toHaveBeenCalled();
             ctx.instance.options.navigation = 'Scroll';
             ctx.instance.addNavigationControls();
-            expect(ctx.options.bindScrollEvt).toHaveBeenCalled();
+            expect(ctx.options.bindScrollEvt).toHaveBeenCalledTimes(1);
         });
 
         it('hides the load more link on the last page', () => {
@@ -964,7 +964,7 @@ describe('wm.datatable jQuery widget', () => {
             row.on('click', click);
             key(row[0], 13);
             jest.advanceTimersByTime(200);
-            expect(click).toHaveBeenCalled();
+            expect(click).toHaveBeenCalledTimes(1);
         });
 
         it('ignores enter on selection columns of multi select tables', () => {
@@ -995,7 +995,7 @@ describe('wm.datatable jQuery widget', () => {
             const click = jest.fn();
             row.on('click', click);
             key(row[0], 27);
-            expect(click).toHaveBeenCalled();
+            expect(click).toHaveBeenCalledTimes(1);
         });
 
         it('stops an enter from reaching a parent form', () => {
@@ -1003,7 +1003,7 @@ describe('wm.datatable jQuery widget', () => {
             const $row = ctx.$el.find('tr.app-datagrid-row').first();
             const ev: any = { stopPropagation: jest.fn() };
             ctx.instance._onEnter($row, $row, false, ev);
-            expect(ev.stopPropagation).toHaveBeenCalled();
+            expect(ev.stopPropagation).toHaveBeenCalledTimes(1);
             const btn = $('<button>').appendTo($row);
             ctx.instance._onEnter(btn, $row, false, ev);
             expect(ev.stopPropagation).toHaveBeenCalledTimes(1);
@@ -1015,7 +1015,7 @@ describe('wm.datatable jQuery widget', () => {
             const handler = jest.fn();
             $row.on('click', handler);
             ctx.instance._onEnter($row, $row, true, { stopPropagation: jest.fn() });
-            expect(handler).toHaveBeenCalled();
+            expect(handler).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -1093,17 +1093,17 @@ describe('wm.datatable jQuery widget', () => {
                 expect(row(1).find('td').eq(0).hasClass('cell-editing')).toBe(false);
                 expect(ctx.options.setActionRowIndex).toHaveBeenCalledWith('1');
                 expect(ctx.options.setLastActionPerformed).toHaveBeenCalledWith('edit');
-                expect(ctx.options.callLoadInlineWidgetData).toHaveBeenCalled();
-                expect(ctx.options.removeValidations).toHaveBeenCalled();
+                expect(ctx.options.callLoadInlineWidgetData).toHaveBeenCalledTimes(1);
+                expect(ctx.options.removeValidations).toHaveBeenCalledTimes(1);
                 expect(ctx.options.generateInlineEditRow).toHaveBeenCalledWith(expect.objectContaining({ $index: 2 }), undefined);
-                expect(ctx.options.applyValidations).toHaveBeenCalled();
+                expect(ctx.options.applyValidations).toHaveBeenCalledTimes(2);
                 expect(row(1).find('td.cell-editing').last().hasClass('required-field')).toBe(true);
                 expect(row(1).find('.edit-row-button').hasClass('hidden')).toBe(true);
                 expect(row(1).find('.save-edit-row-button').hasClass('hidden')).toBe(false);
                 expect(row(1).find('.delete-row-button').hasClass('disabled-action')).toBe(false);
                 expect(row(0).find('.edit-row-button').hasClass('disabled-action')).toBe(true);
                 expect(ctx.options.setGridEditMode).toHaveBeenCalledWith(true);
-                expect(ctx.options.onFormRender).toHaveBeenCalled();
+                expect(ctx.options.onFormRender).toHaveBeenCalledWith(expect.anything(), expect.anything(), 'edit', false);
             });
 
             it('marks cells with expressions or format patterns as editable expressions', () => {
@@ -1165,7 +1165,7 @@ describe('wm.datatable jQuery widget', () => {
                 editable({ beforeRowInsert: jest.fn(), rowActions: [] });
                 addFooter();
                 ctx.$el.datatable('addNewRow');
-                expect(ctx.options.beforeRowInsert).toHaveBeenCalled();
+                expect(ctx.options.beforeRowInsert).toHaveBeenCalledTimes(1);
                 expect(ctx.$el.find('tr.app-datagrid-row')).toHaveLength(4);
                 expect(row(3).hasClass('row-editing')).toBe(true);
                 expect(ctx.options.onBeforeFormRender).toHaveBeenCalledWith(expect.anything(), expect.anything(), 'new');
@@ -1254,7 +1254,7 @@ describe('wm.datatable jQuery widget', () => {
                 fieldValues = { name: 'Alice', age: 30 };
                 const success = jest.fn();
                 row(0).trigger('click', [undefined, { action: 'save', success }]);
-                expect(ctx.options.noChangesDetected).toHaveBeenCalled();
+                expect(ctx.options.noChangesDetected).toHaveBeenCalledTimes(1);
                 expect(success).toHaveBeenCalledWith(false);
                 expect(row(0).hasClass('row-editing')).toBe(false);
                 expect(row(0).find('td').eq(1).text()).toBe('Alice');
@@ -1333,7 +1333,7 @@ describe('wm.datatable jQuery widget', () => {
                 const newRow = ctx.$el.find('tr.row-editing');
                 newRow.trigger('click', [undefined, { action: 'save' }]);
                 expect(ctx.options.onRowInsert).toHaveBeenCalledWith(expect.objectContaining({ name: 'New', age: '5' }), expect.anything(), expect.any(Function), {});
-                expect(ctx.options.setGridEditMode).toHaveBeenCalled();
+                expect(ctx.options.setGridEditMode).toHaveBeenCalledWith(true);
             });
 
             it('stops inserting when onBeforeRowInsert cancels', () => {
@@ -1369,7 +1369,7 @@ describe('wm.datatable jQuery widget', () => {
                 const spy = jest.fn();
                 row(0).on('click', spy);
                 ctx.$el.datatable('saveRow', jest.fn());
-                expect(spy).toHaveBeenCalled();
+                expect(spy).toHaveBeenCalledTimes(1);
                 expect(spy.mock.calls[0][2]).toMatchObject({ action: 'save', skipSelect: true, noMsg: true });
             });
 
@@ -1378,7 +1378,7 @@ describe('wm.datatable jQuery widget', () => {
                 startEdit(0);
                 fieldValues = { name: 'Q', age: 1 };
                 startEdit(1);
-                expect(ctx.options.afterRowUpdate).toHaveBeenCalled();
+                expect(ctx.options.afterRowUpdate).toHaveBeenCalledWith(expect.objectContaining({ id: 1, name: 'Q' }), expect.anything(), expect.any(Function), {});
             });
         });
 
@@ -1435,7 +1435,7 @@ describe('wm.datatable jQuery widget', () => {
                 editable({ editmode: 'quickedit', showNewRow: true, isNavTypeScrollOrOndemand: jest.fn(() => true), getCurrentPage: jest.fn(() => 1) });
                 const reset = jest.spyOn(ctx.instance, 'resetNewRow').mockImplementation(() => undefined);
                 ctx.instance.hideRowEditMode(ctx.$el.find('tr.always-new-row'));
-                expect(reset).toHaveBeenCalled();
+                expect(reset).toHaveBeenCalledTimes(1);
             });
 
             it('removes new rows and updates the status', () => {
@@ -1493,7 +1493,7 @@ describe('wm.datatable jQuery widget', () => {
                 editable({ onBeforeRowDelete: jest.fn(), beforeRowDelete: jest.fn() });
                 row(0).addClass('active');
                 del(0);
-                expect(ctx.options.beforeRowDelete).toHaveBeenCalled();
+                expect(ctx.options.beforeRowDelete).toHaveBeenCalledWith(ctx.options.data[0], expect.anything());
                 expect(ctx.options.onBeforeRowDelete).toHaveBeenCalledWith(ctx.options.data[0], expect.anything(), {});
                 expect(row(0).hasClass('danger')).toBe(true);
                 expect(row(0).hasClass('active')).toBe(false);
@@ -1542,7 +1542,7 @@ describe('wm.datatable jQuery widget', () => {
                 const handler = jest.fn();
                 row(1).on('click', handler);
                 success(false, undefined);
-                expect(handler).toHaveBeenCalled();
+                expect(handler).toHaveBeenCalledTimes(1);
                 handler.mockClear();
                 success(false, true);
                 expect(handler).not.toHaveBeenCalled();
@@ -1552,7 +1552,7 @@ describe('wm.datatable jQuery widget', () => {
                 editable({ multiselect: true });
                 const spy = jest.spyOn(ctx.instance, 'updateSelectAllCheckboxState');
                 ctx.instance.deleteRowAndUpdateSelectAll({ target: row(0).find('.delete-row-button')[0], stopPropagation: jest.fn() });
-                expect(spy).toHaveBeenCalled();
+                expect(spy).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -1562,7 +1562,7 @@ describe('wm.datatable jQuery widget', () => {
                 startEdit(0);
                 const focus = jest.spyOn(ctx.instance, 'setFocusOnElement').mockImplementation(() => undefined);
                 ctx.instance.editSuccessHandler(false, true, { target: row(0)[0] }, row(0));
-                expect(focus).toHaveBeenCalled();
+                expect(focus).toHaveBeenCalledWith(expect.objectContaining({ target: row(0)[0] }));
             });
 
             it('moves to the neighbouring row with the arrow direction', () => {
@@ -1582,7 +1582,7 @@ describe('wm.datatable jQuery widget', () => {
                 expect(handler).toHaveBeenCalledWith(expect.anything(), undefined, expect.objectContaining({ action: 'edit', skipSelect: true }));
                 const add = jest.spyOn(ctx.instance, 'addNewRow').mockImplementation(() => undefined);
                 ctx.instance.editSuccessHandler(false, undefined, {}, row(2), false);
-                expect(add).toHaveBeenCalled();
+                expect(add).toHaveBeenCalledTimes(1);
                 ctx.instance.options.actionsEnabled.new = false;
                 ctx.instance.editSuccessHandler(false, undefined, {}, row(2), false);
                 expect(add).toHaveBeenCalledTimes(1);
@@ -1594,7 +1594,7 @@ describe('wm.datatable jQuery widget', () => {
                 ctx.instance.editSuccessHandler(false, undefined, {}, row(2), true);
                 expect(add).not.toHaveBeenCalled();
                 ctx.instance.editSuccessHandler(false, undefined, {}, row(2), false);
-                expect(add).toHaveBeenCalled();
+                expect(add).toHaveBeenCalledTimes(1);
             });
 
             it('detects the last editable column', () => {
@@ -1632,7 +1632,7 @@ describe('wm.datatable jQuery widget', () => {
                 const input = ctx.$el.find('tr.always-new-row input')[0] as HTMLInputElement;
                 const focus = jest.spyOn(input, 'focus');
                 ctx.instance.focusNewRow();
-                expect(focus).toHaveBeenCalled();
+                expect(focus).toHaveBeenCalledTimes(1);
             });
 
             it('reads field values for edited and new rows', () => {
@@ -1666,7 +1666,7 @@ describe('wm.datatable jQuery widget', () => {
             expect(ctx.$el.find('.loading-data-msg')).toHaveLength(1);
             expect(ctx.$el.find('.loading-data-msg .loading-text').html()).toBe('Loading data');
             expect(btn[0].style.display).toBe('none');
-            expect(cb).toHaveBeenCalled();
+            expect(cb).toHaveBeenCalledTimes(1);
         });
 
         it('does not add a button on the last page unless scrolling', () => {
@@ -1687,8 +1687,8 @@ describe('wm.datatable jQuery widget', () => {
             const render = jest.spyOn(ctx.instance, '_renderGrid').mockImplementation(() => undefined);
             ctx.$el.datatable('addLoadMoreBtn', 'More', 'Loading', undefined, false);
             ctx.$el.find('.on-demand-load-btn').trigger('click');
-            expect(ctx.options.enableNavigation).toHaveBeenCalled();
-            expect(render).toHaveBeenCalled();
+            expect(ctx.options.enableNavigation).toHaveBeenCalledTimes(1);
+            expect(render).toHaveBeenCalledTimes(1);
             expect(ctx.instance.renderTableOnViewLess).toBe(true);
         });
 
@@ -1720,7 +1720,7 @@ describe('wm.datatable jQuery widget', () => {
             ctx.instance.options.addLoadMoreBtn = jest.fn();
             ctx.$el.find('.on-demand-datagrid').remove();
             ctx.$el.datatable('hideLoadingIndicator', true, true);
-            expect(ctx.instance.options.addLoadMoreBtn).toHaveBeenCalled();
+            expect(ctx.instance.options.addLoadMoreBtn).toHaveBeenCalledTimes(1);
             ctx.$el.datatable('hideLoadingIndicator', false, false);
             ctx.instance.options.showviewlessbutton = false;
             ctx.$el.find('.app-grid-header-inner').append('<div class="on-demand-datagrid"></div>');
@@ -1964,7 +1964,7 @@ describe('wm.datatable jQuery widget', () => {
             header[0].addEventListener('click', click);
             header.trigger($.Event('keydown', { key: 'Enter' }));
             jest.runAllTimers();
-            expect(click).toHaveBeenCalled();
+            expect(click).toHaveBeenCalledTimes(1);
         });
 
         it('clicks the checkbox when enter is pressed on the checkbox header cell', () => {
@@ -1973,7 +1973,7 @@ describe('wm.datatable jQuery widget', () => {
             const click = jest.fn();
             th.find('input').on('click', click);
             th.trigger($.Event('keydown', { key: 'Enter', target: th[0] }));
-            expect(click).toHaveBeenCalled();
+            expect(click).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -2015,18 +2015,14 @@ describe('wm.datatable jQuery widget', () => {
             $('<div class="app-grid" widget-id="grid-b"><input class="other"></div>').appendTo(document.body);
         };
 
-        it('saves the row when the focus moves to another grid', () => {
+        it('does not save a regular row on focusout when the focus moves to another grid', () => {
+            // [WMS-31104] the other grid's row click / the document click handler saves this row instead
             ctx = quick();
             wrapInGrid();
             row(0).find('td').first().trigger('focusin');
             const spy = jest.spyOn(ctx.instance, 'toggleEditRow').mockImplementation(() => undefined);
             focusOut(row(0).find('td').eq(1)[0], $('.other')[0]);
-            expect(ctx.options.timeoutCall).toHaveBeenCalled();
-            expect(spy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: 'save', noMsg: true }));
-            const success = (spy.mock.calls as any)[0][1].success;
-            const next = jest.spyOn(ctx.instance, 'editSuccessHandler').mockImplementation(() => undefined);
-            success(false, undefined, false);
-            expect(next).not.toHaveBeenCalled();
+            expect(spy).not.toHaveBeenCalled();
         });
 
         it('does not save when the focus leaves the grids or stays in the same row', () => {
@@ -2057,7 +2053,7 @@ describe('wm.datatable jQuery widget', () => {
         it('saves and moves on when tabbing out of the last column of the same grid', () => {
             ctx = quick();
             wrapInGrid();
-            const sameGridInput = $('<input class="same">').appendTo(ctx.$el.closest('.app-grid'));
+            const sameGridInput = $('<input class="same">').appendTo(row(1).find('td').first());
             row(0).find('td').first().trigger('focusin');
             const spy = jest.spyOn(ctx.instance, 'toggleEditRow').mockImplementation(() => undefined);
             jest.spyOn(ctx.instance, 'isLastColumn').mockReturnValue(true);
@@ -2065,7 +2061,7 @@ describe('wm.datatable jQuery widget', () => {
             expect(spy).toHaveBeenCalledTimes(1);
             const next = jest.spyOn(ctx.instance, 'editSuccessHandler').mockImplementation(() => undefined);
             (spy.mock.calls as any)[0][1].success(false, undefined, false);
-            expect(next).toHaveBeenCalled();
+            expect(next).toHaveBeenCalledTimes(1);
             (spy.mock.calls as any)[0][1].success(false, undefined, true);
             expect(next).toHaveBeenCalledTimes(1);
         });
@@ -2095,8 +2091,8 @@ describe('wm.datatable jQuery widget', () => {
             ctx.instance._onEnter(input, $row, true, { stopPropagation: jest.fn() });
             const success = (spy.mock.calls as any)[0][1].success;
             success(false, undefined);
-            expect(hide).toHaveBeenCalled();
-            expect(focusNew).toHaveBeenCalled();
+            expect(hide).toHaveBeenCalledTimes(1);
+            expect(focusNew).toHaveBeenCalledTimes(1);
             expect($row.hasClass('active')).toBe(false);
         });
 
@@ -2118,7 +2114,7 @@ describe('wm.datatable jQuery widget', () => {
             const focusActive = jest.spyOn(ctx.instance, 'focusActiveRow').mockImplementation(() => undefined);
             ctx.instance._onEnter($row.find('input').first(), $row, false, { stopPropagation: jest.fn() });
             (spy.mock.calls as any)[0][1].success(false, undefined);
-            expect(focusActive).toHaveBeenCalled();
+            expect(focusActive).toHaveBeenCalledTimes(1);
         });
 
         it('focuses the new row after pressing enter on it', () => {

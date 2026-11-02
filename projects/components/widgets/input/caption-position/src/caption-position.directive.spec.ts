@@ -288,8 +288,8 @@ describe('CaptionPositionDirective', () => {
             const observer = (directive as any)._attrObserver;
             const disconnectSpy = jest.spyOn(observer, 'disconnect');
             directive.ngOnDestroy();
-            expect(unsubscribeFn).toHaveBeenCalled();
-            expect(disconnectSpy).toHaveBeenCalled();
+            expect(unsubscribeFn).toHaveBeenCalledTimes(1);
+            expect(disconnectSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should be a no-op when neither subscription nor observer were set up', () => {

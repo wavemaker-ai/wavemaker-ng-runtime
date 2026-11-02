@@ -34,7 +34,7 @@ describe('LoginDialogDirective', () => {
     it('exposes doLogin on the dialog context', () => {
         const spy = jest.spyOn(directive, 'doLogin').mockImplementation(() => {});
         contexts[0].doLogin();
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledTimes(1);
     });
 
     describe('messages', () => {

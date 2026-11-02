@@ -96,7 +96,7 @@ describe("wm-rating: Component Specific tests", () => {
     it("should call MouseOver event listener", () => {
         jest.spyOn(wmComponent, "onMouseOver");
         testElement.nativeElement.dispatchEvent(new MouseEvent("mouseover"));
-        expect(wmComponent.onMouseOver).toHaveBeenCalled();
+        expect(wmComponent.onMouseOver).toHaveBeenCalledTimes(1);
     });
     it('should set "rating-label-hover" class on mouseover', () => {
         testElement.nativeElement.dispatchEvent(new MouseEvent("mouseover"));
@@ -108,7 +108,7 @@ describe("wm-rating: Component Specific tests", () => {
     it('should call TouchStart event listener', () => {
         const onTouchStartSpy = jest.spyOn(wmComponent, "onTouchStart");
         testElement.nativeElement.dispatchEvent(new Event("touchstart"));
-        expect(onTouchStartSpy).toHaveBeenCalled();
+        expect(onTouchStartSpy).toHaveBeenCalledTimes(1);
     });
     it('should not set "rating-label-hover" class on mouseover for touch enabled devices', () => {
         testElement.nativeElement.dispatchEvent(new Event("touchstart"));

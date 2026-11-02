@@ -271,7 +271,7 @@ describe('ListAnimator', () => {
             (a as any).actionItems = [l, r1, r2];
             (a as any).position = 'right';
             a.invokeFullSwipeEvt({} as any);
-            expect(r2.invokeEventCallback).toHaveBeenCalled();
+            expect(r2.invokeEventCallback).toHaveBeenCalledWith('tap', { $event: {} });
             expect(r1.invokeEventCallback).not.toHaveBeenCalled();
         });
 
@@ -312,7 +312,7 @@ describe('ListAnimator', () => {
             const a = create();
             (a as any).actionPanel = null;
             a.onAnimation({} as any, 10);
-            expect(list.triggerListItemSelection).toHaveBeenCalled();
+            expect(list.triggerListItemSelection).toHaveBeenCalledWith((a as any).li, {});
         });
 
         it('does nothing extra when fullswipe is disabled', () => {
@@ -327,14 +327,16 @@ describe('ListAnimator', () => {
             const spy = jest.spyOn(a, 'invokeFullSwipeEvt').mockImplementation(() => undefined);
             // 0.5*500*100/(300-200+100)=125
             a.onAnimation({} as any, 500);
-            expect(spy).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spy).toHaveBeenCalledWith({});
         });
 
         it('invokes full swipe using right index and negative distance', () => {
             const a = setup('right', 'true');
             const spy = jest.spyOn(a, 'invokeFullSwipeEvt').mockImplementation(() => undefined);
             a.onAnimation({} as any, -300);
-            expect(spy).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spy).toHaveBeenCalledWith({});
         });
 
         it('does not invoke when distance is under 50%', () => {

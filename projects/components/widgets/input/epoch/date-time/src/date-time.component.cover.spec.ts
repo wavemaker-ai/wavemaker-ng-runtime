@@ -142,7 +142,7 @@ describe('DatetimeComponent - coverage gaps', () => {
 
     it('computes the time pattern when the date pattern has no minutes', () => {
         cmp.datepattern = 'yyyy-MM-dd h';
-        expect(cmp.getTimePattern()).toBeDefined();
+        expect(cmp.getTimePattern()).toBe('');
     });
 
     it('does not open the timepicker on hideDatepickerDropdown without a date value', () => {
@@ -167,8 +167,8 @@ describe('DatetimeComponent - coverage gaps', () => {
             cmp.loadNativeDateInput = true;
             const e = evt('2024-03-05T10:20:30');
             cmp.onDisplayKeydown(e);
-            expect(e.preventDefault).toHaveBeenCalled();
-            expect(cmp.toggleDpDropdown).toHaveBeenCalled();
+            expect(e.preventDefault).toHaveBeenCalledTimes(1);
+            expect(cmp.toggleDpDropdown).toHaveBeenCalledTimes(1);
         });
 
         it('does not flag a matching numeric timestamp as invalid', () => {
@@ -183,7 +183,7 @@ describe('DatetimeComponent - coverage gaps', () => {
                 (getFormattedDate as jest.Mock).mockImplementation(actual);
             }
             expect(change).not.toHaveBeenCalled();
-            expect(cmp.toggleDpDropdown).toHaveBeenCalled();
+            expect(cmp.toggleDpDropdown).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -191,7 +191,7 @@ describe('DatetimeComponent - coverage gaps', () => {
         cmp.loadNativeDateInput = true;
         const fv = jest.spyOn(cmp, 'formatValidation').mockReturnValue(false);
         cmp.isValid(undefined);
-        expect(fv).toHaveBeenCalled();
+        expect(fv).toHaveBeenCalledTimes(1);
     });
 
     it('falls back to the global moment when the module has no default export', () => {

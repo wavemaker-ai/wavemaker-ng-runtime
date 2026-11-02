@@ -53,7 +53,7 @@ describe('WebSocketVariable', () => {
         const variable = new WebSocketVariable({});
         const closeSpy = jest.spyOn(variable, 'close');
         variable.cancel();
-        expect(closeSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalledTimes(1);
     });
 
     it('invoke() should delegate to open()', () => {

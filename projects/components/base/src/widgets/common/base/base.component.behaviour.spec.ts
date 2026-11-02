@@ -162,7 +162,7 @@ describe('BaseComponent - behaviour', () => {
             base.nativeElement.appendChild(media);
             base.widgetType = 'wm-video';
             base.onPropertyChange('autoplay', true);
-            expect(load).toHaveBeenCalled();
+            expect(load).toHaveBeenCalledTimes(1);
         });
 
         it('focuses the widget for autofocus', () => {
@@ -170,7 +170,7 @@ describe('BaseComponent - behaviour', () => {
             base.onPropertyChange('autofocus', false);
             expect(focus).not.toHaveBeenCalled();
             base.onPropertyChange('autofocus', true);
-            expect(focus).toHaveBeenCalled();
+            expect(focus).toHaveBeenCalledTimes(1);
         });
 
         it('notifies property and style listeners', () => {
@@ -298,7 +298,7 @@ describe('BaseComponent - behaviour', () => {
             expect(process).not.toHaveBeenCalled();
             base.nativeElement.removeAttribute('wmwidgetcontainer');
             base.processAttr('click.event', 'x()');
-            expect(process).toHaveBeenCalled();
+            expect(process).toHaveBeenCalledTimes(1);
         });
 
         it('stores plain attributes and strips class, name and tabindex from the element', async () => {
@@ -346,7 +346,7 @@ describe('BaseComponent - behaviour', () => {
 
         it('removes the watcher of a property', () => {
             base.removePropertyBinding('title');
-            expect(core.$unwatch).toHaveBeenCalled();
+            expect(core.$unwatch).toHaveBeenCalledWith(`${base.widgetId}_title`);
         });
 
         it('reads the attributes using their original case', () => {
@@ -414,12 +414,12 @@ describe('BaseComponent - behaviour', () => {
             base.nativeElement.appendChild(target);
             const focusTarget = jest.spyOn(target, 'focus');
             base.focus();
-            expect(focusTarget).toHaveBeenCalled();
+            expect(focusTarget).toHaveBeenCalledTimes(1);
             target.remove();
             base.nativeElement.tabIndex = 0;
             const focusSelf = jest.spyOn(base.nativeElement, 'focus');
             base.focus();
-            expect(focusSelf).toHaveBeenCalled();
+            expect(focusSelf).toHaveBeenCalledTimes(1);
         });
 
         it('executes nothing by default', () => {

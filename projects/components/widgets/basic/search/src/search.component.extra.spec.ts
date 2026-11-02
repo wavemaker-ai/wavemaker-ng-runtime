@@ -287,7 +287,7 @@ describe('SearchComponent - extra behaviour', () => {
             search.lastSelectedIndex = 1;
             search.setLastActiveMatchAsSelected();
             expect(search.typeaheadContainer._active).toBe('b');
-            expect(nextActiveMatch).toHaveBeenCalled();
+            expect(nextActiveMatch).toHaveBeenCalledTimes(1);
             expect(search.lastSelectedIndex).toBeUndefined();
             nextActiveMatch.mockClear();
             search.setLastActiveMatchAsSelected();
@@ -470,6 +470,21 @@ describe('SearchComponent - extra behaviour', () => {
             document.body.innerHTML = '<input class="app-search-input" aria-expanded="true">';
             search.ngAfterViewChecked();
             expect(document.querySelector('.app-search-input')!.hasAttribute('aria-expanded')).toBe(false);
+        });
+
+        it('pushes a changed minchars to the typeahead', () => {
+            search.typeahead = {};
+            search.onPropertyChange('minchars', 3, 1);
+            expect(search.typeahead._typeaheadMinLengthValue).toBe(3);
+        });
+
+        it('ignores a minchars change when there is no typeahead or no value', () => {
+            search.typeahead = undefined;
+            expect(() => search.onPropertyChange('minchars', 3, 1)).not.toThrow();
+
+            search.typeahead = {};
+            search.onPropertyChange('minchars', undefined, 1);
+            expect('_typeaheadMinLengthValue' in search.typeahead).toBe(false);
         });
 
         it('defaults minchars and the search icon from the type', () => {

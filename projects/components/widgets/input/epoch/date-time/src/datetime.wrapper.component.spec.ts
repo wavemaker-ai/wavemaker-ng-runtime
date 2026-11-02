@@ -335,7 +335,7 @@ describe("DatetimeComponent", () => {
         fixture.detectChanges();
         tick();
         const inputEle = getHtmlSelectorElement(fixture, '.app-textbox').nativeElement;
-        expect(inputEle.hasAttribute('autofocus')).toBeTruthy();
+        expect(inputEle.hasAttribute('autofocus')).toBe(true);
     }));
 
     it('should be able to set the mindate and disable the below mindate on calendar', fakeAsync(() => {
@@ -358,7 +358,7 @@ describe("DatetimeComponent", () => {
         tick();
         const isValidSpy = jest.spyOn((wmComponent as any), 'isValid');
         (wmComponent as any).isValid(null);
-        expect(isValidSpy).toHaveBeenCalled();
+        expect(isValidSpy).toHaveBeenCalledTimes(1);
         // Assuming isValid returns undefined for invalid dates
         expect(isValidSpy).toHaveReturnedWith(undefined);
     }));
@@ -473,7 +473,7 @@ describe(('Datetime Component with Localization'), () => {
 
         it('should call invokeOnTouched', () => {
             (wmComponent as any).hideTimepickerDropdown();
-            expect((wmComponent as any).invokeOnTouched).toHaveBeenCalled();
+            expect((wmComponent as any).invokeOnTouched).toHaveBeenCalledTimes(1);
         });
         it('should call app.notify if parentEl exists', () => {
             (wmComponent as any).hideTimepickerDropdown();
@@ -574,7 +574,7 @@ describe(('Datetime Component with Localization'), () => {
         it('should call onDateTimeInputFocus if loadNativeDateInput is true', () => {
             (wmComponent as any).loadNativeDateInput = true;
             wmComponent.toggleTimePicker(true);
-            expect((wmComponent as any).onDateTimeInputFocus).toHaveBeenCalled();
+            expect((wmComponent as any).onDateTimeInputFocus).toHaveBeenCalledTimes(1);
             expect(wmComponent.isTimeOpen).not.toBe(true);
         });
 
@@ -677,22 +677,22 @@ describe(('Datetime Component with Localization'), () => {
 
         it('should set isDateOpen to false', () => {
             wmComponent.hideDatepickerDropdown();
-            expect(wmComponent.isDateOpen).toBeFalsy();
+            expect(wmComponent.isDateOpen).toBe(false);
         });
 
         it('should deactivate focusTrap if it exists', () => {
             wmComponent.hideDatepickerDropdown();
-            expect((wmComponent as any).focusTrap.deactivate).toHaveBeenCalled();
+            expect((wmComponent as any).focusTrap.deactivate).toHaveBeenCalledTimes(1);
         });
 
         it('should call invokeOnTouched', () => {
             wmComponent.hideDatepickerDropdown();
-            expect((wmComponent as any).invokeOnTouched).toHaveBeenCalled();
+            expect((wmComponent as any).invokeOnTouched).toHaveBeenCalledTimes(1);
         });
 
         it('should hide bsDatePickerDirective', () => {
             wmComponent.hideDatepickerDropdown();
-            expect(wmComponent.bsDatePickerDirective.hide).toHaveBeenCalled();
+            expect(wmComponent.bsDatePickerDirective.hide).toHaveBeenCalledTimes(1);
         });
 
         it('should toggle time picker if bsDateValue exists', () => {
@@ -704,12 +704,12 @@ describe(('Datetime Component with Localization'), () => {
         it('should set isEnterPressedOnDateInput to false', () => {
             (wmComponent as any).isEnterPressedOnDateInput = true;
             wmComponent.hideDatepickerDropdown();
-            expect((wmComponent as any).isEnterPressedOnDateInput).toBeFalsy();
+            expect((wmComponent as any).isEnterPressedOnDateInput).toBe(false);
         });
 
         it('should call deregisterDatepickerEventListener if it exists', () => {
             wmComponent.hideDatepickerDropdown();
-            expect((wmComponent as any).deregisterDatepickerEventListener).toHaveBeenCalled();
+            expect((wmComponent as any).deregisterDatepickerEventListener).toHaveBeenCalledTimes(1);
         });
 
         it('should call app.notify if parentEl exists', () => {
@@ -740,7 +740,7 @@ describe(('Datetime Component with Localization'), () => {
         it('should return early if isEnterPressedOnDateInput is true', () => {
             (wmComponent as any).isEnterPressedOnDateInput = true;
             wmComponent.onDateChange({ target: { value: '2023-01-01' } });
-            expect((wmComponent as any).isEnterPressedOnDateInput).toBeFalsy();
+            expect((wmComponent as any).isEnterPressedOnDateInput).toBe(false);
         });
 
         it('should call getNativeDateObject with correct parameters', () => {
@@ -767,8 +767,8 @@ describe(('Datetime Component with Localization'), () => {
 
         it('should set invalidDateTimeFormat to false and call onModelUpdate', () => {
             wmComponent.onDateChange({ target: { value: '2023-01-01' } });
-            expect((wmComponent as any).invalidDateTimeFormat).toBeFalsy();
-            expect(wmComponent.onModelUpdate).toHaveBeenCalled();
+            expect((wmComponent as any).invalidDateTimeFormat).toBe(false);
+            expect(wmComponent.onModelUpdate).toHaveBeenCalledWith(expect.any(Date));
         });
     });
 
@@ -786,37 +786,37 @@ describe(('Datetime Component with Localization'), () => {
         it('should stop propagation if dropdown is enabled on input', () => {
             const event = { stopPropagation: jest.fn(), target: { value: '2023-01-01' }, key: 'a' };
             wmComponent.onDisplayKeydown(event);
-            expect(event.stopPropagation).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalledTimes(1);
         });
 
         it('should handle Enter key press', () => {
             const event = { preventDefault: jest.fn(), stopPropagation: jest.fn(), target: { value: '2023-01-01' }, key: 'Enter' };
             wmComponent.onDisplayKeydown(event);
-            expect(event.preventDefault).toHaveBeenCalled();
-            expect(wmComponent.toggleDpDropdown).toHaveBeenCalled();
+            expect(event.preventDefault).toHaveBeenCalledTimes(1);
+            expect(wmComponent.toggleDpDropdown).toHaveBeenCalledTimes(1);
         });
 
         it('should set invalidDateTimeFormat to true if input doesnt Math formatted Date', () => {
             const event = { preventDefault: jest.fn(), stopPropagation: jest.fn(), target: { value: '2023-01-02' }, key: 'Enter' };
             wmComponent.onDisplayKeydown(event);
-            expect((wmComponent as any).invalidDateTimeFormat).toBeTruthy();
-            expect((wmComponent as any).invokeOnChange).toHaveBeenCalled();
+            expect((wmComponent as any).invalidDateTimeFormat).toBe(true);
+            expect((wmComponent as any).invokeOnChange).toHaveBeenCalledTimes(1);
         });
 
         it('should set bsDatePickerDirective.bsValue if input matches formatted date', () => {
             const event = { preventDefault: jest.fn(), stopPropagation: jest.fn(), target: { value: '2023-01-01' }, key: 'Enter' };
             wmComponent.bsDatePickerDirective = { bsValue: null };
             wmComponent.onDisplayKeydown(event);
-            expect((wmComponent as any).invalidDateTimeFormat).toBeFalsy();
-            expect((wmComponent as any).isEnterPressedOnDateInput).toBeTruthy();
+            expect((wmComponent as any).invalidDateTimeFormat).toBe(false);
+            expect((wmComponent as any).isEnterPressedOnDateInput).toBe(true);
             expect(wmComponent.bsDatePickerDirective.bsValue).toEqual(expect.any(Date));
         });
 
         it('should hide datepicker and timepicker dropdowns for other keys', () => {
             const event = { stopPropagation: jest.fn(), target: { value: '2023-01-01' }, key: 'a' };
             wmComponent.onDisplayKeydown(event);
-            expect(wmComponent.hideDatepickerDropdown).toHaveBeenCalled();
-            expect((wmComponent as any).hideTimepickerDropdown).toHaveBeenCalled();
+            expect(wmComponent.hideDatepickerDropdown).toHaveBeenCalledTimes(1);
+            expect((wmComponent as any).hideTimepickerDropdown).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -840,7 +840,7 @@ describe(('Datetime Component with Localization'), () => {
         it('should call invokeOnTouched and invokeEventCallback if relatedTarget does not have current-date class', () => {
             const event = { relatedTarget: {} };
             wmComponent.onInputBlur(event);
-            expect((wmComponent as any).invokeOnTouched).toHaveBeenCalled();
+            expect((wmComponent as any).invokeOnTouched).toHaveBeenCalledTimes(1);
             expect((wmComponent as any).invokeEventCallback).toHaveBeenCalledWith('blur', { $event: event });
         });
 
@@ -883,19 +883,19 @@ describe(('Datetime Component with Localization'), () => {
 
         it('should update display value when type is date', () => {
             wmComponent.onModelUpdate(new Date('2023-01-01'), 'date');
-            expect((wmComponent as any).invalidDateTimeFormat).toBeFalsy();
+            expect((wmComponent as any).invalidDateTimeFormat).toBe(false);
             expect((global as any).$().find().val).toHaveBeenCalledWith('2023-01-01');
         });
 
         it('should call minDateMaxDateValidationOnInput', () => {
             wmComponent.onModelUpdate(new Date('2023-01-01'));
-            expect((wmComponent as any).minDateMaxDateValidationOnInput).toHaveBeenCalled();
+            expect((wmComponent as any).minDateMaxDateValidationOnInput).toHaveBeenCalledTimes(1);
         });
 
         it('should handle null newVal', () => {
             wmComponent.onModelUpdate(null);
             expect(wmComponent.bsDateValue).toBeUndefined();
-            expect((wmComponent as any)._debouncedOnChange).toHaveBeenCalled();
+            expect((wmComponent as any)._debouncedOnChange).toHaveBeenCalledTimes(1);
         });
 
         it('should toggle time picker if type is date and isDateOpen is true', () => {
@@ -907,15 +907,15 @@ describe(('Datetime Component with Localization'), () => {
         it('should update proxyModel and trigger change', () => {
             wmComponent.onModelUpdate(new Date('2023-01-01'));
             expect((wmComponent as any).proxyModel).toEqual(expect.any(Date));
-            expect((wmComponent as any)._debouncedOnChange).toHaveBeenCalled();
-            expect((wmComponent as any).cdRef.detectChanges).toHaveBeenCalled();
+            expect((wmComponent as any)._debouncedOnChange).toHaveBeenCalledTimes(1);
+            expect((wmComponent as any).cdRef.detectChanges).toHaveBeenCalledTimes(1);
         });
 
         it('should update timepicker fields when timezone is provided', () => {
             Object.defineProperty(wmComponent, 'timeZone', { value: 'America/New_York' });
             (wmComponent as any).key = 'datetimestamp';
             wmComponent.onModelUpdate(new Date('2023-01-01'));
-            expect((wmComponent as any).updateTimepickerFields).toHaveBeenCalled();
+            expect((wmComponent as any).updateTimepickerFields).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -971,7 +971,7 @@ describe(('Datetime Component with Localization'), () => {
         it('should stop event propagation', () => {
             const mockEvent = { stopImmediatePropagation: jest.fn() };
             (wmComponent as any).preventTpClose(mockEvent);
-            expect(mockEvent.stopImmediatePropagation).toHaveBeenCalled();
+            expect(mockEvent.stopImmediatePropagation).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -999,7 +999,7 @@ describe(('Datetime Component with Localization'), () => {
         it('should call onDateTimeInputFocus for native input', () => {
             (wmComponent as any).loadNativeDateInput = true;
             wmComponent.toggleDpDropdown({ type: 'click' });
-            expect((wmComponent as any).onDateTimeInputFocus).toHaveBeenCalled();
+            expect((wmComponent as any).onDateTimeInputFocus).toHaveBeenCalledTimes(1);
         });
 
         it('should invoke click event callback', () => {
@@ -1012,12 +1012,12 @@ describe(('Datetime Component with Localization'), () => {
             const mockEvent = { type: 'click', target: {}, stopPropagation: jest.fn() };
             (global as any).$.mockReturnValue({ is: jest.fn().mockReturnValue(true) });
             wmComponent.toggleDpDropdown(mockEvent);
-            expect(mockEvent.stopPropagation).toHaveBeenCalled();
+            expect(mockEvent.stopPropagation).toHaveBeenCalledTimes(1);
         });
 
         it('should toggle datepicker and add body click listener', () => {
             wmComponent.toggleDpDropdown({ type: 'click' });
-            expect(wmComponent.bsDatePickerDirective.toggle).toHaveBeenCalled();
+            expect(wmComponent.bsDatePickerDirective.toggle).toHaveBeenCalledTimes(1);
             expect((wmComponent as any).addBodyClickListener).toHaveBeenCalledWith(true);
         });
     });

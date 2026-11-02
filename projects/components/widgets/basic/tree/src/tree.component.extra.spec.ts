@@ -217,7 +217,7 @@ describe('TreeComponent - extra behaviour', () => {
             const ref = { destroy: jest.fn() };
             tree.nodeTemplateRefs = [ref];
             tree.ngOnDestroy();
-            expect(ref.destroy).toHaveBeenCalled();
+            expect(ref.destroy).toHaveBeenCalledTimes(1);
         });
     });
 });

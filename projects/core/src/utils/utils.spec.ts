@@ -724,7 +724,7 @@ describe('EventNotifier', () => {
             const startSpy = jest.spyOn(EventNotifier.prototype, 'start');
             const notifier = new EventNotifier(true);
             expect(notifier).toBeDefined();
-            expect(startSpy).toHaveBeenCalled();
+            expect(startSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should not start the notifier if start is false', () => {
@@ -813,7 +813,7 @@ describe('EventNotifier', () => {
     describe('destroy', () => {
         it('should complete the subject', () => {
             eventNotifier.destroy();
-            expect(mockSubject.complete).toHaveBeenCalled();
+            expect(mockSubject.complete).toHaveBeenCalledTimes(1);
         });
     });
 });
@@ -1156,12 +1156,6 @@ describe('isInsecureContentRequest', () => {
     it('should return false for HTTPS URLs', () => {
         expect(isInsecureContentRequest('https://example.com')).toBe(false);
     });
-
-            it('should return true for HTTP URLs when current page is HTTPS', () => {
-            // Since we can't mock location.href directly, let's skip this test
-            // as it requires a proper HTTPS environment
-            expect(true).toBe(true); // Placeholder test
-        });
 
     it('should return false for data URLs', () => {
         expect(isInsecureContentRequest('data:image/png;base64,iVBORw0KGgo=')).toBe(false);

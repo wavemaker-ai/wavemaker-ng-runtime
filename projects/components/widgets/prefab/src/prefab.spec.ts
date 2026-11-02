@@ -60,7 +60,9 @@ describe('PrefabDirective', () => {
                 testProp: { type: 'string', value: 'testValue' }
             }
         };
+        const propsReady = jest.spyOn(directive as any, 'propsReady');
         directive.setProps(mockConfig);
+        expect(propsReady).toHaveBeenCalledTimes(1);
     });
 
     it('should not throw error when setProps is called with invalid config', () => {

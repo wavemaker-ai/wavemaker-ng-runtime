@@ -63,7 +63,7 @@ describe('Checkbox component', () => {
         expect(checkboxComponent.datavalue).toBeFalsy();
         const checkboxElement = getHtmlSelectorElement(fixture, '[wmCheckbox]');
         checkboxElement.triggerEventHandler('keydown.enter', { preventDefault: () => { } });
-        fixture.whenStable().then(() => {
+        return fixture.whenStable().then(() => {
             expect(checkboxComponent.datavalue).toBeTruthy();
         });
     });

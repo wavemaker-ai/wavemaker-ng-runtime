@@ -171,7 +171,7 @@ describe('CaptionPositionDirective', () => {
             directive['observeForPlaceholderAttrChange']();
             directive.ngOnDestroy();
 
-            expect(mockDisconnect).toHaveBeenCalled();
+            expect(mockDisconnect).toHaveBeenCalledTimes(1);
         });
     });
 

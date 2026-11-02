@@ -34,7 +34,7 @@ describe('LoginAction', () => {
         const action = new LoginAction({});
         const loginSpy = jest.spyOn(action, 'login');
         action.invoke({}, jest.fn(), jest.fn());
-        expect(loginSpy).toHaveBeenCalled();
+        expect(loginSpy).toHaveBeenCalledWith({}, expect.any(Function), expect.any(Function));
     });
 
     it('cancel() should not throw', () => {

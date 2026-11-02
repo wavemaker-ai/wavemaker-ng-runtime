@@ -48,9 +48,9 @@ describe('PrefabPreviewComponent', () => {
             send({ context: 'PREFAB', action: 'invoke-script', payload: { script: '1' } });
             send({ context: 'PREFAB', action: 'unknown' });
 
-            expect(init).toHaveBeenCalled();
+            expect(init).toHaveBeenCalledTimes(1);
             expect(setProperty).toHaveBeenCalledWith({ name: 'a', value: 1 });
-            expect(outbound).toHaveBeenCalled();
+            expect(outbound).toHaveBeenCalledTimes(1);
             expect(invoke).toHaveBeenCalledWith({ script: '1' });
         });
     });
