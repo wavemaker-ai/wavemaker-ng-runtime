@@ -55,7 +55,7 @@ describe('LoginActionManager - redirects and callbacks', () => {
             await login();
             expect(routerService.navigate).toHaveBeenCalledWith(['/Orders'], { queryParams: { id: '5' } });
             expect(appManager.noRedirect).toHaveBeenCalledWith(false);
-            expect(appManager.executeSessionFailureRequests).toHaveBeenCalled();
+            expect(appManager.executeSessionFailureRequests).toHaveBeenCalledTimes(1);
         });
 
         it('resets the url when there is no page to redirect to', async () => {
@@ -69,7 +69,7 @@ describe('LoginActionManager - redirects and callbacks', () => {
             securityService.getCurrentRouteQueryParam.mockReturnValue('Orders');
             await login({}, 'ram');
             expect(routerService.navigate).toHaveBeenCalledWith(['/Orders'], { queryParams: {} });
-            expect(appManager.executeSessionFailureRequests).toHaveBeenCalled();
+            expect(appManager.executeSessionFailureRequests).toHaveBeenCalledTimes(1);
         });
 
         it('reloads the app for a different user and discards the requested page', async () => {
@@ -119,7 +119,7 @@ describe('LoginActionManager - redirects and callbacks', () => {
             const error = jest.fn();
             const variable: any = { dataBinding: creds(), _context: { before: () => false }, onBeforeUpdate: 'before()' };
             manager.login(variable, {}, jest.fn(), error);
-            expect(error).toHaveBeenCalled();
+            expect(error).toHaveBeenCalledTimes(1);
             expect(securityService.appLogin).not.toHaveBeenCalled();
         });
 

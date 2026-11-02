@@ -62,7 +62,7 @@ describe('LogoutActionManager - redirects', () => {
     it('uses the data returned by onPrepareSetData as the redirect result', async () => {
         const onSuccess = jest.fn();
         await logout({ _context: { prepare: () => ({ done: true }), success: onSuccess }, onBeforeDatasetReady: 'prepare()', onSuccess: 'success($event)' });
-        expect(appManager.reloadAppData).toHaveBeenCalled();
+        expect(appManager.reloadAppData).toHaveBeenCalledTimes(1);
     });
 
     it('does not trigger the variable error event in studio mode', () => {

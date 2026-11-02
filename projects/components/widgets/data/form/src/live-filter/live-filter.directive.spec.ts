@@ -110,7 +110,11 @@ describe('LiveFilterDirective', () => {
         it('should fetch distinct values for FETCH_DISTINCT_VALUES', () => {
             const directive = createDirective(form);
             directive.execute(DataSource.Operation.FETCH_DISTINCT_VALUES, {});
-            expect(fetchDistinctValues).toHaveBeenCalled();
+            expect(fetchDistinctValues).toHaveBeenCalledWith(form.datasource, form.formFields, {
+                widget: 'widgettype',
+                enableemptyfilter: '',
+                EMPTY_VALUE: '(empty)'
+            });
         });
 
         it('should delegate any other operation to the datasource', () => {
@@ -128,7 +132,7 @@ describe('LiveFilterDirective', () => {
             directive.onFieldDefaultValueChange(field, 'x');
             expect(field.minValue).toEqual('x');
             expect(field.value).toEqual('x');
-            expect(spy).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -137,7 +141,7 @@ describe('LiveFilterDirective', () => {
             const directive = createDirective(form);
             const field = createMockField();
             directive.onFieldValueChange(field, 'v');
-            expect(applyFilterOnField).toHaveBeenCalled();
+            expect(applyFilterOnField).toHaveBeenCalledWith(form.datasource, undefined, form.formFields, 'v', { EMPTY_VALUE: '(empty)' });
         });
 
         it('should trigger the debounced filter when autoupdate is enabled and the value is defined', () => {
@@ -145,7 +149,7 @@ describe('LiveFilterDirective', () => {
             const directive = createDirective(form);
             const filterSpy = jest.spyOn(directive as any, '_filter');
             directive.onFieldValueChange(createMockField(), 'v');
-            expect(filterSpy).toHaveBeenCalled();
+            expect(filterSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should not trigger the debounced filter when autoupdate is disabled', () => {
@@ -164,7 +168,7 @@ describe('LiveFilterDirective', () => {
             directive.onMaxDefaultValueChange();
             expect(spy).not.toHaveBeenCalled();
             tick();
-            expect(spy).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(1);
         }));
     });
 
@@ -181,9 +185,16 @@ describe('LiveFilterDirective', () => {
             const directive = createDirective(form);
             const filterSpy = jest.spyOn(directive as any, '_filter');
             directive.onDataSourceChange();
-            expect(getDistinctValuesForField).toHaveBeenCalled();
-            expect(applyFilterOnField).toHaveBeenCalled();
-            expect(filterSpy).toHaveBeenCalled();
+            expect(getDistinctValuesForField).toHaveBeenCalledWith(form.datasource, undefined, {
+                widget: 'widgettype',
+                enableemptyfilter: '',
+                EMPTY_VALUE: '(empty)'
+            });
+            expect(applyFilterOnField).toHaveBeenCalledWith(form.datasource, undefined, form.formFields, undefined, {
+                isFirst: true,
+                EMPTY_VALUE: '(empty)'
+            });
+            expect(filterSpy).toHaveBeenCalledTimes(1);
         }));
 
         it('should skip fields that are not dataset widgets', () => {
@@ -200,7 +211,7 @@ describe('LiveFilterDirective', () => {
             form.formFields = [field];
             const directive = createDirective(form);
             directive.clearFilter();
-            expect(form.resetFormState).toHaveBeenCalled();
+            expect(form.resetFormState).toHaveBeenCalledTimes(1);
             expect(field.value).toEqual('x');
             tick();
         }));
@@ -221,7 +232,7 @@ describe('LiveFilterDirective', () => {
             const directive = createDirective(form);
             directive.clearFilter();
             expect(field.value).toEqual('');
-            expect(field.resetDisplayInput).toHaveBeenCalled();
+            expect(field.resetDisplayInput).toHaveBeenCalledTimes(1);
             tick();
         }));
 
@@ -230,7 +241,7 @@ describe('LiveFilterDirective', () => {
             form.formFields = [field];
             const directive = createDirective(form);
             directive.clearFilter();
-            expect(form.$element.find).toHaveBeenCalled();
+            expect(form.$element.find).toHaveBeenCalledWith('div[name=firstname] input');
             tick();
         }));
 
@@ -240,7 +251,7 @@ describe('LiveFilterDirective', () => {
             directive.clearFilter();
             expect(filterSpy).not.toHaveBeenCalled();
             tick();
-            expect(filterSpy).toHaveBeenCalled();
+            expect(filterSpy).toHaveBeenCalledTimes(1);
         }));
     });
 
@@ -249,7 +260,7 @@ describe('LiveFilterDirective', () => {
             const directive = createDirective(form);
             const spy = jest.spyOn(directive, 'filter').mockImplementation(() => undefined as any);
             directive.submitForm();
-            expect(spy).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -351,7 +362,10 @@ describe('LiveFilterDirective', () => {
             form.enableemptyfilter = 'null,empty';
             const directive = createDirective(form);
             directive.filter();
-            expect(form.datasource.execute).toHaveBeenCalled();
+            expect(form.datasource.execute).toHaveBeenCalledTimes(1);
+            expect(form.datasource.execute).toHaveBeenCalledWith(DataSource.Operation.LIST_RECORDS, expect.objectContaining({
+                filterFields: expect.objectContaining({ status: expect.objectContaining({ logicalOp: 'AND' }) })
+            }));
         });
 
         it('should parse boolean values for CHECKBOX/TOGGLE fields', () => {
@@ -482,7 +496,7 @@ describe('LiveFilterDirective', () => {
             const directive = createDirective(form);
             const filterSpy = jest.spyOn(directive as any, '_filter');
             directive.filterOnDefault();
-            expect(filterSpy).toHaveBeenCalled();
+            expect(filterSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should not trigger the filter when no field has a default value', () => {
@@ -522,7 +536,7 @@ describe('LiveFilterDirective', () => {
             const cancelFn = jest.fn();
             (directive as any)._filter = Object.assign(jest.fn(), { cancel: cancelFn });
             directive.ngOnDestroy();
-            expect(cancelFn).toHaveBeenCalled();
+            expect(cancelFn).toHaveBeenCalledTimes(1);
             expect((directive as any).form).toBeNull();
             expect((directive as any)._options).toBeNull();
             expect(directive.orderBy).toBeNull();

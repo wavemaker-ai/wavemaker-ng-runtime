@@ -173,7 +173,7 @@ describe('I18nServiceImpl', () => {
             await service.setSelectedLocale('fr');
             await flush();
             expect(mockLoadScripts).toHaveBeenCalledWith(['cdn/locales/moment/fr-x.js'], true);
-            expect(mockDefineLocale).toHaveBeenCalled();
+            expect(mockDefineLocale).toHaveBeenCalledWith('fr', { cfg: 1 });
         });
 
         it('fullCalendar bundle flagged when FullCalendar is on window', async () => {
@@ -199,7 +199,7 @@ describe('I18nServiceImpl', () => {
             http.get.mockReturnValue(of({ messages: {} }));
             await service.setSelectedLocale('en');
             // missing prefabMessages is tolerated
-            expect(app.notify).toHaveBeenCalled();
+            expect(app.notify).toHaveBeenCalledWith('locale-changed', mockProps.supportedLanguages.en);
         });
 
         it('a failing resource load is swallowed and warns', async () => {

@@ -223,8 +223,8 @@ describe('BasePrefabComponent', () => {
         it('registers property and style listeners', () => {
             prefab.containerWidget = container;
             prefab.registerChangeListeners();
-            expect(container.registerPropertyChangeListener).toHaveBeenCalled();
-            expect(container.registerStyleChangeListener).toHaveBeenCalled();
+            expect(container.registerPropertyChangeListener).toHaveBeenCalledTimes(1);
+            expect(container.registerStyleChangeListener).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -241,6 +241,7 @@ describe('BasePrefabComponent', () => {
             prefab.init();
             prefab.viewInit$.complete();
             await wait();
+            expect(variableCollection.callback).toHaveBeenCalledWith(variableCollection.Actions);
         });
     });
 
@@ -313,9 +314,10 @@ describe('BasePrefabComponent', () => {
             prefab.Actions = { a: {} };
             prefab.mute();
             prefab.unmute();
-            expect(prefab.Widgets.w.mute).toHaveBeenCalled();
-            expect(v.mute).toHaveBeenCalled();
-            expect(v.unmute).toHaveBeenCalled();
+            expect(prefab.Widgets.w.mute).toHaveBeenCalledTimes(1);
+            expect(prefab.Widgets.w.unmute).toHaveBeenCalledTimes(1);
+            expect(v.mute).toHaveBeenCalledTimes(1);
+            expect(v.unmute).toHaveBeenCalledTimes(1);
         });
 
         it('ngOnAttach refreshes startUpdate variables only when asked', () => {
@@ -324,7 +326,7 @@ describe('BasePrefabComponent', () => {
             prefab.Actions = { a: { startUpdate: true, invoke } };
             prefab.ngOnAttach(true);
             expect(invoke).toHaveBeenCalledTimes(2);
-            expect(prefab.Widgets.w.ngOnAttach).toHaveBeenCalled();
+            expect(prefab.Widgets.w.ngOnAttach).toHaveBeenCalledTimes(1);
             invoke.mockClear();
             prefab.ngOnAttach(false);
             expect(invoke).not.toHaveBeenCalled();
@@ -332,8 +334,8 @@ describe('BasePrefabComponent', () => {
 
         it('ngOnDetach mutes and notifies widgets', () => {
             prefab.ngOnDetach();
-            expect(prefab.Widgets.w.mute).toHaveBeenCalled();
-            expect(prefab.Widgets.w.ngOnDetach).toHaveBeenCalled();
+            expect(prefab.Widgets.w.mute).toHaveBeenCalledTimes(1);
+            expect(prefab.Widgets.w.ngOnDetach).toHaveBeenCalledTimes(1);
         });
     });
 

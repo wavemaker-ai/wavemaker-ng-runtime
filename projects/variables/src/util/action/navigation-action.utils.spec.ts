@@ -15,7 +15,7 @@ describe('navigate (NavigationAction utils)', () => {
 
     it('should go to the previous page for goToPreviousPage operation', () => {
         navigate({ operation: 'goToPreviousPage', dataBinding: {} }, {});
-        expect(navigationService.goToPrevious).toHaveBeenCalled();
+        expect(navigationService.goToPrevious).toHaveBeenCalledTimes(1);
     });
 
     it('should go to the named page for gotoPage operation', () => {

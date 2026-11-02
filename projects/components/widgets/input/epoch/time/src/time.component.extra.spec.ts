@@ -141,7 +141,7 @@ describe('TimeComponent - additional behaviour', () => {
             const formControl = jest.spyOn(cmp, 'formControl', 'get').mockReturnValue({ pristine: true, control: { markAsPristine } } as any);
             jest.spyOn(cmp, 'invokeOnChange').mockImplementation(() => undefined);
             cmp.onPropertyChange('mintime', '08:00:00');
-            expect(markAsPristine).toHaveBeenCalled();
+            expect(markAsPristine).toHaveBeenCalledTimes(1);
             markAsPristine.mockClear();
             formControl.mockReturnValue({ pristine: false, control: { markAsPristine } } as any);
             cmp.onPropertyChange('maxtime', '17:00:00');
@@ -153,7 +153,7 @@ describe('TimeComponent - additional behaviour', () => {
             cmp.onPropertyChange('tabindex', 3);
             expect(base).not.toHaveBeenCalled();
             cmp.onPropertyChange('caption', 'x');
-            expect(base).toHaveBeenCalled();
+            expect(base).toHaveBeenCalledTimes(1);
         });
 
         it('reports which limit was exceeded', () => {
@@ -254,7 +254,7 @@ describe('TimeComponent - additional behaviour', () => {
             const change = jest.spyOn(cmp, 'onTimeChange').mockImplementation(() => undefined);
             cmp.setTimeInterval();
             jest.advanceTimersByTime(1100);
-            expect(change).toHaveBeenCalled();
+            expect(change).toHaveBeenCalledTimes(1);
             cmp.clearTimeInterval();
         });
     });
@@ -283,10 +283,10 @@ describe('TimeComponent - additional behaviour', () => {
             cmp.status.isopen = true;
             $(cmp.nativeElement).wrap('<div class="app-composite-widget caption-floating"></div>');
             cmp.hideTimepickerDropdown();
-            expect(touched).toHaveBeenCalled();
+            expect(touched).toHaveBeenCalledTimes(1);
             expect(cmp.status.isopen).toBe(false);
-            expect(dereg).toHaveBeenCalled();
-            expect(removeKeys).toHaveBeenCalled();
+            expect(dereg).toHaveBeenCalledTimes(1);
+            expect(removeKeys).toHaveBeenCalledTimes(1);
             expect(notify).toHaveBeenCalledWith('captionPositionAnimate', expect.anything());
             expect(blur).toHaveBeenCalledWith(true);
         });
@@ -303,7 +303,7 @@ describe('TimeComponent - additional behaviour', () => {
             cmp.isValid({});
             expect(format).not.toHaveBeenCalled();
             cmp.isValid(undefined);
-            expect(format).toHaveBeenCalled();
+            expect(format).toHaveBeenCalledTimes(1);
             format.mockReturnValue(false);
             expect(cmp.isValid(null)).toBeUndefined();
         });

@@ -270,7 +270,7 @@ describe("SelectComponent", () => {
 
             wmComponent.checkForFloatingLabel({ type: 'focus' });
 
-            expect(removeSpy).toHaveBeenCalled();
+            expect(removeSpy).toHaveBeenCalledTimes(1);
 
             // Restore original implementations
             iosSpy.mockRestore();
@@ -342,7 +342,7 @@ describe("SelectComponent", () => {
             const removeSpy = jest.spyOn(wmComponent as any, 'removePlaceholderOption');
             wmComponent.checkForFloatingLabel({ type: 'focus' });
 
-            expect(removeSpy).toHaveBeenCalled();
+            expect(removeSpy).toHaveBeenCalledTimes(1);
             iosSpy.mockRestore();
         });
     });

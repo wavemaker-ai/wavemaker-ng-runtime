@@ -87,10 +87,18 @@ describe('BaseInput', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should update class on input element', () => {
+    it('should update class on input element', async () => {
         const newClass = 'test-class';
+        const settle = () => new Promise(resolve => setTimeout(resolve, 20));
         component.class = newClass;
         (component as any).onPropertyChange('class', newClass, '');
+        await settle();
+        expect(component.inputEl.nativeElement.classList.contains(newClass)).toBe(true);
+
+        (component as any).onPropertyChange('class', 'other-class', newClass);
+        await settle();
+        expect(component.inputEl.nativeElement.classList.contains(newClass)).toBe(false);
+        expect(component.inputEl.nativeElement.classList.contains('other-class')).toBe(true);
     });
 
     it('should handle change event', () => {
@@ -138,7 +146,8 @@ describe('BaseInput', () => {
         it('should call _onChange when key is required', () => {
             const onChangeSpy = jest.spyOn(component as any, '_onChange');
             (component as any).onPropertyChange('required', true, false);
-            expect(onChangeSpy).toHaveBeenCalled();
+            expect(onChangeSpy).toHaveBeenCalledTimes(1);
+            expect(onChangeSpy).toHaveBeenCalledWith(component.datavalue);
         });
 
         it('should update class on input element when key is class', () => {
@@ -160,7 +169,8 @@ describe('BaseInput', () => {
             (component as any).onPropertyChange('datavalue', newValue, 'old value');
 
             expect(updatePrevDatavalueSpy).toHaveBeenCalledWith(newValue);
-            expect(onChangeSpy).toHaveBeenCalled();
+            expect(onChangeSpy).toHaveBeenCalledTimes(1);
+            expect(onChangeSpy).toHaveBeenCalledWith(component.datavalue);
         });
 
         it('should call super.onPropertyChange for other keys', () => {
@@ -215,7 +225,7 @@ describe('BaseInput', () => {
 
         it('should call super.ngAfterViewInit', () => {
             component.ngAfterViewInit();
-            expect(superNgAfterViewInitSpy).toHaveBeenCalled();
+            expect(superNgAfterViewInitSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should add class to input element if this.class is set', () => {

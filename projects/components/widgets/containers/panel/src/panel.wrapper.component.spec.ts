@@ -232,7 +232,7 @@ describe("PanelComponent", () => {
             wmComponent.onPropertyChange('content', 'new content');
 
             setTimeout(() => {
-                expect(wmComponent.$lazyLoad).toHaveBeenCalled();
+                expect(wmComponent.$lazyLoad).toHaveBeenCalledTimes(1);
                 done();
             }, 30);
         });
@@ -245,7 +245,7 @@ describe("PanelComponent", () => {
             wmComponent.onPropertyChange('content', 'new content');
 
             setTimeout(() => {
-                expect(wmComponent.$lazyLoad).toHaveBeenCalled();
+                expect(wmComponent.$lazyLoad).toHaveBeenCalledTimes(1);
                 done();
             }, 30);
         });

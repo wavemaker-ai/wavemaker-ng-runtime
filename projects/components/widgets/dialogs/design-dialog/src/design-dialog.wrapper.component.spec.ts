@@ -146,11 +146,11 @@ describe('DialogComponent', () => {
     it('should open the dialog correctly', () => {
         const openSpy = jest.spyOn(dialogComponent, 'open');
         dialogComponent.open();
-        expect(openSpy).toHaveBeenCalled();
+        expect(openSpy).toHaveBeenCalledTimes(1);
     });
     it("should close the dialog correctly", () => {
         const closeSpy = jest.spyOn(dialogComponent, 'close');
         dialogComponent.close();
-        expect(closeSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalledTimes(1);
     });
 });

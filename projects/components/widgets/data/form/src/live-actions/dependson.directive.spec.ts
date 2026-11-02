@@ -66,7 +66,7 @@ describe('DependsonDirective', () => {
             const changesSubscribeSpy = jest.fn();
             (directive as any).formChildren = { first: null, changes: { subscribe: changesSubscribeSpy } };
             directive.ngAfterContentInit();
-            expect(changesSubscribeSpy).toHaveBeenCalled();
+            expect(changesSubscribeSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should call onFormRender once the form arrives via the changes stream', () => {
@@ -231,7 +231,7 @@ describe('DependsonDirective', () => {
             (directive as any).currentOp = Live_Operations.INSERT;
             (directive as any).onFormRender();
             jest.advanceTimersByTime(250);
-            expect(form.new).toHaveBeenCalled();
+            expect(form.new).toHaveBeenCalledTimes(1);
             jest.useRealTimers();
         });
 
@@ -256,8 +256,8 @@ describe('DependsonDirective', () => {
             (directive as any).formSubscription = { unsubscribe: formUnsubscribe };
             const eventUnsubscribe = (directive as any).eventSubscription;
             directive.ngOnDestroy();
-            expect(formUnsubscribe).toHaveBeenCalled();
-            expect(eventUnsubscribe).toHaveBeenCalled();
+            expect(formUnsubscribe).toHaveBeenCalledTimes(1);
+            expect(eventUnsubscribe).toHaveBeenCalledTimes(1);
         });
 
         it('should not throw when there is no form subscription', () => {

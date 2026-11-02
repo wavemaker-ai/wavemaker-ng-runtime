@@ -82,7 +82,7 @@ describe('CustomToasterComponent', () => {
             comp.customToastTmpl = {};
             comp.ngAfterViewInit();
             await Promise.resolve();
-            expect(comp.customToastRef.clear).toHaveBeenCalled();
+            expect(comp.customToastRef.clear).toHaveBeenCalledTimes(1);
             expect(document.querySelector('.parent-custom-toast').contains(node)).toBe(true);
         });
     });
@@ -93,9 +93,9 @@ describe('CustomToasterComponent', () => {
             const w2 = jest.fn();
             comp.watchers = [w1, w2];
             comp.ngOnDestroy();
-            expect(w1).toHaveBeenCalled();
-            expect(w2).toHaveBeenCalled();
-            expect(mockSuperDestroy).toHaveBeenCalled();
+            expect(w1).toHaveBeenCalledTimes(1);
+            expect(w2).toHaveBeenCalledTimes(1);
+            expect(mockSuperDestroy).toHaveBeenCalledTimes(1);
         });
     });
 });

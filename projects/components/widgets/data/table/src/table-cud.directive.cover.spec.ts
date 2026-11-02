@@ -107,7 +107,7 @@ describe('TableCUDDirective - cover branches', () => {
     it('does not select the item when navigation is off for non static variables', () => {
         table.isNavigationEnabled.mockReturnValue(false);
         directive.initiateSelectItem('last', { id: 1 }, true, false);
-        expect(table.dataNavigator.navigatePage).toHaveBeenCalled();
+        expect(table.dataNavigator.navigatePage).toHaveBeenCalledWith('current', null, true, expect.any(Function));
         expect(table.selectItem).not.toHaveBeenCalled();
         expect(table.callDataGridMethod).not.toHaveBeenCalled();
     });
@@ -157,7 +157,7 @@ describe('TableCUDDirective - cover branches', () => {
             directive.updateRecord(opts);
             await flushPromises();
             expect(table.toggleMessage).not.toHaveBeenCalled();
-            expect(opts.error).toHaveBeenCalled();
+            expect(opts.error).toHaveBeenCalledWith({ error: 'bad' });
         });
 
         it('leaves the success message to the rowupdate handler', async () => {

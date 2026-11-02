@@ -255,7 +255,7 @@ describe('BaseCustomWidgetComponent', () => {
             cfgProvider.getConfig.mockResolvedValue({});
             widget.init();
             await wait();
-            expect(container.setProps).toHaveBeenCalled();
+            expect(container.setProps).toHaveBeenCalledWith({}, expect.any(Function));
         });
 
         it('recreates the proxy on IE', async () => {
@@ -299,6 +299,7 @@ describe('BaseCustomWidgetComponent', () => {
             widget.init();
             widget.viewInit$.complete();
             await wait();
+            expect(variableCollection.callback).toHaveBeenCalledWith(variableCollection.Actions);
         });
     });
 
@@ -306,8 +307,8 @@ describe('BaseCustomWidgetComponent', () => {
         it('registerChangeListeners registers both listeners', () => {
             widget.containerWidget = container;
             widget.registerChangeListeners();
-            expect(container.registerPropertyChangeListener).toHaveBeenCalled();
-            expect(container.registerStyleChangeListener).toHaveBeenCalled();
+            expect(container.registerPropertyChangeListener).toHaveBeenCalledTimes(1);
+            expect(container.registerStyleChangeListener).toHaveBeenCalledTimes(1);
         });
 
         it('datavalue getter delegates to getDatavalue when present', () => {
@@ -388,7 +389,7 @@ describe('BaseCustomWidgetComponent', () => {
             jest.advanceTimersByTime(100);
             jest.useRealTimers();
             widget.fragmentsLoaded$.complete();
-            expect(ready).toHaveBeenCalled();
+            expect(ready).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -404,8 +405,8 @@ describe('BaseCustomWidgetComponent', () => {
             widget.Actions = { a: {} };
             widget.mute();
             widget.unmute();
-            expect(widget.Widgets.w.mute).toHaveBeenCalled();
-            expect(v.unmute).toHaveBeenCalled();
+            expect(widget.Widgets.w.mute).toHaveBeenCalledTimes(1);
+            expect(v.unmute).toHaveBeenCalledTimes(1);
         });
 
         it('ngOnAttach refreshes startUpdate variables only when asked', () => {
@@ -422,8 +423,8 @@ describe('BaseCustomWidgetComponent', () => {
 
         it('ngOnDetach mutes and notifies widgets', () => {
             widget.ngOnDetach();
-            expect(widget.Widgets.w.mute).toHaveBeenCalled();
-            expect(widget.Widgets.w.ngOnDetach).toHaveBeenCalled();
+            expect(widget.Widgets.w.mute).toHaveBeenCalledTimes(1);
+            expect(widget.Widgets.w.ngOnDetach).toHaveBeenCalledTimes(1);
         });
     });
 

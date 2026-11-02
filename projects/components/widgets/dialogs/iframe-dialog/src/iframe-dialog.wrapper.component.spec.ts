@@ -90,7 +90,7 @@ describe('IframeDialogComponent', () => {
     it('should close the dialog correctly', () => {
         const closeSpy = jest.spyOn(dialogComponent, 'close');
         dialogComponent.close();
-        expect(closeSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalledTimes(1);
     });
     it('should render the iframe dialog component', () => {
         const dialogElement = fixture.debugElement.query(By.css('[wmIframeDialog]'));

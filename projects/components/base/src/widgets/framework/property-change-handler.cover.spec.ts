@@ -58,14 +58,14 @@ describe('globalPropertyChangeHandler', () => {
             const c = makeComponent();
             globalPropertyChangeHandler(c, 'caption', 'x');
             expect(mockUnwatch).toHaveBeenCalledWith('w1_caption');
-            expect(mockReset).toHaveBeenCalled();
+            expect(mockReset).toHaveBeenCalledTimes(1);
         });
 
         it('keeps the watch for changes that come from a watch', () => {
             mockChangeFromWatch = true;
             globalPropertyChangeHandler(makeComponent(), 'caption', 'x');
             expect(mockUnwatch).not.toHaveBeenCalled();
-            expect(mockReset).toHaveBeenCalled();
+            expect(mockReset).toHaveBeenCalledTimes(1);
         });
     });
 

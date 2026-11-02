@@ -132,7 +132,7 @@ describe("AnchorComponent", () => {
 
         it('should set hasGoToPageExpr and goToPageName', () => {
             (wmComponent as any).processEventAttr('click', 'Actions.goToPage_SomePage.invoke()');
-            expect((wmComponent as any).hasGoToPageExpr).toBeTruthy();
+            expect((wmComponent as any).hasGoToPageExpr).toBe(true);
             expect((wmComponent as any).goToPageName).toBe('SomePage');
         });
     });
@@ -158,8 +158,8 @@ describe("AnchorComponent", () => {
             const mockCancelSubscription = jest.fn();
             (wmComponent as any).cancelSubscription = mockCancelSubscription;
             wmComponent.ngOnDestroy();
-            expect(mockEventNotifier.destroy).toHaveBeenCalled();
-            expect(mockCancelSubscription).toHaveBeenCalled();
+            expect(mockEventNotifier.destroy).toHaveBeenCalledTimes(1);
+            expect(mockCancelSubscription).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -204,8 +204,8 @@ describe("AnchorComponent", () => {
 
             (wmComponent as any).handleEvent(mockNode, 'click', mockEventCallback, locals);
 
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-            expect(mockEventCallback).toHaveBeenCalled();
+            expect(mockEvent.preventDefault).toHaveBeenCalledTimes(1);
+            expect(mockEventCallback).toHaveBeenCalledTimes(1);
         });
 
         it('should not prevent default if hasGoToPageExpr is false', () => {
@@ -215,7 +215,7 @@ describe("AnchorComponent", () => {
             (wmComponent as any).handleEvent(mockNode, 'click', mockEventCallback, locals);
 
             expect(mockEvent.preventDefault).not.toHaveBeenCalled();
-            expect(mockEventCallback).toHaveBeenCalled();
+            expect(mockEventCallback).toHaveBeenCalledTimes(1);
         });
 
         it('should not prevent default if $event is not provided', () => {
@@ -225,7 +225,7 @@ describe("AnchorComponent", () => {
             (wmComponent as any).handleEvent(mockNode, 'click', mockEventCallback, locals);
 
             expect(mockEvent.preventDefault).not.toHaveBeenCalled();
-            expect(mockEventCallback).toHaveBeenCalled();
+            expect(mockEventCallback).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -247,8 +247,8 @@ describe("AnchorComponent", () => {
         it('should call super.ngAfterViewInit and init', () => {
             wmComponent.ngAfterViewInit();
 
-            expect(superAfterViewInitSpy).toHaveBeenCalled();
-            expect(initSpy).toHaveBeenCalled();
+            expect(superAfterViewInitSpy).toHaveBeenCalledTimes(1);
+            expect(initSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should not subscribe to highlightActiveLink if hasGoToPageExpr is false', () => {
@@ -279,8 +279,8 @@ describe("AnchorComponent", () => {
 
                 callback({ pageName: 'OtherPage' });
 
-                expect((wmComponent as any).hasNavigationToCurrentPageExpr).toBeFalsy();
-                expect((wmComponent as any).nativeElement.classList.contains('active')).toBeFalsy();
+                expect((wmComponent as any).hasNavigationToCurrentPageExpr).toBe(false);
+                expect((wmComponent as any).nativeElement.classList.contains('active')).toBe(false);
                 expect((wmComponent as any).nativeElement.getAttribute('aria-current')).toBeNull();
             });
 
@@ -289,7 +289,7 @@ describe("AnchorComponent", () => {
 
                 callback({ pageName: 'TestPage' });
 
-                expect((wmComponent as any).hasNavigationToCurrentPageExpr).toBeTruthy();
+                expect((wmComponent as any).hasNavigationToCurrentPageExpr).toBe(true);
             });
         });
     });
@@ -306,7 +306,7 @@ describe("AnchorComponent", () => {
             disableContextMenu(mockEvent);
 
             // Assert that preventDefault was called
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(mockEvent.preventDefault).toHaveBeenCalledTimes(1);
         });
 
         it('should not throw an error when called with a valid event', () => {

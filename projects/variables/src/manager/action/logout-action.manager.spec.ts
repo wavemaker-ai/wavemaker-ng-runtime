@@ -20,7 +20,7 @@ describe('LogoutActionManager', () => {
         const error = jest.fn();
         const variable: any = { onBeforeUpdate: 'block()', _context: { block: () => false } };
         manager.logout(variable, {}, jest.fn(), error);
-        expect(error).toHaveBeenCalled();
+        expect(error).toHaveBeenCalledTimes(1);
         expect(securityService.isAuthenticated).not.toHaveBeenCalled();
     });
 

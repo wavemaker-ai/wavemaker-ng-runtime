@@ -49,6 +49,6 @@ describe('ColorPickerComponent coverage', () => {
         const close = jest.spyOn(cmp.cpDirective, 'closeDialog').mockImplementation(() => {});
         cmp.colorPickerOpen('#fff');
         container.click();
-        expect(close).toHaveBeenCalled();
+        expect(close).toHaveBeenCalledTimes(1);
     });
 });

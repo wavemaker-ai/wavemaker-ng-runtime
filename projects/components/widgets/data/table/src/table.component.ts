@@ -18,6 +18,7 @@ import {
     Optional,
     QueryList,
     TemplateRef,
+    EmbeddedViewRef,
     ViewChild,
     ViewContainerRef, ChangeDetectionStrategy
 } from '@angular/core';
@@ -118,7 +119,7 @@ const DEFAULT_PAGE_SIZE_OPTIONS = '5,10,20,50,100';
 const noop = () => {};
 
 const isInputBodyWrapper = target => {
-    const classes = ['.dropdown-menu', '.uib-typeahead-match', '.modal-dialog', '.toast'];
+    const classes = ['.dropdown-menu', '.uib-typeahead-match', '.modal-dialog', '.toast', '.bs-datepicker-container'];
     let isInput = false;
     classes.forEach(cls => {
         if (target.closest(cls).length) {
@@ -208,6 +209,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     viewlessmessage;
     showviewlessbutton = false;
     _triggeredByUser;
+    _isInlineEditSave;
+    /** Covers async navigator/dataset updates after inline/quickedit save (wm.Variable). */
+    private _modelVarEditSoftRefreshActiveUntil = 0;
     isGridEditMode;
     loadingdatamsg;
     multiselect;
@@ -647,11 +651,24 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.prevData = getClonedObject(row);
         },
         afterRowUpdate: (row, e, callBack, options) => {
+            const isModelVarInlineOrQuick = this.isModelVariableInlineOrQuickEdit();
+            if (isModelVarInlineOrQuick) {
+                this._isInlineEditSave = true;
+                // Inline save triggers navigatePage / dataset emit asynchronously; a
+                // microtask timeout cleared the flag before gridData ran → full rerender.
+                this._modelVarEditSoftRefreshActiveUntil = Date.now() + 550;
+            }
             muteWatchers();
             const v = get(this.datasource, 'category') === 'wm.Variable' && options?.rowindex != null;
             this.updateRecord(extend({}, options, {row, prevData: v ? options.rowindex : this.prevData, event: e, callBack}));
             setTimeout(() => {
                 unMuteWatchers();
+                if (isModelVarInlineOrQuick) {
+                    setTimeout(() => {
+                        this._isInlineEditSave = false;
+                        this._modelVarEditSoftRefreshActiveUntil = 0;
+                    }, 520);
+                }
             }, 10);
         },
         onBeforeRowUpdate: (row, e, options) => {
@@ -723,10 +740,66 @@ export class TableComponent extends StylableComponent implements AfterContentIni
             this.customExprCompiledTl = {};
             this.customExprCompiledSummaryTl = {};
         },
+        updateCustomExpressionContexts: (preparedData) => {
+            const viewCount = this.customExprViewRef.length;
+            for (let i = 0; i < viewCount; i++) {
+                const viewRef = this.customExprViewRef.get(i) as EmbeddedViewRef<any>;
+                if (!viewRef || !viewRef.context || !viewRef.context.row || viewRef.context.row.$index === undefined) {
+                    continue;
+                }
+                const existingRow = viewRef.context.row;
+                const rowIndex = existingRow.$index - 1;
+                const dataRow = preparedData[rowIndex];
+                if (!dataRow) {
+                    continue;
+                }
+                Object.keys(dataRow).forEach(key => {
+                    if (key !== '$$index' && key !== '$$pk') {
+                        existingRow[key] = dataRow[key];
+                    }
+                });
+                existingRow.$isFirst = existingRow.$index === 1;
+                existingRow.$isLast = this.gridData.length === existingRow.$index;
+                viewRef.markForCheck();
+            }
+        },
         clearRowDetailExpression: () => {
             this.rowDetailViewRef.clear();
             this.rowDefMap = {};
             this.rowDefInstances = {};
+        },
+        invalidateRowDetailCache: (preparedData) => {
+            this.rowDefMap = {};
+            this.rowDefInstances = {};
+            // Update existing row detail view contexts in-place so currently
+            // expanded partials pick up the new row data via change detection.
+            const viewCount = this.rowDetailViewRef.length;
+            for (let i = 0; i < viewCount; i++) {
+                const viewRef = this.rowDetailViewRef.get(i) as EmbeddedViewRef<any>;
+                if (!viewRef || !viewRef.context || !viewRef.context.row) {
+                    continue;
+                }
+                const existingRow = viewRef.context.row;
+                const rowIndex = existingRow.$index - 1;
+                const dataRow = preparedData[rowIndex];
+                if (!dataRow) {
+                    continue;
+                }
+                Object.keys(dataRow).forEach(key => {
+                    if (key !== '$$index' && key !== '$$pk') {
+                        existingRow[key] = dataRow[key];
+                    }
+                });
+                viewRef.markForCheck();
+            }
+        },
+        refreshSelectedItems: () => {
+            const selectedRows = this.callDataGridMethod('getSelectedRows');
+            if (selectedRows.length) {
+                this.items.length = 0;
+                selectedRows.forEach(row => this.items.push(row));
+                this.selectedItemChange.next(selectedRows);
+            }
         },
         generateCustomExpressions: (rowData, index, summaryRow?) => {
             const row = this.getClonedRowObject(rowData);
@@ -1043,6 +1116,21 @@ export class TableComponent extends StylableComponent implements AfterContentIni
         }
     };
 
+    /** wm.Variable + inline or quickedit (editmode is string from markup; normalize case). */
+    private isModelVariableInlineOrQuickEdit(): boolean {
+        if (get(this.datasource, 'category') !== 'wm.Variable') {
+            return false;
+        }
+        const em = String(this.editmode || '').toLowerCase();
+        return em === 'quickedit' || em === 'inline';
+    }
+
+    /** True while an inline/quickedit row save is updating the grid (incl. delayed navigator emit). */
+    private shouldSoftRefreshAfterModelVarRowSave(): boolean {
+        return this.isModelVariableInlineOrQuickEdit()
+            && (this._isInlineEditSave || this._modelVarEditSoftRefreshActiveUntil > Date.now());
+    }
+
     private _gridData;
     private _selectedItemsExist = false;
     set gridData(newValue) {
@@ -1114,8 +1202,14 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     console.warn('Error in beforedatarender event callback, continuing with table rendering:', error);
                 }
             }
+            if (this.shouldSoftRefreshAfterModelVarRowSave()) {
+                const clonedData = getClonedObject(this._gridData);
+                this.gridOptions.data = clonedData;
+                this.callDataGridMethod('softRefreshData', clonedData);
+            } else {
             this.setDataGridOption('data', getClonedObject(this._gridData));
         }
+    }
     }
 
     get gridData() {
@@ -1324,7 +1418,9 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
         if (this.editmode === EDIT_MODE.QUICK_EDIT) {
             this.documentClickBind = this._documentClickBind.bind(this);
-            document.addEventListener('click', this.documentClickBind);
+            // Use capture phase so a click on another grid (which calls stopPropagation) still reaches this
+            // listener and lets the current grid save/close its editing row.
+            document.addEventListener('click', this.documentClickBind, true);
         }
     }
     private getConfiguredState() {
@@ -1573,8 +1669,10 @@ export class TableComponent extends StylableComponent implements AfterContentIni
     }
 
     ngOnDestroy() {
+        this._modelVarEditSoftRefreshActiveUntil = 0;
+        this._isInlineEditSave = false;
         // MEMORY LEAK FIX: Remove document click listener
-        document.removeEventListener('click', this.documentClickBind);
+        document.removeEventListener('click', this.documentClickBind, true);
 
         // MEMORY LEAK FIX: Unsubscribe from navigator watches
         if (this.navigatorResultWatch) {
@@ -2711,11 +2809,16 @@ export class TableComponent extends StylableComponent implements AfterContentIni
 
     private _documentClickBind(event) {
         const $target = event.target;
-        // If click triggered from same grid or a dialog, do not save the row
+        // If the click is within this table, a dialog, or a date picker, do not save the row.
         if (this.$element[0].contains($target) || event.target.doctype || isInputBodyWrapper($($target))) {
             return;
         }
-        this.callDataGridMethod('saveRow');
+        // If click is inside another datatable, that table's edit handler saves this row — skip to avoid a duplicate save. [WMS-31104]
+        if ($($target).closest('.app-datagrid').length) {
+            return;
+        }
+        // Click is outside all tables — save the editing row without returning focus to this table. [WMS-31104]
+        this.callDataGridMethod('saveRow', undefined, true);
     }
 
     private _redraw(forceRender) {

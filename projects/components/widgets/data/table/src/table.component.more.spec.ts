@@ -336,8 +336,20 @@ describe('TableComponent - additional behaviour', () => {
             const outside = document.createElement('div');
             document.body.appendChild(outside);
             click(outside);
-            expect(callGrid).toHaveBeenCalledWith('saveRow');
+            expect(callGrid).toHaveBeenCalledWith('saveRow', undefined, true);
             outside.remove();
+        });
+
+        it('ignores clicks inside another datatable', () => {
+            callGrid.mockClear();
+            const otherGrid = document.createElement('div');
+            otherGrid.className = 'app-datagrid';
+            const cell = document.createElement('span');
+            otherGrid.appendChild(cell);
+            document.body.appendChild(otherGrid);
+            click(cell);
+            expect(callGrid).not.toHaveBeenCalled();
+            otherGrid.remove();
         });
 
         it('ignores clicks inside the table, in dropdowns, dialogs, toasts and date pickers', () => {

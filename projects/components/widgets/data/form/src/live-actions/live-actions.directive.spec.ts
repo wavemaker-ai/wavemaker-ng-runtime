@@ -163,8 +163,13 @@ describe('LiveActionsDirective', () => {
         it('should delegate inserts to performCUDOperation', () => {
             const { directive } = createDirective(widget);
             const performCUDSpy = jest.spyOn(directive as any, 'performCUDOperation').mockImplementation(() => undefined);
-            directive.call(Live_Operations.INSERT, { row: {} });
-            expect(performCUDSpy).toHaveBeenCalled();
+            const options = { row: {} };
+            directive.call(Live_Operations.INSERT, options);
+            expect(performCUDSpy).toHaveBeenCalledWith(
+                expect.objectContaining({ row: options.row }),
+                Live_Operations.INSERT,
+                options
+            );
         });
 
         it('should show the delete confirmation dialog for deletes', () => {
@@ -256,8 +261,12 @@ describe('LiveActionsDirective', () => {
             directive.call(Live_Operations.DELETE, { row: {} });
             const config = dialogService.showAppConfirmDialog.mock.calls[0][0];
             config.onOk();
-            expect(performCUDSpy).toHaveBeenCalled();
-            expect(dialogService.closeAppConfirmDialog).toHaveBeenCalled();
+            expect(performCUDSpy).toHaveBeenCalledWith(
+                expect.objectContaining({ row: {} }),
+                Live_Operations.DELETE,
+                expect.objectContaining({ row: {} })
+            );
+            expect(dialogService.closeAppConfirmDialog).toHaveBeenCalledTimes(1);
         });
 
         it('should trigger the cancel callback and close the confirm dialog on Cancel', () => {
@@ -266,8 +275,8 @@ describe('LiveActionsDirective', () => {
             directive.call(Live_Operations.DELETE, { row: {}, cancelDeleteCallback });
             const config = dialogService.showAppConfirmDialog.mock.calls[0][0];
             config.onCancel();
-            expect(cancelDeleteCallback).toHaveBeenCalled();
-            expect(dialogService.closeAppConfirmDialog).toHaveBeenCalled();
+            expect(cancelDeleteCallback).toHaveBeenCalledTimes(1);
+            expect(dialogService.closeAppConfirmDialog).toHaveBeenCalledTimes(1);
         });
 
         it('should fall back to default confirmation copy when the widget does not customize it', () => {
