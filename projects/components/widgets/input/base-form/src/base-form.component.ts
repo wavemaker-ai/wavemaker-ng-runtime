@@ -3,7 +3,7 @@ import {AfterViewInit, Inject, Injectable, Injector, OnDestroy, Optional} from '
 import {DataSource} from '@wm/core';
 
 import {IWidgetConfig, StylableComponent, WidgetConfig} from '@wm/components/base';
-import {has, set} from "lodash-es";
+import {get, has, set} from "lodash-es";
 
 @Injectable()
 export abstract class BaseFormComponent extends StylableComponent implements AfterViewInit, OnDestroy {
@@ -55,7 +55,11 @@ export abstract class BaseFormComponent extends StylableComponent implements Aft
             /\[(.*?)\]/g,
             (_match, key) => {
                 try {
-                    const value = eval(`this.viewParent.${key}`);
+                    // eval is blocked when CSP / Trusted Types is enforced, so resolve a plain property path first
+                    let value = get(this.viewParent, key);
+                    if (value === undefined) {
+                        value = eval(`this.viewParent.${key}`);
+                    }
                     if (typeof value === 'string' || typeof value === 'number')
                      return `[${value}]`;
                     else

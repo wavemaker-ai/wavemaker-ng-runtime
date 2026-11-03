@@ -448,7 +448,7 @@ $.widget('wm.datatable', {
 
         sel += '</select>';
         htm =
-            '<form class="form-search form-inline" onsubmit="return false;"><div class="form-group">' +
+            '<form class="form-search form-inline"><div class="form-group">' +
             '<input type="text" data-element="dgSearchText" class="form-control app-textbox" value="" placeholder="' + searchLabel + '"/>' +
             '</div><div class="input-append input-group">' +
             sel +
@@ -458,6 +458,10 @@ $.widget('wm.datatable', {
             '</div>' +
             '</div></form>';
         const $htm = $(htm);
+        // inline onsubmit attribute is blocked by CSP, so prevent the form submit through a listener
+        $htm.on('submit', function (e) {
+            e.preventDefault();
+        });
         this._setStyles($htm.find('[data-element="dgSearchText"]'), "display: inline-block;");
         return $htm;
     },
