@@ -18,7 +18,7 @@ import {
 import { registerProps } from './card.props';
 import {removeAttr, setAttr} from '@wm/core';
 
-const DEFAULT_CLS = 'app-card card';
+const DEFAULT_CLS = 'app-card card app-panel';
 const WIDGET_CONFIG: IWidgetConfig = {
     widgetType: 'wm-card',
     hostClass: DEFAULT_CLS

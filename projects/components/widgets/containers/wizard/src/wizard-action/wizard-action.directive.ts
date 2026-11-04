@@ -4,7 +4,7 @@ import {registerProps} from "./wizard-action.props";
 
 const WIDGET_INFO: IWidgetConfig = {
     widgetType: 'wm-wizardaction',
-    hostClass: 'app-wizard-actions'
+    hostClass: 'app-wizard-actions panel-footer '
 };
 
 @Directive({

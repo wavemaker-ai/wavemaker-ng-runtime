@@ -6,7 +6,7 @@
 -->
 <ng-content select="div[wmWizardStepper]"></ng-content>
 @if (type !== 'dynamic') {
-<div class="app-wizard-body">
+<div class="app-wizard-body panel-body">
   @if (message.caption) {
     <p wmMessage caption.bind="message.caption" type.bind="message.type"></p>
   }
@@ -14,7 +14,7 @@
 </div>
 }
 @if (type === 'dynamic') {
-<div class="app-wizard-body">
+<div class="app-wizard-body panel-body">
     @if(!fieldDefs?.length) {
     <div>{{nodatamessage}}</div>
     }

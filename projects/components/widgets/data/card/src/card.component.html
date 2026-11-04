@@ -1,5 +1,5 @@
 @if (showHeader) {
-  <div class="card-header">
+  <div class="app-card-header panel-heading">
     @if (iconclass || iconurl) {
       <div class="app-card-avatar">
         <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [iconClasses]="iconurl ? 'img-circle' : ''"></wm-app-icon>
@@ -10,11 +10,11 @@
       <h5 class="card-subheading text-muted" [textContent]="subheading"></h5>
     </div>
     @if (actions) {
-      <div class="card-actions">
+      <div class="panel-actions">
         <!-- TODO(punith) need to bind autoclose-->
         <div wmMenu dropdown
           [autoClose]="autoclose !== 'disabled'"
-          class="card-action"
+          class="panel-action"
           type="anchor"
           iconclass="wm-sl-l sl-more-menu-vertical"
           menuposition="down,left"

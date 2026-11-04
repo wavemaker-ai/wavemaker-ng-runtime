@@ -16,10 +16,10 @@ import {
 import {registerProps} from './accordion-pane.props';
 import {AccordionDirective} from '../accordion.directive';
 
-const DEFAULT_CLS = 'app-accordion-panel';
+const DEFAULT_CLS = 'app-accordion-panel panel';
 const WIDGET_CONFIG: IWidgetConfig = { widgetType: 'wm-accordionpane', hostClass: DEFAULT_CLS };
 
-@AutoLayout({ targetSelector: '.accordion-body' })
+@AutoLayout({ targetSelector: '.panel-body' })
 @Component({
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
@@ -152,7 +152,7 @@ export class AccordionPaneComponent extends StylableComponent implements AfterVi
     ngAfterViewInit() {
         super.ngAfterViewInit();
         styler(
-            this.nativeElement.querySelector('.accordion-body') as HTMLElement,
+            this.nativeElement.querySelector('.panel-body') as HTMLElement,
             this,
             APPLY_STYLES_TYPE.INNER_SHELL
         );

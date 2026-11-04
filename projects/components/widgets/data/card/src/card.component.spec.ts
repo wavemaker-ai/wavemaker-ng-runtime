@@ -68,7 +68,7 @@ describe('CardComponent', () => {
         const cardHost = fixture.debugElement.query(By.css('[wmCard]'));
         expect(cardHost.nativeElement.classList.contains('app-card')).toBe(true);
         expect(cardHost.nativeElement.classList.contains('card')).toBe(true);
-        expect(cardHost.nativeElement.classList.contains('app-card')).toBe(true);
+        expect(cardHost.nativeElement.classList.contains('app-panel')).toBe(true);
     });
 
     it('should call removeAttr on parent and setAttr on element in ngOnInit', () => {
@@ -126,7 +126,7 @@ describe('CardComponent', () => {
         cardComponent.showHeader = true;
         cardComponent.title = 'Visible Title';
         fixture.detectChanges();
-        const headerEl = fixture.debugElement.query(By.css('.card-header'));
+        const headerEl = fixture.debugElement.query(By.css('.app-card-header'));
         expect(headerEl).toBeTruthy();
         const headingEl = fixture.debugElement.query(By.css('.card-heading'));
         expect(headingEl?.nativeElement.textContent).toContain('Visible Title');
@@ -135,7 +135,7 @@ describe('CardComponent', () => {
     it('should not show header section when showHeader is false', () => {
         cardComponent.showHeader = false;
         fixture.detectChanges();
-        const headerEl = fixture.debugElement.query(By.css('.card-header'));
+        const headerEl = fixture.debugElement.query(By.css('.app-card-header'));
         expect(headerEl).toBeFalsy();
     });
 

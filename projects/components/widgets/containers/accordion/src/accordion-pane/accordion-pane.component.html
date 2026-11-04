@@ -1,21 +1,19 @@
-<div class="accordion-header clearfix" (click)="toggle($event)" [ngClass]="{active: isActive}">
-    <h3 class="accordion-title">
+<div class="panel-heading clearfix" (click)="toggle($event)" [ngClass]="{active: isActive}">
+    <h3 class="panel-title">
         <a [attr.aria-expanded]="isActive" [tabindex]="tabindex"
            class="accordion-toggle clearfix"
            href="javascript:void(0);" role="button">
-           @if (iconclass || iconurl) {
             <div class="pull-left">
-                <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [defaultIconClass]="'accordion-icon'" alt="Accordion icon"></wm-app-icon>
+                <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" iconClasses="panel-icon" alt="Accordion icon"></wm-app-icon>
             </div>
-            }
             <div class="pull-left">
                 <div class="heading" [innerHTML]="title"></div>
                 <div class="description" [innerHTML]="subheading"></div>
             </div>
-            <div class="accordion-actions pull-right">
+            <div class="panel-actions pull-right">
                 <!-- added class as badge, app-label since it needs this classes to trigger the badge tokens -->
                 <span class="badge app-label label-{{badgetype}}">{{ badgevalue }}</span>
-                <span class="app-icon accordion-action wi"
+                <span class="app-icon panel-action wi"
                       title="{{appLocale.LABEL_COLLAPSE}}/{{appLocale.LABEL_EXPAND}}">
                 <i [ngClass]="isActive ? 'wi-minus' : 'wi-plus'"></i>
             </span>
@@ -23,8 +21,8 @@
         </a>
     </h3>
 </div>
-<div [ngClass]="isActive ? 'collapse in' : 'collapse'" class="accordion-collapse collapse">
-    <div class="accordion-body"  partial-container-target>
+<div [ngClass]="isActive ? 'collapse in' : 'collapse'" class="panel-collapse collapse">
+    <div class="panel-body"  partial-container-target>
         <ng-content></ng-content>
     </div>
 </div>
