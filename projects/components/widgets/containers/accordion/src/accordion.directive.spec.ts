@@ -64,7 +64,7 @@ describe('AccordionDirective', () => {
         it('collects the panes and renders their headings', () => {
             const { fixture, panes } = setup();
             expect(panes()).toHaveLength(3);
-            expect(fixture.nativeElement.querySelectorAll('.accordion-header')).toHaveLength(3);
+            expect(fixture.nativeElement.querySelectorAll('.panel-heading')).toHaveLength(3);
             expect(panes().every(p => !p.isActive)).toBe(true);
         });
 
@@ -72,7 +72,7 @@ describe('AccordionDirective', () => {
             const { fixture, accordion, panes } = setup();
             const change = jest.spyOn(accordion as any, 'invokeEventCallback');
             const expand = jest.spyOn(panes()[0], 'invokeEventCallback');
-            (fixture.nativeElement.querySelectorAll('.accordion-header')[0] as HTMLElement).click();
+            (fixture.nativeElement.querySelectorAll('.panel-heading')[0] as HTMLElement).click();
             fixture.detectChanges();
             expect(panes()[0].isActive).toBe(true);
             expect(expand).toHaveBeenCalledWith('expand', expect.anything());
