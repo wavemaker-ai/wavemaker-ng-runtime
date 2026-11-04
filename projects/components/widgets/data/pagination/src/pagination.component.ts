@@ -6,6 +6,7 @@ import {
     EventEmitter,
     Inject,
     Injector,
+    NgZone,
     OnDestroy,
     Optional,
     Output,
@@ -16,7 +17,6 @@ import {
 import {
     $appDigest,
     $watch,
-    adjustVerticalPosition,
     AppConstants,
     DataSource,
     debounce,
@@ -37,6 +37,7 @@ import {registerProps} from './pagination.props';
 import {forEach, get, isArray, isEmpty, isNull, isString, range} from "lodash-es";
 import {PaginationModule} from 'ngx-bootstrap/pagination';
 import {BsDropdownDirective, BsDropdownModule} from 'ngx-bootstrap/dropdown';
+import {take} from 'rxjs/operators';
 
 const DEFAULT_CLS = 'app-datanavigator clearfix';
 const WIDGET_CONFIG = {widgetType: 'wm-pagination', hostClass: DEFAULT_CLS};
@@ -150,7 +151,7 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         });
     }
 
-    constructor(inj: Injector, @SkipSelf() @Inject(WidgetRef) public parent, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any) {
+    constructor(inj: Injector, @SkipSelf() @Inject(WidgetRef) public parent, @Inject('EXPLICIT_CONTEXT') @Optional() explicitContext: any, private readonly ngZone: NgZone) {
         super(inj, WIDGET_CONFIG, explicitContext);
         styler(this.nativeElement, this);
         this._initTimeoutId = setTimeout(()=> {
@@ -889,18 +890,36 @@ export class PaginationComponent extends StylableComponent implements AfterViewI
         const container = $event?._element?.nativeElement as HTMLElement;
         if(!container) return;
 
-        adjustVerticalPosition(
-            $(container),
-            this.nativeElement?.querySelector('.items-per-page div'),
-            this.bsDropdown._dropdown,
-            $(container?.querySelector('ul[id="dropdown-basic"]'))
-        );
+        this.ngZone.onStable.pipe(take(1)).subscribe(() => this.adjustMenuVerticalPosition(container));
 
         this.dropdownScrollHandler = () => {
             this.onDropdownScroll();
         };
 
         window.addEventListener('scroll', this.dropdownScrollHandler, true);
+    }
+
+  // function to adjust the vertical position of the dropdown menu to ensure it is fully visible in the viewport
+    private adjustMenuVerticalPosition(container: HTMLElement, frames = 0) {
+        const menu = container.querySelector('ul[id="dropdown-basic"]') as HTMLElement;
+        const parent = this.nativeElement?.querySelector('.items-per-page div') as HTMLElement;
+        if (!menu?.isConnected || !parent) {
+            return;
+        }
+       // Wait until the container is positioned, then adjust the menu before it appears.
+       // Show the menu above the button if there isn't enough space below.
+        if (!container.style.transform && frames < 60) {
+            requestAnimationFrame(() => this.adjustMenuVerticalPosition(container, frames + 1));
+            return;
+        }
+        const parentRect = parent.getBoundingClientRect();
+        const menuHeight = menu.offsetHeight;
+        if (window.innerHeight - parentRect.bottom >= menuHeight || parentRect.top < menuHeight) {
+            return;
+        }
+        const menuRect = menu.getBoundingClientRect();
+        const shift = Math.max(parentRect.top - 2 - menuRect.bottom, -menuRect.top);
+        menu.style.top = `${(parseFloat(getComputedStyle(menu).top) || 0) + shift}px`;
     }
 
     onDropdownScroll() {
