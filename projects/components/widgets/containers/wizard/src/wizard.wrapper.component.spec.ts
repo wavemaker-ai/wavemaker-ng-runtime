@@ -7,6 +7,73 @@ import { ITestComponentDef, ITestModuleDef } from '../../../../base/src/test/com
 import {App, DynamicComponentRefProvider} from '@wm/core';
 import { WizardStepComponent } from "./wizard-step/wizard-step.component";
 import { TextContentDirective } from '@wm/components/base';
+import { WizardStepperComponent } from '../../wizardstepper/src/wizardstepper.component';
+
+/**
+ * This describe is deliberately placed FIRST in the file, before `wm-wizard: Component Specific
+ * Tests` below: that describe's nested `readMoreSubtitle` block globally overwrites
+ * `(global as any).$` with a stub jQuery lacking `.width()`, and never restores it — a
+ * pre-existing test-isolation gap in this file, not something introduced here. Placed after it,
+ * this describe would inherit that broken global `$` and fail on `WizardComponent`'s
+ * `ngAfterViewInit` resize-handling code with an unrelated `$(...).width is not a function`
+ * error that has nothing to do with the behavior under test.
+ */
+describe('standalone header BEFORE its wizard in document order (US2/T037/T040, construction-order regression check)', () => {
+    /**
+     * This is the exact DOM shape from the originally-reported bug: a standalone
+     * `wm-wizardstepper` placed as a SIBLING before its `wm-wizard`, both bound only by
+     * `wizardname`/`name` — no nesting, no manually-pre-populated mocks. This is the one
+     * scenario the earlier `StandaloneWizardStepperWrapperComponent` spec (in
+     * wizardstepper.component.spec.ts) did NOT exercise: that spec pre-populated
+     * `Widgets.wizard1` by hand before `detectChanges()`, which sidesteps Angular's real
+     * sibling construction order entirely. A real WizardComponent registers itself into
+     * `viewParent.Widgets` from ITS OWN constructor (see `base.component.ts`'s `initWidget()`),
+     * and both this header and the wizard register during the SAME parent construction pass —
+     * before either's `ngOnInit`/change-detection runs — so resolution must work regardless of
+     * which one is declared first in markup.
+     */
+    const orderMarkup = `
+        <div wmWizardStepper name="header1" wizardname="wizard2"></div>
+        <div wmWizard stepstyle="justified" name="wizard2" class="classic" show="true">
+            <form wmWizardStep name="orderedstep1"></form>
+            <form wmWizardStep name="orderedstep2"></form>
+        </div>
+    `;
+
+    @Component({
+        standalone: false,
+        template: orderMarkup
+    })
+    class HeaderBeforeWizardWrapperComponent {
+        @ViewChild(WizardComponent, { static: true }) wizardComponent: WizardComponent;
+        @ViewChild(WizardStepperComponent, { static: true }) headerComponent: WizardStepperComponent;
+        // `viewParent` resolves to THIS instance (see the earlier standalone-resolution spec in
+        // wizardstepper.component.spec.ts for why); without a `Widgets` object here, the generic
+        // `viewParent.Widgets[name]` registry both components register into has nowhere to
+        // write, so name-based resolution can never succeed regardless of construction order.
+        Widgets: any = {};
+    }
+
+    let orderFixture: ComponentFixture<HeaderBeforeWizardWrapperComponent>;
+
+    beforeEach(waitForAsync(() => {
+        orderFixture = compileTestComponent({
+            imports: [FormsModule, TextContentDirective, WizardComponent, WizardStepComponent, WizardStepperComponent],
+            declarations: [HeaderBeforeWizardWrapperComponent],
+            providers: [
+                { provide: App, useValue: mockApp },
+                DynamicComponentRefProvider
+            ]
+        }, HeaderBeforeWizardWrapperComponent);
+        orderFixture.detectChanges();
+    }));
+
+    it('should NOT render empty: a standalone header resolves its wizard and renders steps, even though it is declared first in document order', () => {
+        // scoped to the standalone header's own native element specifically.
+        const headerNativeElement = orderFixture.componentInstance.headerComponent['nativeElement'] as HTMLElement;
+        expect(headerNativeElement.querySelectorAll('li.app-wizard-step').length).toBe(2);
+    });
+});
 
 const markup = `
         <div wmWizard role="tablist" stepstyle="justified" name="wizard1" class="classic" show="true" width="800" height="200"
@@ -549,8 +616,7 @@ describe('wm-wizard: Component Specific Tests', () => {
 
     describe('wizard header icon/stepper helpers', () => {
         function setHostClass(cls: string) {
-            wmComponent.class = cls;
-            wmComponent.getNativeElement().className = cls;
+            (wmComponent as any).explicitHeader = { class: cls };
         }
 
         it('showWizardStepIcons should be false when there is no class information at all', () => {
@@ -805,6 +871,17 @@ describe('wm-wizard: Component Specific Tests', () => {
     });
 
     describe('onkeydown newStep DOM update path', () => {
+        // The header items are rendered by a nested wm-wizardstepper, which this markup does not have
+        let heading: HTMLElement;
+        beforeEach(() => {
+            heading = document.createElement('div');
+            heading.className = 'app-wizard-heading';
+            heading.innerHTML = '<ul>' + wmComponent.steps.toArray().map((s, i) =>
+                `<li data-stepid="${s.widgetId}"${i === 0 ? ' class="active"' : ''}><a></a></li>`).join('') + '</ul>';
+            wmComponent.getNativeElement().appendChild(heading);
+        });
+        afterEach(() => heading.remove());
+
         it('should move the active class to the resolved step and focus it on ArrowDown', () => {
             wmComponent.autoActivation = false;
             const targetStep = wmComponent.getWidget().getStepRefByIndex(2);

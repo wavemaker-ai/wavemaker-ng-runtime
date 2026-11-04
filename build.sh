@@ -236,6 +236,7 @@ bundleWeb() {
         ./libraries/components/containers/panel/bundles/index.umd.js \
         ./libraries/components/containers/tabs/bundles/index.umd.js \
         ./libraries/components/containers/tile/bundles/index.umd.js \
+        ./libraries/components/containers/wizardstepper/bundles/index.umd.js \
         ./libraries/components/containers/wizard/bundles/index.umd.js \
         ./libraries/components/advanced/carousel/bundles/index.umd.js \
         ./libraries/components/advanced/marquee/bundles/index.umd.js \
@@ -324,6 +325,7 @@ buildApp() {
     ngPackagrBuild components-containers-panel projects/components/widgets/containers/panel '@wm/components/containers/panel'
     ngPackagrBuild components-containers-tabs projects/components/widgets/containers/tabs '@wm/components/containers/tabs'
     ngPackagrBuild components-containers-tile projects/components/widgets/containers/tile '@wm/components/containers/tile'
+    ngPackagrBuild components-containers-wizardstepper projects/components/widgets/containers/wizardstepper '@wm/components/containers/wizardstepper'
     ngPackagrBuild components-containers-wizard projects/components/widgets/containers/wizard '@wm/components/containers/wizard'
 
     ngPackagrBuild components-dialogs projects/components/widgets/dialogs/default '@wm/components/dialogs'
