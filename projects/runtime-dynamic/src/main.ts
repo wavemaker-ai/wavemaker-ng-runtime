@@ -26,10 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
   new Promise<Event | void>(resolve => {
       resolve();
   }).then(() => bootstrapApplication(AppComponent, appConfig))
-    .then((appRef: ApplicationRef) => { 
-      window.addEventListener('unload', () => {
-        appRef.components.map(c => c?.destroy());
-      });
+    .then((appRef: ApplicationRef) => {
+      const onPageHide = (event: PageTransitionEvent) => {
+        if (event.persisted) {
+          return;
+        }
+        appRef.components.forEach(c => c?.destroy());
+        window.removeEventListener('pagehide', onPageHide);
+      };
+      window.addEventListener('pagehide', onPageHide);
     })
     .catch(err => console.error('Error bootstrapping app:', err));
 });
