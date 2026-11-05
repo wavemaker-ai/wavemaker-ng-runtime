@@ -2,7 +2,7 @@
   <div class="app-card-header panel-heading">
     @if (iconclass || iconurl) {
       <div class="app-card-avatar">
-        <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [iconClasses]="iconurl ? 'img-circle' : ''"></wm-app-icon>
+        <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [defaultClasses]="iconurl ? 'img-circle' : ''"></wm-app-icon>
       </div>
     }
     <div class="app-card-header-text">

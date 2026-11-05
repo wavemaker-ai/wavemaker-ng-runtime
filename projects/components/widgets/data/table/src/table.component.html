@@ -3,7 +3,7 @@
     <h3 class="panel-title">
       <div class="pull-left">
         @if (iconclass || iconurl) {
-          <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [iconClasses]="iconurl ? 'panel-image-icon' : 'panel-icon'" alt="Table icon"></wm-app-icon>
+          <wm-app-icon [iconclass]="iconclass" [iconurl]="iconurl" [defaultClasses]="iconurl ? 'panel-image-icon' : 'panel-icon'" alt="Table icon"></wm-app-icon>
         }
       </div>
       <div class="pull-left">
