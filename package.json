@@ -115,8 +115,8 @@
         "@rollup/rollup-win32-x64": "4.60.1"
     },
     "engines": {
-        "node": "22.22.3",
-        "npm": "10.9.8"
+        "node": "^22.23.4",
+        "npm": "^10.9.9"
     },
     "overrides": {
         "adm-zip": "0.6.1",
