@@ -298,7 +298,12 @@ export class ListComponent extends StylableComponent implements OnInit, AfterVie
         }
         $appDigest();
     }
-
+    public get item() {
+        if (isEmpty(this._items)) {
+            return {};
+        }
+        return last(this._items);
+    }
     /**
      * Returns list of widgets present on list item by considering name and index of the widget.
      * If we did'nt pass index, it returns array of all the widgets which are matching to widget name
