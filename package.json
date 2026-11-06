@@ -40,7 +40,7 @@
         "@wavemaker-ai/custom-widgets-m3": "file:.yalc/@wavemaker-ai/custom-widgets-m3",
         "@wavemaker-ai/foundation-css": "file:.yalc/@wavemaker-ai/foundation-css",
         "@wavemaker-ai/variables": "file:.yalc/@wavemaker-ai/variables",
-        "@wavemaker/focus-trap": "1.0.1",
+        "@wavemaker/focus-trap": "1.0.2",
         "@wavemaker/nvd3": "1.8.16",
         "@ztree/ztree_v3": "3.5.48",
         "acorn": "8.15.0",
