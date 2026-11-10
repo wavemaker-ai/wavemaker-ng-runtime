@@ -33,15 +33,25 @@ describe('runtime-dynamic main', () => {
         expect(mockEnableProdMode).toHaveBeenCalledTimes(1);
     });
 
-    it('bootstraps the app on DOMContentLoaded and destroys components on unload', async () => {
+    it('bootstraps the app on DOMContentLoaded and destroys components on pagehide', async () => {
         const destroy = jest.fn();
         mockBootstrap.mockResolvedValue({ components: [{ destroy }, null] });
         load();
         document.dispatchEvent(new Event('DOMContentLoaded'));
         await flush();
         expect(mockBootstrap).toHaveBeenCalledWith(expect.any(Function), { cfg: 1 });
-        window.dispatchEvent(new Event('unload'));
+        window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: false }));
         expect(destroy).toHaveBeenCalled();
+    });
+
+    it('keeps components alive when the page enters bfcache (pagehide with persisted=true)', async () => {
+        const destroy = jest.fn();
+        mockBootstrap.mockResolvedValue({ components: [{ destroy }] });
+        load();
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+        await flush();
+        window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }));
+        expect(destroy).not.toHaveBeenCalled();
     });
 
     it('logs bootstrap failures', async () => {

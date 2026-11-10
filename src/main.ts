@@ -54,13 +54,14 @@ const boundDOMContentLoadedHandler = () => {
     resolve();
   }).then(() => bootstrapApplication(AppComponent, appConfig))
     .then((appRef: ApplicationRef) => {
-      // MEMORY LEAK FIX: Store unload handler reference
-      const boundUnloadHandler = () => {
+      const boundPageHideHandler = (event: PageTransitionEvent) => {
+        if (event.persisted) {
+          return;
+        }
         appRef.components.forEach(c => c?.destroy());
-        // MEMORY LEAK FIX: Remove unload listener after cleanup (though unload is typically final)
-        window.removeEventListener('unload', boundUnloadHandler);
+        window.removeEventListener('pagehide', boundPageHideHandler);
       };
-      window.addEventListener('unload', boundUnloadHandler);
+      window.addEventListener('pagehide', boundPageHideHandler);
     })
     .catch(err => console.error('Error bootstrapping app:', err));
   // MEMORY LEAK FIX: Remove DOMContentLoaded listener after execution (one-time event)

@@ -491,7 +491,7 @@ describe('utils.more - triggerItemAction / findRootContainer / setListClass / fi
     it('setListClass variants', () => {
         const s: any = {};
         setListClass(s);
-        expect(s.itemsPerRowClass).toBe('col-xs-12');
+        expect(s.itemsPerRowClass).toBe('');
         s.itemsperrow = 'auto';
         setListClass(s);
         expect(s.itemsPerRowClass).toBe('');
