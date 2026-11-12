@@ -31,8 +31,10 @@ export {
     setPipeProvider,
     getFnByExpr,
     getFnForBindExpr,
-    getFnForEventExpr
+    getFnForEventExpr,
+    isCSPEnabled
 } from './utils/expression-parser';
+export { installCspSafeJitCompiler, InterpretingJitEvaluator } from './utils/csp-safe-jit';
 export {
     EVENT_LIFE,
     isDefined,

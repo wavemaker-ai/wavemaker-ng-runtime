@@ -17,9 +17,19 @@ import {
     PrefixNot,
     PropertyRead,
     Unary,
-    ParenthesizedExpression
+    ParenthesizedExpression,
+    NonNullAssert,
+    RegularExpressionLiteral,
+    SafeCall,
+    SafeKeyedRead,
+    SafePropertyRead,
+    SpreadElement,
+    TaggedTemplateLiteral,
+    TemplateLiteral,
+    ThisReceiver,
+    TypeofExpression,
+    VoidExpression
 } from '@angular/compiler';
-import {get} from "lodash-es";
 
 const isDef = v => v !== void 0;
 const ifDef = (v, d) => v === void 0 ? d : v;
@@ -467,6 +477,356 @@ class ASTCompiler {
     }
 }
 
+// ==================== CSP-safe AST interpreter ====================
+//
+// Evaluates the parsed expression AST directly, instead of generating JS source and running it
+// through `new Function` like ASTCompiler does. Used when a Content-Security-Policy blocks eval
+// (no 'unsafe-eval') and the expression was not pre-compiled by codegen, e.g. expressions that
+// only exist at runtime (tree node actions, table rowngclass/col-ng-class, menu item actions).
+//
+// Semantics deliberately mirror the code ASTCompiler generates, so that an expression gives the
+// same result with and without CSP: `+`/`-` tolerate undefined operands, `a && b` yields `false`
+// (not `a`) for a falsy `a`, `a.b` yields `a` itself for a falsy `a`, method calls on the implicit
+// receiver run with `this` set to the original context, and a chain returns its first value.
+
+const BLOCKED_MEMBERS = new Set(['constructor', '__proto__', '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__']);
+
+// Expressions must not reach the Function constructor, prototypes or eval: that would let a
+// runtime expression run arbitrary code, which is exactly what CSP is there to prevent.
+const checkMember = (key, forWrite?: boolean) => {
+    const name = typeof key === 'symbol' ? key : String(key);
+    if (BLOCKED_MEMBERS.has(name as string) || (forWrite && name === 'prototype')) {
+        throw new Error(`Access to '${String(name)}' is not allowed in expressions`);
+    }
+    return name;
+};
+
+const assertCallable = (fn) => {
+    if (typeof fn !== 'function') {
+        throw new TypeError(`${fn} is not a function`);
+    }
+    if (fn === Function || fn === globalThis.eval) {
+        throw new Error('Calling Function or eval is not allowed in expressions');
+    }
+};
+
+// Plain JS binary operators. `+`, `-`, `&&`, `||`, `??` and assignments are handled separately.
+/* eslint-disable eqeqeq */
+const BINARY_OPS: Record<string, (l, r) => any> = {
+    '==': (l, r) => l == r,
+    '!=': (l, r) => l != r,
+    '===': (l, r) => l === r,
+    '!==': (l, r) => l !== r,
+    '<': (l, r) => l < r,
+    '>': (l, r) => l > r,
+    '<=': (l, r) => l <= r,
+    '>=': (l, r) => l >= r,
+    '*': (l, r) => l * r,
+    '/': (l, r) => l / r,
+    '%': (l, r) => l % r,
+    '**': (l, r) => l ** r,
+    'in': (l, r) => l in r
+};
+/* eslint-enable eqeqeq */
+
+const COMPOUND_ASSIGN_OPS: Record<string, (l, r) => any> = {
+    '+=': (l, r) => l + r,
+    '-=': (l, r) => l - r,
+    '*=': (l, r) => l * r,
+    '/=': (l, r) => l / r,
+    '%=': (l, r) => l % r,
+    '**=': (l, r) => l ** r
+};
+
+interface PipeState {
+    cache: Map<any, any>; // pure pipe results, keyed by the pipe AST node
+    instances: Map<any, any>; // pipe instances, keyed by the pipe AST node
+    isPure: Map<string, boolean>;
+}
+
+interface EvalState {
+    ctx: any; // the context the expression runs against
+    locals: any;
+    scope: any; // locals layered over ctx; what identifiers resolve against
+    pipes: PipeState;
+}
+
+const isImplicit = ast => ast instanceof ImplicitReceiver || ast instanceof ThisReceiver;
+
+const getPipeInstance = (ast: BindingPipe, pipes: PipeState) => {
+    let instance = pipes.instances.get(ast);
+    if (instance) {
+        return instance;
+    }
+    const pipeInfo = pipeProvider.meta(ast.name);
+    if (!pipeInfo) {
+        instance = nullPipe();
+    } else if (pipeInfo.pure) {
+        instance = purePipes.get(ast.name) || pipeProvider.getInstance(ast.name);
+        purePipes.set(ast.name, instance);
+    } else {
+        instance = pipeProvider.getInstance(ast.name);
+    }
+    pipes.instances.set(ast, instance);
+    return instance;
+};
+
+// Resolves the function a Call / TaggedTemplateLiteral invokes, and the `this` to invoke it with.
+const resolveCallee = (ast, s: EvalState): { fn: any, thisArg: any, skip?: boolean } => {
+    if (ast instanceof PropertyRead || ast instanceof SafePropertyRead) {
+        const obj = evaluate(ast.receiver, s);
+        if (ast instanceof SafePropertyRead && obj == null) {
+            return { fn: undefined, thisArg: undefined, skip: true };
+        }
+        return {
+            fn: obj && obj[checkMember(ast.name)],
+            thisArg: isImplicit(ast.receiver) ? s.ctx : obj
+        };
+    }
+    if (ast instanceof KeyedRead || ast instanceof SafeKeyedRead) {
+        const key = evaluate(ast.key, s);
+        const obj = evaluate(ast.receiver, s);
+        if (ast instanceof SafeKeyedRead && obj == null) {
+            return { fn: undefined, thisArg: undefined, skip: true };
+        }
+        return { fn: obj && obj[checkMember(key)], thisArg: obj };
+    }
+    return { fn: evaluate(ast, s), thisArg: isImplicit(ast) ? s.ctx : undefined };
+};
+
+// The object an assignment to a bare identifier (`x = 1`) writes to: the locals when the name is a
+// local (e.g. `item`), otherwise the context. Never the merged scope, which is a throwaway copy.
+const implicitWriteTarget = (name, s: EvalState) => {
+    return s.locals && Object.prototype.hasOwnProperty.call(s.locals, name) ? s.locals : s.ctx;
+};
+
+const evaluateAssignment = (ast: Binary, s: EvalState) => {
+    const target = ast.left;
+    let obj;
+    let key;
+    if (target instanceof PropertyRead) {
+        key = target.name;
+        obj = isImplicit(target.receiver) ? implicitWriteTarget(key, s) : evaluate(target.receiver, s);
+    } else if (target instanceof KeyedRead) {
+        key = evaluate(target.key, s);
+        obj = isImplicit(target.receiver) ? implicitWriteTarget(key, s) : evaluate(target.receiver, s);
+    } else {
+        throw new Error('Invalid assignment target in expression');
+    }
+    key = checkMember(key, true);
+    if (obj == null) {
+        throw new TypeError(`Cannot set properties of ${obj} (setting '${String(key)}')`);
+    }
+
+    const op = ast.operation;
+    if (op === '=') {
+        return (obj[key] = evaluate(ast.right, s));
+    }
+    const current = obj[key];
+    switch (op) {
+        case '&&=':
+            return current ? (obj[key] = evaluate(ast.right, s)) : current;
+        case '||=':
+            return current ? current : (obj[key] = evaluate(ast.right, s));
+        case '??=':
+            return current != null ? current : (obj[key] = evaluate(ast.right, s));
+    }
+    const apply = COMPOUND_ASSIGN_OPS[op];
+    if (!apply) {
+        throw new Error(`Unsupported assignment operator '${op}' in expression`);
+    }
+    return (obj[key] = apply(current, evaluate(ast.right, s)));
+};
+
+const evaluateBinary = (ast: Binary, s: EvalState) => {
+    const op = ast.operation;
+    if (Binary.isAssignmentOperation(op)) {
+        return evaluateAssignment(ast, s);
+    }
+    if (op === '&&') {
+        // same as the generated code: yields `false`, not the left value, when the left side is falsy
+        return evaluate(ast.left, s) ? evaluate(ast.right, s) : false;
+    }
+    if (op === '||') {
+        return evaluate(ast.left, s) || evaluate(ast.right, s);
+    }
+    if (op === '??') {
+        return evaluate(ast.left, s) ?? evaluate(ast.right, s);
+    }
+    const l = evaluate(ast.left, s);
+    const r = evaluate(ast.right, s);
+    if (op === '+') {
+        return plus(l, r);
+    }
+    if (op === '-') {
+        return minus(l, r);
+    }
+    const apply = BINARY_OPS[op];
+    if (!apply) {
+        throw new Error(`Unsupported operator '${op}' in expression`);
+    }
+    return apply(l, r);
+};
+
+const evaluateCall = (ast: Call | SafeCall, s: EvalState) => {
+    const args = ast.args.map(arg => evaluate(arg, s));
+    const { fn, thisArg, skip } = resolveCallee(ast.receiver, s);
+    if (skip || (ast instanceof SafeCall && fn == null)) {
+        return undefined;
+    }
+    if (!fn) {
+        return fn;
+    }
+    assertCallable(fn);
+    return fn.apply(thisArg, args);
+};
+
+const evaluateTemplate = (ast: TemplateLiteral, s: EvalState) => {
+    let result = ast.elements[0].text;
+    for (let i = 0; i < ast.expressions.length; i++) {
+        result += String(evaluate(ast.expressions[i], s)) + ast.elements[i + 1].text;
+    }
+    return result;
+};
+
+const evaluateTaggedTemplate = (ast: TaggedTemplateLiteral, s: EvalState) => {
+    const { fn, thisArg } = resolveCallee(ast.tag, s);
+    assertCallable(fn);
+    const strings: any = ast.template.elements.map(e => e.text);
+    strings.raw = strings.slice();
+    const values = ast.template.expressions.map(e => evaluate(e, s));
+    return fn.apply(thisArg, [Object.freeze(strings), ...values]);
+};
+
+const evaluatePipe = (ast: BindingPipe, s: EvalState) => {
+    const value = evaluate(ast.exp, s);
+    const args = ast.args.map(arg => evaluate(arg, s));
+    const pipe = getPipeInstance(ast, s.pipes);
+    if (s.pipes.isPure.get(ast.name)) {
+        return getPurePipeVal(pipe, s.pipes.cache, ast, value, ...args);
+    }
+    return pipe.transform(value, ...args);
+};
+
+function evaluate(ast, s: EvalState) {
+    if (isImplicit(ast)) {
+        return s.scope;
+    }
+    if (ast instanceof LiteralPrimitive) {
+        return ast.value;
+    }
+    if (ast instanceof PropertyRead) {
+        const r = evaluate(ast.receiver, s);
+        return r && r[checkMember(ast.name)];
+    }
+    if (ast instanceof SafePropertyRead) {
+        const r = evaluate(ast.receiver, s);
+        return r == null ? undefined : r[checkMember(ast.name)];
+    }
+    if (ast instanceof KeyedRead) {
+        const k = evaluate(ast.key, s);
+        const o = evaluate(ast.receiver, s);
+        return o && o[checkMember(k)];
+    }
+    if (ast instanceof SafeKeyedRead) {
+        const k = evaluate(ast.key, s);
+        const o = evaluate(ast.receiver, s);
+        return o == null ? undefined : o[checkMember(k)];
+    }
+    if (ast instanceof Call || ast instanceof SafeCall) {
+        return evaluateCall(ast, s);
+    }
+    if (ast instanceof PrefixNot) {
+        return !evaluate(ast.expression, s);
+    }
+    // Unary extends Binary, so it has to be checked first
+    if (ast instanceof Unary) {
+        const v = evaluate(ast.expr, s);
+        return ast.operator === '-' ? -v : +v;
+    }
+    if (ast instanceof Binary) {
+        return evaluateBinary(ast, s);
+    }
+    if (ast instanceof Conditional) {
+        return evaluate(ast.condition, s) ? evaluate(ast.trueExp, s) : evaluate(ast.falseExp, s);
+    }
+    if (ast instanceof ParenthesizedExpression || ast instanceof NonNullAssert) {
+        return evaluate(ast.expression, s);
+    }
+    if (ast instanceof LiteralArray) {
+        const result = [];
+        for (const item of ast.expressions) {
+            if (item instanceof SpreadElement) {
+                result.push(...evaluate(item.expression, s));
+            } else {
+                result.push(evaluate(item, s));
+            }
+        }
+        return result;
+    }
+    if (ast instanceof LiteralMap) {
+        const result = {};
+        ast.keys.forEach((k, i) => {
+            const value = evaluate(ast.values[i], s);
+            if (k.kind === 'spread') {
+                Object.assign(result, value);
+            } else {
+                result[checkMember(k.key, true)] = value;
+            }
+        });
+        return result;
+    }
+    if (ast instanceof BindingPipe) {
+        return evaluatePipe(ast, s);
+    }
+    if (ast instanceof Chain) {
+        // same as the generated code: every statement runs, the first one's value is returned
+        const results = ast.expressions.map(e => evaluate(e, s));
+        return results[0];
+    }
+    if (ast instanceof TemplateLiteral) {
+        return evaluateTemplate(ast, s);
+    }
+    if (ast instanceof TaggedTemplateLiteral) {
+        return evaluateTaggedTemplate(ast, s);
+    }
+    if (ast instanceof TypeofExpression) {
+        return typeof evaluate(ast.expression, s);
+    }
+    if (ast instanceof VoidExpression) {
+        evaluate(ast.expression, s);
+        return undefined;
+    }
+    if (ast instanceof RegularExpressionLiteral) {
+        return new RegExp(ast.body, ast.flags ?? undefined);
+    }
+    throw new Error(`Unsupported expression syntax: ${ast?.constructor?.name}`);
+}
+
+/**
+ * Builds an evaluator for the expression that interprets its AST on every call, without eval.
+ * Returns noop for an expression with syntax errors, like the compiled path does.
+ */
+const interpretExpr = (expr: string, exprType: ExpressionType) => {
+    const parser = new Parser(new Lexer);
+    const span = createParseSourceSpan(expr);
+    const parsed = exprType === ExpressionType.Binding ? parser.parseBinding(expr, span, 0) : parser.parseAction(expr, span, 0);
+    if (parsed.errors.length) {
+        return noop;
+    }
+    const ast = parsed.ast;
+    const pipes: PipeState = {
+        cache: new Map(),
+        instances: new Map(),
+        isPure: exprType === ExpressionType.Binding ? pipeProvider.getPipeNameVsIsPureMap() : new Map()
+    };
+    return (ctx?, locals?) => {
+        const scope = Object.assign({}, locals);
+        Object.setPrototypeOf(scope, ctx);
+        return evaluate(ast, { ctx, locals, scope, pipes });
+    };
+};
+
 const nullPipe = () => {
     return {
         transform: noop
@@ -474,7 +834,8 @@ const nullPipe = () => {
 };
 
 let _cspEnabled;
-const isCSPEnabled = () => {
+// whether a Content-Security-Policy blocks eval / new Function (detected once)
+export const isCSPEnabled = () => {
     if(typeof _cspEnabled !== 'undefined') {
         return _cspEnabled;
     }
@@ -529,17 +890,13 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
         boundFn = getFnForBindExpr(expr);
     }
 
-    // fallback to generate function in runtime. This will break if CSP is enabled
+    // not pre-compiled by codegen: build the function at runtime
     if (!boundFn) {
-        // If CSP enabled, function def not found from the generated fn expressions for the page.
-        // Handle bind expressions used internally inside WM components. e.g. wmAnchor used inside nav.comp.html
-        if (isCSPEnabled()) {
-            boundFn = function(ctx, locals) {
-                // handle internal bindings for wm widgets used inside a component
-                let _ctx = Object.assign({}, locals);
-                Object.setPrototypeOf(_ctx, ctx);
-                return get(_ctx, expr);
-            };
+        // CSP blocks `new Function`, so interpret the expression instead of compiling it.
+        // e.g. bindings of WM widgets used inside a component (wmAnchor in nav.comp.html) or runtime-only expressions.
+        // defOnly asks for the generated source (used by codegen), which needs no eval, so it still uses the compiler.
+        if (!defOnly && isCSPEnabled()) {
+            boundFn = interpretExpr(expr, ExpressionType.Binding);
         } else {
             const parser = new Parser(new Lexer);
             const ast = parser.parseBinding(expr, createParseSourceSpan(expr), 0);
@@ -594,26 +951,6 @@ export function $parseExpr(expr: string, defOnly?: boolean): ParseExprResult {
     return boundFn;
 }
 
-function simpleFunctionEvaluator(expr, ctx, locals) {
-    let _ctx = Object.assign({}, locals);
-    Object.setPrototypeOf(_ctx, ctx);
-
-    let parts = expr.split('(');
-    let fnName = parts[0];
-    let computedFn = get(ctx, fnName);
-
-    if (computedFn) {
-        let args = parts[1].replace(')', '');
-        args = args.split(',');
-        let computedArgs = [];
-        args.forEach((arg)=> {
-            arg = arg?.trim();
-            computedArgs.push(get(_ctx, arg));
-        });
-        return computedFn.bind(_ctx)(...computedArgs);
-    }
-}
-
 export function $parseEvent(expr, defOnly?): ParseExprResult {
     if (typeof (expr) !== 'string') {
         return noop;
@@ -635,10 +972,11 @@ export function $parseEvent(expr, defOnly?): ParseExprResult {
         fn = getFnForEventExpr(expr);
     }
 
-    // fallback to generate function in runtime. This will break if CSP is enabled
+    // not pre-compiled by codegen: build the function at runtime
     if(!fn) {
-        if (isCSPEnabled()) {
-            fn = simpleFunctionEvaluator.bind(undefined, expr);
+        // CSP blocks `new Function`, so interpret the action instead of compiling it
+        if (!defOnly && isCSPEnabled()) {
+            fn = interpretExpr(expr, ExpressionType.Action);
         } else {
             const parser = new Parser(new Lexer);
             const ast = parser.parseAction(expr, createParseSourceSpan(expr), 0);

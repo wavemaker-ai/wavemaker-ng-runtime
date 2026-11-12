@@ -425,14 +425,20 @@ describe('expression-parser - CSP enabled', () => {
         expect(received).toEqual([[1, 2]]);
     });
 
-    it('resolves event arguments from locals and binds the function to the merged context', () => {
+    it('resolves event arguments from locals and calls the function with the context as `this`, like the compiled path', () => {
         const ctx: any = {
             tag: 'ctx',
             handler(arg: any) {
                 return `${this.tag}:${arg}`;
             }
         };
-        expect(parser.$parseEvent('handler(item)')(ctx, { item: 'x', tag: 'local' })).toBe('local:x');
+        expect(parser.$parseEvent('handler(item)')(ctx, { item: 'x', tag: 'local' })).toBe('ctx:x');
+    });
+
+    it('evaluates full expressions, not only property paths and simple calls', () => {
+        expect(parser.$parseExpr('a > 1 ? "big" : "small"')({ a: 5 })).toBe('big');
+        expect(parser.$parseExpr('(a + b) * 2')({ a: 1, b: 2 })).toBe(6);
+        expect(parser.$parseExpr('greet(user.name + "!")')({ greet: (v: string) => `hi ${v}`, user: { name: 'wm' } })).toBe('hi wm!');
     });
 
     it('does nothing when the called function does not exist on the context', () => {

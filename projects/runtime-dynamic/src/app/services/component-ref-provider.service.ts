@@ -11,7 +11,7 @@ import {
     inject
 } from '@angular/core';
 
-import { App, getValidJSON, UserDefinedExecutionContext } from '@wm/core';
+import { App, getValidJSON, installCspSafeJitCompiler, UserDefinedExecutionContext } from '@wm/core';
 import { transpile, scopeComponentStyles } from '@wm/transpiler';
 import {
     AppManagerService,
@@ -125,6 +125,8 @@ const createComponent = (name: string, type: ComponentType, template: string,
     css: string, script: string, variables: string): Type<unknown> => {
     const { Base, prefix, ctx } = CONFIG_MAP[type];
     const selector = prefix + name;
+    // compiled at runtime by the JIT compiler: use the CSP-safe evaluator when eval is blocked
+    installCspSafeJitCompiler();
 
     class DynamicComponent extends Base {
         isDynamicComponent = true;

@@ -16,7 +16,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import { extendProto, isDefined } from '@wm/core';
+import { extendProto, installCspSafeJitCompiler, isDefined } from '@wm/core';
 import { transpile } from '@wm/transpiler';
 import { initComponentsBuildTask } from '@wm/build-task';
 import { AppManagerService } from './app.manager.service';
@@ -49,6 +49,10 @@ let counter = 1;
 
 const createDynamicComponent = (selector: string, template: string, css: string): Type<unknown> => {
     if (!isValidMarkup(template)) throw new Error('Invalid markup');
+
+    // The component is compiled at runtime by Angular's JIT compiler; when a Content-Security-Policy
+    // blocks eval, compile it with the CSP-safe (interpreting) evaluator instead.
+    installCspSafeJitCompiler();
 
     class DynamicComponent {
         readonly isDynamicComponent = true;

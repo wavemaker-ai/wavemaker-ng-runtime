@@ -54,12 +54,12 @@ VALIDATION_MODES="angular_deployment:LOCAL_DEPLOYMENT_URL:WAVEMAKER_DEPLOYMENT_U
 
 # --- Project used by local-angular-build.md (Studio export name; must match
 # the project segment in the URLs below) ---
-PROJECT_NAME="WMTheme"
+PROJECT_NAME="csp"
 
 # --- Angular Deployment (Tomcat) validation — built/deployed by
 # local-angular-build.md; see LOCAL_BUILD_DOC below ---
-LOCAL_DEPLOYMENT_URL="http://localhost:8080/WMTheme/#/Main"
-WAVEMAKER_DEPLOYMENT_URL="https://cloud.wavemakeronline.com/pkcq1975w401/WMTheme/#/Main"
+LOCAL_DEPLOYMENT_URL="http://localhost:8080/csp/#/Main"
+WAVEMAKER_DEPLOYMENT_URL="http://apps-platform.wavemaker.ai/pknmg8470ymm/csp"
 
 # --- WaveMaker Preview validation — supplied directly (like the pair above);
 # not built by this skill's automation. Leave empty to skip this mode. ---
