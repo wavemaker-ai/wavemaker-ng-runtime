@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy,Component, Inject, Injector, Optional} from '@angular/core';
 
-import {DISPLAY_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler, TrustAsPipe} from '@wm/components/base';
+import {DISPLAY_TYPE, IWidgetConfig, provideAsWidgetRef, StylableComponent, styler} from '@wm/components/base';
 import {registerProps} from './audio.props';
 
 const DEFAULT_CLS = 'app-audio';
@@ -13,7 +13,6 @@ const WIDGET_CONFIG: IWidgetConfig = {
 @Component({
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: true,
-    imports: [TrustAsPipe],
     selector: '[wmAudio]',
     templateUrl: './audio.component.html',
     providers: [
