@@ -16,14 +16,16 @@ document.addEventListener('DOMContentLoaded', () => {
       resolve();
   }).then(() => bootstrapApplication(AppComponent, appConfig))
     .then((appRef: ApplicationRef) => {
-      const onPageHide = (event: PageTransitionEvent) => {
-        if (event.persisted) {
-          return;
-        }
+      const onPageHide = () => {
         appRef.components.forEach(c => c?.destroy());
         window.removeEventListener('pagehide', onPageHide);
       };
       window.addEventListener('pagehide', onPageHide);
+      window.addEventListener('pageshow', (event: PageTransitionEvent) => {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
     })
     .catch(err => console.error('Error bootstrapping app:', err));
 });
