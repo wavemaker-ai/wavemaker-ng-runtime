@@ -54,14 +54,16 @@ const boundDOMContentLoadedHandler = () => {
     resolve();
   }).then(() => bootstrapApplication(AppComponent, appConfig))
     .then((appRef: ApplicationRef) => {
-      const boundPageHideHandler = (event: PageTransitionEvent) => {
-        if (event.persisted) {
-          return;
-        }
+      const boundPageHideHandler = () => {
         appRef.components.forEach(c => c?.destroy());
         window.removeEventListener('pagehide', boundPageHideHandler);
       };
       window.addEventListener('pagehide', boundPageHideHandler);
+      window.addEventListener('pageshow', (event: PageTransitionEvent) => {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
     })
     .catch(err => console.error('Error bootstrapping app:', err));
   // MEMORY LEAK FIX: Remove DOMContentLoaded listener after execution (one-time event)
