@@ -91,11 +91,18 @@ describe('AppComponent', () => {
             expect(comp.enableSkipToMainContent).toBe(false);
         });
 
-        it('does not load custom icons for non-application projects', () => {
+        it('loads custom icons for prefab projects (prefab preview)', () => {
             mockProps.type = 'PREFAB';
             customIcons.load.mockClear();
             const c = create();
             expect(c.isApplicationType).toBe(false);
+            expect(customIcons.load).toHaveBeenCalledTimes(1);
+        });
+
+        it('does not load custom icons for other project types', () => {
+            mockProps.type = 'TEMPLATE';
+            customIcons.load.mockClear();
+            create();
             expect(customIcons.load).not.toHaveBeenCalled();
         });
 
