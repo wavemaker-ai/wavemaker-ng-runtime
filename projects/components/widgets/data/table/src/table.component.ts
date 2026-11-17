@@ -1019,6 +1019,17 @@ export class TableComponent extends StylableComponent implements AfterContentIni
                     changeFn: this.onRowFilterChange.bind(this),
                     isDisabled: (fieldName) => {
                         return this.emptyMatchModes.indexOf(this.rowFilter[fieldName]?.matchMode) > -1;
+                    },
+                    getMatchMode: (fieldName) => {
+                        const type = this.columns[fieldName]?.type || 'string';
+                        if (!includes(['string', 'text'], type)) {
+                            return;
+                        }
+                        let matchMode = this.rowFilter[fieldName]?.matchMode || get(this.matchModeTypesMap[type], 0);
+                        if (matchMode && !this.datasource?.execute(DataSource.Operation.SUPPORTS_SERVER_FILTER)) {
+                            matchMode = matchMode.replace('ignorecase', '') + 'ignorecase';
+                        }
+                        return includes(['anywhere', 'anywhereignorecase', 'start', 'startignorecase', 'end', 'endignorecase', 'exact', 'exactignorecase'], matchMode) ? matchMode : undefined;
                     }
                 };
                 const rootNode = this.filterViewRef.createEmbeddedView(tmpl, context).rootNodes[0];

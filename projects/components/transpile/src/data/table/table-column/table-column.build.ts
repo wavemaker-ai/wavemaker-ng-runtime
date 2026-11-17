@@ -62,12 +62,13 @@ const getFilterTemplate = (attrs, pCounter)  => {
         }
         submitEventBinding = `submit.event="changeFn('${fieldName}')"`;
     }
+    const matchModeBinding = (widget === FormWidgetType.AUTOCOMPLETE) ? `matchmode.bind="getMatchMode('${fieldName}')"` : '';
     const innerTmpl = `#filterWidget formControlName="${fieldName + '_filter'}" ${datasourceBinding} ${submitEventBinding} change.event="changeFn('${fieldName}')"
-                        disabled.bind="isDisabled('${fieldName}')"`;
+                        disabled.bind="isDisabled('${fieldName}')" ${matchModeBinding}`;
     const options = {inputType: 'filterinputtype'} ;
     const widgetTmpl = `${getFormWidgetTemplate(widget, innerTmpl, attrs, options)}`;
 
-    return `<ng-template #filterTmpl let-changeFn="changeFn" let-isDisabled="isDisabled">
+    return `<ng-template #filterTmpl let-changeFn="changeFn" let-isDisabled="isDisabled" let-getMatchMode="getMatchMode">
     <div class="input-group ${widget}" data-col-identifier="${fieldName}">
         ${widgetTmpl}
         @if(${pCounter}.showClearIcon('${fieldName}')){

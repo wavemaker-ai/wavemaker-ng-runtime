@@ -95,7 +95,7 @@ const getFilteredData = (data, searchObj, visibleCols) => {
             });
             currentVal = currentVal.join(' ').toLowerCase(); // If field is not there, search on all the columns
         }
-        switch (searchObj.matchMode) {
+        switch (searchObj.matchMode?.replace('ignorecase', '')) {
             case 'start':
                 isExists = startsWith(currentVal, searchVal as string);
                 break;
