@@ -1,0 +1,19 @@
+import {PROP_BOOLEAN, PROP_NUMBER, PROP_STRING, register} from '@wm/components/base';
+
+export const registerProps = () => {
+    register(
+        'wm-wizardstepper',
+        new Map(
+            [
+                ['class', PROP_STRING],
+                ['name', PROP_STRING],
+                ['show', {value: true, ...PROP_BOOLEAN}],
+                // No registered default: an unset stepstyle falls back to the wizard's (see
+                // WizardStepperComponent.stepClass); the effective default is still 'auto'.
+                ['stepstyle', PROP_STRING],
+                ['tabindex', {value: 0, ...PROP_NUMBER}],
+                ['wizardname', PROP_STRING]
+            ]
+        )
+    );
+};

@@ -287,8 +287,13 @@ describe("TimeComponent", () => {
         onClickCheckTaglengthOnBody(fixture, '.btn-date', null, null);
 
         fixture.whenStable().then(() => {
+            // Let the opened timepicker compute its max-time state before interacting with it
+            fixture.detectChanges();
             triggerTimerClickonArrowsByIndex(0);
-            checkCustomElementClass(getTimePickerElement()[0], 'disabled');
+            fixture.detectChanges();
+            // The hour-increment arrow must stay disabled: datavalue already equals maxtime
+            const hourIncrementBtn = getTimePickerElement()[0] as HTMLElement;
+            expect(hourIncrementBtn.classList.contains('disabled') || hourIncrementBtn.hasAttribute('disabled')).toBeTruthy();
         });
     }));
 

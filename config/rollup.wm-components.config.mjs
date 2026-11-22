@@ -824,6 +824,16 @@ export default [
         }
     },
     {
+        input: './libraries/components/containers/wizardstepper/fesm2022/index.mjs',
+        external: [ ...rollupExternals ],
+        output: {
+            file: './libraries/components/containers/wizardstepper/bundles/index.umd.js',
+            format: 'umd',
+            name: 'wm.components.containers.wizardstepper',
+            globals: rollupGlobals
+        }
+    },
+    {
         input: './libraries/components/containers/tile/fesm2022/index.mjs',
         external: [ ...rollupExternals ],
         output: {

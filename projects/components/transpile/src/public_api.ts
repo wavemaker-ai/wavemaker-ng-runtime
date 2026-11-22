@@ -36,6 +36,7 @@ export * as tileBuild from './containers/tile/tile.build';
 export * as wizardBuild from './containers/wizard/wizard.build';
 export * as wizardStepBuild from './containers/wizard/wizard-step/wizard-step.build';
 export * as wizardActionBuild from './containers/wizard/wizard-action/wizard-action.build';
+export * as wizardStepperBuild from './containers/wizardstepper/wizardstepper.build';
 export * as barcodeScannerBuild from './device/barcode-scanner/barcode-scanner.build';
 export * as cameraBuild from './device/camera/camera.build';
 export * as alertDlgBuild from './dialogs/alert-dialog/alert-dialog.build';

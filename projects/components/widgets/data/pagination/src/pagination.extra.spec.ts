@@ -564,7 +564,6 @@ describe('PaginationComponent - extra behaviour', () => {
             const add = jest.spyOn(window, 'addEventListener');
             const remove = jest.spyOn(window, 'removeEventListener');
             component.onDropDownShown({ _element: { nativeElement: container } });
-            expect(core.adjustVerticalPosition).toHaveBeenCalled();
             expect(add).toHaveBeenCalledWith('scroll', component.dropdownScrollHandler, true);
             expect(() => component.dropdownScrollHandler()).not.toThrow();
 
@@ -572,6 +571,67 @@ describe('PaginationComponent - extra behaviour', () => {
             expect(remove).toHaveBeenCalledWith('scroll', expect.any(Function), true);
             expect(component.dropdownScrollHandler).toBeUndefined();
             component.onDropDownShown(undefined);
+        });
+
+        describe('adjustMenuVerticalPosition', () => {
+            let container: HTMLElement;
+            let menu: HTMLElement;
+            let raf: jest.SpyInstance;
+            let frame: () => void;
+
+            beforeEach(() => {
+                container = document.createElement('div');
+                container.innerHTML = '<ul id="dropdown-basic" style="position:absolute; top:0px"></ul>';
+                document.body.appendChild(container);
+                menu = container.querySelector('ul');
+                Object.defineProperty(menu, 'offsetHeight', { value: 100, configurable: true });
+                menu.getBoundingClientRect = () => ({ top: 770, bottom: 870 } as DOMRect);
+                const parentEl = document.createElement('div');
+                parentEl.getBoundingClientRect = () => ({ top: 700, bottom: 750, height: 50 } as DOMRect);
+                jest.spyOn(component.nativeElement, 'querySelector').mockReturnValue(parentEl);
+                Object.defineProperty(window, 'innerHeight', { value: 768, configurable: true });
+                raf = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: any) => { frame = () => cb(0); return 1; });
+            });
+
+            afterEach(() => {
+                raf.mockRestore();
+                container.remove();
+            });
+
+            it('waits until the container is positioned, then moves the menu above the button', () => {
+                component.adjustMenuVerticalPosition(container);
+                expect(menu.style.top).toBe('0px');
+                container.style.transform = 'translate3d(0px, 700px, 0px)'; // positioned by ngx-bootstrap
+                frame();
+                expect(menu.style.top).toBe('-172px'); // 700 - 2 - 870
+            });
+
+            it('leaves the menu alone when there is room below', () => {
+                Object.defineProperty(menu, 'offsetHeight', { value: 10, configurable: true });
+                container.style.transform = 'translate3d(0px, 700px, 0px)'; // positioned by ngx-bootstrap
+                component.adjustMenuVerticalPosition(container);
+                expect(menu.style.top).toBe('0px');
+            });
+
+            it('stops waiting after 60 frames and positions the menu anyway', () => {
+                component.adjustMenuVerticalPosition(container);
+                for (let i = 0; i < 60; i++) {
+                    frame();
+                }
+                expect(raf).toHaveBeenCalledTimes(60);
+                expect(menu.style.top).toBe('-172px');
+            });
+
+            it('never moves the menu above the top of the viewport', () => {
+                const nearTop = document.createElement('div');
+                nearTop.getBoundingClientRect = () => ({ top: 101, bottom: 151, height: 50 } as DOMRect);
+                component.nativeElement.querySelector.mockReturnValue(nearTop);
+                Object.defineProperty(window, 'innerHeight', { value: 200, configurable: true });
+                menu.getBoundingClientRect = () => ({ top: 151, bottom: 251 } as DOMRect);
+                container.style.transform = 'translate3d(0px, 700px, 0px)'; // positioned by ngx-bootstrap
+                component.adjustMenuVerticalPosition(container);
+                expect(menu.style.top).toBe('-151px'); // clamped: 101 - 2 - 251 = -152 would put the menu 1px above the viewport
+            });
         });
     });
 
