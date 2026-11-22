@@ -96,8 +96,11 @@ export class AppComponent implements DoCheck, AfterViewInit, OnDestroy {
         setAppRef(_appRef);
 
         this.appLocale = app.appLocale;
-        this.isApplicationType = getWmProjectProperties().type === 'APPLICATION';
-        if (this.isApplicationType) {
+        const projectType = getWmProjectProperties().type;
+        // Keep APPLICATION-only: the template uses this flag for the Common partial and the Prefab*Dialog dialogs.
+        this.isApplicationType = projectType === 'APPLICATION';
+        // Load custom icons for prefabs too, since prefab preview boots through this component.
+        if (this.isApplicationType || projectType === 'PREFAB') {
             this.customIconsLoaderService.load();
         }
 

@@ -40,7 +40,7 @@
         "@wavemaker-ai/custom-widgets-m3": "file:.yalc/@wavemaker-ai/custom-widgets-m3",
         "@wavemaker-ai/foundation-css": "file:.yalc/@wavemaker-ai/foundation-css",
         "@wavemaker-ai/variables": "file:.yalc/@wavemaker-ai/variables",
-        "@wavemaker/focus-trap": "1.0.1",
+        "@wavemaker/focus-trap": "1.0.2",
         "@wavemaker/nvd3": "1.8.16",
         "@ztree/ztree_v3": "3.5.48",
         "acorn": "8.15.0",
@@ -116,8 +116,8 @@
         "@rollup/rollup-win32-x64": "4.60.1"
     },
     "engines": {
-        "node": "22.22.3",
-        "npm": "10.9.8"
+        "node": "^22.23.4",
+        "npm": "^10.9.9"
     },
     "overrides": {
         "@babel/core": "7.29.7",

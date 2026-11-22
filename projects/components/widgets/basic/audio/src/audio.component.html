@@ -1,6 +1,6 @@
 <audio [attr.aria-label]="arialabel || 'Audio'" [attr.hint]="hint" [autoplay]="autoplay"
-       [controls]="controls" [loop]="loop" [muted]="muted" [preload]="audiopreload" [src]="mp3format | trustAs: 'resource'"
+       [controls]="controls" [loop]="loop" [muted]="muted" [preload]="audiopreload" [src]="mp3format"
        name="wmAudio" [tabindex]="tabindex">
-    <source type="audio/mp3" [src]="mp3format | trustAs: 'resource'">
+    <source type="audio/mp3" [src]="mp3format">
     {{audiosupportmessage}}
 </audio>

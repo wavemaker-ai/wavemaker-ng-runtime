@@ -515,11 +515,13 @@ describe('AutoLayout decorator', () => {
             expect(inst.__al_store.isViewInitialized).toBe(true);
         });
 
-        it('should stretch the inner target element to fill the host when targetSelector is configured', () => {
+        it('should make the host a flex column and flex-grow the inner target when targetSelector is configured', () => {
             const inst = createInstance({ targetSelector: '.inner-target' });
             inst.ngAfterViewInit();
             expect($(innerEl).css('width')).toBe('100%');
-            expect($(innerEl).css('height')).toBe('100%');
+            expect($(innerEl).css('flex-grow')).toBe('1');
+            expect($(hostEl).css('display')).toBe('flex');
+            expect($(hostEl).css('flex-direction')).toBe('column');
         });
 
         it('should apply stored width/height after the microtask flush', async () => {

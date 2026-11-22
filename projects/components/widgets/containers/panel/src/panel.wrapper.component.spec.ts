@@ -108,23 +108,27 @@ describe("PanelComponent", () => {
         let wmMenuEle = getwmMenuEle();
         let wmMenuComponentInstance: MenuComponent = wmMenuEle.componentInstance;
         wmMenuComponentInstance.getWidget().dataset = panelWrapperComponent.testData;
-
-        // Click the dropdown toggle element
-        dropdownToggleEle.nativeElement.click();
-
-        // Wait for the fixture to stabilize
-        await fixture.whenStable();
-
-        // Get the menu dropdown element and spy on the callback
-        let menudropdownEle = getMenudropdownEle();
-        jest.spyOn(panelWrapperComponent, 'panel1Actionsclick');
-
-        // Trigger change detection
+        // Render the menu items for the new dataset before opening the dropdown
         fixture.detectChanges();
         await fixture.whenStable();
 
-        // Get the list item elements and click the first one
-        let liElements = menudropdownEle.query(By.css('li.app-menu-item'));
+        jest.spyOn(panelWrapperComponent, 'panel1Actionsclick');
+
+        // Click the dropdown toggle element
+        dropdownToggleEle.nativeElement.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // The dropdown renders asynchronously; on slow runners the items may not be in the DOM yet,
+        // so poll (re-querying each time) instead of reading a stale reference once.
+        let liElements = getMenudropdownEle()?.query(By.css('li.app-menu-item'));
+        for (let attempt = 0; !liElements && attempt < 20; attempt++) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            liElements = getMenudropdownEle()?.query(By.css('li.app-menu-item'));
+        }
+        expect(liElements).toBeTruthy();
         liElements.nativeElement.click();
 
         // Trigger change detection again and wait for stabilization
